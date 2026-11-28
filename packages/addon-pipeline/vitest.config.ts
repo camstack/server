@@ -51,7 +51,7 @@ export default defineConfig({
       // Frame-transport socket end-to-end specs -- bind real sockets.
       '**/*.e2e.spec.ts',
       // Real-socket timing under load (sentry-never-wakes): off the automatic gates.
-      ...(process.env.CAMSTACK_HEAVY_SPECS === '1' ? [] : ['**/*.heavy.spec.*']),
+      ...(process.env.DOMINEVO_HEAVY_SPECS === '1' ? [] : ['**/*.heavy.spec.*']),
     ],
     // Route browser-context specs to jsdom; all other specs stay in node.
     environmentMatchGlobs: [

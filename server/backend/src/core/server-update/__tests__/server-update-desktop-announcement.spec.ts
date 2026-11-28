@@ -49,7 +49,7 @@ describe('the hub announces its desktop shell updating itself', () => {
       restartServer: () => undefined,
       dataDir: tmp,
       runningPackageJsonPath: path.join(tmp, 'running.json'),
-      env: { CAMSTACK_AGENT_APP_VERSION: '1.2.10', CAMSTACK_NODE_ID: 'hub' },
+      env: { DOMINEVO_AGENT_APP_VERSION: '1.2.10', DOMINEVO_NODE_ID: 'hub' },
       readWrapperProbes: () => ({
         platform: 'darwin',
         dockerEnvFileExists: false,

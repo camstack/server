@@ -469,8 +469,8 @@ describe('login-method contribution', () => {
   })
 
   it("derives rpId/origin from the hub's Network address when unconfigured — never the env", async () => {
-    const prior = process.env['CAMSTACK_HUB_PUBLIC_URL']
-    process.env['CAMSTACK_HUB_PUBLIC_URL'] = 'https://env.example.com'
+    const prior = process.env['DOMINEVO_HUB_PUBLIC_URL']
+    process.env['DOMINEVO_HUB_PUBLIC_URL'] = 'https://env.example.com'
     try {
       const { result } = await initializeAuthAddon({
         endpoints: [
@@ -498,8 +498,8 @@ describe('login-method contribution', () => {
         expect(m.origin).toBe('https://cams.example.com')
       }
     } finally {
-      if (prior === undefined) delete process.env['CAMSTACK_HUB_PUBLIC_URL']
-      else process.env['CAMSTACK_HUB_PUBLIC_URL'] = prior
+      if (prior === undefined) delete process.env['DOMINEVO_HUB_PUBLIC_URL']
+      else process.env['DOMINEVO_HUB_PUBLIC_URL'] = prior
     }
   })
 

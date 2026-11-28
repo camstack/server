@@ -7,7 +7,7 @@ const HUB_MJS = path.resolve(__dirname, '../hub/hub.mjs')
 function runHub(args: readonly string[]) {
   return spawnSync(process.execPath, [HUB_MJS, ...args], {
     encoding: 'utf8',
-    env: { ...process.env, CAMSTACK_TOKEN: 'ignored-token', CAMSTACK_HUB_TOKEN_FILE: '/nope' },
+    env: { ...process.env, DOMINEVO_TOKEN: 'ignored-token', DOMINEVO_HUB_TOKEN_FILE: '/nope' },
   })
 }
 

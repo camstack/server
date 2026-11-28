@@ -1,8 +1,8 @@
 /**
  * D898 measurement — a synthetic 1 GB day file (the hub's measured daily
- * volume). Heavy: runs only with `CAMSTACK_HEAVY_SPECS=1`.
+ * volume). Heavy: runs only with `DOMINEVO_HEAVY_SPECS=1`.
  *
- *   CAMSTACK_HEAVY_SPECS=1 npx vitest run \
+ *   DOMINEVO_HEAVY_SPECS=1 npx vitest run \
  *     src/builtins/winston-logging/__tests__/log-file-reader-1gb.heavy.spec.ts
  *
  * Prints: cold index build, first page for a busy device, first page for a

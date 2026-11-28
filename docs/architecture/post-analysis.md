@@ -1231,7 +1231,7 @@ Per-kind rules that answer "why does this track have / not have X":
   a warn with `tags.deviceId`; an ABSENT tier is still accepted (pre-tier
   runner in a mixed cluster), and the close-time keyFrame derive covers the
   track.
-- **keyFrame** — native-strict (cap 4096 px, `CAMSTACK_KEYFRAME_NATIVE_MAX_WIDTH`),
+- **keyFrame** — native-strict (cap 4096 px, `DOMINEVO_KEYFRAME_NATIVE_MAX_WIDTH`),
   plus a 960 px `keyFrameSmall` encoded from the SAME native surface; a RAM-tier
   reply is a MISS for keyFrame and is dropped with a warn rather than persisted.
   Fires on a genuine new best AND, since 2026-08-06, on a **bounded catch-up
@@ -2767,7 +2767,7 @@ forked addon never reads (see
 | **Audio markers** | `audioMarkerEnabled` (**false** — counts `wouldFire` anyway) · `BaselineSec` (300) · `MinDbfs` (−25) · `MinDeviations` (4) · `MinDeviationDb` (12) · `MotionQuietSec` (20) · `CooldownSec` (120) · `MaxPerHour` (3) · `MaxPerDay` (12) | which audio becomes a synthetic timeline marker ([D62](../decisions/adr-0067.md)) |
 | **Audio episodes** | `audioEpisodeEnabled` (**true**) · `OpenHoldSec` (1.5) · `CloseGapSec` (12) · `CooldownSec` (30) | one event + one synthetic track per classified sound. `false` selects the pre-episode heartbeat WRITER instead — it never silences classified audio |
 | notification RULE conditions | `minImportance` · `minDwellSeconds` · `minLabelConfidence` | track-end rules only — [notifications.md](notifications.md) |
-| env | `CAMSTACK_MEDIA_ROOT` · `CAMSTACK_KEYFRAME_NATIVE_MAX_WIDTH` (4096) | media root, keyFrame cap |
+| env | `DOMINEVO_MEDIA_ROOT` · `DOMINEVO_KEYFRAME_NATIVE_MAX_WIDTH` (4096) | media root, keyFrame cap |
 
 Verified traps in this table's fine print (2026-08-02):
 

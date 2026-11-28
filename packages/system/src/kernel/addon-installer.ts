@@ -104,7 +104,7 @@ export interface AddonInstallerConfig {
   readonly registry?: string
   /**
    * Directory of pre-built package dirs to seed from instead of npm — the
-   * Electron bundle's closure scope dir (`CAMSTACK_BUNDLED_ADDONS_DIR`). Unset
+   * Electron bundle's closure scope dir (`DOMINEVO_BUNDLED_ADDONS_DIR`). Unset
    * everywhere else: addons then always come from npm.
    */
   readonly bundledAddonsDir?: string
@@ -117,7 +117,7 @@ export interface AddonInstallerConfig {
   readonly isPackageResolvable?: (packageName: string) => boolean
   /**
    * The server closure's node_modules to dedupe addon trees against.
-   * Production leaves it unset (derived from `CAMSTACK_FRAMEWORK_DIR`);
+   * Production leaves it unset (derived from `DOMINEVO_FRAMEWORK_DIR`);
    * specs point it at a fabricated closure dir.
    */
   readonly closureNodeModulesDir?: string
@@ -298,7 +298,7 @@ export class AddonInstaller {
   readonly bundledAddonsDir: string | undefined
   private readonly logger: IScopedLogger
   private readonly isPackageResolvable?: (packageName: string) => boolean
-  /** Test seam — production resolves via `CAMSTACK_FRAMEWORK_DIR`. */
+  /** Test seam — production resolves via `DOMINEVO_FRAMEWORK_DIR`. */
   private readonly closureNodeModulesDir: string | undefined
   private readonly resolveLatestVersionOverride: AddonInstallerConfig['resolveLatestVersion']
   private readonly serverVersion: string | null | undefined

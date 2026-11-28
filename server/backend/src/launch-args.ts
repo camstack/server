@@ -26,7 +26,7 @@
  *    the hub (`serverManagement.setLaunchOverrides`) and persisted on the node.
  *    The same file carries `rssBudgetMb`, hub-main's RSS budget, read by the
  *    running hub (not by this launcher) and winning over its env variable.
- *  - `CAMSTACK_HUB_HEAP_MB` / `CAMSTACK_AGENT_HEAP_MB` are RETIRED: never
+ *  - `DOMINEVO_HUB_HEAP_MB` / `DOMINEVO_AGENT_HEAP_MB` are RETIRED: never
  *    read for a value, named in a `warn` line when set.
  *  - `computed` — AGENT only: clamp(min(RAM, cgroup limit) / 4, 1536, 4096) MB.
  *    V8's own quarter-of-RAM rule with a floor above every measured agent RSS
@@ -46,10 +46,10 @@ export type CeilingSource = 'override' | 'computed' | 'v8-default'
 
 export const LAUNCH_OVERRIDES_FILE = 'launch-overrides.json'
 /** Env var carrying {@link CeilingSource} to the node so its heartbeat can say who chose. */
-export const HEAP_CEILING_SOURCE_ENV = 'CAMSTACK_HEAP_CEILING_SOURCE'
+export const HEAP_CEILING_SOURCE_ENV = 'DOMINEVO_HEAP_CEILING_SOURCE'
 
 /** The retired heap variables: ignored, and named at launch when set. */
-export const RETIRED_HEAP_ENV = ['CAMSTACK_HUB_HEAP_MB', 'CAMSTACK_AGENT_HEAP_MB'] as const
+export const RETIRED_HEAP_ENV = ['DOMINEVO_HUB_HEAP_MB', 'DOMINEVO_AGENT_HEAP_MB'] as const
 
 export const AGENT_HEAP_FLOOR_MB = 1536
 export const AGENT_HEAP_CAP_MB = 4096
@@ -173,7 +173,7 @@ const realFs: LaunchFs = {
 
 /** The data dir the launcher (and the hub's own boot) read the overrides from. */
 export function launchDataDir(env: Readonly<Record<string, string | undefined>>): string {
-  return path.resolve(env['CAMSTACK_DATA'] ?? 'camstack-data')
+  return path.resolve(env['DOMINEVO_DATA'] ?? 'camstack-data')
 }
 
 export function overridesPath(dataDir: string): string {

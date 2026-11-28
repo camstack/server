@@ -105,15 +105,15 @@ function checkImage(): readonly string[] {
     problems.push('Dockerfile: the runtime stage has no org.opencontainers.image.licenses label')
   }
   if (
-    !/^COPY [^\n]*\bTHIRD_PARTY_MODELS\.md\b[^\n]*\/usr\/share\/doc\/camstack\//m.test(dockerfile)
+    !/^COPY [^\n]*\bTHIRD_PARTY_MODELS\.md\b[^\n]*\/usr\/share\/doc\/dominevo\//m.test(dockerfile)
   ) {
-    problems.push(`Dockerfile: no COPY of ${NOTICE_FILE} into /usr/share/doc/camstack/`)
+    problems.push(`Dockerfile: no COPY of ${NOTICE_FILE} into /usr/share/doc/dominevo/`)
   }
   if (
-    !/^COPY licenses\/models\/ \/usr\/share\/doc\/camstack\/licenses\/models\/$/m.test(dockerfile)
+    !/^COPY licenses\/models\/ \/usr\/share\/doc\/dominevo\/licenses\/models\/$/m.test(dockerfile)
   ) {
     problems.push(
-      `Dockerfile: no COPY of ${LICENSE_TEXTS_DIR}/ into /usr/share/doc/camstack/licenses/models/`,
+      `Dockerfile: no COPY of ${LICENSE_TEXTS_DIR}/ into /usr/share/doc/dominevo/licenses/models/`,
     )
   }
   for (const entry of [`!${NOTICE_FILE}`, '!LICENSE', `!${LICENSE_TEXTS_DIR}/**`]) {

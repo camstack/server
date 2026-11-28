@@ -2,8 +2,8 @@
 /**
  * No runtime code reads `config.yaml` (D1018, planning #342).
  *
- * The bootstrap config is built-in defaults plus `CAMSTACK_PORT`,
- * `CAMSTACK_HOST` and `CAMSTACK_DATA`; everything a yaml once carried lives in
+ * The bootstrap config is built-in defaults plus `DOMINEVO_PORT`,
+ * `DOMINEVO_HOST` and `DOMINEVO_DATA`; everything a yaml once carried lives in
  * the keychain (master key at `/run/secrets/camstack-master-key`, D991), the
  * settings store or a capability. The one-release transition reader was
  * removed 2026-11-12. This guard keeps a second bootstrap source from coming
@@ -106,7 +106,7 @@ function main(): void {
   }
   console.error(
     'check-no-config-yaml: there is no config.yaml (D1018) — bootstrap values come from ' +
-      'CAMSTACK_PORT / CAMSTACK_HOST / CAMSTACK_DATA, everything else from the keychain, settings or a capability:',
+      'DOMINEVO_PORT / DOMINEVO_HOST / DOMINEVO_DATA, everything else from the keychain, settings or a capability:',
   )
   for (const f of findings) console.error(`  ${f.file}:${f.line}  ${f.text}`)
   process.exit(1)

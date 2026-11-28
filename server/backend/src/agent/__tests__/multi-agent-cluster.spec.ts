@@ -267,12 +267,12 @@ describe('Multi-agent cluster', { timeout: 15_000 }, () => {
 
     // Set env to trigger the env-var path
     const saved = {
-      hub: process.env.CAMSTACK_HUB_ADDRESS,
-      name: process.env.CAMSTACK_AGENT_NAME,
+      hub: process.env.DOMINEVO_HUB_ADDRESS,
+      name: process.env.DOMINEVO_AGENT_NAME,
     }
     try {
-      process.env.CAMSTACK_HUB_ADDRESS = 'ws://localhost:4443/agent'
-      process.env.CAMSTACK_AGENT_NAME = 'fresh-agent'
+      process.env.DOMINEVO_HUB_ADDRESS = 'ws://localhost:4443/agent'
+      process.env.DOMINEVO_AGENT_NAME = 'fresh-agent'
 
       const config = loadAgentConfig('agent.json', freshDir)
       expect(config.nodeId).toMatch(/^agent-[a-f0-9]{8}$/)
@@ -287,10 +287,10 @@ describe('Multi-agent cluster', { timeout: 15_000 }, () => {
       const config2 = loadAgentConfig('agent.json', freshDir)
       expect(config2.nodeId).toBe(config.nodeId)
     } finally {
-      if (saved.hub) process.env.CAMSTACK_HUB_ADDRESS = saved.hub
-      else delete process.env.CAMSTACK_HUB_ADDRESS
-      if (saved.name) process.env.CAMSTACK_AGENT_NAME = saved.name
-      else delete process.env.CAMSTACK_AGENT_NAME
+      if (saved.hub) process.env.DOMINEVO_HUB_ADDRESS = saved.hub
+      else delete process.env.DOMINEVO_HUB_ADDRESS
+      if (saved.name) process.env.DOMINEVO_AGENT_NAME = saved.name
+      else delete process.env.DOMINEVO_AGENT_NAME
     }
   })
 

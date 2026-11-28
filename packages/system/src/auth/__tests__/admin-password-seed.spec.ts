@@ -151,9 +151,9 @@ describe('admin password across restarts', () => {
     expect(await users.validateCredentials('admin', 'changeme')).toBeNull()
   })
 
-  it('ignores the retired CAMSTACK_ADMIN_USER / CAMSTACK_ADMIN_PASS variables', async () => {
-    vi.stubEnv('CAMSTACK_ADMIN_USER', 'root')
-    vi.stubEnv('CAMSTACK_ADMIN_PASS', 'from-env')
+  it('ignores the retired DOMINEVO_ADMIN_USER / DOMINEVO_ADMIN_PASS variables', async () => {
+    vi.stubEnv('DOMINEVO_ADMIN_USER', 'root')
+    vi.stubEnv('DOMINEVO_ADMIN_PASS', 'from-env')
     try {
       const rows = makeUsersTable()
       const { users, result } = await boot(rows)

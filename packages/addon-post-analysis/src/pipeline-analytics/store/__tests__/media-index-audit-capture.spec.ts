@@ -3,7 +3,7 @@
  *
  * Not an assertion spec: this drives every read path against the real engine
  * with `better-sqlite3`'s `prepare` observed, and writes the captured SQL to
- * `CAMSTACK_D481_CAPTURE` so the plans can be explained on a copy of the hub's
+ * `DOMINEVO_D481_CAPTURE` so the plans can be explained on a copy of the hub's
  * own database, where `sqlite_stat1` exists and the planner's choice between
  * two indexes that both fit is the real one. A hand-spelled statement would
  * assert a plan nobody runs (D447); a four-row temp database would answer with
@@ -90,7 +90,7 @@ describe('D481 — capture every prepared statement against pipeline-analytics:m
 
   afterAll(async () => {
     vi.restoreAllMocks()
-    const out = process.env['CAMSTACK_D481_CAPTURE']
+    const out = process.env['DOMINEVO_D481_CAPTURE']
     if (out !== undefined && out.length > 0) {
       writeFileSync(out, `${JSON.stringify(captures, null, 2)}\n`)
     }

@@ -85,7 +85,7 @@ export interface ModalProviderDeps {
 const STAGING_TIMEOUT_MS = 2 * 60 * 60_000
 const COLLECTOR_TIMEOUT_MS = 30 * 60_000
 const TRAINER_COMMAND =
-  'printf "%s" "$CAMSTACK_JOB_JSON" > /data/job.json && exec python -m camstack_train run --job /data/job.json --dataset /data/dataset.tar --out /data/out --cache /cache'
+  'printf "%s" "$DOMINEVO_JOB_JSON" > /data/job.json && exec python -m camstack_train run --job /data/job.json --dataset /data/dataset.tar --out /data/out --cache /cache'
 
 export const jobVolumeName = (jobKey: string): string => `cst-ds-${jobKey}`
 const tagsFor = (jobKey: string): Record<string, string> => ({ camstack: 'training', jobKey })
@@ -223,7 +223,7 @@ export class ModalTrainingProvider implements ITrainingCloudProvider {
       gpu: input.gpuType,
       ...(input.region !== '' ? { regions: [input.region] } : {}),
       volumes: { '/data': jobVolumeName(input.jobKey), '/cache': MODAL_CACHE_VOLUME },
-      env: { CAMSTACK_JOB_JSON: input.jobSpecJson, TRAINER_REVISION: input.trainer.revision },
+      env: { DOMINEVO_JOB_JSON: input.jobSpecJson, TRAINER_REVISION: input.trainer.revision },
       tags: { ...tagsFor(input.jobKey), role: 'trainer', entryId: input.entryId },
       name: `cst-${input.jobKey}`,
     })

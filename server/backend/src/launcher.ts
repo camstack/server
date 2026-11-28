@@ -10,7 +10,7 @@
  *
  * Load-order invariant: @dominevo/server/system is imported DYNAMICALLY inside
  * launch() AFTER the active framework dir is resolved (the single-copy
- * collapse points CAMSTACK_FRAMEWORK_DIR at CAMSTACK_SERVER_ACTIVE_ROOT in
+ * collapse points DOMINEVO_FRAMEWORK_DIR at DOMINEVO_SERVER_ACTIVE_ROOT in
  * data-root mode, or the baked seed otherwise). NEVER add a top-level static
  * import of @dominevo/server/system here — that would pin the resolver before the
  * framework dir + NODE_PATH are set up. Framework/cap updates ship via the
@@ -37,7 +37,7 @@ import { applyPendingRestore } from './pending-restore.js'
 import { applyPendingPreMigrationRestore } from './pre-migration-restore.js'
 
 /** Resolve the data directory from env or default */
-const DATA_DIR = process.env['CAMSTACK_DATA'] ?? 'camstack-data'
+const DATA_DIR = process.env['DOMINEVO_DATA'] ?? 'camstack-data'
 
 /**
  * Derive the bootstrap package list from THIS server's own package.json — the
@@ -126,20 +126,20 @@ async function launch(): Promise<void> {
   // every @dominevo/* (system + addon-*) from there via the standard
   // walk-up — NODE_PATH only covers CJS, which is why forked ESM addon
   // runners couldn't resolve `@dominevo/types` from a plain `addons/` dir.
-  // `CAMSTACK_ADDONS_DIR` lets the Docker/Electron images point at their
+  // `DOMINEVO_ADDONS_DIR` lets the Docker/Electron images point at their
   // node_modules path (e.g. /data/node_modules); dev keeps `<dataDir>/addons`.
-  const addonsDir = process.env['CAMSTACK_ADDONS_DIR'] ?? path.resolve(dataDir, 'addons')
+  const addonsDir = process.env['DOMINEVO_ADDONS_DIR'] ?? path.resolve(dataDir, 'addons')
 
   // ── Single-copy framework dir (2026-07-18 collapse) ────────────────────────
   // In data-root mode the ACTIVE single copy (set by the starter as
-  // CAMSTACK_SERVER_ACTIVE_ROOT) IS the framework — point the forked
+  // DOMINEVO_SERVER_ACTIVE_ROOT) IS the framework — point the forked
   // addon-runners' resolver + NODE_PATH at it instead of the (now-inert)
   // static /data/framework copy. Forked children inherit this via process.env,
-  // and the NODE_PATH extension below reads CAMSTACK_FRAMEWORK_DIR. No-op in
+  // and the NODE_PATH extension below reads DOMINEVO_FRAMEWORK_DIR. No-op in
   // baked mode (activeRoot unset → keep the image's /data/framework).
-  const activeRoot = process.env['CAMSTACK_SERVER_ACTIVE_ROOT']
+  const activeRoot = process.env['DOMINEVO_SERVER_ACTIVE_ROOT']
   if (activeRoot && isActiveFrameworkRoot(activeRoot, fs.existsSync)) {
-    process.env['CAMSTACK_FRAMEWORK_DIR'] = activeRoot
+    process.env['DOMINEVO_FRAMEWORK_DIR'] = activeRoot
     console.log(`[launcher] Single-copy framework dir → ${activeRoot}`)
   }
   // ──────────────────────────────────────────────────────────────────────────
@@ -181,12 +181,12 @@ async function launch(): Promise<void> {
     console.warn('[launcher] quarantineAddonResidue unavailable — skipping residue quarantine')
   }
 
-  // Provisioning source: CAMSTACK_BUNDLED_ADDONS_DIR — set by Electron-packaged
+  // Provisioning source: DOMINEVO_BUNDLED_ADDONS_DIR — set by Electron-packaged
   // builds to the closure's own scope dir, <resourcesPath>/node_modules/@dominevo
   // — seeds first launch from that closure (D45). Otherwise addons come from
   // npm; a workspace build reaches a node only through `dominevo deploy`.
   console.log('[launcher] Checking required packages...')
-  const bundledDir = process.env['CAMSTACK_BUNDLED_ADDONS_DIR']
+  const bundledDir = process.env['DOMINEVO_BUNDLED_ADDONS_DIR']
   let bundledAddonsDir: string | undefined
   if (bundledDir && fs.existsSync(bundledDir)) {
     bundledAddonsDir = bundledDir
@@ -410,7 +410,7 @@ async function launch(): Promise<void> {
   // etc); the server-local node_modules has direct deps. Listing
   // both covers every realistic resolution.
   const workspaceRootNodeModules = path.resolve(serverDir, '..', '..', 'node_modules')
-  const frameworkPaths = frameworkNodePaths(process.env['CAMSTACK_FRAMEWORK_DIR'], fs.existsSync)
+  const frameworkPaths = frameworkNodePaths(process.env['DOMINEVO_FRAMEWORK_DIR'], fs.existsSync)
   const extraNodePaths = [...frameworkPaths, nodeModulesDir, workspaceRootNodeModules].filter((p) =>
     fs.existsSync(p),
   )

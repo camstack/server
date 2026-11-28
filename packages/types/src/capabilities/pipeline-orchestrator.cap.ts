@@ -143,7 +143,7 @@ const AgentPipelineSettingsSchema = z.object({
   /**
    * Operator override for the LAN host a cross-node decoder dials to reach
    * THIS node's restream (Cluster UI). Absent → auto-detect: a remote runner
-   * falls back to its `CAMSTACK_HUB_URL`-derived host (the Moleculer address
+   * falls back to its `DOMINEVO_HUB_URL`-derived host (the Moleculer address
    * it already uses to reach the hub). Set this only when the auto-detected
    * address is wrong (multi-homed host, NAT, custom interface).
    */
@@ -1198,7 +1198,7 @@ export const pipelineOrchestratorCapability = {
     /**
      * Set (or clear) the operator override for the LAN host a cross-node
      * decoder dials to reach this node's restream. Pass a non-empty string to
-     * override the auto-detected address (the runner's `CAMSTACK_HUB_URL`
+     * override the auto-detected address (the runner's `DOMINEVO_HUB_URL`
      * default); pass `null` or an empty string to clear it and revert to
      * auto-detect. Applied on the next dispatch cycle — takes effect for new
      * cross-node attaches; existing attaches keep their current host until

@@ -80,23 +80,23 @@ class EdgetpuLibraryPath(unittest.TestCase):
     def test_a_desktop_loads_the_dylib_staged_under_its_data_root(self) -> None:
         staged = "/Users/me/CamStack/data/deps/edgetpu/lib/libedgetpu.1.dylib"
         path = edgetpu_library_path(
-            {"CAMSTACK_DATA": "/Users/me/CamStack/data"}, "darwin", lambda p: p == staged
+            {"DOMINEVO_DATA": "/Users/me/CamStack/data"}, "darwin", lambda p: p == staged
         )
         self.assertEqual(path, staged)
 
     def test_a_linux_agent_with_another_data_root_loads_its_staged_copy(self) -> None:
         staged = "/srv/cs/deps/edgetpu/lib/libedgetpu.so.1"
-        env = {"CAMSTACK_DATA_DIR": "/srv/cs"}
+        env = {"DOMINEVO_DATA_DIR": "/srv/cs"}
         self.assertEqual(edgetpu_library_path(env, "linux", lambda p: p in (staged, self.LEGACY)), staged)
 
     def test_the_override_wins_even_when_missing(self) -> None:
         # The operator named a file: loading another build instead would hide it.
-        env = {"CAMSTACK_EDGETPU_LIB": "/opt/x.so", "CAMSTACK_DATA": "/d"}
+        env = {"DOMINEVO_EDGETPU_LIB": "/opt/x.so", "DOMINEVO_DATA": "/d"}
         self.assertEqual(edgetpu_library_path(env, "linux", lambda p: False), "/opt/x.so")
 
     def test_nothing_staged_falls_back_to_the_historical_hub_path(self) -> None:
         self.assertEqual(edgetpu_library_path({}, "linux", lambda p: False), self.LEGACY)
-        self.assertEqual(edgetpu_library_path({"CAMSTACK_DATA": "/d"}, "linux", lambda p: False), self.LEGACY)
+        self.assertEqual(edgetpu_library_path({"DOMINEVO_DATA": "/d"}, "linux", lambda p: False), self.LEGACY)
 
 
 if __name__ == "__main__":

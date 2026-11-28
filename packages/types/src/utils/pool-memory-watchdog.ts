@@ -88,7 +88,7 @@ export const DEFAULT_POOL_MEMORY_POLICY: PoolMemoryPolicy = {
 }
 
 /**
- * Resolve the policy from env overrides (`CAMSTACK_POOL_MEM_*`). Garbage or
+ * Resolve the policy from env overrides (`DOMINEVO_POOL_MEM_*`). Garbage or
  * absent values keep the default — an operator typo must never disable the
  * bound or set it to zero.
  */
@@ -103,15 +103,15 @@ export function resolvePoolMemoryPolicy(
   }
   const d = DEFAULT_POOL_MEMORY_POLICY
   return {
-    sampleIntervalMs: num('CAMSTACK_POOL_MEM_INTERVAL_MS', d.sampleIntervalMs, 5_000),
+    sampleIntervalMs: num('DOMINEVO_POOL_MEM_INTERVAL_MS', d.sampleIntervalMs, 5_000),
     baselineSettleSamples: d.baselineSettleSamples,
     baselineSampleCount: d.baselineSampleCount,
-    restartMultiple: num('CAMSTACK_POOL_MEM_MULTIPLE', d.restartMultiple, 1.5),
-    floorBytes: num('CAMSTACK_POOL_MEM_FLOOR_MB', d.floorBytes / MB, 128) * MB,
-    ceilingBytes: num('CAMSTACK_POOL_MEM_CEILING_MB', d.ceilingBytes / MB, 256) * MB,
-    cooldownMs: num('CAMSTACK_POOL_MEM_COOLDOWN_MS', d.cooldownMs, 60_000),
-    maxRestartsPerWindow: num('CAMSTACK_POOL_MEM_MAX_RESTARTS', d.maxRestartsPerWindow, 1),
-    restartWindowMs: num('CAMSTACK_POOL_MEM_RESTART_WINDOW_MS', d.restartWindowMs, 60_000),
+    restartMultiple: num('DOMINEVO_POOL_MEM_MULTIPLE', d.restartMultiple, 1.5),
+    floorBytes: num('DOMINEVO_POOL_MEM_FLOOR_MB', d.floorBytes / MB, 128) * MB,
+    ceilingBytes: num('DOMINEVO_POOL_MEM_CEILING_MB', d.ceilingBytes / MB, 256) * MB,
+    cooldownMs: num('DOMINEVO_POOL_MEM_COOLDOWN_MS', d.cooldownMs, 60_000),
+    maxRestartsPerWindow: num('DOMINEVO_POOL_MEM_MAX_RESTARTS', d.maxRestartsPerWindow, 1),
+    restartWindowMs: num('DOMINEVO_POOL_MEM_RESTART_WINDOW_MS', d.restartWindowMs, 60_000),
   }
 }
 

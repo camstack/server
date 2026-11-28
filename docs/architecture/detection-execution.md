@@ -520,7 +520,7 @@ ai-edge-litert 2.1.6 can invoke). `requirements-edgetpu.txt` carries the line
 (`packages/system/src/kernel/deps/addon-deps-manager.ts`) stages the pinned set
 right after pip, on every call: `ensureEdgetpuDelegate`
 (`packages/types/src/deps/edgetpu-delegate.ts`), SHA-256 verified before a byte
-is extracted, into `<CAMSTACK_DATA>/deps/edgetpu/lib/`.
+is extracted, into `<DOMINEVO_DATA>/deps/edgetpu/lib/`.
 
 | Host | What is staged | Notes |
 | --- | --- | --- |
@@ -531,9 +531,9 @@ is extracted, into `<CAMSTACK_DATA>/deps/edgetpu/lib/`.
 
 The pool and the probe resolve the same file in the same order
 (`edgetpu_device.edgetpu_library_path` / `chooseEdgetpuDelegate`):
-`CAMSTACK_EDGETPU_LIB` (a path override; followed even when missing) → the
-staged copy under `CAMSTACK_DATA` → `/data/deps/edgetpu/lib/libedgetpu.so.1`.
-On the hub image `CAMSTACK_DATA=/data`, so the staged copy IS the one
+`DOMINEVO_EDGETPU_LIB` (a path override; followed even when missing) → the
+staged copy under `DOMINEVO_DATA` → `/data/deps/edgetpu/lib/libedgetpu.so.1`.
+On the hub image `DOMINEVO_DATA=/data`, so the staged copy IS the one
 `edgetpu-install.sh` writes and nothing is downloaded. A macOS host has no
 `/sys`: the staged dylib is its only Coral signal, so it reads as one USB unit,
 and the first staging there needs the edgetpu runtime provisioned by hand

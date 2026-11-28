@@ -6,9 +6,9 @@
  *   • CLI  = POST .tgz to /api/addons/upload (the wire format
  *            `dominevo deploy` produces).
  *   • npm  = tRPC `addons.installPackage` → AddonInstaller runs
- *            `npm install --registry $CAMSTACK_NPM_REGISTRY`.
+ *            `npm install --registry $DOMINEVO_NPM_REGISTRY`.
  *
- * Both ultimately write into `${CAMSTACK_DATA}/addons/<pkg>/`. The
+ * Both ultimately write into `${DOMINEVO_DATA}/addons/<pkg>/`. The
  * spec at docs/superpowers/specs/2026-05-14-addon-cli-vs-npm-test-suite-design.md
  * documents 5 scenarios; this file lands #1 + #3 (the CLI-wins paths).
  * #2 (policy lock-in) lands in a follow-up; #4 (update-available) +
@@ -41,7 +41,7 @@ import { packAddon, uploadTarball } from '../fixtures/addon-upload.ts'
 // bundled closure instead of pulling them from npm (same as addon-update-on-agent).
 const REPO_PACKAGES_DIR = resolve(fileURLToPath(import.meta.url), '..', '..', '..', 'packages')
 
-const E2E_LIVE = process.env['CAMSTACK_E2E_LIVE'] === '1'
+const E2E_LIVE = process.env['DOMINEVO_E2E_LIVE'] === '1'
 const desc = E2E_LIVE ? describe : describe.skip
 
 const PACKAGE_NAME = '@dominevo/e2e-fixture-noop'
@@ -79,9 +79,9 @@ beforeAll(async () => {
   hubRef = await spawnHub({
     port: HUB_PORT,
     env: {
-      CAMSTACK_BUNDLED_ADDONS_DIR: REPO_PACKAGES_DIR,
-      CAMSTACK_NPM_REGISTRY: registryRef.url,
-      CAMSTACK_HUB_TCP_PORT: '6011',
+      DOMINEVO_BUNDLED_ADDONS_DIR: REPO_PACKAGES_DIR,
+      DOMINEVO_NPM_REGISTRY: registryRef.url,
+      DOMINEVO_HUB_TCP_PORT: '6011',
       // REQUIRED_PACKAGES aren't on the verdaccio fixture (only the
       // synthetic e2e-fixture-noop is). Bootstrap them via the
       // workspace `'local'` copy mode — same path Electron-bundled
@@ -91,7 +91,7 @@ beforeAll(async () => {
       // don't serve the SPA, and the wait pushes boot past the
       // spawnHub timeout. Production keeps the poll so the SPA is
       // served immediately on cold boot.
-      CAMSTACK_SKIP_ADMIN_UI_WAIT: '1',
+      DOMINEVO_SKIP_ADMIN_UI_WAIT: '1',
     },
   })
   const client = await loginAsAdmin(hubRef.port)
@@ -174,7 +174,7 @@ function sleep(ms: number): Promise<void> {
 }
 
 /**
- * Installed on-disk version reported by `${CAMSTACK_DATA}/addons/<scope>/<name>/package.json`.
+ * Installed on-disk version reported by `${DOMINEVO_DATA}/addons/<scope>/<name>/package.json`.
  * We round-trip through the filesystem rather than `addons.list` to catch
  * cases where the installer wrote the package but the loader rejected
  * it — the test wants to see WHAT got installed, not just whether the

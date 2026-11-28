@@ -108,11 +108,11 @@ export async function fetchLatestVersion(pkg: string): Promise<string | null> {
  * Suppresses repeated banners for the same version: once you've been told
  * `0.5.0` is out, we don't tell you again until `0.5.1` ships.
  *
- * Disabled via env: `CAMSTACK_NO_UPDATE_CHECK=1` or `NO_UPDATE_NOTIFIER=1`
+ * Disabled via env: `DOMINEVO_NO_UPDATE_CHECK=1` or `NO_UPDATE_NOTIFIER=1`
  * (compat with the conventional flag).
  */
 export function maybeNotifyUpdate(pkgName: string, currentVersion: string): void {
-  if (process.env.CAMSTACK_NO_UPDATE_CHECK || process.env.NO_UPDATE_NOTIFIER) return
+  if (process.env.DOMINEVO_NO_UPDATE_CHECK || process.env.NO_UPDATE_NOTIFIER) return
   // Skip in non-TTY contexts (CI/scripted runs) — keeps logs clean.
   if (!process.stdout.isTTY) return
 

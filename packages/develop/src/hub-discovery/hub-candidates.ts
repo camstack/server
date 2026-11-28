@@ -23,7 +23,7 @@ export interface HubCandidate {
   /** The hub's announced identity (#494); absent when no source named one. */
   readonly hubId?: string
   readonly version: string | null
-  /** Human labels: "LAN (mDNS)", "saved session admin", "CAMSTACK_HUB_URL"… */
+  /** Human labels: "LAN (mDNS)", "saved session admin", "DOMINEVO_HUB_URL"… */
   readonly sources: readonly string[]
 }
 

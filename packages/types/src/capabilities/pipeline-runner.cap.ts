@@ -545,7 +545,7 @@ export type ReportMotionInput = z.infer<typeof ReportMotionInputSchema>
  *   pull-mode decoder session pinned to its own node. The shm ring stays
  *   node-local; only H.264/H.265 packets cross the wire.
  *   `hubHostnameOverride` mirrors the recorder's `recordingHubHostname`:
- *   when set it overrides the `CAMSTACK_HUB_URL`-derived host the runner
+ *   when set it overrides the `DOMINEVO_HUB_URL`-derived host the runner
  *   dials for the owner's restream.
  */
 export const RunnerFrameSourceSchema = z
@@ -559,7 +559,7 @@ export const RunnerFrameSourceSchema = z
        * The owner's LAN-reachable host, resolved by the orchestrator from the
        * per-node `reachableHost` override (Cluster UI). When present the runner
        * dials THIS host for the owner's restream, in preference to the
-       * `CAMSTACK_HUB_URL`-derived default. Absent → auto-detect fallback.
+       * `DOMINEVO_HUB_URL`-derived default. Absent → auto-detect fallback.
        */
       ownerReachableHost: z.string().optional(),
       /** Operator override for the owner host the runner dials. */

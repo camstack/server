@@ -65,7 +65,7 @@ interface HealthRoutesDeps {
   readonly agentRegistry: HealthAgentRegistry
   readonly hubVersion: string
   /**
-   * Product release (image / desktop app), from `CAMSTACK_PRODUCT_VERSION`.
+   * Product release (image / desktop app), from `DOMINEVO_PRODUCT_VERSION`.
    * Absent in a dev workspace. Not `hubVersion` — that is the server package.
    */
   readonly productVersion?: string | null

@@ -23,9 +23,9 @@ import {
 } from '../root-update-service.js'
 
 const ENV_NAMES: RootUpdateEnvNames = {
-  bootMode: 'CAMSTACK_SERVER_BOOT_MODE',
-  activeVersion: 'CAMSTACK_SERVER_ACTIVE_VERSION',
-  seedDir: 'CAMSTACK_SEED_SERVER_DIR',
+  bootMode: 'DOMINEVO_SERVER_BOOT_MODE',
+  activeVersion: 'DOMINEVO_SERVER_ACTIVE_VERSION',
+  seedDir: 'DOMINEVO_SEED_SERVER_DIR',
 }
 
 const NODE_AV = '1.0.0'
@@ -160,7 +160,7 @@ describe('stageClosure seeds from current/', () => {
       runningPackageJsonPath: path.join(tmp, 'running-package.json'),
       workspaceProbeDir: tmp,
       execNpm,
-      env: { CAMSTACK_SERVER_BOOT_MODE: 'data-root' },
+      env: { DOMINEVO_SERVER_BOOT_MODE: 'data-root' },
       now: () => 1_700_000_000_000,
     })
   }

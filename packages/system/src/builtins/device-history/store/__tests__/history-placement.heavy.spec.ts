@@ -5,7 +5,7 @@
  *
  * Checked the only way the router's own map cannot fool: stop everything, then
  * open the files with a plain driver and ask `sqlite_master`. Heavy (worker
- * threads through tsx) — run with `CAMSTACK_HEAVY_SPECS=1`.
+ * threads through tsx) — run with `DOMINEVO_HEAVY_SPECS=1`.
  */
 import Database from 'better-sqlite3'
 import { afterEach, describe, expect, it } from 'vitest'

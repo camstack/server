@@ -117,7 +117,7 @@ export interface SearchRootsInput {
   /** `process.env.NODE_PATH` AFTER the launcher has finished extending it. */
   readonly nodePath: string | undefined
   readonly pathSeparator: string
-  /** The node's data dir (`CAMSTACK_DATA`). */
+  /** The node's data dir (`DOMINEVO_DATA`). */
   readonly dataDir: string
   /**
    * `@dominevo/server/node_modules` — the NESTED tree that resolves that

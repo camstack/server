@@ -17,7 +17,7 @@ const SAMPLE_AAC = readFileSync(join(__dirname, 'fixtures/sample.m4s'))
  * tests take the same override the product honours and fall back to PATH only
  * for a developer machine. CI sets it to the pinned build.
  */
-const FFMPEG = process.env['CAMSTACK_FFMPEG_PATH'] ?? 'ffmpeg'
+const FFMPEG = process.env['DOMINEVO_FFMPEG_PATH'] ?? 'ffmpeg'
 
 /**
  * Produce a self-contained fragmented-mp4 (`.m4s`) with an Opus audio track

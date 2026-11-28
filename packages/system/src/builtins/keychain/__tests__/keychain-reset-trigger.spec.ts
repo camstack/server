@@ -251,13 +251,13 @@ describe('RESET_KEYCHAIN trigger file', () => {
     const saved = { ...process.env }
     try {
       process.env['RESET_KEYCHAIN'] = '1'
-      process.env['CAMSTACK_RESET_KEYCHAIN'] = 'true'
-      process.env['CAMSTACK_KEYCHAIN_RESET'] = '1'
+      process.env['DOMINEVO_RESET_KEYCHAIN'] = 'true'
+      process.env['DOMINEVO_KEYCHAIN_RESET'] = '1'
       const outcome = await applyKeychainResetTrigger({ service: locked, dataDir, logger })
       expect(outcome.kind).toBe('absent')
       expect(locked.getState()).toEqual({ state: 'locked', reason: 'wrong-key' })
     } finally {
-      for (const k of ['RESET_KEYCHAIN', 'CAMSTACK_RESET_KEYCHAIN', 'CAMSTACK_KEYCHAIN_RESET']) {
+      for (const k of ['RESET_KEYCHAIN', 'DOMINEVO_RESET_KEYCHAIN', 'DOMINEVO_KEYCHAIN_RESET']) {
         if (saved[k] === undefined) Reflect.deleteProperty(process.env, k)
         else process.env[k] = saved[k]
       }

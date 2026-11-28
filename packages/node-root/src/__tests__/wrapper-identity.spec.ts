@@ -8,7 +8,7 @@ import { detectWrapperIdentity, type WrapperIdentityInputs } from '../wrapper-id
  * The 2026-08-02 case is the reason. `check-deployment-templates.ts` proved
  * every day that the templates DECLARED `ghcr.io/dominevo/dominevo:intel-latest`
  * while the hub actually ran `camstack-server:intel-1.1.74` from a renamed
- * repository nothing rebuilt. A `CAMSTACK_WRAPPER=docker` env would be exactly
+ * repository nothing rebuilt. A `DOMINEVO_WRAPPER=docker` env would be exactly
  * that same declaration, so `kind` may never come from one.
  */
 
@@ -103,7 +103,7 @@ describe('detectWrapperIdentity', () => {
     expect(evidenceFor(identity, 'platform').detail).toContain('darwin')
   })
 
-  it('ignores an empty CAMSTACK_AGENT_APP_VERSION rather than reading it as electron', () => {
+  it('ignores an empty DOMINEVO_AGENT_APP_VERSION rather than reading it as electron', () => {
     const identity = detectWrapperIdentity(inputs({ electronAppVersion: '' }))
     expect(identity.kind).toBe('native')
   })

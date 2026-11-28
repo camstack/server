@@ -426,8 +426,8 @@ function createProcessService(
    * Replaces the former `spawnProcess` (single-addon → `process-runner.js`)
    * and `spawnGroupProcess` (group → `group-runner.js`) — both paths
    * differed only in the runner bundle and the env shape. `addon-runner`
-   * takes ONE env contract (`CAMSTACK_RUNNER_ID` + a JSON
-   * `CAMSTACK_RUNNER_ADDONS` array), so this single spawner serves both.
+   * takes ONE env contract (`DOMINEVO_RUNNER_ID` + a JSON
+   * `DOMINEVO_RUNNER_ADDONS` array), so this single spawner serves both.
    *
    * The D6 crash circuit-breaker governs respawns: an unexpected exit
    * is respawned with exponential backoff (capped at `MAX_BACKOFF_MS`,
@@ -454,25 +454,25 @@ function createProcessService(
     const rssBudgetMb = runnerRssBudgetMb(addons)
     const childEnv: Record<string, string> = {
       ...(process.env as Record<string, string>),
-      CAMSTACK_RUNNER_ID: runnerId,
-      CAMSTACK_RUNNER_ADDONS: JSON.stringify(addons),
-      CAMSTACK_PARENT_NODE_ID: parentNodeId,
-      CAMSTACK_DATA_DIR: dataDir,
+      DOMINEVO_RUNNER_ID: runnerId,
+      DOMINEVO_RUNNER_ADDONS: JSON.stringify(addons),
+      DOMINEVO_PARENT_NODE_ID: parentNodeId,
+      DOMINEVO_DATA_DIR: dataDir,
       // The child must know its own class: heavy runners start the heap watch
       // + stranded-page reclaimer on themselves (kernel/heap-watch.ts —
       // `startRunnerHeapWatch`), because the uncapped media-path runners have
       // no GC pressure to return a burst's pages and ratchet to multi-GB RSS.
-      CAMSTACK_RUNNER_HEAP_PROFILE: heavy ? 'heavy' : 'light',
+      DOMINEVO_RUNNER_HEAP_PROFILE: heavy ? 'heavy' : 'light',
       // Inherit the parent's log level rather than hardcoding `debug` into
       // EVERY runner — a hardcoded debug level force-forwarded every debug
       // line to `$hub.log`, amplifying the event-bus / log fan-out load.
-      CAMSTACK_LOG_LEVEL: process.env['CAMSTACK_LOG_LEVEL'] ?? 'info',
+      DOMINEVO_LOG_LEVEL: process.env['DOMINEVO_LOG_LEVEL'] ?? 'info',
       // Pass the parent broker's TCP port so the child connects to the right
       // node. When unset, addon-runner falls back to 6000 (hub default) which
       // is correct for hub-spawned runners but wrong for agent-spawned runners
       // whose brokers listen on a derived port (Bug-4).
-      ...(parentTcpPort !== undefined ? { CAMSTACK_PARENT_TCP_PORT: String(parentTcpPort) } : {}),
-      ...(parentUdsPath !== undefined ? { CAMSTACK_PARENT_UDS_PATH: parentUdsPath } : {}),
+      ...(parentTcpPort !== undefined ? { DOMINEVO_PARENT_TCP_PORT: String(parentTcpPort) } : {}),
+      ...(parentUdsPath !== undefined ? { DOMINEVO_PARENT_UDS_PATH: parentUdsPath } : {}),
       // The native half of the runner's memory, which no V8 flag reaches:
       // bounded glibc arenas, plus the libvips concurrency pin that keeps the
       // arena bound from also changing sharp's threading. Set here, at spawn,

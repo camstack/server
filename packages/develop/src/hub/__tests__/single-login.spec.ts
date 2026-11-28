@@ -10,10 +10,10 @@ import { tryConnectHub } from '../../mcp/hub-connection.js'
 // D1101: the `dominevo login` session is the ONLY way a client reaches a hub.
 const SESSION = { server: 'https://hub.lan:4443', token: 'tok_session' }
 const ENV_THEN_SESSION = {
-  CAMSTACK_TOKEN: 'tok_env',
-  CAMSTACK_HUB_TOKEN: 'tok_hub_env',
-  CAMSTACK_HUB_TOKEN_FILE: '/nonexistent/token',
-  CAMSTACK_SERVER: SESSION.server,
+  DOMINEVO_TOKEN: 'tok_env',
+  DOMINEVO_HUB_TOKEN: 'tok_hub_env',
+  DOMINEVO_HUB_TOKEN_FILE: '/nonexistent/token',
+  DOMINEVO_SERVER: SESSION.server,
 }
 
 describe('resolveCredentials: the session is the only source', () => {
@@ -25,7 +25,7 @@ describe('resolveCredentials: the session is the only source', () => {
     })
   })
 
-  it('ignores CAMSTACK_TOKEN and CAMSTACK_HUB_TOKEN* in the environment', () => {
+  it('ignores DOMINEVO_TOKEN and DOMINEVO_HUB_TOKEN* in the environment', () => {
     const r = resolveCredentials({ env: ENV_THEN_SESSION, loadSession: () => SESSION })
     expect(r.token).toBe('tok_session')
     expect(r.source).toBe('session')
@@ -58,7 +58,7 @@ describe('connectHub: environment tokens are ignored', () => {
     const outcome = await tryConnectHub({
       workspaceRoot: dir,
       server: 'https://hub.example.test:4443',
-      env: { CAMSTACK_TOKEN: 'tok_env', CAMSTACK_HUB_TOKEN: 'tok_env2' },
+      env: { DOMINEVO_TOKEN: 'tok_env', DOMINEVO_HUB_TOKEN: 'tok_env2' },
       sessionDir: dir,
       loginCommand: 'dominevo login',
     })
@@ -81,7 +81,7 @@ describe('connectHub: environment tokens are ignored', () => {
     const outcome = await tryConnectHub({
       workspaceRoot: dir,
       server: 'https://hub.example.test:4443',
-      env: { CAMSTACK_TOKEN: 'tok_env' },
+      env: { DOMINEVO_TOKEN: 'tok_env' },
       sessionDir: dir,
       loginCommand: 'dominevo login',
     })

@@ -15,7 +15,7 @@ import {
 /**
  * The URL a hub hands an agent for an addon bundle or a model pull.
  *
- * The defect: it was `CAMSTACK_HUB_PUBLIC_URL ?? 'https://127.0.0.1:4443'`. A
+ * The defect: it was `DOMINEVO_HUB_PUBLIC_URL ?? 'https://127.0.0.1:4443'`. A
  * Mac hub (the desktop app has no field for that variable) and any container
  * without it handed the agent its OWN loopback. These tests run with the
  * variable absent — and, for good measure, set to loopback — and require a
@@ -61,7 +61,7 @@ function source(
   }
 }
 
-const ENV = 'CAMSTACK_HUB_PUBLIC_URL'
+const ENV = 'DOMINEVO_HUB_PUBLIC_URL'
 let saved: string | undefined
 beforeEach(() => {
   saved = process.env[ENV]

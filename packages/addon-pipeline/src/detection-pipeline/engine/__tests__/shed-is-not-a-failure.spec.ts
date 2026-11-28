@@ -86,7 +86,7 @@ const YOLO_STEP_DEF: StepDefinition = {
 describe('overload shed is a first-class outcome, not a malformed result', () => {
   beforeEach(() => {
     spawned.length = 0
-    vi.stubEnv('CAMSTACK_POOL_MAX_IN_FLIGHT', '2')
+    vi.stubEnv('DOMINEVO_POOL_MAX_IN_FLIGHT', '2')
     vi.resetModules()
   })
   afterEach(() => {

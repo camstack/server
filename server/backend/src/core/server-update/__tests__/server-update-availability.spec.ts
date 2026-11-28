@@ -24,7 +24,7 @@ describe('ServerUpdateService availability event', () => {
       restartServer: () => undefined,
       dataDir: path.resolve(__dirname, '..'),
       runningPackageJsonPath,
-      env: { CAMSTACK_SERVER_BOOT_MODE: 'data-root' },
+      env: { DOMINEVO_SERVER_BOOT_MODE: 'data-root' },
       execNpm: async () => ({ stdout: '99.0.0\n' }),
       eventBus: { emit } as unknown as IEventBus,
     })

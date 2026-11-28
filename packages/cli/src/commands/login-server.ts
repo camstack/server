@@ -3,7 +3,7 @@ import { normalizeHubAddress } from '@dominevo/develop'
 /**
  * The hub `dominevo login` was told about, canonical, or `undefined` to
  * discover. `login <host>` and `--server <host>` are the same thing; naming two
- * different hubs is an error. `$CAMSTACK_SERVER`, then `$CAMSTACK_HUB_URL`, are
+ * different hubs is an error. `$DOMINEVO_SERVER`, then `$DOMINEVO_HUB_URL`, are
  * the fallback. Every form goes through the one shared normaliser.
  */
 export function resolveLoginServer(
@@ -21,6 +21,6 @@ export function resolveLoginServer(
       `login got two different hubs: ${positional} (argument) and ${flagged} (--server).`,
     )
   }
-  const fromEnv = env['CAMSTACK_SERVER']?.trim() || env['CAMSTACK_HUB_URL']?.trim()
+  const fromEnv = env['DOMINEVO_SERVER']?.trim() || env['DOMINEVO_HUB_URL']?.trim()
   return flagged ?? positional ?? (fromEnv ? normalizeHubAddress(fromEnv) : undefined)
 }

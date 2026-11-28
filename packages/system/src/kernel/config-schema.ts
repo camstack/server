@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-/** Default data directory — used when CAMSTACK_DATA env var is not set */
+/** Default data directory — used when DOMINEVO_DATA env var is not set */
 export const DEFAULT_DATA_PATH = 'camstack-data'
 
 /** Bootstrap `server` section — see {@link serverSchema}. */

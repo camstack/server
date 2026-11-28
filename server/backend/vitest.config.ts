@@ -23,7 +23,7 @@ export default defineConfig({
       '**/*diagnostic*.test.ts',
       '**/*scale*.test.ts',
       '**/node_modules/**',
-      ...(process.env.CAMSTACK_HEAVY_SPECS === '1' ? [] : ['**/*.heavy.spec.*']),
+      ...(process.env.DOMINEVO_HEAVY_SPECS === '1' ? [] : ['**/*.heavy.spec.*']),
     ],
     testTimeout: 30_000,
     teardownTimeout: 5_000,

@@ -32,23 +32,23 @@ export interface NodeEnvInput {
 export function buildNodeEnv(input: NodeEnvInput): Readonly<Record<string, string>> {
   const env: Record<string, string> = {
     // Role selects hub vs agent inside the server launcher.
-    CAMSTACK_ROLE: input.role,
+    DOMINEVO_ROLE: input.role,
     // The one writable data dir — survives app updates and is the only
     // writable place inside a signed bundle. Read by the starter + launcher.
-    CAMSTACK_DATA: input.dataDir,
+    DOMINEVO_DATA: input.dataDir,
     // Which wrapper build is running, for the node's status API / embedded UI.
     // This is the product version (`app.getVersion()`), not the server package.
-    CAMSTACK_AGENT_APP_VERSION: input.appVersion,
+    DOMINEVO_AGENT_APP_VERSION: input.appVersion,
     // Same number, read by hub and agent About lines. Distinct env so a
     // container can set it without looking like an Electron shell (D437).
-    CAMSTACK_PRODUCT_VERSION: input.appVersion,
+    DOMINEVO_PRODUCT_VERSION: input.appVersion,
   }
   if (input.role === 'agent' && input.agent !== undefined) {
-    env['CAMSTACK_STATUS_PORT'] = String(input.agent.statusPort)
-    if (input.agent.hubAddress) env['CAMSTACK_HUB_ADDRESS'] = input.agent.hubAddress
-    if (input.agent.agentName) env['CAMSTACK_AGENT_NAME'] = input.agent.agentName
+    env['DOMINEVO_STATUS_PORT'] = String(input.agent.statusPort)
+    if (input.agent.hubAddress) env['DOMINEVO_HUB_ADDRESS'] = input.agent.hubAddress
+    if (input.agent.agentName) env['DOMINEVO_AGENT_NAME'] = input.agent.agentName
   }
-  if (input.bundledAddonsDir) env['CAMSTACK_BUNDLED_ADDONS_DIR'] = input.bundledAddonsDir
-  if (input.seedServerDir) env['CAMSTACK_SEED_SERVER_DIR'] = input.seedServerDir
+  if (input.bundledAddonsDir) env['DOMINEVO_BUNDLED_ADDONS_DIR'] = input.bundledAddonsDir
+  if (input.seedServerDir) env['DOMINEVO_SEED_SERVER_DIR'] = input.seedServerDir
   return env
 }

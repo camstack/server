@@ -432,9 +432,9 @@ describe('AuthOidcAddon — buildLoginUrl', () => {
   })
 
   it("falls back to the hub's browser address from Network when redirectUri is unset", async () => {
-    const prior = process.env['CAMSTACK_HUB_PUBLIC_URL']
+    const prior = process.env['DOMINEVO_HUB_PUBLIC_URL']
     // The retired variable must be ignored even when present.
-    process.env['CAMSTACK_HUB_PUBLIC_URL'] = 'https://env.example.com'
+    process.env['DOMINEVO_HUB_PUBLIC_URL'] = 'https://env.example.com'
     try {
       const { registrations } = await bootAddon({
         config: { providers: [{ ...VIEWER_PROVIDER, redirectUri: '' }] },
@@ -468,8 +468,8 @@ describe('AuthOidcAddon — buildLoginUrl', () => {
         'https://cams.example.com/addon/auth-oidc/acme/callback',
       )
     } finally {
-      if (prior === undefined) delete process.env['CAMSTACK_HUB_PUBLIC_URL']
-      else process.env['CAMSTACK_HUB_PUBLIC_URL'] = prior
+      if (prior === undefined) delete process.env['DOMINEVO_HUB_PUBLIC_URL']
+      else process.env['DOMINEVO_HUB_PUBLIC_URL'] = prior
     }
   })
 

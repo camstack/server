@@ -59,7 +59,7 @@ describe('findHubs', () => {
     fs.writeFileSync(path.join(dir, '192.168.1.40_4443.admin-token'), 'opaque_x')
     const hubs = await findHubs({
       sessionDir: dir,
-      env: { CAMSTACK_HUB_URL: 'https://192.0.2.20:4443' },
+      env: { DOMINEVO_HUB_URL: 'https://192.0.2.20:4443' },
       browse: async () => [mdnsHub('https://192.0.2.10:4443')],
       probe: reachable('192.0.2.10:4443', '192.168.1.40:4443', '192.0.2.20:4443'),
     })
@@ -71,7 +71,7 @@ describe('findHubs', () => {
     ])
     expect(byUrl.get('https://192.0.2.10:4443')?.nodeId).toBe('hub')
     expect(byUrl.get('https://192.168.1.40:4443')).toBeUndefined()
-    expect(byUrl.get('https://192.0.2.20:4443')?.sources).toEqual(['CAMSTACK_HUB_URL'])
+    expect(byUrl.get('https://192.0.2.20:4443')?.sources).toEqual(['DOMINEVO_HUB_URL'])
   })
 
   it('drops candidates that do not answer on https', async () => {
@@ -171,7 +171,7 @@ describe('pickHub', () => {
     const choice = await pickHub(
       [
         hub('https://192.0.2.10:4443', ['LAN (mDNS)', 'saved session admin']),
-        hub('https://192.0.2.20:4443', ['CAMSTACK_HUB_URL']),
+        hub('https://192.0.2.20:4443', ['DOMINEVO_HUB_URL']),
       ],
       {
         select: async (_m, options) => {
@@ -183,7 +183,7 @@ describe('pickHub', () => {
     )
     expect(choice).toBe('https://192.0.2.20:4443')
     expect(shown[0]?.label).toContain('LAN (mDNS), saved session admin')
-    expect(shown[1]?.label).toContain('CAMSTACK_HUB_URL')
+    expect(shown[1]?.label).toContain('DOMINEVO_HUB_URL')
     expect(shown.at(-1)).toEqual({ value: MANUAL_ENTRY_VALUE, label: MANUAL_ENTRY_LABEL })
   })
 

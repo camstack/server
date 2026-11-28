@@ -188,7 +188,7 @@ export async function bootManual(opts: BootOptions): Promise<BootedApp> {
   // deps manager every addon is given, once, and never looked up on PATH.
   // (The manager roots binaries at the NODE's data dir whatever it is given.)
   const probeDeps = new AddonDepsManager(
-    path.resolve(process.env['CAMSTACK_DATA'] ?? 'camstack-data'),
+    path.resolve(process.env['DOMINEVO_DATA'] ?? 'camstack-data'),
     loggingService.createLogger('StreamProbeDeps'),
   )
   const streamProbeService = new StreamProbeService(
@@ -307,7 +307,7 @@ export async function bootManual(opts: BootOptions): Promise<BootedApp> {
   )
   // Durable `update.available` dedup lives next to `auto-update.json`, so a
   // hub restart never re-announces what the operator already saw.
-  const availabilityDataDir = path.resolve(process.env['CAMSTACK_DATA'] ?? 'camstack-data')
+  const availabilityDataDir = path.resolve(process.env['DOMINEVO_DATA'] ?? 'camstack-data')
   const addonPackageService = new AddonPackageService(
     loggingService,
     eventBusService,
@@ -392,7 +392,7 @@ export async function bootManual(opts: BootOptions): Promise<BootedApp> {
   // Task 5) need a stable instance that exists before any request, so we build
   // it ONCE here from the addon-package service + event bus. `createdBy` is no
   // longer a construction dep — it travels on each `startJob` call.
-  const lifecycleDataDir = path.resolve(process.env['CAMSTACK_DATA'] ?? 'camstack-data')
+  const lifecycleDataDir = path.resolve(process.env['DOMINEVO_DATA'] ?? 'camstack-data')
   initLifecycleRunner({
     dataDir: lifecycleDataDir,
     fetchTarball: (name, version, signal) =>
@@ -605,8 +605,8 @@ export async function bootManual(opts: BootOptions): Promise<BootedApp> {
       minimums: readRunningServerAddonMinimums(),
       installed: () =>
         readInstalledAddonVersions(
-          process.env.CAMSTACK_ADDONS_DIR ??
-            path.resolve(process.env.CAMSTACK_DATA ?? 'camstack-data', 'addons'),
+          process.env.DOMINEVO_ADDONS_DIR ??
+            path.resolve(process.env.DOMINEVO_DATA ?? 'camstack-data', 'addons'),
         ),
       updatePackage: (name) => addonPackageService.updatePackage(name),
       getAlerts: () =>

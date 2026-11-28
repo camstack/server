@@ -54,7 +54,7 @@ let client: AuthorizedClient | null = null
 let secondaryDir: string | null = null
 let secondaryLocationId: string | null = null
 
-const E2E_LIVE = process.env['CAMSTACK_E2E_LIVE'] === '1'
+const E2E_LIVE = process.env['DOMINEVO_E2E_LIVE'] === '1'
 const desc = E2E_LIVE ? describe : describe.skip
 
 beforeAll(async () => {

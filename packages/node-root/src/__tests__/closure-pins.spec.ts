@@ -68,9 +68,9 @@ describe('closure pins file', () => {
 
 describe('staging a registry closure', () => {
   const ENV_NAMES: RootUpdateEnvNames = {
-    bootMode: 'CAMSTACK_SERVER_BOOT_MODE',
-    activeVersion: 'CAMSTACK_SERVER_ACTIVE_VERSION',
-    seedDir: 'CAMSTACK_SEED_SERVER_DIR',
+    bootMode: 'DOMINEVO_SERVER_BOOT_MODE',
+    activeVersion: 'DOMINEVO_SERVER_ACTIVE_VERSION',
+    seedDir: 'DOMINEVO_SEED_SERVER_DIR',
   }
   interface LogLine {
     readonly level: 'info' | 'warn'
@@ -137,7 +137,7 @@ describe('staging a registry closure', () => {
       workspaceProbeDir: tmp,
       execNpm,
       applyClosurePatches: async () => undefined,
-      env: { CAMSTACK_SERVER_BOOT_MODE: 'data-root', CAMSTACK_SERVER_ACTIVE_VERSION: '1.2.276' },
+      env: { DOMINEVO_SERVER_BOOT_MODE: 'data-root', DOMINEVO_SERVER_ACTIVE_VERSION: '1.2.276' },
       now: () => 1_700_000_000_000,
     })
     await service.applyServerUpdate({ version: '1.2.277' }).catch(() => undefined)

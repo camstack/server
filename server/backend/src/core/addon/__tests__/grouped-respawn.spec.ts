@@ -126,7 +126,7 @@ function harness(): {
   const entries = Reflect.get(registry, 'addonEntries') as Map<string, Record<string, unknown>>
   // The hub's spawn gate reads each addon's package.json, so the addons have a real one.
   const addonsRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'grouped-respawn-'))
-  process.env.CAMSTACK_ADDONS_DIR = addonsRoot
+  process.env.DOMINEVO_ADDONS_DIR = addonsRoot
   for (const [id, pkg, version] of [
     [HA, '@dominevo/addon-provider-homeassistant', disk[HA]],
     [GOOGLE, '@dominevo/addon-export-google', disk[GOOGLE]],

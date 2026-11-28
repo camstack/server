@@ -7,7 +7,7 @@
  * pipeline-runner's remote-source leg shares the exact same resolver instead
  * of copying it. This module keeps the recorder-facing name as a thin alias —
  * resolution order and semantics are unchanged (operator override first, then
- * the host extracted from `CAMSTACK_HUB_URL`).
+ * the host extracted from `DOMINEVO_HUB_URL`).
  */
 import { resolveHubHostname } from '../../shared/hub-hostname.js'
 

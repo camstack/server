@@ -8,7 +8,7 @@
  *
  * ## Why the arm deadline is persisted
  *
- * `FleetReadCensus` arms from `CAMSTACK_FLEET_READ_CENSUS_MS` at construction
+ * `FleetReadCensus` arms from `DOMINEVO_FLEET_READ_CENSUS_MS` at construction
  * because "the storm is at BOOT - by the time a process is up enough to
  * receive an action, the window being investigated has closed". That reasoning
  * is right and its conclusion is not: an env var needs a container recreation

@@ -49,11 +49,11 @@ describe('default session rule', () => {
     expect(listSessions(dir)).toHaveLength(1)
   })
 
-  it('$CAMSTACK_SERVER wins, otherwise the most recently used', () => {
+  it('$DOMINEVO_SERVER wins, otherwise the most recently used', () => {
     const all = [session('https://a:4443', 100, 900), session('https://b:4443', 100, 10)]
     expect(defaultSession(all, {})?.server).toBe('https://a:4443')
-    expect(defaultSession(all, { CAMSTACK_SERVER: 'b' })?.server).toBe('https://b:4443')
-    expect(defaultSession(all, { CAMSTACK_SERVER: 'unknown' })?.server).toBe('https://a:4443')
+    expect(defaultSession(all, { DOMINEVO_SERVER: 'b' })?.server).toBe('https://b:4443')
+    expect(defaultSession(all, { DOMINEVO_SERVER: 'unknown' })?.server).toBe('https://a:4443')
     expect(defaultSession([], {})).toBeNull()
   })
 

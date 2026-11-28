@@ -16,8 +16,8 @@ ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # Defaults
 HUB_IP="127.0.0.1"
-HUB_PORT="${CAMSTACK_PORT:-4443}"
-TOKEN="${CAMSTACK_HUB_TOKEN:-dev-local}"  # agent-join:line
+HUB_PORT="${DOMINEVO_PORT:-4443}"
+TOKEN="${DOMINEVO_HUB_TOKEN:-dev-local}"  # agent-join:line
 AGENT_NAME=""
 AGENT_DATA="camstack-data-agent"
 
@@ -72,10 +72,10 @@ fi
 
 # agent-join:begin
 exec env \
-  CAMSTACK_MODE=agent \
-  CAMSTACK_HUB_URL="wss://${HUB_IP}:${HUB_PORT}/agent" \
-  CAMSTACK_HUB_TOKEN="${TOKEN}" \
-  CAMSTACK_AGENT_NAME="${AGENT_NAME}" \
-  CAMSTACK_DATA="${AGENT_DATA}" \
+  DOMINEVO_MODE=agent \
+  DOMINEVO_HUB_URL="wss://${HUB_IP}:${HUB_PORT}/agent" \
+  DOMINEVO_HUB_TOKEN="${TOKEN}" \
+  DOMINEVO_AGENT_NAME="${AGENT_NAME}" \
+  DOMINEVO_DATA="${AGENT_DATA}" \
   node server/backend/dist/main.js
 # agent-join:end

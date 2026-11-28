@@ -5,21 +5,21 @@
 #
 # Lays out the managed tree the CLI's `mcp update` / `mcp rollback` expect:
 #
-#   $CAMSTACK_HOME/runtime/          the Node the CLI runs on (only when the host Node is < 24)
-#   $CAMSTACK_HOME/cli/<version>/    one staged CLI per version (npm --prefix)
-#   $CAMSTACK_HOME/current           symlink to the active cli/<version>
-#   $CAMSTACK_HOME/previous          symlink to the one before
-#   $CAMSTACK_BIN_DIR/camstack       launcher
+#   $DOMINEVO_HOME/runtime/          the Node the CLI runs on (only when the host Node is < 24)
+#   $DOMINEVO_HOME/cli/<version>/    one staged CLI per version (npm --prefix)
+#   $DOMINEVO_HOME/current           symlink to the active cli/<version>
+#   $DOMINEVO_HOME/previous          symlink to the one before
+#   $DOMINEVO_BIN_DIR/camstack       launcher
 #
 # It never asks for, reads or writes a credential: sign-in sessions live in
 # ~/.camstack and are the CLI's business. No sudo. No secret through the
 # environment or argv: the variables below only choose paths and versions.
 #
-#   CAMSTACK_HOME          default ~/.local/share/camstack
-#   CAMSTACK_BIN_DIR       default ~/.local/bin
-#   CAMSTACK_VERSION       default: the latest `camstack` on npm
-#   CAMSTACK_NODE_DIST     default https://nodejs.org/dist (a mirror, for tests)
-#   CAMSTACK_NPM_REGISTRY  default: npm's own configuration
+#   DOMINEVO_HOME          default ~/.local/share/camstack
+#   DOMINEVO_BIN_DIR       default ~/.local/bin
+#   DOMINEVO_VERSION       default: the latest `camstack` on npm
+#   DOMINEVO_NODE_DIST     default https://nodejs.org/dist (a mirror, for tests)
+#   DOMINEVO_NPM_REGISTRY  default: npm's own configuration
 set -eu
 
 MIN_NODE_MAJOR=24
@@ -30,9 +30,9 @@ fail() { printf 'camstack installer: %s\n' "$*" >&2; exit 1; }
 
 HOME_DIR="${HOME:-}"
 [ -n "$HOME_DIR" ] || fail 'HOME is not set.'
-ROOT="${CAMSTACK_HOME:-$HOME_DIR/.local/share/camstack}"
-BIN_DIR="${CAMSTACK_BIN_DIR:-$HOME_DIR/.local/bin}"
-NODE_DIST="${CAMSTACK_NODE_DIST:-https://nodejs.org/dist}"
+ROOT="${DOMINEVO_HOME:-$HOME_DIR/.local/share/camstack}"
+BIN_DIR="${DOMINEVO_BIN_DIR:-$HOME_DIR/.local/bin}"
+NODE_DIST="${DOMINEVO_NODE_DIST:-https://nodejs.org/dist}"
 
 case "$(uname -s)" in
   Linux) OS=linux ;;
@@ -99,9 +99,9 @@ else
 fi
 
 # --- 2. the CLI -------------------------------------------------------------
-VERSION="${CAMSTACK_VERSION:-}"
+VERSION="${DOMINEVO_VERSION:-}"
 if [ -z "$VERSION" ]; then
-  VERSION="$("$NPM" view camstack version 2>/dev/null)" || fail 'could not read the latest camstack version from npm; set CAMSTACK_VERSION.'
+  VERSION="$("$NPM" view camstack version 2>/dev/null)" || fail 'could not read the latest camstack version from npm; set DOMINEVO_VERSION.'
 fi
 case "$VERSION" in
   *[!0-9A-Za-z.-]* | '') fail "\"$VERSION\" is not a version." ;;

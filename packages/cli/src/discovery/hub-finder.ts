@@ -1,7 +1,7 @@
 /**
  * Find the hubs a CLI can log into (D838): what the LAN announces over mDNS,
  * UNION the hubs this machine already knows — cached sessions,
- * `$CAMSTACK_HUB_URL`, the repo's `scratchpad/.hub-url`. Each candidate
+ * `$DOMINEVO_HUB_URL`, the repo's `scratchpad/.hub-url`. Each candidate
  * is probed on its https port and the unreachable ones are dropped; the rest
  * are deduped by host:port with every source that named them kept.
  */
@@ -71,7 +71,7 @@ export function knownHubCandidates(
   const fromEnv = resolveHubUrl({ env, session: null })
   if (fromEnv) {
     const name =
-      (env['CAMSTACK_HUB_URL'] ?? '').trim() === '' ? 'CAMSTACK_SERVER' : 'CAMSTACK_HUB_URL'
+      (env['DOMINEVO_HUB_URL'] ?? '').trim() === '' ? 'DOMINEVO_SERVER' : 'DOMINEVO_HUB_URL'
     out.push({ url: fromEnv.url, source: name })
   }
   if (deps.workspaceRoot !== undefined) {

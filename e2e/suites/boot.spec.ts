@@ -38,7 +38,7 @@ const REQUIRED_STORAGE_TYPES = [
 let hub: SpawnedHub | null = null
 let client: AuthorizedClient | null = null
 
-const E2E_LIVE = process.env['CAMSTACK_E2E_LIVE'] === '1'
+const E2E_LIVE = process.env['DOMINEVO_E2E_LIVE'] === '1'
 const desc = E2E_LIVE ? describe : describe.skip
 
 beforeAll(async () => {

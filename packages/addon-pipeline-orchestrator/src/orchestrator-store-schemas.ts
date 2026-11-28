@@ -84,7 +84,7 @@ export const StoredAgentPipelineSettingsSchema = z.object({
   maxLiveDecodeWorkers: z.number().int().min(1).max(32).optional(),
   // Operator override for the LAN host a cross-node decoder dials to reach
   // this node's restream (Cluster UI). Optional — absent = auto-detect (the
-  // remote runner falls back to its CAMSTACK_HUB_URL-derived host).
+  // remote runner falls back to its DOMINEVO_HUB_URL-derived host).
   reachableHost: z.string().optional(),
   color: NodeColorIdSchema.optional(),
   // NODE-wide step settings (D927): stepId → { key → value }, under every

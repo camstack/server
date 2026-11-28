@@ -839,7 +839,7 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
    */
   private static readonly DEVICE_POOL_IDLE_TTL_MS = Math.max(
     60_000,
-    Number(process.env['CAMSTACK_DEVICE_POOL_IDLE_TTL_MS']) || 6 * 60 * 60 * 1000,
+    Number(process.env['DOMINEVO_DEVICE_POOL_IDLE_TTL_MS']) || 6 * 60 * 60 * 1000,
   )
   private readonly deviceReaper = new IdlePoolReaper({
     ttlMs: DetectionPipelineProvider.DEVICE_POOL_IDLE_TTL_MS,
@@ -1335,7 +1335,7 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
       requirementsFor: (id) =>
         pythonRequirementsFor(id, {
           nvidia: this.probedNvidia,
-          ortWheelhouse: process.env['CAMSTACK_ORT_WHEELHOUSE'] || null,
+          ortWheelhouse: process.env['DOMINEVO_ORT_WHEELHOUSE'] || null,
         }),
       modelFormatFor,
       installRequirements: async (files) => {

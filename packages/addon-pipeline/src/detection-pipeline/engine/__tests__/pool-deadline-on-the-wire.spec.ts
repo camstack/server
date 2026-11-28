@@ -145,7 +145,7 @@ describe('the deadline on the wire, and version-skew negotiation', () => {
     vi.resetModules()
     vi.useFakeTimers()
     vi.setSystemTime(1_000_000)
-    vi.stubEnv('CAMSTACK_POOL_LIVE_INFER_TIMEOUT_MS', '1500')
+    vi.stubEnv('DOMINEVO_POOL_LIVE_INFER_TIMEOUT_MS', '1500')
   })
   afterEach(() => {
     vi.useRealTimers()
@@ -183,7 +183,7 @@ describe('the deadline on the wire, and version-skew negotiation', () => {
   })
 
   it('a COMMAND that times out still REJECTS — a shed command desynchronizes model state', async () => {
-    vi.stubEnv('CAMSTACK_POOL_INFER_TIMEOUT_MS', '2000')
+    vi.stubEnv('DOMINEVO_POOL_INFER_TIMEOUT_MS', '2000')
     vi.resetModules()
     spawned.length = 0
     const { worker } = await makeWorker({ protocolVersion: 2 })

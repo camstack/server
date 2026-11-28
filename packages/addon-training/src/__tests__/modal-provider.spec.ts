@@ -75,7 +75,7 @@ describe('Modal provider', () => {
     expect(spec?.regions).toEqual(['eu'])
     expect(spec?.timeoutMs).toBe(7_200_000)
     expect(spec?.volumes).toEqual({ '/data': `cst-ds-${JOB}`, '/cache': MODAL_CACHE_VOLUME })
-    expect(spec?.env?.['CAMSTACK_JOB_JSON']).toBe('{"jobKey":"x"}')
+    expect(spec?.env?.['DOMINEVO_JOB_JSON']).toBe('{"jobKey":"x"}')
     expect(JSON.stringify(spec)).not.toMatch(/as-y|ak-x/)
     expect(spec?.image.kind === 'recipe' && spec.image.recipe.commands[1]).toContain('ebeed67a')
   })

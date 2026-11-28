@@ -122,7 +122,7 @@ describe('WrapperUpdateChecker', () => {
               fact: 'electron-app-version-env',
               mode: 'declared',
               holds: true,
-              detail: 'CAMSTACK_AGENT_APP_VERSION=1.4.2',
+              detail: 'DOMINEVO_AGENT_APP_VERSION=1.4.2',
             },
           ],
           currentVersion: null,

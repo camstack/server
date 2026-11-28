@@ -5,7 +5,7 @@
  * A hub on the LAN serves a self-signed (or privately issued) certificate. The
  * operator tells the tools to trust it by dropping a PEM next to the session
  * cache as `~/.camstack/<host>_<port>.ca.pem` (or naming another file in
- * `$CAMSTACK_HUB_CA_FILE`): the hub's own certificate when it is self-signed,
+ * `$DOMINEVO_HUB_CA_FILE`): the hub's own certificate when it is self-signed,
  * or the CA that issued it (e.g. mkcert's `rootCA.pem`, never its key). The PEM
  * is a trust anchor for THAT hub only: standard verification still runs against
  * it — chain, expiry and host name. A leaf issued by a CA cannot be pinned on
@@ -36,13 +36,13 @@ export function resolveHubTls(
   dir: string = defaultSessionDir(),
 ): HubTlsConfig {
   if (!serverUrl.startsWith('https:')) return {}
-  const named = env['CAMSTACK_HUB_CA_FILE']?.trim()
+  const named = env['DOMINEVO_HUB_CA_FILE']?.trim()
   const candidate = named && named !== '' ? named : hubCaFileForServer(serverUrl, dir)
   try {
     return { ca: fs.readFileSync(candidate, 'utf8'), caFile: candidate }
   } catch (err) {
     if (named && named !== '') {
-      throw new Error(`Cannot read the hub CA file named by CAMSTACK_HUB_CA_FILE: ${candidate}`, {
+      throw new Error(`Cannot read the hub CA file named by DOMINEVO_HUB_CA_FILE: ${candidate}`, {
         cause: err,
       })
     }
@@ -66,7 +66,7 @@ export function explainTlsFailure(serverUrl: string, err: unknown): string | nul
     `TLS verification of ${serverUrl} failed (${code}). Verification is never switched off.`,
     `  Trust this hub: save the PEM of its certificate (when self-signed) or of the CA that`,
     `  issued it (e.g. mkcert's rootCA.pem — never its key) to ${hubCaFileForServer(serverUrl)},`,
-    '  or point $CAMSTACK_HUB_CA_FILE at that PEM. A leaf issued by a CA needs the CA, not the leaf.',
+    '  or point $DOMINEVO_HUB_CA_FILE at that PEM. A leaf issued by a CA needs the CA, not the leaf.',
   ].join('\n')
 }
 

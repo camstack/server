@@ -27,7 +27,7 @@ import {
 
 export interface CleanupRunnerOptions {
   readonly dataDir: string
-  /** `CAMSTACK_ADDONS_DIR` — the ONE directory the loader reads. */
+  /** `DOMINEVO_ADDONS_DIR` — the ONE directory the loader reads. */
   readonly addonRoot: string
   /** One line per event. The caller decides whether that is a logger or console. */
   readonly log: (line: string) => void
@@ -44,7 +44,7 @@ const EMPTY_RESULT: CleanupResult = { removed: [], failed: [], refused: true }
 export async function runSingleCopyCleanup(opts: CleanupRunnerOptions): Promise<CleanupResult> {
   try {
     if (!isCleanupEnabled(process.env)) {
-      opts.log('single-copy cleanup disabled by CAMSTACK_SINGLE_COPY_CLEANUP — nothing removed')
+      opts.log('single-copy cleanup disabled by DOMINEVO_SINGLE_COPY_CLEANUP — nothing removed')
       return EMPTY_RESULT
     }
 
@@ -68,7 +68,7 @@ export async function runSingleCopyCleanup(opts: CleanupRunnerOptions): Promise<
     )
 
     const plan = planSingleCopyCleanup({
-      activeRoot: process.env['CAMSTACK_SERVER_ACTIVE_ROOT'] ?? null,
+      activeRoot: process.env['DOMINEVO_SERVER_ACTIVE_ROOT'] ?? null,
       closureResolvedFrom: resolveSystemPath(),
       bootHealthy: true,
       nodePathEntries: (process.env['NODE_PATH'] ?? '')

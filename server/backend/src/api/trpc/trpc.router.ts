@@ -171,13 +171,13 @@ export function enrichInputWithUserAgent<
  *
  * Until an operator confirms that ONE real remote relay session (4G /
  * Cloudflare-tunnel) actually delivers media, remote viewers stay on the same
- * `relayOnly:false` path as everyone else. Set `CAMSTACK_FORCE_RELAY_REMOTE=1`
+ * `relayOnly:false` path as everyone else. Set `DOMINEVO_FORCE_RELAY_REMOTE=1`
  * (or `true`) to re-enable remote→relay once validated; the broker's pairClass
  * logging is the instrument for that validation.
  */
 const FORCE_RELAY_REMOTE =
-  process.env.CAMSTACK_FORCE_RELAY_REMOTE === '1' ||
-  process.env.CAMSTACK_FORCE_RELAY_REMOTE === 'true'
+  process.env.DOMINEVO_FORCE_RELAY_REMOTE === '1' ||
+  process.env.DOMINEVO_FORCE_RELAY_REMOTE === 'true'
 
 /**
  * Inject the SERVER-computed `relayOnly` ICE override.
@@ -259,7 +259,7 @@ export function enrichHintsWithClientClass<
  *     a loopback socket peer is `remote`, not misread as LAN). The class is
  *     ALWAYS computed and threaded so the broker's pairClass logging can
  *     observe it — but FORCING remote viewers onto a relay↔relay path is
- *     GATED OFF by default (`CAMSTACK_FORCE_RELAY_REMOTE`, see
+ *     GATED OFF by default (`DOMINEVO_FORCE_RELAY_REMOTE`, see
  *     `enrichInputWithRelayClass`).
  *
  *     Why gated: the forced-relay MEDIA-FORWARD path was disabled on
@@ -375,7 +375,7 @@ function buildServerProviders(
     'server-management': wrap(() =>
       buildServerManagementProvider(
         services.serverUpdateService,
-        path.resolve(process.env['CAMSTACK_DATA'] ?? 'camstack-data'),
+        path.resolve(process.env['DOMINEVO_DATA'] ?? 'camstack-data'),
       ),
     ),
     // cluster-update — backup, hub, agents, addons as one hub-side job.

@@ -29,7 +29,7 @@ For the current inventory, read the generated pages, not this one:
 ## The six things worth knowing first
 
 **1. A node is a process running `@dominevo/server`.** Hub and agent are the same
-package; the role is `CAMSTACK_ROLE` ([D16](../decisions/adr-0016.md)). A hub
+package; the role is `DOMINEVO_ROLE` ([D16](../decisions/adr-0016.md)). A hub
 orchestrates; an agent contributes capabilities and hardware.
 
 **2. Capabilities are the only interface.** A capability is a named, typed

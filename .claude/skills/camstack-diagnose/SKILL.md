@@ -46,7 +46,7 @@ refreshes once and retries). There is no token flag, file or variable (D1101); s
 the `hub-access` skill. It never logs in with a password and never turns TLS
 off: trust a self-signed hub by saving its PEM to `~/.camstack/<host>.ca.pem`
 (the error prints the command). The hub URL comes from `--server`,
-`$CAMSTACK_HUB_URL`, the gitignored `scratchpad/.hub-url` (one line) or the
+`$DOMINEVO_HUB_URL`, the gitignored `scratchpad/.hub-url` (one line) or the
 session. For reads, prefer the `camstack-ops` MCP tools (`hub_query`,
 `topology`, `cap_providers`, `hub_logs`, `audit_tracks`). With curl:
 

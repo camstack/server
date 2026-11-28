@@ -6,7 +6,7 @@
  *   <root>/current         symlink to the active cli/<version>
  *   <root>/previous        symlink to the one before (for rollback)
  *
- * with `<root>` = `$CAMSTACK_HOME` or `~/.local/share/camstack`. The CLI's
+ * with `<root>` = `$DOMINEVO_HOME` or `~/.local/share/camstack`. The CLI's
  * sign-in sessions live in `~/.camstack` and are never part of this tree.
  * Detection is pure: a path in, a layout out — nothing is read from disk.
  */
@@ -23,7 +23,7 @@ export function managedRoot(
   env: Readonly<Record<string, string | undefined>>,
   home: string,
 ): string {
-  const override = env['CAMSTACK_HOME']
+  const override = env['DOMINEVO_HOME']
   return override !== undefined && override !== ''
     ? override
     : path.join(home, '.local', 'share', 'camstack')

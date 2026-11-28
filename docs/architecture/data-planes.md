@@ -42,7 +42,7 @@ Permitted shapes for the decode→detect hop:
    worker publishes a **process-local** `FrameRef`; the executor resolves
    **content-sized** JPEG views from `LocalFrameRegistry`. This is the
    shipped path, and the only one for a co-located executor (its rollback
-   env, `CAMSTACK_DISABLE_LOCAL_FRAME_REF`, was removed on 2026-10-06).
+   env, `DOMINEVO_DISABLE_LOCAL_FRAME_REF`, was removed on 2026-10-06).
 2. **Compressed inline** — binary JPEG / RGB `contain` when the executor
    is not in the same process as the registry. A `frameRef` never crosses
    a node or process boundary.
@@ -60,7 +60,7 @@ A buffered face's source frame (`face-src:` keys, D644, opt-in via
 `keepSourceFrames`) is parked the same way but in its OWN partition
 (16 MB per node, 4 per camera), so it can never evict a track's keyframe.
 The by-handle fetch serves the enrichment horizon only.
-`CAMSTACK_CONTINUOUS_RETAIN=1` restores write-on-admit. Post-analysis
+`DOMINEVO_CONTINUOUS_RETAIN=1` restores write-on-admit. Post-analysis
 resolves media over tRPC ([D18](../decisions/adr-0018.md)). Shared memory
 is not a data plane.
 
@@ -937,7 +937,7 @@ These are all field-learned; each cost a debugging session.
 ## Decode
 
 > Which ffmpeg BINARY any of this runs through — the pinned build every node
-> downloads, the `CAMSTACK_FFMPEG_PATH` override, and how to change the version
+> downloads, the `DOMINEVO_FFMPEG_PATH` override, and how to change the version
 > without an image rebuild — is [`ffmpeg.md`](./ffmpeg.md).
 
 The live runner path is the **native session-decode worker** (node-av, in a

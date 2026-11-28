@@ -19,13 +19,13 @@
 #   hf/dominevo-models/upload.sh --upload --replace <path>   # also replace <path> (operator approval needed)
 #
 # Token: HF_TOKEN from the environment if set, else from server/backend/.env
-# (override the file with CAMSTACK_ENV_FILE). The token is never printed.
+# (override the file with DOMINEVO_ENV_FILE). The token is never printed.
 set -euo pipefail
 
 REPO_ID="Dominevo/dominevo-models"
 ROOT="$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
 SRC="$ROOT/hf/dominevo-models"
-ENV_FILE="${CAMSTACK_ENV_FILE:-$ROOT/server/backend/.env}"
+ENV_FILE="${DOMINEVO_ENV_FILE:-$ROOT/server/backend/.env}"
 
 DO_UPLOAD=0
 # Paths the operator approved replacing on the Hub (read first, content kept in

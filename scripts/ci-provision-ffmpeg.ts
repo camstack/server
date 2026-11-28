@@ -18,7 +18,7 @@
  *
  *   - `$GITHUB_PATH` gets a shim directory whose `ffmpeg` IS that binary, so
  *     any spec or default that spawns `ffmpeg` by name gets it;
- *   - `$GITHUB_ENV` gets `CAMSTACK_FFMPEG_PATH`, the product's own override,
+ *   - `$GITHUB_ENV` gets `DOMINEVO_FFMPEG_PATH`, the product's own override,
  *     for code and specs that resolve through it.
  *
  * Outside GitHub Actions (no `$GITHUB_PATH`) it prints the two exports instead,
@@ -78,12 +78,12 @@ async function main(): Promise<void> {
   const envFile = actionsFile('GITHUB_ENV')
   if (pathFile !== null && envFile !== null) {
     appendFileSync(pathFile, `${shimDir}\n`)
-    appendFileSync(envFile, `CAMSTACK_FFMPEG_PATH=${ffmpegPath}\n`)
-    process.stdout.write(`exported: PATH+=${shimDir}, CAMSTACK_FFMPEG_PATH=${ffmpegPath}\n`)
+    appendFileSync(envFile, `DOMINEVO_FFMPEG_PATH=${ffmpegPath}\n`)
+    process.stdout.write(`exported: PATH+=${shimDir}, DOMINEVO_FFMPEG_PATH=${ffmpegPath}\n`)
     return
   }
   process.stdout.write(
-    `export PATH="${shimDir}:$PATH"\nexport CAMSTACK_FFMPEG_PATH="${ffmpegPath}"\n`,
+    `export PATH="${shimDir}:$PATH"\nexport DOMINEVO_FFMPEG_PATH="${ffmpegPath}"\n`,
   )
   // Keep the symlink's parent visible in the message when this runs by hand.
   process.stdout.write(`(dataDir ${dirname(shimDir)})\n`)

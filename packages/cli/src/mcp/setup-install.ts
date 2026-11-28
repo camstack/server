@@ -287,7 +287,7 @@ async function proxmoxGuide(input: ResolvedInput, fetchFn: FetchFn): Promise<Ins
   const vars: string[] = [`ROLE=${input.role}`]
   vars.push(`IMAGE_TAG=${IMAGE_REPOSITORY}:${imageTag}`)
   if (input.accelerator === 'cpu') vars.push('PASS_ACCEL=none')
-  if (input.role === 'agent') vars.push(`CAMSTACK_HUB_ADDRESS=${input.hubAddress ?? '<hub-ip>'}`)
+  if (input.role === 'agent') vars.push(`DOMINEVO_HUB_ADDRESS=${input.hubAddress ?? '<hub-ip>'}`)
   if (input.paths !== undefined) vars.push(`RECORDINGS_HOST_PATH=${input.paths.recordings}`)
   const header = fetched.body
     .split('\n')

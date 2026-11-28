@@ -189,7 +189,7 @@ interface DispatchOptions {
  */
 const POOL_INFER_TIMEOUT_MS = Math.max(
   1_000,
-  Number(process.env['CAMSTACK_POOL_INFER_TIMEOUT_MS']) || 60_000,
+  Number(process.env['DOMINEVO_POOL_INFER_TIMEOUT_MS']) || 60_000,
 )
 
 /** Commands that compile a model — the only ones that get the load deadline. */
@@ -235,7 +235,7 @@ const POOL_POISON_DRAIN_SLACK_MS = 1_000
  * and answers `{dropped: true}`; this is the same contract applied one layer
  * earlier, where the unbounded queue actually is.
  */
-const POOL_MAX_IN_FLIGHT = Math.max(1, Number(process.env['CAMSTACK_POOL_MAX_IN_FLIGHT']) || 8)
+const POOL_MAX_IN_FLIGHT = Math.max(1, Number(process.env['DOMINEVO_POOL_MAX_IN_FLIGHT']) || 8)
 
 /**
  * Reply deadline for a LIVE inference request (ms), as opposed to the generous
@@ -260,7 +260,7 @@ const POOL_MAX_IN_FLIGHT = Math.max(1, Number(process.env['CAMSTACK_POOL_MAX_IN_
  */
 const POOL_LIVE_INFER_TIMEOUT_MS = Math.max(
   250,
-  Number(process.env['CAMSTACK_POOL_LIVE_INFER_TIMEOUT_MS']) || 3_000,
+  Number(process.env['DOMINEVO_POOL_LIVE_INFER_TIMEOUT_MS']) || 3_000,
 )
 
 /** Opcodes the in-flight cap may shed. Commands and frame-cache writes are

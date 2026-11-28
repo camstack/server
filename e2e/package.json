@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "End-to-end test harness for the camstack hub. Spawns a hub with isolated CAMSTACK_DATA per suite and exercises tRPC + UI flows.",
+  "description": "End-to-end test harness for the camstack hub. Spawns a hub with isolated DOMINEVO_DATA per suite and exercises tRPC + UI flows.",
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",

@@ -51,11 +51,11 @@ const BUNDLE_MARKER = path.join(
   ROOT,
   'packages/addon-pipeline-orchestrator/assets/viewer/.viewer-version',
 )
-// Not a secret: $CAMSTACK_HUB / $CAMSTACK_HUB_URL, else the gitignored scratchpad/.hub-url.
+// Not a secret: $DOMINEVO_HUB / $DOMINEVO_HUB_URL, else the gitignored scratchpad/.hub-url.
 const HUB_FILE = path.join(ROOT, 'scratchpad/.hub-url')
 const HUB =
-  process.env.CAMSTACK_HUB ||
-  process.env.CAMSTACK_HUB_URL ||
+  process.env.DOMINEVO_HUB ||
+  process.env.DOMINEVO_HUB_URL ||
   (fs.existsSync(HUB_FILE) ? fs.readFileSync(HUB_FILE, 'utf8').trim() : 'https://<hub-host>:4443')
 
 const CHECK_ONLY = process.argv.includes('--check')

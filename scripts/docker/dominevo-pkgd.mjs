@@ -15,9 +15,9 @@ import { createServer } from 'node:net'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-const SOCKET = process.env.CAMSTACK_PKGD_SOCKET ?? '/run/camstack/pkgd.sock'
+const SOCKET = process.env.DOMINEVO_PKGD_SOCKET ?? '/run/dominevo/pkgd.sock'
 const ALLOWLIST_PATH =
-  process.env.CAMSTACK_PKG_ALLOWLIST ?? '/usr/local/share/camstack/pkg-allowlist.json'
+  process.env.DOMINEVO_PKG_ALLOWLIST ?? '/usr/local/share/dominevo/pkg-allowlist.json'
 const INSTALL_TIMEOUT_MS = 5 * 60 * 1000
 
 function loadAllowlist() {
@@ -122,7 +122,7 @@ const server = createServer((socket) => {
       return
     }
     console.info(
-      `[camstack-pkgd] request addon=${req.addonId ?? '?'} pkg=${req.packageName ?? req.package} manager=${req.manager}`,
+      `[dominevo-pkgd] request addon=${req.addonId ?? '?'} pkg=${req.packageName ?? req.package} manager=${req.manager}`,
     )
     handle(req).then((result) => {
       socket.end(`${JSON.stringify(result)}\n`)
@@ -131,7 +131,7 @@ const server = createServer((socket) => {
 })
 
 server.on('error', (err) => {
-  console.error(`[camstack-pkgd] ${err.message}`)
+  console.error(`[dominevo-pkgd] ${err.message}`)
   process.exit(1)
 })
 
@@ -148,7 +148,7 @@ server.listen(SOCKET, () => {
     // camstack is uid/gid 1001 in the image.
     chownSync(SOCKET, 0, 1001)
   } catch (err) {
-    console.warn(`[camstack-pkgd] could not chmod/chown socket: ${err.message}`)
+    console.warn(`[dominevo-pkgd] could not chmod/chown socket: ${err.message}`)
   }
-  console.info(`[camstack-pkgd] listening on ${SOCKET}`)
+  console.info(`[dominevo-pkgd] listening on ${SOCKET}`)
 })

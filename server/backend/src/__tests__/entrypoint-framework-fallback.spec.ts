@@ -39,25 +39,25 @@ describe('entrypoint — the image no longer carries a bootstrap addon seed', ()
   it('has no addon seed tree, no COPY of one, and no bundled-addons env', () => {
     const source = fs.readFileSync(DOCKERFILE, 'utf-8')
 
-    // `CAMSTACK_BUNDLED_ADDONS_DIR` is the one that must not survive alone: the
+    // `DOMINEVO_BUNDLED_ADDONS_DIR` is the one that must not survive alone: the
     // launcher resolves `installSource: 'local'` from it, so a leftover env
     // would send the bootstrap looking for a tree that is not in the image.
-    expect(source).not.toContain('ENV CAMSTACK_BUNDLED_ADDONS_DIR')
-    expect(source).not.toContain('COPY --from=fetch /opt/camstack-seed-addons')
+    expect(source).not.toContain('ENV DOMINEVO_BUNDLED_ADDONS_DIR')
+    expect(source).not.toContain('COPY --from=fetch /opt/dominevo-seed-addons')
     expect(source).not.toContain('NEED_ADDONS')
   })
 
   it('still ships ONE seed tree — the fallback a broken closure boots from', () => {
     const source = fs.readFileSync(DOCKERFILE, 'utf-8')
-    // There used to be TWO: `/opt/camstack-hub` (the closure, also the CMD
+    // There used to be TWO: `/opt/dominevo-hub` (the closure, also the CMD
     // entry) and a second framework-only tree built beside it purely to be
     // copied into `$FRAMEWORK_DIR` on the fallback boot. Measured 2026-08-25 it
-    // was 510 MB duplicating what the first already held — `/opt/camstack-hub`
+    // was 510 MB duplicating what the first already held — `/opt/dominevo-hub`
     // hoists `better-sqlite3`, `node-av`, `sharp` and `zod` at its root and
     // carries `@dominevo/{sdk,system,types}` as dependencies of the server — and
     // it was the THIRD copy of every framework package, which is what made the
     // D45 inventory report three where the design allows two.
-    expect(source).toContain('COPY --from=fetch /opt/camstack-hub /opt/camstack-hub')
+    expect(source).toContain('COPY --from=fetch /opt/dominevo-hub /opt/dominevo-hub')
     expect(source).not.toContain('camstack-seed-framework')
   })
 })
@@ -91,11 +91,11 @@ describe('entrypoint framework fallback', () => {
 
   /**
    * Run the extracted block against a sandbox. The block hardcodes
-   * `/opt/camstack-hub`, so the test rewrites that one prefix — the LOGIC under
+   * `/opt/dominevo-hub`, so the test rewrites that one prefix — the LOGIC under
    * test is the condition, not the literal path.
    */
   function runFallback(dataDir: string, seedDir: string): string {
-    const block = extractFallbackBlock().replaceAll('/opt/camstack-hub', seedDir)
+    const block = extractFallbackBlock().replaceAll('/opt/dominevo-hub', seedDir)
     // The trailing echo observes what the block EXPORTED into the boot
     // environment — the contract the single-copy sweep depends on: a healthy
     // boot must leave NODE_PATH empty or /data/framework is unremovable forever.
@@ -214,14 +214,14 @@ describe('entrypoint ownership repair', () => {
     expect(source).not.toContain(
       'chown -R camstack:camstack "$DATA_DIR" "$CONFIG_DIR" "$FRAMEWORK_DIR" "$ADDONS_DIR"',
     )
-    expect(source).toContain('if [ "${CAMSTACK_REPAIR_PERMISSIONS:-0}" = "1" ]; then')
+    expect(source).toContain('if [ "${DOMINEVO_REPAIR_PERMISSIONS:-0}" = "1" ]; then')
   })
 
   it('allows health probes enough time to start under CPU contention', () => {
     const source = fs.readFileSync(DOCKERFILE, 'utf-8')
 
     expect(source).toContain(
-      'curl -fsSk --max-time 20 "https://localhost:${CAMSTACK_PORT:-4443}/health"',
+      'curl -fsSk --max-time 20 "https://localhost:${DOMINEVO_PORT:-4443}/health"',
     )
     expect(source).toContain('HEALTHCHECK --interval=30s --timeout=25s')
   })
@@ -229,10 +229,10 @@ describe('entrypoint ownership repair', () => {
   it('probes plain HTTP when the operator turned TLS off in the UI, with no env switch', () => {
     const source = fs.readFileSync(DOCKERFILE, 'utf-8')
 
-    expect(source).not.toContain('CAMSTACK_TLS_ENABLED')
+    expect(source).not.toContain('DOMINEVO_TLS_ENABLED')
     expect(source).toContain('/health" -o /dev/null && exit 0')
     expect(source).toContain(
-      'curl -fsS --max-time 20 "http://localhost:${CAMSTACK_PORT:-4443}/health"',
+      'curl -fsS --max-time 20 "http://localhost:${DOMINEVO_PORT:-4443}/health"',
     )
   })
 })
@@ -276,7 +276,7 @@ describe('entrypoint — which backend is about to run', () => {
 
   function run(dataDir: string, seedServer: string): string {
     const script =
-      `set -e\nDATA_DIR="${dataDir}"\nCAMSTACK_SEED_SERVER_DIR="${seedServer}"\n` +
+      `set -e\nDATA_DIR="${dataDir}"\nDOMINEVO_SEED_SERVER_DIR="${seedServer}"\n` +
       `${extractCapabilityBlock()}\n`
     return execFileSync('sh', ['-c', script], { encoding: 'utf-8' })
   }

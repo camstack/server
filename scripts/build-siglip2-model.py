@@ -645,7 +645,7 @@ def _stage_verify_coreml(base: Path, spike_dir: Path) -> None:
 
 def _hf_token(root: Path) -> str:
     token = os.environ.get("HF_TOKEN", "")
-    env_file = Path(os.environ.get("CAMSTACK_ENV_FILE", root / "server" / "backend" / ".env"))
+    env_file = Path(os.environ.get("DOMINEVO_ENV_FILE", root / "server" / "backend" / ".env"))
     if not token and env_file.is_file():
         for line in env_file.read_text().splitlines():
             if line.startswith("HF_TOKEN="):

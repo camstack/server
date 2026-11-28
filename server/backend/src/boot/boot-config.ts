@@ -44,14 +44,14 @@ export interface InfraContext {
  * at boot from the `tls/enabled` marker the setting writes. The old variable
  * is ignored, and named at boot.
  */
-const RETIRED_TLS_ENABLED_ENV = 'CAMSTACK_TLS_ENABLED'
+const RETIRED_TLS_ENABLED_ENV = 'DOMINEVO_TLS_ENABLED'
 
 /**
  * Env variables that once set the node's certificate. Ignored since D726:
  * the admin UI (Network → Local access) is the one way to set it. Still
  * named here so a node that has them set is told, not silently re-keyed.
  */
-const IGNORED_TLS_CERT_ENV = ['CAMSTACK_TLS_CERT', 'CAMSTACK_TLS_KEY'] as const
+const IGNORED_TLS_CERT_ENV = ['DOMINEVO_TLS_CERT', 'DOMINEVO_TLS_KEY'] as const
 
 // ---------------------------------------------------------------------------
 // Retired env sources
@@ -87,7 +87,7 @@ export function ignoredTlsCertSources(
 // ---------------------------------------------------------------------------
 
 /**
- * The kernel's bootstrap loader (`CAMSTACK_PORT` / `HOST` /
+ * The kernel's bootstrap loader (`DOMINEVO_PORT` / `HOST` /
  * `DATA` over built-in defaults) — the ONE loader — plus a boot warning for the retired HTTPS
  * variables still set, so a container template that carries one is told.
  */

@@ -54,7 +54,7 @@
  * latency; a session that starts wrong is a camera that detects nothing, and
  * this path has shipped that failure before.
  *
- * The rollback is `CAMSTACK_DECODE_PROBE_STREAM_INFO=1` (read by the worker,
+ * The rollback is `DOMINEVO_DECODE_PROBE_STREAM_INFO=1` (read by the worker,
  * passed in as `forceStreamInfoProbe`): it restores the unconditional probe
  * inline, with no deploy. That flag is also the A/B — `demuxerOpenMs` with it
  * set minus `demuxerOpenMs` with it clear IS the probe's measured cost.
@@ -115,7 +115,7 @@ export interface OpenPullDemuxerParams<TDemuxer extends PullDemuxerLike> {
   readonly demuxerOptions: Record<string, string>
   readonly signal: AbortSignal
   readonly open: PullDemuxerOpener<TDemuxer>
-  /** `CAMSTACK_DECODE_PROBE_STREAM_INFO=1` — restore the unconditional probe. */
+  /** `DOMINEVO_DECODE_PROBE_STREAM_INFO=1` — restore the unconditional probe. */
   readonly forceStreamInfoProbe: boolean
   /**
    * Diagnostic sink. Written ONLY when the fast path is abandoned or the SPS

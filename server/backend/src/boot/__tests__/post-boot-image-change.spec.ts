@@ -36,8 +36,8 @@ function makeService(): PostBootService {
 }
 
 async function boot(productVersion: string): Promise<void> {
-  vi.stubEnv('CAMSTACK_PRODUCT_VERSION', productVersion)
-  vi.stubEnv('CAMSTACK_NODE_ID', 'hub')
+  vi.stubEnv('DOMINEVO_PRODUCT_VERSION', productVersion)
+  vi.stubEnv('DOMINEVO_NODE_ID', 'hub')
   await makeService().run({
     port: 1,
     host: 'h',

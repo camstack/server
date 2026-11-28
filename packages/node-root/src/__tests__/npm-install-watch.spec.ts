@@ -32,9 +32,9 @@ import {
 } from '../npm-install-watch.js'
 
 const ENV_NAMES: RootUpdateEnvNames = {
-  bootMode: 'CAMSTACK_SERVER_BOOT_MODE',
-  activeVersion: 'CAMSTACK_SERVER_ACTIVE_VERSION',
-  seedDir: 'CAMSTACK_SEED_SERVER_DIR',
+  bootMode: 'DOMINEVO_SERVER_BOOT_MODE',
+  activeVersion: 'DOMINEVO_SERVER_ACTIVE_VERSION',
+  seedDir: 'DOMINEVO_SEED_SERVER_DIR',
 }
 
 const silentLog = {
@@ -233,7 +233,7 @@ describe('a stalled install returns the node to idle', () => {
       runningPackageJsonPath: runningPkgPath,
       workspaceProbeDir: tmp,
       execNpm,
-      env: { CAMSTACK_SERVER_BOOT_MODE: 'data-root' },
+      env: { DOMINEVO_SERVER_BOOT_MODE: 'data-root' },
       now: () => 1_700_000_000_000,
       ...(sleep !== undefined ? { sleep } : {}),
     })
@@ -293,7 +293,7 @@ describe('stall and ceiling are not retried', () => {
       runningPackageJsonPath: runningPkgPath,
       workspaceProbeDir: tmp,
       execNpm,
-      env: { CAMSTACK_SERVER_BOOT_MODE: 'data-root' },
+      env: { DOMINEVO_SERVER_BOOT_MODE: 'data-root' },
       now: () => 1_700_000_000_000,
       sleep: async () => undefined,
     })

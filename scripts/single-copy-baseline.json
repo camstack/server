@@ -5,6 +5,6 @@
     "Dockerfile » legacy-framework-dir": 4,
     "Dockerfile » node-path-manipulation": 6,
     "server/backend/src/launcher.ts » framework-dir-override": 2,
-    "server/backend/src/launcher.ts » node-path-manipulation": 6
+    "server/backend/src/launcher.ts » node-path-manipulation": 5
   }
 }

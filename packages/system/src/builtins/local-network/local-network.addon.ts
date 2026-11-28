@@ -172,7 +172,7 @@ const DEFAULT_HUB_PORT = 4443
 export interface ListenPortSources {
   /** `server.port` from the hub's live config section; null when unreadable. */
   readonly configured: number | null
-  /** `CAMSTACK_PORT` off the environment; null when unset / unparseable. */
+  /** `DOMINEVO_PORT` off the environment; null when unset / unparseable. */
   readonly env: number | null
   /** The port the CALLER passed. A guess about our socket, not a fact. */
   readonly callerHint: number | null
@@ -1237,7 +1237,7 @@ export class LocalNetworkAddon extends BaseAddon<LocalNetworkConfig> {
 
   /**
    * The port this hub is actually listening on, plus the provenance of the
-   * number. The boot loader merges the `CAMSTACK_PORT` env override into the
+   * number. The boot loader merges the `DOMINEVO_PORT` env override into the
    * persisted `server` section (`server/backend/src/boot/boot-config.ts`), so
    * reading that section gives the authoritative live port — no new setting,
    * and the same source `tailscale-client` already stamps its mesh endpoints
@@ -1246,7 +1246,7 @@ export class LocalNetworkAddon extends BaseAddon<LocalNetworkConfig> {
   private async resolveAdvertisedListenPort(
     callerHint: number | null,
   ): Promise<AdvertisedLocalPort> {
-    const envRaw = Number.parseInt(process.env['CAMSTACK_PORT'] ?? '', 10)
+    const envRaw = Number.parseInt(process.env['DOMINEVO_PORT'] ?? '', 10)
     return resolveAdvertisedPort({
       configured: await this.readConfiguredPort(),
       env: Number.isNaN(envRaw) ? null : envRaw,

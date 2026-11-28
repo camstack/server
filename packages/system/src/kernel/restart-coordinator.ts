@@ -167,14 +167,14 @@ export function scheduleSelfRestart(options: ScheduleSelfRestartOptions = {}): v
   setTimeout(() => {
     // Dev (tsx watch): a clean `process.exit()` is NOT respawned by the file
     // watcher — it only restarts on a source change, so the hub would stay
-    // down until an unrelated edit. When `CAMSTACK_RESTART_TOUCH_FILE` points
+    // down until an unrelated edit. When `DOMINEVO_RESTART_TOUCH_FILE` points
     // at the watched entry file, touch it so tsx performs a clean reload that
     // re-reads the freshly-installed dist from the data dir. Only the `serve`
     // (watch) npm script sets this; `serve:once` and production leave it unset
     // and fall through to the real exit path below. A touch failure (missing
     // file, permissions) also falls through, so we never silently fail to
     // restart.
-    const touchTarget = process.env['CAMSTACK_RESTART_TOUCH_FILE']
+    const touchTarget = process.env['DOMINEVO_RESTART_TOUCH_FILE']
     if (touchTarget !== undefined && touchTarget.length > 0) {
       try {
         const now = new Date()

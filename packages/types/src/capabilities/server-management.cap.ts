@@ -116,14 +116,14 @@ const ImageContractSchema = z.object({
  * templates declared `ghcr.io/dominevo/dominevo:intel-latest` while the hub
  * actually ran `camstack-server:intel-1.1.74` from a repository that had been
  * renamed and received no builds. The declaration was right; reality was not;
- * nothing compared them. A `CAMSTACK_WRAPPER=docker` written into a template
+ * nothing compared them. A `DOMINEVO_WRAPPER=docker` written into a template
  * would be exactly that same declaration, so `kind` is NEVER an env var.
  *
  * What can honestly be observed from inside: `/.dockerenv` and `/proc/1/cgroup`
  * (a container), and the platform (a Linux container cannot exist on darwin or
  * win32). What cannot: that the node is a CHILD of an Electron main process —
  * `process.versions.electron` is `undefined` in the child, so the only channel
- * is `CAMSTACK_AGENT_APP_VERSION`, which the main process already writes
+ * is `DOMINEVO_AGENT_APP_VERSION`, which the main process already writes
  * (`packages/desktop/src/main.ts`). That one declaration is unavoidable, and it
  * is marked as such on every row of {@link WrapperEvidenceSchema}.
  *

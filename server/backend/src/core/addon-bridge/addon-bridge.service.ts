@@ -44,8 +44,8 @@ export class AddonBridgeService {
     // This ensures install/uninstall works even before onModuleInit completes.
     try {
       const kernel = require('@dominevo/server/system') as typeof import('@dominevo/server/system')
-      const dataDir = process.env.CAMSTACK_DATA ?? 'camstack-data'
-      const addonsDir = process.env.CAMSTACK_ADDONS_DIR ?? path.resolve(dataDir, 'addons')
+      const dataDir = process.env.DOMINEVO_DATA ?? 'camstack-data'
+      const addonsDir = process.env.DOMINEVO_ADDONS_DIR ?? path.resolve(dataDir, 'addons')
       this.installer = new kernel.AddonInstaller({ addonsDir })
       kernel.ensureDir(addonsDir)
     } catch (error: unknown) {
@@ -62,8 +62,8 @@ export class AddonBridgeService {
 
       this.loader = new kernel.AddonLoader(this.logger.child('AddonLoader'))
 
-      const dataDir = process.env.CAMSTACK_DATA ?? 'camstack-data'
-      const addonsDir = process.env.CAMSTACK_ADDONS_DIR ?? path.resolve(dataDir, 'addons')
+      const dataDir = process.env.DOMINEVO_DATA ?? 'camstack-data'
+      const addonsDir = process.env.DOMINEVO_ADDONS_DIR ?? path.resolve(dataDir, 'addons')
       await this.loader.loadFromDirectory(addonsDir)
 
       this.available = true
@@ -117,8 +117,8 @@ export class AddonBridgeService {
     const kernel = await import('@dominevo/server/system')
     this.loader = new kernel.AddonLoader(this.logger.child('AddonLoader'))
 
-    const dataDir = process.env.CAMSTACK_DATA ?? 'camstack-data'
-    const addonsDir = process.env.CAMSTACK_ADDONS_DIR ?? path.resolve(dataDir, 'addons')
+    const dataDir = process.env.DOMINEVO_DATA ?? 'camstack-data'
+    const addonsDir = process.env.DOMINEVO_ADDONS_DIR ?? path.resolve(dataDir, 'addons')
     await this.loader.loadFromDirectory(addonsDir)
 
     this.logger.info('Reloaded', { meta: { count: this.loader.listAddons().length } })

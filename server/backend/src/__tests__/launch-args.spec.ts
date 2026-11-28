@@ -78,10 +78,10 @@ describe('planLaunch', () => {
   })
 
   it('a legacy heap env is ignored and named in a warning, the ceiling stays the default', () => {
-    const plan = planLaunch({ ...base, role: 'hub', legacyEnvNames: ['CAMSTACK_HUB_HEAP_MB'] })
+    const plan = planLaunch({ ...base, role: 'hub', legacyEnvNames: ['DOMINEVO_HUB_HEAP_MB'] })
     expect(plan.args).toEqual([])
     expect(plan.source).toBe('v8-default')
-    expect(plan.warnings.join(' ')).toContain('CAMSTACK_HUB_HEAP_MB')
+    expect(plan.warnings.join(' ')).toContain('DOMINEVO_HUB_HEAP_MB')
     expect(plan.warnings.join(' ')).toContain('ignored')
   })
 
@@ -154,10 +154,10 @@ describe('runLaunchCli', () => {
     cgroupFiles: [] as string[],
   })
 
-  it('prints the plan for the role, reading the override from CAMSTACK_DATA', () => {
+  it('prints the plan for the role, reading the override from DOMINEVO_DATA', () => {
     const out = runLaunchCli(
       ['--role', 'hub', '--allocator-env'],
-      deps({ CAMSTACK_DATA: '/data' }, { '/data/launch-overrides.json': '{"heapMb":3072}' }),
+      deps({ DOMINEVO_DATA: '/data' }, { '/data/launch-overrides.json': '{"heapMb":3072}' }),
     )
     expect(out.code).toBe(0)
     expect(out.stdout.split('\n')).toEqual(
@@ -172,13 +172,13 @@ describe('runLaunchCli', () => {
   })
 
   it('ignores the legacy heap env per role, with one warning naming it', () => {
-    const hub = runLaunchCli(['--role', 'hub'], deps({ CAMSTACK_HUB_HEAP_MB: '2048' })).stdout
+    const hub = runLaunchCli(['--role', 'hub'], deps({ DOMINEVO_HUB_HEAP_MB: '2048' })).stdout
     expect(hub).not.toContain('--max-old-space-size')
     expect(hub).toContain('source v8-default')
-    expect(hub).toMatch(/warn .*CAMSTACK_HUB_HEAP_MB.* ignored/)
-    const agent = runLaunchCli(['--role', 'agent'], deps({ CAMSTACK_AGENT_HEAP_MB: '9000' })).stdout
+    expect(hub).toMatch(/warn .*DOMINEVO_HUB_HEAP_MB.* ignored/)
+    const agent = runLaunchCli(['--role', 'agent'], deps({ DOMINEVO_AGENT_HEAP_MB: '9000' })).stdout
     expect(agent).toContain('source computed')
-    expect(agent).toMatch(/warn .*CAMSTACK_AGENT_HEAP_MB.* ignored/)
+    expect(agent).toMatch(/warn .*DOMINEVO_AGENT_HEAP_MB.* ignored/)
     expect(runLaunchCli(['--role', 'hub'], deps({})).stdout).not.toContain('warn ')
   })
 
@@ -231,14 +231,14 @@ function runEntrypoint(options: {
     `launch_candidates="${moduleJs}"`,
     BLOCK,
     'for a in "$@"; do echo "ARG:$a"; done',
-    'for n in MALLOC_ARENA_MAX VIPS_CONCURRENCY CAMSTACK_HEAP_CEILING_SOURCE LD_PRELOAD EVIL; do',
+    'for n in MALLOC_ARENA_MAX VIPS_CONCURRENCY DOMINEVO_HEAP_CEILING_SOURCE LD_PRELOAD EVIL; do',
     '  echo "ENV:$n=$(printenv $n)"',
     'done',
   ].join('\n')
   const stdout = execFileSync('sh', ['-c', script, 'sh', '/opt/starter.js'], {
     env: {
       PATH: `${bin}:/usr/bin:/bin`,
-      CAMSTACK_ROLE: options.role ?? 'hub',
+      DOMINEVO_ROLE: options.role ?? 'hub',
       FAKE_PLAN: options.plan,
       ...options.presetEnv,
     },
@@ -265,7 +265,7 @@ describe('the Docker entrypoint executes what launch-args printed', () => {
     expect(r.args).toEqual(['--max-old-space-size=2048', '/opt/starter.js'])
     expect(r.env['MALLOC_ARENA_MAX']).toBe('2')
     expect(r.env['VIPS_CONCURRENCY']).toBe('1')
-    expect(r.env['CAMSTACK_HEAP_CEILING_SOURCE']).toBe('computed')
+    expect(r.env['DOMINEVO_HEAP_CEILING_SOURCE']).toBe('computed')
     expect(r.stdout).toContain('[entrypoint] node launch: role=agent ceiling-source=computed')
   })
 

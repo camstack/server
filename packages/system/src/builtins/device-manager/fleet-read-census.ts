@@ -22,7 +22,7 @@
  * action, which is the right shape for a steady-state mystery: you notice, you
  * arm, you read. It cannot work here. **The storm is at BOOT** — by the time a
  * process is up enough to receive an action, the window being investigated has
- * closed. So this arms at CONSTRUCTION from `CAMSTACK_FLEET_READ_CENSUS_MS` and
+ * closed. So this arms at CONSTRUCTION from `DOMINEVO_FLEET_READ_CENSUS_MS` and
  * closes itself after that many milliseconds.
  *
  * A bad value **disarms**. An env var someone fat-fingered must not quietly

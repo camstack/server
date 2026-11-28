@@ -310,7 +310,7 @@ and `expiresAt` in `~/.camstack/<host>_<port>.json` (0600). The CLI, `scripts/hu
 the operator scripts (`scripts/hub/credentials.mjs`) and the MCP all resolve the
 credential through `resolveCredentials` / `resolveFreshCredentials`
 (`packages/develop/src/hub`): that session, and nothing else (D1101): `--token`,
-`--token-file` and `$CAMSTACK_TOKEN` were removed, and a removed flag fails with a
+`--token-file` and `$DOMINEVO_TOKEN` were removed, and a removed flag fails with a
 message that says `dominevo login`. Guards `check-single-client-login` and
 `check-no-token-file-lookup`; the how-to is the `hub-access` skill. A session with less than 60 s left is renewed over HTTP with
 `auth.refreshSession` before use, and a 401 renews it once and retries once; a
@@ -357,8 +357,8 @@ users, the HA, Alexa and Google links, share links and tokens.
 and there is ONE login: `--admin` / `--admin-days` were removed (D895) and an old
 invocation that still passes them prints a one-line warning ("one login, one token
 — drop --admin") and logs in as usual; naming two different hubs is an error.
-EVERY server input — the positional, `--server`/`-s`, `$CAMSTACK_SERVER`,
-`$CAMSTACK_HUB_URL`, `scratchpad/.hub-url`, the "Enter an address…" prompt, and
+EVERY server input — the positional, `--server`/`-s`, `$DOMINEVO_SERVER`,
+`$DOMINEVO_HUB_URL`, `scratchpad/.hub-url`, the "Enter an address…" prompt, and
 `scripts/hub/hub.mjs --server` — goes through ONE parser,
 `normalizeHubAddress` (`packages/develop/src/hub/hub-address.ts`), into
 `https://<host>:<port>`: scheme defaults to https, port to 4443 (`192.0.2.50`,
@@ -367,7 +367,7 @@ message — the hub API is https only. Never parse a server in a command.
 
 **Not naming one.** `login` (and `dominevo discover`) lists the hubs announced over
 mDNS (`_camstack._tcp`, the hub's HTTPS endpoint) unioned with the hubs this
-machine already knows (saved sessions, `$CAMSTACK_HUB_URL`,
+machine already knows (saved sessions, `$DOMINEVO_HUB_URL`,
 `scratchpad/.hub-url`), reachable ones only. The picker is shown for one hub as
 well as several — the found hub first (Enter accepts it), then "Enter an
 address…" — because a hub that does not announce (an old build) would otherwise
@@ -377,7 +377,7 @@ retired it). Details and the container requirement:
 `docs/architecture/transport.md`.
 
 **Which saved session a command uses.** With no server given: the session of
-`$CAMSTACK_SERVER` if set and saved, else the most recently used one
+`$DOMINEVO_SERVER` if set and saved, else the most recently used one
 (`lastUsedAt`, stamped when `deploy`/`dev`/`watch` use a cached session; a file
 without it counts from `createdAt`). `dominevo whoami` with several sessions and
 no `--server` lists them all (server, user, admin role) and marks

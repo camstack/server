@@ -20,7 +20,7 @@
  * Globs are relative to camstack-server; a `camstack/…` glob is the viewer
  * submodule, judged in the viewer's own history.
  *
- * The docs checkout is `CAMSTACK_DOCS_DIR`, else `../docs` beside this repo; when
+ * The docs checkout is `DOMINEVO_DOCS_DIR`, else `../docs` beside this repo; when
  * neither exists the script says so and exits 0.
  *
  * Exit code is ALWAYS 0 unless `--strict` (then 1 on any stale or dead page).
@@ -48,7 +48,7 @@ function main(): void {
   const result = run({
     serverRoot: ROOT,
     docsRoot: locateDocs(ROOT, process.env),
-    viewerRoot: process.env['CAMSTACK_VIEWER_DIR'] ?? path.join(ROOT, 'camstack'),
+    viewerRoot: process.env['DOMINEVO_VIEWER_DIR'] ?? path.join(ROOT, 'camstack'),
     strict: process.argv.includes('--strict'),
     commitsShown: commitsArg(process.argv),
   })

@@ -720,7 +720,7 @@ export function mergeLevel(
  * Two refusals, and the second is the point of the whole per-camera design:
  *
  *  - an UNDECLARED channel. Silently accepting one would let a typo look like
- *    a working arm forever — the `CAMSTACK_FLEET_READ_CENSUS_MS=true` failure,
+ *    a working arm forever — the `DOMINEVO_FLEET_READ_CENSUS_MS=true` failure,
  *    which cost a whole boot before anyone noticed nothing was being measured.
  *  - `deviceIds` on a channel declared `perDevice: false`. That channel's
  *    lines carry no `tags: { deviceId }`, so the narrowing would produce a

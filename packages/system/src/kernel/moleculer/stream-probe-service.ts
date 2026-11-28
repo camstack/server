@@ -6,7 +6,7 @@
  * Moleculer transport without needing the HTTPS tRPC WSS link.
  *
  * Why not reuse the tRPC router? Workers default to
- * `brokerTransportLink` when `CAMSTACK_HUB_API_URL` isn't set; the link
+ * `brokerTransportLink` when `DOMINEVO_HUB_API_URL` isn't set; the link
  * naively maps every `op.path` to `<addonId>.<capName>.<method>` and
  * fails with "Service not found" for core (non-capability) routers.
  * `$stream-probe` is the canonical cross-process entrypoint — the

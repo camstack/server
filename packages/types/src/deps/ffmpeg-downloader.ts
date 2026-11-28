@@ -18,7 +18,7 @@ import { FFMPEG_RELEASE, getFfmpegArtifact, getFfmpegDownloadUrl } from './ffmpe
  * The ffmpeg this node runs, downloading the pinned build if it is not here
  * yet, and reporting what it got.
  *
- * Order: the operator's `CAMSTACK_FFMPEG_PATH` → the pinned build already on
+ * Order: the operator's `DOMINEVO_FFMPEG_PATH` → the pinned build already on
  * disk → download it. No PATH, no image copy, no per-platform special case —
  * see `ffmpeg-binary-source.ts` for why the image stopped being special after
  * exactly one day.

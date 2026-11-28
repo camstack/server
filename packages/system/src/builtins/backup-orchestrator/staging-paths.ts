@@ -7,13 +7,13 @@
  * OUTSIDE every location in `DEFAULT_BACKUP_LOCATIONS`, so a backup
  * can never contain a backup by construction (the tar only ever
  * includes listed locations). It is deliberately NOT
- * `<nodeDataDir>/backups`: with `CAMSTACK_BACKUP_ROOT` unset (the
+ * `<nodeDataDir>/backups`: with `DOMINEVO_BACKUP_ROOT` unset (the
  * Electron app, or a docker host without the env) the default
  * `backups` storage location seeds at exactly that path, and transient
  * build files must never mix into an archive destination. The path is
  * always under the node data root, which every deployment shape
  * already mounts (`/data` volume in the Unraid template and
- * docker-compose, `CAMSTACK_DATA=<userData>/data` in Electron) — no
+ * docker-compose, `DOMINEVO_DATA=<userData>/data` in Electron) — no
  * template change required.
  *
  * Sweep: staging holds only transient files — an archive being built

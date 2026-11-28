@@ -17,10 +17,10 @@ ai-edge-litert==2.1.6
 # after this file installs (`@dominevo/types` `deps/edgetpu-delegate.ts`:
 # pinned, SHA-256 verified; on Linux libusb-1.0.so.0 beside it, because the std
 # delegate links libusb even for a PCIe Coral and the pool preloads that copy).
-# It lands in <CAMSTACK_DATA>/deps/edgetpu/lib/ — /data/deps/edgetpu/lib on the
+# It lands in <DOMINEVO_DATA>/deps/edgetpu/lib/ — /data/deps/edgetpu/lib on the
 # hub image, where `edgetpu-install.sh` (beside this file) has always put it.
 # Linux x64/arm64 and Apple Silicon only; Windows has no TF 2.17.1 build.
-# CAMSTACK_EDGETPU_LIB overrides the path the pool loads.
+# DOMINEVO_EDGETPU_LIB overrides the path the pool loads.
 # camstack-native-dep: edgetpu-delegate
 #
 # Host prerequisite, USB: /dev/bus/usb passed through plus a

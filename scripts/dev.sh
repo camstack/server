@@ -26,8 +26,8 @@ set -e
 #   --no-clean          : alias for the new default — kept for muscle-memory.
 #
 # Data directories configured in server/backend/.env:
-#   CAMSTACK_DATA=camstack-data              (hub)
-#   CAMSTACK_AGENT_1_DATA=camstack-agent-1-data  (agent 1)
+#   DOMINEVO_DATA=camstack-data              (hub)
+#   DOMINEVO_AGENT_1_DATA=camstack-agent-1-data  (agent 1)
 # ============================================================================
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
@@ -118,7 +118,7 @@ get_env() {
 # ----------------------------------------------------------------------------
 # Clean node data dirs per --clean-mode
 # ----------------------------------------------------------------------------
-HUB_DATA="$(get_env CAMSTACK_DATA)"
+HUB_DATA="$(get_env DOMINEVO_DATA)"
 [ -z "$HUB_DATA" ] && HUB_DATA="camstack-data"
 HUB_DATA_PATH="${BACKEND_DIR}/${HUB_DATA}"
 
@@ -133,7 +133,7 @@ done
 shopt -u nullglob
 # Also include explicitly declared agent slots (even if dir not yet created)
 for i in $([ "$AGENT_COUNT" -gt 0 ] && seq 0 $((AGENT_COUNT - 1))); do
-  AGENT_DATA_VAR="CAMSTACK_AGENT_${i}_DATA"
+  AGENT_DATA_VAR="DOMINEVO_AGENT_${i}_DATA"
   AGENT_DATA="$(get_env "$AGENT_DATA_VAR")"
   [ -z "$AGENT_DATA" ] && AGENT_DATA="camstack-agent-${i}-data"
   AGENT_PATH="${BACKEND_DIR}/${AGENT_DATA}"
@@ -208,7 +208,7 @@ npx nx run-many -t build \
   }
 
 # Agents are now the SAME @dominevo/server as the hub, booted with
-# CAMSTACK_ROLE=agent — `packages/agent` no longer exists. Dev agents run the
+# DOMINEVO_ROLE=agent — `packages/agent` no longer exists. Dev agents run the
 # BUILT `server/backend/dist/launcher.js` (no watch, matching the old agent
 # semantics), so we must produce a fresh server dist before spawning them. The
 # hub leg itself boots from src via `tsx watch` (npm run serve), so it does NOT
@@ -254,25 +254,25 @@ if [ "$WATCH" = true ]; then
   COMMANDS[0]="bash scripts/dev-watch-packages.sh"
 fi
 
-# Optional: agents — the SAME @dominevo/server booted with CAMSTACK_ROLE=agent.
+# Optional: agents — the SAME @dominevo/server booted with DOMINEVO_ROLE=agent.
 # Last agent starts WITHOUT hub address (discovery mode) so we can
 # test the autonomous boot + UI config flow. All others get explicit hub.
 for i in $([ "$AGENT_COUNT" -gt 0 ] && seq 0 $((AGENT_COUNT - 1))); do
   AGENT_NAME="dev-agent-${i}"
 
-  # Read agent data dir from .env: CAMSTACK_AGENT_{i}_DATA
-  AGENT_DATA_VAR="CAMSTACK_AGENT_${i}_DATA"
+  # Read agent data dir from .env: DOMINEVO_AGENT_{i}_DATA
+  AGENT_DATA_VAR="DOMINEVO_AGENT_${i}_DATA"
   AGENT_DATA="$(get_env "$AGENT_DATA_VAR")"
   [ -z "$AGENT_DATA" ] && AGENT_DATA="camstack-agent-${i}-data"
 
-  # Path relative to server/backend/ (same as hub's CAMSTACK_DATA)
+  # Path relative to server/backend/ (same as hub's DOMINEVO_DATA)
   AGENT_DATA_PATH="${BACKEND_DIR}/${AGENT_DATA}"
 
   NAMES="${NAMES},agent-${i}"
   AGENT_STATUS_PORT=$((4444 + i))
-  # CAMSTACK_ROLE=agent selects the agent runtime; CAMSTACK_DATA is the per-agent
-  # data dir (the old CAMSTACK_DATA_DIR is dead — agent-config.ts reads CAMSTACK_DATA).
-  AGENT_ENV="CAMSTACK_ROLE=agent CAMSTACK_NODE_ID=${AGENT_NAME} CAMSTACK_AGENT_NAME=${AGENT_NAME} CAMSTACK_DATA=${AGENT_DATA_PATH} CAMSTACK_STATUS_PORT=${AGENT_STATUS_PORT}"
+  # DOMINEVO_ROLE=agent selects the agent runtime; DOMINEVO_DATA is the per-agent
+  # data dir (the old DOMINEVO_DATA_DIR is dead — agent-config.ts reads DOMINEVO_DATA).
+  AGENT_ENV="DOMINEVO_ROLE=agent DOMINEVO_NODE_ID=${AGENT_NAME} DOMINEVO_AGENT_NAME=${AGENT_NAME} DOMINEVO_DATA=${AGENT_DATA_PATH} DOMINEVO_STATUS_PORT=${AGENT_STATUS_PORT}"
 
   LAST_AGENT_INDEX=$((AGENT_COUNT - 1))
   if [ "$i" -eq "$LAST_AGENT_INDEX" ]; then
@@ -282,7 +282,7 @@ for i in $([ "$AGENT_COUNT" -gt 0 ] && seq 0 $((AGENT_COUNT - 1))); do
   else
     # Other agents: explicit hub connection
     COLORS="${COLORS},green"
-    AGENT_ENV="${AGENT_ENV} CAMSTACK_HUB_ADDRESS=localhost"
+    AGENT_ENV="${AGENT_ENV} DOMINEVO_HUB_ADDRESS=localhost"
     COMMANDS+=("sleep 5 && ${AGENT_ENV} node server/backend/dist/launcher.js")
   fi
 done

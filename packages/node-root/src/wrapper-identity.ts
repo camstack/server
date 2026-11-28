@@ -9,9 +9,9 @@
  * the templates DECLARED `ghcr.io/dominevo/dominevo:intel-latest`, while the
  * hub actually ran `camstack-server:intel-1.1.74` from a repository that had
  * been renamed and received no builds. The declaration was right, reality was
- * not, and nothing compared them. A `CAMSTACK_WRAPPER=docker` written into a
+ * not, and nothing compared them. A `DOMINEVO_WRAPPER=docker` written into a
  * compose template would be exactly that same declaration — so `kind` is never
- * an env var, and the only env in play is `CAMSTACK_AGENT_APP_VERSION`, which
+ * an env var, and the only env in play is `DOMINEVO_AGENT_APP_VERSION`, which
  * already exists (`packages/desktop/src/main.ts` writes it, `agent-http.ts`
  * reads it).
  *
@@ -21,7 +21,7 @@
  *   |-------------------|-----------------------------------------|----------|
  *   | in a container    | `/.dockerenv`, `/proc/1/cgroup`         | observed |
  *   | not in a container| a non-linux platform                    | observed |
- *   | inside Electron   | `CAMSTACK_AGENT_APP_VERSION`            | declared |
+ *   | inside Electron   | `DOMINEVO_AGENT_APP_VERSION`            | declared |
  *
  * The Electron row has no honest alternative: the node is a CHILD of the
  * Electron main process, so `process.versions.electron` is `undefined` here.
@@ -65,7 +65,7 @@ export interface WrapperProbeReadings {
 
 export interface WrapperIdentityInputs extends WrapperProbeReadings {
   /**
-   * `CAMSTACK_AGENT_APP_VERSION` — `app.getVersion()`, written by the Electron
+   * `DOMINEVO_AGENT_APP_VERSION` — `app.getVersion()`, written by the Electron
    * main process into the child's env. Absent when the node runs headless or
    * in Docker.
    */
@@ -83,7 +83,7 @@ export interface WrapperIdentityInputs extends WrapperProbeReadings {
  * env, and `server/backend/src/agent/agent-http.ts` reads it for
  * `/api/agent/status`. Nothing here ever declares the wrapper KIND — see D437.
  */
-export const ELECTRON_APP_VERSION_ENV = 'CAMSTACK_AGENT_APP_VERSION'
+export const ELECTRON_APP_VERSION_ENV = 'DOMINEVO_AGENT_APP_VERSION'
 
 /** Container runtimes whose name appears in a task's cgroup path. */
 const CONTAINER_CGROUP_MARKERS: readonly string[] = ['docker', 'containerd', 'kubepods', 'podman']
@@ -147,8 +147,8 @@ export function detectWrapperIdentity(inputs: WrapperIdentityInputs): WrapperIde
       mode: 'declared',
       holds: electronDeclared,
       detail: electronDeclared
-        ? `CAMSTACK_AGENT_APP_VERSION=${String(electronAppVersion)}`
-        : 'CAMSTACK_AGENT_APP_VERSION not set',
+        ? `DOMINEVO_AGENT_APP_VERSION=${String(electronAppVersion)}`
+        : 'DOMINEVO_AGENT_APP_VERSION not set',
     },
   ]
 

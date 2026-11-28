@@ -19,15 +19,15 @@ describe('resolveLoginServer', () => {
     expect(() => resolveLoginServer(undefined, ['a', 'b'], {})).toThrow(/one hub address/)
     expect(() => resolveLoginServer(undefined, ['http://a'], {})).toThrow(/https/)
   })
-  it('falls back to $CAMSTACK_SERVER, then $CAMSTACK_HUB_URL, then undefined (discover)', () => {
-    expect(resolveLoginServer(undefined, [], { CAMSTACK_SERVER: 'a.local' })).toBe(
+  it('falls back to $DOMINEVO_SERVER, then $DOMINEVO_HUB_URL, then undefined (discover)', () => {
+    expect(resolveLoginServer(undefined, [], { DOMINEVO_SERVER: 'a.local' })).toBe(
       'https://a.local:4443',
     )
-    expect(resolveLoginServer(undefined, [], { CAMSTACK_HUB_URL: 'b.local:9000' })).toBe(
+    expect(resolveLoginServer(undefined, [], { DOMINEVO_HUB_URL: 'b.local:9000' })).toBe(
       'https://b.local:9000',
     )
     expect(resolveLoginServer(undefined, [], {})).toBeUndefined()
-    expect(resolveLoginServer('flag.local', [], { CAMSTACK_SERVER: 'a.local' })).toBe(
+    expect(resolveLoginServer('flag.local', [], { DOMINEVO_SERVER: 'a.local' })).toBe(
       'https://flag.local:4443',
     )
   })

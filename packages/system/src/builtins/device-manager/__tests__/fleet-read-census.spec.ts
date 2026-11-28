@@ -18,7 +18,7 @@
  * action, which is right for a steady-state mystery. It is useless here: the
  * storm happens DURING boot, and an action cannot be called before the process
  * that would answer it has started. The window therefore opens at construction,
- * from `CAMSTACK_FLEET_READ_CENSUS_MS`, and closes itself.
+ * from `DOMINEVO_FLEET_READ_CENSUS_MS`, and closes itself.
  *
  * ## Why it reports through the logger
  *

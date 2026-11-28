@@ -168,7 +168,7 @@ minus `data-store-provider` — so `sqlite-settings` is never instantiated and n
 Persistence is the hub's, and the agent's `settings-store` door forwards there
 over `$hub-cap-fwd.forward` (`hub-settings-forward.ts`). A **local engine always
 wins** over that remote, so the rollback is a single env var on the container —
-`CAMSTACK_AGENT_LOCAL_DATA_STORE=1` — and no redeploy.
+`DOMINEVO_AGENT_LOCAL_DATA_STORE=1` — and no redeploy.
 
 Two things follow that surprise people. Reads REJECT when the hub is
 unreachable, never answering empty — an empty answer is indistinguishable from
@@ -194,7 +194,7 @@ neither the young generation nor the old space.
 | `maxOldSpaceMb` | `--max-old-space-size=<n>` (`0` = none) | the class default | MAX; `0` wins |
 | `semiSpaceMb` (1–256) | `--max-semi-space-size=<n>` | the class default (2 light, V8's 64 heavy) | MAX |
 | `initialOldSpaceMb` (16–65536) | `--initial-old-space-size=<n>`, clamped to the ceiling | V8 grows it from the live set | MAX |
-| `rssBudgetMb` | `CAMSTACK_RUNNER_RSS_BUDGET_MB` (env, the watchdog's alarm) | unwatched, said at boot | MAX |
+| `rssBudgetMb` | `DOMINEVO_RUNNER_RSS_BUDGET_MB` (env, the watchdog's alarm) | unwatched, said at boot | MAX |
 
 Every value is the MAXIMUM across the group ([D2](../decisions/adr-0002.md),
 [D29](../decisions/adr-0029.md)): a runner is respawned as a whole, so a

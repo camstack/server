@@ -319,7 +319,7 @@ describe('PipelineOrchestratorAddon — source-owner assignment (P2d)', () => {
       success: true,
     })
     // No per-node reachableHost override set → the payload names the owner but
-    // carries no ownerReachableHost (the runner auto-detects via CAMSTACK_HUB_URL).
+    // carries no ownerReachableHost (the runner auto-detects via DOMINEVO_HUB_URL).
     expect(agentRunner.attachedCameras.get(104)?.frameSource).toEqual({
       kind: 'remote-restream',
       ownerNodeId: 'hub',

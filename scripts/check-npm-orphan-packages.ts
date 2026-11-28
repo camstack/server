@@ -60,7 +60,7 @@ const FETCH_TIMEOUT_MS = 20_000
 const RETIRED: Readonly<Record<string, string>> = {
   camstack:
     'renamed to dominevo (the CLI package, 0.1.0 restart) in the CamStack to Dominevo rebrand; deprecated on npm',
-  '@dominevo/agent': 'merged into @dominevo/server — CAMSTACK_ROLE=agent (2026-07-21); unpublished',
+  '@dominevo/agent': 'merged into @dominevo/server — DOMINEVO_ROLE=agent (2026-07-21); unpublished',
   '@dominevo/core':
     'merged into @dominevo/system — all 18 addon ids still declared there; unpublished',
   '@dominevo/system':

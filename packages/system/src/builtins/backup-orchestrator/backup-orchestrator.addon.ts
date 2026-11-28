@@ -335,7 +335,7 @@ export class BackupOrchestratorAddon extends BaseAddon<Record<string, never>> {
    * backup (the old `ctx.dataDir/staging` sat inside `addons-data` and
    * compounded 175M → 4.5G before Jul 28), and distinct from
    * `<nodeDataDir>/backups` where the default `backups` destination
-   * seeds when `CAMSTACK_BACKUP_ROOT` is unset. See staging-paths.ts.
+   * seeds when `DOMINEVO_BACKUP_ROOT` is unset. See staging-paths.ts.
    */
   private stagingDir = ''
   private scheduleTimer: NodeJS.Timeout | null = null
@@ -370,7 +370,7 @@ export class BackupOrchestratorAddon extends BaseAddon<Record<string, never>> {
       this.backupRecords = backupRecordStoresOf(records)
     }
 
-    // The node-local data root (`CAMSTACK_DATA` ?? kernel boot dir). Never the
+    // The node-local data root (`DOMINEVO_DATA` ?? kernel boot dir). Never the
     // hub-singleton `storage` cap. Backup *destinations* stay configurable via
     // the `backups` storage location; this is only the local source root.
     this.dataDir = this.ctx.nodeDataDir

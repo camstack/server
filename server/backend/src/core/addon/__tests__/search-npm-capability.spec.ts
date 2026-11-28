@@ -97,7 +97,7 @@ describe('searchNpm — capabilities', () => {
   beforeEach(() => {
     latestRequests = []
     vi.stubGlobal('fetch', vi.fn(fakeFetch))
-    delete process.env['CAMSTACK_NPM_REGISTRY']
+    delete process.env['DOMINEVO_NPM_REGISTRY']
   })
   afterEach(() => {
     vi.unstubAllGlobals()

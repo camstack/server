@@ -11,8 +11,8 @@ describe('describeFfmpegProvisioning', () => {
 
   it("names the operator's override when one is set", () => {
     expect(
-      describeFfmpegProvisioning({ CAMSTACK_FFMPEG_PATH: '/opt/ffmpeg/bin/ffmpeg' }),
-    ).toContain('CAMSTACK_FFMPEG_PATH=/opt/ffmpeg/bin/ffmpeg')
+      describeFfmpegProvisioning({ DOMINEVO_FFMPEG_PATH: '/opt/ffmpeg/bin/ffmpeg' }),
+    ).toContain('DOMINEVO_FFMPEG_PATH=/opt/ffmpeg/bin/ffmpeg')
   })
 })
 

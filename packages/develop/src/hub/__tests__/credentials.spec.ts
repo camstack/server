@@ -32,10 +32,10 @@ describe('resolveCredentials', () => {
     expect(asked).toBe('https://other:4443')
   })
 
-  it('looks the session up by $CAMSTACK_SERVER when --server is absent (not the newest file)', () => {
+  it('looks the session up by $DOMINEVO_SERVER when --server is absent (not the newest file)', () => {
     let asked: string | undefined = 'unset'
     resolveCredentials({
-      env: { CAMSTACK_SERVER: 'https://from-env:4443' },
+      env: { DOMINEVO_SERVER: 'https://from-env:4443' },
       loadSession: (s) => {
         asked = s
         return { server: 'https://from-env:4443', token: 'tok_env_host' }

@@ -6,7 +6,7 @@
  *
  * Refused, in client tooling (`scripts/`, `tests/e2e/`, the CLI, develop,
  * mcp-develop and nx-plugin sources, `.sh` files included):
- *   - an environment token: `CAMSTACK_TOKEN`, `CAMSTACK_HUB_TOKEN*`, a
+ *   - an environment token: `DOMINEVO_TOKEN`, `DOMINEVO_HUB_TOKEN*`, a
  *     `*_TOKEN_FILE` variable naming a hub credential;
  *   - a `--token` / `--token-file` option;
  *   - a `login` call (`auth.login`, `system.login`, `admin.login`) from `scripts/`:
@@ -14,7 +14,7 @@
  *
  * NOT refused: the agent JOIN token. It is a node's identity at first pairing,
  * not a client login, so `agent.ts`, the `dominevo agent` usage text in `main.ts`,
- * `dev-cluster.sh` and `dev-agent-only.sh` keep `--token` / `CAMSTACK_HUB_TOKEN`
+ * `dev-cluster.sh` and `dev-agent-only.sh` keep `--token` / `DOMINEVO_HUB_TOKEN`
  * on lines marked `agent-join:line` / between `agent-join:begin` and `agent-join:end`.
  *
  * A file that exists to REFUSE a removed flag names it (`REMOVED_ALLOWED`).
@@ -42,7 +42,7 @@ const NON_RUNTIME_RE = /\.(?:spec|test)\.(?:ts|tsx|mts|cts|js|mjs|cjs)$/
  * Node identity, not a client login. Only these files may carry the agent join
  * token, and only on lines marked `agent-join:line` or between `agent-join:begin`
  * and `agent-join:end`: a client command in the same file that regains
- * `--token` or `CAMSTACK_TOKEN` outside a marker still fails.
+ * `--token` or `DOMINEVO_TOKEN` outside a marker still fails.
  */
 const AGENT_JOIN_FILES: ReadonlySet<string> = new Set([
   'packages/cli/src/commands/agent.ts',
@@ -69,7 +69,7 @@ const REMOVED_REGION_FILES: ReadonlySet<string> = new Set([
   'scripts/deploy-addon.sh',
 ])
 
-const ENV_TOKEN = /\bCAMSTACK_TOKEN\b|\bCAMSTACK_HUB_TOKEN\w*|\bCAMSTACK_\w*TOKEN_FILE\b/
+const ENV_TOKEN = /\bDOMINEVO_TOKEN\b|\bDOMINEVO_HUB_TOKEN\w*|\bDOMINEVO_\w*TOKEN_FILE\b/
 const TOKEN_OPTION = /['"`\s](--token(?:-file)?)(?=[\s='"`)\]]|$)/
 const LOGIN_CALL = /\b(?:auth|system|admin)\.login\b|['"`](?:auth|system|admin)\.login['"`]/
 

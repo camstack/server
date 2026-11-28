@@ -6,7 +6,7 @@ import { resolveDeployConfig } from '../lib/resolve-config.js'
 
 /**
  * The deploy credential is the `dominevo login` session and nothing else
- * (D1101): no executor token, no $CAMSTACK_TOKEN, no ~/.camstackrc.
+ * (D1101): no executor token, no $DOMINEVO_TOKEN, no ~/.camstackrc.
  */
 const SERVER = 'https://hub.example.test:4443'
 
@@ -36,19 +36,19 @@ describe('resolveDeployConfig', () => {
     })
   })
 
-  it('ignores $CAMSTACK_TOKEN and an executor token: with no session it names dominevo login', () => {
+  it('ignores $DOMINEVO_TOKEN and an executor token: with no session it names dominevo login', () => {
     expect(() =>
       resolveDeployConfig({
         server: SERVER,
-        env: { CAMSTACK_TOKEN: 'from-env' },
+        env: { DOMINEVO_TOKEN: 'from-env' },
         sessionDir: dir,
       }),
     ).toThrow(/dominevo login/)
   })
 
-  it('takes the address from $CAMSTACK_SERVER, else the most recent session', () => {
+  it('takes the address from $DOMINEVO_SERVER, else the most recent session', () => {
     save('session-token')
-    expect(resolveDeployConfig({ env: { CAMSTACK_SERVER: SERVER }, sessionDir: dir }).server).toBe(
+    expect(resolveDeployConfig({ env: { DOMINEVO_SERVER: SERVER }, sessionDir: dir }).server).toBe(
       SERVER,
     )
     expect(resolveDeployConfig({ env: {}, sessionDir: dir }).server).toBe(SERVER)

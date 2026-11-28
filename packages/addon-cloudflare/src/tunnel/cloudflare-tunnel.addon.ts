@@ -102,7 +102,7 @@ export class CloudflareTunnelAddon extends BaseAddon<CloudflareTunnelAddonConfig
   /**
    * Resolve the local hub HTTPS port the tunnel must front. Order:
    *   1. Explicit `localPort` in addon config (> 0) — operator override.
-   *   2. `CAMSTACK_PORT` env (set by the bootstrap config manager).
+   *   2. `DOMINEVO_PORT` env (set by the bootstrap config manager).
    *   3. `PORT` env (legacy / .env fallback).
    *   4. 4443 — Dominevo hub backend HTTPS default.
    */
@@ -117,7 +117,7 @@ export class CloudflareTunnelAddon extends BaseAddon<CloudflareTunnelAddonConfig
     ) {
       return this.settings.localPort
     }
-    const camstack = Number.parseInt(process.env['CAMSTACK_PORT'] ?? '', 10)
+    const camstack = Number.parseInt(process.env['DOMINEVO_PORT'] ?? '', 10)
     if (Number.isFinite(camstack) && camstack > 0) return camstack
     const port = Number.parseInt(process.env['PORT'] ?? '', 10)
     if (Number.isFinite(port) && port > 0) return port
@@ -813,7 +813,7 @@ export class CloudflareTunnelAddon extends BaseAddon<CloudflareTunnelAddonConfig
         {
           // Persist `0` for default-mode so future restarts go through
           // `resolveLocalPort()` instead of pinning to the once-resolved
-          // value (which would drift if CAMSTACK_PORT changes).
+          // value (which would drift if DOMINEVO_PORT changes).
           localPort: useDefault ? 0 : (input.localPort ?? 0),
           localPortMode: useDefault ? 'default' : 'custom',
         },
@@ -1125,7 +1125,7 @@ export class CloudflareTunnelAddon extends BaseAddon<CloudflareTunnelAddonConfig
               label: 'Local port',
               labelKey: 'cloudflare:globalSettings.s_custom.localPortMode.label',
               description:
-                'Default: the addon resolves the hub backend port automatically (CAMSTACK_PORT, fallback 4443 HTTPS). Pick "Custom" only when you need to forward to a non-default service.',
+                'Default: the addon resolves the hub backend port automatically (DOMINEVO_PORT, fallback 4443 HTTPS). Pick "Custom" only when you need to forward to a non-default service.',
               descriptionKey: 'cloudflare:globalSettings.s_custom.localPortMode.description',
               default: 'default',
               options: [
@@ -1133,7 +1133,7 @@ export class CloudflareTunnelAddon extends BaseAddon<CloudflareTunnelAddonConfig
                   value: 'default',
                   label: 'Default (auto-detect hub port)',
                   labelKey: 'cloudflare:globalSettings.s_custom.localPortMode.o_default.label',
-                  description: 'Recommended — follows CAMSTACK_PORT env / 4443',
+                  description: 'Recommended — follows DOMINEVO_PORT env / 4443',
                 },
                 {
                   value: 'custom',
@@ -1178,7 +1178,7 @@ export class CloudflareTunnelAddon extends BaseAddon<CloudflareTunnelAddonConfig
               label: 'Mode',
               labelKey: 'cloudflare:globalSettings.s_mode.mode.label',
               description:
-                'Quick: random *.trycloudflare.com URL, no account. Custom: server-managed named tunnel on your own domain (requires a Cloudflare account + API token). Hit Start on the Remote Access page to launch — Custom mode auto-provisions on first start. The local hub port is auto-detected from CAMSTACK_PORT / PORT env.',
+                'Quick: random *.trycloudflare.com URL, no account. Custom: server-managed named tunnel on your own domain (requires a Cloudflare account + API token). Hit Start on the Remote Access page to launch — Custom mode auto-provisions on first start. The local hub port is auto-detected from DOMINEVO_PORT / PORT env.',
               descriptionKey: 'cloudflare:globalSettings.s_mode.mode.description',
               default: 'quick',
               options: [

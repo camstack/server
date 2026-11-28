@@ -92,7 +92,7 @@ export interface RemoteEncodedSourceBrokerOptions {
   readonly ownerNodeId: string
   /**
    * The owner host to dial (already resolved: attach-payload override →
-   * `CAMSTACK_HUB_URL`). `undefined` = unresolvable → every acquire fails
+   * `DOMINEVO_HUB_URL`). `undefined` = unresolvable → every acquire fails
    * fast with a descriptive error (a `127.0.0.1` restream URL on a remote
    * node would dial the wrong box).
    */
@@ -190,7 +190,7 @@ export class RemoteEncodedSourceBroker {
     const { api, deviceId, streamId, ownerNodeId } = this
     if (this.hostname === undefined) {
       throw new Error(
-        'RemoteEncodedSourceBroker: owner hostname unresolvable — set frameSource.hubHostnameOverride or CAMSTACK_HUB_URL (a 127.0.0.1 restream URL would dial the wrong box)',
+        'RemoteEncodedSourceBroker: owner hostname unresolvable — set frameSource.hubHostnameOverride or DOMINEVO_HUB_URL (a 127.0.0.1 restream URL would dial the wrong box)',
       )
     }
 

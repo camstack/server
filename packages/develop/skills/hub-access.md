@@ -6,7 +6,7 @@ description: Reach a Dominevo hub from a client tool — the CLI, `dominevo depl
 # Reaching a hub
 
 Every client tool reaches a hub the same way: the **`dominevo login` session**.
-There is no token flag, no token file, no `$CAMSTACK_TOKEN`, no rc file, and no
+There is no token flag, no token file, no `$DOMINEVO_TOKEN`, no rc file, and no
 password in a script. A tool that needs a credential asks the one resolver; a
 tool that needs a second way in is a bug to fix, not an exception to grant
 (D1101, enforced by `scripts/check-single-client-login.ts`).
@@ -28,7 +28,7 @@ not need a long-lived token on disk, because the session is the long-lived part.
 ## 2. Which hub
 
 The address is never a secret and may come from, in this order: the tool's
-`--server` option, `CAMSTACK_HUB_URL` / `CAMSTACK_SERVER`, a checkout's
+`--server` option, `DOMINEVO_HUB_URL` / `DOMINEVO_SERVER`, a checkout's
 `scratchpad/.hub-url`, then the hub of the saved session. A bare host is
 completed to the default port.
 
@@ -59,7 +59,7 @@ answer), the tool says that instead of guessing "not admin".
 | `Not logged in to <hub>` | no saved session for that address | `dominevo login <host>` |
 | 401 after the renewal | the refresh token was revoked or the user removed | log in again |
 | `--token` / `--token-file` "was removed" | an old command line | drop the flag; log in |
-| certificate error | self-signed hub | name its CA (`CAMSTACK_HUB_CA_FILE`); never switch verification off |
+| certificate error | self-signed hub | name its CA (`DOMINEVO_HUB_CA_FILE`); never switch verification off |
 
 ## 6. Agents never log in themselves
 

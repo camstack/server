@@ -61,7 +61,7 @@ export const cloudflareTunnelActions = defineCustomActions({
       zoneId: z.string().min(1),
       hostname: z.string().min(1),
       // `localPortMode` decides whether the addon auto-resolves the hub
-      // backend port (CAMSTACK_PORT / default 4443) or honours the
+      // backend port (DOMINEVO_PORT / default 4443) or honours the
       // operator-supplied `localPort`. The form-builder renders both
       // fields and the addon ignores `localPort` when mode='default'.
       localPortMode: z.enum(['default', 'custom']).default('default'),

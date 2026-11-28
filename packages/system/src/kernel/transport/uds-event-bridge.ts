@@ -40,7 +40,7 @@ import type { IEventBus, SystemEvent } from '@dominevo/types'
  * `event.category` (mirror of each child's local `SharedBusState.handlers`
  * keys). A child that never declared a set (legacy/undeclared) fails OPEN and
  * receives everything. There is no kill-switch any more (the
- * `CAMSTACK_UDS_EVENT_FANOUT` modes were removed on 2026-10-06). The bridge itself
+ * `DOMINEVO_UDS_EVENT_FANOUT` modes were removed on 2026-10-06). The bridge itself
  * needs no per-event logic change — both fan-out call sites here go through the
  * filtered `broadcastEventToChildren`. `sendEventToChild` (targeted push) is
  * NOT filtered — an explicit single-child send expresses intent.

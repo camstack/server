@@ -12,7 +12,7 @@ import WebSocket from 'ws'
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
 // The `dominevo login` session is the only credential (D1101): `dominevo login <host>` once.
 const hubAuth = await resolveHubAuth(
-  process.env['CAMSTACK_SERVER'] ? { server: process.env['CAMSTACK_SERVER'] } : {},
+  process.env['DOMINEVO_SERVER'] ? { server: process.env['DOMINEVO_SERVER'] } : {},
 )
 const SERVER = hubAuth.server
 const DEVICE_ID = process.argv[2] || 'dev_0003'

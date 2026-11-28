@@ -95,7 +95,7 @@ export interface Probe {
   readonly heapUsedMb: number
 }
 
-// The entry boots a runner on load (`main()` reads CAMSTACK_RUNNER_* and exits
+// The entry boots a runner on load (`main()` reads DOMINEVO_RUNNER_* and exits
 // when they are missing). Loading the entry is the point — the closure may be a
 // single file — so `process.exit` is turned into a throw and the resulting
 // rejection swallowed: every import has been evaluated by then, which is the

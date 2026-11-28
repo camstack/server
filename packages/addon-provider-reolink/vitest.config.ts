@@ -9,7 +9,7 @@ export default defineConfig({
     exclude: [
       '**/node_modules/**',
       '**/dist/**',
-      ...(process.env.CAMSTACK_HEAVY_SPECS === '1' ? [] : ['**/*.heavy.spec.*']),
+      ...(process.env.DOMINEVO_HEAVY_SPECS === '1' ? [] : ['**/*.heavy.spec.*']),
     ],
   },
 })

@@ -19,10 +19,10 @@
  * Isolation: the suite uses a unique cluster secret + non-default
  * hub/agent/verdaccio ports + isolated mktemp data dirs so it never
  * collides with a developer's running `dev:full` cluster (which holds
- * the default ports). An explicit `CAMSTACK_HUB_ADDRESS` on the agent
+ * the default ports). An explicit `DOMINEVO_HUB_ADDRESS` on the agent
  * disables UDP discovery — the agent connects ONLY to the test hub.
  *
- * Gated behind `CAMSTACK_E2E_LIVE=1` like every other live suite.
+ * Gated behind `DOMINEVO_E2E_LIVE=1` like every other live suite.
  *
  * Test flow:
  *   1. Verdaccio: publish the synthetic addon at 1.0.0 and 1.1.0. The
@@ -53,7 +53,7 @@ import {
 import { spawnVerdaccio, publishFixture, type SpawnedVerdaccio } from '../fixtures/verdaccio.ts'
 import { buildSyntheticAddon, type SyntheticAddon } from '../fixtures/synthetic-addon.ts'
 
-const E2E_LIVE = process.env['CAMSTACK_E2E_LIVE'] === '1'
+const E2E_LIVE = process.env['DOMINEVO_E2E_LIVE'] === '1'
 const desc = E2E_LIVE ? describe : describe.skip
 
 // ── Unique per-suite identifiers ────────────────────────────────────────
@@ -194,12 +194,12 @@ beforeAll(async () => {
     port: HUB_HTTP_PORT,
     bootTimeoutMs: 180_000,
     env: {
-      CAMSTACK_NPM_REGISTRY: registryRef.url,
-      CAMSTACK_HUB_TCP_PORT: String(HUB_TCP_PORT),
+      DOMINEVO_NPM_REGISTRY: registryRef.url,
+      DOMINEVO_HUB_TCP_PORT: String(HUB_TCP_PORT),
       // Framework/required packages aren't on the test verdaccio —
       // bootstrap them from the local workspace, same as the other
       // verdaccio-backed suites.
-      CAMSTACK_SKIP_ADMIN_UI_WAIT: '1',
+      DOMINEVO_SKIP_ADMIN_UI_WAIT: '1',
     },
   })
   const client = await loginAsAdmin(hubRef.port)
@@ -216,7 +216,7 @@ beforeAll(async () => {
       // Boot the agent's required runtime packages from the workspace
       // `packages/` dir (offline, fast) instead of npm — the agent
       // runtime packages are not on the test verdaccio.
-      CAMSTACK_BUNDLED_ADDONS_DIR: REPO_PACKAGES_DIR,
+      DOMINEVO_BUNDLED_ADDONS_DIR: REPO_PACKAGES_DIR,
     },
   })
 

@@ -9,7 +9,7 @@
  * Uses random ports to avoid conflicts with running servers.
  *
  * The serve/agent tests require the full server build (@dominevo/server/main.js)
- * and are gated behind CAMSTACK_TEST_CLI_FULL=true.
+ * and are gated behind DOMINEVO_TEST_CLI_FULL=true.
  */
 import { describe, it, expect, afterEach } from 'vitest'
 import { fork, type ChildProcess } from 'node:child_process'
@@ -64,7 +64,7 @@ describe('CLI E2E', () => {
   })
 
   // Full server boot tests require the entire build chain
-  const fullTest = process.env.CAMSTACK_TEST_CLI_FULL === 'true' && CLI_EXISTS ? it : it.skip
+  const fullTest = process.env.DOMINEVO_TEST_CLI_FULL === 'true' && CLI_EXISTS ? it : it.skip
 
   fullTest(
     'dominevo serve boots and responds on HTTPS',
@@ -110,8 +110,8 @@ describe('CLI E2E', () => {
           stdio: 'pipe',
           env: {
             ...process.env,
-            CAMSTACK_AGENT_NAME: 'test-agent',
-            CAMSTACK_DATA: TEST_DATA_DIR,
+            DOMINEVO_AGENT_NAME: 'test-agent',
+            DOMINEVO_DATA: TEST_DATA_DIR,
           },
         },
       )

@@ -14,7 +14,7 @@ import {
 import type { FrameImage } from '../../session-decode/video-frame-generator.js'
 import { FrameLazyTelemetry } from '../frame-lazy-metrics.js'
 import {
-  CAMSTACK_CONTINUOUS_RETAIN,
+  DOMINEVO_CONTINUOUS_RETAIN,
   OnDemandRetentionSession,
   canRecoverNotificationMedia,
   encodeCrossNodeCrop,
@@ -128,10 +128,10 @@ function session(opts?: { continuousRetain?: boolean }) {
 }
 
 describe('on-demand retention policy', () => {
-  const prev = process.env[CAMSTACK_CONTINUOUS_RETAIN]
+  const prev = process.env[DOMINEVO_CONTINUOUS_RETAIN]
   afterEach(() => {
-    if (prev === undefined) delete process.env[CAMSTACK_CONTINUOUS_RETAIN]
-    else process.env[CAMSTACK_CONTINUOUS_RETAIN] = prev
+    if (prev === undefined) delete process.env[DOMINEVO_CONTINUOUS_RETAIN]
+    else process.env[DOMINEVO_CONTINUOUS_RETAIN] = prev
   })
 
   it('does not retain an admitted or dropped frame without a detection', () => {
@@ -141,7 +141,7 @@ describe('on-demand retention policy', () => {
     expect(
       shouldRetainDetectionFrame({ admitted: false, hasDetection: false, continuousRetain: false }),
     ).toBe(false)
-    expect(isContinuousRetainEnabled({ [CAMSTACK_CONTINUOUS_RETAIN]: '1' })).toBe(true)
+    expect(isContinuousRetainEnabled({ [DOMINEVO_CONTINUOUS_RETAIN]: '1' })).toBe(true)
     expect(isContinuousRetainEnabled({})).toBe(false)
   })
 
@@ -266,7 +266,7 @@ describe('on-demand retention policy', () => {
     expect(payload).not.toHaveProperty('bytes')
   })
 
-  it('rollback CAMSTACK_CONTINUOUS_RETAIN=1 restores write-on-admit', () => {
+  it('rollback DOMINEVO_CONTINUOUS_RETAIN=1 restores write-on-admit', () => {
     const { gate, retained } = session({ continuousRetain: true })
     const handle = gate.admitFrame(1, rawFrame())
     expect(handle).toBeDefined()

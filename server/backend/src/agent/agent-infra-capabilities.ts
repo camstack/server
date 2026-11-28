@@ -34,7 +34,7 @@
  * hang). A change to agent boot that can only be undone by shipping a build is
  * a change that stays broken for a release cycle.
  *
- * **To roll back:** set `CAMSTACK_AGENT_LOCAL_DATA_STORE=1` in the agent
+ * **To roll back:** set `DOMINEVO_AGENT_LOCAL_DATA_STORE=1` in the agent
  * container's environment and restart it. That restores `INFRA_CAPABILITIES`
  * EXACTLY (same entries, same order, same `required` flags) minus the hub-only
  * `keychain`, which no flag brings to an agent — so the agent boots its own `sqlite-settings` again and the data door resolves that engine
@@ -50,7 +50,7 @@ import { INFRA_CAPABILITIES, type InfraCapability } from '@dominevo/server/syste
  * for what it disables, so an operator reading a container's environment can
  * tell what it does without this file.
  */
-export const AGENT_LOCAL_DATA_STORE_ENV = 'CAMSTACK_AGENT_LOCAL_DATA_STORE'
+export const AGENT_LOCAL_DATA_STORE_ENV = 'DOMINEVO_AGENT_LOCAL_DATA_STORE'
 
 /** The capability an agent no longer boots. */
 const DATA_STORE_PROVIDER = 'data-store-provider'

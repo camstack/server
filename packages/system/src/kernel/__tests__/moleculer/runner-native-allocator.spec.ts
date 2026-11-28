@@ -68,7 +68,7 @@ describe('runnerNativeAllocatorEnv', () => {
   })
 
   it('has a kill switch that needs no rebuild — `off` restores the glibc/sharp defaults', () => {
-    const env = runnerNativeAllocatorEnv({ CAMSTACK_RUNNER_NATIVE_ALLOCATOR: 'off' }, 'linux')
+    const env = runnerNativeAllocatorEnv({ DOMINEVO_RUNNER_NATIVE_ALLOCATOR: 'off' }, 'linux')
     expect(env.MALLOC_ARENA_MAX).toBeUndefined()
     expect(env.VIPS_CONCURRENCY).toBeUndefined()
   })
@@ -86,7 +86,7 @@ describe('runnerNativeAllocatorEnv', () => {
   })
 
   it('ignores the retired Dominevo arena override', () => {
-    const env = runnerNativeAllocatorEnv({ CAMSTACK_RUNNER_MALLOC_ARENA_MAX: '4' }, 'linux')
+    const env = runnerNativeAllocatorEnv({ DOMINEVO_RUNNER_MALLOC_ARENA_MAX: '4' }, 'linux')
     expect(env.MALLOC_ARENA_MAX).toBe(String(RUNNER_MALLOC_ARENA_MAX_DEFAULT))
   })
 })

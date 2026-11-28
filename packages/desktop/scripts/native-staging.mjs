@@ -79,7 +79,7 @@ export function hasDotNode(dir, maxDepth = 6) {
 
 /**
  * Every `@dominevo/*` package dir inside a staged closure's `node_modules` —
- * i.e. every dir the packaged app's `CAMSTACK_BUNDLED_ADDONS_DIR` can seed from,
+ * i.e. every dir the packaged app's `DOMINEVO_BUNDLED_ADDONS_DIR` can seed from,
  * because `AddonInstaller.findLocalPackage` joins the SHORT name onto that dir
  * and an npm scope dir is laid out exactly that way.
  *

@@ -3,7 +3,7 @@
  * the hub's other self-addressed URLs — derived from the `local-network`
  * capability, never from an environment variable.
  *
- * This used to be `process.env.CAMSTACK_HUB_PUBLIC_URL ?? 'https://127.0.0.1:4443'`.
+ * This used to be `process.env.DOMINEVO_HUB_PUBLIC_URL ?? 'https://127.0.0.1:4443'`.
  * The desktop app has no field for that variable and the container template
  * marked it optional, so a Mac hub and any container started without it handed
  * every agent its OWN loopback: each addon deploy and model distribution to an

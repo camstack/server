@@ -165,13 +165,13 @@ function buildCommands(): readonly CommandSpec[] {
           "      --open               With --browser: also open the approval page in this machine's browser",
           '',
           'Default flow (no flags): finds the hub from what the LAN announces over mDNS',
-          '  plus the hubs this machine knows (saved sessions, $CAMSTACK_HUB_URL),',
+          '  plus the hubs this machine knows (saved sessions, $DOMINEVO_HUB_URL),',
           '  then prompts for user + password. Found hubs show a picker (the first, the default, is',
           '  one Enter away) with the source of each and an "Enter an address…" entry, so a hub',
           '  that does not announce is still reachable. A given <host>/--server skips all of it.',
           '',
           'Options (all optional):',
-          '  -s, --server <host>    Skip discovery, use this hub ($CAMSTACK_SERVER, then $CAMSTACK_HUB_URL)',
+          '  -s, --server <host>    Skip discovery, use this hub ($DOMINEVO_SERVER, then $DOMINEVO_HUB_URL)',
           '  -n, --namespace <ns>   Ignored (kept so old scripts do not fail): hubs are found over mDNS',
           '  -u, --username <name>  Username (skips prompt)',
           '  -p, --password <pwd>   Password (skips prompt — prefer letting the CLI prompt)',
@@ -194,7 +194,7 @@ function buildCommands(): readonly CommandSpec[] {
           'Usage: dominevo discover [options]',
           '',
           'Lists the hubs `dominevo login` would offer: those announcing _camstack._tcp over',
-          '  mDNS plus saved sessions, $CAMSTACK_HUB_URL and scratchpad/.hub-url,',
+          '  mDNS plus saved sessions, $DOMINEVO_HUB_URL and scratchpad/.hub-url,',
           '  reachable ones only, each with its source. Agents never announce this service.',
           '',
           'Options:',
@@ -212,7 +212,7 @@ function buildCommands(): readonly CommandSpec[] {
           'Usage: dominevo logout [options]',
           '',
           'Options:',
-          '  -s, --server <host>     Dominevo server URL (default: $CAMSTACK_SERVER or https://localhost:4443; a bare host or host:port is fine)',
+          '  -s, --server <host>     Dominevo server URL (default: $DOMINEVO_SERVER or https://localhost:4443; a bare host or host:port is fine)',
         ].join('\n'),
     },
     {
@@ -225,7 +225,7 @@ function buildCommands(): readonly CommandSpec[] {
           '',
           'With one saved session, prints it and checks the token against the hub. With several and',
           'no --server, lists them all (server, user, admin role) and marks the default:',
-          '$CAMSTACK_SERVER if set, else the most recently used session.',
+          '$DOMINEVO_SERVER if set, else the most recently used session.',
           '',
           'Options:',
           '  -s, --server <host>    Show one session (192.0.2.20, hub.local:4443, https://host)',
@@ -260,7 +260,7 @@ function buildCommands(): readonly CommandSpec[] {
           '      --no-verify         Skip post-deploy verify / promotion poll',
           '',
           'Target options (addon and --closure):',
-          '  -s, --server <host>      Hub URL (default: $CAMSTACK_SERVER, then the cached session)',
+          '  -s, --server <host>      Hub URL (default: $DOMINEVO_SERVER, then the cached session)',
           '  -n, --node <id>         Target one agent. Mutually exclusive with --cluster',
           '  -c, --cluster           Every online agent (and hub for addons; hub then agents for --closure)',
           '',
@@ -491,7 +491,7 @@ async function runLogin(args: readonly string[]): Promise<void> {
     return
   }
   // Resolution chain:
-  //   --server / $CAMSTACK_SERVER   → silent, use as-is
+  //   --server / $DOMINEVO_SERVER   → silent, use as-is
   //   neither                       → mDNS + known hubs; one is taken, several get a picker
   // We never auto-fallback to localhost.
   await loginCommand({
@@ -515,7 +515,7 @@ async function runLogout(args: readonly string[]): Promise<void> {
     return
   }
   const server = normalizeHubAddress(
-    stringOpt(parsed.values, 'server') ?? process.env.CAMSTACK_SERVER ?? DEFAULT_SERVER_URL,
+    stringOpt(parsed.values, 'server') ?? process.env.DOMINEVO_SERVER ?? DEFAULT_SERVER_URL,
   )
   await logoutCommand({ server })
 }

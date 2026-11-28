@@ -269,8 +269,8 @@ function unmetForTarget(
     return unmetAddonRequirements(manifest.requires, {
       serverVersion: readRunningServerVersion(),
       addonsDir: () => {
-        const dataDir = path.resolve(process.env['CAMSTACK_DATA'] ?? 'camstack-data')
-        return process.env['CAMSTACK_ADDONS_DIR'] ?? path.resolve(dataDir, 'addons')
+        const dataDir = path.resolve(process.env['DOMINEVO_DATA'] ?? 'camstack-data')
+        return process.env['DOMINEVO_ADDONS_DIR'] ?? path.resolve(dataDir, 'addons')
       },
     })
   }
@@ -426,14 +426,14 @@ async function installToHub(
       .filter((row) => row.manifest.packageName === result.name)
       .map((row) => row.manifest.id)
 
-    // Must honour CAMSTACK_ADDONS_DIR — the runtime installs/loads addons
-    // from there (e.g. /data/node_modules), NOT from CAMSTACK_DATA/addons.
-    // Deriving the dir from CAMSTACK_DATA alone pointed the marker write at a
+    // Must honour DOMINEVO_ADDONS_DIR — the runtime installs/loads addons
+    // from there (e.g. /data/node_modules), NOT from DOMINEVO_DATA/addons.
+    // Deriving the dir from DOMINEVO_DATA alone pointed the marker write at a
     // non-existent path → unguarded ENOENT → HTTP 500, which aborted the
     // handler before loadNewAddons()/restartAddon() ran, so uploads landed on
     // disk but never hot-reloaded. Mirrors AddonPackageService.resolveAddonsDir().
-    const dataDir = path.resolve(process.env['CAMSTACK_DATA'] ?? 'camstack-data')
-    const addonsDir = process.env['CAMSTACK_ADDONS_DIR'] ?? path.resolve(dataDir, 'addons')
+    const dataDir = path.resolve(process.env['DOMINEVO_DATA'] ?? 'camstack-data')
+    const addonsDir = process.env['DOMINEVO_ADDONS_DIR'] ?? path.resolve(dataDir, 'addons')
     try {
       fs.writeFileSync(path.join(addonsDir, result.name, '.install-source'), 'upload')
     } catch (err) {

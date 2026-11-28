@@ -105,7 +105,7 @@ describe('defaults / format / requirements', () => {
       reason: 'no-cuda-execution-provider' as const,
     }
     expect(
-      pythonRequirementsFor('onnx', { nvidia, ortWheelhouse: '/opt/camstack/wheelhouse' }),
+      pythonRequirementsFor('onnx', { nvidia, ortWheelhouse: '/opt/dominevo/wheelhouse' }),
     ).toEqual(['requirements.txt', 'requirements-onnxruntime-gpu.txt'])
     // no wheelhouse (not an nvidia image) or no card: the CPU wheel
     expect(pythonRequirementsFor('onnx', { nvidia, ortWheelhouse: null })).toContain(

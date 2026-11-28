@@ -7,7 +7,7 @@
  *
  * Post-consolidation there is a SINGLE root package — `@dominevo/server` —
  * for every node role. An agent node boots the same `@dominevo/server`
- * closure via `CAMSTACK_ROLE=agent`; the launcher branches into the agent
+ * closure via `DOMINEVO_ROLE=agent`; the launcher branches into the agent
  * runtime at boot. The spec is kept as a parameter (clean DI: the machinery
  * never hard-codes a package name) even though only one spec exists today.
  *
@@ -26,7 +26,7 @@ export interface RootPackageSpec {
 
 /**
  * The single root package for every node role — the starter loads its
- * launcher, which branches on `CAMSTACK_ROLE` into the hub or agent runtime.
+ * launcher, which branches on `DOMINEVO_ROLE` into the hub or agent runtime.
  */
 export const HUB_ROOT_SPEC: RootPackageSpec = {
   packageName: '@dominevo/server',

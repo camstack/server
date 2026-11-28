@@ -25,7 +25,7 @@ import {
  * in 2026-05 specifically to break that cycle.
  *
  * Shared per-node store (2026-06): base binaries (Python, ffmpeg, downloaded
- * tools) are resolved into the NODE data dir (`CAMSTACK_DATA`), not the
+ * tools) are resolved into the NODE data dir (`DOMINEVO_DATA`), not the
  * per-addon dir. Every addon on a node reuses one copy instead of downloading
  * its own. Because addons run as separate processes that now share one deps
  * dir, resolution is guarded by a single-flight (in-process promise cache +
@@ -35,7 +35,7 @@ import {
 
 /** Resolve the node-wide data root (shared by all addon processes on a node). */
 function resolveNodeRoot(): string {
-  return process.env['CAMSTACK_DATA'] ?? process.env['CAMSTACK_DATA_DIR'] ?? 'camstack-data'
+  return process.env['DOMINEVO_DATA'] ?? process.env['DOMINEVO_DATA_DIR'] ?? 'camstack-data'
 }
 
 // In-process coalescing: concurrent calls in the SAME process for the same

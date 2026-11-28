@@ -55,8 +55,8 @@ describe('process-service re-gates a runner before it stops it (planning#713)', 
     opts: cp.SpawnOptions,
   ): cp.ChildProcess => {
     const child = makeFakeChild(++pidCounter)
-    const nodeId = (opts.env as Record<string, string>)['CAMSTACK_PARENT_NODE_ID']
-    const runnerId = (opts.env as Record<string, string>)['CAMSTACK_RUNNER_ID']
+    const nodeId = (opts.env as Record<string, string>)['DOMINEVO_PARENT_NODE_ID']
+    const runnerId = (opts.env as Record<string, string>)['DOMINEVO_RUNNER_ID']
     setImmediate(() => child.stdout.emit('data', Buffer.from(`READY:${nodeId}/${runnerId}\n`)))
     return child as unknown as cp.ChildProcess
   }

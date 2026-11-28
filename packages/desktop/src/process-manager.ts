@@ -6,7 +6,7 @@
  * STARTER (`@dominevo/server/dist/starter.js`), NOT `launcher.js` directly. The
  * starter resolves the active `@dominevo/server` root from the user data dir
  * (`<userData>/data/server-root/...`) and falls back to the baked SEED closure
- * (Resources) on first boot / offline. The `CAMSTACK_ROLE` env the shell passes
+ * (Resources) on first boot / offline. The `DOMINEVO_ROLE` env the shell passes
  * selects hub vs agent inside the launcher. Node + framework updates then land
  * in the data dir and NEVER touch the signed .app bundle.
  *
@@ -86,7 +86,7 @@ function existsDir(p: string): boolean {
  * `dist/launcher.js`, its `package.json`, and — as npm siblings under
  * `${resourcesPath}/node_modules/@dominevo/*` — the host-external framework
  * packages the seed launcher resolves. Passed to the starter as
- * `CAMSTACK_SEED_SERVER_DIR`. Returns null in dev (no packaged Resources).
+ * `DOMINEVO_SEED_SERVER_DIR`. Returns null in dev (no packaged Resources).
  */
 export function resolveSeedServerDir(resourcesPath: string | null): string | null {
   if (!resourcesPath) return null
@@ -97,7 +97,7 @@ export function resolveSeedServerDir(resourcesPath: string | null): string | nul
 /**
  * Resolve the dir the packaged app seeds addons from: the `@dominevo` SCOPE dir
  * of the baked closure, `${resourcesPath}/node_modules/@dominevo`. Exported to
- * the node as `CAMSTACK_BUNDLED_ADDONS_DIR`. Returns null in dev / a build
+ * the node as `DOMINEVO_BUNDLED_ADDONS_DIR`. Returns null in dev / a build
  * without the closure — the launcher then falls back to npm.
  *
  * ── Why the closure scope dir and not a second `Resources/addons` tree ──────

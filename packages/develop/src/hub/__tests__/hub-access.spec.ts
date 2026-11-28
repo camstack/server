@@ -56,7 +56,7 @@ describe('resolveHubUrl', () => {
     const session = { server: 'https://session.example.test' }
     expect(resolveHubUrl({ explicit: 'https://flag.example.test/', env: {} })?.source).toBe('flag')
     expect(
-      resolveHubUrl({ env: { CAMSTACK_HUB_URL: 'https://env.example.test' }, workspaceRoot: dir }),
+      resolveHubUrl({ env: { DOMINEVO_HUB_URL: 'https://env.example.test' }, workspaceRoot: dir }),
     ).toEqual({ url: 'https://env.example.test:4443', source: 'env' })
     expect(resolveHubUrl({ env: {}, workspaceRoot: dir, session })).toEqual({
       url: 'https://scratch.example.test:4443',
@@ -78,8 +78,8 @@ describe('resolveHubTls', () => {
   })
   it('refuses a named CA file that cannot be read instead of falling back', () => {
     expect(() =>
-      resolveHubTls(SESSION.server, { CAMSTACK_HUB_CA_FILE: path.join(dir, 'nope') }, dir),
-    ).toThrow(/CAMSTACK_HUB_CA_FILE/)
+      resolveHubTls(SESSION.server, { DOMINEVO_HUB_CA_FILE: path.join(dir, 'nope') }, dir),
+    ).toThrow(/DOMINEVO_HUB_CA_FILE/)
   })
   it('explains a verification failure and never suggests disabling it', () => {
     const err = Object.assign(new Error('self signed'), { code: 'DEPTH_ZERO_SELF_SIGNED_CERT' })

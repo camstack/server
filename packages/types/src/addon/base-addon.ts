@@ -1672,7 +1672,7 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
    * This is the SINGLE centralized models-dir resolver for every inference addon
    * (detection-pipeline, audio-analyzer, embedding-encoder, model-studio). It is
    * anchored at the node's own writable data root (`ctx.nodeDataDir`, i.e.
-   * `CAMSTACK_DATA` ?? the kernel boot dir) — never the hub-singleton `storage`
+   * `DOMINEVO_DATA` ?? the kernel boot dir) — never the hub-singleton `storage`
    * cap, which returns the hub's `/data/models` to every node and breaks any node
    * whose real data dir differs (e.g. the macOS electron agent).
    *

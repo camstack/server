@@ -28,9 +28,9 @@ import {
 import type { WrapperProbeReadings } from '../wrapper-identity.js'
 
 const ENV_NAMES: RootUpdateEnvNames = {
-  bootMode: 'CAMSTACK_SERVER_BOOT_MODE',
-  activeVersion: 'CAMSTACK_SERVER_ACTIVE_VERSION',
-  seedDir: 'CAMSTACK_SEED_SERVER_DIR',
+  bootMode: 'DOMINEVO_SERVER_BOOT_MODE',
+  activeVersion: 'DOMINEVO_SERVER_ACTIVE_VERSION',
+  seedDir: 'DOMINEVO_SEED_SERVER_DIR',
 }
 
 const SILENT: RootUpdateLogger = {
@@ -89,7 +89,7 @@ function makeService(
   })
 }
 
-const ELECTRON_ENV: NodeJS.ProcessEnv = { CAMSTACK_AGENT_APP_VERSION: '2.0.0' }
+const ELECTRON_ENV: NodeJS.ProcessEnv = { DOMINEVO_AGENT_APP_VERSION: '2.0.0' }
 
 function appState(over: Partial<DesktopAppStateFile> = {}): DesktopAppStateFile {
   return {

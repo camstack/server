@@ -8,7 +8,7 @@ describe('ConfigService', () => {
   beforeEach(() => {
     // `ConfigManager` reads `ENV_VAR_MAP`; a sibling suite (or the parent nx
     // process) must not leak those variables in. Snapshot and clear them.
-    const envKeys = ['CAMSTACK_PORT', 'CAMSTACK_HOST', 'CAMSTACK_DATA', 'CONFIG_PATH'] as const
+    const envKeys = ['DOMINEVO_PORT', 'DOMINEVO_HOST', 'DOMINEVO_DATA', 'CONFIG_PATH'] as const
     originalEnv = {}
     for (const key of envKeys) {
       originalEnv[key] = process.env[key]
@@ -24,8 +24,8 @@ describe('ConfigService', () => {
   })
 
   it('reads port and host from the environment', () => {
-    process.env['CAMSTACK_PORT'] = '5000'
-    process.env['CAMSTACK_HOST'] = '127.0.0.1'
+    process.env['DOMINEVO_PORT'] = '5000'
+    process.env['DOMINEVO_HOST'] = '127.0.0.1'
 
     const service = new ConfigService()
 
@@ -35,13 +35,13 @@ describe('ConfigService', () => {
   })
 
   it('throws on an invalid port', () => {
-    process.env['CAMSTACK_PORT'] = 'not-a-number'
+    process.env['DOMINEVO_PORT'] = 'not-a-number'
 
     expect(() => new ConfigService()).toThrow()
   })
 
   it('dot-path access works for bootstrap keys', () => {
-    process.env['CAMSTACK_PORT'] = '9090'
+    process.env['DOMINEVO_PORT'] = '9090'
 
     const service = new ConfigService()
 
@@ -77,8 +77,8 @@ describe('ConfigService', () => {
   })
 
   it('getBootstrap returns bootstrap-only values', () => {
-    process.env['CAMSTACK_PORT'] = '7777'
-    process.env['CAMSTACK_DATA'] = '/custom/data'
+    process.env['DOMINEVO_PORT'] = '7777'
+    process.env['DOMINEVO_DATA'] = '/custom/data'
 
     const service = new ConfigService()
 

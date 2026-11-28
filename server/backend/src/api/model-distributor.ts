@@ -17,7 +17,7 @@ import type { ClusterBaseUrlResolver } from './hub-cluster-url.js'
 const AGENT_DISTRIBUTE_TIMEOUT_MS = 60_000
 
 function hubModelsDir(): string {
-  return path.join(process.env['CAMSTACK_DATA'] ?? 'camstack-data', 'models')
+  return path.join(process.env['DOMINEVO_DATA'] ?? 'camstack-data', 'models')
 }
 
 /**

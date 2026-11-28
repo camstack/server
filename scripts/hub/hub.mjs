@@ -7,16 +7,16 @@
 // `dominevo login <host>` once, interactively: every tool uses that session
 // (~/.camstack/<host>_<port>.json), renewed automatically when it is about to expire,
 // and a 401 renews it once and retries once. A headless service is logged in once and
-// then refreshes unattended. `--token-file` and $CAMSTACK_TOKEN were removed.
+// then refreshes unattended. `--token-file` and $DOMINEVO_TOKEN were removed.
 //
 // --server takes a host, host:port or https URL (normalised by the shared
 // normalizeHubAddress in @dominevo/develop; port defaults to 4443).
-// The hub address is never in this file: --server, else $CAMSTACK_HUB_URL, else
+// The hub address is never in this file: --server, else $DOMINEVO_HUB_URL, else
 // the gitignored scratchpad/.hub-url (one line, https://<hub-host>:4443), else
 // the cached session's server.
 //
 // TLS stays on. A hub with a private certificate is trusted by saving its PEM (or the issuing CA, e.g. mkcert rootCA.pem)
-// to ~/.camstack/<host>.ca.pem (or $CAMSTACK_HUB_CA_FILE); a failure prints
+// to ~/.camstack/<host>.ca.pem (or $DOMINEVO_HUB_CA_FILE); a failure prints
 // the exact command.
 //
 // Needs the develop package built once: `npm run build -w packages/develop`.
@@ -91,7 +91,7 @@ const hub = resolveHubUrl({
 })
 if (!hub) {
   console.error(
-    'no hub URL: pass --server, set CAMSTACK_HUB_URL, write scratchpad/.hub-url, or run `dominevo login`',
+    'no hub URL: pass --server, set DOMINEVO_HUB_URL, write scratchpad/.hub-url, or run `dominevo login`',
   )
   process.exit(1)
 }

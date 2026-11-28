@@ -178,7 +178,7 @@ describe('openPullDemuxer — the stream-info probe', () => {
     expect(result.demuxer.disposed()).toBe(false)
   })
 
-  it('CAMSTACK_DECODE_PROBE_STREAM_INFO restores the probe in ONE open — the A/B, not a second dial', async () => {
+  it('DOMINEVO_DECODE_PROBE_STREAM_INFO restores the probe in ONE open — the A/B, not a second dial', async () => {
     const recorder = makeRecorder([48])
 
     const result = await openPullDemuxer({

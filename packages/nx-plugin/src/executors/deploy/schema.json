@@ -7,7 +7,7 @@
   "properties": {
     "server": {
       "type": "string",
-      "description": "Hub base URL (e.g. https://hub.example.com:4443). Falls back to $CAMSTACK_SERVER, then the hub of the `dominevo login` session.",
+      "description": "Hub base URL (e.g. https://hub.example.com:4443). Falls back to $DOMINEVO_SERVER, then the hub of the `dominevo login` session.",
       "examples": ["http://localhost:4443"]
     },
     "skipBuild": {

@@ -11,7 +11,7 @@ import { DOCS_MANIFEST_RELATIVE, SNAPSHOT_PATH, docsCheckout } from './onboardin
 const docs = docsCheckout()
 if (docs === null) {
   process.stderr.write(
-    'sync-onboarding-manifest: no docs checkout — set CAMSTACK_DOCS_DIR to the docs repository.\n',
+    'sync-onboarding-manifest: no docs checkout — set DOMINEVO_DOCS_DIR to the docs repository.\n',
   )
   process.exit(1)
 }

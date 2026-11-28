@@ -87,7 +87,7 @@ export interface NodeData {
   readonly processes: readonly NodeProcess[]
   readonly categories: readonly NodeCategory[]
   // The node's runtime-updatable ROOT package — always `@dominevo/server` now
-  // (hub and agent are the same root, differentiated by CAMSTACK_ROLE) from
+  // (hub and agent are the same root, differentiated by DOMINEVO_ROLE) from
   // `nodes.topology.rootPackage` — the SAME single source the Server-management
   // surface reads. Nullable for offline / pre-phase-2 rows.
   readonly rootPackage?: { readonly name: string; readonly version: string } | null

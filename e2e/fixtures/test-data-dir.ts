@@ -3,7 +3,7 @@
  *
  * Each suite calls `createTestDataDir()` which mktemp's a fresh directory
  * under `/tmp/camstack-e2e-XXXX`. The hub fixture passes this as
- * `CAMSTACK_DATA` so the spawned process has zero contamination from any
+ * `DOMINEVO_DATA` so the spawned process has zero contamination from any
  * operator hub running on the dev machine.
  *
  * Cleanup is deferred to the caller (typically `afterAll`) — the directory

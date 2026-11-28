@@ -7,7 +7,7 @@
  * `electron.ts`.
  *
  * The agent is configured to connect EXPLICITLY to the test hub's
- * Moleculer TCP endpoint (`CAMSTACK_HUB_ADDRESS=host:port`). An
+ * Moleculer TCP endpoint (`DOMINEVO_HUB_ADDRESS=host:port`). An
  * explicit hub URL disables UDP multicast discovery in the broker
  * factory (`packages/kernel/src/moleculer/broker-factory.ts`), so the
  * test agent can never cross-talk with a developer's `dev:full`
@@ -37,7 +37,7 @@ const AGENT_ENTRY = path.resolve(REPO_ROOT, 'packages/agent/dist/cli.js')
 
 export interface SpawnedAgent {
   readonly proc: ChildProcess
-  /** The agent's cluster node id (matches `CAMSTACK_NODE_ID`). */
+  /** The agent's cluster node id (matches `DOMINEVO_NODE_ID`). */
   readonly nodeId: string
   readonly dataDir: string
   /** The agent's HTTP status port. */
@@ -190,11 +190,11 @@ export async function spawnAgent(opts: SpawnAgentOptions): Promise<SpawnedAgent>
 
   const env: NodeJS.ProcessEnv = {
     ...process.env,
-    CAMSTACK_NODE_ID: opts.nodeId,
-    CAMSTACK_AGENT_NAME: opts.nodeId,
-    CAMSTACK_HUB_ADDRESS: opts.hubAddress,
-    CAMSTACK_DATA_DIR: dataDir,
-    CAMSTACK_STATUS_PORT: String(statusPort),
+    DOMINEVO_NODE_ID: opts.nodeId,
+    DOMINEVO_AGENT_NAME: opts.nodeId,
+    DOMINEVO_HUB_ADDRESS: opts.hubAddress,
+    DOMINEVO_DATA_DIR: dataDir,
+    DOMINEVO_STATUS_PORT: String(statusPort),
     NODE_ENV: 'test',
     ...opts.env,
   }

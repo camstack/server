@@ -86,8 +86,8 @@ let previousAddonsDir: string | undefined
 
 beforeAll(() => {
   addonsRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'hub-spawn-plan-'))
-  previousAddonsDir = process.env.CAMSTACK_ADDONS_DIR
-  process.env.CAMSTACK_ADDONS_DIR = addonsRoot
+  previousAddonsDir = process.env.DOMINEVO_ADDONS_DIR
+  process.env.DOMINEVO_ADDONS_DIR = addonsRoot
   for (const f of FIXTURES) {
     const dir = path.join(addonsRoot, f.pkg)
     fs.mkdirSync(dir, { recursive: true })
@@ -100,8 +100,8 @@ beforeAll(() => {
 })
 
 afterAll(() => {
-  if (previousAddonsDir === undefined) delete process.env.CAMSTACK_ADDONS_DIR
-  else process.env.CAMSTACK_ADDONS_DIR = previousAddonsDir
+  if (previousAddonsDir === undefined) delete process.env.DOMINEVO_ADDONS_DIR
+  else process.env.DOMINEVO_ADDONS_DIR = previousAddonsDir
   fs.rmSync(addonsRoot, { recursive: true, force: true })
 })
 

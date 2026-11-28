@@ -23,10 +23,10 @@
 //   import-system   (D797) the hub's OWN secrets that used to come from env /
 //              config.yaml, into the keychain — each only if it is set:
 //                --values-file <f>   KEY=VALUE lines (0600, deleted by you
-//                                    after): CAMSTACK_JWT_SECRET — the value
+//                                    after): DOMINEVO_JWT_SECRET — the value
 //                                    the hub container had in its environment.
 //                                    (There is no cluster secret to import
-//                                    since D857; a CAMSTACK_CLUSTER_SECRET
+//                                    since D857; a DOMINEVO_CLUSTER_SECRET
 //                                    line is read and ignored.)
 //                --config-yaml <f>   the hub's config.yaml (as mounted on the
 //                                    host): its auth.jwtSecret is imported and
@@ -38,7 +38,7 @@
 //              store them through the operator write path (→ keychain).
 //              Needs the old key: --mqtt-key-file <copy of
 //              /data/addons-data/mqtt-broker/.secret-key> or
-//              CAMSTACK_SECRET_KEY in --values-file. Run it whenever convenient
+//              DOMINEVO_SECRET_KEY in --values-file. Run it whenever convenient
 //              after the release: mqtt-broker reads the enc:v1 values
 //              read-only with its .secret-key meanwhile.
 //   verify     re-scan: no inline secret left, keychain ready, refs in use.
@@ -227,7 +227,7 @@ export function parseValuesFile(text) {
 export function resolveSystemSecrets({ values = {}, configAuth = {} }) {
   const nonEmpty = (v) => (typeof v === 'string' && v.length > 0 ? v : null)
   return {
-    jwtSigningKey: nonEmpty(values.CAMSTACK_JWT_SECRET) ?? nonEmpty(configAuth.jwtSecret),
+    jwtSigningKey: nonEmpty(values.DOMINEVO_JWT_SECRET) ?? nonEmpty(configAuth.jwtSecret),
   }
 }
 
@@ -252,7 +252,7 @@ const MQTT_ENC_PREFIX = 'enc:v1:'
 const MQTT_KEY_BYTES = 32
 const MQTT_SCRYPT_SALT = Buffer.from('camstack-mqtt-broker:v1', 'utf-8')
 
-/** The retired mqtt codec's key from `CAMSTACK_SECRET_KEY` (base64 32 bytes, else scrypt). */
+/** The retired mqtt codec's key from `DOMINEVO_SECRET_KEY` (base64 32 bytes, else scrypt). */
 export function mqttKeyFromMaterial(material) {
   const decoded = Buffer.from(material, 'base64')
   if (
@@ -534,17 +534,17 @@ async function waitForRun(call, runId) {
 async function main() {
   const args = parseArgs(process.argv.slice(2))
   const step = args._[0] ?? 'plan'
-  // The hub URL is not a secret: --hub, else $CAMSTACK_HUB_URL, else the
+  // The hub URL is not a secret: --hub, else $DOMINEVO_HUB_URL, else the
   // gitignored scratchpad/.hub-url that scripts/hub/hub.mjs reads too.
   const hubFile = path.resolve('scratchpad/.hub-url')
   const hub =
     typeof args.hub === 'string'
       ? args.hub
-      : process.env.CAMSTACK_HUB_URL ||
+      : process.env.DOMINEVO_HUB_URL ||
         (existsSync(hubFile) ? readFileSync(hubFile, 'utf8').trim() : '')
   if (!hub) {
     console.error(
-      'no hub URL: pass --hub https://<hub-host>:4443, set CAMSTACK_HUB_URL, or write scratchpad/.hub-url',
+      'no hub URL: pass --hub https://<hub-host>:4443, set DOMINEVO_HUB_URL, or write scratchpad/.hub-url',
     )
     process.exit(1)
   }
@@ -692,7 +692,7 @@ async function main() {
     }
     writeState(stateFile, { ...readState(stateFile), systemImportedAt: Date.now() })
     console.log(
-      'Next: remove CAMSTACK_JWT_SECRET / CAMSTACK_CLUSTER_SECRET (retired) / CAMSTACK_ADMIN_* / CAMSTACK_SECRET_KEY from the container template, delete the values file, run `apply` (deletes the stale rows), restart.',
+      'Next: remove DOMINEVO_JWT_SECRET / DOMINEVO_CLUSTER_SECRET (retired) / DOMINEVO_ADMIN_* / DOMINEVO_SECRET_KEY from the container template, delete the values file, run `apply` (deletes the stale rows), restart.',
     )
     return 0
   }
@@ -701,14 +701,14 @@ async function main() {
     let key = null
     if (typeof args['values-file'] === 'string') {
       const values = parseValuesFile(readPrivateFile(args['values-file']).toString('utf-8'))
-      if (typeof values.CAMSTACK_SECRET_KEY === 'string')
-        key = mqttKeyFromMaterial(values.CAMSTACK_SECRET_KEY)
+      if (typeof values.DOMINEVO_SECRET_KEY === 'string')
+        key = mqttKeyFromMaterial(values.DOMINEVO_SECRET_KEY)
     }
     if (key === null && typeof args['mqtt-key-file'] === 'string')
       key = mqttKeyFromFile(readPrivateFile(args['mqtt-key-file']))
     if (key === null) {
       console.error(
-        'refusing: no old mqtt key — pass --mqtt-key-file <copy of .secret-key> or CAMSTACK_SECRET_KEY in --values-file',
+        'refusing: no old mqtt key — pass --mqtt-key-file <copy of .secret-key> or DOMINEVO_SECRET_KEY in --values-file',
       )
       return 1
     }

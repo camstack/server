@@ -63,7 +63,7 @@ describe('renaming an agent that is not paired', () => {
     const name: unknown = status.json().name
     expect(name).not.toBe('agent-bbce9dde')
     expect(name).toBe(
-      process.env['CAMSTACK_AGENT_NAME'] || defaultAgentName(os.hostname(), os.arch()),
+      process.env['DOMINEVO_AGENT_NAME'] || defaultAgentName(os.hostname(), os.arch()),
     )
     await app.close()
   })

@@ -14,7 +14,7 @@ export const DOCS_MANIFEST_RELATIVE = 'public/onboarding/v1/manifest.json'
 
 /** `docs` beside the MAIN checkout — a worktree's own parent is not it. */
 export function docsCheckout(): string | null {
-  const fromEnv = process.env['CAMSTACK_DOCS_DIR']
+  const fromEnv = process.env['DOMINEVO_DOCS_DIR']
   if (fromEnv !== undefined && fromEnv !== '') return resolve(fromEnv)
   const common = execFileSync('git', ['rev-parse', '--path-format=absolute', '--git-common-dir'], {
     cwd: ROOT,

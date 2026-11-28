@@ -48,15 +48,15 @@ describe('normalizeHubAddress', () => {
 })
 
 describe('resolveHubUrl normalises every typed source', () => {
-  it('flag, then CAMSTACK_HUB_URL, then CAMSTACK_SERVER', () => {
+  it('flag, then DOMINEVO_HUB_URL, then DOMINEVO_SERVER', () => {
     expect(resolveHubUrl({ explicit: '10.0.0.5', env: {} })).toEqual({
       url: 'https://10.0.0.5:4443',
       source: 'flag',
     })
-    expect(resolveHubUrl({ env: { CAMSTACK_HUB_URL: 'hub.local' } })?.url).toBe(
+    expect(resolveHubUrl({ env: { DOMINEVO_HUB_URL: 'hub.local' } })?.url).toBe(
       'https://hub.local:4443',
     )
-    expect(resolveHubUrl({ env: { CAMSTACK_SERVER: '10.0.0.6:9000' } })?.url).toBe(
+    expect(resolveHubUrl({ env: { DOMINEVO_SERVER: '10.0.0.6:9000' } })?.url).toBe(
       'https://10.0.0.6:9000',
     )
   })

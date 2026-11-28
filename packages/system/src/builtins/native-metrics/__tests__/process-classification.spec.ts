@@ -31,7 +31,7 @@ function psRow(over: Partial<PsProcessRow>): PsProcessRow {
     cpuPercent: 1.5,
     memoryRssBytes: 4 * 1024 * 1024,
     uptimeSec: 3600,
-    command: '/usr/local/bin/node /opt/camstack-hub/server/backend/dist/main.js',
+    command: '/usr/local/bin/node /opt/dominevo-hub/server/backend/dist/main.js',
     ...over,
   }
 }
@@ -41,7 +41,7 @@ const TINI_PID_1 = psRow({
   pid: 1,
   ppid: 0,
   pgid: 1,
-  command: '/usr/bin/tini -- /usr/local/bin/docker-entrypoint.sh /opt/camstack-hub/starter.js',
+  command: '/usr/bin/tini -- /usr/local/bin/docker-entrypoint.sh /opt/dominevo-hub/starter.js',
 })
 
 /** `MacMiniAgent.localdomain`: the operator's own app, started by launchd. */
@@ -67,7 +67,7 @@ const HUB_ROOT = psRow({ pid: SELF_PID, ppid: 1, pgid: SELF_PID })
 const RUNNER = psRow({
   pid: 8801,
   ppid: SELF_PID,
-  command: '/usr/local/bin/node /opt/camstack-hub/addons/@dominevo/addon-pipeline/dist/runner.js',
+  command: '/usr/local/bin/node /opt/dominevo-hub/addons/@dominevo/addon-pipeline/dist/runner.js',
 })
 
 const MANAGED: ReadonlyMap<number, ManagedProcessEntry> = new Map([

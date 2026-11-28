@@ -3,7 +3,7 @@ run-name: "Release ${{ inputs.publish_release && 'publish' || inputs.version_typ
 
 # Single workflow that produces every artifact for the single Dominevo
 # product — ONE Docker image + ONE desktop app, each selecting hub vs
-# agent at runtime (CAMSTACK_ROLE). Triggered ONLY by workflow_dispatch,
+# agent at runtime (DOMINEVO_ROLE). Triggered ONLY by workflow_dispatch,
 # and the first job refuses any ref other than refs/heads/main.
 #
 # The home runners sit in an org runner group that allows exactly this
@@ -134,7 +134,7 @@ jobs:
             const filter = process.argv[1];
             const L = (a) => JSON.stringify(a);
             // ONE desktop product (packages/desktop) — the single Dominevo
-            // app selects hub vs agent at runtime via CAMSTACK_ROLE. Three
+            // app selects hub vs agent at runtime via DOMINEVO_ROLE. Three
             // legs: mac arm64 + mac x64 (cross-built on the two arm64 Mac
             // mini runners, one arch each — staging fetches the target-arch
             // native prebuilds via CS_NODE_ARCH) + linux x64. Both mac legs
@@ -325,7 +325,7 @@ jobs:
   # ── Step 2 — Docker image (single Dominevo image, hub OR agent) ──
   #
   # ONE image name `ghcr.io/<owner>/dominevo` from the single `Dockerfile`:
-  # hub vs agent at runtime via CAMSTACK_ROLE; accel variant via `--target`
+  # hub vs agent at runtime via DOMINEVO_ROLE; accel variant via `--target`
   # (`intel` | `amd`). Tags are accel-prefixed
   # (`intel-<version>`, `amd-latest`, …) — never a bare `:latest`.
   build-docker:
@@ -344,21 +344,21 @@ jobs:
             target: intel
             image: dominevo
             title: Dominevo
-            description: Dominevo node (Intel VA/NPU) — hub or agent via CAMSTACK_ROLE
+            description: Dominevo node (Intel VA/NPU) — hub or agent via DOMINEVO_ROLE
           - accel: amd
             runner: ci-release
             dockerfile: Dockerfile
             target: amd
             image: dominevo
             title: Dominevo (AMD)
-            description: Dominevo node (AMD Mesa VA/Vulkan) — hub or agent via CAMSTACK_ROLE
+            description: Dominevo node (AMD Mesa VA/Vulkan) — hub or agent via DOMINEVO_ROLE
           - accel: intel-legacy
             runner: ci-release
             dockerfile: Dockerfile
             target: intel-legacy
             image: dominevo
             title: Dominevo (Intel legacy)
-            description: Dominevo node (Intel Gen8-Gen11 iGPU, legacy compute runtime) — hub or agent via CAMSTACK_ROLE
+            description: Dominevo node (Intel Gen8-Gen11 iGPU, legacy compute runtime) — hub or agent via DOMINEVO_ROLE
           - accel: nvidia
             runner: ci-release
             dockerfile: Dockerfile
@@ -453,7 +453,7 @@ jobs:
           target: ${{ matrix.target }}
           # Registry-install: the image installs `@dominevo/server@latest`.
           # PRODUCT_VERSION is the product release (the tag), baked as
-          # CAMSTACK_PRODUCT_VERSION for the About line. It is not the
+          # DOMINEVO_PRODUCT_VERSION for the About line. It is not the
           # npm version — that is the server_version label below.
           build-args: |
             PRODUCT_VERSION=${{ needs.derive-version.outputs.version }}
@@ -748,7 +748,7 @@ jobs:
           # addons + node_modules + native prebuilds) is fetched from public npm
           # and staged into packages/desktop/.deps by stage-deps. NO source
           # build, NO nx. ONE closure serves both roles — the desktop app picks
-          # hub vs agent at runtime via CAMSTACK_ROLE.
+          # hub vs agent at runtime via DOMINEVO_ROLE.
           #
           # Clean stale electron build artifacts from any PRIOR run on this
           # self-hosted runner. A prior FAILED pack can leave a half-written
@@ -851,7 +851,7 @@ jobs:
                 # list drops the other leg's keychain mid-sign
                 # (`no identity found` / `errSecInternalComponent`, D429).
                 # The keychain is handed to the tools by path instead.
-                echo "CAMSTACK_SIGN_KC=$SIGN_KC" >> "$GITHUB_ENV"
+                echo "DOMINEVO_SIGN_KC=$SIGN_KC" >> "$GITHUB_ENV"
                 rm -f "$P12"
                 # electron-builder must NOT run its own (partition-list-less)
                 # keychain import — unset CSC_LINK so it looks the identity up
@@ -1005,7 +1005,7 @@ jobs:
                  --apple-id "$APPLE_ID" \
                  --password "$APPLE_APP_SPECIFIC_PASSWORD" \
                  --team-id "$APPLE_TEAM_ID" \
-                 ${CAMSTACK_SIGN_KC:+--keychain "$CAMSTACK_SIGN_KC"} \
+                 ${DOMINEVO_SIGN_KC:+--keychain "$DOMINEVO_SIGN_KC"} \
                  --wait 2>&1 | tee "$NOTARY_LOG"; then
               if grep -q "status: Accepted" "$NOTARY_LOG"; then
                 echo "── Accepted ──"
@@ -1035,9 +1035,9 @@ jobs:
       - name: Delete this job's signing keychain (macOS)
         if: always() && matrix.platform == 'mac'
         run: |
-          if [ -n "${CAMSTACK_SIGN_KC:-}" ]; then
-            security delete-keychain "$CAMSTACK_SIGN_KC" 2>/dev/null || true
-            rm -f "$CAMSTACK_SIGN_KC" 2>/dev/null || true
+          if [ -n "${DOMINEVO_SIGN_KC:-}" ]; then
+            security delete-keychain "$DOMINEVO_SIGN_KC" 2>/dev/null || true
+            rm -f "$DOMINEVO_SIGN_KC" 2>/dev/null || true
           fi
         shell: bash
 

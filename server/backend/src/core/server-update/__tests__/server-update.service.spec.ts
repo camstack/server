@@ -5,7 +5,7 @@
  * (`@dominevo/node-root`, bundled into `dist/server-root/index.js`); the engine
  * itself is exhaustively covered by `packages/node-root/.../root-update-service.spec.ts`.
  * This suite verifies that the SAME single-copy behaviour holds THROUGH the hub
- * adapter's constructor (`@dominevo/server` spec, `CAMSTACK_SERVER_*` env
+ * adapter's constructor (`@dominevo/server` spec, `DOMINEVO_SERVER_*` env
  * markers, hub data-dir + running package.json).
  *
  * Single-copy semantics under test:
@@ -80,7 +80,7 @@ function makeService(args: MakeServiceArgs = {}): ServerUpdateService {
     restartServer: args.restartServer ?? (() => undefined),
     dataDir,
     execNpm: args.execNpm ?? (async () => ({ stdout: '' })),
-    env: args.env ?? { CAMSTACK_SERVER_BOOT_MODE: 'data-root' },
+    env: args.env ?? { DOMINEVO_SERVER_BOOT_MODE: 'data-root' },
     now: () => NOW,
     runningPackageJsonPath: runningPkgPath,
   })
@@ -187,7 +187,7 @@ describe('applyServerUpdate (single-copy stage + swap-on-restart)', () => {
   })
 
   it('refuses in workspace boot mode', async () => {
-    const service = makeService({ env: { CAMSTACK_SERVER_BOOT_MODE: 'workspace' } })
+    const service = makeService({ env: { DOMINEVO_SERVER_BOOT_MODE: 'workspace' } })
     const result = await service.applyServerUpdate({ version: '1.1.51' })
     expect(result.accepted).toBe(false)
     expect(result.message).toMatch(/workspace/i)
@@ -351,9 +351,9 @@ describe('getServerPackageStatus', () => {
     const service = makeService({
       execNpm: async () => ({ stdout: '1.1.52\n' }),
       env: {
-        CAMSTACK_SERVER_BOOT_MODE: 'data-root',
-        CAMSTACK_SERVER_ACTIVE_VERSION: '1.1.50',
-        CAMSTACK_SEED_SERVER_DIR: seedDir,
+        DOMINEVO_SERVER_BOOT_MODE: 'data-root',
+        DOMINEVO_SERVER_ACTIVE_VERSION: '1.1.50',
+        DOMINEVO_SEED_SERVER_DIR: seedDir,
       },
     })
     await service.checkServerUpdate()

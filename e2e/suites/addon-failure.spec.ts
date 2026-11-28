@@ -51,7 +51,7 @@ let dataDir: TestDataDir | null = null
 let hub: SpawnedHub | null = null
 let client: AuthorizedClient | null = null
 
-const E2E_LIVE = process.env['CAMSTACK_E2E_LIVE'] === '1'
+const E2E_LIVE = process.env['DOMINEVO_E2E_LIVE'] === '1'
 const desc = E2E_LIVE ? describe : describe.skip
 
 function stageBrokenAddon(targetDataDir: string): void {
@@ -72,7 +72,7 @@ beforeAll(async () => {
   hub = await spawnHub({
     port: 4545,
     dataDir: dataDir.path,
-    env: { CAMSTACK_BUNDLED_ADDONS_DIR: REPO_PACKAGES_DIR },
+    env: { DOMINEVO_BUNDLED_ADDONS_DIR: REPO_PACKAGES_DIR },
   })
   client = await loginAsAdmin(hub.port)
 }, 120_000)

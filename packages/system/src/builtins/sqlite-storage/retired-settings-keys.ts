@@ -134,7 +134,7 @@ export interface RetiredRowPurgeResult {
  * write to a store this node does not own. Only one of those is recoverable.
  */
 export function settingsStoreIsAuthoritativeHere(env: NodeJS.ProcessEnv): boolean {
-  const raw = (env['CAMSTACK_ROLE'] ?? '').trim().toLowerCase()
+  const raw = (env['DOMINEVO_ROLE'] ?? '').trim().toLowerCase()
   return raw === '' || raw === 'hub'
 }
 

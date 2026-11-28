@@ -54,14 +54,14 @@ function recorder(result: unknown): {
 
 describe('nodeOwnsItsDataStore', () => {
   it('is TRUE on a hub — the hub is the store, it can never forward to itself', () => {
-    expect(nodeOwnsItsDataStore({ CAMSTACK_ROLE: 'hub' })).toBe(true)
+    expect(nodeOwnsItsDataStore({ DOMINEVO_ROLE: 'hub' })).toBe(true)
     expect(nodeOwnsItsDataStore({})).toBe(true)
-    expect(nodeOwnsItsDataStore({ CAMSTACK_ROLE: '' })).toBe(true)
+    expect(nodeOwnsItsDataStore({ DOMINEVO_ROLE: '' })).toBe(true)
   })
 
   it('is FALSE on an agent — its persistence is the hub, always', () => {
-    expect(nodeOwnsItsDataStore({ CAMSTACK_ROLE: 'agent' })).toBe(false)
-    expect(nodeOwnsItsDataStore({ CAMSTACK_ROLE: '  AGENT ' })).toBe(false)
+    expect(nodeOwnsItsDataStore({ DOMINEVO_ROLE: 'agent' })).toBe(false)
+    expect(nodeOwnsItsDataStore({ DOMINEVO_ROLE: '  AGENT ' })).toBe(false)
   })
 })
 
@@ -179,7 +179,7 @@ describe('resolveHubSettingsForward — the gate', () => {
     const calls: BrokerCall[] = []
     expect(
       resolveHubSettingsForward({
-        env: { CAMSTACK_ROLE: 'hub' },
+        env: { DOMINEVO_ROLE: 'hub' },
         broker: fakeBroker(null, calls),
         logger,
       }),
@@ -191,14 +191,14 @@ describe('resolveHubSettingsForward — the gate', () => {
 
   it('answers null with no cluster broker — a forked worker has no hop to make', () => {
     expect(
-      resolveHubSettingsForward({ env: { CAMSTACK_ROLE: 'agent' }, broker: undefined, logger }),
+      resolveHubSettingsForward({ env: { DOMINEVO_ROLE: 'agent' }, broker: undefined, logger }),
     ).toBeNull()
   })
 
   it('builds a forwarder on an AGENT that rides $hub-cap-fwd.forward with the cap envelope', async () => {
     const calls: BrokerCall[] = []
     const forward = resolveHubSettingsForward({
-      env: { CAMSTACK_ROLE: 'agent' },
+      env: { DOMINEVO_ROLE: 'agent' },
       broker: fakeBroker({ hydrated: true }, calls),
       logger,
     })

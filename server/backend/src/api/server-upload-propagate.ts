@@ -37,7 +37,7 @@ export interface ServerUploadPropagateRouteOptions {
   readonly logger: ServerUploadPropagateLogger
   readonly broker: AgentDeliveryBroker
   readonly resolveClusterBaseUrl: ClusterBaseUrlResolver
-  /** Test override — defaults to `$CAMSTACK_DATA` (or `camstack-data`). */
+  /** Test override — defaults to `$DOMINEVO_DATA` (or `camstack-data`). */
   readonly dataDir?: string
 }
 
@@ -107,7 +107,7 @@ export function registerServerUploadPropagateRoute(
     }
     const { version, nodeId } = parsed
 
-    const dataDir = path.resolve(options.dataDir ?? process.env['CAMSTACK_DATA'] ?? 'camstack-data')
+    const dataDir = path.resolve(options.dataDir ?? process.env['DOMINEVO_DATA'] ?? 'camstack-data')
     const versionDir = devUploadVersionDir(serverRootDir(dataDir), version)
     if (!fs.existsSync(versionDir)) {
       return reply.status(404).send({

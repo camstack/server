@@ -860,7 +860,7 @@ export default class RecorderV2Addon extends BaseAddon<RecorderV2Config> {
     // owner and mints `127.0.0.1` restream URLs there. When THIS node is the
     // designated recorder but is NOT the owner (an agent), pull from the
     // owner's LAN-reachable host — `reachableHost` (from `getIngestOwner`)
-    // wins; the operator override / `CAMSTACK_HUB_URL`-derived hub host is
+    // wins; the operator override / `DOMINEVO_HUB_URL`-derived hub host is
     // the fallback. On the owner node itself, `undefined` keeps the correct
     // local default.
     const consumerHostname =
@@ -869,7 +869,7 @@ export default class RecorderV2Addon extends BaseAddon<RecorderV2Config> {
         : (ingestOwner.reachableHost ??
           resolveRecordingHubHostname(
             this.config.recordingHubHostname,
-            process.env['CAMSTACK_HUB_URL'],
+            process.env['DOMINEVO_HUB_URL'],
           ))
     if (this.nodeId !== ingestOwner.ownerNodeId) {
       this.ctx.logger.info(
@@ -884,7 +884,7 @@ export default class RecorderV2Addon extends BaseAddon<RecorderV2Config> {
       )
       if (consumerHostname === undefined) {
         this.ctx.logger.warn(
-          'recorder: could not resolve the ingest owner host for cross-node pull — set the `recordingHubHostname` global setting or CAMSTACK_HUB_URL; recording will not reach this node',
+          'recorder: could not resolve the ingest owner host for cross-node pull — set the `recordingHubHostname` global setting or DOMINEVO_HUB_URL; recording will not reach this node',
           {
             meta: { ownNodeId: this.nodeId },
           },
@@ -1028,7 +1028,7 @@ export default class RecorderV2Addon extends BaseAddon<RecorderV2Config> {
     // placement root (`<locationRoot>/.rec-tmp/<dev>/<profile>`), so the
     // rec-tmp→final relocate is always a same-fs rename regardless of where
     // the operator points the recordings locations. The old global
-    // `CAMSTACK_MEDIA_ROOT`/dataDir `rec-tmp` staging root is gone — recording
+    // `DOMINEVO_MEDIA_ROOT`/dataDir `rec-tmp` staging root is gone — recording
     // never writes to the appData/cache disk and never EXDEV-copies (F1).
     // The stream-broker only ever runs on the ingest owner, so gate on (and
     // pull from) THAT node's broker — not this node's. On the owner node this

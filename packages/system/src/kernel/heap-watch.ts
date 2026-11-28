@@ -509,7 +509,7 @@ export type HeapCeilingOrigin = 'explicit' | 'v8-default'
  * hub-main is the only process in the cluster whose ceiling nobody chose. Every
  * forked runner is given V8 heap flags by `process-service.ts`; hub-main gets
  * `--max-old-space-size` from `docker-entrypoint.sh` ONLY when the operator sets
- * `CAMSTACK_HUB_HEAP_MB`, and on the live container it is unset — verified
+ * `DOMINEVO_HUB_HEAP_MB`, and on the live container it is unset — verified
  * 2026-08-25 by reading pid 7's argv, a bare `node .../starter.js`. So the
  * ceiling in force is whatever V8 derives from the host (4288MB there), and the
  * only record of that was a comment inside an image nobody rebuilds to read.
@@ -528,7 +528,7 @@ export function heapCeilingOrigin(
 }
 
 /** Env var the launch-args module hands the node: who chose its heap ceiling. */
-export const HEAP_CEILING_SOURCE_ENV = 'CAMSTACK_HEAP_CEILING_SOURCE'
+export const HEAP_CEILING_SOURCE_ENV = 'DOMINEVO_HEAP_CEILING_SOURCE'
 
 const LAUNCHER_SOURCES: ReadonlySet<string> = new Set([
   'override',
@@ -1518,7 +1518,7 @@ export const RUNNER_HEAP_WATCH_INTERVAL_MS = 300_000
 /** Wiring for {@link startRunnerHeapWatch}. */
 export interface RunnerHeapWatchOptions {
   /**
-   * `CAMSTACK_RUNNER_HEAP_PROFILE` as the parent passed it. Anything but
+   * `DOMINEVO_RUNNER_HEAP_PROFILE` as the parent passed it. Anything but
    * `'heavy'` (including unset — the un-annotated default is light) starts
    * nothing: light runners are small, already carry V8 heap flags, and a
    * quiet runner must never pay a stop-the-world.
@@ -1528,7 +1528,7 @@ export interface RunnerHeapWatchOptions {
   readonly label: string
   readonly sink: HeapWatchSink
   /**
-   * `CAMSTACK_RUNNER_HEAP_RECLAIM` as the environment carries it. `'off'`
+   * `DOMINEVO_RUNNER_HEAP_RECLAIM` as the environment carries it. `'off'`
    * keeps the heartbeat and disables only the reclaim pass — the operator
    * kill-switch for the media path, usable without a rebuild.
    */
@@ -1538,7 +1538,7 @@ export interface RunnerHeapWatchOptions {
   /** Test injection. Production omits it and gets {@link createV8Reclaimer}. */
   readonly reclaimOptions?: HeapReclaimOptions
   /**
-   * `CAMSTACK_RUNNER_RSS_BUDGET_MB` as the parent passed it — the MAXIMUM
+   * `DOMINEVO_RUNNER_RSS_BUDGET_MB` as the parent passed it — the MAXIMUM
    * `execution.rssBudgetMb` any co-located addon declares, resolved from the
    * manifests in `process-service.ts`. Absent means no co-located addon declared
    * one, and the runner reports itself UNWATCHED. See {@link RssBudgetOptions}.
@@ -1561,10 +1561,10 @@ export function parseRssBudgetMb(raw: string | undefined): number | undefined {
 }
 
 /** Env var carrying a runner's declared RSS budget from parent to child. */
-export const RUNNER_RSS_BUDGET_ENV = 'CAMSTACK_RUNNER_RSS_BUDGET_MB'
+export const RUNNER_RSS_BUDGET_ENV = 'DOMINEVO_RUNNER_RSS_BUDGET_MB'
 
 /** Operator override for hub-main's budget, applied without a release. */
-export const HUB_RSS_BUDGET_ENV = 'CAMSTACK_HUB_RSS_BUDGET_MB'
+export const HUB_RSS_BUDGET_ENV = 'DOMINEVO_HUB_RSS_BUDGET_MB'
 
 /**
  * hub-main's declared RSS budget, in MB.
@@ -1572,7 +1572,7 @@ export const HUB_RSS_BUDGET_ENV = 'CAMSTACK_HUB_RSS_BUDGET_MB'
  * ## Why the number lives HERE and not in the image
  *
  * hub-main has no manifest to declare it in, and the obvious alternative — the
- * entrypoint that already knew about `CAMSTACK_HUB_HEAP_MB` — is the least
+ * entrypoint that already knew about `DOMINEVO_HUB_HEAP_MB` — is the least
  * deployable surface in this system. The Dockerfile says so itself: the image
  * never contains this repo's backend, so a value written there reaches a running
  * hub only on an image rebuild. `main.ts` is what `applyServerUpdate` replaces,

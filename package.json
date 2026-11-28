@@ -44,7 +44,7 @@
     "test:related": "bash scripts/ci/test-slot.sh -- node scripts/ci/test-run.mjs related",
     "test:pkg": "bash scripts/ci/test-slot.sh -- node scripts/ci/test-run.mjs pkg",
     "test:heavy": "tsx scripts/run-heavy-specs.ts",
-    "test:scripts:slow": "CAMSTACK_REAL_TREE_SPECS=1 vitest run scripts/__tests__",
+    "test:scripts:slow": "DOMINEVO_REAL_TREE_SPECS=1 vitest run scripts/__tests__",
     "validate-addon": "tsx scripts/validate-addon.ts",
     "build:sdk": "npx nx run sdk:build",
     "build:ui": "npx nx run ui-library:build",

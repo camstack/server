@@ -10,7 +10,7 @@
  * `Contents/Resources/node_modules`.
  *
  * ONE closure serves BOTH roles: `@dominevo/server` is the single root package
- * and the desktop shell selects hub vs agent at runtime via `CAMSTACK_ROLE`.
+ * and the desktop shell selects hub vs agent at runtime via `DOMINEVO_ROLE`.
  *
  * ROLE CHANGE (runtime-updatable node packages, phase 3): this baked closure is
  * the immutable first-boot/offline SEED, not "the thing we run". The app spawns
@@ -311,7 +311,7 @@ if (process.platform === 'win32') {
 // any addon copy is still missing a native binary.
 //
 // The targets are the closure's OWN `@dominevo/*` dirs, which is what
-// `CAMSTACK_BUNDLED_ADDONS_DIR` points at (`Resources/node_modules/@dominevo`).
+// `DOMINEVO_BUNDLED_ADDONS_DIR` points at (`Resources/node_modules/@dominevo`).
 // Until 2026-08-25 this list was derived from the per-addon `extraResources`
 // entries instead, and it was verifying a tree electron-builder shipped WITHOUT
 // its `node_modules` — see `native-staging.mjs` for the measurement.

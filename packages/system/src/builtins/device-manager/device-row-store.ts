@@ -582,7 +582,7 @@ export class DeviceRowStore {
   }
 
   /** Call-site attribution for fleet reads. Armed only by
-   *  `CAMSTACK_FLEET_READ_CENSUS_MS`; see `fleet-read-census.ts`. */
+   *  `DOMINEVO_FLEET_READ_CENSUS_MS`; see `fleet-read-census.ts`. */
   private readonly census: FleetReadCensus
 
   /**
@@ -604,7 +604,7 @@ export class DeviceRowStore {
     private readonly observer?: DeviceRowObserver,
   ) {
     this.census =
-      census ?? new FleetReadCensus(process.env['CAMSTACK_FLEET_READ_CENSUS_MS'], Date.now())
+      census ?? new FleetReadCensus(process.env['DOMINEVO_FLEET_READ_CENSUS_MS'], Date.now())
     if (this.census.armed) {
       const startedAt = Date.now()
       setTimeout(

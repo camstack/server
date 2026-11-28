@@ -98,8 +98,8 @@ describe('AddonInstaller.ensureAddonRuntimeDeps', () => {
   let savedFrameworkDir: string | undefined
 
   beforeEach(() => {
-    savedFrameworkDir = process.env['CAMSTACK_FRAMEWORK_DIR']
-    delete process.env['CAMSTACK_FRAMEWORK_DIR']
+    savedFrameworkDir = process.env['DOMINEVO_FRAMEWORK_DIR']
+    delete process.env['DOMINEVO_FRAMEWORK_DIR']
     tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'camstack-ensure-deps-'))
     addonsDir = path.join(tmpRoot, 'addons')
     closureNodeModules = path.join(tmpRoot, 'closure', 'node_modules')
@@ -112,7 +112,7 @@ describe('AddonInstaller.ensureAddonRuntimeDeps', () => {
 
   afterEach(() => {
     if (savedFrameworkDir !== undefined) {
-      process.env['CAMSTACK_FRAMEWORK_DIR'] = savedFrameworkDir
+      process.env['DOMINEVO_FRAMEWORK_DIR'] = savedFrameworkDir
     }
     fs.rmSync(tmpRoot, { recursive: true, force: true })
   })

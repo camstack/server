@@ -21,7 +21,7 @@
  *    written down next to it, so a source that changes under us is caught by
  *    the probe instead of discovered months later in a log nobody reads.
  *
- * `CAMSTACK_FFMPEG_PATH` remains, and beats everything: an operator who points
+ * `DOMINEVO_FFMPEG_PATH` remains, and beats everything: an operator who points
  * at their own build has said something deliberate.
  */
 import { describe, expect, it } from 'vitest'
@@ -68,7 +68,7 @@ describe('chooseFfmpegBinary', () => {
   })
 
   it('names the env var it reads, so the log can quote it', () => {
-    expect(FFMPEG_PATH_ENV).toBe('CAMSTACK_FFMPEG_PATH')
+    expect(FFMPEG_PATH_ENV).toBe('DOMINEVO_FFMPEG_PATH')
   })
 })
 

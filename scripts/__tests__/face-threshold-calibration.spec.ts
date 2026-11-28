@@ -201,9 +201,9 @@ describe('decodeVectorBase64', () => {
 describe('resolveHubConnection — no hub address lives in the repo', () => {
   const here = path.dirname(fileURLToPath(import.meta.url))
 
-  it('takes the hub URL from CAMSTACK_HUB_URL', () => {
+  it('takes the hub URL from DOMINEVO_HUB_URL', () => {
     const c = resolveHubConnection({
-      env: { CAMSTACK_HUB_URL: 'https://hub.example:4443/' },
+      env: { DOMINEVO_HUB_URL: 'https://hub.example:4443/' },
       repoRoot: '/repo',
       readFile: () => null,
     })
@@ -224,12 +224,12 @@ describe('resolveHubConnection — no hub address lives in the repo', () => {
   it('REFUSES by name when neither is set — there is no built-in default', () => {
     expect(() =>
       resolveHubConnection({ env: {}, repoRoot: '/repo', readFile: () => null }),
-    ).toThrow(/CAMSTACK_HUB_URL/)
+    ).toThrow(/DOMINEVO_HUB_URL/)
   })
 
-  it('ignores CAMSTACK_HUB_TOKEN_FILE: the session is the only credential (D1101)', () => {
+  it('ignores DOMINEVO_HUB_TOKEN_FILE: the session is the only credential (D1101)', () => {
     const c = resolveHubConnection({
-      env: { CAMSTACK_HUB_URL: 'https://h:1', CAMSTACK_HUB_TOKEN_FILE: '/elsewhere/.tok' },
+      env: { DOMINEVO_HUB_URL: 'https://h:1', DOMINEVO_HUB_TOKEN_FILE: '/elsewhere/.tok' },
       repoRoot: '/repo',
       readFile: () => null,
     })

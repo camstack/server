@@ -60,7 +60,7 @@ export interface KeptCandidate {
 }
 
 export interface CleanupInput {
-  /** `CAMSTACK_SERVER_ACTIVE_ROOT` — `null` in baked mode. */
+  /** `DOMINEVO_SERVER_ACTIVE_ROOT` — `null` in baked mode. */
   readonly activeRoot: string | null
   /** Where `require.resolve('@dominevo/server')` actually landed this boot. */
   readonly closureResolvedFrom: string | null
@@ -264,7 +264,7 @@ export const CLOSURE_PROVIDED_PACKAGES: readonly string[] = [
 
 export interface DiscoveryInput {
   readonly dataDir: string
-  /** `CAMSTACK_ADDONS_DIR`, i.e. the ONE directory the loader reads. */
+  /** `DOMINEVO_ADDONS_DIR`, i.e. the ONE directory the loader reads. */
   readonly addonRoot: string
   /**
    * Does the running closure actually resolve this package? Only then is a copy
@@ -329,10 +329,10 @@ function trimSlash(p: string): string {
 /**
  * The kill switch. Default ON — the operator asked for convergence to one copy
  * — but a destructive sweep that cannot be turned off from the outside is one
- * an operator has to edit code to stop. `CAMSTACK_SINGLE_COPY_CLEANUP=off`
+ * an operator has to edit code to stop. `DOMINEVO_SINGLE_COPY_CLEANUP=off`
  * (or `0` / `false`) leaves every copy where it is, and the boot says so.
  */
 export function isCleanupEnabled(env: Readonly<Record<string, string | undefined>>): boolean {
-  const raw = env['CAMSTACK_SINGLE_COPY_CLEANUP']?.trim().toLowerCase()
+  const raw = env['DOMINEVO_SINGLE_COPY_CLEANUP']?.trim().toLowerCase()
   return raw !== 'off' && raw !== '0' && raw !== 'false'
 }

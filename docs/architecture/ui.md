@@ -1400,7 +1400,7 @@ in `packages/addon-admin-ui/src/pages/system/` and
   (Q2, see `notifications.md`). The guard
   (`scripts/check-device-selection-in-sync.ts`) holds 11 pairs, the last
   the device → value picker's model (`device-value-picker-model.ts`, issue #496).
-  `CAMSTACK_VIEWER_DIR=<viewer checkout>` points it at a checkout when the
+  `DOMINEVO_VIEWER_DIR=<viewer checkout>` points it at a checkout when the
   `camstack/` submodule is not present; with the variable SET, a missing viewer
   file is a failure, not a skip.
 - **The Alarm tab is laid out like the Rules tab.** The modes are sub-tabs

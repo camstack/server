@@ -18,7 +18,7 @@
  *
  * Why npx instead of a tracked dev-dep: verdaccio's npm tree is ~400MB,
  * bigger than the entire e2e harness. We only need it for the CLI-vs-npm
- * suite which is opt-in (`CAMSTACK_E2E_LIVE=1`), so the npx cold-install
+ * suite which is opt-in (`DOMINEVO_E2E_LIVE=1`), so the npx cold-install
  * cost is amortised across the suite's beforeAll instead of being paid
  * by every `npm install` on the repo.
  */

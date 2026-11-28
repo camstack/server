@@ -54,9 +54,9 @@ describe('agent service resources', () => {
     const spec = buildAgentServiceSpec({
       resourcesPath: 'C:\\R',
       starterJs: 'C:\\R\\node_modules\\@dominevo\\server\\dist\\starter.js',
-      env: { CAMSTACK_ROLE: 'agent' },
+      env: { DOMINEVO_ROLE: 'agent' },
     })
     expect(spec.workingDir).toBe('C:\\R\\node_modules\\@dominevo\\server\\dist')
-    expect(spec.env).toEqual({ CAMSTACK_ROLE: 'agent' })
+    expect(spec.env).toEqual({ DOMINEVO_ROLE: 'agent' })
   })
 })

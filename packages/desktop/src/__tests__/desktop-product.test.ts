@@ -47,6 +47,6 @@ describe('resolveDesktopProduct', () => {
   })
 
   it('names the override variable so the docs and the code cannot drift', () => {
-    expect(PRODUCT_OVERRIDE_ENV_VAR).toBe('CAMSTACK_DESKTOP_PRODUCT')
+    expect(PRODUCT_OVERRIDE_ENV_VAR).toBe('DOMINEVO_DESKTOP_PRODUCT')
   })
 })

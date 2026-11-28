@@ -107,21 +107,21 @@ function defaultSessionFile(dir: string): string | null {
 
 /**
  * THE default-session rule, used by every command that is given no server:
- *   1. the session of `$CAMSTACK_SERVER`, when one is set and saved;
+ *   1. the session of `$DOMINEVO_SERVER`, when one is set and saved;
  *   2. otherwise the most recently used session (`lastUsedAt`, else `createdAt`).
  */
 export function defaultSession(
   sessions: readonly SessionFile[],
   env: Readonly<Record<string, string | undefined>> = process.env,
 ): SessionFile | null {
-  const named = env['CAMSTACK_SERVER']?.trim()
+  const named = env['DOMINEVO_SERVER']?.trim()
   if (named) {
     try {
       const server = normalizeHubAddress(named)
       const hit = sessions.find((s) => s.server === server)
       if (hit) return hit
     } catch {
-      // a malformed $CAMSTACK_SERVER is reported by the command that resolves it
+      // a malformed $DOMINEVO_SERVER is reported by the command that resolves it
     }
   }
   return sessions.toSorted((a, b) => sessionRecency(b) - sessionRecency(a))[0] ?? null

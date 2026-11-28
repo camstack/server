@@ -43,10 +43,10 @@ services:
       # setup-camstack-recordings-volume.sh). Rootfs is fine only for smoke tests.
       - /opt/camstack/recordings:/recordings
     environment:
-      - CAMSTACK_ROLE=hub
-      - CAMSTACK_MEDIA_ROOT=/recordings
-      - CAMSTACK_MOLECULER_USE_HOSTNAME=false
-      - CAMSTACK_LOG_LEVEL=info
+      - DOMINEVO_ROLE=hub
+      - DOMINEVO_MEDIA_ROOT=/recordings
+      - DOMINEVO_MOLECULER_USE_HOSTNAME=false
+      - DOMINEVO_LOG_LEVEL=info
     logging:
       driver: json-file
       options:

@@ -158,7 +158,7 @@ describe('process-service D668: a runner owns a process group', { timeout: 20_00
       setImmediate(() =>
         child.stdout.emit(
           'data',
-          Buffer.from(`READY:${env['CAMSTACK_PARENT_NODE_ID']}/${env['CAMSTACK_RUNNER_ID']}\n`),
+          Buffer.from(`READY:${env['DOMINEVO_PARENT_NODE_ID']}/${env['DOMINEVO_RUNNER_ID']}\n`),
         ),
       )
       return child as unknown as cp.ChildProcess

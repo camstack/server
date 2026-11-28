@@ -117,7 +117,7 @@ interface TailscaleConfig {
  * Fallback hub HTTPS port used when the `server` config section can't
  * be read from the addon ctx (e.g. running detached in a test harness).
  * Mirrors the boot default in `server/backend/src/boot/boot-config.ts`
- * (`server.port: 4443`) and the `CAMSTACK_PORT` env override the boot
+ * (`server.port: 4443`) and the `DOMINEVO_PORT` env override the boot
  * loader applies. The normal path reads the resolved port via
  * `ctx.settings.getSection('server')` — see `resolveHubPort`.
  */
@@ -604,14 +604,14 @@ export class TailscaleClientAddon extends BaseAddon<TailscaleConfig> {
 
   /**
    * Resolve the hub's HTTPS port. The boot loader merges the
-   * `CAMSTACK_PORT` env override into the persisted `server` config
+   * `DOMINEVO_PORT` env override into the persisted `server` config
    * section (`server/backend/src/boot/boot-config.ts`), so reading the
    * `server` section gives the authoritative live port — NO new setting.
-   * Falls back to `CAMSTACK_PORT`-or-4443 only when the ctx can't reach
+   * Falls back to `DOMINEVO_PORT`-or-4443 only when the ctx can't reach
    * the section (detached test harness with no `settings` API).
    */
   private async resolveHubPort(): Promise<number> {
-    const envPort = Number(process.env['CAMSTACK_PORT'])
+    const envPort = Number(process.env['DOMINEVO_PORT'])
     const fallback = Number.isInteger(envPort) && envPort > 0 ? envPort : DEFAULT_HUB_PORT
     if (!this.ctx.settings) return fallback
     try {

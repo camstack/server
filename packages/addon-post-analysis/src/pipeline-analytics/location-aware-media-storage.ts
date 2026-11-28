@@ -27,7 +27,7 @@ export interface LocationAwareMediaBlobStorage extends MediaBlobStorage {
 }
 
 export interface LocationAwareDeps {
-  /** Handles the DEFAULT media location (the CAMSTACK_MEDIA_ROOT bypass). */
+  /** Handles the DEFAULT media location (the DOMINEVO_MEDIA_ROOT bypass). */
   readonly base: MediaBlobStorage
   /** The location id the base provider owns. */
   readonly defaultLocation: string

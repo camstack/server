@@ -29,7 +29,7 @@
  *     "installed".
  *  5. **Apt is not the runner's.** Distro package managers need root. The
  *     runner and hub-main are uid 1001 (`gosu` in the entrypoint). Apt/apk/dnf
- *     go through `camstack-pkgd` (allowlisted). Brew stays in-process.
+ *     go through `dominevo-pkgd` (allowlisted). Brew stays in-process.
  *
  * Every branch that declines to install SAYS SO. A dependency step that
  * produced no line at all is indistinguishable from one that never ran, and

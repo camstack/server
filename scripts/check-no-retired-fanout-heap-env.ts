@@ -3,9 +3,9 @@
  * No runtime code reads the retired heap-snapshot or event-fanout mode envs.
  *
  * D718 removed:
- *   - `CAMSTACK_RUNNER_HEAP_SNAPSHOT` (and the `writeHeapSnapshot` writer —
+ *   - `DOMINEVO_RUNNER_HEAP_SNAPSHOT` (and the `writeHeapSnapshot` writer —
  *     also refused by `check-no-heap-dump-command.ts`)
- *   - `CAMSTACK_MOLECULER_EVENT_FANOUT` / `CAMSTACK_UDS_EVENT_FANOUT`
+ *   - `DOMINEVO_MOLECULER_EVENT_FANOUT` / `DOMINEVO_UDS_EVENT_FANOUT`
  *     (`filter | shadow | broadcast` mode switches)
  *
  * Both event planes always filter. SIGUSR2 reports heap spaces and never
@@ -22,7 +22,7 @@ import { fileURLToPath } from 'node:url'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 
-const RETIRED = /\bCAMSTACK_(?:RUNNER_HEAP_SNAPSHOT|MOLECULER_EVENT_FANOUT|UDS_EVENT_FANOUT)\b/
+const RETIRED = /\bDOMINEVO_(?:RUNNER_HEAP_SNAPSHOT|MOLECULER_EVENT_FANOUT|UDS_EVENT_FANOUT)\b/
 
 const SKIP_DIRS = new Set([
   'dist',
@@ -99,8 +99,8 @@ function main(): void {
     return
   }
   console.error(
-    'check-no-retired-fanout-heap-env: CAMSTACK_RUNNER_HEAP_SNAPSHOT / ' +
-      'CAMSTACK_MOLECULER_EVENT_FANOUT / CAMSTACK_UDS_EVENT_FANOUT are gone (D718) — ' +
+    'check-no-retired-fanout-heap-env: DOMINEVO_RUNNER_HEAP_SNAPSHOT / ' +
+      'DOMINEVO_MOLECULER_EVENT_FANOUT / DOMINEVO_UDS_EVENT_FANOUT are gone (D718) — ' +
       'event planes always filter; no process writes a heap snapshot:',
   )
   for (const f of findings) console.error(`  ${f.file}:${f.line}  ${f.text}`)

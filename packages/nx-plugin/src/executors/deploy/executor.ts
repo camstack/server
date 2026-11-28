@@ -10,7 +10,7 @@ import { uploadAddon } from '../../lib/upload-addon.js'
  * Nx executor: pack + push an addon to a running Dominevo hub.
  *
  * Steps:
- *   1. Resolve server + token from (the `dominevo login` session; the address from options → $CAMSTACK_SERVER)
+ *   1. Resolve server + token from (the `dominevo login` session; the address from options → $DOMINEVO_SERVER)
  *   2. Run `npm pack --json` in the project's source dir → .tgz
  *   3. POST the tarball to `${server}/api/addons/upload`
  *   4. Delete the .tgz unless `keepTarball` is set

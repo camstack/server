@@ -25,7 +25,7 @@
  *   npx tsx scripts/bench-e2e-latency.mts [durationSec=60]
  *
  * Env:
- *   CAMSTACK_SERVER  hub address (default: the `dominevo login` session's hub)
+ *   DOMINEVO_SERVER  hub address (default: the `dominevo login` session's hub)
  *
  * Output: live tail of per-camera latency stats every 5s + final
  * report sorted by camera fps.
@@ -43,7 +43,7 @@ const DURATION_SEC = Number.parseInt(process.argv[2] ?? '60', 10)
 // The `dominevo login` session is the only credential (D1101): log in once with
 // `dominevo login <host>`; nothing here asks for a password.
 const hubAuth = await resolveHubAuth(
-  process.env['CAMSTACK_SERVER'] ? { server: process.env['CAMSTACK_SERVER'] } : {},
+  process.env['DOMINEVO_SERVER'] ? { server: process.env['DOMINEVO_SERVER'] } : {},
 )
 const SERVER = hubAuth.server
 

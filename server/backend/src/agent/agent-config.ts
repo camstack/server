@@ -38,7 +38,7 @@ interface AgentConfig {
  * Resolution order (first match wins, persisted on first boot):
  *   1. Existing `nodeId` in the config file — survives env var changes
  *      and host renames once seeded.
- *   2. `CAMSTACK_NODE_ID` env var on first boot — lets dev workflows
+ *   2. `DOMINEVO_NODE_ID` env var on first boot — lets dev workflows
  *      pin a stable, human-readable nodeId (e.g. `dev-agent-0`)
  *      without clobbering already-persisted random ids.
  *   3. A fresh random hex (`agent-a1b2c3`) — production fallback when
@@ -61,7 +61,7 @@ function ensurePersistedNodeId(configPath: string, dataDir: string): string {
   if (typeof raw.nodeId === 'string' && raw.nodeId.length > 0) {
     return raw.nodeId
   }
-  const envSeed = process.env.CAMSTACK_NODE_ID
+  const envSeed = process.env.DOMINEVO_NODE_ID
   const id =
     envSeed && envSeed.length > 0 ? envSeed : `agent-${crypto.randomBytes(4).toString('hex')}`
   raw.nodeId = id
@@ -95,11 +95,11 @@ function defaultAgentName(hostname: string, arch: string): string {
 }
 
 /**
- * The name before anyone renamed the agent: `CAMSTACK_AGENT_NAME` when set, else the default.
+ * The name before anyone renamed the agent: `DOMINEVO_AGENT_NAME` when set, else the default.
  * Never the node id - that is an identity, not a label.
  */
 function seededAgentName(): string {
-  const fromEnv = process.env.CAMSTACK_AGENT_NAME
+  const fromEnv = process.env.DOMINEVO_AGENT_NAME
   return fromEnv !== undefined && fromEnv.trim().length > 0
     ? fromEnv.trim()
     : defaultAgentName(os.hostname(), os.arch())
@@ -107,7 +107,7 @@ function seededAgentName(): string {
 
 function loadAgentConfig(configPath?: string, dataDirOverride?: string): AgentConfig {
   const filePath = configPath ?? 'agent.json'
-  const dataDir = dataDirOverride ?? process.env.CAMSTACK_DATA ?? './camstack-data'
+  const dataDir = dataDirOverride ?? process.env.DOMINEVO_DATA ?? './camstack-data'
   const resolvedDataDir = path.resolve(dataDir)
 
   // Name: config file takes priority over env (allows UI rename to stick).
@@ -116,7 +116,7 @@ function loadAgentConfig(configPath?: string, dataDirOverride?: string): AgentCo
 
   // Environment variable for the hub connection (optional — agent starts
   // without). Pairing material lives only in agent.json.
-  const envHubAddress = process.env.CAMSTACK_HUB_ADDRESS || undefined
+  const envHubAddress = process.env.DOMINEVO_HUB_ADDRESS || undefined
   const configFullPath = path.resolve(resolvedDataDir, filePath)
   const nodeId = ensurePersistedNodeId(filePath, resolvedDataDir)
 
@@ -145,10 +145,10 @@ function loadAgentConfig(configPath?: string, dataDirOverride?: string): AgentCo
     hubAddress: effectiveHub,
     dataDir: resolvedDataDir,
     addonsDir: path.resolve(resolvedDataDir, 'addons'),
-    logLevel: process.env.CAMSTACK_LOG_LEVEL ?? 'info',
+    logLevel: process.env.DOMINEVO_LOG_LEVEL ?? 'info',
     ...(fileMeshTls !== undefined ? { meshTls: fileMeshTls } : {}),
     configPath: configFullPath,
-    statusPort: Number(process.env.CAMSTACK_STATUS_PORT) || 4444,
+    statusPort: Number(process.env.DOMINEVO_STATUS_PORT) || 4444,
   }
 }
 

@@ -248,7 +248,7 @@ describe('the permission tier comes from claims, never from a prefix', () => {
       const stale = path.join(dir, 'hub.example.test_4443.admin-token')
       fs.writeFileSync(stale, 'opaque_stale', { mode: 0o600 })
       const r = await resolveFreshCredentials({
-        env: { CAMSTACK_ADMIN_TOKEN_FILE: stale },
+        env: { DOMINEVO_ADMIN_TOKEN_FILE: stale },
         now: NOW,
         loadSession: () => ({ server: SERVER, token: jwt({ isAdmin: false }) }),
       })

@@ -58,13 +58,13 @@ describe('npm reachability from the hub addon sweep', () => {
   beforeEach(() => {
     events.length = 0
     root = fs.mkdtempSync(path.join(os.tmpdir(), 'npm-reach-'))
-    previousAddonsDir = process.env['CAMSTACK_ADDONS_DIR']
-    process.env['CAMSTACK_ADDONS_DIR'] = root
+    previousAddonsDir = process.env['DOMINEVO_ADDONS_DIR']
+    process.env['DOMINEVO_ADDONS_DIR'] = root
   })
 
   afterEach(() => {
-    if (previousAddonsDir === undefined) delete process.env['CAMSTACK_ADDONS_DIR']
-    else process.env['CAMSTACK_ADDONS_DIR'] = previousAddonsDir
+    if (previousAddonsDir === undefined) delete process.env['DOMINEVO_ADDONS_DIR']
+    else process.env['DOMINEVO_ADDONS_DIR'] = previousAddonsDir
     fs.rmSync(root, { recursive: true, force: true })
     vi.unstubAllGlobals()
   })

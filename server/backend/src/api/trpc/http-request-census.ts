@@ -49,7 +49,7 @@
  * the router entries this census saw, over the SAME window. When it does not
  * balance, a plane is missing from this instrument - which is a result. The
  * two windows are armed separately (this one from the logging document, the
- * fleet one from `CAMSTACK_FLEET_READ_CENSUS_MS`), so the comparison is only
+ * fleet one from `DOMINEVO_FLEET_READ_CENSUS_MS`), so the comparison is only
  * valid when both were armed across the same boot; nothing here joins them
  * automatically, because a join across two differently-armed windows would
  * produce a confident wrong number.

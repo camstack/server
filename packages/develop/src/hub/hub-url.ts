@@ -3,8 +3,8 @@
  * the operator's, found in this order (first hit wins).
  *
  *   1. an explicit value (a `--server` flag)
- *   2. `$CAMSTACK_HUB_URL`
- *   3. `$CAMSTACK_SERVER`           (the CLI's name for the same thing)
+ *   2. `$DOMINEVO_HUB_URL`
+ *   3. `$DOMINEVO_SERVER`           (the CLI's name for the same thing)
  *   4. `<workspace>/scratchpad/.hub-url`  (gitignored, one line)
  *   5. the cached `dominevo login` session's server
  *
@@ -57,7 +57,7 @@ export function resolveHubUrl(inputs: HubUrlInputs): ResolvedHubUrl | undefined 
   const env = inputs.env ?? process.env
   const explicit = clean(inputs.explicit)
   if (explicit) return { url: explicit, source: 'flag' }
-  const fromEnv = clean(env['CAMSTACK_HUB_URL']) ?? clean(env['CAMSTACK_SERVER'])
+  const fromEnv = clean(env['DOMINEVO_HUB_URL']) ?? clean(env['DOMINEVO_SERVER'])
   if (fromEnv) return { url: fromEnv, source: 'env' }
   const scratch = readScratchpadHubUrl(inputs.workspaceRoot)
   if (scratch) return { url: scratch, source: 'scratchpad' }

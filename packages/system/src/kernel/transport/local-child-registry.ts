@@ -626,7 +626,7 @@ export class LocalChildRegistry {
    * (`null`) → always (fail-open, counted by {@link undeclaredChildCount});
    * else the child's declared set must match via `matchesPattern` — the SAME
    * function the child's own `deliverShared` map-key gate uses, giving provable
-   * delivery parity. The parent always filters: the `CAMSTACK_UDS_EVENT_FANOUT`
+   * delivery parity. The parent always filters: the `DOMINEVO_UDS_EVENT_FANOUT`
    * shadow/broadcast modes were removed on 2026-10-06.
    *
    * NOTE: this gate must NOT consult `RING_BUFFER_DENY_PATTERNS` /

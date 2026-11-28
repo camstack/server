@@ -33,7 +33,7 @@ COPY dev-overlay/ /tmp/overlay/
 # of that package with the packed contents. Two kinds of install location:
 #   (a) node_modules trees (camstack-hub, seed-framework) — framework/system/server
 #   (b) the standalone self-contained addon seed dir
-#       (/opt/camstack-seed-addons/@dominevo/<basename>) — one dir per addon
+#       (/opt/dominevo-seed-addons/@dominevo/<basename>) — one dir per addon
 # `--strip-components=1` drops the `package/` prefix.
 RUN set -eu; \
     for t in /tmp/overlay/*.tgz; do \
@@ -47,7 +47,7 @@ RUN set -eu; \
         tar -xzf "$t" -C "$dir" --strip-components=1 package; \
         echo "   -> $dir"; found=1; \
       done; \
-      seed="/opt/camstack-seed-addons/@dominevo/$base"; \
+      seed="/opt/dominevo-seed-addons/@dominevo/$base"; \
       if [ -d "$seed" ]; then \
         rm -rf "$seed"; mkdir -p "$seed"; \
         tar -xzf "$t" -C "$seed" --strip-components=1 package; \

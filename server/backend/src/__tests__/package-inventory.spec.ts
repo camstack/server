@@ -44,7 +44,7 @@ function root(p: string, expectation: RootExpectation): InventoryRoot {
 }
 
 const ACTIVE_ROOT = '/data/server-root/current/node_modules'
-const SEED_HUB = '/opt/camstack-hub/node_modules'
+const SEED_HUB = '/opt/dominevo-hub/node_modules'
 const SEED_FRAMEWORK = '/opt/camstack-seed-framework/node_modules'
 const STALE_FRAMEWORK = '/data/framework/node_modules'
 
@@ -62,7 +62,7 @@ function expectationOf(roots: readonly InventoryRoot[], p: string): RootExpectat
 describe('hostProvidedSearchRoots', () => {
   it('scans NODE_PATH, the closure, the legacy framework dir, /data/addons and the image seeds', () => {
     const roots = hostProvidedSearchRoots({
-      nodePath: '/data/server-root/current/node_modules:/opt/camstack-hub/node_modules',
+      nodePath: '/data/server-root/current/node_modules:/opt/dominevo-hub/node_modules',
       pathSeparator: ':',
       dataDir: '/data',
       serverNodeModules: ACTIVE_ROOT,
@@ -372,7 +372,7 @@ describe('formatInventoryReport', () => {
 describe('the inventory is never fatal', () => {
   /**
    * Operator directive, 2026-08-12: "non dovremmo mai prevenire il boot". The
-   * `CAMSTACK_INVENTORY_STRICT=1` refusal is gone and no flag replaces it — a
+   * `DOMINEVO_INVENTORY_STRICT=1` refusal is gone and no flag replaces it — a
    * node that will not start records nothing, and every layout this detector
    * describes is survivable at runtime and fixable by an operator with a shell.
    * The inverse of the test that used to pin the refusal.
@@ -508,7 +508,7 @@ describe('formatShadowingNotes', () => {
  * this guard must not do itself.
  */
 describe('the closure directory is active, not unexpected', () => {
-  const seedRoots = ['/opt/camstack-hub/node_modules', '/opt/camstack-seed-framework/node_modules']
+  const seedRoots = ['/opt/dominevo-hub/node_modules', '/opt/camstack-seed-framework/node_modules']
   const closure = '/data/server-root/current/node_modules'
   const nested = '/data/server-root/current/node_modules/@dominevo/server/node_modules'
 

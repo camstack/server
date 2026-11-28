@@ -11,7 +11,7 @@
  *   4. Retrieve metadata via `npm view --json` round-trip.
  *   5. Tear down cleanly (process killed, storage tree intact under mktemp).
  *
- * Gated by `CAMSTACK_E2E_LIVE` like every other live suite — the npx
+ * Gated by `DOMINEVO_E2E_LIVE` like every other live suite — the npx
  * verdaccio cold-install is ~10s and the publish round-trip needs the
  * real npm CLI in PATH, neither of which we want firing on every
  * unit-test pass.
@@ -23,7 +23,7 @@ import { join } from 'node:path'
 import { execFileSync } from 'node:child_process'
 import { spawnVerdaccio, publishFixture, type SpawnedVerdaccio } from '../fixtures/verdaccio.ts'
 
-const E2E_LIVE = process.env['CAMSTACK_E2E_LIVE'] === '1'
+const E2E_LIVE = process.env['DOMINEVO_E2E_LIVE'] === '1'
 
 const describeLive = E2E_LIVE ? describe : describe.skip
 

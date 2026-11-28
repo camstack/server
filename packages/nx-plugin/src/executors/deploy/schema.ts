@@ -3,7 +3,7 @@
  * Mirrors `schema.json` (the Nx-facing JSON schema).
  */
 export interface DeployExecutorSchema {
-  /** Hub base URL. Falls back to $CAMSTACK_SERVER, then the hub of the login session. */
+  /** Hub base URL. Falls back to $DOMINEVO_SERVER, then the hub of the login session. */
   readonly server?: string
   /** Skip the `build` target dependency and pack whatever is already on disk. */
   readonly skipBuild?: boolean

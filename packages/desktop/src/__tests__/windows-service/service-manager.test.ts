@@ -13,7 +13,7 @@ const spec: AgentServiceSpec = {
   supervisorJs: 'C:\\App\\resources\\service\\service-supervisor.js',
   starterJs: 'C:\\App\\resources\\node_modules\\@dominevo\\server\\dist\\starter.js',
   workingDir: 'C:\\App\\resources',
-  env: { CAMSTACK_ROLE: 'agent' },
+  env: { DOMINEVO_ROLE: 'agent' },
   logDir: '',
 }
 

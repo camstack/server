@@ -17,14 +17,14 @@ export function buildAgentEnv(opts: AgentOptions): Record<string, string> {
   const agentName = opts.name ?? `${os.hostname()}-${os.arch()}`
 
   return {
-    // `CAMSTACK_ROLE`, not `CAMSTACK_MODE`. Nothing in server/backend has ever
-    // read `CAMSTACK_MODE` — the role switch is `resolveNodeRole`
+    // `DOMINEVO_ROLE`, not `DOMINEVO_MODE`. Nothing in server/backend has ever
+    // read `DOMINEVO_MODE` — the role switch is `resolveNodeRole`
     // (server/backend/src/node-role.ts), which returns 'hub' for an EMPTY
     // value. So `dominevo agent` set a variable no one reads and booted a HUB.
-    CAMSTACK_ROLE: 'agent',
-    CAMSTACK_HUB_URL: `ws://${opts.hub}:${hubPort}/agent`,
-    CAMSTACK_HUB_TOKEN: opts.token, // agent-join:line
-    CAMSTACK_AGENT_NAME: agentName,
+    DOMINEVO_ROLE: 'agent',
+    DOMINEVO_HUB_URL: `ws://${opts.hub}:${hubPort}/agent`,
+    DOMINEVO_HUB_TOKEN: opts.token, // agent-join:line
+    DOMINEVO_AGENT_NAME: agentName,
   }
 }
 

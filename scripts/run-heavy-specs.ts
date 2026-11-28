@@ -7,7 +7,7 @@
  * test configs exclude it (see docs/architecture/testing.md). Each spec runs
  * through the config of the project that owns it, so module resolution is the
  * one the default lane uses: the project is the nearest ancestor directory with
- * a `vitest.config.*`, `CAMSTACK_HEAVY_SPECS=1` lifts that config's exclusion,
+ * a `vitest.config.*`, `DOMINEVO_HEAVY_SPECS=1` lifts that config's exclusion,
  * and the spec paths narrow the run to the heavy files.
  */
 import { spawnSync } from 'node:child_process'
@@ -69,7 +69,7 @@ function main(): number {
     const result = spawnSync('npx', ['vitest', 'run', ...rel], {
       cwd: project,
       stdio: 'inherit',
-      env: { ...process.env, CAMSTACK_HEAVY_SPECS: '1' },
+      env: { ...process.env, DOMINEVO_HEAVY_SPECS: '1' },
     })
     if (result.status !== 0) failed.push(label)
   }

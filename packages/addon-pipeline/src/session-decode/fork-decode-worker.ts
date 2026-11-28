@@ -131,7 +131,7 @@ export function wrapChild(
  * every fork ~170 ms and ~100 MB of heap (D453).
  *
  * The inherited environment is SPREAD, never replaced: this child resolves
- * node-av through `CAMSTACK_FRAMEWORK_DIR` / `CAMSTACK_BUNDLED_ADDONS_DIR` on
+ * node-av through `DOMINEVO_FRAMEWORK_DIR` / `DOMINEVO_BUNDLED_ADDONS_DIR` on
  * agents, so a replaced env would silently break decoding off the hub.
  */
 export function forkDecodeWorker(

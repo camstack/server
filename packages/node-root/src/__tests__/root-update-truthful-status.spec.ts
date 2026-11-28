@@ -41,13 +41,13 @@ import {
 const NOW = 1_700_000_000_000
 const RUNNING = '1.1.50'
 const ENV_NAMES: RootUpdateEnvNames = {
-  bootMode: 'CAMSTACK_SERVER_BOOT_MODE',
-  activeVersion: 'CAMSTACK_SERVER_ACTIVE_VERSION',
-  seedDir: 'CAMSTACK_SEED_SERVER_DIR',
+  bootMode: 'DOMINEVO_SERVER_BOOT_MODE',
+  activeVersion: 'DOMINEVO_SERVER_ACTIVE_VERSION',
+  seedDir: 'DOMINEVO_SEED_SERVER_DIR',
 }
 const DATA_ROOT_ENV: NodeJS.ProcessEnv = {
-  CAMSTACK_SERVER_BOOT_MODE: 'data-root',
-  CAMSTACK_SERVER_ACTIVE_VERSION: RUNNING,
+  DOMINEVO_SERVER_BOOT_MODE: 'data-root',
+  DOMINEVO_SERVER_ACTIVE_VERSION: RUNNING,
 }
 
 /** npm's real wording for the failure the hub hit at 21:04:38Z on 2026-09-19. */
@@ -214,19 +214,19 @@ describe('runningVersion is what THIS process loaded', () => {
 
   it('claims no installed version on a baked or workspace boot — the starter did not load current/ there', async () => {
     installCurrent('1.2.352')
-    const baked = await makeService({ CAMSTACK_SERVER_BOOT_MODE: 'baked' }).getServerPackageStatus()
+    const baked = await makeService({ DOMINEVO_SERVER_BOOT_MODE: 'baked' }).getServerPackageStatus()
     expect(baked.installedVersion).toBeNull()
     expect(baked.restartRequired).toBe(false)
     const workspace = await makeService({
-      CAMSTACK_SERVER_BOOT_MODE: 'workspace',
+      DOMINEVO_SERVER_BOOT_MODE: 'workspace',
     }).getServerPackageStatus()
     expect(workspace.installedVersion).toBeNull()
   })
 
   it('logs when the loaded version disagrees with the version the starter booted', () => {
     makeService({
-      CAMSTACK_SERVER_BOOT_MODE: 'data-root',
-      CAMSTACK_SERVER_ACTIVE_VERSION: '1.1.49',
+      DOMINEVO_SERVER_BOOT_MODE: 'data-root',
+      DOMINEVO_SERVER_ACTIVE_VERSION: '1.1.49',
     })
     const warned = lines.find((l) =>
       l.message.includes('disagrees with the version the starter booted'),

@@ -27,7 +27,7 @@ the Unraid template — and one image behind both.
 
 ## One image, two roles
 
-There is one image and it serves both roles. `CAMSTACK_ROLE` picks which at boot:
+There is one image and it serves both roles. `DOMINEVO_ROLE` picks which at boot:
 `hub` (the default) runs the full server and admin UI on 4443; `agent` runs a
 worker that joins a hub and serves a status dashboard on 4444. A cluster is one
 hub plus any number of agents, and an agent exists to put a second machine's
@@ -52,14 +52,14 @@ track `intel-latest`; Proxmox / AMD APU hosts use `amd-latest`.
 Both NVIDIA images need the host's NVIDIA driver and the NVIDIA Container
 Toolkit (`--gpus all`, or `--runtime=nvidia`): the toolkit injects `libcuda`
 and `nvidia-smi`; the image carries only the CUDA runtime libraries and cuDNN.
-Wheels are baked as a **wheelhouse** at `$CAMSTACK_ORT_WHEELHOUSE`
-(`/opt/camstack/wheelhouse`), not installed: the pipeline's Python env is a venv
+Wheels are baked as a **wheelhouse** at `$DOMINEVO_ORT_WHEELHOUSE`
+(`/opt/dominevo/wheelhouse`), not installed: the pipeline's Python env is a venv
 under `/data` that a system-level install would not reach. The build refuses a
 wheel whose CUDA provider does not link the CUDA major the image ships.
 
 !!! warning "State of the NVIDIA images"
 
-    On a node with an NVIDIA card and the wheelhouse (`CAMSTACK_ORT_WHEELHOUSE`
+    On a node with an NVIDIA card and the wheelhouse (`DOMINEVO_ORT_WHEELHOUSE`
     set), the pipeline installs `onnxruntime-gpu` from it instead of the CPU
     `onnxruntime` wheel (`requirements-onnxruntime-gpu.txt`), and `cuda` is
     offered only once the CUDA execution provider answers. Neither NVIDIA image
@@ -99,7 +99,7 @@ things want your attention:
   change if bridge is unavoidable.
 
 The settings whose absence produces a failure that does not look like the setting
-— `pids_limit`, `CAMSTACK_MEDIA_ROOT`, the Coral pairing, the restart policy —
+— `pids_limit`, `DOMINEVO_MEDIA_ROOT`, the Coral pairing, the restart policy —
 are the same in both routes and are tabulated once, in
 [unraid.md](unraid.md#what-must-be-true-and-why).
 
@@ -168,7 +168,7 @@ the system zone; a zone the runtime cannot resolve reads as `UTC`.
 ## The hub's address
 
 There is no variable for it: the hub's address, the roles an address serves and
-the retired `CAMSTACK_HUB_PUBLIC_URL` are documented in
+the retired `DOMINEVO_HUB_PUBLIC_URL` are documented in
 [network](network.md#3-the-four-roles).
 
 ## Optional settings for TLS and port
@@ -177,20 +177,20 @@ All optional, all `advanced` in the Unraid template:
 
 | Variable | Default | What it does |
 | --- | --- | --- |
-| `CAMSTACK_PORT` | `4443` | The hub's HTTPS port. With bridge networking change the published mapping instead. |
-| `CAMSTACK_HOST` | `0.0.0.0` | The address the hub binds. |
-| `CAMSTACK_DATA` | `camstack-data` (`/data` in the image) | The data directory. |
+| `DOMINEVO_PORT` | `4443` | The hub's HTTPS port. With bridge networking change the published mapping instead. |
+| `DOMINEVO_HOST` | `0.0.0.0` | The address the hub binds. |
+| `DOMINEVO_DATA` | `camstack-data` (`/data` in the image) | The data directory. |
 
 These three are the whole bootstrap config: there is no `config.yaml` ([D1018](../decisions/adr-1018-the-bootstrap-config-is-the-environment-there-is-no-config-yaml.md)). For one release, a leftover file whose port, host or data path differs is still applied, with a WARN naming the variable to set; delete the file once you have set it.
 
-The image's healthcheck follows `CAMSTACK_PORT` and tries HTTPS, then plain HTTP,
+The image's healthcheck follows `DOMINEVO_PORT` and tries HTTPS, then plain HTTP,
 so a hub moved off 4443 or onto plain HTTP does not report itself unhealthy.
 
 Whether the hub serves HTTPS is not a variable: it is **Serve HTTPS** in
 **Network → Local access** (on by default, and on at first boot). Turn it off only behind a
 reverse proxy that terminates TLS. It applies after the hub restarts: the
 setting is mirrored to `<dataDir>/tls/enabled`, which the boot reads because the
-listener is built before the settings database opens. `CAMSTACK_TLS_ENABLED` is
+listener is built before the settings database opens. `DOMINEVO_TLS_ENABLED` is
 ignored and named in the boot log.
 
 There is no variable for the certificate itself. The hub issues its own from a
@@ -198,7 +198,7 @@ local CA ([D227](../decisions/adr-0227-the-hub-reissues-its-certificate-only-whe
 to use your own, upload the PEM chain and key in **Network → Local access**,
 which is also where you revert to the generated one and download the local CA
 ([D726](../decisions/adr-0726-a-nodes-certificate-is-set-only-in-the-admin-ui-and-what-the-ui-shows-is-what-the-listener-serves.md)).
-`CAMSTACK_TLS_CERT` / `CAMSTACK_TLS_KEY` are ignored; a node that still sets one
+`DOMINEVO_TLS_CERT` / `DOMINEVO_TLS_KEY` are ignored; a node that still sets one
 logs a WARN at boot.
 
 The generated CA is name-constrained: critical `nameConstraints` limit it to the
@@ -231,7 +231,7 @@ used — the request's `Host`), the hosted viewer at
 Expo web on `http://localhost:8081`, add it under Identity → Authentication →
 Sign-in policy → Allowed browser origins. It applies to the next request, with
 no restart. There is no environment variable for it:
-the retired `server.corsOrigins` and `CAMSTACK_CORS_ORIGINS` are ignored
+the retired `server.corsOrigins` and `DOMINEVO_CORS_ORIGINS` are ignored
 (silently: the boot no longer names them).
 
 The hub logs a refused origin once, in the `cors` scope, with this hint.

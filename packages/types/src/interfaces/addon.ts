@@ -544,7 +544,7 @@ export interface AddonContext<TConfig = Record<string, unknown>> {
   readonly dataDir: string
 
   /**
-   * Node-local data ROOT for this node (`CAMSTACK_DATA` ?? the kernel boot dir).
+   * Node-local data ROOT for this node (`DOMINEVO_DATA` ?? the kernel boot dir).
    * The single, centralized anchor for internal per-node working directories
    * (models, logs, addons-data). Always writable on the local node — unlike the
    * hub-singleton `storage` cap, which returns the hub's path to every node.

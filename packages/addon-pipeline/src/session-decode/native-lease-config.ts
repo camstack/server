@@ -38,7 +38,7 @@
  * rather than being clamped: clamping turns a typo into a number nobody chose,
  * and this one governs how much RAM a busy camera holds.
  *
- * The GPU surface ring (`CAMSTACK_SESSION_NATIVE_CROP_RING`) is deliberately
+ * The GPU surface ring (`DOMINEVO_SESSION_NATIVE_CROP_RING`) is deliberately
  * NOT here — see its docblock in `decode-worker-child.ts` for why it stays
  * env-only.
  */
@@ -59,12 +59,12 @@ export { formatNativeLeaseKnobs } from './native-lease-knobs.js'
 
 /** Emergency / dev override env vars (pre-settings; lowest precedence but the default). */
 export const NATIVE_LEASE_ENV_VARS: Readonly<Record<NativeLeaseKnob, string>> = {
-  holdFrames: 'CAMSTACK_SESSION_NATIVE_LEASE_HOLD_FRAMES',
-  budgetMb: 'CAMSTACK_SESSION_NATIVE_LEASE_BUDGET_MB',
-  activityMs: 'CAMSTACK_SESSION_NATIVE_LEASE_ACTIVITY_MS',
-  admission: 'CAMSTACK_SESSION_NATIVE_LEASE_ADMISSION',
-  tileBudgetMb: 'CAMSTACK_SESSION_NATIVE_TILE_BUDGET_MB',
-  sceneBudgetMb: 'CAMSTACK_SESSION_NATIVE_SCENE_BUDGET_MB',
+  holdFrames: 'DOMINEVO_SESSION_NATIVE_LEASE_HOLD_FRAMES',
+  budgetMb: 'DOMINEVO_SESSION_NATIVE_LEASE_BUDGET_MB',
+  activityMs: 'DOMINEVO_SESSION_NATIVE_LEASE_ACTIVITY_MS',
+  admission: 'DOMINEVO_SESSION_NATIVE_LEASE_ADMISSION',
+  tileBudgetMb: 'DOMINEVO_SESSION_NATIVE_TILE_BUDGET_MB',
+  sceneBudgetMb: 'DOMINEVO_SESSION_NATIVE_SCENE_BUDGET_MB',
 }
 
 /** A read-only view of `process.env` — injectable so the resolver is testable. */

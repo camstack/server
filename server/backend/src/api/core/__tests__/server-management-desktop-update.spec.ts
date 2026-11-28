@@ -50,9 +50,9 @@ function providerFor(env: NodeJS.ProcessEnv) {
   const service = new RootUpdateService({
     spec: HUB_ROOT_SPEC,
     envNames: {
-      bootMode: 'CAMSTACK_SERVER_BOOT_MODE',
-      activeVersion: 'CAMSTACK_SERVER_ACTIVE_VERSION',
-      seedDir: 'CAMSTACK_SEED_SERVER_DIR',
+      bootMode: 'DOMINEVO_SERVER_BOOT_MODE',
+      activeVersion: 'DOMINEVO_SERVER_ACTIVE_VERSION',
+      seedDir: 'DOMINEVO_SEED_SERVER_DIR',
     },
     nodeId: 'win-agent',
     logger: SILENT,
@@ -84,7 +84,7 @@ function state(over: Partial<DesktopAppStateFile>): DesktopAppStateFile {
 }
 
 describe('installDesktopUpdate via the server-management provider', () => {
-  const ELECTRON = { CAMSTACK_AGENT_APP_VERSION: '2.0.0' }
+  const ELECTRON = { DOMINEVO_AGENT_APP_VERSION: '2.0.0' }
 
   it('hands the app a consumable request when its update is downloaded', async () => {
     writeDesktopAppState(serverRootDir(dataDir), state({}))

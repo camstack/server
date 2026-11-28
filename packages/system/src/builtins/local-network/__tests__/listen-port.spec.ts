@@ -29,7 +29,7 @@ describe('resolveAdvertisedPort', () => {
     })
   })
 
-  it('falls back to CAMSTACK_PORT when the config section is unreadable', () => {
+  it('falls back to DOMINEVO_PORT when the config section is unreadable', () => {
     expect(resolveAdvertisedPort({ configured: null, env: 9000, callerHint: 443 })).toEqual({
       port: 9000,
       source: 'server-env',
@@ -82,7 +82,7 @@ function makeLogger(): IScopedLogger {
 
 /**
  * Minimal hub-side context. `getSection('server')` is the ONE thing under test
- * here — it is the hub's live boot config (`CAMSTACK_PORT` is merged into it by
+ * here — it is the hub's live boot config (`DOMINEVO_PORT` is merged into it by
  * the boot loader), so a stub that answers it is a stub of the real authority.
  */
 function makeCtx(serverSection: Record<string, unknown>): CtxHarness {
@@ -176,7 +176,7 @@ describe('getConnectionEndpoints — the advertised port', () => {
   })
 
   it('marks the port as a caller hint when the hub cannot read its own config', async () => {
-    vi.stubEnv('CAMSTACK_PORT', '')
+    vi.stubEnv('DOMINEVO_PORT', '')
     try {
       const { provider } = await startProvider({})
       const res = await provider.getConnectionEndpoints({ port: 5555 })

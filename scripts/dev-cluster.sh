@@ -14,8 +14,8 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # Defaults
-HUB_PORT="${CAMSTACK_PORT:-4443}"
-HUB_DATA="${CAMSTACK_DATA:-camstack-data}"
+HUB_PORT="${DOMINEVO_PORT:-4443}"
+HUB_DATA="${DOMINEVO_DATA:-camstack-data}"
 AGENT_COUNT=1
 NO_AGENT=false
 DEV_TOKEN="dev-local-$(date +%s | shasum | head -c 12)"
@@ -75,14 +75,14 @@ CONCURRENTLY_ARGS=(
 NAMES="hub"
 
 # Hub command
-COMMANDS=("CAMSTACK_PORT=${HUB_PORT} CAMSTACK_DATA=${HUB_DATA} node server/backend/dist/main.js")
+COMMANDS=("DOMINEVO_PORT=${HUB_PORT} DOMINEVO_DATA=${HUB_DATA} node server/backend/dist/main.js")
 
 # Agent commands
 for i in $(seq 1 "$AGENT_COUNT"); do
   AGENT_NAME="dev-agent-${i}"
   AGENT_DATA="${HUB_DATA}-agent-${i}"
 
-  COMMANDS+=("sleep 3 && CAMSTACK_MODE=agent CAMSTACK_HUB_URL=wss://127.0.0.1:${HUB_PORT}/agent CAMSTACK_HUB_TOKEN=${DEV_TOKEN} CAMSTACK_AGENT_NAME=${AGENT_NAME} CAMSTACK_DATA=${AGENT_DATA} node server/backend/dist/main.js")  # agent-join:line
+  COMMANDS+=("sleep 3 && DOMINEVO_MODE=agent DOMINEVO_HUB_URL=wss://127.0.0.1:${HUB_PORT}/agent DOMINEVO_HUB_TOKEN=${DEV_TOKEN} DOMINEVO_AGENT_NAME=${AGENT_NAME} DOMINEVO_DATA=${AGENT_DATA} node server/backend/dist/main.js")  # agent-join:line
   NAMES="${NAMES},agent-${i}"
   CONCURRENTLY_ARGS+=(--prefix-colors "green")
 done

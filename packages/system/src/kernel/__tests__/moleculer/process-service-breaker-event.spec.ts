@@ -88,8 +88,8 @@ describe('process-service: the crash circuit-breaker announces the runner it gav
   ): cp.ChildProcess => {
     const child = makeFakeChild(++pidCounter)
     const env = opts.env ?? {}
-    const nodeId = env['CAMSTACK_PARENT_NODE_ID']
-    const runnerId = env['CAMSTACK_RUNNER_ID']
+    const nodeId = env['DOMINEVO_PARENT_NODE_ID']
+    const runnerId = env['DOMINEVO_RUNNER_ID']
     spawned.push(child)
     setImmediate(() => child.stdout.emit('data', Buffer.from(`READY:${nodeId}/${runnerId}\n`)))
     return child as unknown as cp.ChildProcess

@@ -31,7 +31,7 @@
  * packaged metadata exists, so there is nothing to read and the answer is
  * `node` — the product a developer running the workspace almost always means.
  * To see the reduced product's UI in development, set
- * `CAMSTACK_DESKTOP_PRODUCT=viewer`. That override is honoured ONLY when
+ * `DOMINEVO_DESKTOP_PRODUCT=viewer`. That override is honoured ONLY when
  * unpackaged: in a shipped app the product is the build and an environment
  * variable must never be able to turn a viewer install into one that appends
  * `ignore-certificate-errors`.
@@ -47,7 +47,7 @@ export const VIEWER_APP_NAME = 'camstack-viewer'
 export const VIEWER_PRODUCT_NAME = 'Dominevo Viewer'
 
 /** Development-only product override; ignored in a packaged app. */
-export const PRODUCT_OVERRIDE_ENV_VAR = 'CAMSTACK_DESKTOP_PRODUCT'
+export const PRODUCT_OVERRIDE_ENV_VAR = 'DOMINEVO_DESKTOP_PRODUCT'
 
 export interface ProductEnvironment {
   /** `app.getName()` — the packaged `productName`, else `name`. */

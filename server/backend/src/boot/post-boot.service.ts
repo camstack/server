@@ -146,7 +146,7 @@ export class PostBootService {
         underDesktopShell: (process.env[ELECTRON_APP_VERSION_ENV] ?? '').length > 0,
         bus: this.eventBus,
         sourceId: 'system',
-        nodeId: process.env['CAMSTACK_NODE_ID'] ?? 'hub',
+        nodeId: process.env['DOMINEVO_NODE_ID'] ?? 'hub',
         logger: this.logger,
       })
     } catch (err) {
@@ -164,7 +164,7 @@ export class PostBootService {
     const payload: PendingRestartMarkerPayload = {
       kind: marker.kind,
       requestedAt: marker.requestedAt,
-      nodeId: process.env['CAMSTACK_NODE_ID'] ?? 'hub',
+      nodeId: process.env['DOMINEVO_NODE_ID'] ?? 'hub',
       ...(marker.packageName !== undefined ? { packageName: marker.packageName } : {}),
       ...(marker.fromVersion !== undefined ? { fromVersion: marker.fromVersion } : {}),
       ...(marker.toVersion !== undefined ? { toVersion: marker.toVersion } : {}),

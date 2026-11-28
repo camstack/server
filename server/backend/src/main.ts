@@ -438,7 +438,7 @@ async function bootstrap() {
   let spaIndexHtml: string | null = null
 
   // --- Phase 1 + 2: Load config, setup storage locations, TLS ---
-  // The bootstrap config is the environment (CAMSTACK_PORT / HOST / DATA) over
+  // The bootstrap config is the environment (DOMINEVO_PORT / HOST / DATA) over
   // built-in defaults; there is no config.yaml (D1018).
   const bootstrapConfig = loadBootstrapConfig()
   const infra = await setupInfra(bootstrapConfig)
@@ -1690,9 +1690,9 @@ async function bootstrap() {
   }
   const adminUi = createLazyUiServing({
     label: 'Admin UI',
-    // CAMSTACK_SKIP_ADMIN_UI_WAIT: e2e runs that do not need the SPA.
+    // DOMINEVO_SKIP_ADMIN_UI_WAIT: e2e runs that do not need the SPA.
     lookup: () =>
-      process.env['CAMSTACK_SKIP_ADMIN_UI_WAIT'] === '1' ? null : hubUiProvider('admin-ui'),
+      process.env['DOMINEVO_SKIP_ADMIN_UI_WAIT'] === '1' ? null : hubUiProvider('admin-ui'),
     log: uiLogger,
     onServed: ({ staticDir, indexPath }) => {
       spaIndexHtml = indexPath
@@ -1722,7 +1722,7 @@ async function bootstrap() {
   // with no cookies; content-type must be application/json and no redirect.
   {
     const { appleAppSiteAssociation, assetLinks } = buildAppLinkFiles(
-      parseCertFingerprints(process.env['CAMSTACK_ANDROID_CERT_SHA256']),
+      parseCertFingerprints(process.env['DOMINEVO_ANDROID_CERT_SHA256']),
     )
     const aasa = JSON.stringify(appleAppSiteAssociation)
     const assetlinks = JSON.stringify(assetLinks)
@@ -1861,7 +1861,7 @@ async function bootstrap() {
       listenErr.code === 'EADDRINUSE'
     ) {
       console.error(
-        `[bootstrap] FATAL: Port ${port} is already in use. Stop the other process or set CAMSTACK_PORT to a free port.`,
+        `[bootstrap] FATAL: Port ${port} is already in use. Stop the other process or set DOMINEVO_PORT to a free port.`,
       )
       process.exit(1)
     }
@@ -1954,7 +1954,7 @@ async function bootstrap() {
   // private idea of what may be deleted.
   void runSingleCopyCleanup({
     dataDir: dataPath,
-    addonRoot: process.env['CAMSTACK_ADDONS_DIR'] ?? path.join(dataPath, 'addons'),
+    addonRoot: process.env['DOMINEVO_ADDONS_DIR'] ?? path.join(dataPath, 'addons'),
     log: (line) => logger.info(line),
   })
 

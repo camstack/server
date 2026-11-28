@@ -2,13 +2,13 @@
  * What the About line shows: the product release (image / desktop app) and
  * the running `@dominevo/server` package. They are different lines (D943).
  *
- * The product version is declared by the shell — `CAMSTACK_PRODUCT_VERSION`,
+ * The product version is declared by the shell — `DOMINEVO_PRODUCT_VERSION`,
  * set by the image and by the desktop app. A dev workspace leaves it unset;
  * that is absence, not a failure. The server version is the package this
  * process loaded.
  */
 
-export const PRODUCT_VERSION_ENV = 'CAMSTACK_PRODUCT_VERSION'
+export const PRODUCT_VERSION_ENV = 'DOMINEVO_PRODUCT_VERSION'
 
 export interface ReleaseIdentity {
   readonly productVersion: string | null

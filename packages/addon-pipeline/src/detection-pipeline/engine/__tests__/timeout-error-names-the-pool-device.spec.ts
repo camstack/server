@@ -84,7 +84,7 @@ describe('the timeout rejection names the pool device', () => {
     vi.resetModules()
     vi.useFakeTimers()
     // The COMMAND deadline — the reject path is command-only since D350.
-    vi.stubEnv('CAMSTACK_POOL_INFER_TIMEOUT_MS', '1500')
+    vi.stubEnv('DOMINEVO_POOL_INFER_TIMEOUT_MS', '1500')
   })
   afterEach(() => {
     vi.useRealTimers()

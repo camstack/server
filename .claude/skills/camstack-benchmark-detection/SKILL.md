@@ -62,13 +62,13 @@ spec refuses non-`yolov9[tsm]-(320|640)(-int8)?` ids.
 ## 2. Preflight
 
 ```bash
-dominevo login                   # cached session; the hub URL: scratchpad/.hub-url or CAMSTACK_HUB_URL
+dominevo login                   # cached session; the hub URL: scratchpad/.hub-url or DOMINEVO_HUB_URL
 # Optional: download every model first via pipelineExecutor.downloadModel
 ```
 
 Hub auth for the harness: same as `camstack-diagnose` — run
 `dominevo login <host>` once (as an admin); every tool uses that session (skill `hub-access`). The hub
-URL: `scratchpad/.hub-url` (gitignored) or `CAMSTACK_HUB_URL`. Never commit tokens.
+URL: `scratchpad/.hub-url` (gitignored) or `DOMINEVO_HUB_URL`. Never commit tokens.
 
 **WebGPU / AMD notes (D823):** each WebGPU model is one OS child
 (`webgpu_isolated.py`). Multi-step trees are fine. Recycle the pool between

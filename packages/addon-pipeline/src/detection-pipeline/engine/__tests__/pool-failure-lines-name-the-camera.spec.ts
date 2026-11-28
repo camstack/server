@@ -104,7 +104,7 @@ describe('a pool failure line names the camera', () => {
     spawned.length = 0
     vi.resetModules()
     vi.useFakeTimers()
-    vi.stubEnv('CAMSTACK_POOL_LIVE_INFER_TIMEOUT_MS', '1500')
+    vi.stubEnv('DOMINEVO_POOL_LIVE_INFER_TIMEOUT_MS', '1500')
   })
   afterEach(() => {
     vi.useRealTimers()

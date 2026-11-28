@@ -44,17 +44,17 @@ def edgetpu_library_path(
     """The libedgetpu file this pool loads.
 
     The same lookup as the TS probe (``chooseEdgetpuDelegate`` in
-    ``@dominevo/types`` ``deps/edgetpu-delegate.ts``): ``CAMSTACK_EDGETPU_LIB``
+    ``@dominevo/types`` ``deps/edgetpu-delegate.ts``): ``DOMINEVO_EDGETPU_LIB``
     when set (followed even if missing — ``load_delegate`` then names it); the
-    copy the deps downloader staged under ``<CAMSTACK_DATA>/deps/edgetpu/lib/``
+    copy the deps downloader staged under ``<DOMINEVO_DATA>/deps/edgetpu/lib/``
     (``libedgetpu.1.dylib`` on macOS, ``libedgetpu.so.1`` elsewhere); else the
     hub's historical path, which on the hub image is the same file.
     """
     check = exists or os.path.exists
-    override = (env.get("CAMSTACK_EDGETPU_LIB") or "").strip()
+    override = (env.get("DOMINEVO_EDGETPU_LIB") or "").strip()
     if override:
         return override
-    data_root = env.get("CAMSTACK_DATA") or env.get("CAMSTACK_DATA_DIR") or ""
+    data_root = env.get("DOMINEVO_DATA") or env.get("DOMINEVO_DATA_DIR") or ""
     if data_root:
         name = "libedgetpu.1.dylib" if platform == "darwin" else "libedgetpu.so.1"
         staged = os.path.join(data_root, "deps", "edgetpu", "lib", name)

@@ -5,7 +5,7 @@ import { demuxSegmentToPcmu, sliceMuLawToPcmuFrames } from '../segment-audio'
 
 const SAMPLE = readFileSync(join(__dirname, 'fixtures/sample.m4s'))
 /** The binary the product would run: CI exports the pinned build here (D540). */
-const FFMPEG = process.env['CAMSTACK_FFMPEG_PATH'] ?? 'ffmpeg'
+const FFMPEG = process.env['DOMINEVO_FFMPEG_PATH'] ?? 'ffmpeg'
 
 describe('sliceMuLawToPcmuFrames', () => {
   it('slices into 160-byte / 20 ms frames with running ptsMs', () => {

@@ -605,7 +605,7 @@ next to the mesh CA a backup already keeps). Finding it grants nothing (D838):
 an agent adopts an announced address only after that hub's membership answer
 verifies against the CA pinned at pairing (D1031). The CLI browses it
 (`multicast-dns`) and unions it with the hubs the machine knows — cached
-sessions, `$CAMSTACK_HUB_URL`, `scratchpad/.hub-url`
+sessions, `$DOMINEVO_HUB_URL`, `scratchpad/.hub-url`
 — probes each on https, dedupes by host:port, and picks (one) or asks (several,
 with each source and an "Enter an address…" entry). Agents never advertise it.
 

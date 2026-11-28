@@ -5,9 +5,9 @@ describe('check-no-token-file-lookup', () => {
   it('flags the implicit token-file lookups the scripts used to carry', () => {
     const old = [
       "const TOKEN_FILE = opt('token-file', join(REPO, 'scratchpad', '.tok'))",
-      "const TOK = process.env.CAMSTACK_TOKEN || readScratch('.tok')",
+      "const TOK = process.env.DOMINEVO_TOKEN || readScratch('.tok')",
       "path.resolve('scratchpad/.tok')",
-      "const named = env['CAMSTACK_ADMIN_TOKEN_FILE']",
+      "const named = env['DOMINEVO_ADMIN_TOKEN_FILE']",
       'return path.join(dir, `${slugForServer(serverUrl)}.admin-token`)',
       'findAdminTokenFile(server)',
     ].join('\n')

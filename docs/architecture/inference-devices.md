@@ -344,7 +344,7 @@ Compilation, not inference, was the thread holder. Measured on the hub
 2026-09-18: one `inference_pool.py` held **214 threads** 17 minutes after boot —
 the largest in the container, 3× ffmpeg — with the start times clustering exactly
 on compile timestamps, 23 threads per compile on a 20-core box, never retired.
-`COMPILATION_NUM_THREADS=4` bounds it (`CAMSTACK_OV_COMPILATION_THREADS`, `0`
+`COMPILATION_NUM_THREADS=4` bounds it (`DOMINEVO_OV_COMPILATION_THREADS`, `0`
 disables). Four rather than one because the cold-compile storm is where frames
 pile up, and it costs nothing at inference time: `INFERENCE_NUM_THREADS` is
 deliberately left at OpenVINO's default, because the CPU device is this pool's
@@ -372,7 +372,7 @@ can refuse to serve a camera is worse than every miss it prevents.
 
 A device pool is reaped when unused (`engine/idle-pool-reaper.ts`), and the TTL is
 measured in HOURS — `DetectionPipelineProvider.DEVICE_POOL_IDLE_TTL_MS`, default
-6 h, `CAMSTACK_DEVICE_POOL_IDLE_TTL_MS`. The reason is the workload again: only a
+6 h, `DOMINEVO_DEVICE_POOL_IDLE_TTL_MS`. The reason is the workload again: only a
 DISPATCH touches the key, and dispatch is driven by motion, so "an active camera"
 does not keep its pool warm — a quiet camera stops touching it entirely. Under the
 old 120 s TTL the pool was evicted between events and the next motion paid a full
@@ -509,7 +509,7 @@ What keeps this from becoming a second lifecycle:
 - **A pid that changed on its own** — a kernel kill, an idle eviction — is
   re-baselined and never charged to the budget.
 
-Every threshold is env-tunable (`CAMSTACK_POOL_MEM_INTERVAL_MS` / `_MULTIPLE` /
+Every threshold is env-tunable (`DOMINEVO_POOL_MEM_INTERVAL_MS` / `_MULTIPLE` /
 `_FLOOR_MB` / `_CEILING_MB` / `_COOLDOWN_MS` / `_MAX_RESTARTS` /
 `_RESTART_WINDOW_MS`); a garbage value falls back to the default rather than
 disarming the bound.
@@ -535,10 +535,10 @@ because it was re-measured.
 Three bounds now make the state unreachable, and they must be understood
 together:
 
-- **in-flight cap** per worker (`CAMSTACK_POOL_MAX_IN_FLIGHT`, default 8) — over
+- **in-flight cap** per worker (`DOMINEVO_POOL_MAX_IN_FLIGHT`, default 8) — over
   the cap, inference is SHED with the same `{dropped: true}` contract Python
   already uses for its own per-model bound;
-- **live deadline** of 3s (`CAMSTACK_POOL_LIVE_INFER_TIMEOUT_MS`), separate from
+- **live deadline** of 3s (`DOMINEVO_POOL_LIVE_INFER_TIMEOUT_MS`), separate from
   the 60s that commands keep. Sixty seconds was never a deadline for live
   detection: a result that late describes a scene that no longer exists. A
   model load gets its own per-runtime bounds instead (`POOL_MODEL_LOAD_BOUNDS`:

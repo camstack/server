@@ -315,7 +315,7 @@ export interface RequirementsContext {
   /** The node's NVIDIA slot — PRESENT whether or not the CUDA EP exists yet. */
   readonly nvidia: NvidiaInfo | null
   /**
-   * `CAMSTACK_ORT_WHEELHOUSE`: the directory an nvidia image bakes its
+   * `DOMINEVO_ORT_WHEELHOUSE`: the directory an nvidia image bakes its
    * `onnxruntime-gpu` wheel into; null on every other image.
    */
   readonly ortWheelhouse: string | null

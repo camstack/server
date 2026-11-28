@@ -54,7 +54,7 @@ export interface EnsureAddonNativePrebuildsOptions {
   readonly logger: IScopedLogger
   /**
    * Bundled addon copy dir (the `installCopy` `sourceDir` / a
-   * `CAMSTACK_BUNDLED_ADDONS_DIR/<addon>` copy) whose own
+   * `DOMINEVO_BUNDLED_ADDONS_DIR/<addon>` copy) whose own
    * `node_modules/<pkg>` may carry a prebuilt `.node` for THIS machine.
    * Copied in directly before any network fetch. Absent on the npm/tgz path.
    */

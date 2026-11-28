@@ -16,7 +16,7 @@ import { ARTIFACTS_MEDIA_LOCATION } from '../artifact-store.js'
  * the other declarer and their agreement.
  *
  * `defaultRoot: 'media'` is pinned too: the class must seed under the
- * declared media mount (`CAMSTACK_MEDIA_ROOT`) out of the box — never the
+ * declared media mount (`DOMINEVO_MEDIA_ROOT`) out of the box — never the
  * addon data dir, and never a path needing a new template mount.
  */
 interface ManifestStorageLocation {

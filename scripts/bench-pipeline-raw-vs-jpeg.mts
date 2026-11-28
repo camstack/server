@@ -24,7 +24,7 @@
  * has any spare capacity to harvest.
  *
  * Env:
- *   CAMSTACK_SERVER  hub address (default: the `dominevo login` session's hub)
+ *   DOMINEVO_SERVER  hub address (default: the `dominevo login` session's hub)
  *   AGENT_NODE_ID    hub  (cluster node to target)
  *   FIXTURE_PATH     test-output/bench/sample-1080p.jpg
  *
@@ -48,7 +48,7 @@ const SWEEP = process.argv[4] === '1' || process.argv[4] === 'sweep'
 // The `dominevo login` session is the only credential (D1101): log in once with
 // `dominevo login <host>`; nothing here asks for a password.
 const hubAuth = await resolveHubAuth(
-  process.env['CAMSTACK_SERVER'] ? { server: process.env['CAMSTACK_SERVER'] } : {},
+  process.env['DOMINEVO_SERVER'] ? { server: process.env['DOMINEVO_SERVER'] } : {},
 )
 const SERVER = hubAuth.server
 const NODE_ID = process.env.AGENT_NODE_ID ?? 'hub'

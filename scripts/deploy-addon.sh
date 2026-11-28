@@ -4,7 +4,7 @@
 #
 # The credential is the `dominevo login` session (D1101): run
 # `dominevo login <host>` once, interactively. There is no token flag, no
-# $CAMSTACK_TOKEN and no ~/.camstackrc.
+# $DOMINEVO_TOKEN and no ~/.camstackrc.
 
 set -euo pipefail
 

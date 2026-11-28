@@ -2,7 +2,7 @@
 /**
  * No runtime code reads the hub's address from the environment.
  *
- * `CAMSTACK_HUB_PUBLIC_URL` (and its older alias `CAMSTACK_PUBLIC_ORIGIN`)
+ * `DOMINEVO_HUB_PUBLIC_URL` (and its older alias `DOMINEVO_PUBLIC_ORIGIN`)
  * restated what the `local-network` capability owns — the hub's interfaces,
  * listen port, allowlist, tunnel and mesh, edited on the admin Network page.
  * Because the variable was optional (and the desktop app has no field for
@@ -26,7 +26,7 @@ import { fileURLToPath } from 'node:url'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 
-const RETIRED = /\bCAMSTACK_(?:HUB_PUBLIC_URL|PUBLIC_ORIGIN)\b/
+const RETIRED = /\bDOMINEVO_(?:HUB_PUBLIC_URL|PUBLIC_ORIGIN)\b/
 
 /** The one file that names them: to warn and strip, never to read a value. */
 const ALLOWED = new Set(['server/backend/src/boot/retired-public-url-env.ts'])
@@ -107,7 +107,7 @@ function main(): void {
   }
   console.error(
     'check-no-hub-address-env: the hub address comes from the local-network capability ' +
-      '(getAddresses().roles), never from CAMSTACK_HUB_PUBLIC_URL / CAMSTACK_PUBLIC_ORIGIN:',
+      '(getAddresses().roles), never from DOMINEVO_HUB_PUBLIC_URL / DOMINEVO_PUBLIC_ORIGIN:',
   )
   for (const f of findings) console.error(`  ${f.file}:${f.line}  ${f.text}`)
   process.exit(1)

@@ -195,7 +195,7 @@ export class NcStateSummaryService {
         const addonId = stringOf(data, 'addonId')
         // The NODE is the event's `source.nodeId` — the broker node id a
         // crash-loop row carries. `data.agent` is the agent's display NAME
-        // (`CAMSTACK_AGENT_NAME ?? 'hub'`) and never matched on an agent. An
+        // (`DOMINEVO_AGENT_NAME ?? 'hub'`) and never matched on an agent. An
         // in-process `addon.started` names no node: it is THIS process's
         // node, the hub (the centre evaluates only there), and only the hub's
         // rows are closed by it.

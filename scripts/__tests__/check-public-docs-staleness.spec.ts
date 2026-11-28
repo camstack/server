@@ -314,11 +314,11 @@ describe('the reminder against real repositories', () => {
     expect(result.exitCode).toBe(0)
     expect(result.report).toBeNull()
     expect(result.lines[0]).toContain('skipped')
-    expect(locateDocs(server, { CAMSTACK_DOCS_DIR: path.join(server, 'nope') })).toBeNull()
+    expect(locateDocs(server, { DOMINEVO_DOCS_DIR: path.join(server, 'nope') })).toBeNull()
   })
 
-  it('finds the docs checkout through CAMSTACK_DOCS_DIR', () => {
+  it('finds the docs checkout through DOMINEVO_DOCS_DIR', () => {
     const docs = docsFixture({ bare: page('') })
-    expect(locateDocs(tempDir('elsewhere'), { CAMSTACK_DOCS_DIR: docs })).toBe(docs)
+    expect(locateDocs(tempDir('elsewhere'), { DOMINEVO_DOCS_DIR: docs })).toBe(docs)
   })
 })

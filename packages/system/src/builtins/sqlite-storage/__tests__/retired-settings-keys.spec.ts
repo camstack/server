@@ -412,25 +412,25 @@ describe('settingsStoreIsAuthoritativeHere', () => {
   // purge has exactly one place to run.
 
   it('runs on the hub', () => {
-    expect(settingsStoreIsAuthoritativeHere({ CAMSTACK_ROLE: 'hub' })).toBe(true)
+    expect(settingsStoreIsAuthoritativeHere({ DOMINEVO_ROLE: 'hub' })).toBe(true)
   })
 
   it('runs when the role is unset — the launcher default is hub', () => {
     expect(settingsStoreIsAuthoritativeHere({})).toBe(true)
-    expect(settingsStoreIsAuthoritativeHere({ CAMSTACK_ROLE: '' })).toBe(true)
+    expect(settingsStoreIsAuthoritativeHere({ DOMINEVO_ROLE: '' })).toBe(true)
   })
 
   it('does NOT run on an agent, in any casing or padding', () => {
-    expect(settingsStoreIsAuthoritativeHere({ CAMSTACK_ROLE: 'agent' })).toBe(false)
-    expect(settingsStoreIsAuthoritativeHere({ CAMSTACK_ROLE: 'AGENT' })).toBe(false)
-    expect(settingsStoreIsAuthoritativeHere({ CAMSTACK_ROLE: '  agent  ' })).toBe(false)
+    expect(settingsStoreIsAuthoritativeHere({ DOMINEVO_ROLE: 'agent' })).toBe(false)
+    expect(settingsStoreIsAuthoritativeHere({ DOMINEVO_ROLE: 'AGENT' })).toBe(false)
+    expect(settingsStoreIsAuthoritativeHere({ DOMINEVO_ROLE: '  agent  ' })).toBe(false)
   })
 
   it('does NOT run on an unrecognised role — skipping is the safe direction', () => {
     // `resolveNodeRole` throws on garbage and the launcher would already have
     // died. If somehow reached, a purge that does nothing is recoverable; a
     // purge that runs where it must not is not.
-    expect(settingsStoreIsAuthoritativeHere({ CAMSTACK_ROLE: 'satellite' })).toBe(false)
+    expect(settingsStoreIsAuthoritativeHere({ DOMINEVO_ROLE: 'satellite' })).toBe(false)
   })
 })
 
@@ -440,7 +440,7 @@ describe('purgeRetiredSettingsKeys — off the authoritative node', () => {
     const log = { info: vi.fn(), warn: vi.fn() }
 
     const result = await purgeRetiredSettingsKeys(store, log, RETIRED_SETTINGS_KEYS, {
-      CAMSTACK_ROLE: 'agent',
+      DOMINEVO_ROLE: 'agent',
     })
 
     expect(result).toEqual([])
@@ -459,7 +459,7 @@ describe('purgeRetiredSettingsKeys — off the authoritative node', () => {
     const log = { info: vi.fn(), warn: vi.fn() }
 
     const result = await purgeRetiredSettingsKeys(store, log, [DETECTION_SPEC], {
-      CAMSTACK_ROLE: 'hub',
+      DOMINEVO_ROLE: 'hub',
     })
 
     expect(result).toHaveLength(1)
@@ -505,7 +505,7 @@ describe('purgeRetiredSettingsKeys — nested rows', () => {
     const log = { info: vi.fn(), warn: vi.fn() }
 
     const result = await purgeRetiredSettingsKeys(store, log, [DEVICE_META_SPEC], {
-      CAMSTACK_ROLE: 'hub',
+      DOMINEVO_ROLE: 'hub',
     })
 
     expect(result[0]?.nested).toEqual(['1026.deviceLinks'])
@@ -526,7 +526,7 @@ describe('purgeRetiredSettingsKeys — nested rows', () => {
     const log = { info: vi.fn(), warn: vi.fn() }
 
     const result = await purgeRetiredSettingsKeys(store, log, [DEVICE_META_SPEC], {
-      CAMSTACK_ROLE: 'hub',
+      DOMINEVO_ROLE: 'hub',
     })
 
     expect(result).toEqual([])
@@ -623,7 +623,7 @@ describe('purgeRetiredSettingsRows', () => {
     const log = makeTestLogger()
 
     const result = await purgeRetiredSettingsRows(store, log, [DEVICE_META_ROW], {
-      CAMSTACK_ROLE: 'agent',
+      DOMINEVO_ROLE: 'agent',
     })
 
     expect(result).toEqual([])

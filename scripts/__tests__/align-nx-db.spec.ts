@@ -14,7 +14,7 @@ const script = join(import.meta.dirname, '../ci/align-nx-db.sh')
 function run(root: string, machineId: string): void {
   execFileSync('bash', [script], {
     cwd: root,
-    env: { ...process.env, CAMSTACK_NX_MACHINE_ID: machineId },
+    env: { ...process.env, DOMINEVO_NX_MACHINE_ID: machineId },
     stdio: 'pipe',
   })
 }

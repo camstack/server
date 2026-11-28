@@ -2,7 +2,7 @@
  * AgentUpdateService — agent-side adapter over the SHARED `RootUpdateService`
  * (`@dominevo/node-root`, bundled into the `@dominevo/server` dist by tsup).
  * Post-consolidation the agent boots the SAME `@dominevo/server` closure as
- * the hub (via `CAMSTACK_ROLE=agent`), so this service stages/applies
+ * the hub (via `DOMINEVO_ROLE=agent`), so this service stages/applies
  * `@dominevo/server` closures in `<agentDataDir>/server-root/`, applied on
  * restart by the shared STARTER (single-copy in-place swap — no probation,
  * no auto-rollback).
@@ -10,8 +10,8 @@
  * The engine lives in the shared core; this module binds the agent's
  * parameters, which differ from the hub only in the RESTART seam:
  *   - spec `@dominevo/server` + `dist/launcher.js` (the single root spec)
- *   - env markers `CAMSTACK_SERVER_{BOOT_MODE,ACTIVE_VERSION}` +
- *     `CAMSTACK_SEED_SERVER_DIR` (written by the shared starter / image) —
+ *   - env markers `DOMINEVO_SERVER_{BOOT_MODE,ACTIVE_VERSION}` +
+ *     `DOMINEVO_SEED_SERVER_DIR` (written by the shared starter / image) —
  *     identical to the hub, because the on-disk root is `@dominevo/server`
  *   - restart = graceful self-SIGTERM → the supervisor (docker restart
  *     policy / Electron main) relaunches → the shared starter swaps the copy
@@ -252,8 +252,8 @@ export class AgentUpdateService extends RootUpdateService {
     // Resolved before `super` so the base class stamps `tags.nodeId` on every
     // line. `bindAvailability` can re-point `this.nodeId` later once the hub
     // handshake settles the id; the log tag keeps the boot-time value, which is
-    // the same string in every deployment that sets `CAMSTACK_NODE_ID`.
-    const nodeId = options.nodeId ?? process.env['CAMSTACK_NODE_ID'] ?? 'agent'
+    // the same string in every deployment that sets `DOMINEVO_NODE_ID`.
+    const nodeId = options.nodeId ?? process.env['DOMINEVO_NODE_ID'] ?? 'agent'
     const restartAnnouncer = new AgentRestartAnnouncer(
       options.logger,
       options.eventBus ?? null,
@@ -263,12 +263,12 @@ export class AgentUpdateService extends RootUpdateService {
       spec: HUB_ROOT_SPEC,
       nodeId,
       // The agent's on-disk root IS `@dominevo/server` (booted via
-      // CAMSTACK_ROLE=agent by the shared starter), so it reads the SAME
-      // `CAMSTACK_SERVER_*` boot markers the starter writes.
+      // DOMINEVO_ROLE=agent by the shared starter), so it reads the SAME
+      // `DOMINEVO_SERVER_*` boot markers the starter writes.
       envNames: {
-        bootMode: 'CAMSTACK_SERVER_BOOT_MODE',
-        activeVersion: 'CAMSTACK_SERVER_ACTIVE_VERSION',
-        seedDir: 'CAMSTACK_SEED_SERVER_DIR',
+        bootMode: 'DOMINEVO_SERVER_BOOT_MODE',
+        activeVersion: 'DOMINEVO_SERVER_ACTIVE_VERSION',
+        seedDir: 'DOMINEVO_SEED_SERVER_DIR',
       },
       logger: options.logger,
       restartServer: (requestedBy, update): void => {

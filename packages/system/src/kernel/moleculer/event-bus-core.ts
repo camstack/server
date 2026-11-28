@@ -294,7 +294,7 @@ export function isHighFrequencyCategory(category: string): boolean {
  * Cross-node (Moleculer) inbound gate: an inbound cross-node event whose
  * category no local subscriber on THIS node wants (the union of its children's
  * declared patterns) is dropped and counted (`suppressed`). It always filters —
- * the `CAMSTACK_MOLECULER_EVENT_FANOUT` shadow/broadcast modes were removed on
+ * the `DOMINEVO_MOLECULER_EVENT_FANOUT` shadow/broadcast modes were removed on
  * 2026-10-06; the intra-host analogue is `LocalChildRegistry.childWantsEvent`.
  */
 

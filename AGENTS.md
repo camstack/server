@@ -142,7 +142,7 @@ change the record — do not quietly work around it.
 - **The hub's address is the `local-network` palette, never an env var.** Read it per role through `local-network.getAddresses().roles` (`appConnections`, `notificationTaps`, `publicEndpoint`, `internal` — the address flagged on the Network page, else automatic; meanings in `packages/types/src/capabilities/hub-address.ts`). Never rank the palette yourself and never hand anyone `127.0.0.1`. (D729, D732, D734, guard `check-no-hub-address-env`)
 - **A seed never overwrites.** The first-boot admin (`admin` / `changeme`,
   no longer configurable) is seeded only when no admin exists; the old
-  `CAMSTACK_ADMIN_PASS` reset a UI-changed password on every boot. (D728, D797)
+  `DOMINEVO_ADMIN_PASS` reset a UI-changed password on every boot. (D728, D797)
 - **No secret through a node's environment** — not the session signing key,
   not a token. The hub's own secrets live in the keychain (owner `system`); an
   agent's `agent.json` (0600) holds its private mesh key, never a shared secret.

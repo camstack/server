@@ -1,5 +1,5 @@
 /**
- * Unit tests for CAMSTACK_PARENT_UDS_PATH env-var plumbing in
+ * Unit tests for DOMINEVO_PARENT_UDS_PATH env-var plumbing in
  * `createProcessService`. Mirrors the setup style of addon-runner.spec.ts
  * (Layer 1) — a fake `spawnFn` is injected via the `deps` seam so we can
  * inspect the env object passed to `spawn` without paying real subprocess
@@ -7,8 +7,8 @@
  *
  * Two invariants:
  *   (a) When `parentUdsPath` is provided, child env includes
- *       `CAMSTACK_PARENT_UDS_PATH` set to that value.
- *   (b) When `parentUdsPath` is omitted, `CAMSTACK_PARENT_UDS_PATH` is
+ *       `DOMINEVO_PARENT_UDS_PATH` set to that value.
+ *   (b) When `parentUdsPath` is omitted, `DOMINEVO_PARENT_UDS_PATH` is
  *       absent from the child env entirely (not set to "undefined").
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
@@ -47,7 +47,7 @@ type SpawnCall = { command: string; args: readonly string[]; env: Record<string,
 // Suite A — with parentUdsPath set
 // ---------------------------------------------------------------------------
 
-describe('CAMSTACK_PARENT_UDS_PATH — present when parentUdsPath provided', {
+describe('DOMINEVO_PARENT_UDS_PATH — present when parentUdsPath provided', {
   timeout: 15000,
 }, () => {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ps-uds-env-spec-with-'))
@@ -91,11 +91,11 @@ describe('CAMSTACK_PARENT_UDS_PATH — present when parentUdsPath provided', {
     }
   })
 
-  it('sets CAMSTACK_PARENT_UDS_PATH in child env', async () => {
+  it('sets DOMINEVO_PARENT_UDS_PATH in child env', async () => {
     const addons = [{ addonId: 'test-addon', addonDir: '/tmp/test-addon' }]
     await broker.call('$process.spawnRunner', { runnerId: 'uds-runner', addons })
     const lastCall = spawnCalls[spawnCalls.length - 1]!
-    expect(lastCall.env['CAMSTACK_PARENT_UDS_PATH']).toBe('/tmp/camstack-test.sock')
+    expect(lastCall.env['DOMINEVO_PARENT_UDS_PATH']).toBe('/tmp/camstack-test.sock')
   })
 })
 
@@ -103,7 +103,7 @@ describe('CAMSTACK_PARENT_UDS_PATH — present when parentUdsPath provided', {
 // Suite B — without parentUdsPath (key must be absent, not "undefined")
 // ---------------------------------------------------------------------------
 
-describe('CAMSTACK_PARENT_UDS_PATH — absent when parentUdsPath not provided', {
+describe('DOMINEVO_PARENT_UDS_PATH — absent when parentUdsPath not provided', {
   timeout: 15000,
 }, () => {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ps-uds-env-spec-without-'))
@@ -145,10 +145,10 @@ describe('CAMSTACK_PARENT_UDS_PATH — absent when parentUdsPath not provided', 
     }
   })
 
-  it('does NOT include CAMSTACK_PARENT_UDS_PATH in child env', async () => {
+  it('does NOT include DOMINEVO_PARENT_UDS_PATH in child env', async () => {
     const addons = [{ addonId: 'test-addon-no-uds', addonDir: '/tmp/test-addon-no-uds' }]
     await broker.call('$process.spawnRunner', { runnerId: 'no-uds-runner', addons })
     const lastCall = spawnCalls[spawnCalls.length - 1]!
-    expect('CAMSTACK_PARENT_UDS_PATH' in lastCall.env).toBe(false)
+    expect('DOMINEVO_PARENT_UDS_PATH' in lastCall.env).toBe(false)
   })
 })

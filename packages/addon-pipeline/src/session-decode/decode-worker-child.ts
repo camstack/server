@@ -209,7 +209,7 @@ const PRE_ROLL_BURST_MAX_WALL_MS = 2_000
  * (typically 1-4 frames), NOT the full shm ring depth. On the HW path every
  * retained slot pins a GPU/VAAPI surface out of the decoder pool (the historic
  * leak site), so the cap MUST stay small; a miss is free (caller falls back to
- * today's detection-frame crop). Override with `CAMSTACK_SESSION_NATIVE_CROP_RING`
+ * today's detection-frame crop). Override with `DOMINEVO_SESSION_NATIVE_CROP_RING`
  * (0 disables retention entirely); clamped to [0,4], default 2.
  *
  * **Deliberately NOT an operator setting** (unlike the three lease knobs, which
@@ -224,7 +224,7 @@ const PRE_ROLL_BURST_MAX_WALL_MS = 2_000
  * debugging the lease itself.
  */
 const NATIVE_RING_CAP = (() => {
-  const raw = Number(process.env['CAMSTACK_SESSION_NATIVE_CROP_RING'])
+  const raw = Number(process.env['DOMINEVO_SESSION_NATIVE_CROP_RING'])
   if (!Number.isFinite(raw)) return 2
   return Math.min(4, Math.max(0, Math.floor(raw)))
 })()
@@ -303,7 +303,7 @@ const UNSTARTED_LEASE_KNOBS: WorkerLeaseKnobs = {
  * already the operator's knob.
  */
 const NATIVE_TILE_TTL_MS = (() => {
-  const raw = Number(process.env['CAMSTACK_SESSION_NATIVE_TILE_TTL_MS'])
+  const raw = Number(process.env['DOMINEVO_SESSION_NATIVE_TILE_TTL_MS'])
   return Number.isFinite(raw) && raw > 0 ? raw : 30_000
 })()
 
@@ -314,7 +314,7 @@ const NATIVE_TILE_TTL_MS = (() => {
  * twenty encodes. Anything past it is counted, not silently dropped.
  */
 const NATIVE_TILE_MAX_PER_FRAME = (() => {
-  const raw = Number(process.env['CAMSTACK_SESSION_NATIVE_TILE_MAX_PER_FRAME'])
+  const raw = Number(process.env['DOMINEVO_SESSION_NATIVE_TILE_MAX_PER_FRAME'])
   return Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : 4
 })()
 
@@ -571,7 +571,7 @@ function formatLatency(ms: number | null): string {
  * (`native-lease-config.ts` makes the same argument for the lease knobs).
  * See `pull-demuxer-open.ts`.
  */
-const FORCE_STREAM_INFO_PROBE = process.env['CAMSTACK_DECODE_PROBE_STREAM_INFO'] === '1'
+const FORCE_STREAM_INFO_PROBE = process.env['DOMINEVO_DECODE_PROBE_STREAM_INFO'] === '1'
 
 function buildDemuxerOptions(consumerTag: string): Record<string, string> {
   return {

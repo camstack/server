@@ -70,7 +70,7 @@ async function makeWorker(): Promise<PoolWorkerLike> {
 describe('PoolWorker in-flight cap', () => {
   beforeEach(() => {
     spawned.length = 0
-    vi.stubEnv('CAMSTACK_POOL_MAX_IN_FLIGHT', '4')
+    vi.stubEnv('DOMINEVO_POOL_MAX_IN_FLIGHT', '4')
     vi.resetModules()
   })
   afterEach(() => {

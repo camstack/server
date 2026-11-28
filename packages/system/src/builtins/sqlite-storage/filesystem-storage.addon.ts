@@ -27,7 +27,7 @@ function defaultAllowedRoots(): readonly string[] {
  *
  * The OLD `rootPath` config field is preserved for back-compat: the
  * orchestrator's first-boot seeding step still uses the same env-var
- * resolution chain (operator override → `CAMSTACK_DATA` → fallback) to
+ * resolution chain (operator override → `DOMINEVO_DATA` → fallback) to
  * derive the base path of every default location, then writes
  * `config.basePath` into each persisted `StorageLocation` row. The
  * provider itself is now stateless — every call carries the live

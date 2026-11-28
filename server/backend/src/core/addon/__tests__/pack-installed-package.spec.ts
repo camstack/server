@@ -37,17 +37,17 @@ beforeEach(() => {
     JSON.stringify({ name: '@dominevo/addon-fake', version: '1.2.43', files: ['dist'] }),
   )
   fs.writeFileSync(path.join(pkgDir, 'dist', 'index.mjs'), `export const marker = '${MARKER}'\n`)
-  previousData = process.env['CAMSTACK_DATA']
-  previousAddonsDir = process.env['CAMSTACK_ADDONS_DIR']
-  process.env['CAMSTACK_DATA'] = root
-  process.env['CAMSTACK_ADDONS_DIR'] = addonsDir
+  previousData = process.env['DOMINEVO_DATA']
+  previousAddonsDir = process.env['DOMINEVO_ADDONS_DIR']
+  process.env['DOMINEVO_DATA'] = root
+  process.env['DOMINEVO_ADDONS_DIR'] = addonsDir
 })
 
 afterEach(() => {
-  if (previousData === undefined) delete process.env['CAMSTACK_DATA']
-  else process.env['CAMSTACK_DATA'] = previousData
-  if (previousAddonsDir === undefined) delete process.env['CAMSTACK_ADDONS_DIR']
-  else process.env['CAMSTACK_ADDONS_DIR'] = previousAddonsDir
+  if (previousData === undefined) delete process.env['DOMINEVO_DATA']
+  else process.env['DOMINEVO_DATA'] = previousData
+  if (previousAddonsDir === undefined) delete process.env['DOMINEVO_ADDONS_DIR']
+  else process.env['DOMINEVO_ADDONS_DIR'] = previousAddonsDir
   fs.rmSync(root, { recursive: true, force: true })
 })
 

@@ -3,7 +3,7 @@
  *
  * ## The rule
  *
- * 1. `CAMSTACK_FFMPEG_PATH`, when the operator set it and it exists. Pointing
+ * 1. `DOMINEVO_FFMPEG_PATH`, when the operator set it and it exists. Pointing
  *    at your own build is a deliberate act and it wins over everything.
  * 2. The pinned build this node has already downloaded, named by release
  *    (`ffmpeg-<release>`), in `<dataDir>/deps`.
@@ -42,7 +42,7 @@
 import { FFMPEG_RELEASE } from './ffmpeg-artifacts.js'
 
 /** Operator override. Unset on every node unless a human deliberately set it. */
-export const FFMPEG_PATH_ENV = 'CAMSTACK_FFMPEG_PATH'
+export const FFMPEG_PATH_ENV = 'DOMINEVO_FFMPEG_PATH'
 
 export type FfmpegBinaryOrigin = 'override' | 'downloaded'
 

@@ -132,7 +132,7 @@ export interface AgentHttpConfig {
   readonly updateControls?: AgentUpdateControls
   /**
    * Running `@dominevo/server` version. The product release is read from
-   * `CAMSTACK_PRODUCT_VERSION` and is not this value (D943).
+   * `DOMINEVO_PRODUCT_VERSION` and is not this value (D943).
    */
   readonly serverVersion?: string | null
   /** Test seam for the hubs-on-this-network scan (no multicast, no network). */
@@ -200,7 +200,7 @@ export function readUiDistCandidate(baseDir: string): UiDistCandidate | null {
  * otherwise keep serving the UI frozen at whatever version was first
  * installed (observed live: an app at v1.1.27 serving the v1.1.1 UI).
  *
- * This is the ONE runtime reader of `CAMSTACK_BUNDLED_ADDONS_DIR` that reads a
+ * This is the ONE runtime reader of `DOMINEVO_BUNDLED_ADDONS_DIR` that reads a
  * package OUT of it (the rest only seed from it, or use it to locate the
  * Electron Resources root). It reads the bundled copy in place and serves it
  * over `@fastify/static` — so which dir that variable names is load-bearing
@@ -218,7 +218,7 @@ export function pickUiDist(
 
 export function resolveUiDistDir(
   dataDir: string,
-  // `CAMSTACK_BUNDLED_ADDONS_DIR` — a dir of package dirs keyed by SHORT name
+  // `DOMINEVO_BUNDLED_ADDONS_DIR` — a dir of package dirs keyed by SHORT name
   // (`<dir>/addon-agent-ui`), the same shape `AddonInstaller.findLocalPackage`
   // joins onto. On a packaged desktop that is the closure's own scope dir,
   // `Contents/Resources/node_modules/@dominevo`; it was a second, hand-copied
@@ -259,7 +259,7 @@ function writeConfigFile(configPath: string, data: Record<string, unknown>): voi
   writeOwnerOnlyFileSync(configPath, JSON.stringify(data, null, 2))
 }
 
-// Registry-node shape shared with the CAMSTACK_HUB_URL derivation
+// Registry-node shape shared with the DOMINEVO_HUB_URL derivation
 // (`deriveHubUrlFromRegistry`) so the UI's `resolvedHubAddress` and the
 // exported env var read the exact same registry view.
 type RegistryNode = HubRegistryNode
@@ -529,7 +529,7 @@ export async function createAgentHttpServer(
       null
     // Version of the Electron wrapper (injected by the desktop app); absent
     // when the agent runs headless / in Docker.
-    const appVersion = process.env['CAMSTACK_AGENT_APP_VERSION'] ?? null
+    const appVersion = process.env['DOMINEVO_AGENT_APP_VERSION'] ?? null
     const identity = releaseIdentityFrom({
       productVersionEnv: process.env[PRODUCT_VERSION_ENV],
       serverVersion: config.serverVersion ?? null,
@@ -783,7 +783,7 @@ export async function createAgentHttpServer(
 
   // -- Static file serving (agent-ui) ---------------------------------
 
-  const uiDir = resolveUiDistDir(config.dataDir, process.env['CAMSTACK_BUNDLED_ADDONS_DIR'])
+  const uiDir = resolveUiDistDir(config.dataDir, process.env['DOMINEVO_BUNDLED_ADDONS_DIR'])
   if (uiDir) {
     const fastifyStatic = await import('@fastify/static')
     // Every route the static plugin mounts is the public UI bundle: tag them for the auth gate.

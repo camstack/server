@@ -24,9 +24,9 @@
  *
  * ## Both planes always filter
  *
- * The cross-node plane ran a `shadow` burn-in (`CAMSTACK_MOLECULER_EVENT_FANOUT`)
+ * The cross-node plane ran a `shadow` burn-in (`DOMINEVO_MOLECULER_EVENT_FANOUT`)
  * with no end condition, and the UDS plane carried the same three-mode switch
- * (`CAMSTACK_UDS_EVENT_FANOUT`). Both switches were removed on 2026-10-06: a
+ * (`DOMINEVO_UDS_EVENT_FANOUT`). Both switches were removed on 2026-10-06: a
  * suppressed count now always means "this many WERE dropped", and the line no
  * longer prints a regime because there is only one.
  *

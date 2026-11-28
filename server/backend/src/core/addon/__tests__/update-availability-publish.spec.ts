@@ -109,9 +109,9 @@ describe('a failed registry lookup never looks like "no updates"', () => {
   let latestByName: Record<string, string | 'fail'> = {}
 
   beforeEach(() => {
-    previousDataDir = process.env['CAMSTACK_DATA']
+    previousDataDir = process.env['DOMINEVO_DATA']
     dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'camstack-fallible-'))
-    process.env['CAMSTACK_DATA'] = dataDir
+    process.env['DOMINEVO_DATA'] = dataDir
     vi.spyOn(globalThis, 'fetch').mockImplementation((async (input: string | URL | Request) => {
       const url = typeof input === 'string' ? input : input.toString()
       const encoded = url.split('/').at(-2) ?? ''
@@ -125,8 +125,8 @@ describe('a failed registry lookup never looks like "no updates"', () => {
 
   afterEach(() => {
     vi.restoreAllMocks()
-    if (previousDataDir === undefined) delete process.env['CAMSTACK_DATA']
-    else process.env['CAMSTACK_DATA'] = previousDataDir
+    if (previousDataDir === undefined) delete process.env['DOMINEVO_DATA']
+    else process.env['DOMINEVO_DATA'] = previousDataDir
     fs.rmSync(dataDir, { recursive: true, force: true })
   })
 
@@ -179,14 +179,14 @@ describe('update-check interval setting', () => {
   let previousDataDir: string | undefined
 
   beforeEach(() => {
-    previousDataDir = process.env['CAMSTACK_DATA']
+    previousDataDir = process.env['DOMINEVO_DATA']
     dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'camstack-interval-'))
-    process.env['CAMSTACK_DATA'] = dataDir
+    process.env['DOMINEVO_DATA'] = dataDir
   })
 
   afterEach(() => {
-    if (previousDataDir === undefined) delete process.env['CAMSTACK_DATA']
-    else process.env['CAMSTACK_DATA'] = previousDataDir
+    if (previousDataDir === undefined) delete process.env['DOMINEVO_DATA']
+    else process.env['DOMINEVO_DATA'] = previousDataDir
     fs.rmSync(dataDir, { recursive: true, force: true })
   })
 

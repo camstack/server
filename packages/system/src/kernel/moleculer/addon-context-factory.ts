@@ -365,8 +365,8 @@ async function buildAddonContext(
   // per-node working directory (addons-data, models, logs, data). NEVER the
   // hub-singleton `storage` cap (which would return the hub's path to every
   // node). `dataDir` is the node root the kernel was booted with; the operator
-  // override is `CAMSTACK_DATA`. See the per-node-data-root design.
-  const nodeDataDir = process.env['CAMSTACK_DATA'] ?? dataDir
+  // override is `DOMINEVO_DATA`. See the per-node-data-root design.
+  const nodeDataDir = process.env['DOMINEVO_DATA'] ?? dataDir
   const addonDataDir = path.resolve(nodeDataDir, 'addons-data', addonId)
   fs.mkdirSync(addonDataDir, { recursive: true })
 

@@ -730,7 +730,7 @@ export class RootUpdateService {
     }
     this.inFlight = 'checking'
     try {
-      const registry = this.env['CAMSTACK_NPM_REGISTRY']
+      const registry = this.env['DOMINEVO_NPM_REGISTRY']
       const args = [
         'view',
         `${this.spec.packageName}@latest`,
@@ -1172,7 +1172,7 @@ export class RootUpdateService {
       // registry — a synthetic package.json depends on the root tgz via
       // `file:` and pins every other uploaded package through `overrides`.
       const devDir = devUploadVersionDir(rootDir, target)
-      const registry = this.env['CAMSTACK_NPM_REGISTRY']
+      const registry = this.env['DOMINEVO_NPM_REGISTRY']
       // `--save-exact`: `npm install <pkg>@X` otherwise saves `^X` as the root
       // dependency, and the seeded tree check refuses anything but `X` — every
       // seeded update fell back to an empty directory and re-ran node-av's

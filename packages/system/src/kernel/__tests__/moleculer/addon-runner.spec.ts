@@ -163,10 +163,10 @@ describe('$process.spawnRunner unit wiring', { timeout: 15000 }, () => {
     expect(lastCall.args.at(-1)).toMatch(/addon-runner\.js$/)
 
     const env = lastCall.env
-    expect(env.CAMSTACK_RUNNER_ID).toBe('detection')
-    expect(env.CAMSTACK_PARENT_NODE_ID).toBe('hub')
-    expect(env.CAMSTACK_RUNNER_ADDONS).toBeDefined()
-    const parsed = JSON.parse(env.CAMSTACK_RUNNER_ADDONS!) as Array<{
+    expect(env.DOMINEVO_RUNNER_ID).toBe('detection')
+    expect(env.DOMINEVO_PARENT_NODE_ID).toBe('hub')
+    expect(env.DOMINEVO_RUNNER_ADDONS).toBeDefined()
+    const parsed = JSON.parse(env.DOMINEVO_RUNNER_ADDONS!) as Array<{
       addonId: string
       addonDir: string
     }>
@@ -204,7 +204,7 @@ describe('$process.spawnRunner unit wiring', { timeout: 15000 }, () => {
     expect(result.addonIds).toEqual(['provider-rtsp'])
     const lastCall = spawnCalls[spawnCalls.length - 1]!
     expect(lastCall.args.at(-1)).toMatch(/addon-runner\.js$/)
-    const parsed = JSON.parse(lastCall.env.CAMSTACK_RUNNER_ADDONS!) as Array<{ addonId: string }>
+    const parsed = JSON.parse(lastCall.env.DOMINEVO_RUNNER_ADDONS!) as Array<{ addonId: string }>
     expect(parsed).toEqual(addons)
   })
 
@@ -459,7 +459,7 @@ describe('$process.spawnRunner unit wiring', { timeout: 15000 }, () => {
           },
         ],
       })
-      expect(spawnCalls[spawnCalls.length - 1]!.env.CAMSTACK_RUNNER_RSS_BUDGET_MB).toBe('2048')
+      expect(spawnCalls[spawnCalls.length - 1]!.env.DOMINEVO_RUNNER_RSS_BUDGET_MB).toBe('2048')
     })
 
     it('co-location takes the MAX — an under-sized budget cries wolf for the whole group', async () => {
@@ -474,7 +474,7 @@ describe('$process.spawnRunner unit wiring', { timeout: 15000 }, () => {
           { addonId: 'big-heavy', addonDir: dir },
         ],
       })
-      expect(spawnCalls[spawnCalls.length - 1]!.env.CAMSTACK_RUNNER_RSS_BUDGET_MB).toBe('3584')
+      expect(spawnCalls[spawnCalls.length - 1]!.env.DOMINEVO_RUNNER_RSS_BUDGET_MB).toBe('3584')
     })
 
     it('an undeclared budget is ABSENT, never inherited from the container', async () => {
@@ -482,8 +482,8 @@ describe('$process.spawnRunner unit wiring', { timeout: 15000 }, () => {
       // container-wide value leaking through `...process.env` would silently
       // become a budget the addon never chose — the invented default this whole
       // mechanism exists to refuse.
-      const previous = process.env['CAMSTACK_RUNNER_RSS_BUDGET_MB']
-      process.env['CAMSTACK_RUNNER_RSS_BUDGET_MB'] = '9999'
+      const previous = process.env['DOMINEVO_RUNNER_RSS_BUDGET_MB']
+      process.env['DOMINEVO_RUNNER_RSS_BUDGET_MB'] = '9999'
       try {
         await broker.call('$process.spawnRunner', {
           runnerId: 'rss-undeclared',
@@ -496,10 +496,10 @@ describe('$process.spawnRunner unit wiring', { timeout: 15000 }, () => {
             },
           ],
         })
-        expect(spawnCalls[spawnCalls.length - 1]!.env.CAMSTACK_RUNNER_RSS_BUDGET_MB).toBeUndefined()
+        expect(spawnCalls[spawnCalls.length - 1]!.env.DOMINEVO_RUNNER_RSS_BUDGET_MB).toBeUndefined()
       } finally {
-        if (previous === undefined) delete process.env['CAMSTACK_RUNNER_RSS_BUDGET_MB']
-        else process.env['CAMSTACK_RUNNER_RSS_BUDGET_MB'] = previous
+        if (previous === undefined) delete process.env['DOMINEVO_RUNNER_RSS_BUDGET_MB']
+        else process.env['DOMINEVO_RUNNER_RSS_BUDGET_MB'] = previous
       }
     })
 
@@ -537,7 +537,7 @@ describe('$process.spawnRunner unit wiring', { timeout: 15000 }, () => {
         ],
       })
       // `ai` and `benchmark` declare nothing; `model-studio` declares 2048.
-      expect(spawnCalls[spawnCalls.length - 1]!.env.CAMSTACK_RUNNER_RSS_BUDGET_MB).toBe('2048')
+      expect(spawnCalls[spawnCalls.length - 1]!.env.DOMINEVO_RUNNER_RSS_BUDGET_MB).toBe('2048')
     })
 
     /**
@@ -594,7 +594,7 @@ describe('$process.spawnRunner unit wiring', { timeout: 15000 }, () => {
     )
     // The child must KNOW its class: the heavy-runner heap watch + stranded-page
     // reclaimer (heap-watch.ts) starts inside addon-runner, gated on this env.
-    expect(lightCall.env.CAMSTACK_RUNNER_HEAP_PROFILE).toBe('light')
+    expect(lightCall.env.DOMINEVO_RUNNER_HEAP_PROFILE).toBe('light')
 
     // Manifest declares heapProfile: 'heavy' → V8's DEFAULT young generation (no semi-space flag),
     // but never an unbounded old space: the ceiling from HEAVY_MAX_OLD_MB_DEFAULT rides along.
@@ -611,7 +611,7 @@ describe('$process.spawnRunner unit wiring', { timeout: 15000 }, () => {
     // A heavy child starts the heap watch + reclaimer on itself (uncapped
     // media-path runners have NO old-space ceiling to create GC pressure, so
     // stranded pages are returned by the reclaim pass instead — heap-watch.ts).
-    expect(heavyCall.env.CAMSTACK_RUNNER_HEAP_PROFILE).toBe('heavy')
+    expect(heavyCall.env.DOMINEVO_RUNNER_HEAP_PROFILE).toBe('heavy')
   })
 
   /**
@@ -710,7 +710,7 @@ describe('addon-runner is UDS-only — no ServiceBroker (F1)', () => {
     expect(code).not.toMatch(/from\s+["']moleculer["']/)
     // Connects over UDS instead.
     expect(code).toMatch(/LocalChildClient/)
-    expect(code).toMatch(/CAMSTACK_PARENT_UDS_PATH/)
+    expect(code).toMatch(/DOMINEVO_PARENT_UDS_PATH/)
   })
 })
 
@@ -1120,14 +1120,14 @@ module.exports.default = FakeAddon;
     const child = cp.spawn('node', [runnerPath], {
       env: {
         ...process.env,
-        CAMSTACK_RUNNER_ID: runnerId,
-        CAMSTACK_RUNNER_ADDONS: JSON.stringify([
+        DOMINEVO_RUNNER_ID: runnerId,
+        DOMINEVO_RUNNER_ADDONS: JSON.stringify([
           { addonId, addonDir: path.join(tmpRoot, addonId) },
         ]),
-        CAMSTACK_PARENT_NODE_ID: parentNodeId,
-        CAMSTACK_PARENT_UDS_PATH: localEndpointPath(parentNodeId),
-        CAMSTACK_DATA_DIR: path.join(tmpRoot, 'data'),
-        CAMSTACK_LOG_LEVEL: 'error',
+        DOMINEVO_PARENT_NODE_ID: parentNodeId,
+        DOMINEVO_PARENT_UDS_PATH: localEndpointPath(parentNodeId),
+        DOMINEVO_DATA_DIR: path.join(tmpRoot, 'data'),
+        DOMINEVO_LOG_LEVEL: 'error',
       },
       stdio: ['ignore', 'pipe', 'pipe'],
     })

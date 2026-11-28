@@ -55,8 +55,8 @@ const APEX_ENTRY = /^apex_(\d+)$/
 /**
  * Where this node would find the libedgetpu delegate — the same lookup the
  * Python pool runs (`edgetpu_device.edgetpu_library_path`): the
- * `CAMSTACK_EDGETPU_LIB` override, the copy the deps downloader staged under
- * `<CAMSTACK_DATA>/deps/edgetpu/lib/`, the hub's historical
+ * `DOMINEVO_EDGETPU_LIB` override, the copy the deps downloader staged under
+ * `<DOMINEVO_DATA>/deps/edgetpu/lib/`, the hub's historical
  * `/data/deps/edgetpu/lib/libedgetpu.so.1`.
  */
 export type EdgetpuDelegateHost = Omit<EdgetpuDelegateLookup, 'exists'>

@@ -228,19 +228,19 @@ async function startAgent(configPath?: string): Promise<void> {
     : null
   const config = rediscovered?.kind === 'found' ? loadAgentConfig(configPath) : bootConfig
 
-  // Derive CAMSTACK_HUB_URL from the configured hub address so remote agents
+  // Derive DOMINEVO_HUB_URL from the configured hub address so remote agents
   // no longer need a second, redundant env var set by hand (the cross-node
   // source trap). An explicit operator value ALWAYS wins — capture whether it
   // was set BEFORE deriving so reconnect() can still update a derived value.
   // This runs before every runner spawn (loadClusterCapableAddons /
   // loadDeployedAddons below), and process-service spreads `process.env` into
   // child env, so pipeline-runner + recorder children inherit it for free.
-  const hubUrlWasExplicit = process.env['CAMSTACK_HUB_URL'] !== undefined
+  const hubUrlWasExplicit = process.env['DOMINEVO_HUB_URL'] !== undefined
   const derivedHubUrl = deriveHubUrlForExport(hubUrlWasExplicit, config.hubAddress)
   if (derivedHubUrl !== undefined) {
-    process.env['CAMSTACK_HUB_URL'] = derivedHubUrl
+    process.env['DOMINEVO_HUB_URL'] = derivedHubUrl
     console.log(
-      `[Agent] Derived CAMSTACK_HUB_URL=${derivedHubUrl} from hub address "${config.hubAddress}"`,
+      `[Agent] Derived DOMINEVO_HUB_URL=${derivedHubUrl} from hub address "${config.hubAddress}"`,
     )
   }
 
@@ -263,13 +263,13 @@ async function startAgent(configPath?: string): Promise<void> {
 
   // Ensure required addon packages are installed in the agent's addonsDir.
   // Resolution order:
-  //   1. `CAMSTACK_BUNDLED_ADDONS_DIR` — Electron-packaged builds copy out of
+  //   1. `DOMINEVO_BUNDLED_ADDONS_DIR` — Electron-packaged builds copy out of
   //      the closure's own scope dir, `<resourcesPath>/node_modules/@dominevo`
   //      (`'local'` mode). Was a second `<resourcesPath>/addons` tree until
   //      2026-08-25 — see `packages/desktop/src/process-manager.ts`.
   //   2. Otherwise npm from registry. A workspace build reaches a node via
   //      `dominevo deploy` (CLI tarball upload), bypassing this path.
-  const bundledDir = process.env['CAMSTACK_BUNDLED_ADDONS_DIR']
+  const bundledDir = process.env['DOMINEVO_BUNDLED_ADDONS_DIR']
   const installer = new AddonInstaller({
     addonsDir: config.addonsDir,
     ...(bundledDir && fs.existsSync(bundledDir) ? { bundledAddonsDir: bundledDir } : {}),
@@ -379,17 +379,17 @@ async function startAgent(configPath?: string): Promise<void> {
           `mesh=${fresh.meshTls !== undefined ? 'tls (paired)' : 'none (unpaired)'}`,
       )
 
-      // Re-derive CAMSTACK_HUB_URL when the dashboard has just written a hubAddress. Explicit operator values
+      // Re-derive DOMINEVO_HUB_URL when the dashboard has just written a hubAddress. Explicit operator values
       // still win via the boot-captured `hubUrlWasExplicit` flag.
       // KNOWN LIMITATION (Stage-0): runners already spawned before this reconnect
       // keep the env they inherited; picking up a changed hub address in live
       // children would need a runner respawn. Boot-time — the actual trap — is
       // fully covered.
       const freshHubUrl = deriveHubUrlForExport(hubUrlWasExplicit, fresh.hubAddress)
-      if (freshHubUrl !== undefined && process.env['CAMSTACK_HUB_URL'] !== freshHubUrl) {
-        process.env['CAMSTACK_HUB_URL'] = freshHubUrl
+      if (freshHubUrl !== undefined && process.env['DOMINEVO_HUB_URL'] !== freshHubUrl) {
+        process.env['DOMINEVO_HUB_URL'] = freshHubUrl
         console.log(
-          `[Agent] Derived CAMSTACK_HUB_URL=${freshHubUrl} from hub address "${fresh.hubAddress}"`,
+          `[Agent] Derived DOMINEVO_HUB_URL=${freshHubUrl} from hub address "${fresh.hubAddress}"`,
         )
       }
       currentMeshTls = fresh.meshTls ?? null
@@ -1129,8 +1129,8 @@ async function startAgent(configPath?: string): Promise<void> {
       getReport: () =>
         buildAgentAddonUpdateReport({
           addonsDir: config.addonsDir,
-          ...(process.env['CAMSTACK_NPM_REGISTRY'] !== undefined
-            ? { registryUrl: process.env['CAMSTACK_NPM_REGISTRY'] }
+          ...(process.env['DOMINEVO_NPM_REGISTRY'] !== undefined
+            ? { registryUrl: process.env['DOMINEVO_NPM_REGISTRY'] }
             : {}),
           fetchFn: (url) => fetch(url),
           isHubReachable: () => getHubConnectionState() === 'connected',
@@ -1142,7 +1142,7 @@ async function startAgent(configPath?: string): Promise<void> {
   // A hub pairs this agent from outside; the agent installs the certificate only after
   // its own operator confirmed the code. Its pairing state is advertised over mDNS.
   const agentVersion =
-    process.env['CAMSTACK_AGENT_APP_VERSION'] ?? agentUpdateService.getRunningRootPackage().version
+    process.env['DOMINEVO_AGENT_APP_VERSION'] ?? agentUpdateService.getRunningRootPackage().version
   const agentMdns = new AgentMdnsAdvertiser({
     publisher: createCiaoPublisher(),
     logger: consoleLogger,
@@ -1412,7 +1412,7 @@ async function startAgent(configPath?: string): Promise<void> {
   // `ctx.api` for every addon is built inside `createAddonContext` from
   // `[localProviderLink, brokerTransportLink(broker)]`. Unresolved calls
   // route via Moleculer to the hub (or any other node hosting the cap).
-  // No separate hub WSS client, no `CAMSTACK_HUB_API_URL` — all cross-node
+  // No separate hub WSS client, no `DOMINEVO_HUB_API_URL` — all cross-node
   // traffic rides the broker mesh.
 
   // ── Phase 1.5: Load cluster-capable addon packages (forkable → child process) ──
@@ -1489,7 +1489,7 @@ async function startAgent(configPath?: string): Promise<void> {
 // forwards to the hub (`hub-settings-forward.ts`), so booting `sqlite-settings`
 // here would only open a database nothing reads. See
 // `agent-infra-capabilities.ts` for the measurement behind that and for the
-// one-env-var rollback (`CAMSTACK_AGENT_LOCAL_DATA_STORE=1`).
+// one-env-var rollback (`DOMINEVO_AGENT_LOCAL_DATA_STORE=1`).
 const AGENT_INFRA = resolveAgentInfraCapabilities(process.env)
 
 async function bootCoreAddons(
@@ -1871,11 +1871,11 @@ async function loadInProcessDeployedAddons(
   loggerFactory: (addonId: string) => IScopedLogger,
   capabilityRegistry?: CapabilityRegistry,
 ): Promise<void> {
-  // Node-local models dir — anchored at this node's data root (CAMSTACK_DATA ??
+  // Node-local models dir — anchored at this node's data root (DOMINEVO_DATA ??
   // the agent --data dir), never the hub-singleton `storage` cap. Mirrors
   // BaseAddon.resolveModelsDir so addons that read the hint and those that
   // self-resolve agree on one path.
-  const modelsDir = path.join(process.env['CAMSTACK_DATA'] ?? dataDir, 'models')
+  const modelsDir = path.join(process.env['DOMINEVO_DATA'] ?? dataDir, 'models')
   const contextOptions: AddonContextOptions = {
     storageProvider,
     addonConfig: { modelsDir },
@@ -1936,7 +1936,7 @@ async function loadInProcessDeployedAddons(
 
 /**
  * Read the agent's own root package.json version (best-effort). The agent
- * boots the `@dominevo/server` closure (via CAMSTACK_ROLE=agent), so its
+ * boots the `@dominevo/server` closure (via DOMINEVO_ROLE=agent), so its
  * on-disk root package is `@dominevo/server`.
  */
 function readAgentVersion(): string {

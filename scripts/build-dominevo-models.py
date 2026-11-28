@@ -45,7 +45,7 @@ Formats:
   int8      convert_lib.quantize_openvino_int8: NNCF post-training quantisation
             of the ONNX, calibrated on the first N images (sorted by path,
             recursively; an export folder's frames/ only) of --calib-dir
-            (default $CAMSTACK_CALIB_DIR or ./calibration-images). Recipe (D818):
+            (default $DOMINEVO_CALIB_DIR or ./calibration-images). Recipe (D818):
             preset MIXED, full bias correction, the Detect head in float —
             its own ops (DFL + box decode) for a YOLOv9 head, all of it for
             YOLO26's end-to-end head; every conv before it is INT8
@@ -106,7 +106,7 @@ if _CONVERT_LIB_DIR is None:
 sys.path.insert(0, str(_CONVERT_LIB_DIR))
 
 HF_REPO = 'Dominevo/dominevo-models'
-DEFAULT_CALIB_DIR = Path(os.environ.get('CAMSTACK_CALIB_DIR', 'calibration-images'))
+DEFAULT_CALIB_DIR = Path(os.environ.get('DOMINEVO_CALIB_DIR', 'calibration-images'))
 
 # --- Recipe model ------------------------------------------------------------
 

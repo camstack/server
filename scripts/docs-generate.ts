@@ -267,7 +267,7 @@ function renderPackages(pkgs: readonly PackageInfo[]): string {
     '',
     section(
       'App',
-      'The single root package every node boots. Hub vs agent is `CAMSTACK_ROLE`, not a different package.',
+      'The single root package every node boots. Hub vs agent is `DOMINEVO_ROLE`, not a different package.',
       byRole('app'),
     ),
     section(

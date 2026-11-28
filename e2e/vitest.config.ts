@@ -4,7 +4,7 @@ import { defineConfig } from 'vitest/config'
  * Vitest config for the camstack E2E harness.
  *
  * Suites spawn an isolated hub via `e2e/fixtures/electron.ts` and talk to it
- * over tRPC. Each suite gets its own `CAMSTACK_DATA` (mktemp) and port to
+ * over tRPC. Each suite gets its own `DOMINEVO_DATA` (mktemp) and port to
  * stay isolated from any operator hub running on the dev machine.
  *
  * The default port range avoids the typical dev port (4443). Suites that

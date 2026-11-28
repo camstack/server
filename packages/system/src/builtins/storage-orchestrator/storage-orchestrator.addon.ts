@@ -781,7 +781,7 @@ export class StorageOrchestratorAddon extends BaseAddon<StorageOrchestratorConfi
    *
    * Built once and memoised. It is only consulted when `getEngines()` is
    * empty, so on a hub — and on an agent rolled back to a local engine via
-   * `CAMSTACK_AGENT_LOCAL_DATA_STORE` — the resolve never runs a second time.
+   * `DOMINEVO_AGENT_LOCAL_DATA_STORE` — the resolve never runs a second time.
    */
   private hubForward: ISettingsStoreProvider | null = null
   private hubSettingsForward(): ISettingsStoreProvider | null {
@@ -1745,7 +1745,7 @@ export class StorageOrchestratorAddon extends BaseAddon<StorageOrchestratorConfi
    * map is a no-op (each declared id's `<id>:default` is already in the
    * service's map).
    *
-   * `basePath` is this node's data root (`ctx.nodeDataDir` = `CAMSTACK_DATA`
+   * `basePath` is this node's data root (`ctx.nodeDataDir` = `DOMINEVO_DATA`
    * ?? the kernel boot dir). Every declared default is attributed to the
    * `filesystem-storage`
    * provider; operators repoint individual locations (or add remote
@@ -1771,16 +1771,16 @@ export class StorageOrchestratorAddon extends BaseAddon<StorageOrchestratorConfi
     // removed). Must run after `setRegistry` so the declaration check is live.
     this.service.pruneUndeclaredSystemLocations(unloaded)
     // Default base for configurable destinations = this node's data root.
-    // `ctx.nodeDataDir` is already `CAMSTACK_DATA ?? <node root>`, node-correct
+    // `ctx.nodeDataDir` is already `DOMINEVO_DATA ?? <node root>`, node-correct
     // everywhere. Declarations marked `defaultRoot: 'media'` (recordings,
     // eventMedia) instead seed onto the dedicated media volume
-    // (`CAMSTACK_MEDIA_ROOT`) when that env is set, keeping bulky/hot media off
+    // (`DOMINEVO_MEDIA_ROOT`) when that env is set, keeping bulky/hot media off
     // the appData disk on a fresh install. Users can still repoint any location.
-    const mediaRoot = process.env.CAMSTACK_MEDIA_ROOT?.trim()
-    // Backups seed onto their own volume (`CAMSTACK_BACKUP_ROOT`, default
+    const mediaRoot = process.env.DOMINEVO_MEDIA_ROOT?.trim()
+    // Backups seed onto their own volume (`DOMINEVO_BACKUP_ROOT`, default
     // `/backups` in the image) so archives never fill the appData disk. Unset
     // → falls back to the data root like everything else.
-    const backupRoot = process.env.CAMSTACK_BACKUP_ROOT?.trim()
+    const backupRoot = process.env.DOMINEVO_BACKUP_ROOT?.trim()
     const seedInput: SeedDefaultsInput = {
       providerId: 'filesystem-storage',
       basePath: this.ctx.nodeDataDir,

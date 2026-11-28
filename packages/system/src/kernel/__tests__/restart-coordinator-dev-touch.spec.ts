@@ -10,13 +10,13 @@ import { scheduleSelfRestart } from '../restart-coordinator.js'
  * Under `tsx watch`, a clean `process.exit(0)` is NOT respawned — the
  * watcher only restarts on a file change, so the hub stays down until an
  * unrelated source edit. The `serve` (watch) npm script sets
- * `CAMSTACK_RESTART_TOUCH_FILE` to the watched entry; when present, the
+ * `DOMINEVO_RESTART_TOUCH_FILE` to the watched entry; when present, the
  * coordinator touches that file (clean tsx reload that re-reads freshly
  * installed dist) instead of exiting. `serve:once` and production leave it
  * unset and fall through to the real exit path.
  */
 describe('scheduleSelfRestart — dev touch-reload', () => {
-  const ENV_KEY = 'CAMSTACK_RESTART_TOUCH_FILE'
+  const ENV_KEY = 'DOMINEVO_RESTART_TOUCH_FILE'
   const originalEnv = process.env[ENV_KEY]
   let tmpDir: string
   let touchFile: string

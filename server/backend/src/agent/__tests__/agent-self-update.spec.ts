@@ -110,9 +110,9 @@ describe('decideAgentSelfUpdate', () => {
 describe('agentSelfUpdateEnabled', () => {
   it('is on unless the operator turned it off', () => {
     expect(agentSelfUpdateEnabled({})).toBe(true)
-    expect(agentSelfUpdateEnabled({ CAMSTACK_AGENT_SELF_UPDATE: 'on' })).toBe(true)
-    expect(agentSelfUpdateEnabled({ CAMSTACK_AGENT_SELF_UPDATE: 'off' })).toBe(false)
-    expect(agentSelfUpdateEnabled({ CAMSTACK_AGENT_SELF_UPDATE: '0' })).toBe(false)
+    expect(agentSelfUpdateEnabled({ DOMINEVO_AGENT_SELF_UPDATE: 'on' })).toBe(true)
+    expect(agentSelfUpdateEnabled({ DOMINEVO_AGENT_SELF_UPDATE: 'off' })).toBe(false)
+    expect(agentSelfUpdateEnabled({ DOMINEVO_AGENT_SELF_UPDATE: '0' })).toBe(false)
   })
 })
 

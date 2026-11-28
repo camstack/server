@@ -42,13 +42,13 @@ export class ResolveMediaStorage {
 
   /** Event-media storage. By default it uses `ctx.kernel.storage`, rooted at
    *  the node data dir (appData) → heavy thumbnail/track-frame churn hammers
-   *  the appData/cache disk. When `CAMSTACK_MEDIA_ROOT` is set (the dedicated
+   *  the appData/cache disk. When `DOMINEVO_MEDIA_ROOT` is set (the dedicated
    *  media share), root a FilesystemStorageProvider there instead, so event
    *  media is written to (and read back from — one provider, both sides) the
    *  share and never touches appData. See also the recorder's rec-tmp root. */
   async resolveMediaStorage(logger: IScopedLogger): Promise<LocationAwareMediaBlobStorage> {
     let storage: MediaBlobStorage | undefined = this.ctx.kernel.storage
-    const mediaRoot = process.env.CAMSTACK_MEDIA_ROOT?.trim()
+    const mediaRoot = process.env.DOMINEVO_MEDIA_ROOT?.trim()
     if (mediaRoot) {
       const { FilesystemStorageProvider } = await import('@dominevo/types/node')
       // `eventMedia` resolves to the media root ITSELF (not `<root>/eventMedia`):
@@ -57,7 +57,7 @@ export class ResolveMediaStorage {
       storage = new FilesystemStorageProvider(mediaRoot, {
         eventMedia: mediaRoot,
       })
-      logger.info('pipeline-analytics: event media rooted at CAMSTACK_MEDIA_ROOT', {
+      logger.info('pipeline-analytics: event media rooted at DOMINEVO_MEDIA_ROOT', {
         meta: { mediaRoot },
       })
     }

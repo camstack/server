@@ -3,8 +3,8 @@
 # Run on the PVE HOST (needs `pct`), not inside a container.
 #
 #   ROLE=hub  VMID=200 bash install-camstack-proxmox.sh
-#   ROLE=agent VMID=201 CAMSTACK_HUB_ADDRESS=192.168.1.9 \
-#     CAMSTACK_NODE_ID=amd-proxmox bash install-camstack-proxmox.sh
+#   ROLE=agent VMID=201 DOMINEVO_HUB_ADDRESS=192.168.1.9 \
+#     DOMINEVO_NODE_ID=amd-proxmox bash install-camstack-proxmox.sh
 #
 # Hub and agent on the same machine = two CTs (host networking collides otherwise).
 #
@@ -47,7 +47,7 @@ DISK_GB="${DISK_GB:-64}"
 BRIDGE="${BRIDGE:-vmbr0}"
 IMAGE_TAG="${IMAGE_TAG:-ghcr.io/dominevo/dominevo:amd-latest}"
 # Optional: host directory for recordings, bound at /opt/camstack/recordings
-# in the CT (same path Docker maps to CAMSTACK_MEDIA_ROOT). Prefer attaching
+# in the CT (same path Docker maps to DOMINEVO_MEDIA_ROOT). Prefer attaching
 # a real HD later with setup-camstack-recordings-volume.sh if unknown now.
 RECORDINGS_HOST_PATH="${RECORDINGS_HOST_PATH:-}"
 FORCE="${FORCE:-}"

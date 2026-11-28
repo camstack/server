@@ -13,15 +13,15 @@ describe('buildNodeEnv', () => {
         seedServerDir: 'S',
       }),
     ).toEqual({
-      CAMSTACK_ROLE: 'agent',
-      CAMSTACK_DATA: 'D',
-      CAMSTACK_AGENT_APP_VERSION: '1.0.0',
-      CAMSTACK_PRODUCT_VERSION: '1.0.0',
-      CAMSTACK_STATUS_PORT: '4444',
-      CAMSTACK_HUB_ADDRESS: 'hub:4443',
-      CAMSTACK_AGENT_NAME: 'cam-box',
-      CAMSTACK_BUNDLED_ADDONS_DIR: 'B',
-      CAMSTACK_SEED_SERVER_DIR: 'S',
+      DOMINEVO_ROLE: 'agent',
+      DOMINEVO_DATA: 'D',
+      DOMINEVO_AGENT_APP_VERSION: '1.0.0',
+      DOMINEVO_PRODUCT_VERSION: '1.0.0',
+      DOMINEVO_STATUS_PORT: '4444',
+      DOMINEVO_HUB_ADDRESS: 'hub:4443',
+      DOMINEVO_AGENT_NAME: 'cam-box',
+      DOMINEVO_BUNDLED_ADDONS_DIR: 'B',
+      DOMINEVO_SEED_SERVER_DIR: 'S',
     })
   })
 
@@ -35,11 +35,11 @@ describe('buildNodeEnv', () => {
       seedServerDir: null,
     })
     expect(Object.keys(env).sort()).toEqual([
-      'CAMSTACK_AGENT_APP_VERSION',
-      'CAMSTACK_DATA',
-      'CAMSTACK_PRODUCT_VERSION',
-      'CAMSTACK_ROLE',
-      'CAMSTACK_STATUS_PORT',
+      'DOMINEVO_AGENT_APP_VERSION',
+      'DOMINEVO_DATA',
+      'DOMINEVO_PRODUCT_VERSION',
+      'DOMINEVO_ROLE',
+      'DOMINEVO_STATUS_PORT',
     ])
   })
 
@@ -52,8 +52,8 @@ describe('buildNodeEnv', () => {
       bundledAddonsDir: null,
       seedServerDir: null,
     })
-    expect(env['CAMSTACK_HUB_ADDRESS']).toBeUndefined()
-    expect(env['CAMSTACK_STATUS_PORT']).toBeUndefined()
+    expect(env['DOMINEVO_HUB_ADDRESS']).toBeUndefined()
+    expect(env['DOMINEVO_STATUS_PORT']).toBeUndefined()
   })
 
   it('never carries a secret (D797)', () => {

@@ -43,9 +43,9 @@ export const ADDONS_SUBDIR = 'addons'
 export const ADDON_SCOPE = '@dominevo'
 
 export interface RivalRootInput {
-  /** The data root this node is ACTUALLY running from (`CAMSTACK_DATA`). */
+  /** The data root this node is ACTUALLY running from (`DOMINEVO_DATA`). */
   readonly dataDir: string
-  /** The addon root this node resolved — `CAMSTACK_ADDONS_DIR` or its default. */
+  /** The addon root this node resolved — `DOMINEVO_ADDONS_DIR` or its default. */
   readonly activeAddonsDir: string
   /** `os.homedir()`. Empty string when unavailable. */
   readonly homeDir: string

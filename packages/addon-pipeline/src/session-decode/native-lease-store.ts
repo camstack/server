@@ -47,7 +47,7 @@
  * immediately and returns `false` (caller-declined ownership, exactly like
  * `NativeFrameRing.retain` when disabled) so the worker falls back to today's
  * GPU-surface ring. This is the "keep the lease off" knob
- * (`CAMSTACK_SESSION_NATIVE_LEASE_BUDGET_MB=0`).
+ * (`DOMINEVO_SESSION_NATIVE_LEASE_BUDGET_MB=0`).
  *
  * Generic over the minimal {@link LeasedNativeFrame} shape (a byte size + a
  * `free()`), so it is unit-testable without node-av.

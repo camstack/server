@@ -177,7 +177,7 @@ them to pair. The transport details and the CLI browse are in
 
 ## 7. Failure modes
 
-- Retired variables: `CAMSTACK_HUB_PUBLIC_URL` and `CAMSTACK_PUBLIC_ORIGIN` are
+- Retired variables: `DOMINEVO_HUB_PUBLIC_URL` and `DOMINEVO_PUBLIC_ORIGIN` are
   ignored. A container that still sets one logs a WARN in the `public-url` scope on
   every boot, and the hub removes it from its environment before any addon runner
   forks (`server/backend/src/boot/retired-public-url-env.ts`). The guard

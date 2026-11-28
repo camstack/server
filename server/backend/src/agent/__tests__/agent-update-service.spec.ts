@@ -82,7 +82,7 @@ function makeService(args: MakeServiceArgs = {}): AgentUpdateService {
     restartAgent: args.restartAgent ?? (() => undefined),
     dataDir,
     execNpm: args.execNpm ?? (async () => ({ stdout: '' })),
-    env: args.env ?? { CAMSTACK_SERVER_BOOT_MODE: 'data-root' },
+    env: args.env ?? { DOMINEVO_SERVER_BOOT_MODE: 'data-root' },
     now: () => NOW,
     runningPackageJsonPath: runningPkgPath,
   })
@@ -92,9 +92,9 @@ describe('AgentUpdateService — agent bindings', () => {
   it('reports the @dominevo/server package with the shared server env markers', async () => {
     const svc = makeService({
       env: {
-        CAMSTACK_SERVER_BOOT_MODE: 'data-root',
-        CAMSTACK_SERVER_ACTIVE_VERSION: '1.1.40',
-        CAMSTACK_SEED_SERVER_DIR: tmp,
+        DOMINEVO_SERVER_BOOT_MODE: 'data-root',
+        DOMINEVO_SERVER_ACTIVE_VERSION: '1.1.40',
+        DOMINEVO_SEED_SERVER_DIR: tmp,
       },
     })
     // Seed dir version comes from <seedDir>/package.json — write one.
@@ -156,7 +156,7 @@ describe('AgentUpdateService — agent bindings', () => {
   })
 
   it('refuses updates from a workspace checkout', async () => {
-    const svc = makeService({ env: { CAMSTACK_SERVER_BOOT_MODE: 'workspace' } })
+    const svc = makeService({ env: { DOMINEVO_SERVER_BOOT_MODE: 'workspace' } })
     const result = await svc.applyServerUpdate({ version: '1.1.41' })
     expect(result.accepted).toBe(false)
     expect(result.message).toMatch(/workspace/i)
@@ -164,7 +164,7 @@ describe('AgentUpdateService — agent bindings', () => {
 
   it('confirmBootHealthy is a GC no-op returning promoted:null (no probation)', () => {
     const svc = makeService({
-      env: { CAMSTACK_SERVER_BOOT_MODE: 'data-root', CAMSTACK_SERVER_ACTIVE_VERSION: '1.1.41' },
+      env: { DOMINEVO_SERVER_BOOT_MODE: 'data-root', DOMINEVO_SERVER_ACTIVE_VERSION: '1.1.41' },
     })
     expect(svc.confirmBootHealthy()).toEqual({ promoted: null })
   })
@@ -279,7 +279,7 @@ describe('the agent announces its own restart before exiting (D723)', () => {
       restartAgent,
       dataDir,
       execNpm: async () => ({ stdout: '' }),
-      env: { CAMSTACK_SERVER_BOOT_MODE: 'data-root', CAMSTACK_SERVER_ACTIVE_VERSION: '1.1.40' },
+      env: { DOMINEVO_SERVER_BOOT_MODE: 'data-root', DOMINEVO_SERVER_ACTIVE_VERSION: '1.1.40' },
       now: () => NOW,
       runningPackageJsonPath: runningPkgPath,
       eventBus: bus,
@@ -325,7 +325,7 @@ describe('the agent announces its own restart before exiting (D723)', () => {
       restartAgent: () => undefined,
       dataDir,
       execNpm: stagingAwareExecNpm,
-      env: { CAMSTACK_SERVER_BOOT_MODE: 'data-root' },
+      env: { DOMINEVO_SERVER_BOOT_MODE: 'data-root' },
       now: () => NOW,
       runningPackageJsonPath: runningPkgPath,
       eventBus: bus,
@@ -359,7 +359,7 @@ describe('the agent announces its own restart before exiting (D723)', () => {
       restartAgent: () => undefined,
       dataDir,
       execNpm: async () => ({ stdout: '' }),
-      env: { CAMSTACK_AGENT_APP_VERSION: '1.2.10' },
+      env: { DOMINEVO_AGENT_APP_VERSION: '1.2.10' },
       readWrapperProbes: () => ({
         platform: 'darwin',
         dockerEnvFileExists: false,

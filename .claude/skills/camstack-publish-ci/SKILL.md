@@ -18,7 +18,7 @@ Two surfaces, in this ORDER:
 2. **Release** — workflow `Release — Dominevo (Docker + Electron)`
    (`.github/workflows/release.yml`): ONE Docker image
    `ghcr.io/<owner>/camstack:intel-X.Y.Z` (role chosen at runtime by
-   `CAMSTACK_ROLE`) and ONE desktop app (`packages/desktop`, `Dominevo-X.Y.Z-<arch>.*`).
+   `DOMINEVO_ROLE`) and ONE desktop app (`packages/desktop`, `Dominevo-X.Y.Z-<arch>.*`).
 
 The release installs from npm (the image `@dominevo/server@latest`, the
 desktop `@dominevo/server@X.Y.Z`), so step 1 must have LANDED first.

@@ -51,7 +51,7 @@ export interface ServerUploadRouteOptions {
   readonly authService: UploadAuthTokenVerifier
   readonly addonRegistry: UploadAuthAddonRegistry
   readonly logger: ServerUploadLogger
-  /** Test override — defaults to `$CAMSTACK_DATA` (or `camstack-data`). */
+  /** Test override — defaults to `$DOMINEVO_DATA` (or `camstack-data`). */
   readonly dataDir?: string
 }
 
@@ -199,7 +199,7 @@ export function registerServerUploadRoute(
       return reply.status(400).send({ error: validated.error })
     }
 
-    const dataDir = path.resolve(options.dataDir ?? process.env['CAMSTACK_DATA'] ?? 'camstack-data')
+    const dataDir = path.resolve(options.dataDir ?? process.env['DOMINEVO_DATA'] ?? 'camstack-data')
     const versionDir = devUploadVersionDir(serverRootDir(dataDir), version)
     fs.mkdirSync(versionDir, { recursive: true })
     const packages: Record<string, string> = {}

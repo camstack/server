@@ -2,7 +2,7 @@
  * The hub address a BROWSER comes back to — an OIDC callback, the WebAuthn relying party — when the operator left the addon's own
  * field empty.
  *
- * It used to be the `CAMSTACK_HUB_PUBLIC_URL` environment variable. The hub's
+ * It used to be the `DOMINEVO_HUB_PUBLIC_URL` environment variable. The hub's
  * address is not an environment fact: the `local-network` capability owns it
  * (interfaces, listen port, allowlist, tunnel, mesh — the admin Network page),
  * and `getAddresses().roles.publicEndpoint` is the one reading: the address

@@ -66,7 +66,7 @@ function parseAddonSourceFilter(raw: string | null): AddonSourceFilter | null {
 /**
  * Framework/system packages (`@dominevo/{system,types,sdk,shm-ring,ui-library}`)
  * are no longer operator-facing installable units — they ride inside each
- * node's root package (`@dominevo/server`, hub or agent via CAMSTACK_ROLE) and are
+ * node's root package (`@dominevo/server`, hub or agent via DOMINEVO_ROLE) and are
  * managed from the "Server management" surface (runtime-updatable node
  * packages design, phase 4). They are hidden from the Addons page so there is
  * no separate "system packages" section and no legacy per-package update path.

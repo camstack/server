@@ -91,8 +91,8 @@ function runInstaller(extraEnv: Record<string, string>): { status: number | null
       HOME: home,
       PATH: `${bin}:/usr/bin:/bin`,
       TMPDIR: dir,
-      CAMSTACK_NODE_DIST: 'https://mirror.test/dist',
-      CAMSTACK_VERSION: '1.2.3',
+      DOMINEVO_NODE_DIST: 'https://mirror.test/dist',
+      DOMINEVO_VERSION: '1.2.3',
       ...extraEnv,
     },
   })
@@ -157,7 +157,7 @@ describe('camstack-install.sh', () => {
   it('uses the host Node when it is 24 or newer: no download, no runtime directory', () => {
     write(path.join(bin, 'node'), '#!/bin/sh\necho 24\n')
     write(path.join(bin, 'npm'), npmScript())
-    const { status } = runInstaller({ CAMSTACK_NODE_DIST: 'https://mirror.test/never' })
+    const { status } = runInstaller({ DOMINEVO_NODE_DIST: 'https://mirror.test/never' })
     expect(status).toBe(0)
     const root = path.join(home, '.local', 'share', 'camstack')
     expect(fs.existsSync(path.join(root, 'runtime'))).toBe(false)
@@ -169,8 +169,8 @@ describe('camstack-install.sh', () => {
     write(path.join(bin, 'npm'), npmScript())
     const session = path.join(home, '.camstack', 'session.json')
     write(session, '{"keep":"me"}', 0o600)
-    expect(runInstaller({ CAMSTACK_VERSION: '1.2.3' }).status).toBe(0)
-    expect(runInstaller({ CAMSTACK_VERSION: '1.2.4' }).status).toBe(0)
+    expect(runInstaller({ DOMINEVO_VERSION: '1.2.3' }).status).toBe(0)
+    expect(runInstaller({ DOMINEVO_VERSION: '1.2.4' }).status).toBe(0)
     const root = path.join(home, '.local', 'share', 'camstack')
     expect(fs.readlinkSync(path.join(root, 'current'))).toBe(path.join(root, 'cli', '1.2.4'))
     expect(fs.readlinkSync(path.join(root, 'previous'))).toBe(path.join(root, 'cli', '1.2.3'))
@@ -180,7 +180,7 @@ describe('camstack-install.sh', () => {
   it('rejects a version that is not a version, before any download', () => {
     write(path.join(bin, 'node'), '#!/bin/sh\necho 24\n')
     write(path.join(bin, 'npm'), npmScript())
-    const { status, out } = runInstaller({ CAMSTACK_VERSION: '1.2.3; rm -rf /' })
+    const { status, out } = runInstaller({ DOMINEVO_VERSION: '1.2.3; rm -rf /' })
     expect(status).not.toBe(0)
     expect(out).toContain('is not a version')
   })

@@ -7,7 +7,7 @@
 # the previous id, and the new VM opens an empty database — the cache
 # artifacts are then "unrecognized" and every task misses (D548).
 #
-# CAMSTACK_NX_MACHINE_ID overrides the id. CI leaves it unset. The spec sets it.
+# DOMINEVO_NX_MACHINE_ID overrides the id. CI leaves it unset. The spec sets it.
 set -u
 
 root="${1:-.}"
@@ -17,7 +17,7 @@ if [ ! -d "$data" ]; then
   exit 0
 fi
 
-mid="${CAMSTACK_NX_MACHINE_ID:-}"
+mid="${DOMINEVO_NX_MACHINE_ID:-}"
 if [ -z "$mid" ]; then
   if [ "$(uname -s)" = "Darwin" ]; then
     mid=$(ioreg -rd1 -c IOPlatformExpertDevice | awk -F'"' '/IOPlatformUUID/{print $4; exit}')

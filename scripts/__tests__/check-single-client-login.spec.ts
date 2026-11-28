@@ -6,10 +6,10 @@ const rules = (file: string, source: string): readonly string[] =>
 
 describe('check-single-client-login', () => {
   it.each([
-    ['CAMSTACK_TOKEN', "const t = process.env['CAMSTACK_TOKEN']"],
-    ['CAMSTACK_HUB_TOKEN', 'const t = process.env.CAMSTACK_HUB_TOKEN'],
-    ['CAMSTACK_HUB_TOKEN_FILE', "env['CAMSTACK_HUB_TOKEN_FILE']"],
-    ['a shell variable', 'curl -H "Authorization: Bearer $CAMSTACK_TOKEN" "$HUB"'],
+    ['DOMINEVO_TOKEN', "const t = process.env['DOMINEVO_TOKEN']"],
+    ['DOMINEVO_HUB_TOKEN', 'const t = process.env.DOMINEVO_HUB_TOKEN'],
+    ['DOMINEVO_HUB_TOKEN_FILE', "env['DOMINEVO_HUB_TOKEN_FILE']"],
+    ['a shell variable', 'curl -H "Authorization: Bearer $DOMINEVO_TOKEN" "$HUB"'],
   ])('refuses an env token: %s', (_name, line) => {
     expect(rules('scripts/probe.mts', line)).toContain('env-token')
     expect(rules('scripts/probe.sh', line)).toContain('env-token')
@@ -34,7 +34,7 @@ describe('check-single-client-login', () => {
   })
 
   it('leaves the agent join token alone, only where it is marked', () => {
-    const line = 'HUB_TOKEN="$CAMSTACK_HUB_TOKEN" dominevo agent --token "$HUB_TOKEN"'
+    const line = 'HUB_TOKEN="$DOMINEVO_HUB_TOKEN" dominevo agent --token "$HUB_TOKEN"'
     const marked = `${line}  # agent-join:line`
     expect(rules('scripts/dev-cluster.sh', marked)).toEqual([])
     expect(rules('scripts/dev-agent-only.sh', marked)).toEqual([])
@@ -51,7 +51,7 @@ describe('check-single-client-login', () => {
     expect(rules('packages/cli/src/main.ts', "'  --token <token>   deploy token',")).toContain(
       'token-option',
     )
-    expect(rules('packages/cli/src/main.ts', "process.env['CAMSTACK_TOKEN']")).toContain(
+    expect(rules('packages/cli/src/main.ts', "process.env['DOMINEVO_TOKEN']")).toContain(
       'env-token',
     )
     // the region closes: a line after `agent-join:end` is a client line again
@@ -63,12 +63,12 @@ describe('check-single-client-login', () => {
     ].join('\n')
     expect(rules('packages/cli/src/main.ts', after)).toHaveLength(1)
     expect(
-      rules('scripts/dev-cluster.sh', 'curl -H "Authorization: Bearer $CAMSTACK_TOKEN"'),
+      rules('scripts/dev-cluster.sh', 'curl -H "Authorization: Bearer $DOMINEVO_TOKEN"'),
     ).toContain('env-token')
   })
 
   it('skips comment lines and the files that refuse the removed flags', () => {
-    expect(rules('scripts/x.ts', ' * CAMSTACK_TOKEN was removed')).toEqual([])
+    expect(rules('scripts/x.ts', ' * DOMINEVO_TOKEN was removed')).toEqual([])
     expect(rules('scripts/x.sh', '# --token was removed')).toEqual([])
   })
 

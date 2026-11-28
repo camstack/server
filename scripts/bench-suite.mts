@@ -18,7 +18,7 @@
  *   npx tsx scripts/bench-suite.mts [iterations=50] [warmup=2]
  *
  * Env:
- *   CAMSTACK_SERVER  hub address (default: the `dominevo login` session's hub)
+ *   DOMINEVO_SERVER  hub address (default: the `dominevo login` session's hub)
  *   AGENT_NODE_ID    hub
  *   FIXTURE_PATH     test-output/bench/sample.jpg  (any JPEG)
  *   MATRIX           comma-separated combos to override default sweep:
@@ -56,7 +56,7 @@ const WARMUP = Number.parseInt(process.argv[3] ?? '2', 10)
 // The `dominevo login` session is the only credential (D1101): log in once with
 // `dominevo login <host>`; nothing here asks for a password.
 const hubAuth = await resolveHubAuth(
-  process.env['CAMSTACK_SERVER'] ? { server: process.env['CAMSTACK_SERVER'] } : {},
+  process.env['DOMINEVO_SERVER'] ? { server: process.env['DOMINEVO_SERVER'] } : {},
 )
 const SERVER = hubAuth.server
 const NODE_ID = process.env.AGENT_NODE_ID ?? 'hub'

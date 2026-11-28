@@ -5,7 +5,7 @@
  * zero exceptions (D2/D9). The media-pipeline co-location group was
  * dissolved by Phase 5 once frames and audio chunks became serialisable
  * (shm `FrameHandle`s / tRPC), so no addon declares `execution.group`
- * and `CAMSTACK_RUNNER_ADDONS` always carries a single element. The
+ * and `DOMINEVO_RUNNER_ADDONS` always carries a single element. The
  * runner still accepts a multi-element array structurally — that is a
  * mechanism, not a policy; no manifest exercises it.
  *
@@ -32,12 +32,12 @@
  * connect, so init-time logs/events are preserved.
  *
  * Environment variables:
- * - CAMSTACK_RUNNER_ID        — runner label (becomes the nodeID suffix)
- * - CAMSTACK_RUNNER_ADDONS    — JSON array of `{ addonId, addonDir }`
- * - CAMSTACK_PARENT_NODE_ID   — hub or agent nodeID
- * - CAMSTACK_PARENT_UDS_PATH  — REQUIRED: the parent's UDS endpoint
- * - CAMSTACK_DATA_DIR         — addon data root (default ./camstack-data)
- * - CAMSTACK_LOG_LEVEL        — log level (default debug)
+ * - DOMINEVO_RUNNER_ID        — runner label (becomes the nodeID suffix)
+ * - DOMINEVO_RUNNER_ADDONS    — JSON array of `{ addonId, addonDir }`
+ * - DOMINEVO_PARENT_NODE_ID   — hub or agent nodeID
+ * - DOMINEVO_PARENT_UDS_PATH  — REQUIRED: the parent's UDS endpoint
+ * - DOMINEVO_DATA_DIR         — addon data root (default ./camstack-data)
+ * - DOMINEVO_LOG_LEVEL        — log level (default debug)
  *
  * Exits non-zero on fatal init failures so the parent process supervisor
  * can respawn. Graceful SIGTERM/SIGINT triggers `addon.shutdown()` for
@@ -119,13 +119,13 @@ process.on('unhandledRejection', (reason: unknown) => {
 })
 process.on('exit', (code: number) => {
   console.error(
-    `[addon-runner EXIT] code=${String(code)} nodeId=${process.env['CAMSTACK_RUNNER_ID'] ?? '?'}`,
+    `[addon-runner EXIT] code=${String(code)} nodeId=${process.env['DOMINEVO_RUNNER_ID'] ?? '?'}`,
   )
 })
 for (const sig of ['SIGTERM', 'SIGINT', 'SIGHUP'] as const) {
   process.on(sig, () => {
     console.error(
-      `[addon-runner SIGNAL] received ${sig} nodeId=${process.env['CAMSTACK_RUNNER_ID'] ?? '?'}`,
+      `[addon-runner SIGNAL] received ${sig} nodeId=${process.env['DOMINEVO_RUNNER_ID'] ?? '?'}`,
     )
   })
 }
@@ -135,7 +135,7 @@ for (const sig of ['SIGTERM', 'SIGINT', 'SIGHUP'] as const) {
 // hung initialize() (and anything it spawned) orphaned forever.
 startRunnerParentDeathWatchdog(() => {
   console.error(
-    `[addon-runner] "${process.env['CAMSTACK_RUNNER_ID'] ?? '?'}" parent died — killing its process group`,
+    `[addon-runner] "${process.env['DOMINEVO_RUNNER_ID'] ?? '?'}" parent died — killing its process group`,
   )
   // On POSIX the runner is the group leader (D668), so this atomically removes
   // it and every descendant, including SIGTERM-deaf children. Under an older
@@ -169,12 +169,12 @@ function parseAddonsSpec(raw: string | undefined): readonly RunnerAddonSpec[] {
   try {
     parsed = JSON.parse(raw)
   } catch (err) {
-    throw new Error(`[addon-runner] CAMSTACK_RUNNER_ADDONS is not valid JSON: ${errMsg(err)}`, {
+    throw new Error(`[addon-runner] DOMINEVO_RUNNER_ADDONS is not valid JSON: ${errMsg(err)}`, {
       cause: err,
     })
   }
   if (!Array.isArray(parsed)) {
-    throw new Error(`[addon-runner] CAMSTACK_RUNNER_ADDONS must be a JSON array`)
+    throw new Error(`[addon-runner] DOMINEVO_RUNNER_ADDONS must be a JSON array`)
   }
   const specs: RunnerAddonSpec[] = []
   for (const entry of parsed) {
@@ -228,14 +228,14 @@ async function loadAddonModule(
 // unit-testable — this module's `main()` runs at import time).
 
 async function main(): Promise<void> {
-  const runnerId = process.env['CAMSTACK_RUNNER_ID']
-  const addonsJson = process.env['CAMSTACK_RUNNER_ADDONS']
-  const parentNodeId = process.env['CAMSTACK_PARENT_NODE_ID']
-  const dataDir = process.env['CAMSTACK_DATA_DIR'] ?? './camstack-data'
+  const runnerId = process.env['DOMINEVO_RUNNER_ID']
+  const addonsJson = process.env['DOMINEVO_RUNNER_ADDONS']
+  const parentNodeId = process.env['DOMINEVO_PARENT_NODE_ID']
+  const dataDir = process.env['DOMINEVO_DATA_DIR'] ?? './camstack-data'
 
   if (!runnerId || !addonsJson || !parentNodeId) {
     console.error(
-      '[addon-runner] Missing required env vars: CAMSTACK_RUNNER_ID, CAMSTACK_RUNNER_ADDONS, CAMSTACK_PARENT_NODE_ID',
+      '[addon-runner] Missing required env vars: DOMINEVO_RUNNER_ID, DOMINEVO_RUNNER_ADDONS, DOMINEVO_PARENT_NODE_ID',
     )
     process.exit(1)
   }
@@ -249,7 +249,7 @@ async function main(): Promise<void> {
   }
 
   if (specs.length === 0) {
-    console.error('[addon-runner] CAMSTACK_RUNNER_ADDONS resolved to 0 addons — refusing to start')
+    console.error('[addon-runner] DOMINEVO_RUNNER_ADDONS resolved to 0 addons — refusing to start')
     process.exit(1)
   }
 
@@ -258,10 +258,10 @@ async function main(): Promise<void> {
   // The hub/agent always propagate this when their LocalChildRegistry is
   // listening; its absence means the parent is broken, so fail fast and let
   // the supervisor surface the parent failure rather than silently hanging.
-  const parentUdsPath = process.env['CAMSTACK_PARENT_UDS_PATH']
+  const parentUdsPath = process.env['DOMINEVO_PARENT_UDS_PATH']
   if (!parentUdsPath) {
     console.error(
-      `[addon-runner] "${nodeId}" CAMSTACK_PARENT_UDS_PATH is unset — broker-less runner cannot reach its parent. Exiting.`,
+      `[addon-runner] "${nodeId}" DOMINEVO_PARENT_UDS_PATH is unset — broker-less runner cannot reach its parent. Exiting.`,
     )
     process.exit(1)
   }
@@ -272,8 +272,8 @@ async function main(): Promise<void> {
   // Register the framework resolver BEFORE importing any addon: addons now live
   // in /data/addons (outside the framework node_modules), so their host-provided
   // imports (@dominevo/server/system, @dominevo/types, …) must be redirected to
-  // CAMSTACK_FRAMEWORK_DIR. No-op in dev where workspace symlinks resolve them.
-  registerFrameworkResolver(process.env['CAMSTACK_FRAMEWORK_DIR'])
+  // DOMINEVO_FRAMEWORK_DIR. No-op in dev where workspace symlinks resolve them.
+  registerFrameworkResolver(process.env['DOMINEVO_FRAMEWORK_DIR'])
 
   // ── Pre-load every addon module up front ───────────────────────────
   // Importing is async; doing it before the UDS connect so that any
@@ -842,8 +842,8 @@ async function main(): Promise<void> {
   // never pays a pass. Light runners start nothing. See `startRunnerHeapWatch`
   // for the pricing of the sub-second stall on a runner that finalizes segments.
   const stopHeapWatch = startRunnerHeapWatch({
-    heapProfile: process.env['CAMSTACK_RUNNER_HEAP_PROFILE'],
-    reclaimSwitch: process.env['CAMSTACK_RUNNER_HEAP_RECLAIM'],
+    heapProfile: process.env['DOMINEVO_RUNNER_HEAP_PROFILE'],
+    reclaimSwitch: process.env['DOMINEVO_RUNNER_HEAP_RECLAIM'],
     // The whole-process RSS budget the parent resolved from the co-located manifests. Absent
     // means no addon here declared one, and the runner says so at boot rather than running with
     // an invented default — the ceiling and the reclaim gate are both blind to `external`, which

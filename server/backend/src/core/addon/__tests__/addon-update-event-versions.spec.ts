@@ -151,13 +151,13 @@ function makeHarness(installedVersion: string | null): Harness {
 
 beforeEach(() => {
   root = fs.mkdtempSync(path.join(os.tmpdir(), 'addon-update-versions-'))
-  previousAddonsDir = process.env['CAMSTACK_ADDONS_DIR']
-  process.env['CAMSTACK_ADDONS_DIR'] = path.join(root, 'addons')
+  previousAddonsDir = process.env['DOMINEVO_ADDONS_DIR']
+  process.env['DOMINEVO_ADDONS_DIR'] = path.join(root, 'addons')
 })
 
 afterEach(() => {
-  if (previousAddonsDir === undefined) delete process.env['CAMSTACK_ADDONS_DIR']
-  else process.env['CAMSTACK_ADDONS_DIR'] = previousAddonsDir
+  if (previousAddonsDir === undefined) delete process.env['DOMINEVO_ADDONS_DIR']
+  else process.env['DOMINEVO_ADDONS_DIR'] = previousAddonsDir
   fs.rmSync(root, { recursive: true, force: true })
 })
 

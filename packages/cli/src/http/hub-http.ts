@@ -3,7 +3,7 @@
  *
  * A hub on the LAN serves a self-signed (or privately issued) certificate. The
  * CLI never switches verification off: it trusts the PEM the operator pinned
- * for THAT hub (`~/.camstack/<host>_<port>.ca.pem`, or `$CAMSTACK_HUB_CA_FILE`),
+ * for THAT hub (`~/.camstack/<host>_<port>.ca.pem`, or `$DOMINEVO_HUB_CA_FILE`),
  * through the same `resolveHubTls` / `createHubAgent` the MCP and `develop`
  * use (D835). A hub with a publicly trusted certificate needs no pin.
  *
@@ -26,7 +26,7 @@ export interface HubRequestOptions {
   readonly timeoutMs?: number
   /** Where pinned CAs live; defaults to `~/.camstack`. */
   readonly sessionDir?: string
-  /** Environment for `CAMSTACK_HUB_CA_FILE`; defaults to `process.env`. */
+  /** Environment for `DOMINEVO_HUB_CA_FILE`; defaults to `process.env`. */
   readonly env?: Readonly<Record<string, string | undefined>>
 }
 

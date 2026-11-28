@@ -44,8 +44,8 @@ set -uo pipefail
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO_ROOT"
 
-# The hub's data dir. Override with CAMSTACK_DEPLOY_ROOT for non-default layouts.
-DEPLOY_ROOT="${CAMSTACK_DEPLOY_ROOT:-$REPO_ROOT/server/backend/camstack-data/addons/@dominevo}"
+# The hub's data dir. Override with DOMINEVO_DEPLOY_ROOT for non-default layouts.
+DEPLOY_ROOT="${DOMINEVO_DEPLOY_ROOT:-$REPO_ROOT/server/backend/camstack-data/addons/@dominevo}"
 MAIN_TS="$REPO_ROOT/server/backend/src/main.ts"
 
 DO_BUILD=1

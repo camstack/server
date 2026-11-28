@@ -274,7 +274,7 @@ export const NATIVE_LEASE_ADMISSION_FIELD = {
  * the schema's own `default` (verified live on the hub: a cluster that has never
  * opened the form still reports `nativeLeaseHoldFrames = 8`). A reader that took
  * that at face value would report all three knobs as "set" on every cluster on
- * the day this shipped, permanently retiring the `CAMSTACK_SESSION_NATIVE_LEASE_*`
+ * the day this shipped, permanently retiring the `DOMINEVO_SESSION_NATIVE_LEASE_*`
  * emergency override that the precedence promises. There is no raw-store read on
  * this cap to distinguish the two, so the default value itself is treated as
  * "the operator has expressed no preference" — which is also what leaving a

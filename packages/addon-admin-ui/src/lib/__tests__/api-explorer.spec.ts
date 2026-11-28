@@ -138,7 +138,7 @@ describe('buildCurl', () => {
 
   it('a query is a GET with the input in the superjson envelope', () => {
     const curl = buildCurl({ hubBase, path: 'addons.list', kind: 'query', input: { a: 1 } })
-    expect(curl).toContain('-H "Authorization: Bearer $CAMSTACK_API_TOKEN"')
+    expect(curl).toContain('-H "Authorization: Bearer $DOMINEVO_API_TOKEN"')
     expect(curl).toContain(
       `'https://hub.example.com/camstack/trpc/addons.list?input=${encodeURIComponent('{"json":{"a":1}}')}'`,
     )

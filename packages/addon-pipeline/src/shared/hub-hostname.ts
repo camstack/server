@@ -11,7 +11,7 @@
  *      `recordingHubHostname` global, or the runner attach payload's
  *      `frameSource.hubHostnameOverride`), when the auto-derived host isn't
  *      reachable for RTSP on the consuming interface.
- *   2. `hubUrl` — derived from the node's `CAMSTACK_HUB_URL` (the address it
+ *   2. `hubUrl` — derived from the node's `DOMINEVO_HUB_URL` (the address it
  *      already uses to reach the hub). The RTSP restream port differs from
  *      the hub API port, but the HOST is the same — only the host is
  *      extracted.

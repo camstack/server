@@ -85,7 +85,7 @@ export interface RunnerNativeAllocatorEnv {
  * Resolve the native-allocator env for a child runner from the parent's env.
  *
  * Precedence, highest first:
- *   1. `CAMSTACK_RUNNER_NATIVE_ALLOCATOR=off` — kill switch, returns nothing and
+ *   1. `DOMINEVO_RUNNER_NATIVE_ALLOCATOR=off` — kill switch, returns nothing and
  *      restores the glibc/sharp defaults. Recoverable without a rebuild.
  *   2. A value the operator already put in the environment (`MALLOC_ARENA_MAX`,
  *      `VIPS_CONCURRENCY`) — inherited verbatim, never overwritten.
@@ -102,7 +102,7 @@ export function runnerNativeAllocatorEnv(
   // `sharp.concurrency()` is 6 by default where the linux hub returns 1 —
   // exporting the pair everywhere would have cut that node 6x.
   if (platform !== 'linux') return {}
-  if (parentEnv['CAMSTACK_RUNNER_NATIVE_ALLOCATOR'] === 'off') return {}
+  if (parentEnv['DOMINEVO_RUNNER_NATIVE_ALLOCATOR'] === 'off') return {}
   return {
     MALLOC_ARENA_MAX: parentEnv['MALLOC_ARENA_MAX'] ?? String(RUNNER_MALLOC_ARENA_MAX_DEFAULT),
     VIPS_CONCURRENCY: parentEnv['VIPS_CONCURRENCY'] ?? String(RUNNER_VIPS_CONCURRENCY_DEFAULT),
@@ -119,7 +119,7 @@ export function runnerNativeAllocatorEnv(
  * INHERITS them, and a kill switch that only omits is a kill switch that does
  * nothing.
  *
- * So `CAMSTACK_RUNNER_NATIVE_ALLOCATOR=off` DELETES. And only that: the
+ * So `DOMINEVO_RUNNER_NATIVE_ALLOCATOR=off` DELETES. And only that: the
  * non-linux path returns nothing to add for its own reasons (the pin is a pure
  * throughput cut there — measured `sharp.concurrency()` 6 on the darwin agent
  * against 1 on the linux hub) and must not be read as "remove what the operator
@@ -130,7 +130,7 @@ export function applyRunnerNativeAllocator(
   platform: NodeJS.Platform = process.platform,
 ): NodeJS.ProcessEnv {
   const next: NodeJS.ProcessEnv = { ...parentEnv }
-  if (parentEnv['CAMSTACK_RUNNER_NATIVE_ALLOCATOR'] === 'off') {
+  if (parentEnv['DOMINEVO_RUNNER_NATIVE_ALLOCATOR'] === 'off') {
     delete next['MALLOC_ARENA_MAX']
     delete next['VIPS_CONCURRENCY']
     return next

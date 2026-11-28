@@ -77,12 +77,12 @@ describe('forkDecodeWorker — a neutral spawn', () => {
   })
 
   it('preserves the inherited environment (node-av resolution depends on it)', () => {
-    process.env['CAMSTACK_FORK_ENV_PROBE'] = 'kept'
+    process.env['DOMINEVO_FORK_ENV_PROBE'] = 'kept'
     try {
       forkDecodeWorker(SOURCE)
-      expect(forkEnv()['CAMSTACK_FORK_ENV_PROBE']).toBe('kept')
+      expect(forkEnv()['DOMINEVO_FORK_ENV_PROBE']).toBe('kept')
     } finally {
-      delete process.env['CAMSTACK_FORK_ENV_PROBE']
+      delete process.env['DOMINEVO_FORK_ENV_PROBE']
     }
   })
 

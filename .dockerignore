@@ -10,7 +10,7 @@
 !scripts/docker
 !scripts/docker/**
 
-# Licence notices baked into the runtime image (/usr/share/doc/camstack).
+# Licence notices baked into the runtime image (/usr/share/doc/dominevo).
 !LICENSE
 !THIRD_PARTY_MODELS.md
 !licenses/models

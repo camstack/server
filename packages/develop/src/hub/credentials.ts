@@ -10,7 +10,7 @@
  * the session refreshes itself.
  *
  * Server precedence (an ADDRESS, never a credential): `--server`,
- * `$CAMSTACK_SERVER`, the cached session's `server`. The caller applies its
+ * `$DOMINEVO_SERVER`, the cached session's `server`. The caller applies its
  * own default when none of these is set.
  */
 import { normalizeHubAddress } from './hub-address.js'
@@ -106,7 +106,7 @@ export class MissingCredentialsError extends Error {
 /** Resolve `{server, token}` for a hub command. Throws {@link MissingCredentialsError}. */
 export function resolveCredentials(inputs: CredentialInputs): ResolvedCredentials {
   const env = inputs.env ?? process.env
-  const typed = inputs.server ?? env['CAMSTACK_SERVER']
+  const typed = inputs.server ?? env['DOMINEVO_SERVER']
   const targeted = typed ? normalizeHubAddress(typed) : undefined
   const session = inputs.loadSession(targeted)
   const server = targeted ?? session?.server

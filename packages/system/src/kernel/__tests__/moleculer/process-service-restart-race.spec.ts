@@ -89,8 +89,8 @@ describe('process-service: concurrent restarts of one runnerId never orphan a ch
   ): cp.ChildProcess => {
     const child = makeFakeChild(++pidCounter)
     // The child signals READY on stdout so the runner reaches `running`.
-    const nodeId = (opts.env as Record<string, string>)['CAMSTACK_PARENT_NODE_ID']
-    const runnerId = (opts.env as Record<string, string>)['CAMSTACK_RUNNER_ID']
+    const nodeId = (opts.env as Record<string, string>)['DOMINEVO_PARENT_NODE_ID']
+    const runnerId = (opts.env as Record<string, string>)['DOMINEVO_RUNNER_ID']
     allChildren.push(child)
     setImmediate(() => child.stdout.emit('data', Buffer.from(`READY:${nodeId}/${runnerId}\n`)))
     return child as unknown as cp.ChildProcess

@@ -4,7 +4,7 @@ set -e
 # =============================================================================
 # dev-agent-ui.sh — Start agent + agent-ui for local development
 #
-# The agent is the SAME @dominevo/server booted with CAMSTACK_ROLE=agent
+# The agent is the SAME @dominevo/server booted with DOMINEVO_ROLE=agent
 # (packages/agent no longer exists). This runs the launcher from src via tsx —
 # mirroring the hub's `npm run serve` leg — plus the agent-ui Vite dev server.
 #
@@ -39,11 +39,11 @@ if [ ! -d "packages/kernel/dist" ]; then
     --parallel=4
 fi
 
-# Hub connection is now env-driven (CAMSTACK_HUB_ADDRESS), not a --hub flag.
+# Hub connection is now env-driven (DOMINEVO_HUB_ADDRESS), not a --hub flag.
 HUB_ENV=""
 MODE="discovery"
 if [ -n "$HUB_IP" ]; then
-  HUB_ENV="CAMSTACK_HUB_ADDRESS=$HUB_IP"
+  HUB_ENV="DOMINEVO_HUB_ADDRESS=$HUB_IP"
   MODE="connected to $HUB_IP"
 fi
 
@@ -61,5 +61,5 @@ npx concurrently \
   --names "agent,ui" \
   --prefix "[{name}]" \
   --prefix-colors "green,blue" \
-  "CAMSTACK_ROLE=agent CAMSTACK_AGENT_NAME=$AGENT_NAME CAMSTACK_STATUS_PORT=4444 ${HUB_ENV} npx tsx server/backend/src/launcher.ts" \
+  "DOMINEVO_ROLE=agent DOMINEVO_AGENT_NAME=$AGENT_NAME DOMINEVO_STATUS_PORT=4444 ${HUB_ENV} npx tsx server/backend/src/launcher.ts" \
   "npm run dev -w packages/addon-agent-ui"

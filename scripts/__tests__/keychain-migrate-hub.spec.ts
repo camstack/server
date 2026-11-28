@@ -83,16 +83,16 @@ describe('keychain-migrate-hub — D797 system secrets and the retired mqtt code
   it('parses a values file without inventing empty values', () => {
     expect(
       script.parseValuesFile(
-        '# hub env\nCAMSTACK_JWT_SECRET="abc"\nexport CAMSTACK_CLUSTER_SECRET=x y\nEMPTY=\n',
+        '# hub env\nDOMINEVO_JWT_SECRET="abc"\nexport DOMINEVO_CLUSTER_SECRET=x y\nEMPTY=\n',
       ),
-    ).toEqual({ CAMSTACK_JWT_SECRET: 'abc', CAMSTACK_CLUSTER_SECRET: 'x y' })
+    ).toEqual({ DOMINEVO_JWT_SECRET: 'abc', DOMINEVO_CLUSTER_SECRET: 'x y' })
     // The cluster secret is read and ignored: there is none to import any more (D857).
   })
 
   it('resolves the signing key as the old hub did: env over config.yaml; only if set; no cluster secret', () => {
     expect(
       script.resolveSystemSecrets({
-        values: { CAMSTACK_JWT_SECRET: 'from-env', CAMSTACK_CLUSTER_SECRET: 'ignored' },
+        values: { DOMINEVO_JWT_SECRET: 'from-env', DOMINEVO_CLUSTER_SECRET: 'ignored' },
         configAuth: { jwtSecret: 'from-yaml' },
       }),
     ).toEqual({ jwtSigningKey: 'from-env' })

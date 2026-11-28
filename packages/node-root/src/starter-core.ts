@@ -332,7 +332,7 @@ export function runNodeStarter(options: NodeStarterOptions): void {
     )
     env[options.envNames.bootMode] = 'data-root'
     // `activeRoot` IS the single copy — both node entries (hub launcher / agent
-    // cli) derive `CAMSTACK_FRAMEWORK_DIR` (forked-runner resolver + NODE_PATH)
+    // cli) derive `DOMINEVO_FRAMEWORK_DIR` (forked-runner resolver + NODE_PATH)
     // from it, so the runners resolve `@dominevo/{system,types,…}` + native
     // prebuilds from the SAME copy hub-main loaded (no separate /data/framework).
     env[options.envNames.activeRoot] = activeRootDir

@@ -71,7 +71,7 @@ function serverSection(stored: string) {
         key: 'server-restart-note',
         label: 'Restart required',
         content:
-          'Port, host and data path are read-only: set the environment variables CAMSTACK_PORT, CAMSTACK_HOST and CAMSTACK_DATA, then restart.',
+          'Port, host and data path are read-only: set the environment variables DOMINEVO_PORT, DOMINEVO_HOST and DOMINEVO_DATA, then restart.',
         variant: 'warning',
       },
       {

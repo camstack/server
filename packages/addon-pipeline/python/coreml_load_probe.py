@@ -104,7 +104,7 @@ def record_crash(
     """Append one crash; return the verdict to store (`suspect` or `crashed`) and the list."""
     crashes = [*prior, {"at": now, "loadavg": [round(x, 2) for x in load], "detail": detail}]
     return (VERDICT_CRASHED if crashes_confirmed(crashes) else VERDICT_SUSPECT), crashes
-PROBE_MARKER = "@@CAMSTACK_COREML_PROBE_OK@@"
+PROBE_MARKER = "@@DOMINEVO_COREML_PROBE_OK@@"
 # Long enough for the slowest cold compile measured on a Mac (rfdetr-package,
 # 58 s); the pool's own load bound reports a slow load to the host meanwhile.
 PROBE_TIMEOUT_SEC = 600.0

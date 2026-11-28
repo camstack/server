@@ -69,7 +69,7 @@ from coreml_load_probe import (
 # The key's version stays 1: a v1 `crashed` file (no `crashes` list) is read
 # as ONE crash of unknown age, so it is re-probed rather than discarded.
 PROBE_VERDICT_VERSION = 1
-PROBE_MARKER = "@@CAMSTACK_OV_PROBE_OK@@"
+PROBE_MARKER = "@@DOMINEVO_OV_PROBE_OK@@"
 # A cold iGPU compile of a large detector takes tens of seconds; past this the
 # probe says nothing and the pool's own load bound (POOL_MODEL_LOAD_BOUNDS)
 # is the only fence, exactly as before the probe existed.

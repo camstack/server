@@ -109,7 +109,7 @@ describe('readUiDistCandidate + resolveUiDistDir', () => {
   })
 
   it('reads the bundled copy out of the CLOSURE SCOPE dir the packaged app now passes', () => {
-    // `CAMSTACK_BUNDLED_ADDONS_DIR` moved from a second `Resources/addons` tree
+    // `DOMINEVO_BUNDLED_ADDONS_DIR` moved from a second `Resources/addons` tree
     // to the closure's own `Resources/node_modules/@dominevo` (2026-08-25). This
     // function is the only RUNTIME reader that opens a package inside that dir,
     // so the scope layout is pinned here: break the coupling and the desktop

@@ -7,7 +7,7 @@
  * `package-inventory.ts` (D45) and `addon-root-inventory.ts` exist to EXPLAIN a
  * confusing layout: which copy of `@dominevo/server/system` runs, which rival addon
  * root is lying around. They are diagnostics. For a while both could also end
- * the process — `CAMSTACK_INVENTORY_STRICT=1` printed "refusing to boot on this
+ * the process — `DOMINEVO_INVENTORY_STRICT=1` printed "refusing to boot on this
  * layout" and called `process.exit(1)`.
  *
  * That trade is wrong in this system whichever way it is set. A Dominevo node
@@ -70,7 +70,7 @@ const FATAL_MARKERS: readonly FatalMarker[] = [
 ]
 
 /** The env var that used to gate the refusal. It must not come back. */
-const RETIRED_FLAG = 'CAMSTACK_INVENTORY_STRICT'
+const RETIRED_FLAG = 'DOMINEVO_INVENTORY_STRICT'
 
 interface Failure {
   readonly file: string

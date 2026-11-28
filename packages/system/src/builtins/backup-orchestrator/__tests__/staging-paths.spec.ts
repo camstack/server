@@ -10,7 +10,7 @@
  *    previous archive (175M → 503M → 4.5G compounding), and even after
  *    the tar-filter fix the leaked files sat inside the backup set's
  *    own tree. It also must NOT be `<dataDir>/backups`: with
- *    `CAMSTACK_BACKUP_ROOT` unset (Electron, plain docker without the
+ *    `DOMINEVO_BACKUP_ROOT` unset (Electron, plain docker without the
  *    env) the default `backups` storage location seeds at exactly
  *    `<nodeDataDir>/backups`, and transient build files must never mix
  *    into an archive destination.

@@ -17,7 +17,7 @@
  * 1. every `ui.route` is a route the admin UI mounts or an addon page declares;
  * 2. every `ui.nav` label is an English string of the admin UI;
  * 3. every core addon `{ id, package }` is an addon a workspace package declares;
- * 4. when a docs checkout is present (`CAMSTACK_DOCS_DIR`, else `docs` beside the
+ * 4. when a docs checkout is present (`DOMINEVO_DOCS_DIR`, else `docs` beside the
  *    main checkout), the bundled snapshot is the same document as its manifest;
  * 5. with `--live`, the snapshot is not ahead of, nor a different document than,
  *    the one the docs site serves. Network: never part of an automatic gate.
@@ -104,7 +104,7 @@ async function main(): Promise<void> {
   const docs = docsCheckout()
   if (docs === null) {
     process.stdout.write(
-      'check-onboarding-manifest: no docs checkout (CAMSTACK_DOCS_DIR unset, no sibling `docs`) — snapshot not compared.\n',
+      'check-onboarding-manifest: no docs checkout (DOMINEVO_DOCS_DIR unset, no sibling `docs`) — snapshot not compared.\n',
     )
   } else {
     const file = join(docs, DOCS_MANIFEST_RELATIVE)

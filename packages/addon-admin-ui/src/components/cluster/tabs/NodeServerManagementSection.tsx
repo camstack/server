@@ -1,6 +1,6 @@
 /**
  * Per-node server-management section — the runtime-updatable root package
- * (`@dominevo/server` for every node; hub vs agent is the CAMSTACK_ROLE, not a
+ * (`@dominevo/server` for every node; hub vs agent is the DOMINEVO_ROLE, not a
  * different package) status + lifecycle actions (check / update / restart) for
  * a SINGLE node.
  *

@@ -28,7 +28,7 @@ async function loadDevelop() {
 
 /**
  * @param {{ server?: string }} [opts] an explicit hub ADDRESS; without it the address
- *   comes from $CAMSTACK_HUB_URL / scratchpad/.hub-url / the session. The token always
+ *   comes from $DOMINEVO_HUB_URL / scratchpad/.hub-url / the session. The token always
  *   comes from the session.
  * @returns {Promise<{ server: string, token: string, tier: 'admin' | 'protected', source: 'session' }>}
  */
@@ -41,7 +41,7 @@ export async function resolveHubAuth(opts = {}) {
   })
   if (!hub) {
     throw new Error(
-      'no hub URL: pass --server, set CAMSTACK_HUB_URL, write scratchpad/.hub-url, or run `dominevo login <host>`',
+      'no hub URL: pass --server, set DOMINEVO_HUB_URL, write scratchpad/.hub-url, or run `dominevo login <host>`',
     )
   }
   const credentials = await develop.resolveFreshCredentials({

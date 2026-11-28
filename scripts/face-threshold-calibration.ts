@@ -34,7 +34,7 @@
  * `identity-arcface` index. The model of each sample is the stamp its VECTOR
  * carries, the same stamp the gallery load checks (D651).
  *
- * No hub address lives in this file. The hub is `CAMSTACK_HUB_URL`, or the
+ * No hub address lives in this file. The hub is `DOMINEVO_HUB_URL`, or the
  * gitignored `scratchpad/.hub`; with neither, `--live` refuses by name. The
  * token is the operator's `dominevo login` session through the shared resolver
  * (`scripts/hub/credentials.mjs`), and nothing else. The hub serves a self-signed certificate, so the
@@ -293,12 +293,12 @@ export interface HubConnectionSources {
  */
 export function resolveHubConnection(sources: HubConnectionSources): HubConnection {
   const scratchpad = path.join(sources.repoRoot, 'scratchpad')
-  const fromEnv = sources.env['CAMSTACK_HUB_URL']?.trim()
+  const fromEnv = sources.env['DOMINEVO_HUB_URL']?.trim()
   const fromFile = sources.readFile(path.join(scratchpad, '.hub'))?.trim()
   const hubUrl = fromEnv !== undefined && fromEnv !== '' ? fromEnv : fromFile
   if (hubUrl === undefined || hubUrl === '') {
     throw new Error(
-      'no hub URL: set CAMSTACK_HUB_URL (e.g. https://<hub-host>:4443) or write it to scratchpad/.hub (gitignored)',
+      'no hub URL: set DOMINEVO_HUB_URL (e.g. https://<hub-host>:4443) or write it to scratchpad/.hub (gitignored)',
     )
   }
   return { hubUrl: hubUrl.replace(/\/+$/, '') }

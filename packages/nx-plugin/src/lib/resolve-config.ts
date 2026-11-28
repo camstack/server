@@ -4,8 +4,8 @@ import * as path from 'node:path'
 
 /**
  * Resolved deploy configuration. The credential is the `dominevo login`
- * session and nothing else (D1101): no executor token, no `$CAMSTACK_TOKEN`,
- * no rc file. The address is the executor `server` option, `$CAMSTACK_SERVER`,
+ * session and nothing else (D1101): no executor token, no `$DOMINEVO_TOKEN`,
+ * no rc file. The address is the executor `server` option, `$DOMINEVO_SERVER`,
  * or the most recently used saved session's hub.
  *
  * This package is bootstrapped with plain `tsc` on a fresh clone, before nx can
@@ -204,7 +204,7 @@ function notLoggedIn(server: string | undefined): Error {
 export function resolveDeployConfig(inputs: ResolveInputs): ResolvedDeployConfig {
   const env = inputs.env ?? process.env
   const dir = inputs.sessionDir ?? path.join(os.homedir(), '.camstack')
-  const typed = inputs.server ?? env['CAMSTACK_SERVER']
+  const typed = inputs.server ?? env['DOMINEVO_SERVER']
   let session: SavedSession | null
   let target: string | undefined
   if (typed !== undefined && typed !== '') {

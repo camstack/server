@@ -32,9 +32,9 @@ const NOW = 1_700_000_000_000
 const NODE_ID = 'hub'
 
 const ENV_NAMES: RootUpdateEnvNames = {
-  bootMode: 'CAMSTACK_SERVER_BOOT_MODE',
-  activeVersion: 'CAMSTACK_SERVER_ACTIVE_VERSION',
-  seedDir: 'CAMSTACK_SEED_SERVER_DIR',
+  bootMode: 'DOMINEVO_SERVER_BOOT_MODE',
+  activeVersion: 'DOMINEVO_SERVER_ACTIVE_VERSION',
+  seedDir: 'DOMINEVO_SEED_SERVER_DIR',
 }
 
 interface RecordedLine {
@@ -127,7 +127,7 @@ function refusalLine(): RecordedLine | undefined {
 
 describe('applyServerUpdate leaves a trace on EVERY path', () => {
   it('logs the request itself, tagged with the nodeId, before deciding anything', async () => {
-    const service = makeService({ CAMSTACK_SERVER_BOOT_MODE: 'workspace' })
+    const service = makeService({ DOMINEVO_SERVER_BOOT_MODE: 'workspace' })
 
     await service.applyServerUpdate({ version: '1.1.51' })
 
@@ -138,7 +138,7 @@ describe('applyServerUpdate leaves a trace on EVERY path', () => {
   })
 
   it('logs the refusal when the node boots from a workspace checkout', async () => {
-    const service = makeService({ CAMSTACK_SERVER_BOOT_MODE: 'workspace' })
+    const service = makeService({ DOMINEVO_SERVER_BOOT_MODE: 'workspace' })
 
     const result = await service.applyServerUpdate({ version: '1.1.51' })
 
@@ -148,7 +148,7 @@ describe('applyServerUpdate leaves a trace on EVERY path', () => {
   })
 
   it('logs the refusal when the target version is already running', async () => {
-    const service = makeService({ CAMSTACK_SERVER_BOOT_MODE: 'data-root' })
+    const service = makeService({ DOMINEVO_SERVER_BOOT_MODE: 'data-root' })
 
     const result = await service.applyServerUpdate({ version: '1.1.50' })
 
@@ -167,7 +167,7 @@ describe('applyServerUpdate leaves a trace on EVERY path', () => {
       stagingPath: path.join(dataDir, 'server-root', '.staging-1.1.52'),
       requestedAtMs: NOW,
     })
-    const service = makeService({ CAMSTACK_SERVER_BOOT_MODE: 'data-root' })
+    const service = makeService({ DOMINEVO_SERVER_BOOT_MODE: 'data-root' })
 
     const result = await service.applyServerUpdate({ version: '1.1.51' })
 
@@ -177,7 +177,7 @@ describe('applyServerUpdate leaves a trace on EVERY path', () => {
   })
 
   it('logs the refusal when the latest version cannot be resolved', async () => {
-    const service = makeService({ CAMSTACK_SERVER_BOOT_MODE: 'data-root' }, async () => {
+    const service = makeService({ DOMINEVO_SERVER_BOOT_MODE: 'data-root' }, async () => {
       throw new Error('ENOTFOUND registry.npmjs.org')
     })
 
@@ -189,7 +189,7 @@ describe('applyServerUpdate leaves a trace on EVERY path', () => {
   })
 
   it('logs the refusal when a dev-channel version has no uploaded tarballs', async () => {
-    const service = makeService({ CAMSTACK_SERVER_BOOT_MODE: 'data-root' })
+    const service = makeService({ DOMINEVO_SERVER_BOOT_MODE: 'data-root' })
 
     const result = await service.applyServerUpdate({ version: '1.1.51-dev.123' })
 
@@ -199,7 +199,7 @@ describe('applyServerUpdate leaves a trace on EVERY path', () => {
   })
 
   it('tags the staging-failure line with the nodeId', async () => {
-    const service = makeService({ CAMSTACK_SERVER_BOOT_MODE: 'data-root' }, async (args) => {
+    const service = makeService({ DOMINEVO_SERVER_BOOT_MODE: 'data-root' }, async (args) => {
       if (args[0] === 'install') throw new Error('npm ERR! 404')
       return { stdout: '' }
     })
@@ -220,7 +220,7 @@ describe('restartServer refusals are logged too', () => {
       stagingPath: path.join(dataDir, 'server-root', '.staging-1.1.52'),
       requestedAtMs: NOW,
     })
-    const service = makeService({ CAMSTACK_SERVER_BOOT_MODE: 'data-root' })
+    const service = makeService({ DOMINEVO_SERVER_BOOT_MODE: 'data-root' })
 
     const result = service.restartNode()
 

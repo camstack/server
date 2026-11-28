@@ -171,7 +171,7 @@ export async function runDoctorChecks(deps: DoctorDeps): Promise<readonly Doctor
       label: 'Hub CA pinned',
       status: 'fail',
       detail: 'no pinned CA and the hub certificate is not publicly trusted',
-      fix: `Save the hub's certificate or CA PEM to ${hubCaFileForServer(server, deps.sessionDir)} (or set $CAMSTACK_HUB_CA_FILE).`,
+      fix: `Save the hub's certificate or CA PEM to ${hubCaFileForServer(server, deps.sessionDir)} (or set $DOMINEVO_HUB_CA_FILE).`,
     })
   } else {
     checks.push({

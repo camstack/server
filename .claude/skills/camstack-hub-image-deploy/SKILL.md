@@ -215,7 +215,7 @@ To try packed workspace packages inside a container without publishing:
 ```bash
 ./scripts/dev-pack.sh @dominevo/server @dominevo/types     # or --affected, or --all → dev-overlay/*.tgz
 docker build -f Dockerfile.dev --build-arg BASE=<a published camstack image> -t camstack:dev-<tag> .
-docker run --rm --entrypoint sh camstack:dev-<tag> -c 'grep -rl "<unique marker>" /opt/camstack-hub/node_modules/@dominevo/server/dist || echo MISSING'
+docker run --rm --entrypoint sh camstack:dev-<tag> -c 'grep -rl "<unique marker>" /opt/dominevo-hub/node_modules/@dominevo/server/dist || echo MISSING'
 ```
 
 Run it with the same volumes and env as the container it replaces (keep

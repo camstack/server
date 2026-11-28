@@ -70,7 +70,7 @@ export interface ProductVersionChange {
 }
 
 /**
- * Compare the product version this boot runs (`CAMSTACK_PRODUCT_VERSION`, set
+ * Compare the product version this boot runs (`DOMINEVO_PRODUCT_VERSION`, set
  * by the image) with the one the previous boot recorded, then record this one.
  * The record is ONE small file in the data dir: the image is replaced under the
  * node, so the data dir is the only thing that remembers the old one.
@@ -100,7 +100,7 @@ export function detectProductVersionChange(
 
 export interface ProductVersionAnnouncementInput {
   readonly dataDir: string
-  /** `CAMSTACK_PRODUCT_VERSION`, or null when unset. */
+  /** `DOMINEVO_PRODUCT_VERSION`, or null when unset. */
   readonly productVersion: string | null
   /** True when an Electron shell hosts the node: it announces its own update. */
   readonly underDesktopShell: boolean

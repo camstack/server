@@ -42,7 +42,7 @@ describe('one bootstrap loader', () => {
       ].join('\n'),
     )
     vi.stubEnv('CONFIG_PATH', configPath)
-    vi.stubEnv('CAMSTACK_PORT', '')
+    vi.stubEnv('DOMINEVO_PORT', '')
     const warn = vi.spyOn(console, 'warn')
     const config = loadBootstrapConfig()
 
@@ -62,21 +62,21 @@ describe('one bootstrap loader', () => {
 
   it('the retired secret and CORS env variables are not named at boot any more', () => {
     for (const name of [
-      'CAMSTACK_JWT_SECRET',
-      'CAMSTACK_ADMIN_USER',
-      'CAMSTACK_ADMIN_PASS',
-      'CAMSTACK_CLUSTER_SECRET',
-      'CAMSTACK_SECRET_KEY',
+      'DOMINEVO_JWT_SECRET',
+      'DOMINEVO_ADMIN_USER',
+      'DOMINEVO_ADMIN_PASS',
+      'DOMINEVO_CLUSTER_SECRET',
+      'DOMINEVO_SECRET_KEY',
       'HF_TOKEN',
       'HUGGING_FACE_HUB_TOKEN',
-      'CAMSTACK_CORS_ORIGINS',
+      'DOMINEVO_CORS_ORIGINS',
     ]) {
       vi.stubEnv(name, 'set-in-the-container')
     }
     const warn = vi.spyOn(console, 'warn')
     loadBootstrapConfig()
     const warned = warn.mock.calls.map((c) => c.map(String).join(' ')).join('\n')
-    expect(warned).not.toMatch(/CAMSTACK_JWT_SECRET|CAMSTACK_CORS_ORIGINS|HF_TOKEN|ignored/)
+    expect(warned).not.toMatch(/DOMINEVO_JWT_SECRET|DOMINEVO_CORS_ORIGINS|HF_TOKEN|ignored/)
   })
 
   it('the launcher no longer reads bootstrap.requiredAddons: its set is the role default', () => {
@@ -86,7 +86,7 @@ describe('one bootstrap loader', () => {
   })
 
   it('an env override reaches both views', () => {
-    vi.stubEnv('CAMSTACK_PORT', '6262')
+    vi.stubEnv('DOMINEVO_PORT', '6262')
     expect(loadBootstrapConfig().server.port).toBe(6262)
     expect(new ConfigManager().getBootstrap<number>('server.port')).toBe(6262)
   })
@@ -119,7 +119,7 @@ describe('one bootstrap loader', () => {
         if (entry.isDirectory()) {
           if (entry.name !== 'node_modules' && entry.name !== '__tests__') walkEnv(full)
         } else if (/\.tsx?$/.test(entry.name) && !/\.(spec|test)\./.test(entry.name)) {
-          if (fs.readFileSync(full, 'utf-8').includes("CAMSTACK_DATA: 'server.dataPath'")) {
+          if (fs.readFileSync(full, 'utf-8').includes("DOMINEVO_DATA: 'server.dataPath'")) {
             env.push(path.relative(path.resolve(__dirname, '../../../../..'), full))
           }
         }

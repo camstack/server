@@ -24,7 +24,7 @@ export default mergeConfig(
       exclude: [
         ...configDefaults.exclude,
         '**/*.cluster.spec.ts',
-        ...(process.env.CAMSTACK_HEAVY_SPECS === '1' ? [] : ['**/*.heavy.spec.*']),
+        ...(process.env.DOMINEVO_HEAVY_SPECS === '1' ? [] : ['**/*.heavy.spec.*']),
       ],
     },
   }),

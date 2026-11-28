@@ -56,7 +56,7 @@ describe('resolveSessionDecodeHostname', () => {
     )
   })
 
-  it('falls back to the host extracted from CAMSTACK_HUB_URL when no override', () => {
+  it('falls back to the host extracted from DOMINEVO_HUB_URL when no override', () => {
     const remote: RunnerFrameSource = { kind: 'remote-restream', ownerNodeId: 'agent-a' }
     const host = resolveSessionDecodeHostname({ frameSource: remote }, 'https://192.168.x.x:4443')
     expect(host).toBeDefined()

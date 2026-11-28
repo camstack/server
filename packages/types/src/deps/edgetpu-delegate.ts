@@ -21,10 +21,10 @@
  *   Windows delegate is built for a TFLite ai-edge-litert 2.1.6 cannot load.
  *
  * Resolution order, mirrored by `edgetpu_device.edgetpu_library_path` in the
- * Python pool: the `CAMSTACK_EDGETPU_LIB` path override → the copy staged
- * under `<CAMSTACK_DATA>/deps/edgetpu/lib/` → the hub's historical
+ * Python pool: the `DOMINEVO_EDGETPU_LIB` path override → the copy staged
+ * under `<DOMINEVO_DATA>/deps/edgetpu/lib/` → the hub's historical
  * `/data/deps/edgetpu/lib/libedgetpu.so.1`. On the hub image
- * `CAMSTACK_DATA=/data`, so the staged path and the historical one are the
+ * `DOMINEVO_DATA=/data`, so the staged path and the historical one are the
  * same file and nothing moves.
  */
 import { copyFileSync, existsSync, mkdirSync, renameSync, rmSync, writeFileSync } from 'node:fs'
@@ -35,7 +35,7 @@ import { verifySha256 } from './binary-downloader.js'
 import { findEntryByName, installLibraryFromDeb } from './deb-extract.js'
 
 /** The path override (a library PATH, never a secret). */
-export const EDGETPU_LIB_ENV = 'CAMSTACK_EDGETPU_LIB'
+export const EDGETPU_LIB_ENV = 'DOMINEVO_EDGETPU_LIB'
 
 /** The pinned feranick release. Changing it is the delegate version change. */
 export const EDGETPU_DELEGATE_RELEASE = '16.0TF2.17.1-1' as const
@@ -177,9 +177,9 @@ export interface EdgetpuDelegateChoice {
 
 export interface EdgetpuDelegateLookup {
   readonly platform: NodeJS.Platform
-  /** The node data root (`CAMSTACK_DATA`), or `undefined` when unknown. */
+  /** The node data root (`DOMINEVO_DATA`), or `undefined` when unknown. */
   readonly dataDir: string | undefined
-  /** `CAMSTACK_EDGETPU_LIB`, verbatim. */
+  /** `DOMINEVO_EDGETPU_LIB`, verbatim. */
   readonly override: string | undefined
   readonly exists: (path: string) => boolean
 }
@@ -206,7 +206,7 @@ export function chooseEdgetpuDelegate(lookup: EdgetpuDelegateLookup): EdgetpuDel
 
 /** The node data root the way every node process names it. */
 export function nodeDataRootFromEnv(env: NodeJS.ProcessEnv): string | undefined {
-  return env['CAMSTACK_DATA'] ?? env['CAMSTACK_DATA_DIR']
+  return env['DOMINEVO_DATA'] ?? env['DOMINEVO_DATA_DIR']
 }
 
 export type EdgetpuDelegateResult =

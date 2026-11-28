@@ -15,13 +15,13 @@ import {
 } from '../launch-args-client'
 
 const GOOD =
-  'arg --max-old-space-size=2048\nenv CAMSTACK_HEAP_CEILING_SOURCE=computed\nsource computed\n'
+  'arg --max-old-space-size=2048\nenv DOMINEVO_HEAP_CEILING_SOURCE=computed\nsource computed\n'
 
 describe('parseLaunchOutput', () => {
   it('reads args, env and the source', () => {
     expect(parseLaunchOutput(GOOD)).toEqual({
       args: ['--max-old-space-size=2048'],
-      env: { CAMSTACK_HEAP_CEILING_SOURCE: 'computed' },
+      env: { DOMINEVO_HEAP_CEILING_SOURCE: 'computed' },
       source: 'computed',
       notes: [],
     })
@@ -86,7 +86,7 @@ describe('resolveLaunchArgs', () => {
     expect(run).toHaveBeenCalledWith(
       '/usr/bin/node',
       [closureModule, '--role', 'agent'],
-      expect.objectContaining({ CAMSTACK_DATA: '/data' }),
+      expect.objectContaining({ DOMINEVO_DATA: '/data' }),
     )
     expect(r.args).toEqual(['--max-old-space-size=2048'])
   })

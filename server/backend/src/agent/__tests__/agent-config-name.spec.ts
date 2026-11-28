@@ -34,23 +34,23 @@ describe('the name a fresh agent reports', () => {
   }
 
   it('is host-arch, not the generated node id', () => {
-    vi.stubEnv('CAMSTACK_AGENT_NAME', '')
-    vi.stubEnv('CAMSTACK_NODE_ID', '')
+    vi.stubEnv('DOMINEVO_AGENT_NAME', '')
+    vi.stubEnv('DOMINEVO_NODE_ID', '')
     const config = loadAgentConfig('agent.json', freshDir())
     expect(config.name).toBe(defaultAgentName(os.hostname(), os.arch()))
     expect(config.name).not.toBe(config.nodeId)
   })
 
   it('is not the node id seed either', () => {
-    vi.stubEnv('CAMSTACK_AGENT_NAME', '')
-    vi.stubEnv('CAMSTACK_NODE_ID', 'dev-agent-0')
+    vi.stubEnv('DOMINEVO_AGENT_NAME', '')
+    vi.stubEnv('DOMINEVO_NODE_ID', 'dev-agent-0')
     const config = loadAgentConfig('agent.json', freshDir())
     expect(config.nodeId).toBe('dev-agent-0')
     expect(config.name).toBe(defaultAgentName(os.hostname(), os.arch()))
   })
 
-  it('takes CAMSTACK_AGENT_NAME, and a persisted name wins over both', () => {
-    vi.stubEnv('CAMSTACK_AGENT_NAME', 'gpu-box')
+  it('takes DOMINEVO_AGENT_NAME, and a persisted name wins over both', () => {
+    vi.stubEnv('DOMINEVO_AGENT_NAME', 'gpu-box')
     const dir = freshDir()
     expect(loadAgentConfig('agent.json', dir).name).toBe('gpu-box')
     fs.writeFileSync(path.join(dir, 'agent.json'), JSON.stringify({ name: 'kitchen-mac' }))

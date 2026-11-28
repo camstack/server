@@ -1787,7 +1787,7 @@ export default class PipelineOrchestratorAddon
    * Set (or clear) the per-node `reachableHost` override — the LAN host a
    * cross-node decoder dials to reach this node's restream. A non-empty string
    * overrides the auto-detected host the runner would otherwise derive from
-   * `CAMSTACK_HUB_URL`; `null` or an empty string clears it (revert to
+   * `DOMINEVO_HUB_URL`; `null` or an empty string clears it (revert to
    * auto-detect). Persisted onto the node's `agentSettings` entry, then a
    * debounced re-dispatch so new cross-node attaches pick up the host.
    */

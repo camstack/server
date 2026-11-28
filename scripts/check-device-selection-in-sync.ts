@@ -24,7 +24,7 @@
  * `check-container-priority-in-sync.ts`): "I could not look" and "it is fine"
  * are different answers (D315).
  *
- * `CAMSTACK_VIEWER_DIR=<viewer checkout>` points the guard at a viewer checkout
+ * `DOMINEVO_VIEWER_DIR=<viewer checkout>` points the guard at a viewer checkout
  * instead of the `camstack/` submodule, so a worktree that has no submodule can
  * still check the copies against a checkout elsewhere. When it is set, a missing
  * viewer file is a PROBLEM (the operator asked for that checkout to be compared),
@@ -35,8 +35,8 @@ import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 const ROOT = join(import.meta.dirname, '..')
-const VIEWER_DIR_ENV = 'CAMSTACK_VIEWER_DIR'
-// An EMPTY value is unset: `CAMSTACK_VIEWER_DIR=` in a shell or a CI matrix must not
+const VIEWER_DIR_ENV = 'DOMINEVO_VIEWER_DIR'
+// An EMPTY value is unset: `DOMINEVO_VIEWER_DIR=` in a shell or a CI matrix must not
 // point the guard at the repo root and fail every pair as "missing".
 const VIEWER_DIR = process.env[VIEWER_DIR_ENV] || undefined
 const VIEWER_ROOT = VIEWER_DIR ?? join(ROOT, 'camstack')

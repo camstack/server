@@ -22,7 +22,7 @@ from typing import Iterable, Optional
 _OV_COMPILATION_NUM_THREADS: int = 4
 try:
     _OV_COMPILATION_NUM_THREADS = int(
-        os.environ.get("CAMSTACK_OV_COMPILATION_THREADS", "4")
+        os.environ.get("DOMINEVO_OV_COMPILATION_THREADS", "4")
     )
 except ValueError:
     _OV_COMPILATION_NUM_THREADS = 4

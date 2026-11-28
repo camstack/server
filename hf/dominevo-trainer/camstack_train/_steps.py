@@ -15,7 +15,7 @@ import shutil
 import sys
 from pathlib import Path
 
-#: Same bound as convert_lib / the inference pool (CAMSTACK_OV_COMPILATION_THREADS).
+#: Same bound as convert_lib / the inference pool (DOMINEVO_OV_COMPILATION_THREADS).
 OV_COMPILATION_THREADS = 4
 ONNX_OPSET = 13
 

@@ -171,13 +171,13 @@ export interface SeedDefaultsInput {
   readonly basePath: string
   /**
    * Root for declarations marked `defaultRoot: 'media'` (the dedicated media
-   * volume, `CAMSTACK_MEDIA_ROOT`). Absent → media declarations fall back to
+   * volume, `DOMINEVO_MEDIA_ROOT`). Absent → media declarations fall back to
    * `basePath` like everything else.
    */
   readonly mediaBasePath?: string
   /**
    * Root for declarations marked `defaultRoot: 'backup'` (the dedicated
-   * backup volume, `CAMSTACK_BACKUP_ROOT`, default `/backups`). Absent →
+   * backup volume, `DOMINEVO_BACKUP_ROOT`, default `/backups`). Absent →
    * backup declarations fall back to `basePath`.
    */
   readonly backupBasePath?: string
@@ -1177,7 +1177,7 @@ export class StorageOrchestratorService {
    * satisfies the
    * `^[a-z][a-z0-9-]*:[a-z0-9-]+$` regex on `StorageLocationSchema.id`.
    *
-   * `basePath` is the storage root (e.g. `<CAMSTACK_DATA>`). Each
+   * `basePath` is the storage root (e.g. `<DOMINEVO_DATA>`). Each
    * location's `config.basePath` is `<basePath>/<id>`, except when the
    * declaration sets `defaultsTo` — then it inherits the resolved root of
    * the referenced location's default instance (sharing the same root

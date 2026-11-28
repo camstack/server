@@ -8,10 +8,10 @@ import { createRetainedContentFallback } from '../session-decode/retained-conten
 import { RetainedFrameStore } from '../session-decode/retained-frame-store.js'
 import { FrameLazyTelemetry } from './frame-lazy-metrics.js'
 
-export const CAMSTACK_CONTINUOUS_RETAIN = 'CAMSTACK_CONTINUOUS_RETAIN'
+export const DOMINEVO_CONTINUOUS_RETAIN = 'DOMINEVO_CONTINUOUS_RETAIN'
 
 export function isContinuousRetainEnabled(env: NodeJS.Dict<string> = process.env): boolean {
-  return env[CAMSTACK_CONTINUOUS_RETAIN] === '1'
+  return env[DOMINEVO_CONTINUOUS_RETAIN] === '1'
 }
 
 export function shouldRetainDetectionFrame(input: {

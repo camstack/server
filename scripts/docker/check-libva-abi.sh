@@ -11,7 +11,7 @@
 #
 # With a render node present (a running container with /dev/dri passed) it
 # also runs `vainfo` against it; at build time there is no /dev/dri and that
-# half is skipped. CAMSTACK_LIBVA_ABI_SKIP_DEVICE=1 skips it explicitly.
+# half is skipped. DOMINEVO_LIBVA_ABI_SKIP_DEVICE=1 skips it explicitly.
 set -eu
 
 driver="${1:-}"
@@ -39,8 +39,8 @@ if [ "$have" -lt "$needs" ]; then
 fi
 echo "[libva-abi] ok: $(basename "$driver") needs VA-API 1.$needs, libva2 $libva_version provides VA-API 1.$have"
 
-render_node="${CAMSTACK_LIBVA_RENDER_NODE:-/dev/dri/renderD128}"
-if [ "${CAMSTACK_LIBVA_ABI_SKIP_DEVICE:-0}" = "1" ] || [ ! -e "$render_node" ]; then
+render_node="${DOMINEVO_LIBVA_RENDER_NODE:-/dev/dri/renderD128}"
+if [ "${DOMINEVO_LIBVA_ABI_SKIP_DEVICE:-0}" = "1" ] || [ ! -e "$render_node" ]; then
   echo "[libva-abi] no render node at $render_node — vaInitialize not exercised"
   exit 0
 fi

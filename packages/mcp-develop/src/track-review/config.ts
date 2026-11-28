@@ -1,10 +1,10 @@
 /**
  * How the review tools find their hub: the shared `@dominevo/develop` chain
  * (`connectHub`), the same one `dominevo deploy` and `scripts/hub/hub.mjs` use.
- * Hub address: `CAMSTACK_HUB_URL`, the scratchpad file, else the cached
+ * Hub address: `DOMINEVO_HUB_URL`, the scratchpad file, else the cached
  * `dominevo login` session. Credential: the login session, and only that
  * (D1101; renewed when about to expire): no token variable is read. TLS is never disabled — a self-signed hub is trusted by naming its
- * CA (`CAMSTACK_HUB_CA_FILE`) or saving it next to the session.
+ * CA (`DOMINEVO_HUB_CA_FILE`) or saving it next to the session.
  *
  * A token is never printed, logged or returned.
  */

@@ -398,14 +398,14 @@ export class AddonPackageService {
     // Ensures install/uninstall works before full module init completes.
     try {
       const addonsDir = this.resolveAddonsDir()
-      // `CAMSTACK_NPM_REGISTRY` override exists primarily for the e2e
+      // `DOMINEVO_NPM_REGISTRY` override exists primarily for the e2e
       // harness — it points the installer at a sandboxed verdaccio so
       // the CLI-vs-npm version-interaction tests don't hit the public
       // registry. In production this stays unset and the installer
       // falls back to `https://registry.npmjs.org` (the default in
       // AddonInstaller). Both the `npm install` shell-out AND the
       // metadata HTTPS fetch honour this value.
-      const registry = process.env['CAMSTACK_NPM_REGISTRY']
+      const registry = process.env['DOMINEVO_NPM_REGISTRY']
       this.installer = new AddonInstaller({
         addonsDir,
         ...(registry ? { registry } : {}),
@@ -879,7 +879,7 @@ export class AddonPackageService {
    * Throws when the registry cannot answer.
    */
   async resolveRegistryVersion(name: string): Promise<string> {
-    return resolveNpmVersion(name, 'latest', process.env['CAMSTACK_NPM_REGISTRY'])
+    return resolveNpmVersion(name, 'latest', process.env['DOMINEVO_NPM_REGISTRY'])
   }
 
   /**
@@ -896,7 +896,7 @@ export class AddonPackageService {
     name: string,
     version?: string,
   ): Promise<{ buffer: Buffer; version: string; filename: string }> {
-    const registry = process.env['CAMSTACK_NPM_REGISTRY']
+    const registry = process.env['DOMINEVO_NPM_REGISTRY']
     const resolvedVersion = await resolveNpmVersion(name, version ?? 'latest', registry)
     const spec = `${name}@${resolvedVersion}`
     const destDir = fs.mkdtempSync(path.join(os.tmpdir(), 'camstack-pack-'))
@@ -1417,7 +1417,7 @@ export class AddonPackageService {
    * Ranges (`^1.2.0`) are still not supported — resolve those upstream.
    */
   async fetchAddonTarball(name: string, version: string, signal: AbortSignal): Promise<Buffer> {
-    const registry = process.env['CAMSTACK_NPM_REGISTRY']
+    const registry = process.env['DOMINEVO_NPM_REGISTRY']
     const reg = (registry ?? 'https://registry.npmjs.org').replace(/\/+$/, '')
     const metaUrl = `${reg}/${encodeURIComponent(name).replace(/^%40/, '@')}`
     const metaRes = await fetch(metaUrl, { signal })
@@ -1495,7 +1495,7 @@ export class AddonPackageService {
       // (`post-boot.service.ts`): the announcement and the landing of one
       // restart must name the same node, or a stale `node-updating` could not
       // be matched to the `server-updated` that supersedes it (D723).
-      data: { ...payload, nodeId: process.env['CAMSTACK_NODE_ID'] ?? 'hub' },
+      data: { ...payload, nodeId: process.env['DOMINEVO_NODE_ID'] ?? 'hub' },
     })
 
     // 10s grace gives in-flight requests time to drain.
@@ -1528,7 +1528,7 @@ export class AddonPackageService {
       buildId: string | null
     }[]
   > {
-    const registry = process.env['CAMSTACK_NPM_REGISTRY']
+    const registry = process.env['DOMINEVO_NPM_REGISTRY']
 
     const rows = await Promise.all(
       FRAMEWORK_STATUS_PACKAGES.map(async (packageName) => {
@@ -1640,7 +1640,7 @@ export class AddonPackageService {
 
   /** Node id stamped on availability events emitted by THIS process. */
   private resolveNodeId(): string {
-    return process.env['CAMSTACK_NODE_ID'] ?? 'hub'
+    return process.env['DOMINEVO_NODE_ID'] ?? 'hub'
   }
 
   // =========================================================================
@@ -1984,7 +1984,7 @@ export class AddonPackageService {
 
   /** Resolve the top-level data directory */
   private resolveDataDir(): string {
-    return path.resolve(process.env.CAMSTACK_DATA ?? 'camstack-data')
+    return path.resolve(process.env.DOMINEVO_DATA ?? 'camstack-data')
   }
 
   // =========================================================================
@@ -2125,7 +2125,7 @@ export class AddonPackageService {
   /**
    * Base URL for npm registry METADATA fetches.
    *
-   * Honours `CAMSTACK_NPM_REGISTRY` so update checks resolve against
+   * Honours `DOMINEVO_NPM_REGISTRY` so update checks resolve against
    * the same registry the installer/pack paths use. Without this, a
    * per-node `listUpdates` (which diffs an agent's roster via
    * `checkUpdatesForInstalled` → `lookupLatestVersion`) would bypass a
@@ -2134,7 +2134,7 @@ export class AddonPackageService {
    * Trailing slashes are stripped so the `${base}/${name}` join is clean.
    */
   private resolveRegistryBase(): string {
-    const override = process.env['CAMSTACK_NPM_REGISTRY']
+    const override = process.env['DOMINEVO_NPM_REGISTRY']
     const base = override && override.length > 0 ? override : AddonPackageService.NPM_REGISTRY
     return base.replace(/\/+$/, '')
   }
@@ -2408,12 +2408,12 @@ export class AddonPackageService {
   /** Resolve the addons directory from config or fall back to default */
   private resolveAddonsDir(): string {
     // Must match where the runtime LOADS addons (launcher.ts +
-    // addon-registry.service.ts honor CAMSTACK_ADDONS_DIR). If this service
+    // addon-registry.service.ts honor DOMINEVO_ADDONS_DIR). If this service
     // installed/reloaded from a different dir than the runtime loads, a
     // post-install reload re-registers the hub node from an INCOMPLETE set
     // (registerNode replaces the cap set atomically) — dropping in-process
     // builtins like device-manager/addon-pages/addon-widgets.
-    const envDir = process.env.CAMSTACK_ADDONS_DIR
+    const envDir = process.env.DOMINEVO_ADDONS_DIR
     if (envDir && envDir.trim().length > 0) return path.resolve(envDir)
     const dataPath = this.configService.get<string>('server.dataPath') ?? 'camstack-data'
     return path.resolve(dataPath, 'addons')
@@ -2496,7 +2496,7 @@ export async function extractTgzStripped(tgz: Buffer, destDir: string): Promise<
 
 /**
  * Build the npm CLI args that pin every relevant registry to
- * `CAMSTACK_NPM_REGISTRY`. We pass BOTH the default `--registry` and
+ * `DOMINEVO_NPM_REGISTRY`. We pass BOTH the default `--registry` and
  * the scope-specific `--@dominevo:registry=` flag because workspace or
  * user-home `.npmrc` files commonly declare
  * `@dominevo:registry=https://registry.npmjs.org/`, and that scoped

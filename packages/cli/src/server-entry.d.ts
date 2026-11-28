@@ -13,7 +13,7 @@ declare module '@dominevo/server/main.js'
  * The LAUNCHER — what `dominevo serve` / `dominevo agent` import.
  *
  * `main.js` is the hub bootstrap and runs on import, so importing it made
- * `dominevo agent` boot a hub. The launcher reads `CAMSTACK_ROLE` and branches
+ * `dominevo agent` boot a hub. The launcher reads `DOMINEVO_ROLE` and branches
  * to the right runtime, and wires the framework/NODE_PATH resolution that
  * importing main.js skipped entirely.
  */

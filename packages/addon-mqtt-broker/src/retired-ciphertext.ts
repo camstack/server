@@ -5,7 +5,7 @@
  * keychain like every other secret (D787, D797) and `this.config` hands this
  * addon the resolved value. The addon's own AES-GCM codec is retired: nothing
  * is encrypted with it any more, nothing is re-encrypted, no key is generated,
- * and no key comes from the environment (`CAMSTACK_SECRET_KEY` is gone).
+ * and no key comes from the environment (`DOMINEVO_SECRET_KEY` is gone).
  *
  * A hub that has not yet run the one-off operator step
  * (`scripts/ops/keychain-migrate-hub.mjs mqtt`) still stores `enc:v1:` strings.

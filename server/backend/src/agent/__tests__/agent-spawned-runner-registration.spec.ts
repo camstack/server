@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
 /**
  * Bug-4 regression: agent-spawned addon-runners must receive
- * CAMSTACK_PARENT_TCP_PORT in their child env so they connect to the spawning
+ * DOMINEVO_PARENT_TCP_PORT in their child env so they connect to the spawning
  * agent's broker instead of falling back to port 6000 (the hub). Without the
  * correct port the runner calls `$agent.registerNode` through the hub, which
  * has no `$agent` service, producing a retry storm (attempt 80+).
@@ -109,7 +109,7 @@ describe('Bug-4 regression: agent-spawned addon-runner env wiring', { timeout: 1
     }
   })
 
-  it('CAMSTACK_PARENT_TCP_PORT equals the agent listen port when parentTcpPort is provided', async () => {
+  it('DOMINEVO_PARENT_TCP_PORT equals the agent listen port when parentTcpPort is provided', async () => {
     const addons = [{ addonId: 'edge-detector', addonDir: '/opt/addons/edge-detector' }]
     const beforeCount = spawnCalls.length
 
@@ -123,15 +123,15 @@ describe('Bug-4 regression: agent-spawned addon-runner env wiring', { timeout: 1
     const env = lastCall.env
 
     // The core invariant: agent TCP port reaches the child.
-    expect(env.CAMSTACK_PARENT_TCP_PORT).toBe(String(agentTcpPort))
+    expect(env.DOMINEVO_PARENT_TCP_PORT).toBe(String(agentTcpPort))
     // Sanity-check: the port must not be the hub's fixed 6000 for any real agent.
-    expect(Number(env.CAMSTACK_PARENT_TCP_PORT)).not.toBe(6000)
+    expect(Number(env.DOMINEVO_PARENT_TCP_PORT)).not.toBe(6000)
     // Standard env vars must still be set.
-    expect(env.CAMSTACK_PARENT_NODE_ID).toBe(agentNodeId)
-    expect(env.CAMSTACK_RUNNER_ID).toBe('edge-detector')
+    expect(env.DOMINEVO_PARENT_NODE_ID).toBe(agentNodeId)
+    expect(env.DOMINEVO_RUNNER_ID).toBe('edge-detector')
   })
 
-  it('CAMSTACK_RUNNER_ADDONS contains the correct addon descriptor', async () => {
+  it('DOMINEVO_RUNNER_ADDONS contains the correct addon descriptor', async () => {
     const addons = [{ addonId: 'audio-codec-nodeav', addonDir: '/opt/addons/audio-codec-nodeav' }]
 
     await broker.call('$process.spawnRunner', {
@@ -140,7 +140,7 @@ describe('Bug-4 regression: agent-spawned addon-runner env wiring', { timeout: 1
     })
 
     const lastCall = spawnCalls[spawnCalls.length - 1]!
-    const parsed = JSON.parse(lastCall.env.CAMSTACK_RUNNER_ADDONS!) as Array<{
+    const parsed = JSON.parse(lastCall.env.DOMINEVO_RUNNER_ADDONS!) as Array<{
       addonId: string
       addonDir: string
     }>
@@ -149,10 +149,10 @@ describe('Bug-4 regression: agent-spawned addon-runner env wiring', { timeout: 1
 })
 
 // ---------------------------------------------------------------------------
-// Suite B — hub-spawned runners omit CAMSTACK_PARENT_TCP_PORT (fallback to 6000)
+// Suite B — hub-spawned runners omit DOMINEVO_PARENT_TCP_PORT (fallback to 6000)
 // ---------------------------------------------------------------------------
 
-describe('Hub-spawned runner does not set CAMSTACK_PARENT_TCP_PORT (fallback 6000 applies)', {
+describe('Hub-spawned runner does not set DOMINEVO_PARENT_TCP_PORT (fallback 6000 applies)', {
   timeout: 15_000,
 }, () => {
   const hubNodeId = 'hub'
@@ -201,11 +201,11 @@ describe('Hub-spawned runner does not set CAMSTACK_PARENT_TCP_PORT (fallback 600
     }
   })
 
-  it('CAMSTACK_PARENT_TCP_PORT is not explicitly set by process-service when parentTcpPort is omitted', async () => {
+  it('DOMINEVO_PARENT_TCP_PORT is not explicitly set by process-service when parentTcpPort is omitted', async () => {
     // Unset the env var before this test so process.env doesn't accidentally
     // satisfy the assertion via inheritance from a parent runner context.
-    const prevVal = process.env.CAMSTACK_PARENT_TCP_PORT
-    delete process.env.CAMSTACK_PARENT_TCP_PORT
+    const prevVal = process.env.DOMINEVO_PARENT_TCP_PORT
+    delete process.env.DOMINEVO_PARENT_TCP_PORT
 
     const addons = [{ addonId: 'provider-rtsp', addonDir: '/opt/addons/provider-rtsp' }]
     const beforeCount = spawnCalls.length
@@ -216,7 +216,7 @@ describe('Hub-spawned runner does not set CAMSTACK_PARENT_TCP_PORT (fallback 600
     })
 
     // Restore env to avoid side-effects on other tests.
-    if (prevVal !== undefined) process.env.CAMSTACK_PARENT_TCP_PORT = prevVal
+    if (prevVal !== undefined) process.env.DOMINEVO_PARENT_TCP_PORT = prevVal
 
     expect(spawnCalls.length).toBeGreaterThan(beforeCount)
     const lastCall = spawnCalls[spawnCalls.length - 1]!
@@ -225,8 +225,8 @@ describe('Hub-spawned runner does not set CAMSTACK_PARENT_TCP_PORT (fallback 600
     // When parentTcpPort is omitted, process-service does NOT inject the
     // var — the runner picks up 6000 from its own default fallback in
     // addon-runner.ts. This verifies backward compat for hub-spawned runners.
-    expect(env.CAMSTACK_PARENT_TCP_PORT).toBeUndefined()
-    expect(env.CAMSTACK_PARENT_NODE_ID).toBe(hubNodeId)
+    expect(env.DOMINEVO_PARENT_TCP_PORT).toBeUndefined()
+    expect(env.DOMINEVO_PARENT_NODE_ID).toBe(hubNodeId)
   })
 })
 

@@ -39,8 +39,8 @@ export function reportHubAddonSupport(input: HubSupportInput): void {
 
 /** The judgement's facts for THIS hub, read from disk: the running server and the addons dir. */
 export function readHubStaleGateContext(): StaleGateContext {
-  const dataDir = path.resolve(process.env.CAMSTACK_DATA ?? 'camstack-data')
-  const addonsDir = process.env.CAMSTACK_ADDONS_DIR ?? path.resolve(dataDir, 'addons')
+  const dataDir = path.resolve(process.env.DOMINEVO_DATA ?? 'camstack-data')
+  const addonsDir = process.env.DOMINEVO_ADDONS_DIR ?? path.resolve(dataDir, 'addons')
   return {
     serverVersion: readRunningServerVersion(),
     serverRequiresAddons: readRunningServerAddonMinimums(),

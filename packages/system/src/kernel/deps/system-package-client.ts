@@ -3,10 +3,10 @@ import { existsSync } from 'node:fs'
 import type { PackageInstallRequest, PackageInstallResult } from './system-package-broker.js'
 
 /** Default path the entrypoint binds before dropping to uid 1001. */
-export const DEFAULT_PKGD_SOCKET = '/run/camstack/pkgd.sock'
+export const DEFAULT_PKGD_SOCKET = '/run/dominevo/pkgd.sock'
 
 export function pkgdSocketPath(): string {
-  return process.env['CAMSTACK_PKGD_SOCKET'] ?? DEFAULT_PKGD_SOCKET
+  return process.env['DOMINEVO_PKGD_SOCKET'] ?? DEFAULT_PKGD_SOCKET
 }
 
 export function privilegedHelperAvailable(socketPath: string = pkgdSocketPath()): boolean {

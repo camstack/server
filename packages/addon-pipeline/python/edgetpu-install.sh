@@ -24,12 +24,12 @@
 #   sh <addon>/python/edgetpu-install.sh
 # Re-run after a venv rebuild. Idempotent.
 #
-# Overrides: CAMSTACK_DEPS_DIR (default /data/deps),
-#            CAMSTACK_PYTHON   (default $CAMSTACK_DEPS_DIR/python/bin/python).
+# Overrides: DOMINEVO_DEPS_DIR (default /data/deps),
+#            DOMINEVO_PYTHON   (default $DOMINEVO_DEPS_DIR/python/bin/python).
 set -eu
 
-DEPS_DIR="${CAMSTACK_DEPS_DIR:-/data/deps}"
-PYTHON="${CAMSTACK_PYTHON:-$DEPS_DIR/python/bin/python}"
+DEPS_DIR="${DOMINEVO_DEPS_DIR:-/data/deps}"
+PYTHON="${DOMINEVO_PYTHON:-$DEPS_DIR/python/bin/python}"
 LIB_DIR="$DEPS_DIR/edgetpu/lib"
 
 LITERT_VERSION="2.1.6"
@@ -55,7 +55,7 @@ esac
 
 command -v dpkg-deb > /dev/null 2>&1 || die "dpkg-deb not found (needs a Debian/Ubuntu container)"
 command -v curl > /dev/null 2>&1 || die "curl not found"
-[ -x "$PYTHON" ] || die "python not found at $PYTHON (set CAMSTACK_PYTHON)"
+[ -x "$PYTHON" ] || die "python not found at $PYTHON (set DOMINEVO_PYTHON)"
 
 EDGETPU_DEB="libedgetpu1-std_${EDGETPU_VERSION}.${EDGETPU_DISTRO}_${DEB_ARCH}.deb"
 EDGETPU_URL="https://github.com/feranick/libedgetpu/releases/download/${EDGETPU_TAG}/${EDGETPU_DEB}"
@@ -95,4 +95,4 @@ if [ -n "$apex_nodes" ]; then
 elif [ -d /sys/class/apex ] || grep -qil '0x1ac1' /sys/bus/pci/devices/*/vendor 2> /dev/null; then
   log "a PCIe Coral is present but no /dev/apex_N is visible here — pass it into the container"
 fi
-log "done — delegate at $LIB_DIR/libedgetpu.so.1 (CAMSTACK_EDGETPU_LIB overrides the path)"
+log "done — delegate at $LIB_DIR/libedgetpu.so.1 (DOMINEVO_EDGETPU_LIB overrides the path)"

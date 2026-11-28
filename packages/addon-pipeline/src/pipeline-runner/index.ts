@@ -874,7 +874,7 @@ export function resolveSessionDecodeOwnerNodeId(
  * The host a cross-node consumer dials for the owner's compressed restream.
  * Precedence: the orchestrator-resolved `ownerReachableHost` (the per-node
  * Cluster-UI override) → the operator `hubHostnameOverride` escape hatch →
- * the `CAMSTACK_HUB_URL`-derived host (the auto-detected Moleculer address).
+ * the `DOMINEVO_HUB_URL`-derived host (the auto-detected Moleculer address).
  * `undefined` only when none resolve (the acquire then fails loudly rather
  * than silently dialing `127.0.0.1` on a remote node).
  */
@@ -5318,7 +5318,7 @@ export default class PipelineRunnerAddon
           config.deviceId,
           config.detectionStreamId,
           `session-decode:detect:${config.deviceId}`,
-          resolveSessionDecodeHostname(config, process.env['CAMSTACK_HUB_URL']),
+          resolveSessionDecodeHostname(config, process.env['DOMINEVO_HUB_URL']),
           resolveSessionDecodeOwnerNodeId(config),
           // Detection decodes at source rate and publishes throttled by the
           // FrameSlot, so it drains a catch-up burst instead of accumulating it
@@ -5670,7 +5670,7 @@ export default class PipelineRunnerAddon
           config.deviceId,
           config.motionStreamId,
           `session-decode:motion:${config.deviceId}`,
-          resolveSessionDecodeHostname(config, process.env['CAMSTACK_HUB_URL']),
+          resolveSessionDecodeHostname(config, process.env['DOMINEVO_HUB_URL']),
           resolveSessionDecodeOwnerNodeId(config),
         ),
       startPump: (source, hooks) => {
@@ -6988,7 +6988,7 @@ export default class PipelineRunnerAddon
           config.deviceId,
           config.detectionStreamId,
           `session-decode:occupancy:${config.deviceId}`,
-          resolveSessionDecodeHostname(config, process.env['CAMSTACK_HUB_URL']),
+          resolveSessionDecodeHostname(config, process.env['DOMINEVO_HUB_URL']),
           resolveSessionDecodeOwnerNodeId(config),
         ),
       startPump: (source, hooks) => {

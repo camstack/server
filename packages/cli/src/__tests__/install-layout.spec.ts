@@ -21,10 +21,10 @@ describe('install layout detection', () => {
     expect(detectInstallLayout(`${ROOT}/runtime/bin/node`, {}, HOME).kind).not.toBe('managed')
   })
 
-  it('CAMSTACK_HOME moves the root', () => {
-    expect(managedRoot({ CAMSTACK_HOME: '/opt/cs' }, HOME)).toBe('/opt/cs')
+  it('DOMINEVO_HOME moves the root', () => {
+    expect(managedRoot({ DOMINEVO_HOME: '/opt/cs' }, HOME)).toBe('/opt/cs')
     expect(
-      detectInstallLayout('/opt/cs/current/x/cli.js', { CAMSTACK_HOME: '/opt/cs' }, HOME).kind,
+      detectInstallLayout('/opt/cs/current/x/cli.js', { DOMINEVO_HOME: '/opt/cs' }, HOME).kind,
     ).toBe('managed')
   })
 

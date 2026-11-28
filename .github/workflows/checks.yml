@@ -362,6 +362,7 @@ jobs:
             scripts/check-migration-ports-surface.ts \
             scripts/check-no-camera-model-layer.ts \
             scripts/check-no-hub-address-env.ts \
+            scripts/check-no-legacy-product-env.ts \
             scripts/check-no-provider-poll-loops.ts \
             scripts/check-no-ui-optimism.ts \
             scripts/check-ui-save-discard.ts \
@@ -486,7 +487,7 @@ jobs:
 
       - name: Onboarding manifest names things that exist here (D1077)
         env:
-          CAMSTACK_DOCS_DIR: ${{ github.workspace }}/docs-site
+          DOMINEVO_DOCS_DIR: ${{ github.workspace }}/docs-site
         run: npx tsx scripts/check-onboarding-manifest.ts
 
       # These specs walk the whole repo or build throwaway git repos; under load
@@ -503,7 +504,7 @@ jobs:
     # even on the CI host (ports / leftover processes). Watch it when you run it.
     if: ${{ github.event_name == 'workflow_dispatch' }}
     env:
-      CAMSTACK_E2E_LIVE: "1"
+      DOMINEVO_E2E_LIVE: "1"
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

@@ -15,7 +15,7 @@
  * (D49, D393): the reason is logged and nothing changes. The cadence is the update-check
  * constant; there is no retry loop (D3).
  *
- * Off switch: `CAMSTACK_AGENT_SELF_UPDATE=off` (or `0`/`false`).
+ * Off switch: `DOMINEVO_AGENT_SELF_UPDATE=off` (or `0`/`false`).
  */
 import { compareSemver } from '../server-root/index.js'
 
@@ -81,7 +81,7 @@ export function decideAgentSelfUpdate(input: AgentSelfUpdateInput): AgentSelfUpd
 }
 
 export function agentSelfUpdateEnabled(env: NodeJS.ProcessEnv): boolean {
-  const raw = env['CAMSTACK_AGENT_SELF_UPDATE']?.trim().toLowerCase()
+  const raw = env['DOMINEVO_AGENT_SELF_UPDATE']?.trim().toLowerCase()
   return !(raw === 'off' || raw === '0' || raw === 'false' || raw === 'no')
 }
 
@@ -114,7 +114,7 @@ export async function runAgentSelfUpdate(ports: AgentSelfUpdatePorts): Promise<v
   const { log } = ports
   try {
     if (!ports.enabled()) {
-      log.info('agent self-update: off (CAMSTACK_AGENT_SELF_UPDATE) — nothing checked')
+      log.info('agent self-update: off (DOMINEVO_AGENT_SELF_UPDATE) — nothing checked')
       return
     }
     const paired = ports.isPaired()

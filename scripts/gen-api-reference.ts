@@ -11,7 +11,7 @@
  * index this project has (149 capabilities, every method, every resolved Zod
  * shape) was therefore unversioned and of unknowable age: a generator nobody
  * runs is a generated doc with all of the rot and none of the guarantee.
- * `CAMSTACK_API_REF_OUT` still redirects it for the skill's own copy.
+ * `DOMINEVO_API_REF_OUT` still redirects it for the skill's own copy.
  *
  * WHAT IT DOES
  *   Walks every `packages/types/src/capabilities/*.cap.ts` CapabilityDefinition
@@ -34,7 +34,7 @@
  * USAGE
  *   npm run docs:generate                       — writes both files
  *   npx tsx scripts/gen-api-reference.ts --check  — fails if what is on disk differs
- *   Output dir override: CAMSTACK_API_REF_OUT=/path/to/references
+ *   Output dir override: DOMINEVO_API_REF_OUT=/path/to/references
  *
  * This script is READ-ONLY against the repo; it writes ONLY the two generated
  * Markdown files. It imports the real cap defs — it does not parse TS text
@@ -52,7 +52,7 @@ import type {
 const ROOT = path.resolve(import.meta.dirname ?? __dirname, '..')
 const CAPS_DIR = path.join(ROOT, 'packages/types/src/capabilities')
 const BARREL = path.join(CAPS_DIR, 'index.ts')
-const OUT_DIR = process.env.CAMSTACK_API_REF_OUT ?? path.join(ROOT, 'docs/reference')
+const OUT_DIR = process.env.DOMINEVO_API_REF_OUT ?? path.join(ROOT, 'docs/reference')
 const CAPS_FILE = 'api.md'
 const SCHEMAS_FILE = 'api-schemas.md'
 

@@ -4,7 +4,7 @@
  *
  * ONE token format exists; only the set of permissions differs (admin =
  * everything). Tools that went hunting for `scratchpad/.tok`, a
- * `<host>.admin-token` file or `$CAMSTACK_ADMIN_TOKEN_FILE` each decided on
+ * `<host>.admin-token` file or `$DOMINEVO_ADMIN_TOKEN_FILE` each decided on
  * their own which file counted, and a stale one silently won over the session
  * the operator had just logged into. Every hub-talking tool now asks the one
  * resolver (`resolveCredentials` / `resolveFreshCredentials` in
@@ -21,7 +21,7 @@ import { fileURLToPath } from 'node:url'
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 
 const LOOKUP =
-  /scratchpad['"`/,\s)]*\.tok\b|['"`]\.tok['"`]|CAMSTACK_ADMIN_TOKEN_FILE|findAdminTokenFile|adminTokenFileForServer|\.admin-token['"`]/
+  /scratchpad['"`/,\s)]*\.tok\b|['"`]\.tok['"`]|DOMINEVO_ADMIN_TOKEN_FILE|findAdminTokenFile|adminTokenFileForServer|\.admin-token['"`]/
 
 const ROOTS = ['scripts', 'tests/e2e', 'packages/cli/src', 'packages/develop/src']
 const SKIP_DIRS = new Set(['dist', 'node_modules', '__tests__', '__mocks__', 'generated'])

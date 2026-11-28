@@ -103,7 +103,7 @@ export interface BuildNodeProcessesInput {
  * adding a new long-lived subprocess.
  */
 export const CAMSTACK_CMD_RE: RegExp =
-  /(camstack|tsx\s+watch\s.*launcher\.ts|packages\/agent\/dist\/cli\.js|inference_pool\.py|bench-(inference-pool|nodeav)|node .*\/packages\/)/
+  /(camstack|dominevo|tsx\s+watch\s.*launcher\.ts|packages\/agent\/dist\/cli\.js|inference_pool\.py|bench-(inference-pool|nodeav)|node .*\/packages\/)/
 
 /**
  * Classify one pid.

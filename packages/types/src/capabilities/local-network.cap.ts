@@ -149,10 +149,10 @@ const ConnectionEndpointSchema = z.object({
  * tell a FACT about the hub's socket from an echo of its own guess.
  */
 const LocalPortSourceEnum = z.enum([
-  /** The hub's live `server.port` (the boot loader merges `CAMSTACK_PORT` into
+  /** The hub's live `server.port` (the boot loader merges `DOMINEVO_PORT` into
    *  it). Authoritative — this IS the listening socket. */
   'server-config',
-  /** `CAMSTACK_PORT` read straight off the environment, because the config
+  /** `DOMINEVO_PORT` read straight off the environment, because the config
    *  section was unreachable. Still a server-side fact. */
   'server-env',
   /** The `port` the CALLER passed, echoed because the hub could not determine

@@ -122,7 +122,7 @@ destination that registers late. A hub without winston keeps the larger buffer.
 | the same, no index | 1.7 s (1.07 GB read) |
 | text search, one 1 s slice | ~500 MB scanned |
 
-`CAMSTACK_HEAVY_SPECS=1 npx vitest run packages/system/src/builtins/winston-logging/__tests__/log-file-reader-1gb.heavy.spec.ts`
+`DOMINEVO_HEAVY_SPECS=1 npx vitest run packages/system/src/builtins/winston-logging/__tests__/log-file-reader-1gb.heavy.spec.ts`
 reproduces it.
 
 ## The viewer app's own log

@@ -348,12 +348,12 @@ export function readClosureVersions(
 /**
  * Where the running node's server closure keeps its node_modules, or null
  * when there is none to dedupe against (dev workspace, tests without a
- * closure). `CAMSTACK_FRAMEWORK_DIR` is set by the starter/launcher on every
+ * closure). `DOMINEVO_FRAMEWORK_DIR` is set by the starter/launcher on every
  * deployed node — the same directory the framework resolver hook and
  * NODE_PATH extension already point at.
  */
 export function resolveClosureNodeModulesDir(explicitDir: string | undefined): string | null {
-  const frameworkDir = explicitDir ?? process.env['CAMSTACK_FRAMEWORK_DIR']
+  const frameworkDir = explicitDir ?? process.env['DOMINEVO_FRAMEWORK_DIR']
   if (frameworkDir === undefined || frameworkDir.length === 0) return null
   const nodeModulesDir = explicitDir ?? path.join(frameworkDir, 'node_modules')
   return fs.existsSync(nodeModulesDir) ? nodeModulesDir : null

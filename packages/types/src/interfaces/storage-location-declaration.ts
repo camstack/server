@@ -104,12 +104,12 @@ export const StorageLocationDeclarationSchema = z.object({
   /**
    * Which node root the seeded `<id>:default` instance is placed under on a
    * FRESH install:
-   * - `'data'` (default) — the node's data dir (`CAMSTACK_DATA` / boot dir),
+   * - `'data'` (default) — the node's data dir (`DOMINEVO_DATA` / boot dir),
    *   the appData volume. Right for small/durable data (logs, models).
-   * - `'media'` — the dedicated media volume (`CAMSTACK_MEDIA_ROOT`) when that
+   * - `'media'` — the dedicated media volume (`DOMINEVO_MEDIA_ROOT`) when that
    *   env is set, else falls back to the data root. Right for bulky, hot media
    *   (recordings, event media) that should stay off the appData disk.
-   * - `'backup'` — the dedicated backup volume (`CAMSTACK_BACKUP_ROOT`, default
+   * - `'backup'` — the dedicated backup volume (`DOMINEVO_BACKUP_ROOT`, default
    *   `/backups` in the image) so archives live on their own mount rather than
    *   filling the appData disk. Falls back to the data root when unset.
    *

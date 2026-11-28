@@ -89,7 +89,7 @@ describe('planSingleCopyCleanup — the gates', () => {
 
   it('refuses in BAKED mode — with no active closure the fallback is what is running', () => {
     const plan = planSingleCopyCleanup(
-      healthyInput({ activeRoot: null, closureResolvedFrom: '/opt/camstack-hub/node_modules' }),
+      healthyInput({ activeRoot: null, closureResolvedFrom: '/opt/dominevo-hub/node_modules' }),
     )
 
     expect(plan.blocked).toBe(true)
@@ -353,12 +353,12 @@ describe('discoverRedundantCopies', () => {
 describe('isCleanupEnabled', () => {
   it('is ON by default — the operator asked for one copy per node', () => {
     expect(isCleanupEnabled({})).toBe(true)
-    expect(isCleanupEnabled({ CAMSTACK_SINGLE_COPY_CLEANUP: 'on' })).toBe(true)
+    expect(isCleanupEnabled({ DOMINEVO_SINGLE_COPY_CLEANUP: 'on' })).toBe(true)
   })
 
   it('can be turned off from the outside, without editing code', () => {
     for (const raw of ['off', 'OFF', '0', 'false', ' off ']) {
-      expect(isCleanupEnabled({ CAMSTACK_SINGLE_COPY_CLEANUP: raw })).toBe(false)
+      expect(isCleanupEnabled({ DOMINEVO_SINGLE_COPY_CLEANUP: raw })).toBe(false)
     }
   })
 })

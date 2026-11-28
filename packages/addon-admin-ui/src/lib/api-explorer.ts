@@ -367,12 +367,12 @@ function shellQuote(value: string): string {
 /**
  * The same call as a curl line, in the wire format the hub speaks: the input
  * in superjson's `{"json": …}` envelope, a query as GET `?input=`, a mutation
- * as a POST body. The token is the `$CAMSTACK_API_TOKEN` placeholder, never the
+ * as a POST body. The token is the `$DOMINEVO_API_TOKEN` placeholder, never the
  * session's.
  */
 export function buildCurl(request: CurlRequest): string {
   const url = `${request.hubBase}/trpc/${request.path}`
-  const auth = `-H "Authorization: Bearer $CAMSTACK_API_TOKEN"`
+  const auth = `-H "Authorization: Bearer $DOMINEVO_API_TOKEN"`
   const envelope = request.input === undefined ? null : JSON.stringify({ json: request.input })
   if (request.kind === 'mutation') {
     const body = envelope ?? JSON.stringify({ json: null })

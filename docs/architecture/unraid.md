@@ -10,8 +10,14 @@ last-verified: 2026-10-09
 Unraid is the reference deployment. This page is for the person installing
 Dominevo on one, and for whoever has to keep the templates true.
 
+The container contract is named `DOMINEVO_*`. The old product-prefixed names are not read
+any more (no fallback): a template that still sets one of them is silently ignored, so
+rename them. Inside the image the install root is `/opt/dominevo-hub` and the process
+runs as the `dominevo` user, uid and gid 1001 as before. `scripts/check-no-legacy-product-env.ts`
+refuses any pre-rename env name in tracked code, the Dockerfile and the workflows.
+
 There is **one** container image, `ghcr.io/dominevo/dominevo`, and it serves both
-roles. `CAMSTACK_ROLE` picks which at boot: `hub` (the default) runs the full
+roles. `DOMINEVO_ROLE` picks which at boot: `hub` (the default) runs the full
 server and admin UI on 4443; `agent` runs a worker that joins a hub and serves a
 status dashboard on 4444. There are two templates because the two roles want
 different defaults, not because there are two images.
@@ -51,7 +57,7 @@ Run the hub first. One per cluster.
 4. Leave **Backups** mapped. `/backups` is a declared `VOLUME` like `/data` and
    `/config`, so an unmapped one becomes a fresh anonymous volume on every
    container re-create. It is where backup archives seed by default
-   (`CAMSTACK_BACKUP_ROOT=/backups`), so they do not fill the appdata cache.
+   (`DOMINEVO_BACKUP_ROOT=/backups`), so they do not fill the appdata cache.
 5. Remove the hardware mappings the machine does not have — `/dev/dri` with no
    iGPU, `/dev/accel` with no Intel NPU, `/dev/bus/usb` with no Coral.
 
@@ -83,12 +89,12 @@ the setting. The guard exists because every one of them was wrong at some point.
 | Setting | If it is missing |
 | --- | --- |
 | `--pids-limit=8192` | A container cgroup counts THREADS, not processes. Against the 2048 Docker/Unraid default this hub was measured refusing 22 `clone()` calls in 45 minutes — each one a thread some subsystem needed and silently did without, surfacing only as media that stopped. The ceiling stays a ceiling rather than going unbounded, because a ceiling is what makes a thread leak visible; `native-metrics` reads `pids.current/max/events` on a heartbeat so approaching it is legible instead of fatal. |
-| `CAMSTACK_MEDIA_ROOT=/recordings` | `/recordings` is mounted and never written to. Recordings go to `/data` and fill the cache. |
+| `DOMINEVO_MEDIA_ROOT=/recordings` | `/recordings` is mounted and never written to. Recordings go to `/data` and fill the cache. |
 | `/dev/bus/usb` + `--device-cgroup-rule` | A Coral USB accelerator re-enumerates on init, so the passed-through node is not the one the delegate opens. It appears to load and sheds every frame. |
 | `/config` and `/backups` mapped | The image declares both a `VOLUME` (with `/data`). Unmapped, Docker mints a fresh anonymous volume on every re-create. |
 | `<Restart>unless-stopped` | The NVR does not come back after a host reboot. |
-| `CAMSTACK_ORT_WHEELHOUSE` (nvidia images: set by the image to `/opt/camstack/wheelhouse`; never set or override it in a template) | Read by the pipeline's `requirements-onnxruntime-gpu.txt`. Unset or pointing elsewhere, an NVIDIA node installs the CPU `onnxruntime` wheel and reports `cuda` unusable. A Compose or template that clears the environment loses it. |
-| `CAMSTACK_MOLECULER_USE_HOSTNAME=false` | Nodes advertise a container hostname no other machine can resolve, and a multi-machine cluster never forms. |
+| `DOMINEVO_ORT_WHEELHOUSE` (nvidia images: set by the image to `/opt/dominevo/wheelhouse`; never set or override it in a template) | Read by the pipeline's `requirements-onnxruntime-gpu.txt`. Unset or pointing elsewhere, an NVIDIA node installs the CPU `onnxruntime` wheel and reports `cuda` unusable. A Compose or template that clears the environment loses it. |
+| `DOMINEVO_MOLECULER_USE_HOSTNAME=false` | Nodes advertise a container hostname no other machine can resolve, and a multi-machine cluster never forms. |
 
 `--shm-size=2g` used to be on that list and was **removed on 2026-09-19**. It
 reserved a 2 GB tmpfs for the decoder frame rings, and that subsystem left with

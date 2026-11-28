@@ -70,7 +70,7 @@ own secrets), D798 (an addon reads its own settings resolved).
 - **No secret reaches any process through its environment** — not an addon
   credential, not the session signing key, not a node token, not "an
   optional token for power users" (D797 removed `HF_TOKEN`,
-  `CAMSTACK_SECRET_KEY` and the like). A credential is a declared field, read
+  `DOMINEVO_SECRET_KEY` and the like). A credential is a declared field, read
   from your config.
 - The hub's own secrets live in the keychain under owner `system`; an agent's
   identity is its mesh certificate and key in its own `agent.json` (0600). The keychain master key

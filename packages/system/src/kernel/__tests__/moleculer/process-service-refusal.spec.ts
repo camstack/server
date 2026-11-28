@@ -57,7 +57,7 @@ describe('process-service: a typed Init refusal parks the runner, it does not cr
     ee.exitCode = null
     ee.signalCode = null
     ee.kill = () => true
-    ee.nodeId = `${opts.env?.['CAMSTACK_PARENT_NODE_ID']}/${opts.env?.['CAMSTACK_RUNNER_ID']}`
+    ee.nodeId = `${opts.env?.['DOMINEVO_PARENT_NODE_ID']}/${opts.env?.['DOMINEVO_RUNNER_ID']}`
     spawned.push(ee)
     return ee as unknown as cp.ChildProcess
   }

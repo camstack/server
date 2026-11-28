@@ -12,7 +12,7 @@
  *   npm run icons:catalog
  *
  * Environment:
- *   CAMSTACK_VIEWER_ROOT  the viewer checkout holding node_modules/lucide-react-native
+ *   DOMINEVO_VIEWER_ROOT  the viewer checkout holding node_modules/lucide-react-native
  *                         (default: <repo>/camstack — set it when this is a worktree
  *                         whose submodule is empty)
  *   LUCIDE_SOURCE_DIR     an extracted lucide-icons/lucide checkout at the SAME
@@ -137,13 +137,13 @@ function literal(s: string): string {
 function main(): void {
   const webDir = join(ROOT, 'node_modules/lucide-react')
   if (!existsSync(webDir)) fail('node_modules/lucide-react is missing — run npm ci')
-  const viewerRoot = process.env['CAMSTACK_VIEWER_ROOT'] ?? join(ROOT, 'camstack')
+  const viewerRoot = process.env['DOMINEVO_VIEWER_ROOT'] ?? join(ROOT, 'camstack')
   const viewerDir = join(viewerRoot, 'node_modules/lucide-react-native')
   if (!existsSync(viewerDir)) {
     fail(
       `${viewerDir} is missing. The catalog is the intersection of lucide-react and the viewer's ` +
         'lucide-react-native, so the viewer must be installed (cd camstack && npm ci) — or point ' +
-        'CAMSTACK_VIEWER_ROOT at a checkout that has it. CI never regenerates this file.',
+        'DOMINEVO_VIEWER_ROOT at a checkout that has it. CI never regenerates this file.',
     )
   }
 

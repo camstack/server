@@ -16,9 +16,9 @@ import {
 const NOW = 1_700_000_000_000
 
 const ENV_NAMES: RootUpdateEnvNames = {
-  bootMode: 'CAMSTACK_SERVER_BOOT_MODE',
-  activeVersion: 'CAMSTACK_SERVER_ACTIVE_VERSION',
-  seedDir: 'CAMSTACK_SEED_SERVER_DIR',
+  bootMode: 'DOMINEVO_SERVER_BOOT_MODE',
+  activeVersion: 'DOMINEVO_SERVER_ACTIVE_VERSION',
+  seedDir: 'DOMINEVO_SEED_SERVER_DIR',
 }
 
 function makeLogger(): RootUpdateLogger {
@@ -144,7 +144,7 @@ function depositNatives(closureDir: string): void {
 
 describe('applyServerUpdate (single-copy stage + swap-on-restart)', () => {
   it('stages into .staging-*, writes the pending-root-swap marker, and restarts', async () => {
-    const svc = makeService({ CAMSTACK_SERVER_BOOT_MODE: 'data-root' }, makeInstallStub('1.1.60'))
+    const svc = makeService({ DOMINEVO_SERVER_BOOT_MODE: 'data-root' }, makeInstallStub('1.1.60'))
     const res = await svc.applyServerUpdate({ version: '1.1.60' })
     expect(res.accepted, res.message).toBe(true)
     expect(res.restarting).toBe(true)
@@ -165,7 +165,7 @@ describe('applyServerUpdate (single-copy stage + swap-on-restart)', () => {
     // `fromVersion`, because the reason STRING was the only channel and it can
     // only spell one version. The new process cannot recover the old one — it
     // IS the new one — so the fact has to leave here or not at all.
-    const svc = makeService({ CAMSTACK_SERVER_BOOT_MODE: 'data-root' }, makeInstallStub('1.1.60'))
+    const svc = makeService({ DOMINEVO_SERVER_BOOT_MODE: 'data-root' }, makeInstallStub('1.1.60'))
     const res = await svc.applyServerUpdate({ version: '1.1.60' })
     expect(res.accepted, res.message).toBe(true)
     expect(restarts).toHaveLength(1)
@@ -177,7 +177,7 @@ describe('applyServerUpdate (single-copy stage + swap-on-restart)', () => {
   })
 
   it('a plain node restart carries no update context', () => {
-    const svc = makeService({ CAMSTACK_SERVER_BOOT_MODE: 'data-root' })
+    const svc = makeService({ DOMINEVO_SERVER_BOOT_MODE: 'data-root' })
     expect(svc.restartNode().accepted).toBe(true)
     expect(restarts[0]?.update).toBeUndefined()
   })
@@ -189,21 +189,21 @@ describe('applyServerUpdate (single-copy stage + swap-on-restart)', () => {
       stagingPath: path.join(serverRootDir(dataDir), '.staging-x'),
       requestedAtMs: NOW,
     })
-    const svc = makeService({ CAMSTACK_SERVER_BOOT_MODE: 'data-root' }, makeInstallStub('1.1.60'))
+    const svc = makeService({ DOMINEVO_SERVER_BOOT_MODE: 'data-root' }, makeInstallStub('1.1.60'))
     const res = await svc.applyServerUpdate({ version: '1.1.60' })
     expect(res.accepted).toBe(false)
     expect(res.message).toMatch(/already staged/i)
   })
 
   it('refuses in workspace mode', async () => {
-    const svc = makeService({ CAMSTACK_SERVER_BOOT_MODE: 'workspace' }, makeInstallStub('1.1.60'))
+    const svc = makeService({ DOMINEVO_SERVER_BOOT_MODE: 'workspace' }, makeInstallStub('1.1.60'))
     const res = await svc.applyServerUpdate({ version: '1.1.60' })
     expect(res.accepted).toBe(false)
     expect(res.message).toMatch(/workspace/i)
   })
 
   it('refuses when the target equals the running version', async () => {
-    const svc = makeService({ CAMSTACK_SERVER_BOOT_MODE: 'data-root' }, makeInstallStub('1.1.50'))
+    const svc = makeService({ DOMINEVO_SERVER_BOOT_MODE: 'data-root' }, makeInstallStub('1.1.50'))
     const res = await svc.applyServerUpdate({ version: '1.1.50' })
     expect(res.accepted).toBe(false)
     expect(res.message).toMatch(/already running/i)
@@ -224,7 +224,7 @@ describe('applyServerUpdate (single-copy stage + swap-on-restart)', () => {
       }
       return { stdout: '' }
     }
-    const svc = makeService({ CAMSTACK_SERVER_BOOT_MODE: 'data-root' }, execNpm)
+    const svc = makeService({ DOMINEVO_SERVER_BOOT_MODE: 'data-root' }, execNpm)
     const res = await svc.applyServerUpdate({ version: '1.1.60' })
     expect(res.accepted).toBe(false)
     expect(res.message).toMatch(/native prebuilds/i)
@@ -241,7 +241,7 @@ describe('applyServerUpdate (single-copy stage + swap-on-restart)', () => {
       depositNatives(closureDir)
     }
     const svc = makeService(
-      { CAMSTACK_SERVER_BOOT_MODE: 'data-root' },
+      { DOMINEVO_SERVER_BOOT_MODE: 'data-root' },
       makeInstallStubNoNatives('1.1.60'),
       ensureNativePrebuilds,
     )
@@ -257,7 +257,7 @@ describe('applyServerUpdate (single-copy stage + swap-on-restart)', () => {
   it('still aborts when the ensure step cannot supply the missing prebuild', async () => {
     // Ensure step runs but deposits nothing — the validator must still refuse.
     const svc = makeService(
-      { CAMSTACK_SERVER_BOOT_MODE: 'data-root' },
+      { DOMINEVO_SERVER_BOOT_MODE: 'data-root' },
       makeInstallStubNoNatives('1.1.60'),
       async () => undefined,
     )
@@ -270,7 +270,7 @@ describe('applyServerUpdate (single-copy stage + swap-on-restart)', () => {
   it('does not let an ensure-step throw abort a closure that already has natives', async () => {
     // ensure step throws, but the install already deposited natives → success.
     const svc = makeService(
-      { CAMSTACK_SERVER_BOOT_MODE: 'data-root' },
+      { DOMINEVO_SERVER_BOOT_MODE: 'data-root' },
       makeInstallStub('1.1.60'),
       async () => {
         throw new Error('prebuild fetch blew up')
@@ -283,7 +283,7 @@ describe('applyServerUpdate (single-copy stage + swap-on-restart)', () => {
 
 describe('rollbackServerUpdate — unsupported in the single-copy model', () => {
   it('is always refused with a manual-recovery hint', async () => {
-    const svc = makeService({ CAMSTACK_SERVER_BOOT_MODE: 'data-root' })
+    const svc = makeService({ DOMINEVO_SERVER_BOOT_MODE: 'data-root' })
     const res = await svc.rollbackServerUpdate()
     expect(res.accepted).toBe(false)
     expect(res.message).toMatch(/not supported|re-appl/i)
@@ -298,14 +298,14 @@ describe('restartNode', () => {
       stagingPath: path.join(serverRootDir(dataDir), '.staging-x'),
       requestedAtMs: NOW,
     })
-    const svc = makeService({ CAMSTACK_SERVER_BOOT_MODE: 'data-root' })
+    const svc = makeService({ DOMINEVO_SERVER_BOOT_MODE: 'data-root' })
     const res = svc.restartNode()
     expect(res.accepted).toBe(false)
     expect(res.message).toMatch(/staged/i)
   })
 
   it('accepts a plain restart when idle', () => {
-    const svc = makeService({ CAMSTACK_SERVER_BOOT_MODE: 'data-root' })
+    const svc = makeService({ DOMINEVO_SERVER_BOOT_MODE: 'data-root' })
     const res = svc.restartNode()
     expect(res.accepted).toBe(true)
     expect(restarts).toHaveLength(1)
@@ -321,8 +321,8 @@ describe('getServerPackageStatus', () => {
       requestedAtMs: NOW,
     })
     const svc = makeService({
-      CAMSTACK_SERVER_BOOT_MODE: 'data-root',
-      CAMSTACK_SERVER_ACTIVE_VERSION: '1.1.50',
+      DOMINEVO_SERVER_BOOT_MODE: 'data-root',
+      DOMINEVO_SERVER_ACTIVE_VERSION: '1.1.50',
     })
     const status = await svc.getServerPackageStatus()
     expect(status.updateState).toBe('pending-restart')
@@ -334,8 +334,8 @@ describe('getServerPackageStatus', () => {
 
   it('reports idle with the running version when nothing is staged', async () => {
     const svc = makeService({
-      CAMSTACK_SERVER_BOOT_MODE: 'data-root',
-      CAMSTACK_SERVER_ACTIVE_VERSION: '1.1.50',
+      DOMINEVO_SERVER_BOOT_MODE: 'data-root',
+      DOMINEVO_SERVER_ACTIVE_VERSION: '1.1.50',
     })
     const status = await svc.getServerPackageStatus()
     expect(status.updateState).toBe('idle')
@@ -362,9 +362,9 @@ describe('image contract (seed vs the release the contract delivers)', () => {
     // the baked image seed is a series behind. Every other field says healthy.
     const seedDir = writeSeed('1.0.10')
     const svc = makeService({
-      CAMSTACK_SERVER_BOOT_MODE: 'data-root',
-      CAMSTACK_SERVER_ACTIVE_VERSION: '1.1.50',
-      CAMSTACK_SEED_SERVER_DIR: seedDir,
+      DOMINEVO_SERVER_BOOT_MODE: 'data-root',
+      DOMINEVO_SERVER_ACTIVE_VERSION: '1.1.50',
+      DOMINEVO_SEED_SERVER_DIR: seedDir,
     })
     const status = await svc.getServerPackageStatus()
     expect(status.imageContract?.state).toBe('behind-series')
@@ -377,9 +377,9 @@ describe('image contract (seed vs the release the contract delivers)', () => {
     const seedDir = writeSeed('1.1.50')
     const svc = makeService(
       {
-        CAMSTACK_SERVER_BOOT_MODE: 'data-root',
-        CAMSTACK_SERVER_ACTIVE_VERSION: '1.1.50',
-        CAMSTACK_SEED_SERVER_DIR: seedDir,
+        DOMINEVO_SERVER_BOOT_MODE: 'data-root',
+        DOMINEVO_SERVER_ACTIVE_VERSION: '1.1.50',
+        DOMINEVO_SEED_SERVER_DIR: seedDir,
       },
       async () => ({ stdout: '1.1.55\n' }),
     )
@@ -401,9 +401,9 @@ describe('image contract (seed vs the release the contract delivers)', () => {
     }
     const svc = makeService(
       {
-        CAMSTACK_SERVER_BOOT_MODE: 'data-root',
-        CAMSTACK_SERVER_ACTIVE_VERSION: '1.1.50',
-        CAMSTACK_SEED_SERVER_DIR: seedDir,
+        DOMINEVO_SERVER_BOOT_MODE: 'data-root',
+        DOMINEVO_SERVER_ACTIVE_VERSION: '1.1.50',
+        DOMINEVO_SEED_SERVER_DIR: seedDir,
       },
       async () => ({ stdout: '1.1.55\n' }),
       undefined,
@@ -424,9 +424,9 @@ describe('image contract (seed vs the release the contract delivers)', () => {
     }
     const svc = makeService(
       {
-        CAMSTACK_SERVER_BOOT_MODE: 'data-root',
-        CAMSTACK_SERVER_ACTIVE_VERSION: '1.1.50',
-        CAMSTACK_SEED_SERVER_DIR: seedDir,
+        DOMINEVO_SERVER_BOOT_MODE: 'data-root',
+        DOMINEVO_SERVER_ACTIVE_VERSION: '1.1.50',
+        DOMINEVO_SEED_SERVER_DIR: seedDir,
       },
       async () => ({ stdout: '1.1.55\n' }),
       undefined,
@@ -437,7 +437,7 @@ describe('image contract (seed vs the release the contract delivers)', () => {
   })
 
   it('status reports unknown (not in-sync) in a dev workspace with no seed', async () => {
-    const svc = makeService({ CAMSTACK_SERVER_BOOT_MODE: 'workspace' })
+    const svc = makeService({ DOMINEVO_SERVER_BOOT_MODE: 'workspace' })
     const status = await svc.getServerPackageStatus()
     expect(status.imageContract?.state).toBe('unknown')
   })
@@ -445,7 +445,7 @@ describe('image contract (seed vs the release the contract delivers)', () => {
 
 describe('confirmBootHealthy', () => {
   it('is a no-op that returns promoted:null (no probation promotion)', () => {
-    const svc = makeService({ CAMSTACK_SERVER_BOOT_MODE: 'data-root' })
+    const svc = makeService({ DOMINEVO_SERVER_BOOT_MODE: 'data-root' })
     expect(svc.confirmBootHealthy()).toEqual({ promoted: null })
   })
 })

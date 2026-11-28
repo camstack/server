@@ -20,7 +20,7 @@
  *
  * ── Why a ratchet and not a red build ──────────────────────────────────────
  * The layout is non-compliant TODAY, by design: the image still builds seed
- * trees, `/data/framework` still exists, `CAMSTACK_FRAMEWORK_DIR` is still
+ * trees, `/data/framework` still exists, `DOMINEVO_FRAMEWORK_DIR` is still
  * read. D45 records their removal as a deliberate, scheduled migration with a
  * container recreate as the escape hatch — not something a guard should force
  * by turning CI red on the first commit. So this pins what exists today, per
@@ -96,7 +96,7 @@ const MARKERS: readonly Marker[] = [
   },
   {
     id: 'framework-dir-override',
-    pattern: /CAMSTACK_FRAMEWORK_DIR/g,
+    pattern: /DOMINEVO_FRAMEWORK_DIR/g,
     meaning: 'a framework-dir override — a second resolution path (D45: one path)',
   },
   {
@@ -118,7 +118,7 @@ type Counts = Record<string, number>
  *
  * This ratchet counts raw regex hits, and on 2026-09-09 it went red on
  * `addon-installer.ts` 0 → 2 because someone DOCUMENTED, in two doc comments,
- * that production derives the closure dir from `CAMSTACK_FRAMEWORK_DIR` while
+ * that production derives the closure dir from `DOMINEVO_FRAMEWORK_DIR` while
  * a spec injects it. Both lines describe behaviour that already existed; the
  * file gained no path. Failing there teaches the reader that the guard is
  * noise, and a guard people learn to scroll past is the one that gets
@@ -126,7 +126,7 @@ type Counts = Record<string, number>
  *
  * So the count is taken over CODE: line and block comments are blanked
  * (replaced with spaces, so line numbers are unchanged). String literals are
- * NOT blanked — `process.env['CAMSTACK_FRAMEWORK_DIR']` is a real use of the
+ * NOT blanked — `process.env['DOMINEVO_FRAMEWORK_DIR']` is a real use of the
  * override and must keep counting — they are only tracked so a `//` inside a
  * URL is not read as the start of a comment. A marker that appears only in
  * prose is a marker that describes, and describing is not regressing.

@@ -171,6 +171,7 @@ fi
 npx tsx scripts/check-capability-activation-single-authority.ts || exit 1
 npx tsx scripts/check-no-heap-dump-command.ts || exit 1
 # D718: no heap-snapshot env and no event-fanout mode switch (always filter).
+npx tsx scripts/check-no-legacy-product-env.ts || exit 1
 npx tsx scripts/check-no-retired-fanout-heap-env.ts || exit 1
 # The container-child precedence is defined once and copied twice, by two
 # consumers that cannot import it (the viewer resolves @dominevo/types from its

@@ -300,13 +300,13 @@ describe('POST /api/addons/upload', () => {
 
   it('routes to hub installer when nodeId is absent', async () => {
     // Hub install writes a `.install-source` marker into
-    // `${CAMSTACK_DATA}/addons/<addonName>/`. Point CAMSTACK_DATA at an
+    // `${DOMINEVO_DATA}/addons/<addonName>/`. Point DOMINEVO_DATA at an
     // isolated temp dir for the test so the side effect doesn't escape.
     const tmpRoot = await import('node:fs/promises').then((fsp) =>
       fsp.mkdtemp('/tmp/camstack-upload-test-'),
     )
-    const previous = process.env['CAMSTACK_DATA']
-    process.env['CAMSTACK_DATA'] = tmpRoot
+    const previous = process.env['DOMINEVO_DATA']
+    process.env['DOMINEVO_DATA'] = tmpRoot
     const fsSync = await import('node:fs')
     fsSync.mkdirSync(`${tmpRoot}/addons/addon-x`, { recursive: true })
 
@@ -342,8 +342,8 @@ describe('POST /api/addons/upload', () => {
         version: '2.0.0',
       })
     } finally {
-      if (previous === undefined) delete process.env['CAMSTACK_DATA']
-      else process.env['CAMSTACK_DATA'] = previous
+      if (previous === undefined) delete process.env['DOMINEVO_DATA']
+      else process.env['DOMINEVO_DATA'] = previous
       fsSync.rmSync(tmpRoot, { recursive: true, force: true })
     }
   })
@@ -354,8 +354,8 @@ describe('POST /api/addons/upload', () => {
     const tmpRoot = await import('node:fs/promises').then((fsp) =>
       fsp.mkdtemp('/tmp/camstack-upload-fw-'),
     )
-    const previous = process.env['CAMSTACK_DATA']
-    process.env['CAMSTACK_DATA'] = tmpRoot
+    const previous = process.env['DOMINEVO_DATA']
+    process.env['DOMINEVO_DATA'] = tmpRoot
     const fsSync = await import('node:fs')
     fsSync.mkdirSync(`${tmpRoot}/addons/@dominevo/system`, { recursive: true })
 
@@ -399,8 +399,8 @@ describe('POST /api/addons/upload', () => {
       // Critical: the in-process restart that breaks builtins must NOT run.
       expect(restartAddon).not.toHaveBeenCalled()
     } finally {
-      if (previous === undefined) delete process.env['CAMSTACK_DATA']
-      else process.env['CAMSTACK_DATA'] = previous
+      if (previous === undefined) delete process.env['DOMINEVO_DATA']
+      else process.env['DOMINEVO_DATA'] = previous
       fsSync.rmSync(tmpRoot, { recursive: true, force: true })
     }
   })
@@ -449,13 +449,13 @@ describe('POST /api/addons/upload', () => {
 
   /**
    * The agent pulls the bundle from the URL in the source descriptor. That URL
-   * was `CAMSTACK_HUB_PUBLIC_URL ?? 'https://127.0.0.1:4443'`, so a hub without
+   * was `DOMINEVO_HUB_PUBLIC_URL ?? 'https://127.0.0.1:4443'`, so a hub without
    * the variable (every Mac hub) sent the agent to its OWN loopback. It now
    * comes from the `local-network` palette — with the variable absent.
    */
   it('hands the agent the hub LAN address, never loopback', async () => {
-    const previous = process.env['CAMSTACK_HUB_PUBLIC_URL']
-    delete process.env['CAMSTACK_HUB_PUBLIC_URL']
+    const previous = process.env['DOMINEVO_HUB_PUBLIC_URL']
+    delete process.env['DOMINEVO_HUB_PUBLIC_URL']
     try {
       const call = vi.fn(async (action: string, _payload: unknown) =>
         action === '$agent.reload'
@@ -496,7 +496,7 @@ describe('POST /api/addons/upload', () => {
           : ''
       expect(new URL(url).origin).toBe('https://192.0.2.10:4443')
     } finally {
-      if (previous !== undefined) process.env['CAMSTACK_HUB_PUBLIC_URL'] = previous
+      if (previous !== undefined) process.env['DOMINEVO_HUB_PUBLIC_URL'] = previous
     }
   })
 

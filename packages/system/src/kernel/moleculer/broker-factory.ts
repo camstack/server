@@ -114,11 +114,11 @@ function deriveAgentListenPort(nodeID: string): number {
  * falling back to `<name>.localdomain` when `HostName` is unset and DHCP
  * advertises `domain=localdomain`) — pin the hostname to loopback (e.g. an
  * `/etc/hosts` entry) to neutralise it. Set
- * `CAMSTACK_MOLECULER_USE_HOSTNAME=false` to force IP addressing for
+ * `DOMINEVO_MOLECULER_USE_HOSTNAME=false` to force IP addressing for
  * cross-machine deployments that route by IP rather than DNS name.
  */
 function resolveUseHostname(): boolean {
-  return process.env['CAMSTACK_MOLECULER_USE_HOSTNAME'] !== 'false'
+  return process.env['DOMINEVO_MOLECULER_USE_HOSTNAME'] !== 'false'
 }
 
 function createBroker(config: BrokerConfig): ServiceBroker {

@@ -11,14 +11,14 @@
  *   2. `info` prints a JSON-ish version + platform block (cheapest verb).
  *   3. Exit codes propagate (zero on success, non-zero on unknown verb).
  *
- * Gated by CAMSTACK_E2E_LIVE because the verb suite touches the file
+ * Gated by DOMINEVO_E2E_LIVE because the verb suite touches the file
  * system + spawns node subprocesses; safe to leave skipped on CI lanes
  * that don't have the harness wired up.
  */
 import { describe, it, expect } from 'vitest'
 import { runCamstackCli } from '../fixtures/camstack-cli.ts'
 
-const E2E_LIVE = process.env['CAMSTACK_E2E_LIVE'] === '1'
+const E2E_LIVE = process.env['DOMINEVO_E2E_LIVE'] === '1'
 const describeLive = E2E_LIVE ? describe : describe.skip
 
 describeLive('camstack CLI fixture', () => {

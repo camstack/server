@@ -31,9 +31,9 @@ afterEach(() => {
 function slotEnv(slots: number): NodeJS.ProcessEnv {
   return {
     ...process.env,
-    CAMSTACK_TEST_SLOT_DIR: slotDir,
-    CAMSTACK_TEST_SLOTS: String(slots),
-    CAMSTACK_TEST_SLOT_POLL: '0.1',
+    DOMINEVO_TEST_SLOT_DIR: slotDir,
+    DOMINEVO_TEST_SLOTS: String(slots),
+    DOMINEVO_TEST_SLOT_POLL: '0.1',
   }
 }
 
@@ -56,7 +56,9 @@ function deadPid(): number {
 
 /** This process's niceness (a run inside a slot is itself already niced). */
 function ownNiceness(): number {
-  return Number(spawnSync('ps', ['-o', 'nice=', '-p', String(process.pid)], { encoding: 'utf8' }).stdout.trim())
+  return Number(
+    spawnSync('ps', ['-o', 'nice=', '-p', String(process.pid)], { encoding: 'utf8' }).stdout.trim(),
+  )
 }
 
 function sleep(ms: number): Promise<void> {
@@ -66,7 +68,12 @@ function sleep(ms: number): Promise<void> {
 describe('test-slot', () => {
   it('runs the command with the agent worker cap and releases the slot', async () => {
     const out = join(dir, 'out')
-    const res = await runAsync(2, ['--', 'bash', '-c', `echo "$VITEST_MAX_WORKERS $(ps -o nice= -p $$)" > ${out}`])
+    const res = await runAsync(2, [
+      '--',
+      'bash',
+      '-c',
+      `echo "$VITEST_MAX_WORKERS $(ps -o nice= -p $$)" > ${out}`,
+    ])
     expect(res.code).toBe(0)
     const [workers, niceness] = readFileSync(out, 'utf8').trim().split(/\s+/)
     expect(workers).toBe('3')
@@ -83,14 +90,23 @@ describe('test-slot', () => {
 
   it('a second run waits for the busy slot, then runs', async () => {
     const log = join(dir, 'log')
-    const first = runAsync(1, ['--', 'bash', '-c', `echo first-start >> ${log}; sleep 1; echo first-end >> ${log}`])
+    const first = runAsync(1, [
+      '--',
+      'bash',
+      '-c',
+      `echo first-start >> ${log}; sleep 1; echo first-end >> ${log}`,
+    ])
     await sleep(300)
     const second = runAsync(1, ['--', 'bash', '-c', `echo second >> ${log}`])
     const [a, b] = await Promise.all([first, second])
     expect(a.code).toBe(0)
     expect(b.code).toBe(0)
     expect(b.stderr).toContain('busy')
-    expect(readFileSync(log, 'utf8').trim().split('\n')).toEqual(['first-start', 'first-end', 'second'])
+    expect(readFileSync(log, 'utf8').trim().split('\n')).toEqual([
+      'first-start',
+      'first-end',
+      'second',
+    ])
   })
 
   it('reclaims a slot whose owner is gone', async () => {
@@ -132,7 +148,14 @@ describe('test-slot', () => {
     const res = await new Promise<number | null>((resolve) => {
       const child = spawn(
         'bash',
-        [script, '--priority', '--', 'bash', '-c', `echo "$VITEST_MAX_WORKERS $(ps -o nice= -p $$)" > ${out}`],
+        [
+          script,
+          '--priority',
+          '--',
+          'bash',
+          '-c',
+          `echo "$VITEST_MAX_WORKERS $(ps -o nice= -p $$)" > ${out}`,
+        ],
         { env: { ...slotEnv(1), VITEST_MAX_WORKERS: '4' } },
       )
       child.on('close', resolve)

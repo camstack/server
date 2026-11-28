@@ -52,8 +52,8 @@ describe('hostExternalEntryUrls', () => {
     const anchors: string[] = []
     const urls = hostExternalEntryUrls('sharp', {
       env: {
-        CAMSTACK_FRAMEWORK_DIR: '/data/framework',
-        CAMSTACK_BUNDLED_ADDONS_DIR: '/res/addons',
+        DOMINEVO_FRAMEWORK_DIR: '/data/framework',
+        DOMINEVO_BUNDLED_ADDONS_DIR: '/res/addons',
       },
       cwd: '/data/addons/@dominevo/addon-pipeline',
       resolve: (anchorPath: string): string | null => {
@@ -78,14 +78,14 @@ describe('hostExternalEntryUrls', () => {
 
   it('finds the SAME electron Resources root when the seed dir is the closure scope dir', () => {
     // The packaged app stopped shipping a second `Resources/addons` tree
-    // (2026-08-25) and now points `CAMSTACK_BUNDLED_ADDONS_DIR` at the closure's
+    // (2026-08-25) and now points `DOMINEVO_BUNDLED_ADDONS_DIR` at the closure's
     // own scope dir, `<resources>/node_modules/@dominevo`. A `path.dirname` of
     // that is `<resources>/node_modules` — one level too deep — which would have
     // anchored at `<resources>/node_modules/node_modules` and silently lost
     // sharp/node-av in every forked decode worker on the desktop agent.
     const anchors: string[] = []
     const urls = hostExternalEntryUrls('sharp', {
-      env: { CAMSTACK_BUNDLED_ADDONS_DIR: '/res/node_modules/@dominevo' },
+      env: { DOMINEVO_BUNDLED_ADDONS_DIR: '/res/node_modules/@dominevo' },
       cwd: '/data/addons/@dominevo/addon-pipeline',
       resolve: (anchorPath: string): string | null => {
         anchors.push(anchorPath)
@@ -128,7 +128,7 @@ describe('hostExternalEntryUrls', () => {
 
   it('deduplicates anchors that resolve to the same file (a NODE_PATH hit)', () => {
     const urls = hostExternalEntryUrls('sharp', {
-      env: { CAMSTACK_FRAMEWORK_DIR: '/data/framework' },
+      env: { DOMINEVO_FRAMEWORK_DIR: '/data/framework' },
       cwd: '/app',
       resolve: () => '/data/framework/node_modules/sharp/dist/index.cjs',
     })

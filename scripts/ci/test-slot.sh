@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Machine-wide test slot: at most CAMSTACK_TEST_SLOTS (default 2) vitest runs
+# Machine-wide test slot: at most DOMINEVO_TEST_SLOTS (default 2) vitest runs
 # at once on this machine, whatever worktree or agent starts them.
 #
 # Parallel agents each started a full vitest run (12 forks by default) and the
@@ -33,14 +33,14 @@
 #   scripts/ci/test-slot.sh [--priority] -- <command> [args…]
 #
 # Env:
-#   CAMSTACK_TEST_SLOTS     number of slots (default 2)
-#   CAMSTACK_TEST_SLOT_DIR  slot directory (default /tmp/camstack-test-slots)
-#   CAMSTACK_TEST_SLOT_POLL seconds between attempts (default 2)
+#   DOMINEVO_TEST_SLOTS     number of slots (default 2)
+#   DOMINEVO_TEST_SLOT_DIR  slot directory (default /tmp/camstack-test-slots)
+#   DOMINEVO_TEST_SLOT_POLL seconds between attempts (default 2)
 set -uo pipefail
 
-SLOT_DIR="${CAMSTACK_TEST_SLOT_DIR:-/tmp/camstack-test-slots}"
-SLOTS="${CAMSTACK_TEST_SLOTS:-2}"
-POLL="${CAMSTACK_TEST_SLOT_POLL:-2}"
+SLOT_DIR="${DOMINEVO_TEST_SLOT_DIR:-/tmp/camstack-test-slots}"
+SLOTS="${DOMINEVO_TEST_SLOTS:-2}"
+POLL="${DOMINEVO_TEST_SLOT_POLL:-2}"
 AGENT_MAX_WORKERS=3
 AGENT_NICE=15
 # A slot directory without a pid file is being created; only after this many
@@ -69,7 +69,7 @@ if [[ $# -eq 0 ]]; then
   exit 2
 fi
 if ! [[ "$SLOTS" =~ ^[1-9][0-9]*$ ]]; then
-  echo "test-slot: CAMSTACK_TEST_SLOTS must be a positive integer (got '$SLOTS')" >&2
+  echo "test-slot: DOMINEVO_TEST_SLOTS must be a positive integer (got '$SLOTS')" >&2
   exit 2
 fi
 

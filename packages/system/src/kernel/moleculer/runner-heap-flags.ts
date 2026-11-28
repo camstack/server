@@ -364,7 +364,7 @@ export function runnerRssBudgetMb(addons: readonly RunnerAddonSpec[]): number | 
  * `initialOldSpaceMb` (`--initial-old-space-size`, clamped to the ceiling) — each the MAXIMUM
  * across a runner's co-located addons. Shipped for `stream-broker` alone (8 / 512): with the
  * heavy class default the hub's broker ran ~166 major GCs a minute and not one scavenge, at
- * 45–60 % of a core. The environment overrides and the `CAMSTACK_RUNNER_HEAP_TUNING=off` kill
+ * 45–60 % of a core. The environment overrides and the `DOMINEVO_RUNNER_HEAP_TUNING=off` kill
  * switch were removed on 2026-10-06 — nothing had set them since the rollout. The flags must
  * be on the spawn command line: `v8.setFlagsFromString` at runtime changes neither space.
  */

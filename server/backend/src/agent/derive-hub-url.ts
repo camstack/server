@@ -1,9 +1,9 @@
 /**
- * Derive the agent's `CAMSTACK_HUB_URL` from its friendly `hubAddress`.
+ * Derive the agent's `DOMINEVO_HUB_URL` from its friendly `hubAddress`.
  *
  * `hubAddress` is the agent's single source of truth for "where is the hub"
  * (the Moleculer TCP dial target). The cross-node consumers of
- * `CAMSTACK_HUB_URL` — the pipeline-runner remote-source leg and the
+ * `DOMINEVO_HUB_URL` — the pipeline-runner remote-source leg and the
  * cross-node recorder pull — only ever extract the HOSTNAME from it
  * (`resolveHubHostname` / `extractHost` in
  * `packages/addon-pipeline/src/shared/hub-hostname.ts`). Deriving the value
@@ -41,7 +41,7 @@ export function deriveHubUrlFromHubAddress(hubAddress: string): string | undefin
 }
 
 /**
- * Compute the `CAMSTACK_HUB_URL` value the agent should export, or `undefined`
+ * Compute the `DOMINEVO_HUB_URL` value the agent should export, or `undefined`
  * when it must be left untouched. An explicit operator-provided env value
  * (`hubUrlWasExplicit`) always wins and is never clobbered — this preserves
  * today's working deployments. Kept pure (env is passed in) so both the

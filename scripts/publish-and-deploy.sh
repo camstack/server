@@ -28,7 +28,7 @@
 #
 # Deploy target resolution mirrors `dominevo deploy` defaults: cached
 # session file (`dominevo login` first), which is the only credential; the
-# address may also come from `CAMSTACK_SERVER`.
+# address may also come from `DOMINEVO_SERVER`.
 # ──────────────────────────────────────────────────────────────────────────────
 set -euo pipefail
 

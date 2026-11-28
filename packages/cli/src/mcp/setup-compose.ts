@@ -76,13 +76,13 @@ function setVolumeHosts(body: string, paths: InstallPaths | undefined): Customiz
 }
 
 function setHubAddress(body: string, hubAddress: string | undefined): CustomizedCompose {
-  const line = /^(\s*- CAMSTACK_HUB_ADDRESS=).*$/m
+  const line = /^(\s*- DOMINEVO_HUB_ADDRESS=).*$/m
   if (!line.test(body)) return { body, edits: [] }
   if (hubAddress === undefined) {
     return {
       body,
       edits: [
-        'CAMSTACK_HUB_ADDRESS: export it before `docker compose up` (or edit the line) with the hub IP or hostname',
+        'DOMINEVO_HUB_ADDRESS: export it before `docker compose up` (or edit the line) with the hub IP or hostname',
       ],
     }
   }

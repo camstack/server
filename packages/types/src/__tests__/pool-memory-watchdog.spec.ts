@@ -174,10 +174,10 @@ describe('resolvePoolMemoryPolicy — env overrides', () => {
 
   it('applies numeric overrides and ignores garbage', () => {
     const p = resolvePoolMemoryPolicy({
-      CAMSTACK_POOL_MEM_FLOOR_MB: '2048',
-      CAMSTACK_POOL_MEM_CEILING_MB: '4096',
-      CAMSTACK_POOL_MEM_MULTIPLE: '3',
-      CAMSTACK_POOL_MEM_INTERVAL_MS: 'not-a-number',
+      DOMINEVO_POOL_MEM_FLOOR_MB: '2048',
+      DOMINEVO_POOL_MEM_CEILING_MB: '4096',
+      DOMINEVO_POOL_MEM_MULTIPLE: '3',
+      DOMINEVO_POOL_MEM_INTERVAL_MS: 'not-a-number',
     })
     expect(p.floorBytes).toBe(2048 * MB)
     expect(p.ceilingBytes).toBe(4096 * MB)

@@ -831,11 +831,11 @@ export class AddonRegistryService {
     })
 
     // 2. Load all addons from the addons directory (including core builtins).
-    // Honors CAMSTACK_ADDONS_DIR (a `node_modules`-shaped dir on Docker/Electron
+    // Honors DOMINEVO_ADDONS_DIR (a `node_modules`-shaped dir on Docker/Electron
     // so forked ESM addon runners resolve @dominevo/* via walk-up — see the
     // launcher). Defaults to `<dataDir>/addons` for dev.
-    const dataDir = path.resolve(process.env.CAMSTACK_DATA ?? 'camstack-data')
-    const addonsDir = process.env.CAMSTACK_ADDONS_DIR ?? path.resolve(dataDir, 'addons')
+    const dataDir = path.resolve(process.env.DOMINEVO_DATA ?? 'camstack-data')
+    const addonsDir = process.env.DOMINEVO_ADDONS_DIR ?? path.resolve(dataDir, 'addons')
 
     // Single-copy model (2026-07-18 collapse): the framework BUILTINS
     // (`@dominevo/server`: device-manager, snapshot, storage, settings, …) load
@@ -1441,8 +1441,8 @@ export class AddonRegistryService {
    * monitor's catch path schedules the next retry.
    */
   async tryReloadPackage(packageName: string): Promise<void> {
-    const dataDir = path.resolve(process.env.CAMSTACK_DATA ?? 'camstack-data')
-    const addonsDir = process.env.CAMSTACK_ADDONS_DIR ?? path.resolve(dataDir, 'addons')
+    const dataDir = path.resolve(process.env.DOMINEVO_DATA ?? 'camstack-data')
+    const addonsDir = process.env.DOMINEVO_ADDONS_DIR ?? path.resolve(dataDir, 'addons')
     const addonDir = path.join(addonsDir, packageName)
 
     if (!fs.existsSync(addonDir)) {
@@ -1948,7 +1948,7 @@ export class AddonRegistryService {
   ): void {
     const entry = this.addonEntries.get(id)
     if (!entry) return
-    const agentName = process.env.CAMSTACK_AGENT_NAME ?? 'hub'
+    const agentName = process.env.DOMINEVO_AGENT_NAME ?? 'hub'
     const platform = `${os.platform()}/${os.arch()}`
     const runnerPid =
       pids !== undefined && pids.pidAfter !== null
@@ -2286,8 +2286,8 @@ export class AddonRegistryService {
    * captured at boot. Never registers a new addon (that is `loadNewAddons`).
    */
   async refreshPackageFromDisk(packageName: string): Promise<void> {
-    const dataDir = path.resolve(process.env.CAMSTACK_DATA ?? 'camstack-data')
-    const addonsDir = process.env.CAMSTACK_ADDONS_DIR ?? path.resolve(dataDir, 'addons')
+    const dataDir = path.resolve(process.env.DOMINEVO_DATA ?? 'camstack-data')
+    const addonsDir = process.env.DOMINEVO_ADDONS_DIR ?? path.resolve(dataDir, 'addons')
     const freshLoader = new AddonLoader(this.loggingService.createLogger('AddonLoader'))
     await freshLoader.loadFromAddonDir(path.join(addonsDir, packageName))
     for (const registered of freshLoader.listAddons()) {
@@ -2655,8 +2655,8 @@ export class AddonRegistryService {
   }
 
   private findAddonDirOnDisk(addonId: string): string | null {
-    const dataDir = path.resolve(process.env.CAMSTACK_DATA ?? 'camstack-data')
-    const addonsDir = process.env.CAMSTACK_ADDONS_DIR ?? path.resolve(dataDir, 'addons')
+    const dataDir = path.resolve(process.env.DOMINEVO_DATA ?? 'camstack-data')
+    const addonsDir = process.env.DOMINEVO_ADDONS_DIR ?? path.resolve(dataDir, 'addons')
     if (!fs.existsSync(addonsDir)) return null
 
     const visit = (pkgDir: string): string | null => {
@@ -2883,8 +2883,8 @@ export class AddonRegistryService {
     installSource?: 'npm' | 'local' | 'upload'
     process?: AddonProcessView
   }> {
-    const dataDir = path.resolve(process.env.CAMSTACK_DATA ?? 'camstack-data')
-    const addonsDir = process.env.CAMSTACK_ADDONS_DIR ?? path.resolve(dataDir, 'addons')
+    const dataDir = path.resolve(process.env.DOMINEVO_DATA ?? 'camstack-data')
+    const addonsDir = process.env.DOMINEVO_ADDONS_DIR ?? path.resolve(dataDir, 'addons')
     if (!fs.existsSync(addonsDir)) return []
 
     type Row =
@@ -3013,8 +3013,8 @@ export class AddonRegistryService {
    * Called after install/uninstall to hot-load new addons without server restart.
    */
   async loadNewAddons(): Promise<{ loaded: string[]; failed: string[] }> {
-    const dataDir = path.resolve(process.env.CAMSTACK_DATA ?? 'camstack-data')
-    const addonsDir = process.env.CAMSTACK_ADDONS_DIR ?? path.resolve(dataDir, 'addons')
+    const dataDir = path.resolve(process.env.DOMINEVO_DATA ?? 'camstack-data')
+    const addonsDir = process.env.DOMINEVO_ADDONS_DIR ?? path.resolve(dataDir, 'addons')
 
     // Create a fresh loader to discover what's on disk (for diffing against existing)
     const freshLoader = new AddonLoader(this.loggingService.createLogger('AddonLoader'))
@@ -3556,7 +3556,7 @@ export class AddonRegistryService {
         addonId,
         packageName: entry?.packageName,
         packageVersion: entry?.packageVersion,
-        agent: process.env.CAMSTACK_AGENT_NAME ?? 'hub',
+        agent: process.env.DOMINEVO_AGENT_NAME ?? 'hub',
         ...data,
       },
     })
@@ -3640,15 +3640,15 @@ export class AddonRegistryService {
         })
       : // No active storage provider yet — this is an EARLY in-process builtin
         // (notably sqlite-settings, which IS the storage provider, so it loads
-        // before one is active). Honor CAMSTACK_DATA here too; hardcoding the
+        // before one is active). Honor DOMINEVO_DATA here too; hardcoding the
         // relative `camstack-data` made the settings DB escape the mounted
         // data dir in container deployments.
-        path.join(process.env.CAMSTACK_DATA ?? 'camstack-data', 'addons-data', addonId)
+        path.join(process.env.DOMINEVO_DATA ?? 'camstack-data', 'addons-data', addonId)
 
     // Node-local data ROOT — the centralized anchor for internal per-node dirs
-    // (models, logs). `CAMSTACK_DATA` ?? the hub's default data dir. Mirrors the
+    // (models, logs). `DOMINEVO_DATA` ?? the hub's default data dir. Mirrors the
     // kernel addon-context-factory; never the hub-singleton `storage` cap.
-    const nodeDataDir = path.resolve(process.env.CAMSTACK_DATA ?? 'camstack-data')
+    const nodeDataDir = path.resolve(process.env.DOMINEVO_DATA ?? 'camstack-data')
 
     const registerProvider = (capabilityName: string, provider: unknown): void => {
       // An `integration-instances` holder is registered with its delete guarded by the link index (D1013).

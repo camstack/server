@@ -32,7 +32,7 @@ export interface HubConnectOptions {
 }
 
 /** The environment keys the MCP honours: addresses and PATHS, never a secret. */
-const HONOURED_ENV = ['CAMSTACK_HUB_URL', 'CAMSTACK_SERVER', 'CAMSTACK_HUB_CA_FILE'] as const
+const HONOURED_ENV = ['DOMINEVO_HUB_URL', 'DOMINEVO_SERVER', 'DOMINEVO_HUB_CA_FILE'] as const
 
 function honouredEnv(
   env: Readonly<Record<string, string | undefined>>,
@@ -94,14 +94,14 @@ export async function connectHub(options: HubConnectOptions): Promise<HubConnect
   })
   if (!hub) {
     throw new Error(
-      'no hub address: pass --server, set CAMSTACK_HUB_URL, write <checkout>/scratchpad/.hub-url, or run `dominevo login`',
+      'no hub address: pass --server, set DOMINEVO_HUB_URL, write <checkout>/scratchpad/.hub-url, or run `dominevo login`',
     )
   }
   const loginCommand = options.loginCommand ?? sessionLoginCommand()
   const tls = resolveHubTls(hub.url, env, dir)
   const credentials = await resolveFreshCredentials({
     server: hub.url,
-    env: { CAMSTACK_SERVER: hub.url },
+    env: { DOMINEVO_SERVER: hub.url },
     loadSession: (server) => loadSession(server, dir),
     ...(dir ? { dir } : {}),
     tls,

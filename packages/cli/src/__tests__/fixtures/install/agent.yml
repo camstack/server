@@ -41,15 +41,15 @@ services:
       - /opt/camstack/backups:/backups
       - /opt/camstack/recordings:/recordings
     environment:
-      - CAMSTACK_ROLE=agent
-      - CAMSTACK_MEDIA_ROOT=/recordings
-      - CAMSTACK_MOLECULER_USE_HOSTNAME=false
-      - CAMSTACK_LOG_LEVEL=info
+      - DOMINEVO_ROLE=agent
+      - DOMINEVO_MEDIA_ROOT=/recordings
+      - DOMINEVO_MOLECULER_USE_HOSTNAME=false
+      - DOMINEVO_LOG_LEVEL=info
       # Set by the install script when provided:
-      - CAMSTACK_HUB_ADDRESS=${CAMSTACK_HUB_ADDRESS:-}
-      - CAMSTACK_HUB_URL=${CAMSTACK_HUB_URL:-}
-      - CAMSTACK_NODE_ID=${CAMSTACK_NODE_ID:-}
-      - CAMSTACK_AGENT_NAME=${CAMSTACK_AGENT_NAME:-}
+      - DOMINEVO_HUB_ADDRESS=${DOMINEVO_HUB_ADDRESS:-}
+      - DOMINEVO_HUB_URL=${DOMINEVO_HUB_URL:-}
+      - DOMINEVO_NODE_ID=${DOMINEVO_NODE_ID:-}
+      - DOMINEVO_AGENT_NAME=${DOMINEVO_AGENT_NAME:-}
     logging:
       driver: json-file
       options:

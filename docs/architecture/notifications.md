@@ -1225,7 +1225,7 @@ swallows a closure update to the same version.
 | --- | --- | --- |
 | (closure) | `applyServerUpdate` is about to restart the node | `AddonPackageService.restartServer`, `AgentRestartAnnouncer` |
 | `desktop-shell` | the hub asked the Electron app to install its downloaded update (`installDesktopUpdate`, request file written) | `RootUpdateService.onDesktopInstallRequested`, wired in `ServerUpdateService` and `AgentUpdateService` |
-| `container-image` | a node boots with a `CAMSTACK_PRODUCT_VERSION` different from the previous boot's (`<dataDir>/last-boot-product-version`); silent under the desktop shell | `announceProductVersionChange` from `PostBootService` (hub) and `AgentUpdateService.announceImageChangeIfAny` (agent) |
+| `container-image` | a node boots with a `DOMINEVO_PRODUCT_VERSION` different from the previous boot's (`<dataDir>/last-boot-product-version`); silent under the desktop shell | `announceProductVersionChange` from `PostBootService` (hub) and `AgentUpdateService.announceImageChangeIfAny` (agent) |
 
 The container case is announced AFTER the swap, not before: the old container is
 gone before the new process exists, so "about to update" cannot be known earlier.
@@ -3021,7 +3021,7 @@ aged out with the track like every other track media.
 Both writers replace a file WHOLE (temp beside the target, then `rename`), so a
 still read while the next roll overwrites `lastSceneFrame` or `lastFrame` is the
 old complete JPEG or the new one, never a torn prefix. The addon bundles every
-`@dominevo/types/*` subpath, so routed locations and a `CAMSTACK_MEDIA_ROOT`
+`@dominevo/types/*` subpath, so routed locations and a `DOMINEVO_MEDIA_ROOT`
 provider are atomic on addon deploy; only the `ctx.kernel.storage` default
 (the runner-built provider) waits for a `@dominevo/server` release.
 

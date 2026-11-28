@@ -17,11 +17,11 @@ function isRecord(value: unknown): value is Record<string, unknown> {
  */
 //
 // No secret travels through the environment (D783, D797): there is no
-// `CAMSTACK_JWT_SECRET`, `CAMSTACK_ADMIN_USER` or `CAMSTACK_ADMIN_PASS` here.
+// `DOMINEVO_JWT_SECRET`, `DOMINEVO_ADMIN_USER` or `DOMINEVO_ADMIN_PASS` here.
 const ENV_VAR_MAP: Record<string, string> = {
-  CAMSTACK_PORT: 'server.port',
-  CAMSTACK_HOST: 'server.host',
-  CAMSTACK_DATA: 'server.dataPath',
+  DOMINEVO_PORT: 'server.port',
+  DOMINEVO_HOST: 'server.host',
+  DOMINEVO_DATA: 'server.dataPath',
 }
 
 /**

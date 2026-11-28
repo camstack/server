@@ -77,7 +77,7 @@ export interface SelectRunnerFrameSourceInput {
   /**
    * The owner's LAN-reachable host, resolved from the per-node `reachableHost`
    * override (Cluster UI). Emitted into the remote leg when present so the
-   * runner dials it in preference to its `CAMSTACK_HUB_URL` default (optional).
+   * runner dials it in preference to its `DOMINEVO_HUB_URL` default (optional).
    */
   readonly ownerReachableHost?: string
   /** Operator override for the owner host the runner dials (optional). */

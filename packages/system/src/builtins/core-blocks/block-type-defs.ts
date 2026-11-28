@@ -16,7 +16,7 @@
  * build of this package; the bundler erases `import.meta` to `{}`, so
  * `import.meta.resolve?.('@dominevo/types')` is always undefined and the old
  * fallback — `process.cwd()/node_modules/@dominevo/types` — wins. On a live
- * hub `cwd` is the image seed (`/opt/camstack-hub`), not the active data-root
+ * hub `cwd` is the image seed (`/opt/dominevo-hub`), not the active data-root
  * closure that actually runs. That served a months-old `ConfigSelectField`
  * without `optionsFrom` while `/data/server-root/current` already had it, and
  * Monaco blocked Save on a property the runtime hydrate already understood.

@@ -14,7 +14,7 @@
  *
  * Android's verification additionally needs the signing-cert SHA-256
  * fingerprints, which live in the EAS keystore and cannot be derived here —
- * they arrive via `CAMSTACK_ANDROID_CERT_SHA256` (comma-separated). Empty is
+ * they arrive via `DOMINEVO_ANDROID_CERT_SHA256` (comma-separated). Empty is
  * ACCEPTED and produces a valid file that fails auto-verification (the OS
  * shows a disambiguation dialog): same trade-off the Zentik file ships with.
  */

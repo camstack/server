@@ -22,7 +22,7 @@ const contractHolder = vi.hoisted(() => ({ current: null as ImageContract | null
 
 function statusFor(_isHub: boolean) {
   return {
-    // Both roles run the single @dominevo/server root (hub vs agent = CAMSTACK_ROLE).
+    // Both roles run the single @dominevo/server root (hub vs agent = DOMINEVO_ROLE).
     packageName: '@dominevo/server',
     runningVersion: '1.1.41',
     nodeRuntimeVersion: 'v22.11.0',

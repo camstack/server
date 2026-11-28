@@ -40,15 +40,15 @@
  * ## The anchors, in order
  *
  *  - **DOCKER / single-copy node** — the framework overlay
- *    `CAMSTACK_FRAMEWORK_DIR` (`<frameworkDir>/node_modules/<pkg>`). The
+ *    `DOMINEVO_FRAMEWORK_DIR` (`<frameworkDir>/node_modules/<pkg>`). The
  *    launcher points this at the ACTIVE closure in data-root mode and forked
  *    children inherit it (`server/backend/src/launcher.ts`).
- *  - **ELECTRON agent** — the app bundle around `CAMSTACK_BUNDLED_ADDONS_DIR`
+ *  - **ELECTRON agent** — the app bundle around `DOMINEVO_BUNDLED_ADDONS_DIR`
  *    (`<resources>/node_modules/@dominevo` since 2026-08-25, `<resources>/addons`
  *    before it): `<resources>/node_modules/<pkg>` and the `app.asar.unpacked`
  *    mirror. See {@link electronResourcesRoot} — the depth is NOT assumed.
  *  - **the process cwd** — always tried last, and it is NOT redundant:
- *    `CAMSTACK_FRAMEWORK_DIR` is only exported on some boots (the Docker
+ *    `DOMINEVO_FRAMEWORK_DIR` is only exported on some boots (the Docker
  *    entrypoint sets it in its fallback branch; the launcher only in data-root
  *    mode), while the launcher ALWAYS extends `NODE_PATH` with the framework and
  *    hub `node_modules`. A CJS-style resolution honours `NODE_PATH`; an ESM
@@ -138,7 +138,7 @@ export function isModuleResolutionError(err: unknown): boolean {
 const SEED_CONTAINER_SEGMENTS: readonly string[] = ['@dominevo', 'node_modules', 'addons']
 
 /**
- * The Electron `Contents/Resources` dir, derived from `CAMSTACK_BUNDLED_ADDONS_DIR`.
+ * The Electron `Contents/Resources` dir, derived from `DOMINEVO_BUNDLED_ADDONS_DIR`.
  *
  * That variable names the dir the launcher SEEDS addons from, and its shape has
  * moved: it was `<resources>/addons` (a second, hand-copied tree) and is now
@@ -169,11 +169,11 @@ export function electronResourcesRoot(bundledAddonsDir: string): string {
  */
 export function hostExternalAnchors(env: HostExternalEnv, cwd: string): readonly string[] {
   const anchors: string[] = []
-  const frameworkDir = env['CAMSTACK_FRAMEWORK_DIR']
+  const frameworkDir = env['DOMINEVO_FRAMEWORK_DIR']
   if (frameworkDir !== undefined && frameworkDir.length > 0) {
     anchors.push(path.join(frameworkDir, 'node_modules', ANCHOR_FILE))
   }
-  const bundledAddons = env['CAMSTACK_BUNDLED_ADDONS_DIR']
+  const bundledAddons = env['DOMINEVO_BUNDLED_ADDONS_DIR']
   if (bundledAddons !== undefined && bundledAddons.length > 0) {
     const resourcesRoot = electronResourcesRoot(bundledAddons)
     anchors.push(path.join(resourcesRoot, 'node_modules', ANCHOR_FILE))

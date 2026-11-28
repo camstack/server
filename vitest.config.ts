@@ -73,7 +73,7 @@ export default defineConfig({
     teardownTimeout: 5_000,
     hookTimeout: 10_000,
     exclude: [
-      ...(process.env.CAMSTACK_HEAVY_SPECS === '1' ? [] : ['**/*.heavy.spec.*']),
+      ...(process.env.DOMINEVO_HEAVY_SPECS === '1' ? [] : ['**/*.heavy.spec.*']),
       '**/node_modules/**',
       '**/dist/**',
       '**/camstack-data/**',

@@ -92,9 +92,9 @@ export const NO_BARE_LATEST =
 /** Settings whose absence breaks Dominevo in ways that do not look like the setting. */
 export const MUST_NOT_OMIT: readonly string[] = [
   '--pids-limit=8192 (pids_limit: 8192): the default 2048 counts threads and silently stops media on a busy hub.',
-  'CAMSTACK_MEDIA_ROOT=/recordings: without it recordings land in /data and fill the cache drive.',
+  'DOMINEVO_MEDIA_ROOT=/recordings: without it recordings land in /data and fill the cache drive.',
   '--restart unless-stopped: the NVR must come back after a host reboot.',
-  'CAMSTACK_MOLECULER_USE_HOSTNAME=false: otherwise a multi-machine cluster never forms.',
+  'DOMINEVO_MOLECULER_USE_HOSTNAME=false: otherwise a multi-machine cluster never forms.',
   'Coral USB: /dev/bus/usb AND the device-cgroup rule c 189:* rmw.',
 ]
 

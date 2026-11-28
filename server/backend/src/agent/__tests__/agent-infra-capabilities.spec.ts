@@ -17,7 +17,7 @@
  *     three boot holes on this path (1.2.149 skip-infra, 1.2.151 crash-loop,
  *     1.2.152 `resolveConfig` hang). A change to agent boot that can only be
  *     undone by shipping a build is a change that stays broken for a release
- *     cycle. `CAMSTACK_AGENT_LOCAL_DATA_STORE=1` restores the old list
+ *     cycle. `DOMINEVO_AGENT_LOCAL_DATA_STORE=1` restores the old list
  *     EXACTLY — same entries, same order, same `required` flags.
  *  3. **The hub is untouched.** `INFRA_CAPABILITIES` itself never changes; the
  *     hub reads it directly.
@@ -53,7 +53,7 @@ describe('resolveAgentInfraCapabilities', () => {
     // master key onto the AGENT's disk: the hub then locked `key-missing`.
     expect(names(resolveAgentInfraCapabilities({}))).not.toContain('keychain')
     expect(
-      names(resolveAgentInfraCapabilities({ CAMSTACK_AGENT_LOCAL_DATA_STORE: '1' })),
+      names(resolveAgentInfraCapabilities({ DOMINEVO_AGENT_LOCAL_DATA_STORE: '1' })),
     ).not.toContain('keychain')
     // …and the hub still boots it.
     expect(names(INFRA_CAPABILITIES)).toContain('keychain')
@@ -69,20 +69,20 @@ describe('resolveAgentInfraCapabilities', () => {
     expect(resolved.find((c) => c.name === 'storage-provider')?.required).toBe(true)
   })
 
-  it('ROLLBACK: CAMSTACK_AGENT_LOCAL_DATA_STORE=1 restores the engine — every entry but the keychain', () => {
-    const resolved = resolveAgentInfraCapabilities({ CAMSTACK_AGENT_LOCAL_DATA_STORE: '1' })
+  it('ROLLBACK: DOMINEVO_AGENT_LOCAL_DATA_STORE=1 restores the engine — every entry but the keychain', () => {
+    const resolved = resolveAgentInfraCapabilities({ DOMINEVO_AGENT_LOCAL_DATA_STORE: '1' })
     expect(resolved).toEqual(INFRA_CAPABILITIES.filter((c) => c.name !== 'keychain'))
   })
 
   it('accepts the usual truthy spellings of the rollback flag, and nothing else', () => {
     for (const raw of ['1', 'true', 'TRUE', ' yes ']) {
       expect(
-        names(resolveAgentInfraCapabilities({ CAMSTACK_AGENT_LOCAL_DATA_STORE: raw })),
+        names(resolveAgentInfraCapabilities({ DOMINEVO_AGENT_LOCAL_DATA_STORE: raw })),
       ).toContain('data-store-provider')
     }
     for (const raw of ['', '0', 'false', 'no', 'maybe']) {
       expect(
-        names(resolveAgentInfraCapabilities({ CAMSTACK_AGENT_LOCAL_DATA_STORE: raw })),
+        names(resolveAgentInfraCapabilities({ DOMINEVO_AGENT_LOCAL_DATA_STORE: raw })),
       ).not.toContain('data-store-provider')
     }
   })
@@ -90,7 +90,7 @@ describe('resolveAgentInfraCapabilities', () => {
   it('never mutates INFRA_CAPABILITIES — the hub reads the same array', () => {
     const before = names(INFRA_CAPABILITIES)
     resolveAgentInfraCapabilities({})
-    resolveAgentInfraCapabilities({ CAMSTACK_AGENT_LOCAL_DATA_STORE: '1' })
+    resolveAgentInfraCapabilities({ DOMINEVO_AGENT_LOCAL_DATA_STORE: '1' })
     expect(names(INFRA_CAPABILITIES)).toEqual(before)
     expect(before).toContain('data-store-provider')
   })
@@ -157,7 +157,7 @@ describe('agent Phase 1 — no engine, no file', () => {
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'agent-phase1-rollback-'))
     dirs.push(dir)
 
-    const opened = await bootInto(dir, { CAMSTACK_AGENT_LOCAL_DATA_STORE: '1' })
+    const opened = await bootInto(dir, { DOMINEVO_AGENT_LOCAL_DATA_STORE: '1' })
 
     expect(opened).toContain('sqlite-settings.opened')
     expect(opened).not.toContain('keychain.opened')

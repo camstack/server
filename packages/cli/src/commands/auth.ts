@@ -268,7 +268,7 @@ function isUnknown(_value: unknown): _value is unknown {
 /**
  * Interactive server picker (D838): the hubs the LAN announces over mDNS plus
  * the hubs this machine already knows (saved sessions,
- * `$CAMSTACK_HUB_URL`, the repo's `scratchpad/.hub-url`), reachable ones only.
+ * `$DOMINEVO_HUB_URL`, the repo's `scratchpad/.hub-url`), reachable ones only.
  * One hub is used without asking; several show a picker with the source of each
  * and an "Enter an address…" entry; none is an error that names `--server`.
  */
@@ -329,7 +329,7 @@ async function askPasswordWithBack(): Promise<string | typeof BACK_SENTINEL> {
  * Idempotent: re-running best-effort revokes the prior session (if present).
  *
  * Resolution chain for the server URL:
- *   1. `--server` (or $CAMSTACK_SERVER) — explicit, skips discovery.
+ *   1. `--server` (or $DOMINEVO_SERVER) — explicit, skips discovery.
  *   2. neither — the hubs announced over mDNS plus the known ones, auto-picked
  *      when there is one, arrow-key select otherwise (D838).
  *
@@ -502,7 +502,7 @@ export async function logoutCommand(opts: { server: string }): Promise<void> {
 /**
  * `whoami` with several saved sessions and no server: every session, the one a
  * command would use by default marked. The default rule lives in
- * `defaultSession` (`$CAMSTACK_SERVER`, else the most recently used).
+ * `defaultSession` (`$DOMINEVO_SERVER`, else the most recently used).
  */
 export function formatSessionList(
   sessions: readonly SessionFile[],
@@ -520,7 +520,7 @@ export function formatSessionList(
     lines.push(`    scopes: ${scopes}`)
     lines.push(`    last used: ${new Date(s.lastUsedAt ?? s.createdAt).toISOString()}`)
   }
-  lines.push('Default: $CAMSTACK_SERVER if set, else the most recently used session.')
+  lines.push('Default: $DOMINEVO_SERVER if set, else the most recently used session.')
   lines.push('Pick another with `dominevo whoami --server <host>`.')
   return lines.join('\n')
 }

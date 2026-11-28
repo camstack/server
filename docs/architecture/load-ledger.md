@@ -958,7 +958,7 @@ cameras of the ~50 % group (108, 104, 111, 112):
    packet ceiling can end up biting instead of the span one.
 
 *Term 2 — the probe (requires the `pipeline-runner` deploy).* The A/B does not
-require a second deploy: `CAMSTACK_DECODE_PROBE_STREAM_INFO=1` restores the
+require a second deploy: `DOMINEVO_DECODE_PROBE_STREAM_INFO=1` restores the
 inline probe. 6 h without the variable, 6 h with: **the difference between the two
 `demuxerOpenMs` IS the cost of the probe**, per camera. The criterion: if with the
 flag on it is seconds and without it is tens of ms, the probe was the term and the

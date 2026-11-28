@@ -43,14 +43,14 @@ describe('AddonDepsManager.installPythonRequirements — declared native deps', 
   let prevData: string | undefined
   beforeEach(() => {
     dir = fs.mkdtempSync(path.join(os.tmpdir(), 'deps-native-'))
-    prevData = process.env['CAMSTACK_DATA']
-    process.env['CAMSTACK_DATA'] = dir
+    prevData = process.env['DOMINEVO_DATA']
+    process.env['DOMINEVO_DATA'] = dir
     ensureEdgetpuDelegate.mockClear()
     installPythonRequirements.mockClear()
   })
   afterEach(() => {
-    if (prevData === undefined) delete process.env['CAMSTACK_DATA']
-    else process.env['CAMSTACK_DATA'] = prevData
+    if (prevData === undefined) delete process.env['DOMINEVO_DATA']
+    else process.env['DOMINEVO_DATA'] = prevData
     fs.rmSync(dir, { recursive: true, force: true })
   })
 

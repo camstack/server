@@ -144,7 +144,7 @@ export function getFfmpegArtifact(platform: string, arch: string): FfmpegArtifac
   if (!artifact) {
     throw new Error(
       `Unsupported platform/architecture for ffmpeg: ${platform}-${arch}. ` +
-        `Point ${'CAMSTACK_FFMPEG_PATH'} at a binary this node can run.`,
+        `Point ${'DOMINEVO_FFMPEG_PATH'} at a binary this node can run.`,
     )
   }
   return artifact

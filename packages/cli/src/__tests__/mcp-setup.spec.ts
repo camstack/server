@@ -154,7 +154,7 @@ describe('setup_install_guide — routes', () => {
     expect(run).toContain('--network host')
     expect(run).toContain('--restart unless-stopped')
     expect(run).toContain('-v /srv/cam/data:/data')
-    expect(run).toContain('-e CAMSTACK_MEDIA_ROOT=/recordings')
+    expect(run).toContain('-e DOMINEVO_MEDIA_ROOT=/recordings')
     expect(run).toContain('ghcr.io/dominevo/dominevo:amd-latest')
     expect(run).not.toMatch(/camstack:latest/)
     expect(run).toContain('--group-add 44')
@@ -174,7 +174,7 @@ describe('setup_install_guide — routes', () => {
       ),
     )
     expect(g.files[0]?.source).toBe(TEMPLATE_URLS.compose.agent)
-    expect(g.files[0]?.body).toContain('CAMSTACK_HUB_ADDRESS=192.0.2.9')
+    expect(g.files[0]?.body).toContain('DOMINEVO_HUB_ADDRESS=192.0.2.9')
     expect(g.steps.join('\n')).toContain('4444')
     expect(g.steps.join('\n')).toContain('six digits')
   })
@@ -320,7 +320,7 @@ describe('composeToDockerRun', () => {
     const run = composeToDockerRun(fixture('agent.yml')) ?? ''
     expect(run).not.toContain('/dev/dri')
     expect(run).not.toContain('${')
-    expect(run).toContain('-e CAMSTACK_ROLE=agent')
+    expect(run).toContain('-e DOMINEVO_ROLE=agent')
   })
 })
 

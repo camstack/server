@@ -18,7 +18,7 @@ export function frameworkNodePaths(
 /**
  * Whether the starter's active single copy carries the framework, i.e. its
  * `@dominevo/server` ships `./system` (D989). The launcher points
- * CAMSTACK_FRAMEWORK_DIR (and so NODE_PATH and the runners' resolver) at the
+ * DOMINEVO_FRAMEWORK_DIR (and so NODE_PATH and the runners' resolver) at the
  * active root only when this holds; a check on the retired standalone
  * package left the hub's CJS addon loads with no framework on their path.
  */

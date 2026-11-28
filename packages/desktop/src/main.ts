@@ -15,7 +15,7 @@
  *
  * For the two SUPERVISED roles the shell spawns the SAME shared STARTER
  * (`@dominevo/server/dist/starter.js`) as a child process and passes
- * `CAMSTACK_ROLE=<role>` — the server's launcher branches on it. The starter
+ * `DOMINEVO_ROLE=<role>` — the server's launcher branches on it. The starter
  * boots the active server root from the user data dir, falling back to the
  * baked SEED closure on first boot / offline, so node/framework updates land in
  * the data dir and never touch the signed .app bundle. This main process is the

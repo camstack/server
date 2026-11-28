@@ -360,7 +360,7 @@ describe('a budget is stated or absent — never implied', () => {
   })
 
   it('an operator override of 0 disables the alarm without inventing a default', () => {
-    const budget = hubMainRssBudget({ CAMSTACK_HUB_RSS_BUDGET_MB: '0' })
+    const budget = hubMainRssBudget({ DOMINEVO_HUB_RSS_BUDGET_MB: '0' })
     expect(budget.budgetMb).toBeUndefined()
   })
 })

@@ -19,7 +19,7 @@
 #
 # PRODUCT_VERSION is the product release (image tag / desktop app), not an
 # npm version. The closure installed below is `@dominevo/server@latest`.
-# The runtime stage re-declares PRODUCT_VERSION as CAMSTACK_PRODUCT_VERSION
+# The runtime stage re-declares PRODUCT_VERSION as DOMINEVO_PRODUCT_VERSION
 # so the About line can show it next to the running server package (D943).
 # =============================================================================
 
@@ -42,9 +42,9 @@ ENV CI=true
 #    the build log says why; it never fails the build.
 COPY scripts/closure-pins-install.mjs /opt/scripts/closure-pins-install.mjs
 COPY packages/node-root/src/closure-pins.ts /opt/packages/node-root/src/closure-pins.ts
-RUN mkdir -p /opt/camstack-hub && cd /opt/camstack-hub && \
+RUN mkdir -p /opt/dominevo-hub && cd /opt/dominevo-hub && \
     npm init -y >/dev/null && \
-    SERVER_VERSION="$(node /opt/scripts/closure-pins-install.mjs /opt/camstack-hub latest)" && \
+    SERVER_VERSION="$(node /opt/scripts/closure-pins-install.mjs /opt/dominevo-hub latest)" && \
     echo "[image] installing @dominevo/server@$SERVER_VERSION" && \
     npm install --omit=dev --no-audit --no-fund "@dominevo/server@$SERVER_VERSION" && \
     test -e node_modules/@dominevo/server/dist/launcher.js && \
@@ -58,11 +58,11 @@ RUN mkdir -p /opt/camstack-hub && cd /opt/camstack-hub && \
 #    npm install of the same `@dominevo/{server,types,sdk}` plus the hoisted
 #    natives, existing only to be copied into `$FRAMEWORK_DIR` on the fallback
 #    boot. Measured on the live image 2026-08-25 it was 510 MB beside a 930 MB
-#    `/opt/camstack-hub` — and it was the THIRD copy of every framework package,
+#    `/opt/dominevo-hub` — and it was the THIRD copy of every framework package,
 #    which is what made the D45 inventory report three where the design allows
 #    two.
 #
-#    Redundant by inspection: `/opt/camstack-hub/node_modules` already hoists
+#    Redundant by inspection: `/opt/dominevo-hub/node_modules` already hoists
 #    `better-sqlite3`, `node-av`, `sharp` and `zod` at its root — the exact
 #    reason the second tree was built that way — and already holds
 #    `@dominevo/sdk` and `types` as dependencies of `@dominevo/server`, which carries the kernel and builtins itself as `server/system`.
@@ -90,7 +90,7 @@ RUN mkdir -p /opt/camstack-hub && cd /opt/camstack-hub && \
 FROM ubuntu:24.04 AS runtime-common
 LABEL org.opencontainers.image.licenses="MIT" \
       org.opencontainers.image.source="https://github.com/dominevo/server" \
-      org.opencontainers.image.description="Dominevo. Model weights are downloaded at runtime under their own licences: /usr/share/doc/camstack/THIRD_PARTY_MODELS.md"
+      org.opencontainers.image.description="Dominevo. Model weights are downloaded at runtime under their own licences: /usr/share/doc/dominevo/THIRD_PARTY_MODELS.md"
 
 # Base OS + libva (no vendor VA driver yet — those land in the `intel` / `amd`
 # final stages). gnupg stays: the intel stage needs it for the Intel GPU apt key.
@@ -110,7 +110,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # NO ffmpeg in this image, deliberately — and this is the second decision on
 # that line in two days, so the reasoning is worth keeping.
 #
-# It WAS installed here, linked at /opt/camstack/bin/ffmpeg, because a path only
+# It WAS installed here, linked at /opt/dominevo/bin/ffmpeg, because a path only
 # this image writes is the one way a process can tell "our binary" from "the
 # host's" (D536, and /usr/bin/ffmpeg is both depending on where you stand). That
 # worked, and it made the answer depend on WHERE A NODE RUNS: an image node got
@@ -143,17 +143,17 @@ RUN ln -sf ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm && \
     ln -sf ../lib/node_modules/corepack/dist/corepack.js /usr/local/bin/corepack
 
 # The hub run-dir (server closure) + the two seed closures, all baked from npm.
-COPY --from=fetch /opt/camstack-hub /opt/camstack-hub
+COPY --from=fetch /opt/dominevo-hub /opt/dominevo-hub
 
 # Privileged package helper (D326). Image-baked on purpose: applyServerUpdate
 # must not replace a root process. The allowlist is the same file the CI
 # guard diffs against packages/system/.../system-package-allowlist.ts.
-COPY scripts/docker/camstack-pkgd.mjs /usr/local/bin/camstack-pkgd.mjs
-COPY scripts/docker/pkg-allowlist.json /usr/local/share/camstack/pkg-allowlist.json
+COPY scripts/docker/dominevo-pkgd.mjs /usr/local/bin/dominevo-pkgd.mjs
+COPY scripts/docker/pkg-allowlist.json /usr/local/share/dominevo/pkg-allowlist.json
 # VA driver vs libva ABI check (D926). Run by the `intel` / `amd` stages at
 # build time; also runnable by hand in a container with /dev/dri, where it
 # exercises vaInitialize through `vainfo`.
-COPY scripts/docker/check-libva-abi.sh /usr/local/bin/camstack-check-libva-abi.sh
+COPY scripts/docker/check-libva-abi.sh /usr/local/bin/dominevo-check-libva-abi.sh
 
 # Licence notices travel with the image: Dominevo's own LICENSE, the notice for
 # every model a node can download (THIRD_PARTY_MODELS.md), and the full licence
@@ -161,13 +161,13 @@ COPY scripts/docker/check-libva-abi.sh /usr/local/bin/camstack-check-libva-abi.s
 # are whitelisted in .dockerignore), so the image carries them without waiting
 # for a @dominevo/server publish; the npm closure carries its own copy of the
 # notice (server/backend/THIRD_PARTY_MODELS.md).
-COPY LICENSE THIRD_PARTY_MODELS.md /usr/share/doc/camstack/
-COPY licenses/models/ /usr/share/doc/camstack/licenses/models/
+COPY LICENSE THIRD_PARTY_MODELS.md /usr/share/doc/dominevo/
+COPY licenses/models/ /usr/share/doc/dominevo/licenses/models/
 
-RUN groupadd -g 1001 camstack && \
-    useradd -u 1001 -g camstack -m -s /usr/sbin/nologin camstack && \
-    chown -R camstack:camstack /opt/camstack-hub && \
-    mkdir -p /data /backups && chown -R camstack:camstack /data /backups
+RUN groupadd -g 1001 dominevo && \
+    useradd -u 1001 -g dominevo -m -s /usr/sbin/nologin dominevo && \
+    chown -R dominevo:dominevo /opt/dominevo-hub && \
+    mkdir -p /data /backups && chown -R dominevo:dominevo /data /backups
 
 # Seed VERSION fingerprint (content hash of every baked @dominevo/* JS) — the
 # entrypoint re-seeds /data on an image upgrade when this differs.
@@ -176,21 +176,21 @@ RUN groupadd -g 1001 camstack && \
 # claimed. It therefore moves on more changes than before, the conservative
 # direction: a re-seed too many costs a copy, a re-seed too few leaves a node
 # booting old code out of `/data`.
-RUN find /opt/camstack-hub/node_modules/@dominevo \
+RUN find /opt/dominevo-hub/node_modules/@dominevo \
       -type f \( -name '*.js' -o -name '*.mjs' \) -exec md5sum {} + 2>/dev/null \
-      | md5sum | cut -d' ' -f1 > /opt/camstack-seed-version \
-    && echo "[build] seed version: $(cat /opt/camstack-seed-version)"
+      | md5sum | cut -d' ' -f1 > /opt/dominevo-seed-version \
+    && echo "[build] seed version: $(cat /opt/dominevo-seed-version)"
 
 # Vendor LIBVA pin lives only on the `intel` stage (`LIBVA_DRIVER_NAME=iHD`).
 # The `amd` stage leaves libva to auto-select `radeonsi` from mesa-va-drivers.
 # Product release (0.1.0, …). Empty in a local build that did not pass it.
 # Not the npm version of the closure — that is the running package.json.
 ARG PRODUCT_VERSION=
-ENV CAMSTACK_PRODUCT_VERSION=${PRODUCT_VERSION}
+ENV DOMINEVO_PRODUCT_VERSION=${PRODUCT_VERSION}
 ENV NODE_ENV=production
-ENV CAMSTACK_DATA=/data
-ENV CAMSTACK_ADDONS_DIR=/data/addons
-# NO static CAMSTACK_FRAMEWORK_DIR / NODE_PATH. A tree that sits on NODE_PATH is
+ENV DOMINEVO_DATA=/data
+ENV DOMINEVO_ADDONS_DIR=/data/addons
+# NO static DOMINEVO_FRAMEWORK_DIR / NODE_PATH. A tree that sits on NODE_PATH is
 # a live resolution path the single-copy sweep must refuse to remove — so baking
 # these two froze `/data/framework` on every node forever, sweep or no sweep.
 # The entrypoint exports BOTH only in the FALLBACK boot that actually seeds the
@@ -200,8 +200,8 @@ ENV CAMSTACK_ADDONS_DIR=/data/addons
 # `backups` storage location's `defaultRoot: 'backup'`) so they live on their
 # own mount instead of filling the appData /data disk. Operators can repoint
 # the location or override this env; unset falls the seed back to /data.
-ENV CAMSTACK_BACKUP_ROOT=/backups
-# NO CAMSTACK_BUNDLED_ADDONS_DIR. It named the baked addon tree, and the launcher
+ENV DOMINEVO_BACKUP_ROOT=/backups
+# NO DOMINEVO_BUNDLED_ADDONS_DIR. It named the baked addon tree, and the launcher
 # seeds from it whenever it points at a directory that
 # exists — so it must leave with the tree, in the same image. Left behind, it
 # would send the bootstrap looking for a copy that is no longer there.
@@ -210,13 +210,13 @@ ENV CAMSTACK_BACKUP_ROOT=/backups
 # `@dominevo/server` root from /data/server-root when present + healthy, else
 # falls back to this seed. The env names the seed dir so the starter's
 # fallback and the server-management status cap (seedVersion) can find it.
-ENV CAMSTACK_SEED_SERVER_DIR=/opt/camstack-hub/node_modules/@dominevo/server
+ENV DOMINEVO_SEED_SERVER_DIR=/opt/dominevo-hub/node_modules/@dominevo/server
 
 # Role selector (2026-07 single-image collapse): one image serves both roles.
 # `hub` (default) boots the full Fastify hub on 4443; `agent` boots the
-# lightweight agent status API on CAMSTACK_STATUS_PORT (default 4444). The
+# lightweight agent status API on DOMINEVO_STATUS_PORT (default 4444). The
 # starter/launcher branch on this env; the healthcheck below is role-aware.
-ENV CAMSTACK_ROLE=hub
+ENV DOMINEVO_ROLE=hub
 
 # No WebRTC port: werift binds an OS-ephemeral UDP port per session (no
 # icePortRange, no ICE-TCP), so there is nothing fixed to publish. 1984/8555
@@ -227,29 +227,29 @@ EXPOSE 4443 8554 6443/tcp
 # Agent status API port (role=agent).
 EXPOSE 4444
 
-# Role-aware healthcheck: hub probes /health on CAMSTACK_PORT (default 4443),
+# Role-aware healthcheck: hub probes /health on DOMINEVO_PORT (default 4443),
 # over HTTPS and then plain HTTP (whether the hub serves HTTPS is the "Serve
 # HTTPS" setting in Network → Local access, not an env var); agent probes its
-# plain-HTTP /health on CAMSTACK_STATUS_PORT (default 4444).
-COPY <<'EOF' /usr/local/bin/camstack-healthcheck.sh
+# plain-HTTP /health on DOMINEVO_STATUS_PORT (default 4444).
+COPY <<'EOF' /usr/local/bin/dominevo-healthcheck.sh
 #!/bin/sh
-if [ "$CAMSTACK_ROLE" = "agent" ]; then
-  exec curl -fsS --max-time 20 "http://localhost:${CAMSTACK_STATUS_PORT:-4444}/health" -o /dev/null
+if [ "$DOMINEVO_ROLE" = "agent" ]; then
+  exec curl -fsS --max-time 20 "http://localhost:${DOMINEVO_STATUS_PORT:-4444}/health" -o /dev/null
 fi
-curl -fsSk --max-time 20 "https://localhost:${CAMSTACK_PORT:-4443}/health" -o /dev/null && exit 0
-exec curl -fsS --max-time 20 "http://localhost:${CAMSTACK_PORT:-4443}/health" -o /dev/null
+curl -fsSk --max-time 20 "https://localhost:${DOMINEVO_PORT:-4443}/health" -o /dev/null && exit 0
+exec curl -fsS --max-time 20 "http://localhost:${DOMINEVO_PORT:-4443}/health" -o /dev/null
 EOF
-RUN chmod +x /usr/local/bin/camstack-healthcheck.sh
+RUN chmod +x /usr/local/bin/dominevo-healthcheck.sh
 HEALTHCHECK --interval=30s --timeout=25s --start-period=180s --retries=5 \
-    CMD /usr/local/bin/camstack-healthcheck.sh
+    CMD /usr/local/bin/dominevo-healthcheck.sh
 VOLUME ["/data", "/backups"]
 
 COPY <<'EOF' /usr/local/bin/docker-entrypoint.sh
 #!/bin/sh
 set -e
-DATA_DIR="${CAMSTACK_DATA:-/data}"
-FRAMEWORK_DIR="${CAMSTACK_FRAMEWORK_DIR:-$DATA_DIR/framework}"
-ADDONS_DIR="${CAMSTACK_ADDONS_DIR:-$DATA_DIR/addons}"
+DATA_DIR="${DOMINEVO_DATA:-/data}"
+FRAMEWORK_DIR="${DOMINEVO_FRAMEWORK_DIR:-$DATA_DIR/framework}"
+ADDONS_DIR="${DOMINEVO_ADDONS_DIR:-$DATA_DIR/addons}"
 # NOTE: `$FRAMEWORK_DIR/node_modules` is deliberately NOT created here. An empty
 # directory is harmless, but re-creating it every restart is what made the
 # legacy tree impossible to retire; the fallback block below creates it on the
@@ -268,7 +268,7 @@ mkdir -p "$DATA_DIR" "$ADDONS_DIR/@dominevo"
 # Silence is the failure here, so the entrypoint states the capability before
 # Node starts. It reports; it never gates.
 ACTIVE_SERVER="$DATA_DIR/server-root/current/node_modules/@dominevo/server"
-[ -e "$ACTIVE_SERVER/package.json" ] || ACTIVE_SERVER="${CAMSTACK_SEED_SERVER_DIR:-/opt/camstack-hub/node_modules/@dominevo/server}"
+[ -e "$ACTIVE_SERVER/package.json" ] || ACTIVE_SERVER="${DOMINEVO_SEED_SERVER_DIR:-/opt/dominevo-hub/node_modules/@dominevo/server}"
 SERVER_VERSION="$(node -p "require('$ACTIVE_SERVER/package.json').version" 2>/dev/null || echo unknown)"
 if [ -e "$ACTIVE_SERVER/dist/single-copy-cleanup.js" ]; then
   echo "[entrypoint] backend @dominevo/server@$SERVER_VERSION from $ACTIVE_SERVER — post-boot single-copy sweep PRESENT"
@@ -276,7 +276,7 @@ else
   echo "[entrypoint] backend @dominevo/server@$SERVER_VERSION from $ACTIVE_SERVER — post-boot single-copy sweep ABSENT; the redundant data-side copies WILL REMAIN this boot (the sweep ships in a published @dominevo/server, never in an image build)"
 fi
 
-SEED_VERSION="$(cat /opt/camstack-seed-version 2>/dev/null || echo unknown)"
+SEED_VERSION="$(cat /opt/dominevo-seed-version 2>/dev/null || echo unknown)"
 RECORDED_VERSION="$(cat "$DATA_DIR/.camstack-seed-version" 2>/dev/null || echo none)"
 
 # THE FRAMEWORK FALLBACK — recreated only when the closure is BROKEN.
@@ -313,11 +313,11 @@ if [ "$NEED_FRAMEWORK" = 1 ]; then
   # The scope is REPLACED, not merged: copying `@dominevo` wholesale would put
   # `@dominevo/server` and every baked addon into the framework dir — a fresh
   # set of shadow copies, the exact fault D45 names.
-  cp -a /opt/camstack-hub/node_modules/. "$FRAMEWORK_DIR/node_modules/"
+  cp -a /opt/dominevo-hub/node_modules/. "$FRAMEWORK_DIR/node_modules/"
   rm -rf "$FRAMEWORK_DIR/node_modules/@dominevo"
   mkdir -p "$FRAMEWORK_DIR/node_modules/@dominevo"
   for pkg in server types sdk; do
-    src="/opt/camstack-hub/node_modules/@dominevo/$pkg"
+    src="/opt/dominevo-hub/node_modules/@dominevo/$pkg"
     # A missing framework package is fatal for this boot and must say so: the
     # node would otherwise start and then fail resolution with an error that
     # names nothing.
@@ -328,7 +328,7 @@ if [ "$NEED_FRAMEWORK" = 1 ]; then
   # ONLY this boot resolves from the seeded tree. A healthy boot never exports
   # these, so a leftover /data/framework is off NODE_PATH and the single-copy
   # sweep may remove it.
-  export CAMSTACK_FRAMEWORK_DIR="$FRAMEWORK_DIR"
+  export DOMINEVO_FRAMEWORK_DIR="$FRAMEWORK_DIR"
   export NODE_PATH="$FRAMEWORK_DIR/node_modules"
   echo "[entrypoint] FALLBACK: NODE_PATH=$NODE_PATH exported for this boot only"
 fi
@@ -336,40 +336,40 @@ fi
 # The data volume contains recordings and media. Recursively walking it on
 # every container start made an otherwise healthy reboot spend minutes in
 # chown before Node could even open the health port. Runtime-created content
-# is already owned by `camstack`; only repair the mount roots and content that
+# is already owned by `dominevo`; only repair the mount roots and content that
 # this root entrypoint may have seeded itself.
 #
 # `$ADDONS_DIR/@dominevo` is created above as root via `mkdir -p`. A
 # non-recursive chown of `$ADDONS_DIR` alone leaves the scope dir root-owned,
-# and the `camstack` process then cannot seed AGENT_PACKAGES into it (fresh
+# and the `dominevo` process then cannot seed AGENT_PACKAGES into it (fresh
 # AMD Proxmox agent 2026-10-10: empty /data/addons/@dominevo, pipeline page
 # blank). Own the scope dir explicitly — still O(1), not a media-tree walk.
 for owned_path in "$DATA_DIR" "$FRAMEWORK_DIR" "$ADDONS_DIR" "$ADDONS_DIR/@dominevo"; do
-  [ -e "$owned_path" ] && chown camstack:camstack "$owned_path" 2>/dev/null || true
+  [ -e "$owned_path" ] && chown dominevo:dominevo "$owned_path" 2>/dev/null || true
 done
-[ "$NEED_FRAMEWORK" = 1 ] && chown -R camstack:camstack "$FRAMEWORK_DIR" 2>/dev/null || true
-# A media or backup MOUNT ROOT the camstack user cannot write. A fresh bind is
+[ "$NEED_FRAMEWORK" = 1 ] && chown -R dominevo:dominevo "$FRAMEWORK_DIR" 2>/dev/null || true
+# A media or backup MOUNT ROOT the dominevo user cannot write. A fresh bind is
 # usually root:root 0755 (dev hub CT200, 2026-10-23: EACCES on
 # /recordings/artifacts, recordings would have failed). Only the mount root and
-# only when `camstack` cannot write it: never a walk of the media tree, and a
+# only when `dominevo` cannot write it: never a walk of the media tree, and a
 # share the operator already made writable (an Unraid user share) is left as is.
 # A root this cannot fix (read-only, root-squashed NFS) is reported by the hub's
 # storage-root liveness check at boot.
-for media_root in "${CAMSTACK_MEDIA_ROOT:-}" "${CAMSTACK_BACKUP_ROOT:-}"; do
+for media_root in "${DOMINEVO_MEDIA_ROOT:-}" "${DOMINEVO_BACKUP_ROOT:-}"; do
   [ -n "$media_root" ] && [ -d "$media_root" ] || continue
-  if ! gosu camstack:camstack test -w "$media_root" -a -x "$media_root"; then
-    echo "[entrypoint] $media_root is not writable by camstack ($(stat -c '%u:%g %a' "$media_root" 2>/dev/null)) — taking ownership of the mount root"
-    chown camstack:camstack "$media_root" 2>/dev/null \
+  if ! gosu dominevo:dominevo test -w "$media_root" -a -x "$media_root"; then
+    echo "[entrypoint] $media_root is not writable by dominevo ($(stat -c '%u:%g %a' "$media_root" 2>/dev/null)) — taking ownership of the mount root"
+    chown dominevo:dominevo "$media_root" 2>/dev/null \
       || echo "[entrypoint] could not chown $media_root (read-only or root-squashed mount) — the hub will report it at boot"
   fi
 done
 # Explicit recovery escape hatch for a volume imported with foreign ownership.
 # This is intentionally opt-in because it traverses the complete media tree.
-if [ "${CAMSTACK_REPAIR_PERMISSIONS:-0}" = "1" ]; then
+if [ "${DOMINEVO_REPAIR_PERMISSIONS:-0}" = "1" ]; then
   echo "[entrypoint] Repairing data ownership recursively"
-  chown -R camstack:camstack "$DATA_DIR" 2>/dev/null || true
+  chown -R dominevo:dominevo "$DATA_DIR" 2>/dev/null || true
 fi
-# Accelerator device nodes must be OPENABLE by `camstack`, and `gosu` below
+# Accelerator device nodes must be OPENABLE by `dominevo`, and `gosu` below
 # drops every supplementary group — a compose `group_add: [render, video]`
 # reaches only this root shell, never Node or the Python inference pool. The
 # loop used to name `/dev/accel/render*` (a path that does not exist) instead
@@ -382,9 +382,9 @@ fi
 # `/dev/apex_*` is a PCIe/M.2 Coral: an LXC `gid=993,mode=0660` or a host
 # `apex` group reaches only root here, exactly like `render` above.
 for dev in /dev/accel/accel* /dev/dri/renderD* /dev/dri/card* /dev/apex_*; do
-  [ -e "$dev" ] && chown camstack:camstack "$dev" 2>/dev/null || true
+  [ -e "$dev" ] && chown dominevo:dominevo "$dev" 2>/dev/null || true
 done
-# Coral EdgeTPU plug-and-play: the server runs as non-root `camstack`, but USB
+# Coral EdgeTPU plug-and-play: the server runs as non-root `dominevo`, but USB
 # device nodes typically arrive root:root 664 — libusb needs rw to claim the
 # device, so the edgetpu delegate silently fails to load (observed live
 # 2026-07-22: every frame shed, camera blind). The entrypoint still runs as
@@ -406,7 +406,7 @@ done
 # the block below only executes what it printed (ADR 0970). hub-main still gets
 # NO hardcoded heap cap — that module returns V8's default for the hub unless a
 # per-node override (Cluster -> node -> Launch settings) is set. The history
-# below is why. CAMSTACK_HUB_HEAP_MB is retired: ignored, named in a boot warning.
+# below is why. DOMINEVO_HUB_HEAP_MB is retired: ignored, named in a boot warning.
 #
 # It used to be a hard `--max-old-space-size=1536`, and that number killed the
 # hub four times in ~15h on 2026-08-01/02 — once nine seconds after a viewer
@@ -436,7 +436,7 @@ done
 #
 # ## 2026-08-25 — what the default actually costs, measured
 #
-# `CAMSTACK_HUB_HEAP_MB` is UNSET on the live hub, so pid 7's argv is a bare
+# `DOMINEVO_HUB_HEAP_MB` is UNSET on the live hub, so pid 7's argv is a bare
 # `node .../starter.js` and the ceiling in force is V8's host-derived 4288MB.
 # The heap never approaches it: 31 consecutive `[mem]` samples over 55 minutes
 # read heapUsed p50 ~1.27GB and max 2453MB — 57% — against RSS of 3.4-3.9GB.
@@ -460,7 +460,7 @@ done
 #
 # This is no longer an IMAGE-level knob: the ceiling comes from the closure's
 # launch-args module (a per-node override set from the hub; the legacy
-# CAMSTACK_HUB_HEAP_MB is ignored with a warning), so changing it needs a closure update and a restart,
+# DOMINEVO_HUB_HEAP_MB is ignored with a warning), so changing it needs a closure update and a restart,
 # not a new image or a recreated container. The node says which case it is in
 # on every boot: `[mem] hub-main heap ceiling …MB, set by <override|
 # computed>`, or `… is V8's DEFAULT (…MB)` when no `--max-old-space-size`
@@ -473,7 +473,7 @@ done
 # by the same module, for the same reason, and is welded: glibc reads
 # MALLOC_ARENA_MAX once at malloc init, so hub-main cannot set it for itself —
 # it must exist before `exec node`. Every forked runner then inherits it, and
-# `applyRunnerNativeAllocator` still lets `CAMSTACK_RUNNER_NATIVE_ALLOCATOR=off`
+# `applyRunnerNativeAllocator` still lets `DOMINEVO_RUNNER_NATIVE_ALLOCATOR=off`
 # remove it per child. sharp reads MALLOC_ARENA_MAX in its NATIVE binding and,
 # the moment it appears, restores libvips concurrency from 1 to
 # `availableParallelism()` — 20 on the live host — so the pair travels together
@@ -484,9 +484,9 @@ done
 # looked up in the active closure first, then in the baked seed (always present
 # in this image), so the only way to lose the allocator pair is a module that
 # crashes.
-launch_candidates="${CAMSTACK_DATA:-/data}/server-root/current/node_modules/@dominevo/server/dist/launch-args.js /opt/camstack-hub/node_modules/@dominevo/server/dist/launch-args.js"
+launch_candidates="${DOMINEVO_DATA:-/data}/server-root/current/node_modules/@dominevo/server/dist/launch-args.js /opt/dominevo-hub/node_modules/@dominevo/server/dist/launch-args.js"
 # [launch-args-begin]
-launch_role="${CAMSTACK_ROLE:-hub}"
+launch_role="${DOMINEVO_ROLE:-hub}"
 launch_js=""
 for f in $launch_candidates; do
   if [ -f "$f" ]; then launch_js="$f"; break; fi
@@ -498,7 +498,7 @@ launch_extra=""
 if [ -z "$launch_js" ]; then
   echo "[entrypoint] launch-args module not found — launching node with no extra args"
 else
-  launch_records="$(timeout 10 gosu camstack:camstack node "$launch_js" --role "$launch_role" --allocator-env 2>/dev/null)" || launch_records=""
+  launch_records="$(timeout 10 gosu dominevo:dominevo node "$launch_js" --role "$launch_role" --allocator-env 2>/dev/null)" || launch_records=""
 fi
 while IFS= read -r line; do
   case "$line" in
@@ -516,8 +516,8 @@ $launch_extra"
       # The loader and the shell are never the closure's to set.
       case "$name" in LD_*|DYLD_*|NODE_*|PATH|HOME|SHELL|IFS|USER) continue ;; esac
       case "$val" in *[!A-Za-z0-9._-]*) continue ;; esac
-      # CAMSTACK_HEAP_CEILING_SOURCE is a fact about THIS launch, not a default.
-      if [ "$name" = "CAMSTACK_HEAP_CEILING_SOURCE" ] || [ -z "$(printenv "$name")" ]; then
+      # DOMINEVO_HEAP_CEILING_SOURCE is a fact about THIS launch, not a default.
+      if [ "$name" = "DOMINEVO_HEAP_CEILING_SOURCE" ] || [ -z "$(printenv "$name")" ]; then
         export "$name=$val"
       fi
       ;;
@@ -544,31 +544,31 @@ fi
 
 # Privileged package helper (D326). This script is still root; Node is not.
 # The helper is reparented to tini on exec and dies with the container.
-mkdir -p /run/camstack
-chown root:camstack /run/camstack
-chmod 750 /run/camstack
-export CAMSTACK_PKGD_SOCKET=/run/camstack/pkgd.sock
-node /usr/local/bin/camstack-pkgd.mjs &
+mkdir -p /run/dominevo
+chown root:dominevo /run/dominevo
+chmod 750 /run/dominevo
+export DOMINEVO_PKGD_SOCKET=/run/dominevo/pkgd.sock
+node /usr/local/bin/dominevo-pkgd.mjs &
 i=0
-while [ ! -S "$CAMSTACK_PKGD_SOCKET" ] && [ "$i" -lt 50 ]; do
+while [ ! -S "$DOMINEVO_PKGD_SOCKET" ] && [ "$i" -lt 50 ]; do
   i=$((i + 1))
   sleep 0.1
 done
-if [ ! -S "$CAMSTACK_PKGD_SOCKET" ]; then
-  echo "[entrypoint] camstack-pkgd did not bind $CAMSTACK_PKGD_SOCKET — distro package installs will refuse until the next recreate"
+if [ ! -S "$DOMINEVO_PKGD_SOCKET" ]; then
+  echo "[entrypoint] dominevo-pkgd did not bind $DOMINEVO_PKGD_SOCKET — distro package installs will refuse until the next recreate"
 fi
 
-exec gosu camstack:camstack node "$@"
+exec gosu dominevo:dominevo node "$@"
 EOF
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-WORKDIR /opt/camstack-hub
+WORKDIR /opt/dominevo-hub
 ENTRYPOINT ["/usr/bin/tini", "--", "/usr/local/bin/docker-entrypoint.sh"]
 # Entry = the STARTER (tiny, dependency-free, immutable). It picks the active
 # /data/server-root closure (with probation boot + auto-rollback) or falls
 # back to this baked seed's launcher. Update apply = graceful exit → the
 # container restart policy relaunches → the starter loads the new version.
-CMD ["/opt/camstack-hub/node_modules/@dominevo/server/dist/starter.js"]
+CMD ["/opt/dominevo-hub/node_modules/@dominevo/server/dist/starter.js"]
 
 # ── Final: AMD (Mesa VA / Vulkan; no Intel GPU repo, no Intel NPU) ────────────
 # Build: docker build --target amd -t ghcr.io/dominevo/dominevo:amd-local .
@@ -578,7 +578,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       mesa-va-drivers mesa-vulkan-drivers libvulkan1 && \
     rm -rf /var/lib/apt/lists/* && \
     test -e /usr/lib/x86_64-linux-gnu/dri/radeonsi_drv_video.so && \
-    sh /usr/local/bin/camstack-check-libva-abi.sh /usr/lib/x86_64-linux-gnu/dri/radeonsi_drv_video.so
+    sh /usr/local/bin/dominevo-check-libva-abi.sh /usr/lib/x86_64-linux-gnu/dri/radeonsi_drv_video.so
 
 # NOTE: `intel` below stays the LAST stage on purpose — a bare
 # `docker build .` builds the last stage, and that must remain the Intel image.
@@ -625,7 +625,7 @@ RUN curl -fsSL https://repositories.intel.com/gpu/intel-graphics.key \
       "libva2=${LIBVA_VERSION}" "libva-drm2=${LIBVA_VERSION}" \
       "libva-x11-2=${LIBVA_VERSION}" "libva-wayland2=${LIBVA_VERSION}" \
       "vainfo=${VAINFO_VERSION}" ocl-icd-libopencl1 && \
-    sh /usr/local/bin/camstack-check-libva-abi.sh /usr/lib/x86_64-linux-gnu/dri/iHD_drv_video.so && \
+    sh /usr/local/bin/dominevo-check-libva-abi.sh /usr/lib/x86_64-linux-gnu/dri/iHD_drv_video.so && \
     mkdir -p /tmp/neo-legacy && cd /tmp/neo-legacy && \
     curl -fsSL -o igc-core.deb   "${IGC_LEGACY_BASE}/intel-igc-core_${IGC_LEGACY_VERSION}_amd64.deb" && \
     curl -fsSL -o igc-opencl.deb "${IGC_LEGACY_BASE}/intel-igc-opencl_${IGC_LEGACY_VERSION}_amd64.deb" && \
@@ -670,18 +670,18 @@ ARG ORT_GPU_SPEC="onnxruntime-gpu>=1.21,<1.27"
 # Wheelhouse, not an install: the pipeline's Python env is a venv created under
 # /data at runtime, so a wheel baked into the system Python would be invisible
 # to it. The wheels (and their pure-Python deps) are downloaded here, offline
-# installable with `pip install --no-index --find-links $CAMSTACK_ORT_WHEELHOUSE`.
+# installable with `pip install --no-index --find-links $DOMINEVO_ORT_WHEELHOUSE`.
 # The build refuses a wheel whose CUDA provider does not link the CUDA major
 # this image ships (libcudart.so.12 / libcudnn.so.9).
 RUN apt-get update && apt-get install -y --no-install-recommends python3-venv && \
     python3 -m venv /tmp/whvenv && \
-    /tmp/whvenv/bin/pip download --no-cache-dir -q -d /opt/camstack/wheelhouse "${ORT_GPU_SPEC}" && \
-    ls /opt/camstack/wheelhouse | grep -q '^onnxruntime_gpu-' && \
-    mkdir /tmp/ortchk && cd /tmp/ortchk && unzip -q /opt/camstack/wheelhouse/onnxruntime_gpu-*.whl 'onnxruntime/capi/libonnxruntime_providers_cuda.so' && \
+    /tmp/whvenv/bin/pip download --no-cache-dir -q -d /opt/dominevo/wheelhouse "${ORT_GPU_SPEC}" && \
+    ls /opt/dominevo/wheelhouse | grep -q '^onnxruntime_gpu-' && \
+    mkdir /tmp/ortchk && cd /tmp/ortchk && unzip -q /opt/dominevo/wheelhouse/onnxruntime_gpu-*.whl 'onnxruntime/capi/libonnxruntime_providers_cuda.so' && \
     grep -aq 'libcudart.so.12' onnxruntime/capi/libonnxruntime_providers_cuda.so && \
     grep -aq 'libcudnn.so.9' onnxruntime/capi/libonnxruntime_providers_cuda.so && \
     cd / && rm -rf /tmp/whvenv /tmp/ortchk /var/lib/apt/lists/*
-ENV CAMSTACK_ORT_WHEELHOUSE=/opt/camstack/wheelhouse
+ENV DOMINEVO_ORT_WHEELHOUSE=/opt/dominevo/wheelhouse
 ENV NVIDIA_VISIBLE_DEVICES=all \
     NVIDIA_DRIVER_CAPABILITIES=compute,utility,video
 
@@ -712,18 +712,18 @@ ARG ORT_GPU_SPEC="onnxruntime-gpu==1.18.1"
 # Wheelhouse, not an install: the pipeline's Python env is a venv created under
 # /data at runtime, so a wheel baked into the system Python would be invisible
 # to it. The wheels (and their pure-Python deps) are downloaded here, offline
-# installable with `pip install --no-index --find-links $CAMSTACK_ORT_WHEELHOUSE`.
+# installable with `pip install --no-index --find-links $DOMINEVO_ORT_WHEELHOUSE`.
 # The build refuses a wheel whose CUDA provider does not link the CUDA major
 # this image ships (libcudart.so.11.0 / libcudnn.so.8).
 RUN apt-get update && apt-get install -y --no-install-recommends python3-venv && \
     python3 -m venv /tmp/whvenv && \
-    /tmp/whvenv/bin/pip download --no-cache-dir -q -d /opt/camstack/wheelhouse 'numpy<2' "${ORT_GPU_SPEC}" && \
-    ls /opt/camstack/wheelhouse | grep -q '^onnxruntime_gpu-' && \
-    mkdir /tmp/ortchk && cd /tmp/ortchk && unzip -q /opt/camstack/wheelhouse/onnxruntime_gpu-*.whl 'onnxruntime/capi/libonnxruntime_providers_cuda.so' && \
+    /tmp/whvenv/bin/pip download --no-cache-dir -q -d /opt/dominevo/wheelhouse 'numpy<2' "${ORT_GPU_SPEC}" && \
+    ls /opt/dominevo/wheelhouse | grep -q '^onnxruntime_gpu-' && \
+    mkdir /tmp/ortchk && cd /tmp/ortchk && unzip -q /opt/dominevo/wheelhouse/onnxruntime_gpu-*.whl 'onnxruntime/capi/libonnxruntime_providers_cuda.so' && \
     grep -aq 'libcudart.so.11.0' onnxruntime/capi/libonnxruntime_providers_cuda.so && \
     grep -aq 'libcudnn.so.8' onnxruntime/capi/libonnxruntime_providers_cuda.so && \
     cd / && rm -rf /tmp/whvenv /tmp/ortchk /var/lib/apt/lists/*
-ENV CAMSTACK_ORT_WHEELHOUSE=/opt/camstack/wheelhouse
+ENV DOMINEVO_ORT_WHEELHOUSE=/opt/dominevo/wheelhouse
 ENV NVIDIA_VISIBLE_DEVICES=all \
     NVIDIA_DRIVER_CAPABILITIES=compute,utility,video
 
@@ -755,7 +755,7 @@ RUN curl -fsSL https://repositories.intel.com/gpu/intel-graphics.key \
       "libva-x11-2=${LIBVA_VERSION}" "libva-wayland2=${LIBVA_VERSION}" \
       "vainfo=${VAINFO_VERSION}" \
       libmfx-gen1.2 libvpl2 && \
-    sh /usr/local/bin/camstack-check-libva-abi.sh /usr/lib/x86_64-linux-gnu/dri/iHD_drv_video.so && \
+    sh /usr/local/bin/dominevo-check-libva-abi.sh /usr/lib/x86_64-linux-gnu/dri/iHD_drv_video.so && \
     mkdir -p /tmp/npu-driver && cd /tmp/npu-driver && \
     curl -fsSL -o "${NPU_TAR}" "${NPU_URL}" && tar -xf "${NPU_TAR}" && \
     (dpkg -i ./*.deb || apt-get install -f -y) && \

@@ -33,10 +33,10 @@ import { MEDIA_QUALITY } from '../../shared/frame/media-quality.js'
  *  Native resolution is the point: a 4K cam (3840) resolves TRUE native (no
  *  resize, 3840 ≤ 4096); an 8K cam is bounded to 4096 (still far past the retired
  *  1920 cap). This honours "native, no 1920 intermediate" while keeping the raw
- *  rgb transfer wire-safe. Env-overridable (`CAMSTACK_KEYFRAME_NATIVE_MAX_WIDTH`)
+ *  rgb transfer wire-safe. Env-overridable (`DOMINEVO_KEYFRAME_NATIVE_MAX_WIDTH`)
  *  for a homelab that wants a tighter/looser bound. */
 export const KEYFRAME_NATIVE_MAX_WIDTH =
-  Number.parseInt(process.env.CAMSTACK_KEYFRAME_NATIVE_MAX_WIDTH ?? '', 10) || 4096
+  Number.parseInt(process.env.DOMINEVO_KEYFRAME_NATIVE_MAX_WIDTH ?? '', 10) || 4096
 
 /** Long-side cap (px) for the companion `keyFrameSmall` variant — the clean best
  *  full frame at a web-friendly size, written ALONGSIDE the native `keyFrame`

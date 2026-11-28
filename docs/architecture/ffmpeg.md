@@ -25,7 +25,7 @@ which supersedes half of
 [D536](../decisions/adr-0536-the-ffmpeg-a-node-spawns-is-always-one-we-provided.md)).
 Resolution, in order:
 
-1. **`CAMSTACK_FFMPEG_PATH`** — the operator's own binary. Wins over everything.
+1. **`DOMINEVO_FFMPEG_PATH`** — the operator's own binary. Wins over everything.
    A value that names a file which does not exist is reported as an error and
    ignored, because a typo must not stop a node serving video.
 2. **The pinned build**, at `<dataDir>/deps/ffmpeg-<release>`.
@@ -114,7 +114,7 @@ number, not a download that has to succeed.
 
 ## The override
 
-`CAMSTACK_FFMPEG_PATH=/path/to/ffmpeg` on a node uses that binary and skips both
+`DOMINEVO_FFMPEG_PATH=/path/to/ffmpeg` on a node uses that binary and skips both
 the pin and the download. It is for an operator who has a build they want — a
 distro package with a codec we do not ship, a local build with a patch. Two
 consequences worth knowing:
@@ -163,7 +163,7 @@ bump them together. The `amd` stage is consistent as it stands — Ubuntu's Mesa
 Two checks keep it that way:
 
 - **Build time** — `scripts/docker/check-libva-abi.sh <driver.so>` (baked as
-  `/usr/local/bin/camstack-check-libva-abi.sh`) compares the newest
+  `/usr/local/bin/dominevo-check-libva-abi.sh`) compares the newest
   `__vaDriverInit_1_N` the driver exports with the installed `libva2` and fails
   the build on a gap: `iHD_drv_video.so needs VA-API >= 1.22, libva2 2.20.0-…
   provides 1.20`. Both final stages run it. In a running container with

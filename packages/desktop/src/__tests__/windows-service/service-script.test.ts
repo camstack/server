@@ -45,10 +45,10 @@ describe('buildWinswXml', () => {
   })
 
   it('carries the SAME environment the Electron shell gives the child, escaped', () => {
-    expect(xml).toContain('<env name="CAMSTACK_ROLE" value="agent"/>')
-    expect(xml).toContain('<env name="CAMSTACK_HUB_ADDRESS" value="192.0.2.10:4443"/>')
+    expect(xml).toContain('<env name="DOMINEVO_ROLE" value="agent"/>')
+    expect(xml).toContain('<env name="DOMINEVO_HUB_ADDRESS" value="192.0.2.10:4443"/>')
     expect(xml).toContain(
-      '<env name="CAMSTACK_DATA" value="C:\\Users\\O&apos;Brien\\AppData\\Roaming\\Dominevo\\data"/>',
+      '<env name="DOMINEVO_DATA" value="C:\\Users\\O&apos;Brien\\AppData\\Roaming\\Dominevo\\data"/>',
     )
     expect(xml).not.toMatch(/SECRET|TOKEN/i)
   })

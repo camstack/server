@@ -38,7 +38,7 @@ function text(value: unknown): { content: { type: 'text'; text: string }[] } {
 }
 
 function workspaceRootFromEnv(): string {
-  const override = process.env.CAMSTACK_WORKSPACE
+  const override = process.env.DOMINEVO_WORKSPACE
   if (override && override.trim() !== '') return override
   return requireWorkspaceRoot(process.cwd())
 }
@@ -54,7 +54,7 @@ export interface RegisterDevelopOptions {
   readonly only?: readonly string[]
   /** Register the `track_review_*` tools. Defaults to on when `only` is absent. */
   readonly trackReview?: boolean
-  /** The workspace the tools read; defaults to `CAMSTACK_WORKSPACE`, else the working directory's. */
+  /** The workspace the tools read; defaults to `DOMINEVO_WORKSPACE`, else the working directory's. */
   readonly workspaceRoot?: () => string
   /** Annotation class for a tool name, when the host classifies its tools. */
   readonly annotationsFor?: (name: string) => ToolAnnotations | undefined

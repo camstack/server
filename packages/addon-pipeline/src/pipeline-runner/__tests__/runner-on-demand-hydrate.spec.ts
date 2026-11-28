@@ -1,12 +1,12 @@
 /**
  * Task 3 — eager retained hydrate is rollback-only. A detection-free success
- * must not materialize media; CAMSTACK_CONTINUOUS_RETAIN=1 restores the
+ * must not materialize media; DOMINEVO_CONTINUOUS_RETAIN=1 restores the
  * previous post-success hydrate.
  */
 import type { DecodedFrame, FrameHandle, FrameResult } from '@dominevo/types'
 import { makeObjectDetection } from '../../__tests__/support/object-detection.js'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { CAMSTACK_CONTINUOUS_RETAIN } from '../on-demand-retention.js'
+import { DOMINEVO_CONTINUOUS_RETAIN } from '../on-demand-retention.js'
 import { PipelineRunner } from '../runner.js'
 
 function makeFrame(timestamp: number): DecodedFrame {
@@ -46,10 +46,10 @@ function makeResult(detections: number): FrameResult {
 const delay = () => new Promise<void>((resolve) => setTimeout(resolve, 40))
 
 describe('PipelineRunner on-demand hydrate', () => {
-  const prev = process.env[CAMSTACK_CONTINUOUS_RETAIN]
+  const prev = process.env[DOMINEVO_CONTINUOUS_RETAIN]
   afterEach(() => {
-    if (prev === undefined) delete process.env[CAMSTACK_CONTINUOUS_RETAIN]
-    else process.env[CAMSTACK_CONTINUOUS_RETAIN] = prev
+    if (prev === undefined) delete process.env[DOMINEVO_CONTINUOUS_RETAIN]
+    else process.env[DOMINEVO_CONTINUOUS_RETAIN] = prev
   })
 
   it('does not hydrate retained pixels after a detection-free success', async () => {
@@ -72,7 +72,7 @@ describe('PipelineRunner on-demand hydrate', () => {
   })
 
   it('restores post-success hydrate when continuous retain rollback is on', async () => {
-    process.env[CAMSTACK_CONTINUOUS_RETAIN] = '1'
+    process.env[DOMINEVO_CONTINUOUS_RETAIN] = '1'
     const hydrateRetainedFrame = vi.fn().mockResolvedValue(null)
     const runner = new PipelineRunner({
       maxQueueDepth: 3,

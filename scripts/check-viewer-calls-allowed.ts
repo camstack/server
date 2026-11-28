@@ -19,7 +19,7 @@
  * derivation.
  *
  * The camstack/ submodule is absent in CI: the guard then says so and passes.
- * `CAMSTACK_VIEWER_DIR=<viewer checkout>` points it at another checkout.
+ * `DOMINEVO_VIEWER_DIR=<viewer checkout>` points it at another checkout.
  */
 import * as fs from 'node:fs'
 import * as path from 'node:path'
@@ -30,7 +30,7 @@ import {
 } from '../packages/types/src/index.js'
 
 const ROOT = path.join(import.meta.dirname, '..')
-const VIEWER_ROOT = process.env['CAMSTACK_VIEWER_DIR'] || path.join(ROOT, 'camstack')
+const VIEWER_ROOT = process.env['DOMINEVO_VIEWER_DIR'] || path.join(ROOT, 'camstack')
 const SRC = path.join(VIEWER_ROOT, 'src')
 
 /** A viewer-app section a file belongs to. */
@@ -186,7 +186,7 @@ export function refusedCalls(calls: readonly ViewerCall[]): Refusal[] {
 function main(): void {
   if (!fs.existsSync(SRC)) {
     console.log(
-      `  ⊘ viewer NOT checked: ${path.relative(ROOT, SRC) || SRC} is absent (the camstack/ submodule is not checked out here) — set CAMSTACK_VIEWER_DIR=<viewer checkout>`,
+      `  ⊘ viewer NOT checked: ${path.relative(ROOT, SRC) || SRC} is absent (the camstack/ submodule is not checked out here) — set DOMINEVO_VIEWER_DIR=<viewer checkout>`,
     )
     return
   }

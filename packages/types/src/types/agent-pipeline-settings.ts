@@ -103,7 +103,7 @@ export interface AgentPipelineSettings {
   /**
    * Operator override for the LAN host a cross-node decoder dials to reach
    * THIS node's restream (Cluster UI). Absent → auto-detect: a remote runner
-   * falls back to its `CAMSTACK_HUB_URL`-derived host. Set only when the
+   * falls back to its `DOMINEVO_HUB_URL`-derived host. Set only when the
    * auto-detected address is wrong (multi-homed host, NAT, custom interface).
    */
   readonly reachableHost?: string

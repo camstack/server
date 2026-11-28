@@ -8,7 +8,7 @@ import { demuxSegmentToAnnexB } from '../segment-demux'
 // fragment. Requires ffmpeg on PATH (present on dev + hub + agent images).
 const SAMPLE = readFileSync(join(__dirname, 'fixtures/sample.m4s'))
 /** The binary the product would run: CI exports the pinned build here (D540). */
-const FFMPEG = process.env['CAMSTACK_FFMPEG_PATH'] ?? 'ffmpeg'
+const FFMPEG = process.env['DOMINEVO_FFMPEG_PATH'] ?? 'ffmpeg'
 const NAL_TYPE = (b: Buffer, start: number): number => (b[start]! >> 1) & 0x3f // HEVC
 
 describe('demuxSegmentToAnnexB (ffmpeg mpegts remux)', () => {

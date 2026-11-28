@@ -6,7 +6,7 @@ export interface HubAuth {
 }
 
 export interface HubAuthOptions {
-  /** Explicit hub address; otherwise $CAMSTACK_HUB_URL, scratchpad/.hub-url or the session. */
+  /** Explicit hub address; otherwise $DOMINEVO_HUB_URL, scratchpad/.hub-url or the session. */
   readonly server?: string
 }
 

@@ -63,7 +63,7 @@ function row(over: Partial<Row>): Row {
     pgid: 100,
     classification: 'managed',
     addonId: null,
-    command: '/usr/local/bin/node /opt/camstack-hub/x.js',
+    command: '/usr/local/bin/node /opt/dominevo-hub/x.js',
     cpuPercent: 1,
     memoryRssBytes: 1024,
     uptimeSec: 10,
@@ -77,7 +77,7 @@ const TINI_PID_1 = row({
   ppid: 0,
   pgid: 1,
   classification: 'system',
-  command: '/usr/bin/tini -- /usr/local/bin/docker-entrypoint.sh /opt/camstack-hub/starter.js',
+  command: '/usr/bin/tini -- /usr/local/bin/docker-entrypoint.sh /opt/dominevo-hub/starter.js',
 })
 
 const MANAGED = row({ pid: 431, ppid: 12, classification: 'managed', addonId: 'pipeline' })

@@ -86,7 +86,7 @@ describe('the timeout line reports the deadline that fired', () => {
     vi.useFakeTimers()
     // A live deadline that is unmistakably NOT the 60s command deadline, so a
     // line reporting the constant cannot coincidentally match.
-    vi.stubEnv('CAMSTACK_POOL_LIVE_INFER_TIMEOUT_MS', '1500')
+    vi.stubEnv('DOMINEVO_POOL_LIVE_INFER_TIMEOUT_MS', '1500')
   })
   afterEach(() => {
     vi.useRealTimers()

@@ -5,8 +5,8 @@
  * The single-copy stage/apply engine — stage a closure into `.staging-*`,
  * arm the pending-root-swap marker, restart — lives in the shared core so the
  * hub and the agent can never drift. This class only binds the hub's
- * parameters: the `@dominevo/server` root spec, the `CAMSTACK_SERVER_*` env
- * markers, the `CAMSTACK_DATA` data-dir default and the running package.json.
+ * parameters: the `@dominevo/server` root spec, the `DOMINEVO_SERVER_*` env
+ * markers, the `DOMINEVO_DATA` data-dir default and the running package.json.
  *
  * The starter (server/backend/src/starter.ts → shared `runNodeStarter`) owns
  * the OTHER half: applying the staged swap of the single `current/` copy at
@@ -93,8 +93,8 @@ export class ServerUpdateService extends RootUpdateService {
   constructor(options: ServerUpdateServiceOptions) {
     const dataDir = path.resolve(
       options.dataDir ??
-        options.env?.['CAMSTACK_DATA'] ??
-        process.env['CAMSTACK_DATA'] ??
+        options.env?.['DOMINEVO_DATA'] ??
+        process.env['DOMINEVO_DATA'] ??
         'camstack-data',
     )
     // Resolved before `super` so the base class can stamp `tags.nodeId` on
@@ -105,9 +105,9 @@ export class ServerUpdateService extends RootUpdateService {
       spec: HUB_ROOT_SPEC,
       nodeId,
       envNames: {
-        bootMode: 'CAMSTACK_SERVER_BOOT_MODE',
-        activeVersion: 'CAMSTACK_SERVER_ACTIVE_VERSION',
-        seedDir: 'CAMSTACK_SEED_SERVER_DIR',
+        bootMode: 'DOMINEVO_SERVER_BOOT_MODE',
+        activeVersion: 'DOMINEVO_SERVER_ACTIVE_VERSION',
+        seedDir: 'DOMINEVO_SEED_SERVER_DIR',
       },
       logger: options.logger,
       restartServer: options.restartServer,
@@ -151,7 +151,7 @@ export class ServerUpdateService extends RootUpdateService {
           bus,
           'server-update-service',
           // The node, as `AddonPackageService.restartServer` names it (D723).
-          options.env?.['CAMSTACK_NODE_ID'] ?? process.env['CAMSTACK_NODE_ID'] ?? nodeId,
+          options.env?.['DOMINEVO_NODE_ID'] ?? process.env['DOMINEVO_NODE_ID'] ?? nodeId,
           buildNodeUpdateAnnouncement({
             what: 'desktop-shell',
             fromVersion: info.fromVersion,

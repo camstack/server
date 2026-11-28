@@ -284,7 +284,7 @@ export class MoleculerService {
     // a developer's dev:full is up on the default 6000 port, an
     // isolated test hub can't reuse it. Production keeps the default so
     // agent-to-hub connections keep working without per-deploy config.
-    const tcpPortEnv = process.env['CAMSTACK_HUB_TCP_PORT']
+    const tcpPortEnv = process.env['DOMINEVO_HUB_TCP_PORT']
     const tcpPort = tcpPortEnv ? Number(tcpPortEnv) : undefined
     // Two-step cast: createBroker's dist `.d.ts` chains through
     // moleculer→eventemitter2 whose types are unresolvable at this
@@ -388,7 +388,7 @@ export class MoleculerService {
     // Forked addon-runner children must root their storage (addons-data,
     // the sqlite settings DB) under the SAME data path as the hub's main
     // process. The configured key is `server.dataPath` (populated from the
-    // CAMSTACK_DATA env var); reading the non-existent `dataDir` key here
+    // DOMINEVO_DATA env var); reading the non-existent `dataDir` key here
     // made every child silently fall back to the relative `camstack-data`,
     // so the DB escaped the mounted data dir in container deployments.
     const dataDir = this.config.get<string>('server.dataPath') ?? 'camstack-data'

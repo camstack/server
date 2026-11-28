@@ -23,9 +23,9 @@ import {
 import type { WrapperProbeReadings } from '../wrapper-identity.js'
 
 const ENV_NAMES: RootUpdateEnvNames = {
-  bootMode: 'CAMSTACK_SERVER_BOOT_MODE',
-  activeVersion: 'CAMSTACK_SERVER_ACTIVE_VERSION',
-  seedDir: 'CAMSTACK_SEED_SERVER_DIR',
+  bootMode: 'DOMINEVO_SERVER_BOOT_MODE',
+  activeVersion: 'DOMINEVO_SERVER_ACTIVE_VERSION',
+  seedDir: 'DOMINEVO_SEED_SERVER_DIR',
 }
 
 const SILENT: RootUpdateLogger = {
@@ -107,7 +107,7 @@ describe('readWrapperProbes', () => {
 
 describe('getServerPackageStatus carries the wrapper identity', () => {
   it('reports the 2026-08-02 hub as a docker shell fingerprinted by its seed', async () => {
-    const service = makeService({ CAMSTACK_SEED_SERVER_DIR: seedDir }, IN_CONTAINER)
+    const service = makeService({ DOMINEVO_SEED_SERVER_DIR: seedDir }, IN_CONTAINER)
 
     const status = await service.getServerPackageStatus()
 
@@ -120,7 +120,7 @@ describe('getServerPackageStatus carries the wrapper identity', () => {
   })
 
   it('reports the mac agent as native, and its evidence names the platform it excluded on', async () => {
-    const service = makeService({ CAMSTACK_SEED_SERVER_DIR: seedDir }, ON_A_MAC)
+    const service = makeService({ DOMINEVO_SEED_SERVER_DIR: seedDir }, ON_A_MAC)
 
     const status = await service.getServerPackageStatus()
 
@@ -131,7 +131,7 @@ describe('getServerPackageStatus carries the wrapper identity', () => {
 
   it('reports the electron shell from the version its main process declared', async () => {
     const service = makeService(
-      { CAMSTACK_SEED_SERVER_DIR: seedDir, CAMSTACK_AGENT_APP_VERSION: '1.4.2' },
+      { DOMINEVO_SEED_SERVER_DIR: seedDir, DOMINEVO_AGENT_APP_VERSION: '1.4.2' },
       ON_A_MAC,
     )
 
@@ -143,7 +143,7 @@ describe('getServerPackageStatus carries the wrapper identity', () => {
 
   it('reports the contradiction when an electron env turns up inside a container', async () => {
     const service = makeService(
-      { CAMSTACK_SEED_SERVER_DIR: seedDir, CAMSTACK_AGENT_APP_VERSION: '1.4.2' },
+      { DOMINEVO_SEED_SERVER_DIR: seedDir, DOMINEVO_AGENT_APP_VERSION: '1.4.2' },
       IN_CONTAINER,
     )
 

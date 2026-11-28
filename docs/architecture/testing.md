@@ -29,11 +29,11 @@ it is only moved off the automatic gates.
 
 - Name it `<name>.heavy.spec.ts(x)` (rename with `git mv`, keeping history).
 - Every default vitest config excludes `**/*.heavy.spec.*` unless
-  `CAMSTACK_HEAVY_SPECS=1`. A project that owns a heavy spec carries that
+  `DOMINEVO_HEAVY_SPECS=1`. A project that owns a heavy spec carries that
   exclusion in its own `vitest.config.*`.
 - `npm run test:heavy` (`scripts/run-heavy-specs.ts`) finds every heavy spec and
   runs each through the config of the project that owns it, with
-  `CAMSTACK_HEAVY_SPECS=1`, so module resolution is the default lane's.
+  `DOMINEVO_HEAVY_SPECS=1`, so module resolution is the default lane's.
 - The Checks workflow runs `npm run test:heavy`. Checks is on-demand: the
   operator dispatches it.
 - `scripts/check-heavy-specs.ts` fails if an owning config stops excluding

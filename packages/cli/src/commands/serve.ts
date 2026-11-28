@@ -7,12 +7,12 @@ interface ServeOptions {
 
 export function buildServeEnv(opts: ServeOptions): Record<string, string | undefined> {
   const env: Record<string, string | undefined> = {
-    // `CAMSTACK_ROLE`, not `CAMSTACK_MODE` — see agent.ts. This one worked
+    // `DOMINEVO_ROLE`, not `DOMINEVO_MODE` — see agent.ts. This one worked
     // only because an empty role DEFAULTS to hub, i.e. by accident.
-    CAMSTACK_ROLE: 'hub',
+    DOMINEVO_ROLE: 'hub',
   }
   if (opts.port) env.PORT = opts.port
-  if (opts.data) env.CAMSTACK_DATA = opts.data
+  if (opts.data) env.DOMINEVO_DATA = opts.data
   return env
 }
 

@@ -95,7 +95,7 @@ async function loadWerift(): Promise<WeriftModule> {
   // in all three declaring packages — `scripts/check-patches-reach-production.ts` enforces both.
   //
   // werift stays a HOST-PROVIDED, SHARED dep (pipeline + reolink + hikvision) resolved out of the
-  // framework node_modules (CAMSTACK_FRAMEWORK_DIR → NODE_PATH) so the installer's closure-dedupe
+  // framework node_modules (DOMINEVO_FRAMEWORK_DIR → NODE_PATH) so the installer's closure-dedupe
   // (D343) links all three at ONE 5.3 MB copy rather than bundling three. A bare ESM `import('werift')`
   // FAILS here because ESM `import()` does NOT consult NODE_PATH — only CJS resolution does. So we
   // resolve the absolute path via `createRequire().resolve` (which honours NODE_PATH → the shared
@@ -106,7 +106,7 @@ async function loadWerift(): Promise<WeriftModule> {
   // Resolution base: the shared framework node_modules (format-agnostic — avoids import.meta.url /
   // __filename, which differ between the addon's ESM/CJS builds). `require.resolve` from here finds
   // the framework's werift directly, and also honours NODE_PATH.
-  const fwDir = process.env['CAMSTACK_FRAMEWORK_DIR']
+  const fwDir = process.env['DOMINEVO_FRAMEWORK_DIR']
   const resolveBase = fwDir
     ? join(fwDir, 'node_modules', '_werift_anchor.js')
     : join(process.cwd(), '_werift_anchor.js')

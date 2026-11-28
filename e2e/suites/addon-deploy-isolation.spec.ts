@@ -34,7 +34,7 @@ import { packAddon, uploadTarball } from '../fixtures/addon-upload.ts'
 // bundled closure instead of pulling them from npm (same as addon-update-on-agent).
 const REPO_PACKAGES_DIR = resolve(fileURLToPath(import.meta.url), '..', '..', '..', 'packages')
 
-const E2E_LIVE = process.env['CAMSTACK_E2E_LIVE'] === '1'
+const E2E_LIVE = process.env['DOMINEVO_E2E_LIVE'] === '1'
 const desc = E2E_LIVE ? describe : describe.skip
 
 const PACKAGE_NAME = '@dominevo/e2e-fixture-noop'
@@ -52,9 +52,9 @@ beforeAll(async () => {
     port: HUB_PORT,
     bootTimeoutMs: 180_000,
     env: {
-      CAMSTACK_BUNDLED_ADDONS_DIR: REPO_PACKAGES_DIR,
-      CAMSTACK_SKIP_ADMIN_UI_WAIT: '1',
-      CAMSTACK_HUB_TCP_PORT: '6031',
+      DOMINEVO_BUNDLED_ADDONS_DIR: REPO_PACKAGES_DIR,
+      DOMINEVO_SKIP_ADMIN_UI_WAIT: '1',
+      DOMINEVO_HUB_TCP_PORT: '6031',
     },
   })
   client = await loginAsAdmin(hub.port)

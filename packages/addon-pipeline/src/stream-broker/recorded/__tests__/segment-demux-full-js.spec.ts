@@ -10,7 +10,7 @@ import { demuxSegmentToAnnexB, FfmpegFallbackRefusedError } from '../segment-dem
 const HEVC_SAMPLE = join(__dirname, 'fixtures/sample.m4s')
 const HAVE_HEVC = existsSync(HEVC_SAMPLE)
 /** The binary the product would run: CI exports the pinned build here (D540). */
-const FFMPEG = process.env['CAMSTACK_FFMPEG_PATH'] ?? 'ffmpeg'
+const FFMPEG = process.env['DOMINEVO_FFMPEG_PATH'] ?? 'ffmpeg'
 
 const nalTypesAnnexB = (buf: Uint8Array, hevc: boolean): Set<number> => {
   const types = new Set<number>()

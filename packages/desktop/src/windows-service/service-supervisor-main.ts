@@ -21,7 +21,7 @@ const supervisor = new NodeSupervisor({
     // installer. The module is the closure's, never ours (ADR 0970); fails open.
     const launch = resolveLaunchArgs({
       role: 'agent',
-      dataDir: process.env['CAMSTACK_DATA'] ?? '',
+      dataDir: process.env['DOMINEVO_DATA'] ?? '',
       starterPath: starter,
       nodeExecPath: process.execPath,
       runAsElectron: false,

@@ -121,7 +121,7 @@ export function resolveLaunchArgs(options: ResolveLaunchArgsOptions): LaunchArgs
   try {
     const env: NodeJS.ProcessEnv = {
       ...options.env,
-      CAMSTACK_DATA: options.dataDir,
+      DOMINEVO_DATA: options.dataDir,
       ...(options.runAsElectron ? { ELECTRON_RUN_AS_NODE: '1' } : {}),
     }
     return parseLaunchOutput(run(options.nodeExecPath, [moduleJs, '--role', options.role], env))

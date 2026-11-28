@@ -24,7 +24,7 @@
  *   npx tsx scripts/bench-stress-cameras.mts [durationSec=15]
  *
  * Env:
- *   CAMSTACK_SERVER  hub address (default: the `dominevo login` session's hub)
+ *   DOMINEVO_SERVER  hub address (default: the `dominevo login` session's hub)
  *   AGENT_NODE_ID    hub
  *   ADDON_ID         object-detection
  *   MODEL_ID         yolov11n
@@ -57,7 +57,7 @@ const DURATION_SEC = Number.parseInt(process.argv[2] ?? '15', 10)
 // The `dominevo login` session is the only credential (D1101): log in once with
 // `dominevo login <host>`; nothing here asks for a password.
 const hubAuth = await resolveHubAuth(
-  process.env['CAMSTACK_SERVER'] ? { server: process.env['CAMSTACK_SERVER'] } : {},
+  process.env['DOMINEVO_SERVER'] ? { server: process.env['DOMINEVO_SERVER'] } : {},
 )
 const SERVER = hubAuth.server
 const NODE_ID = process.env.AGENT_NODE_ID ?? 'hub'

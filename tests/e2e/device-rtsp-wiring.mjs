@@ -21,7 +21,7 @@
  *   node tests/e2e/device-rtsp-wiring.mjs
  *
  * Setup: `dominevo login <host>` once (an admin account). No password is read here.
- * Env: CAMSTACK_HOST overrides the hub address (otherwise CAMSTACK_HUB_URL, scratchpad/.hub-url or the session).
+ * Env: DOMINEVO_HOST overrides the hub address (otherwise DOMINEVO_HUB_URL, scratchpad/.hub-url or the session).
  */
 import { resolveHubAuth } from '../../scripts/hub/credentials.mjs'
 import { createTRPCClient, createWSClient, wsLink } from '@trpc/client'
@@ -32,9 +32,9 @@ import { setGlobalDispatcher, Agent } from 'undici'
 setGlobalDispatcher(new Agent({ connect: { rejectUnauthorized: false } }))
 
 // The hub and the credential come from the `dominevo login` session through the shared
-// resolver (scripts/hub/credentials.mjs); CAMSTACK_HOST is an explicit override only.
+// resolver (scripts/hub/credentials.mjs); DOMINEVO_HOST is an explicit override only.
 const AUTH = await resolveHubAuth(
-  process.env.CAMSTACK_HOST ? { server: process.env.CAMSTACK_HOST } : {},
+  process.env.DOMINEVO_HOST ? { server: process.env.DOMINEVO_HOST } : {},
 )
 const HOST = AUTH.server
 

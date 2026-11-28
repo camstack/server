@@ -93,8 +93,8 @@ describe('AddonInstaller.installFromTgz — closure dedupe', () => {
   beforeEach(() => {
     // The "no closure" test must not pick up a real framework dir from the
     // host environment.
-    savedFrameworkDir = process.env['CAMSTACK_FRAMEWORK_DIR']
-    delete process.env['CAMSTACK_FRAMEWORK_DIR']
+    savedFrameworkDir = process.env['DOMINEVO_FRAMEWORK_DIR']
+    delete process.env['DOMINEVO_FRAMEWORK_DIR']
     tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'camstack-closure-dedupe-'))
     addonsDir = path.join(tmpRoot, 'addons')
     closureNodeModules = path.join(tmpRoot, 'closure', 'node_modules')
@@ -116,7 +116,7 @@ describe('AddonInstaller.installFromTgz — closure dedupe', () => {
 
   afterEach(() => {
     if (savedFrameworkDir !== undefined) {
-      process.env['CAMSTACK_FRAMEWORK_DIR'] = savedFrameworkDir
+      process.env['DOMINEVO_FRAMEWORK_DIR'] = savedFrameworkDir
     }
     fs.rmSync(tmpRoot, { recursive: true, force: true })
   })

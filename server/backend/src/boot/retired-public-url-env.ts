@@ -1,7 +1,7 @@
 /**
  * The hub's address is not an environment variable.
  *
- * `CAMSTACK_HUB_PUBLIC_URL` (and its older alias `CAMSTACK_PUBLIC_ORIGIN`)
+ * `DOMINEVO_HUB_PUBLIC_URL` (and its older alias `DOMINEVO_PUBLIC_ORIGIN`)
  * restated something the hub already knows: its interfaces, its listen port,
  * the operator's allowlist, its tunnel and mesh names — the `local-network`
  * capability, shown and edited on the admin Network page. A hub without the
@@ -17,8 +17,8 @@
 
 /** Variables that used to name the hub's address; all ignored now. */
 export const RETIRED_HUB_ADDRESS_ENVS = [
-  'CAMSTACK_HUB_PUBLIC_URL',
-  'CAMSTACK_PUBLIC_ORIGIN',
+  'DOMINEVO_HUB_PUBLIC_URL',
+  'DOMINEVO_PUBLIC_ORIGIN',
 ] as const
 
 /**

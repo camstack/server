@@ -33,9 +33,9 @@ import {
 const NOW = 1_700_000_000_000
 
 const ENV_NAMES: RootUpdateEnvNames = {
-  bootMode: 'CAMSTACK_SERVER_BOOT_MODE',
-  activeVersion: 'CAMSTACK_SERVER_ACTIVE_VERSION',
-  seedDir: 'CAMSTACK_SEED_SERVER_DIR',
+  bootMode: 'DOMINEVO_SERVER_BOOT_MODE',
+  activeVersion: 'DOMINEVO_SERVER_ACTIVE_VERSION',
+  seedDir: 'DOMINEVO_SEED_SERVER_DIR',
 }
 
 function makeLogger(): RootUpdateLogger {
@@ -174,7 +174,7 @@ describe('stageClosure — dev-uploads branch', () => {
       '@dominevo/types': 'camstack-types.tgz',
     })
     const { execNpm, calls } = makeInstallCapture(DEV_VERSION)
-    const svc = makeService({ CAMSTACK_SERVER_BOOT_MODE: 'data-root' }, execNpm)
+    const svc = makeService({ DOMINEVO_SERVER_BOOT_MODE: 'data-root' }, execNpm)
 
     const result = await svc.applyServerUpdate({ version: DEV_VERSION })
     expect(result.accepted, result.message).toBe(true)
@@ -203,7 +203,7 @@ describe('stageClosure — dev-uploads branch', () => {
     const buildTimeMs = Date.parse('2026-11-24T10:00:00.000Z')
     seedDevUploads(DEV_VERSION, { '@dominevo/server': 'camstack-server.tgz' }, buildTimeMs)
     const { execNpm, calls } = makeInstallCapture(DEV_VERSION)
-    const svc = makeService({ CAMSTACK_SERVER_BOOT_MODE: 'data-root' }, execNpm)
+    const svc = makeService({ DOMINEVO_SERVER_BOOT_MODE: 'data-root' }, execNpm)
 
     const result = await svc.applyServerUpdate({ version: DEV_VERSION })
     expect(result.accepted, result.message).toBe(true)
@@ -213,7 +213,7 @@ describe('stageClosure — dev-uploads branch', () => {
   it('installs unbounded (no --before) when the manifest has no build time', async () => {
     seedDevUploads(DEV_VERSION, { '@dominevo/server': 'camstack-server.tgz' })
     const { execNpm, calls } = makeInstallCapture(DEV_VERSION)
-    const svc = makeService({ CAMSTACK_SERVER_BOOT_MODE: 'data-root' }, execNpm)
+    const svc = makeService({ DOMINEVO_SERVER_BOOT_MODE: 'data-root' }, execNpm)
 
     const result = await svc.applyServerUpdate({ version: DEV_VERSION })
     expect(result.accepted, result.message).toBe(true)
@@ -237,7 +237,7 @@ describe('stageClosure — dev-uploads branch', () => {
         }),
       )
       const { execNpm, calls } = makeInstallCapture(DEV_VERSION)
-      const svc = makeService({ CAMSTACK_SERVER_BOOT_MODE: 'data-root' }, execNpm)
+      const svc = makeService({ DOMINEVO_SERVER_BOOT_MODE: 'data-root' }, execNpm)
 
       const result = await svc.applyServerUpdate({ version: DEV_VERSION })
       expect(result.accepted, result.message).toBe(true)
@@ -257,7 +257,7 @@ describe('stageClosure — dev-uploads branch', () => {
       )
       fs.writeFileSync(path.join(dir, 'camstack-server.tgz'), tarballWith({ 'other.json': '{}' }))
       const { execNpm, calls } = makeInstallCapture(DEV_VERSION)
-      const svc = makeService({ CAMSTACK_SERVER_BOOT_MODE: 'data-root' }, execNpm)
+      const svc = makeService({ DOMINEVO_SERVER_BOOT_MODE: 'data-root' }, execNpm)
 
       const result = await svc.applyServerUpdate({ version: DEV_VERSION })
       expect(result.accepted, result.message).toBe(true)
@@ -276,7 +276,7 @@ describe('stageClosure — dev-uploads branch', () => {
         tarballWith({ 'closure-pins.json': JSON.stringify({ sharp: '^0.35.0' }) }),
       )
       const { execNpm, calls } = makeInstallCapture(DEV_VERSION)
-      const svc = makeService({ CAMSTACK_SERVER_BOOT_MODE: 'data-root' }, execNpm)
+      const svc = makeService({ DOMINEVO_SERVER_BOOT_MODE: 'data-root' }, execNpm)
 
       const result = await svc.applyServerUpdate({ version: DEV_VERSION })
       expect(result.accepted, result.message).toBe(true)
@@ -286,7 +286,7 @@ describe('stageClosure — dev-uploads branch', () => {
 
   it('registry path is untouched when no dev-uploads dir exists', async () => {
     const { execNpm, calls } = makeInstallCapture('1.1.51')
-    const svc = makeService({ CAMSTACK_SERVER_BOOT_MODE: 'data-root' }, execNpm)
+    const svc = makeService({ DOMINEVO_SERVER_BOOT_MODE: 'data-root' }, execNpm)
 
     const result = await svc.applyServerUpdate({ version: '1.1.51' })
     expect(result.accepted).toBe(true)
@@ -302,7 +302,7 @@ describe('stageClosure — dev-uploads branch', () => {
 
   it('REFUSES a dev-channel version whose uploads are absent on this node', async () => {
     const { execNpm, calls } = makeInstallCapture(DEV_VERSION)
-    const svc = makeService({ CAMSTACK_SERVER_BOOT_MODE: 'data-root' }, execNpm)
+    const svc = makeService({ DOMINEVO_SERVER_BOOT_MODE: 'data-root' }, execNpm)
 
     const result = await svc.applyServerUpdate({ version: DEV_VERSION })
     expect(result.accepted).toBe(false)
@@ -316,7 +316,7 @@ describe('stageClosure — dev-uploads branch', () => {
     fs.mkdirSync(dir, { recursive: true })
     fs.writeFileSync(path.join(dir, 'camstack-server.tgz'), 'tgz', 'utf-8')
     const { execNpm } = makeInstallCapture(DEV_VERSION)
-    const svc = makeService({ CAMSTACK_SERVER_BOOT_MODE: 'data-root' }, execNpm)
+    const svc = makeService({ DOMINEVO_SERVER_BOOT_MODE: 'data-root' }, execNpm)
 
     const result = await svc.applyServerUpdate({ version: DEV_VERSION })
     expect(result.accepted).toBe(false)
@@ -326,7 +326,7 @@ describe('stageClosure — dev-uploads branch', () => {
   it('fails staging when the manifest lacks the root package', async () => {
     seedDevUploads(DEV_VERSION, { '@dominevo/types': 'camstack-types.tgz' })
     const { execNpm } = makeInstallCapture(DEV_VERSION)
-    const svc = makeService({ CAMSTACK_SERVER_BOOT_MODE: 'data-root' }, execNpm)
+    const svc = makeService({ DOMINEVO_SERVER_BOOT_MODE: 'data-root' }, execNpm)
 
     const result = await svc.applyServerUpdate({ version: DEV_VERSION })
     expect(result.accepted).toBe(false)
@@ -339,7 +339,7 @@ describe('confirmBootHealthy — dev-uploads cleanup', () => {
     const versions = [100, 101, 102, 103, 104].map((e) => `1.1.54-dev.${e}`)
     for (const v of versions) seedDevUploads(v, { '@dominevo/server': 'camstack-server.tgz' })
     const { execNpm } = makeInstallCapture(versions[4]!)
-    const svc = makeService({ CAMSTACK_SERVER_BOOT_MODE: 'data-root' }, execNpm)
+    const svc = makeService({ DOMINEVO_SERVER_BOOT_MODE: 'data-root' }, execNpm)
 
     svc.confirmBootHealthy()
 
@@ -352,7 +352,7 @@ describe('confirmBootHealthy — dev-uploads cleanup', () => {
 
   it('is a no-op when the dev-uploads dir does not exist', () => {
     const { execNpm } = makeInstallCapture('1.1.51')
-    const svc = makeService({ CAMSTACK_SERVER_BOOT_MODE: 'data-root' }, execNpm)
+    const svc = makeService({ DOMINEVO_SERVER_BOOT_MODE: 'data-root' }, execNpm)
     expect(() => svc.confirmBootHealthy()).not.toThrow()
   })
 })

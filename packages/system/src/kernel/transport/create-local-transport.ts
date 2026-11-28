@@ -5,7 +5,7 @@ import type { LocalTransportFactory } from './local-transport.js'
 /**
  * The extension seam. UDS is the only shipped implementation; a future
  * transport implements `LocalTransportFactory` and is selected here (e.g. via
- * a `CAMSTACK_LOCAL_TRANSPORT` env) without touching any consumer.
+ * a `DOMINEVO_LOCAL_TRANSPORT` env) without touching any consumer.
  */
 export function createLocalTransport(): LocalTransportFactory {
   return {

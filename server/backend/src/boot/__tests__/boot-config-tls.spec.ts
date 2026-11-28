@@ -14,7 +14,7 @@ import {
  * D726: the admin UI is the only way to set a node's certificate; the env path
  * is ignored, loudly. #342: whether the hub serves HTTPS at all is the
  * "Serve HTTPS" setting in Network → Local access, read at boot from the
- * `tls/enabled` marker — never `CAMSTACK_TLS_ENABLED`.
+ * `tls/enabled` marker — never `DOMINEVO_TLS_ENABLED`.
  */
 describe('boot config — certificate env is ignored (D726)', () => {
   let dir: string
@@ -31,20 +31,20 @@ describe('boot config — certificate env is ignored (D726)', () => {
   it('names every env variable that used to set a certificate', () => {
     expect(
       ignoredTlsCertSources({
-        CAMSTACK_TLS_CERT: '/certs/a.pem',
-        CAMSTACK_TLS_KEY: '/certs/a.key',
+        DOMINEVO_TLS_CERT: '/certs/a.pem',
+        DOMINEVO_TLS_KEY: '/certs/a.key',
       }),
-    ).toEqual(['CAMSTACK_TLS_CERT', 'CAMSTACK_TLS_KEY'])
+    ).toEqual(['DOMINEVO_TLS_CERT', 'DOMINEVO_TLS_KEY'])
   })
 
   it('names nothing when none is set, blank env included', () => {
-    expect(ignoredTlsCertSources({ CAMSTACK_TLS_CERT: '' })).toEqual([])
+    expect(ignoredTlsCertSources({ DOMINEVO_TLS_CERT: '' })).toEqual([])
     expect(ignoredTlsCertSources({})).toEqual([])
   })
 
   it('WARNs at boot that the env certificate is ignored', () => {
-    vi.stubEnv('CAMSTACK_TLS_CERT', '/certs/fullchain.pem')
-    vi.stubEnv('CAMSTACK_TLS_KEY', '/certs/privkey.pem')
+    vi.stubEnv('DOMINEVO_TLS_CERT', '/certs/fullchain.pem')
+    vi.stubEnv('DOMINEVO_TLS_KEY', '/certs/privkey.pem')
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
     vi.spyOn(console, 'log').mockImplementation(() => undefined)
 
@@ -52,23 +52,23 @@ describe('boot config — certificate env is ignored (D726)', () => {
 
     const ignored = warn.mock.calls
       .map((call) => String(call[0]))
-      .find((line) => line.includes('CAMSTACK_TLS_CERT'))
-    expect(ignored).toContain('CAMSTACK_TLS_KEY')
+      .find((line) => line.includes('DOMINEVO_TLS_CERT'))
+    expect(ignored).toContain('DOMINEVO_TLS_KEY')
     expect(ignored).toContain('Network → Local access')
   })
 
-  it('names the retired CAMSTACK_TLS_ENABLED and warns, with no tls key in the config', () => {
-    expect(retiredTlsEnabledSources({ CAMSTACK_TLS_ENABLED: 'false' })).toEqual([
-      'CAMSTACK_TLS_ENABLED',
+  it('names the retired DOMINEVO_TLS_ENABLED and warns, with no tls key in the config', () => {
+    expect(retiredTlsEnabledSources({ DOMINEVO_TLS_ENABLED: 'false' })).toEqual([
+      'DOMINEVO_TLS_ENABLED',
     ])
-    vi.stubEnv('CAMSTACK_TLS_ENABLED', 'false')
+    vi.stubEnv('DOMINEVO_TLS_ENABLED', 'false')
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
     vi.spyOn(console, 'log').mockImplementation(() => undefined)
 
     const config = loadBootstrapConfig()
 
     expect(config).not.toHaveProperty('tls')
-    expect(warn.mock.calls.map((c) => String(c[0])).join('\n')).toContain('CAMSTACK_TLS_ENABLED')
+    expect(warn.mock.calls.map((c) => String(c[0])).join('\n')).toContain('DOMINEVO_TLS_ENABLED')
   })
 })
 
@@ -76,12 +76,12 @@ describe('setupInfra — HTTPS is the stored setting, with a floor of on', () =>
   let dir: string
   beforeEach(() => {
     dir = fs.mkdtempSync(path.join(os.tmpdir(), 'boot-config-tls-infra-'))
-    // The bootstrap loader reads CAMSTACK_DATA/PORT/HOST, and a
+    // The bootstrap loader reads DOMINEVO_DATA/PORT/HOST, and a
     // developer shell or an nx-loaded .env sets them: pin them so the data path is
     // this spec's temp dir whatever the host environment says.
-    vi.stubEnv('CAMSTACK_DATA', dir)
-    vi.stubEnv('CAMSTACK_PORT', '')
-    vi.stubEnv('CAMSTACK_HOST', '')
+    vi.stubEnv('DOMINEVO_DATA', dir)
+    vi.stubEnv('DOMINEVO_PORT', '')
+    vi.stubEnv('DOMINEVO_HOST', '')
     vi.spyOn(console, 'log').mockImplementation(() => undefined)
     vi.spyOn(console, 'warn').mockImplementation(() => undefined)
   })
@@ -108,7 +108,7 @@ describe('setupInfra — HTTPS is the stored setting, with a floor of on', () =>
   })
 
   it('the env variable changes nothing: still HTTPS with no stored value', async () => {
-    vi.stubEnv('CAMSTACK_TLS_ENABLED', 'false')
+    vi.stubEnv('DOMINEVO_TLS_ENABLED', 'false')
     const infra = await boot()
     expect(infra.tlsOptions).toBeDefined()
   })

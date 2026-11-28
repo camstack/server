@@ -156,7 +156,7 @@ function main(): void {
   }
 
   // 1b. lucide-react-native (the viewer surface) — only when the submodule is installed.
-  const viewerRoot = process.env['CAMSTACK_VIEWER_ROOT'] ?? join(ROOT, 'camstack')
+  const viewerRoot = process.env['DOMINEVO_VIEWER_ROOT'] ?? join(ROOT, 'camstack')
   const viewerDir = join(viewerRoot, 'node_modules/lucide-react-native')
   const viewerVersion = installedVersion(viewerDir)
   if (viewerVersion === undefined) {

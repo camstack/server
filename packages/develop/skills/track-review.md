@@ -22,8 +22,8 @@ optional environment variables, both addresses or paths and never a secret.
 
 | Variable | Meaning |
 | --- | --- |
-| `CAMSTACK_HUB_URL` | Hub address (`https://hub.local:4443`; a bare host is completed to the default port). Without it the session's own hub is used. |
-| `CAMSTACK_HUB_CA_FILE` | PEM of the hub's CA or pinned certificate, for a self-signed hub. |
+| `DOMINEVO_HUB_URL` | Hub address (`https://hub.local:4443`; a bare host is completed to the default port). Without it the session's own hub is used. |
+| `DOMINEVO_HUB_CA_FILE` | PEM of the hub's CA or pinned certificate, for a self-signed hub. |
 
 TLS verification is never turned off: a certificate error is fixed by naming the
 CA, not by disabling the check. Triage and frame work with any login;
@@ -33,8 +33,8 @@ up front, before any hub call, when the credential is not admin. Tokens are neve
 ```json
 { "mcpServers": { "camstack-develop": {
   "command": "npx", "args": ["@dominevo/mcp-develop"],
-  "env": { "CAMSTACK_HUB_URL": "https://hub.local:4443",
-           "CAMSTACK_HUB_CA_FILE": "/home/me/.camstack/hub-ca.pem" } } } }
+  "env": { "DOMINEVO_HUB_URL": "https://hub.local:4443",
+           "DOMINEVO_HUB_CA_FILE": "/home/me/.camstack/hub-ca.pem" } } } }
 ```
 
 ## 1. Triage — rank, do not judge

@@ -368,11 +368,11 @@ export interface RunResult {
 }
 
 /**
- * Where the public docs checkout is: `CAMSTACK_DOCS_DIR`, else the sibling
+ * Where the public docs checkout is: `DOMINEVO_DOCS_DIR`, else the sibling
  * `../docs` of camstack-server. Null when neither holds a docs repo.
  */
 export function locateDocs(serverRoot: string, env: NodeJS.ProcessEnv): string | null {
-  const candidates = [env['CAMSTACK_DOCS_DIR'], path.resolve(serverRoot, '..', 'docs')]
+  const candidates = [env['DOMINEVO_DOCS_DIR'], path.resolve(serverRoot, '..', 'docs')]
   for (const dir of candidates) {
     if (dir && fs.existsSync(path.join(dir, 'content', 'docs'))) return dir
   }
@@ -386,7 +386,7 @@ export function run(options: RunOptions): RunResult {
       report: null,
       lines: [
         'Public docs staleness — skipped: no camstack/docs checkout found.',
-        '  Clone it next to camstack-server (../docs) or set CAMSTACK_DOCS_DIR.',
+        '  Clone it next to camstack-server (../docs) or set DOMINEVO_DOCS_DIR.',
       ],
     }
   }

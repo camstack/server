@@ -17,7 +17,7 @@
  * a name that already exists with a legacy `(id, data)` KV shape, the
  * `ensureTable` helper drops the old table and recreates it. Existing
  * data is wiped — `ensureAdminExists` re-seeds the admin from
- * CAMSTACK_ADMIN_USER / CAMSTACK_ADMIN_PASS on the next boot (an empty
+ * DOMINEVO_ADMIN_USER / DOMINEVO_ADMIN_PASS on the next boot (an empty
  * table is a first boot).
  */
 import type { SettingsStoreClient } from '@dominevo/types'

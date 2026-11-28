@@ -477,7 +477,7 @@ describe('per-runner heap watch — heavy runners inherit the hub-main reclaimer
     }
   })
 
-  it('CAMSTACK_RUNNER_HEAP_RECLAIM=off keeps the heartbeat and disables only the pass', () => {
+  it('DOMINEVO_RUNNER_HEAP_RECLAIM=off keeps the heartbeat and disables only the pass', () => {
     // The operator kill-switch for the media path: if a pass ever misbehaves in
     // a runner that finalizes segments, recovery must not need a rebuild.
     const info = vi.fn()
@@ -704,7 +704,7 @@ describe('a permanently satisfied trigger says so', () => {
  * Every forked runner carries V8 heap flags from `process-service.ts`
  * (`--max-old-space-size` on heavy, `--max-semi-space-size` on light). hub-main
  * carries none: `docker-entrypoint.sh` only adds `--max-old-space-size` when
- * `CAMSTACK_HUB_HEAP_MB` is set, and it is not set on the live container —
+ * `DOMINEVO_HUB_HEAP_MB` is set, and it is not set on the live container —
  * verified 2026-08-25 by reading pid 7's argv, which is a bare
  * `node .../starter.js`. The ceiling in force is therefore whatever V8 derives
  * from the host (4288MB here), and the ONLY record of that choice is a comment
@@ -766,7 +766,7 @@ describe('the heap ceiling says whether anyone CHOSE it', () => {
   })
 
   it('names WHO chose the ceiling when the launcher said so (ADR 0970)', () => {
-    vi.stubEnv('CAMSTACK_HEAP_CEILING_SOURCE', 'override')
+    vi.stubEnv('DOMINEVO_HEAP_CEILING_SOURCE', 'override')
     const info = vi.fn()
     const stop = startHeapWatch(
       'agent-main',
@@ -787,7 +787,7 @@ describe('the heap ceiling says whether anyone CHOSE it', () => {
   })
 
   it('a forked runner inheriting the env never claims the launcher chose ITS ceiling', () => {
-    vi.stubEnv('CAMSTACK_HEAP_CEILING_SOURCE', 'override')
+    vi.stubEnv('DOMINEVO_HEAP_CEILING_SOURCE', 'override')
     const info = vi.fn()
     const stop = startHeapWatch(
       'recorder',
@@ -808,7 +808,7 @@ describe('the heap ceiling says whether anyone CHOSE it', () => {
   })
 
   it('the V8-default line carries the source too', () => {
-    vi.stubEnv('CAMSTACK_HEAP_CEILING_SOURCE', 'v8-default')
+    vi.stubEnv('DOMINEVO_HEAP_CEILING_SOURCE', 'v8-default')
     const info = vi.fn()
     const stop = startHeapWatch(
       'hub-main',
@@ -1268,7 +1268,7 @@ describe('an undeclared budget is declared', () => {
   })
 
   it('the reclaim kill-switch turns off the PASS, never the reporting', () => {
-    // `CAMSTACK_RUNNER_HEAP_RECLAIM=off` is the operator's escape hatch for the
+    // `DOMINEVO_RUNNER_HEAP_RECLAIM=off` is the operator's escape hatch for the
     // stop-the-world on the media path. Losing the budget alarm with it would
     // mean the switch silently removes the only thing that sees a Buffer climb.
     const info = vi.fn()

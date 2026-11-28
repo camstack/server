@@ -49,7 +49,7 @@ describe('check-libva-abi.sh', () => {
     chmodSync(shim, 0o755)
     const res = spawnSync('sh', [SCRIPT, driver], {
       encoding: 'utf8',
-      env: { PATH: `${bin}:/usr/bin:/bin`, CAMSTACK_LIBVA_ABI_SKIP_DEVICE: '1' },
+      env: { PATH: `${bin}:/usr/bin:/bin`, DOMINEVO_LIBVA_ABI_SKIP_DEVICE: '1' },
     })
     return { status: res.status, out: `${res.stdout}${res.stderr}` }
   }

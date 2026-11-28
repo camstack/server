@@ -5,7 +5,7 @@
 
   Dominevo hub — the always-on node. One per cluster.
 
-  The image serves both roles; CAMSTACK_ROLE selects which. See
+  The image serves both roles; DOMINEVO_ROLE selects which. See
   camstack-agent.xml for a worker node.
 
   Network: keep br0 (a dedicated container IP) or host. mDNS announcement of

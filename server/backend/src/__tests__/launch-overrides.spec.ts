@@ -25,7 +25,7 @@ describe('writeHeapOverrideMb', () => {
     writeHeapOverrideMb(dir, 3072)
     expect(readHeapOverrideMb(dir)).toBe(3072)
     const out = runLaunchCli(['--role', 'agent'], {
-      env: { CAMSTACK_DATA: dir },
+      env: { DOMINEVO_DATA: dir },
       io: { readFile: (f) => (existsSync(f) ? readFileSync(f, 'utf8') : null) },
       totalMemBytes: 64 * 1024 ** 3,
     })

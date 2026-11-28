@@ -34,9 +34,9 @@ import {
 
 const NOW = 1_700_000_000_000
 const ENV_NAMES: RootUpdateEnvNames = {
-  bootMode: 'CAMSTACK_SERVER_BOOT_MODE',
-  activeVersion: 'CAMSTACK_SERVER_ACTIVE_VERSION',
-  seedDir: 'CAMSTACK_SEED_SERVER_DIR',
+  bootMode: 'DOMINEVO_SERVER_BOOT_MODE',
+  activeVersion: 'DOMINEVO_SERVER_ACTIVE_VERSION',
+  seedDir: 'DOMINEVO_SEED_SERVER_DIR',
 }
 
 function makeLogger(): RootUpdateLogger {
@@ -124,7 +124,7 @@ function makeService(options: {
     ...(options.applyClosurePatches !== undefined
       ? { applyClosurePatches: options.applyClosurePatches }
       : {}),
-    env: { CAMSTACK_SERVER_BOOT_MODE: 'data-root', CAMSTACK_SERVER_ACTIVE_VERSION: '1.2.276' },
+    env: { DOMINEVO_SERVER_BOOT_MODE: 'data-root', DOMINEVO_SERVER_ACTIVE_VERSION: '1.2.276' },
     now: () => NOW,
   })
 }

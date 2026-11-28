@@ -184,7 +184,7 @@ describe('wrapWebrtcSessionProviderWithRelay — UA enrichment', () => {
 
 /**
  * `enrichInputWithRelayClass` gates the remote→relay injection behind the
- * `CAMSTACK_FORCE_RELAY_REMOTE` env flag (DEFAULT OFF). The forced-relay MEDIA
+ * `DOMINEVO_FORCE_RELAY_REMOTE` env flag (DEFAULT OFF). The forced-relay MEDIA
  * path was never validated to deliver media (connected-but-black, disabled
  * 2026-05-26; the werift candidate-leak patch fixed a DIFFERENT bug), so with
  * the flag OFF every class gets `relayOnly:false` while the class is STILL
@@ -194,7 +194,7 @@ describe('wrapWebrtcSessionProviderWithRelay — UA enrichment', () => {
  * stubs the env then `vi.resetModules()` + dynamic-imports a fresh copy of the
  * router module.
  */
-describe('enrichInputWithRelayClass — remote relay gate (CAMSTACK_FORCE_RELAY_REMOTE)', () => {
+describe('enrichInputWithRelayClass — remote relay gate (DOMINEVO_FORCE_RELAY_REMOTE)', () => {
   afterEach(() => {
     vi.unstubAllEnvs()
     vi.resetModules()
@@ -204,7 +204,7 @@ describe('enrichInputWithRelayClass — remote relay gate (CAMSTACK_FORCE_RELAY_
     vi.resetModules()
     // '' models an unset / falsy flag (default OFF); a concrete string models
     // the operator having exported it.
-    vi.stubEnv('CAMSTACK_FORCE_RELAY_REMOTE', flag ?? '')
+    vi.stubEnv('DOMINEVO_FORCE_RELAY_REMOTE', flag ?? '')
     const mod = await import('../trpc.router.js')
     return mod.enrichInputWithRelayClass
   }

@@ -4,12 +4,12 @@
 
 # Guards
 
-265 repository guards: 260 in `scripts/`,
+266 repository guards: 261 in `scripts/`,
 5 as tests inside the package they judge. A guard is the only
 durable form of a convention: a rule nothing checks is a rule that has already
 been broken somewhere. Prefer adding one over adding a paragraph.
 
-## Enforced by CI checks (253)
+## Enforced by CI checks (254)
 
 Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.yml`.
 
@@ -161,6 +161,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-no-hub-address-env.ts` | No runtime code reads the hub's address from the environment. |
 | `scripts/check-no-hub-device-type.ts` | The device type `hub` is gone. A stored row with that type is unknown; it is not aliased to Gateway. This guard refuses the enum member, a device-type set that still lists it beside another device type (`nvr`, `camera`, …), and a compari… |
 | `scripts/check-no-integration-settings.ts` | The legacy integration settings store stays deleted (planning#416, D1007). |
+| `scripts/check-no-legacy-product-env.ts` | No `CAMSTACK_` environment variable name anywhere in tracked code, the Dockerfile or the workflows. The container and process contract is named `DOMINEVO_*` and the old names are not read as a fallback: a template or script that still se… |
 | `scripts/check-no-legacy-token-prefix.ts` | No source names a pre-D892 opaque token format (D895). |
 | `scripts/check-no-legacy-tracker.ts` | The old tracker stays deleted (D683). |
 | `scripts/check-no-literal-addon-process-mode.ts` | Addon-process guard (D877) - `addons.list` never reports a LITERAL process mode. |

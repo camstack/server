@@ -13,7 +13,7 @@
  *     entries / runtime tags — required for the version-conflict
  *     scenarios in Phase 4+.
  *
- * Not gated by CAMSTACK_E2E_LIVE — the builder is pure file I/O; no
+ * Not gated by DOMINEVO_E2E_LIVE — the builder is pure file I/O; no
  * subprocess, no network. Lives in `suites/` only because that's where
  * the harness's vitest pool config picks it up.
  */

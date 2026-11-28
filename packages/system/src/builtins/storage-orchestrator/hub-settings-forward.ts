@@ -102,7 +102,7 @@ export type HubForwardCall = <TResult>(envelope: HubForwardEnvelope) => Promise<
  * Anything else is an agent, and an agent's answer is the hub's store.
  */
 export function nodeOwnsItsDataStore(env: NodeJS.ProcessEnv): boolean {
-  const raw = (env['CAMSTACK_ROLE'] ?? '').trim().toLowerCase()
+  const raw = (env['DOMINEVO_ROLE'] ?? '').trim().toLowerCase()
   return raw === '' || raw === 'hub'
 }
 

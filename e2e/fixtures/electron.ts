@@ -1,7 +1,7 @@
 /**
  * Electron / hub spawn fixture for E2E tests.
  *
- * Spawns the camstack hub as a child process with isolated CAMSTACK_DATA
+ * Spawns the camstack hub as a child process with isolated DOMINEVO_DATA
  * so suites never collide with the operator's running cluster. Two modes:
  *
  *   - `spawnHub({ mode: 'server' })`   — runs `npm run serve -w server/backend`
@@ -109,14 +109,14 @@ export async function spawnHub(opts: SpawnHubOptions = {}): Promise<SpawnedHub> 
 
   const env: NodeJS.ProcessEnv = {
     ...process.env,
-    CAMSTACK_DATA: dataDir,
+    DOMINEVO_DATA: dataDir,
     NODE_ENV: 'test',
-    // `CAMSTACK_PORT` is the boot-config-mapped env var the server
+    // `DOMINEVO_PORT` is the boot-config-mapped env var the server
     // actually reads (boot-config.ts:43 maps it to `server.port`).
     // `PORT`/`HTTPS_PORT` are legacy fallbacks — kept so older suites
-    // that set them keep working, but adding CAMSTACK_PORT is what
+    // that set them keep working, but adding DOMINEVO_PORT is what
     // matters when a developer's dev:full hub holds the default 4443.
-    CAMSTACK_PORT: String(port),
+    DOMINEVO_PORT: String(port),
     PORT: String(port),
     HTTPS_PORT: String(port),
     // No admin credentials in env (D797): a fresh hub seeds admin / changeme.
@@ -127,7 +127,7 @@ export async function spawnHub(opts: SpawnHubOptions = {}): Promise<SpawnedHub> 
   // Use `serve:once` (plain tsx, no watch) so the test hub doesn't
   // restart itself when an addon's dist files churn during install/
   // uninstall. The `serve` (watch) variant covers a developer's local
-  // CAMSTACK_DATA via --ignore, but the e2e mktemp dir lives outside
+  // DOMINEVO_DATA via --ignore, but the e2e mktemp dir lives outside
   // that pattern → addon uninstall files trip a hub reboot mid-test.
   const args =
     mode === 'electron'

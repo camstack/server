@@ -327,7 +327,7 @@ def _ov_request_count(optimal: int) -> int:
 # the never-enabled AsyncInferQueue path were removed on 2026-10-06.
 _OV_PERF_HINT: str = "LATENCY"
 
-# OpenVINO COMPILATION thread pool (CAMSTACK_OV_COMPILATION_THREADS, default 4).
+# OpenVINO COMPILATION thread pool (DOMINEVO_OV_COMPILATION_THREADS, default 4).
 #
 # OpenVINO sizes the pool that COMPILES a model to the machine's core count, per
 # compile, and TBB never retires those workers — they live as long as the
@@ -350,7 +350,7 @@ _OV_PERF_HINT: str = "LATENCY"
 # `_ov_compilation_properties`). 0 disables the bound entirely.
 try:
     OV_COMPILATION_NUM_THREADS: int = int(
-        os.environ.get("CAMSTACK_OV_COMPILATION_THREADS", "4")
+        os.environ.get("DOMINEVO_OV_COMPILATION_THREADS", "4")
     )
 except ValueError:
     OV_COMPILATION_NUM_THREADS = 4

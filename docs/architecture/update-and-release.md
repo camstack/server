@@ -49,7 +49,7 @@ per package, derived from the closure — check it rather than guessing.
 Every node, whatever its role, loads addons from exactly one directory:
 
 ```
-$CAMSTACK_ADDONS_DIR  (defaults to <dataDir>/addons)  →  <root>/@dominevo/<pkg>/
+$DOMINEVO_ADDONS_DIR  (defaults to <dataDir>/addons)  →  <root>/@dominevo/<pkg>/
 ```
 
 `AddonLoader.loadFromDirectory` is the only reader and it takes ONE directory —
@@ -91,7 +91,7 @@ registry at first boot, at `latest` (the system is addons-agnostic: there is no
 pin and no adopt-by-semver).
 
 **The SYSTEM fallback stays — served out of the ONE baked tree.**
-`/opt/camstack-hub` is what a node boots from when its closure is broken, and the
+`/opt/dominevo-hub` is what a node boots from when its closure is broken, and the
 entrypoint re-creates `<dataDir>/framework` on exactly ONE
 condition — no `@dominevo/server/system` under `server-root/current` — printing
 `FALLBACK` when it does. It used to re-create the tree whenever the tree itself
@@ -106,11 +106,11 @@ untestable from here.
 **There is no second baked tree any more.** `/opt/camstack-seed-framework` was a
 SECOND npm install of the same `@dominevo/{system,types,sdk}` plus the hoisted
 natives, existing only to be copied into `$FRAMEWORK_DIR` on that fallback boot:
-510 MB beside a 930 MB `/opt/camstack-hub`, and the THIRD copy of every framework
+510 MB beside a 930 MB `/opt/dominevo-hub`, and the THIRD copy of every framework
 package — which is what made the [D45](../decisions/adr-0045.md) inventory report
 three where the design allows two. It was removed on 2026-08-25 (
 re-cut after the first slice amputated the runtime stage), because
-it was redundant by inspection: `/opt/camstack-hub/node_modules` already hoists
+it was redundant by inspection: `/opt/dominevo-hub/node_modules` already hoists
 `better-sqlite3`, `node-av`, `sharp` and `zod` at its root — the exact reason the
 second tree was built that way — and already holds the three framework packages
 as dependencies of `@dominevo/server`. The fallback now copies that one tree and
@@ -119,7 +119,7 @@ it would put `@dominevo/server` and every baked addon into the framework dir, a
 fresh set of shadow copies. A framework package missing from the
 baked tree is fatal for that boot and says so, rather than letting the node start
 and fail resolution with an error that names nothing. The
-`/opt/camstack-seed-version` fingerprint is now hashed over that same tree, so it
+`/opt/dominevo-seed-version` fingerprint is now hashed over that same tree, so it
 covers every baked `@dominevo/*` instead of only system/types/sdk — it moves on
 more changes than before, which is the conservative direction.
 
@@ -156,9 +156,9 @@ more changes than before, which is the conservative direction.
   not looked at is exactly the cleanup that gutted an agent.
 
 **Everything else on disk is not an addon root** and nothing loads from it:
-`/opt/camstack-hub/node_modules` (the starter and the fallback source, from the
+`/opt/dominevo-hub/node_modules` (the starter and the fallback source, from the
 image), `<dataDir>/framework`
-(inert once `CAMSTACK_SERVER_ACTIVE_ROOT` redirects `CAMSTACK_FRAMEWORK_DIR` —
+(inert once `DOMINEVO_SERVER_ACTIVE_ROOT` redirects `DOMINEVO_FRAMEWORK_DIR` —
 `launcher.ts` does this on every data-root boot), `<dataDir>/addons/.staging`
 (swept, min age 30 min), `<dataDir>/server-root/current.bak-*`.
 
@@ -246,7 +246,7 @@ existing method needs only the providing addon redeployed.
 `@dominevo/server/system` builtins from the running closure and SKIP any
 `<addonsDir>/@dominevo/system` copy. Forked runners resolve `@dominevo/*`
 through the closure too (`registerFrameworkResolver` with
-`CAMSTACK_FRAMEWORK_DIR`, set by the launcher to the active root). So
+`DOMINEVO_FRAMEWORK_DIR`, set by the launcher to the active root). So
 `applyServerUpdate`'s own restart refreshes the builtins; no second restart is
 needed, and `updatePackage({name:'@dominevo/server/system', nodeId})` is no longer how
 an agent's builtins are refreshed.
@@ -526,7 +526,7 @@ had no hub to receive a fix from.
   is logged with its reason and changes nothing; it is never "up to date" (D49, D393). Every
   decision (checked, skip, staging, applied, not applied) is one `agent self-update:` log line with
   the versions.
-- **Off switch.** `CAMSTACK_AGENT_SELF_UPDATE=off` (or `0`, `false`, `no`) on the agent. Default on;
+- **Off switch.** `DOMINEVO_AGENT_SELF_UPDATE=off` (or `0`, `false`, `no`) on the agent. Default on;
   the hub's auto-update settings only pace the hub's notifications and do not reach agents.
 - Containers are in scope: closures are applied in a container by the data-root swap.
 
@@ -904,7 +904,7 @@ the one answering you.
 
 `applyServerUpdate` replaces `<dataDir>/server-root/current`. It does **not**
 replace the starter: hub-main is
-`/opt/camstack-hub/node_modules/@dominevo/server/dist/starter.js`, baked into
+`/opt/dominevo-hub/node_modules/@dominevo/server/dist/starter.js`, baked into
 the image. Code added to `starter-core.ts` deployed cleanly and produced
 **zero** output, because the running starter was still the image's copy.
 

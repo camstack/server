@@ -5,7 +5,7 @@
  * `system-settings` may still hold `auth.jwtSecret`, `auth.adminUsername` and
  * `auth.adminPassword` (written by `local-auth` and by older builds) next to
  * `auth.tokenExpiry`. A pre-D797 container also still sets the retired
- * `CAMSTACK_JWT_SECRET` / `CAMSTACK_ADMIN_USER` / `CAMSTACK_ADMIN_PASS`. None
+ * `DOMINEVO_JWT_SECRET` / `DOMINEVO_ADMIN_USER` / `DOMINEVO_ADMIN_PASS`. None
  * of them may answer: the session signing key is the keychain's and the
  * first-boot admin is fixed. Only `auth.tokenExpiry` may come from the store.
  *
@@ -24,9 +24,9 @@ import { ConfigManager } from '../config-manager.js'
 import { STORE_READABLE_BOOTSTRAP_KEYS } from '../system-settings-policy.js'
 
 const ENV = {
-  CAMSTACK_JWT_SECRET: 'secret-from-env',
-  CAMSTACK_ADMIN_USER: 'admin-from-env',
-  CAMSTACK_ADMIN_PASS: 'password-from-env',
+  DOMINEVO_JWT_SECRET: 'secret-from-env',
+  DOMINEVO_ADMIN_USER: 'admin-from-env',
+  DOMINEVO_ADMIN_PASS: 'password-from-env',
 } as const
 
 /** What a stale DB copy holds. None of it may win except the expiry. */

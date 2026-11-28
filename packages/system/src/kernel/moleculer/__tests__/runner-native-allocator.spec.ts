@@ -24,7 +24,7 @@ describe('the kill switch removes what the parent already exported', () => {
 
   it('deletes both keys when the switch is off, leaving the rest alone', () => {
     const out = applyRunnerNativeAllocator(
-      { ...welded, CAMSTACK_RUNNER_NATIVE_ALLOCATOR: 'off' },
+      { ...welded, DOMINEVO_RUNNER_NATIVE_ALLOCATOR: 'off' },
       'linux',
     )
     expect('MALLOC_ARENA_MAX' in out).toBe(false)
