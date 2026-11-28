@@ -20,10 +20,10 @@
 #   BASE   the published image to overlay onto (defaults to the running tag)
 #
 # Build (on Unraid, where Docker lives):
-#   docker build -f Dockerfile.dev --build-arg BASE=ghcr.io/dominevo/camstack-server:intel-1.1.35 \
-#     -t camstack-server:dev-<tag> .
+#   docker build -f Dockerfile.dev --build-arg BASE=ghcr.io/dominevo/dominevo:intel-0.1.0 \
+#     -t dominevo:dev-<tag> .
 
-ARG BASE=ghcr.io/dominevo/camstack-server:intel-1.1.35
+ARG BASE=ghcr.io/dominevo/dominevo:intel-0.1.0
 FROM ${BASE}
 
 # The packed tarballs (`package/` prefix, per `npm pack`) produced by dev-pack.sh.
