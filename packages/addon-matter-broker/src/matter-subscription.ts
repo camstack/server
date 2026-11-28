@@ -6,6 +6,7 @@
  */
 
 import { errMsg, type IScopedLogger } from '@dominevo/types'
+import { describeErrorChain } from './matter-error-chain.js'
 import type { MatterAttributeReport, MatterEventReport } from './matter-controller.js'
 
 /** First wait before our own re-establishment of an offline node's subscription. */
@@ -327,7 +328,7 @@ export class MatterSubscriptionSupervisor {
     } catch (err: unknown) {
       this.#logger.warn('retry: connect failed', {
         tags,
-        meta: { nodeId: peer.nodeId, error: errMsg(err) },
+        meta: { nodeId: peer.nodeId, error: describeErrorChain(err) },
       })
       return 'failed'
     } finally {

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A Matter device that stayed offline for a while is now really redialled on each retry, instead of the retry failing at once.
+
 ## [0.1.0] - 2026-11-28
 
 ### Changed

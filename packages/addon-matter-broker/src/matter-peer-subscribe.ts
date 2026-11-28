@@ -20,6 +20,7 @@ import {
   type MatterPeerSubscription,
   type MatterSubscribablePeer,
   type MatterSubscriptionHandlers,
+  SUBSCRIBE_ATTEMPT_TIMEOUT_MS,
 } from './matter-subscription.js'
 
 /** Sleepy Thread locks (the U200) report on a short floor and a one-minute ceiling. */
@@ -104,7 +105,14 @@ export async function dialPeer(
   if (typeof connect !== 'function') return refuse(skipped, 'peer has no connect')
   const kick = protocolPeer['kick']
   if (typeof kick === 'function') Reflect.apply(kick, protocolPeer, [])
-  await Promise.resolve(Reflect.apply(connect, protocolPeer, [{ abort: signal }]))
+  // `kick` + an explicit timeout: without `kick` matter.js subtracts the time the
+  // peer has been offline from the timeout, so a peer offline for over 90 s aborts
+  // at once ("Operation aborted") without ever dialling.
+  await Promise.resolve(
+    Reflect.apply(connect, protocolPeer, [
+      { abort: signal, kick: true, connectionTimeout: SUBSCRIBE_ATTEMPT_TIMEOUT_MS },
+    ]),
+  )
   return true
 }
 

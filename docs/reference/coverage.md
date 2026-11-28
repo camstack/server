@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**258 units · 9392 source files · 252 units claimed by at least one document (9370 files).**
+**258 units · 9393 source files · 252 units claimed by at least one document (9371 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -57,10 +57,10 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-provider-homeassistant` | 42 | `device-providers` | `addons/addon-provider-homeassistant.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-1012-a-broker-is-referenced-by-id-and-owns-nothing-of-its-users.md`, +7 more | 2026-11-26 |
 | `packages/develop` | 42 | — | `decisions/adr-0974-the-public-mcp-ships-inside-the-cli-as-toolsets-and-every-write-is-preview-then-confirm.md`, `decisions/adr-0835-hub-credentials-and-tls-trust-live-in-develop-one-chain-pinned-ca-never-a-password.md`, `decisions/adr-0884-the-cli-session-is-the-logged-in-user.md`, +3 more | — |
 | `packages/addon-provider-homeassistant/src/ha-export` | 40 | `device-providers`, `ecosystem-exports` | `addons/addon-provider-homeassistant.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, +10 more, 9 ADRs | 2026-11-26 |
+| `packages/addon-matter-broker` | 39 | `ecosystem-exports` | `addons/addon-matter-broker.md` _(covers)_, `decisions/adr-1012-a-broker-is-referenced-by-id-and-owns-nothing-of-its-users.md`, `decisions/adr-1013-one-instance-model.md`, +1 more | 2026-09-29 |
 | `packages/addon-provider-amcrest` | 39 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0615-an-amcrest-clip-catalog-gates-on-findfile-and-an-ambiguous-refusal-is-settled-by-a-control-search.md`, +9 more | 2026-11-26 |
 | `packages/addon-provider-bosch/src/home-connect` | 39 | `device-providers` | `addons/addon-provider-bosch-home-connect.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0932-a-bosch-sign-in-is-one-field-and-homecom-is-not-a-home-connect-login.md`, +2 more | 2026-11-26 |
 | `packages/addon-provider-unifi` | 39 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-1064-a-machine-an-integration-talks-to-is-a-host-a-gateway-exists-only-when-necessary.md`, +2 more | 2026-11-26 |
-| `packages/addon-matter-broker` | 38 | `ecosystem-exports` | `addons/addon-matter-broker.md` _(covers)_, `decisions/adr-1012-a-broker-is-referenced-by-id-and-owns-nothing-of-its-users.md`, `decisions/adr-1013-one-instance-model.md`, +1 more | 2026-09-29 |
 | `packages/addon-provider-enpal` | 38 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md` | 2026-11-26 |
 | `packages/addon-provider-bosch/src/homecom` | 37 | `device-providers` | `addons/addon-provider-bosch-homecom.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0932-a-bosch-sign-in-is-one-field-and-homecom-is-not-a-home-connect-login.md`, +4 more | 2026-11-26 |
 | `packages/addon-provider-esphome` | 36 | `device-providers` | `addons/addon-provider-esphome.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0952-esphome-speaks-its-native-api-from-node-through-esphome-client-one-broker-per-board.md`, +4 more | 2026-11-26 |
