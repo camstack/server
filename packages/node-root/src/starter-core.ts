@@ -64,7 +64,7 @@ export const HOST_EXTERNAL_SPECIFIERS: readonly string[] = [
  * spec keeps the two equal. Raise it by hand when a server needs a newer
  * starter than the one baked into an image.
  */
-export const STARTER_HOSTS_SERVER_MIN = '1.2.718'
+export const STARTER_HOSTS_SERVER_MIN = '0.1.0'
 
 export function isHostExternal(specifier: string): boolean {
   return HOST_EXTERNAL_SPECIFIERS.some(

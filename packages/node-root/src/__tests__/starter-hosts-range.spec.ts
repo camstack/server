@@ -98,6 +98,9 @@ describe('a starter refuses a server outside the range it hosts', () => {
   })
 })
 
+// A version under the floor the starter hosts (the renamed line starts at 0.1.0).
+const BELOW_RANGE = '0.0.600'
+
 describe('STARTER_HOSTS_SERVER_MIN', () => {
   it('is the range node-root declares in its package.json', () => {
     const pkg: unknown = JSON.parse(
@@ -143,7 +146,7 @@ describe('a starter checks the range at boot for a closure already on disk (plan
 
   it('boots the baked seed, not a closure below the range, and says why', () => {
     const dataDir = path.join(tmp, 'data')
-    closure(currentDir(serverRootDir(dataDir)), '1.2.600')
+    closure(currentDir(serverRootDir(dataDir)), BELOW_RANGE)
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     try {
       const r = boot(dataDir)
@@ -151,7 +154,7 @@ describe('a starter checks the range at boot for a closure already on disk (plan
       expect(r.loaded).toHaveLength(1)
       expect(r.loaded[0]).toContain('launcher.js')
       const said = warn.mock.calls.map((c) => String(c[0])).join('\n')
-      expect(said).toContain('1.2.600')
+      expect(said).toContain(BELOW_RANGE)
       expect(said).toContain(STARTER_HOSTS_SERVER_MIN)
       // The closure stays on disk: an app update that raises the range can host it again.
       expect(fs.existsSync(currentDir(serverRootDir(dataDir)))).toBe(true)
@@ -179,7 +182,7 @@ describe('a starter checks the range at boot for a closure already on disk (plan
   it('refuses the older baked seed when the data root last ran a newer server', () => {
     const dataDir = path.join(tmp, 'data')
     seed('1.2.610')
-    closure(currentDir(serverRootDir(dataDir)), '1.2.600')
+    closure(currentDir(serverRootDir(dataDir)), BELOW_RANGE)
     fs.writeFileSync(
       path.join(serverRootDir(dataDir), 'last-booted.json'),
       JSON.stringify({ version: '1.2.900' }),
@@ -237,7 +240,7 @@ describe('a starter checks the range at boot for a closure already on disk (plan
   it('still boots the seed when it is not older than what the data root ran', () => {
     const dataDir = path.join(tmp, 'data')
     seed('1.2.950')
-    closure(currentDir(serverRootDir(dataDir)), '1.2.600')
+    closure(currentDir(serverRootDir(dataDir)), BELOW_RANGE)
     fs.writeFileSync(
       path.join(serverRootDir(dataDir), 'last-booted.json'),
       JSON.stringify({ version: '1.2.900' }),

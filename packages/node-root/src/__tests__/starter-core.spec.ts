@@ -185,12 +185,12 @@ describe('runNodeStarter (single-copy model)', () => {
 
   it('keeps the previous server when the staged one is below the range the starter hosts', () => {
     scaffoldCurrent(HUB_ROOT_SPEC, '1.2.720')
-    const staging = stagingDirPath(serverRootDir(dataDir), '1.1.60', 42, NOW)
-    scaffoldClosureAt(staging, HUB_ROOT_SPEC, '1.1.60')
+    const staging = stagingDirPath(serverRootDir(dataDir), '0.0.60', 42, NOW)
+    scaffoldClosureAt(staging, HUB_ROOT_SPEC, '0.0.60')
     scaffoldNatives(staging)
     writePendingRootSwap(serverRootDir(dataDir), {
       schemaVersion: 1,
-      version: '1.1.60',
+      version: '0.0.60',
       stagingPath: staging,
       requestedAtMs: NOW,
     })
