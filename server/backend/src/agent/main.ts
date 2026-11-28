@@ -1873,7 +1873,7 @@ async function loadInProcessDeployedAddons(
 ): Promise<void> {
   // Node-local models dir — anchored at this node's data root (DOMINEVO_DATA ??
   // the agent --data dir), never the hub-singleton `storage` cap. Mirrors
-  // BaseAddon.resolveModelsDir so addons that read the hint and those that
+  // `resolveModelsDir` (@dominevo/types/node) so addons that read the hint and those that
   // self-resolve agree on one path.
   const modelsDir = path.join(process.env['DOMINEVO_DATA'] ?? dataDir, 'models')
   const contextOptions: AddonContextOptions = {

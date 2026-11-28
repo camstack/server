@@ -712,7 +712,7 @@ export default class DetectionPipelineAddon extends BaseAddon<DetectionPipelineC
     return readOperatorOverride(this.config)
   }
 
-  // resolveModelsDir is inherited from BaseAddon — the single centralized
+  // Models live under `resolveModelsDir` from @dominevo/types/node — the single
   // node-local resolver (`<nodeDataDir>/models`). No per-addon override.
 
   /**
