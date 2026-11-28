@@ -217,6 +217,34 @@ const SPECS: Readonly<Record<number, Spec>> = {
       'air-quality-sensor': { co2: 640, pm25: 4, lastFetchedAt: NOW - MINUTE },
     },
   },
+  1542: {
+    name: 'Study air monitor',
+    type: 'sensor',
+    role: 'ambient-monitor',
+    slices: {
+      'temperature-sensor': { temperature: 21.8, lastFetchedAt: NOW - MINUTE },
+      'humidity-sensor': { humidity: 52, lastFetchedAt: NOW - MINUTE },
+      'air-quality-sensor': { co2: 905, lastFetchedAt: NOW - MINUTE },
+    },
+  },
+  1543: {
+    name: 'Lab air monitor',
+    type: 'sensor',
+    role: 'ambient-monitor',
+    slices: {
+      'temperature-sensor': { temperature: 23.1, lastFetchedAt: NOW - MINUTE },
+      'humidity-sensor': { humidity: 44, lastFetchedAt: NOW - MINUTE },
+      'ambient-light-sensor': { illuminance: 410, lastFetchedAt: NOW - MINUTE },
+      'air-quality-sensor': {
+        co2: 760,
+        voc: 120,
+        pm25: 7,
+        pm10: 11,
+        aqi: 33,
+        lastFetchedAt: NOW - MINUTE,
+      },
+    },
+  },
   1530: {
     name: 'Garden bridge',
     type: 'container',
@@ -300,7 +328,7 @@ function modelOf(id: number, canActuate: boolean): HeroModel | null {
 
 const history = historyArea.handlers
 /** The ambient monitors keep their own series; every other device here borrows the dishwasher's. */
-const OWN_HISTORY: ReadonlySet<number> = new Set([1540, 1541])
+const OWN_HISTORY: ReadonlySet<number> = new Set([1520, 1540, 1541, 1542, 1543])
 const viaHistory = (path: string): ((i: unknown) => unknown) => {
   const h = history[path]
   return typeof h === 'function'

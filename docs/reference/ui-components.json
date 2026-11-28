@@ -2942,6 +2942,12 @@
           "doc": ""
         },
         {
+          "name": "hideTitle",
+          "type": "boolean",
+          "optional": true,
+          "doc": "The caption is read by screen readers only (a chart a heading already names)."
+        },
+        {
           "name": "actions",
           "type": "ReactNode",
           "optional": true,
@@ -18737,6 +18743,12 @@
           "doc": ""
         },
         {
+          "name": "hideTitle",
+          "type": "boolean",
+          "optional": true,
+          "doc": "The title stays for screen readers only (a chart whose caller already names it)."
+        },
+        {
           "name": "rows",
           "type": "readonly StateRowDef[]",
           "optional": false,
@@ -20516,6 +20528,12 @@
           "type": "string",
           "optional": false,
           "doc": ""
+        },
+        {
+          "name": "hideTitle",
+          "type": "boolean",
+          "optional": true,
+          "doc": "The title is for screen readers only: the chart sits under a heading that names it."
         },
         {
           "name": "series",

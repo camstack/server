@@ -59,6 +59,8 @@ export interface ChartRange {
 
 export interface TimeSeriesChartProps<TId extends string = string> {
   readonly title: string
+  /** The title is for screen readers only: the chart sits under a heading that names it. */
+  readonly hideTitle?: boolean
   readonly series: readonly TimeSeriesDef[]
   /** Spans shaded behind the lines (a run, a window); the point tooltip names the ones under the cursor. */
   readonly bands?: readonly ChartBand[]
@@ -143,6 +145,7 @@ function seriesTooltip(input: SeriesTooltipInput): ChartTooltipSpec {
 
 export function TimeSeriesChart<TId extends string = string>({
   title,
+  hideTitle = false,
   series,
   bands = NO_BANDS,
   range,
@@ -418,6 +421,7 @@ export function TimeSeriesChart<TId extends string = string>({
   return (
     <ChartFrame
       title={title}
+      hideTitle={hideTitle}
       actions={toolbar}
       readoutTime={readoutTime}
       legend={legend}

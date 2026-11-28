@@ -42,10 +42,31 @@ vi.mock('../../hero-model/use-hero-live-refresh', () => ({
   useHeroLiveRefresh: () => {},
 }))
 vi.mock('../connected/SensorTrend', () => ({ SensorTrend: () => null }))
-vi.mock('../../device-history/DeviceHistoryView', () => ({
-  DeviceHistoryView: ({ seriesKeys }: { readonly seriesKeys?: readonly string[] }) => (
-    <p data-testid="reading-history">{(seriesKeys ?? ['ALL']).join(',')}</p>
+// A state reading is the library's one state band: expose what it was given.
+vi.mock('../../charts/StateTimeline', () => ({
+  StateTimeline: (p: {
+    readonly hideTitle?: boolean
+    readonly rows: readonly { readonly id: string }[]
+  }) => (
+    <p data-testid="reading-history" data-hide-title={String(p.hideTitle === true)}>
+      {p.rows.map((r) => r.id).join(',')}
+    </p>
   ),
+}))
+vi.mock('../../device-history/use-device-history', () => ({
+  anchorNow: (now: number) => now,
+  readItemId: (i: { deviceId: number; key: string }) => `${String(i.deviceId)}|${i.key}`,
+  useDeviceSeriesList: () => ({
+    presence: 'present',
+    list: {
+      status: 'ok',
+      data: [{ key: 'cap:motion.detected', scope: '', kind: 'boolean', source: 'cap', unit: null }],
+    },
+  }),
+  useHistoryReads: () => ({
+    status: 'ok',
+    data: { current: new Map(), previous: null, shiftMs: 0 },
+  }),
 }))
 vi.mock('../connected/use-card-common', () => ({
   useCardCommon: () => {
@@ -99,6 +120,24 @@ const sevenReadings = (): HeroModel => ({
     readingOf('aqi', { value: '38', number: 38 }),
   ],
 })
+/** Temperature, humidity and CO2: three readings, the pie. */
+const threeReadings = (): HeroModel => ({
+  ...powerSensor(),
+  measurement: undefined,
+  measurements: [
+    readingOf('temperature', { value: '22.4', number: 22.4, unit: '°C' }),
+    readingOf('humidity', { value: '47', number: 47, unit: '%' }),
+    readingOf('co2', { value: '812', number: 812, unit: 'ppm' }),
+  ],
+})
+/** Seven readings and the light: eight, the grid. */
+const eightReadings = (): HeroModel => ({
+  ...sevenReadings(),
+  measurements: [
+    ...(sevenReadings().measurements ?? []),
+    readingOf('illuminance', { value: '410', number: 410, unit: 'lx' }),
+  ],
+})
 /** A sensor with a setting the operator can change keeps the full hero card. */
 const settableSensor = (): HeroModel => ({ ...powerSensor(), rows: [SETTABLE] })
 const SETTABLE: HeroRow = {
@@ -131,6 +170,13 @@ beforeEach(() => {
     this.open = false
   }
 })
+/** The i-th of a rendered list; a missing one fails the test by name, no cast. */
+function nth<T>(list: readonly T[], i: number): T {
+  const item = list[i]
+  if (item === undefined) throw new Error(`no element ${String(i)} of ${String(list.length)}`)
+  return item
+}
+
 afterEach(cleanup)
 
 describe('every sensor fixture renders through the shell', () => {
@@ -214,6 +260,62 @@ describe('the connected sensor card', () => {
       screen.getAllByTestId('dc-grid-tile').map((t) => t.getAttribute('data-quantity')),
     ).toEqual(['temperature', 'humidity', 'co2', 'voc', 'pm25', 'pm10', 'aqi'])
   })
+  it('three readings are ONE layout, the pie: no tile of any kind beside it', () => {
+    hub.model = threeReadings()
+    render(<ConnectedSensorCard deviceId={1} fallback={<p>hero</p>} />)
+    expect(screen.getByTestId('dc-sensor-pie')).toBeTruthy()
+    expect(screen.getAllByTestId('dc-pie-wedge')).toHaveLength(3)
+    expect(screen.queryByTestId('dc-sensor-grid')).toBeNull()
+    expect(screen.queryAllByTestId('dc-grid-tile')).toHaveLength(0)
+    expect(screen.queryAllByTestId('dc-pie-tile')).toHaveLength(0)
+    expect(screen.queryByTestId('dc-pie-legend')).toBeNull()
+  })
+  it('eight readings are ONE layout, the grid: no wedge of any kind beside it', () => {
+    hub.model = eightReadings()
+    render(<ConnectedSensorCard deviceId={1} fallback={<p>hero</p>} />)
+    expect(screen.getByTestId('dc-sensor-grid')).toBeTruthy()
+    expect(screen.getAllByTestId('dc-grid-tile')).toHaveLength(8)
+    expect(screen.queryByTestId('dc-sensor-pie')).toBeNull()
+    expect(screen.queryAllByTestId('dc-pie-wedge')).toHaveLength(0)
+    expect(screen.queryAllByTestId('dc-pie-tile')).toHaveLength(0)
+  })
+  it('a pie device keeps the pie at six readings and turns grid at seven', () => {
+    hub.model = eightReadings()
+    const six = (hub.model.measurements ?? []).slice(0, 6)
+    hub.model = { ...hub.model, measurements: six }
+    const { unmount } = render(<ConnectedSensorCard deviceId={1} fallback={<p>hero</p>} />)
+    expect(screen.getByTestId('dc-sensor-pie').getAttribute('data-wedges')).toBe('6')
+    unmount()
+    hub.model = sevenReadings()
+    render(<ConnectedSensorCard deviceId={1} fallback={<p>hero</p>} />)
+    expect(screen.queryByTestId('dc-sensor-pie')).toBeNull()
+  })
+  it('humidity and CO2 on one card wear clearly different chart-palette colours, in the wedge and the tile', () => {
+    hub.model = threeReadings()
+    const { unmount } = render(<ConnectedSensorCard deviceId={1} fallback={<p>hero</p>} />)
+    const fillOf = (q: string): string => {
+      const wedge = screen
+        .getAllByTestId('dc-pie-wedge')
+        .find((w) => w.getAttribute('data-quantity') === q)
+      return (
+        /fill-(chart-series-[a-h])\//.exec(
+          wedge?.querySelector(':scope > path')?.getAttribute('class') ?? '',
+        )?.[1] ?? ''
+      )
+    }
+    expect(fillOf('humidity')).toMatch(/^chart-series-/)
+    expect(fillOf('co2')).toMatch(/^chart-series-/)
+    expect(fillOf('humidity')).not.toBe(fillOf('co2'))
+    expect(new Set(['temperature', 'humidity', 'co2'].map(fillOf)).size).toBe(3)
+    unmount()
+    hub.model = eightReadings()
+    render(<ConnectedSensorCard deviceId={1} fallback={<p>hero</p>} />)
+    const tileColours = screen
+      .getAllByTestId('dc-grid-tile')
+      .map((t) => /bg-(chart-series-[a-h])\//.exec(t.className)?.[1])
+    expect(tileColours.every((c) => c !== undefined)).toBe(true)
+    expect(new Set(tileColours).size).toBe(8)
+  })
   it('a device that is not a sensor (a fan with a temperature binding) keeps its own card', () => {
     hub.type = 'fan'
     hub.model = motionAndLight()
@@ -232,8 +334,10 @@ describe('the connected sensor card', () => {
     hub.model = motionAndLight()
     hub.history = { charts: 'FULL HISTORY', events: null }
     render(<ConnectedSensorCard deviceId={1} fallback={<p>hero</p>} />)
-    fireEvent.click(screen.getAllByTestId('dc-pie-wedge')[0] as Element)
+    fireEvent.click(nth(screen.getAllByTestId('dc-pie-wedge'), 0))
     expect(screen.getByTestId('reading-history').textContent).toBe('cap:motion.detected')
+    // The same compact frame as the other readings: the band carries no title of its own.
+    expect(screen.getByTestId('reading-history').getAttribute('data-hide-title')).toBe('true')
     expect(screen.queryByText('FULL HISTORY')).toBeNull()
     expect(screen.queryByTestId('dc-pie-no-history')).toBeNull()
   })
@@ -241,7 +345,7 @@ describe('the connected sensor card', () => {
     hub.model = motionAndLight()
     hub.history = { charts: 'FULL HISTORY', events: null }
     render(<ConnectedSensorCard deviceId={1} fallback={<p>hero</p>} />)
-    fireEvent.click(screen.getAllByTestId('dc-pie-wedge')[1] as Element)
+    fireEvent.click(nth(screen.getAllByTestId('dc-pie-wedge'), 1))
     expect(screen.getByTestId('dc-pie-no-history')).toBeTruthy()
     expect(screen.queryByText('FULL HISTORY')).toBeNull()
   })
@@ -250,13 +354,13 @@ describe('the connected sensor card', () => {
     hub.history = { charts: 'FULL HISTORY', events: null }
     render(<ConnectedSensorCard deviceId={1} fallback={<p>hero</p>} />)
     expect(screen.queryByTestId('dc-pie-detail')).toBeNull()
-    const [motion] = screen.getAllByTestId('dc-pie-wedge')
-    fireEvent.click(motion as Element)
+    const motion = nth(screen.getAllByTestId('dc-pie-wedge'), 0)
+    fireEvent.click(motion)
     const detail = screen.getByTestId('dc-pie-detail')
     expect(screen.getByTestId('dc-sensor-pie').contains(detail)).toBe(true)
     expect(within(detail).getByTestId('reading-history')).toBeTruthy()
     expect(document.querySelector('dialog[open], [role="dialog"]')).toBeNull()
-    fireEvent.click(motion as Element)
+    fireEvent.click(motion)
     expect(screen.queryByTestId('dc-pie-detail')).toBeNull()
     expect(screen.queryByTestId('reading-history')).toBeNull()
   })

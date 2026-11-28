@@ -1,12 +1,13 @@
 import type { HeroMeasurementQuantity } from '@dominevo/types'
-import { type KeyboardEvent, type ReactElement, type ReactNode, useId } from 'react'
+import type { KeyboardEvent, ReactElement, ReactNode } from 'react'
 import { cn } from '../../../../lib/cn'
 import type { SceneVisual } from '../../../hero-scene/types'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardCommon, CardCommonActions, CardOrientation, CardState } from '../../shell/model'
-import { PIE_CENTRE, PIE_RADIUS, type PieWedge, pieGeometry, type ReadingState } from './pie-model'
+import { MeasurementFx } from '../../illustrations/MeasurementFx'
+import { type PieWedge, pieGeometry, type ReadingState, wedgeClipPolygon } from './pie-model'
+import { readingClasses } from './reading-colour'
 import { SENSOR_PIE_CSS } from './pie-css'
-import { READING_TILES_GRID, ReadingTile } from './ReadingTile'
 
 /** One wedge as the operator reads it: already in their display unit. */
 export interface PieReading {
@@ -23,6 +24,8 @@ export interface PieReading {
   readonly visual?: SceneVisual | null
   /** The reading's last day, the single-reading card's `SensorTrend`; absent until it answers. */
   readonly trend?: ReactNode
+  /** The chart-palette slot (`assignReadingSlots`) the wedge, tile and history chart share; absent = the quantity's own. */
+  readonly slot?: number
 }
 
 export interface SensorPieCardModel {
@@ -48,57 +51,6 @@ export interface SensorPieCardProps {
   readonly detail?: ReactNode
 }
 
-/**
- * What tints a wedge and colours its edge: the quantity's theme token, ONE per
- * quantity (literal classes, so Tailwind sees them). Motion takes the series
- * violet because the brand orange reads as the warning amber next to it; the warm
- * pair that remains (power, illuminance) rarely sits on one sensor.
- */
-const WEDGE_FILL: Readonly<Record<HeroMeasurementQuantity, string>> = {
-  temperature: 'fill-danger/25 stroke-danger/60',
-  humidity: 'fill-info/25 stroke-info/60',
-  illuminance: 'fill-warning/25 stroke-warning/60',
-  power: 'fill-primary/25 stroke-primary/60',
-  motion: 'fill-chart-series-f/25 stroke-chart-series-f/60',
-  contact: 'fill-success/25 stroke-success/60',
-  text: 'fill-foreground-muted/25 stroke-foreground-muted/60',
-  co2: 'fill-chart-series-a/25 stroke-chart-series-a/60',
-  voc: 'fill-chart-series-b/25 stroke-chart-series-b/60',
-  pm25: 'fill-chart-series-c/25 stroke-chart-series-c/60',
-  pm10: 'fill-chart-series-e/25 stroke-chart-series-e/60',
-  aqi: 'fill-chart-series-d/25 stroke-chart-series-d/60',
-}
-/** The selected wedge: a stronger tint and a full-colour edge, still its own quantity's. */
-const WEDGE_FILL_SELECTED: Readonly<Record<HeroMeasurementQuantity, string>> = {
-  temperature: 'fill-danger/45 stroke-danger',
-  humidity: 'fill-info/45 stroke-info',
-  illuminance: 'fill-warning/45 stroke-warning',
-  power: 'fill-primary/45 stroke-primary',
-  motion: 'fill-chart-series-f/45 stroke-chart-series-f',
-  contact: 'fill-success/45 stroke-success',
-  text: 'fill-foreground-muted/45 stroke-foreground-muted',
-  co2: 'fill-chart-series-a/45 stroke-chart-series-a',
-  voc: 'fill-chart-series-b/45 stroke-chart-series-b',
-  pm25: 'fill-chart-series-c/45 stroke-chart-series-c',
-  pm10: 'fill-chart-series-e/45 stroke-chart-series-e',
-  aqi: 'fill-chart-series-d/45 stroke-chart-series-d',
-}
-/** Colours the quantity's motion (it draws in `currentColor`). */
-const WEDGE_FX_TEXT: Readonly<Record<HeroMeasurementQuantity, string>> = {
-  temperature: 'text-danger',
-  humidity: 'text-info',
-  illuminance: 'text-warning',
-  power: 'text-primary',
-  motion: 'text-chart-series-f',
-  contact: 'text-success',
-  text: 'text-foreground-muted',
-  co2: 'text-chart-series-a',
-  voc: 'text-chart-series-b',
-  pm25: 'text-chart-series-c',
-  pm10: 'text-chart-series-e',
-  aqi: 'text-chart-series-d',
-}
-
 /** The size of the value, so a word and a long number stay inside the wedge. */
 function valueSizeClass(n: number, value: string): string {
   if (value.length > 6) return 'text-[9px]'
@@ -115,92 +67,18 @@ function onKey(handler: () => void): (e: KeyboardEvent<SVGGElement>) => void {
   }
 }
 
-interface WedgeFxProps {
-  readonly quantity: HeroMeasurementQuantity
-  readonly at: PieWedge['centroid']
-}
-
-/** The quantity's motion, drawn inside the clipped wedge. */
-function WedgeFx({ quantity, at }: WedgeFxProps): ReactElement | null {
-  switch (quantity) {
-    case 'motion':
-      return (
-        <g data-fx="rings" className="dc-pie-fx">
-          {[0, 1, 2].map((i) => (
-            <circle
-              key={i}
-              cx={at.x}
-              cy={at.y}
-              r={8}
-              className={cn('dc-pie-ring fill-none stroke-current', `dc-pie-step-${String(i)}`)}
-            />
-          ))}
-        </g>
-      )
-    case 'humidity':
-      return (
-        <g data-fx="drops" className="dc-pie-fx">
-          {[-14, 0, 14].map((dx, i) => (
-            <ellipse
-              key={dx}
-              cx={at.x + dx}
-              cy={at.y - 26}
-              rx={1.6}
-              ry={3.2}
-              className={cn('dc-pie-drop fill-current', `dc-pie-step-${String(i)}`)}
-            />
-          ))}
-        </g>
-      )
-    case 'temperature':
-      return (
-        <g data-fx="wisps" className="dc-pie-fx">
-          {[-12, 0, 12].map((dx, i) => (
-            <path
-              key={dx}
-              d={`M${String(at.x + dx)} ${String(at.y + 24)} q4 -6 0 -12`}
-              className={cn('dc-pie-wisp fill-none stroke-current', `dc-pie-step-${String(i)}`)}
-            />
-          ))}
-        </g>
-      )
-    case 'power':
-      return (
-        <g data-fx="flow" className="dc-pie-fx">
-          <line
-            x1={PIE_CENTRE}
-            y1={PIE_CENTRE}
-            x2={at.x}
-            y2={at.y}
-            className="dc-pie-flow stroke-current"
-          />
-        </g>
-      )
-    default:
-      return null
-  }
-}
-
 interface WedgeProps {
   readonly wedge: PieWedge
   readonly count: number
   readonly reading: PieReading
-  readonly clipId: string
   readonly selected: boolean
   readonly dimmed: boolean
   readonly onSelect: ((id: string) => void) | undefined
 }
 
-function Wedge({
-  wedge,
-  count,
-  reading,
-  clipId,
-  selected,
-  dimmed,
-  onSelect,
-}: WedgeProps): ReactElement {
+function Wedge({ wedge, count, reading, selected, dimmed, onSelect }: WedgeProps): ReactElement {
   const { centroid: at } = wedge
+  const classes = readingClasses(reading)
   const tap = (): void => onSelect?.(reading.id)
   return (
     <g
@@ -212,34 +90,22 @@ function Wedge({
       aria-pressed={selected}
       tabIndex={0}
       aria-label={`${reading.label} ${reading.value}${reading.unit === null ? '' : ` ${reading.unit}`}`}
-      className={cn(
-        'dc-pie-wedge cursor-pointer transition-opacity',
-        WEDGE_FX_TEXT[reading.quantity],
-        dimmed && 'opacity-40',
-      )}
+      className={cn('dc-pie-wedge cursor-pointer transition-opacity', dimmed && 'opacity-40')}
       onClick={tap}
       onKeyDown={onKey(tap)}
     >
-      <clipPath id={clipId}>
-        <path d={wedge.path} />
-      </clipPath>
       <path
         d={wedge.path}
         className={cn(
           reading.state === 'empty'
             ? 'fill-surface stroke-foreground-subtle dc-pie-empty'
             : selected
-              ? WEDGE_FILL_SELECTED[reading.quantity]
-              : WEDGE_FILL[reading.quantity],
+              ? classes.wedgeSelected
+              : classes.wedge,
           reading.state === 'active' && 'dc-pie-breathe',
         )}
         strokeWidth={selected ? 3 : 1.5}
       />
-      {reading.state === 'active' ? (
-        <g clipPath={`url(#${clipId})`}>
-          <WedgeFx quantity={reading.quantity} at={at} />
-        </g>
-      ) : null}
       <text
         x={at.x}
         y={at.y - 2}
@@ -265,12 +131,12 @@ function Wedge({
 }
 
 /**
- * A sensor with several readings: a pie of equal wedges from 12 o'clock, each
- * tinted by its quantity, its value, unit and short name at the wedge's centre. A
- * reading that is on or alarming breathes, with its quantity's motion clipped
- * inside the wedge; one with no data is a dashed wedge with a "—". Under the pie each
- * reading is also a `ReadingTile` (its motion and trend, as in the grid). Tapping a
- * wedge or a tile highlights it (the others dim) and draws its history below the pie. Seven or more readings are `SensorGridCard`.
+ * A sensor with two to six readings: a pie of equal wedges from 12 o'clock, each in
+ * its own chart-palette colour, its value, unit and short name at the wedge's centre.
+ * Each wedge that has a value carries its reading's own motion (the single-reading card's
+ * backdrop), clipped to the wedge; a reading with no data is a still, dashed wedge with a "—". Tapping
+ * a wedge highlights it (the others dim) and draws its history below the pie. This is
+ * the ONLY layout of such a card: seven or more readings are `SensorGridCard`.
  */
 export function SensorPieCard({
   model,
@@ -281,7 +147,6 @@ export function SensorPieCard({
   selectedId = null,
   detail = null,
 }: SensorPieCardProps): ReactElement {
-  const uid = useId()
   const count = model.readings.length
   const wedges = pieGeometry(count)
   const lead = model.readings[0]
@@ -312,48 +177,49 @@ export function SensorPieCard({
                 {model.updated}
               </span>
             )}
-            <svg
-              viewBox="0 0 200 200"
-              role="group"
-              aria-label={model.common.name}
-              className="aspect-square w-full max-w-72"
-            >
-              <circle
-                cx={PIE_CENTRE}
-                cy={PIE_CENTRE}
-                r={PIE_RADIUS + 2}
-                className="fill-surface stroke-border"
-                strokeWidth={1}
-              />
+            <div className="relative isolate aspect-square w-full max-w-72 overflow-hidden rounded-full border border-border bg-surface">
               {model.readings.map((reading, i) => {
                 const wedge = wedges[i]
-                return wedge === undefined ? null : (
-                  <Wedge
+                return wedge === undefined ||
+                  reading.visual == null ||
+                  reading.state === 'empty' ? null : (
+                  <div
                     key={reading.id}
-                    wedge={wedge}
-                    count={count}
-                    reading={reading}
-                    clipId={`${uid}-w${String(i)}`}
-                    selected={reading.id === selectedId}
-                    dimmed={selectedId !== null && reading.id !== selectedId}
-                    onSelect={onSelect}
-                  />
+                    data-testid="dc-pie-fx"
+                    data-quantity={reading.quantity}
+                    className={cn(
+                      'pointer-events-none absolute inset-0 transition-opacity',
+                      selectedId !== null && reading.id !== selectedId && 'opacity-40',
+                    )}
+                    // ui-check-ok: the wedge's clip outline is geometry, not a colour or spacing
+                    style={{ clipPath: wedgeClipPolygon(wedge) }}
+                  >
+                    <MeasurementFx visual={reading.visual} />
+                  </div>
                 )
               })}
-            </svg>
-            <ul className={READING_TILES_GRID} data-testid="dc-pie-legend">
-              {model.readings.map((reading) => (
-                <li key={reading.id} className="min-w-0">
-                  <ReadingTile
-                    reading={reading}
-                    selected={reading.id === selectedId}
-                    dimmed={selectedId !== null && reading.id !== selectedId}
-                    onSelect={onSelect}
-                    testId="dc-pie-tile"
-                  />
-                </li>
-              ))}
-            </ul>
+              <svg
+                viewBox="0 0 200 200"
+                role="group"
+                aria-label={model.common.name}
+                className="absolute inset-0 size-full"
+              >
+                {model.readings.map((reading, i) => {
+                  const wedge = wedges[i]
+                  return wedge === undefined ? null : (
+                    <Wedge
+                      key={reading.id}
+                      wedge={wedge}
+                      count={count}
+                      reading={reading}
+                      selected={reading.id === selectedId}
+                      dimmed={selectedId !== null && reading.id !== selectedId}
+                      onSelect={onSelect}
+                    />
+                  )
+                })}
+              </svg>
+            </div>
             {detail === null ? null : (
               <div data-testid="dc-pie-detail" className="flex w-full flex-col items-center gap-3">
                 {detail}

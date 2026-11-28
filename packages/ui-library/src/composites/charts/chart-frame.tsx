@@ -28,6 +28,8 @@ export interface ChartLegendEntry {
 
 export interface ChartFrameProps {
   readonly title: string
+  /** The caption is read by screen readers only (a chart a heading already names). */
+  readonly hideTitle?: boolean
   /** Controls at the right of the title (a ⋯ menu). */
   readonly actions?: ReactNode
   /** The instant the readout shows, when the cursor is on the plot. */
@@ -47,6 +49,7 @@ export interface ChartFrameProps {
 
 export function ChartFrame({
   title,
+  hideTitle = false,
   actions,
   readoutTime,
   legend,
@@ -64,6 +67,7 @@ export function ChartFrame({
         <figcaption
           className={cn(
             'text-[10px] tracking-wider text-foreground-subtle truncate min-w-0',
+            hideTitle && 'sr-only',
             // A unit named as a title keeps its case: `kW` is not `KW`.
             unitDimension(title) === undefined ? 'uppercase' : 'normal-case',
           )}

@@ -134,65 +134,91 @@ const ENERGY_SYSTEM_SERIES: readonly SeriesSpec[] = [
   energyCounter('storage.dischargedKwh', 'Storage discharged', 1690, 4.2),
 ]
 
+/** The seven readings of the 1540 ambient monitor; 1542 keeps the first three, 1543 adds light. */
+const AMBIENT_SERIES = [
+  spec({
+    key: 'cap:temperature-sensor.temperature',
+    scope: '',
+    kind: 'gauge',
+    unit: '°C',
+    displayName: 'Temperature',
+    at: (t) => 22 + 1.8 * Math.sin(DAY_PHASE(t)),
+  }),
+  spec({
+    key: 'cap:humidity-sensor.humidity',
+    scope: '',
+    kind: 'gauge',
+    unit: '%',
+    displayName: 'Humidity',
+    at: (t) => 47 + 6 * Math.sin(DAY_PHASE(t) + 1),
+  }),
+  spec({
+    key: 'cap:air-quality-sensor.co2',
+    scope: '',
+    kind: 'gauge',
+    unit: 'ppm',
+    displayName: 'CO2',
+    at: (t) => 650 + 220 * Math.max(0, Math.sin(DAY_PHASE(t) - 1)),
+  }),
+  spec({
+    key: 'cap:air-quality-sensor.voc',
+    scope: '',
+    kind: 'gauge',
+    unit: 'ppb',
+    displayName: 'VOC',
+    at: (t) => 120 + 40 * Math.sin(DAY_PHASE(t) + 2),
+  }),
+  spec({
+    key: 'cap:air-quality-sensor.pm25',
+    scope: '',
+    kind: 'gauge',
+    unit: 'µg/m³',
+    displayName: 'PM2.5',
+    at: (t) => 8 + 3 * Math.sin(DAY_PHASE(t) + 0.5),
+  }),
+  spec({
+    key: 'cap:air-quality-sensor.pm10',
+    scope: '',
+    kind: 'gauge',
+    unit: 'µg/m³',
+    displayName: 'PM10',
+    at: (t) => 13 + 4 * Math.sin(DAY_PHASE(t) + 0.8),
+  }),
+  spec({
+    key: 'cap:air-quality-sensor.aqi',
+    scope: '',
+    kind: 'gauge',
+    unit: null,
+    displayName: 'Air quality',
+    at: (t) => 36 + 8 * Math.sin(DAY_PHASE(t) + 1.2),
+  }),
+]
+
+const AMBIENT_LIGHT = spec({
+  key: 'cap:ambient-light-sensor.illuminance',
+  scope: '',
+  kind: 'gauge',
+  unit: 'lx',
+  displayName: 'Illuminance',
+  at: (t) => 300 + 200 * Math.max(0, Math.sin(DAY_PHASE(t) - 0.5)),
+})
+
 export const DEVICE_SERIES: Readonly<Record<number, readonly SeriesSpec[]>> = {
   // The ambient monitors of the `sensor-card` fixture: one series per reading.
-  1540: [
+  1540: AMBIENT_SERIES,
+  1542: AMBIENT_SERIES.slice(0, 3),
+  1543: [...AMBIENT_SERIES, AMBIENT_LIGHT],
+  // A motion sensor that also reads the light: the state reading opens a state band.
+  1520: [
     spec({
-      key: 'cap:temperature-sensor.temperature',
+      key: 'cap:motion.detected',
       scope: '',
-      kind: 'gauge',
-      unit: '°C',
-      displayName: 'Temperature',
-      at: (t) => 22 + 1.8 * Math.sin(DAY_PHASE(t)),
-    }),
-    spec({
-      key: 'cap:humidity-sensor.humidity',
-      scope: '',
-      kind: 'gauge',
-      unit: '%',
-      displayName: 'Humidity',
-      at: (t) => 47 + 6 * Math.sin(DAY_PHASE(t) + 1),
-    }),
-    spec({
-      key: 'cap:air-quality-sensor.co2',
-      scope: '',
-      kind: 'gauge',
-      unit: 'ppm',
-      displayName: 'CO2',
-      at: (t) => 650 + 220 * Math.max(0, Math.sin(DAY_PHASE(t) - 1)),
-    }),
-    spec({
-      key: 'cap:air-quality-sensor.voc',
-      scope: '',
-      kind: 'gauge',
-      unit: 'ppb',
-      displayName: 'VOC',
-      at: (t) => 120 + 40 * Math.sin(DAY_PHASE(t) + 2),
-    }),
-    spec({
-      key: 'cap:air-quality-sensor.pm25',
-      scope: '',
-      kind: 'gauge',
-      unit: 'µg/m³',
-      displayName: 'PM2.5',
-      at: (t) => 8 + 3 * Math.sin(DAY_PHASE(t) + 0.5),
-    }),
-    spec({
-      key: 'cap:air-quality-sensor.pm10',
-      scope: '',
-      kind: 'gauge',
-      unit: 'µg/m³',
-      displayName: 'PM10',
-      at: (t) => 13 + 4 * Math.sin(DAY_PHASE(t) + 0.8),
-    }),
-    spec({
-      key: 'cap:air-quality-sensor.aqi',
-      scope: '',
-      kind: 'gauge',
+      kind: 'boolean',
       unit: null,
-      displayName: 'Air quality',
-      at: (t) => 36 + 8 * Math.sin(DAY_PHASE(t) + 1.2),
+      displayName: 'Motion',
+      at: (t) => (Math.floor(hourOf(t)) % 5 === 0 ? 1 : 0),
     }),
+    AMBIENT_LIGHT,
   ],
   1541: [
     spec({

@@ -17,7 +17,7 @@ import type { FanReading } from '../scenes/fan/model'
 import { measurementVisual } from '../scenes/sensor/model'
 import { measurementSinceText } from './measurement-since'
 import { quantityLabel } from './measurement-label'
-import { ReadingHistory } from './MeasuredPieCard'
+import { ReadingHistory } from './ReadingHistory'
 import { SensorTrend } from './SensorTrend'
 
 const NONE: readonly FanReading[] = []
@@ -45,6 +45,13 @@ export function useMeasurementReadings(deviceId: number): MeasurementReadingsVie
   const idOf = (m: { quantity: string }, index: number): string => `${m.quantity}-${String(index)}`
   const pickedIndex = (measurements ?? []).findIndex((m, i) => idOf(m, i) === selectedId)
   const picked = pickedIndex < 0 ? undefined : measurements?.[pickedIndex]
+  const subject: ReadingDisplaySubject | null =
+    device.data === undefined || device.data === null
+      ? null
+      : {
+          role: device.data.role ?? null,
+          ...(device.data.display === undefined ? {} : { display: device.data.display }),
+        }
   const open: FanReadingOpen = {
     selectedId: picked === undefined ? null : selectedId,
     onSelect: (id) => setSelectedId((current) => (current === id ? null : id)),
@@ -54,17 +61,14 @@ export function useMeasurementReadings(deviceId: number): MeasurementReadingsVie
           deviceId={deviceId}
           measurement={picked}
           since={measurementSinceText(picked, t)}
+          unit={
+            measurementText({ measurement: picked, lang, subject, unitPreferences, roleDefaults })
+              .unit
+          }
         />
       ),
   }
   if (measurements === undefined) return { readings: NONE, open }
-  const subject: ReadingDisplaySubject | null =
-    device.data === undefined || device.data === null
-      ? null
-      : {
-          role: device.data.role ?? null,
-          ...(device.data.display === undefined ? {} : { display: device.data.display }),
-        }
   const readings = measurements.map((m, index) => {
     const text = measurementText({
       measurement: m,

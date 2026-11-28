@@ -16,6 +16,13 @@ import {
 
 afterEach(cleanup)
 
+/** The i-th of a rendered list; a missing one fails the test by name, no cast. */
+function nth<T>(list: readonly T[], i: number): T {
+  const item = list[i]
+  if (item === undefined) throw new Error(`no element ${String(i)} of ${String(list.length)}`)
+  return item
+}
+
 const common = plugFixtures(0)[0]?.model.common
 if (common === undefined) throw new Error('no plug fixture')
 
@@ -43,7 +50,7 @@ describe('SensorPieCard', () => {
     expect(screen.getByTestId('dc-pie-updated').textContent).toBe('Updated · 2 min ago')
   })
 
-  it('an active reading breathes and carries its quantity motion; an idle one does not', () => {
+  it("an active reading breathes; the motion inside its wedge is the single-reading card's own", () => {
     render(
       <SensorPieCard
         model={model([
@@ -52,16 +59,44 @@ describe('SensorPieCard', () => {
             value: 'Active',
             unit: null,
             state: 'active',
+            visual: { kind: 'ring', tone: 'primary', speed: 'normal', dim: false },
           }),
-          reading('t'),
+          reading('t', { visual: { kind: 'heat', tone: 'danger', speed: 'normal', dim: false } }),
+          reading('h', { quantity: 'humidity', visual: null }),
         ])}
       />,
     )
     const [motion, temp] = screen.getAllByTestId('dc-pie-wedge')
     expect(motion?.querySelector('.dc-pie-breathe')).not.toBeNull()
-    expect(motion?.querySelector('[data-fx="rings"]')).not.toBeNull()
     expect(temp?.querySelector('.dc-pie-breathe')).toBeNull()
-    expect(temp?.querySelector('.dc-pie-fx')).toBeNull()
+    // One clipped layer per reading that has a motion, inside the pie, carrying MeasurementFx.
+    const layers = screen.getAllByTestId('dc-pie-fx')
+    expect(layers).toHaveLength(2)
+    expect(
+      layers.map((l) =>
+        l.querySelector('[data-testid="dc-measurement-fx"]')?.getAttribute('data-fx'),
+      ),
+    ).toEqual(['ring', 'heat'])
+    for (const l of layers) expect(l.getAttribute('style')).toContain('polygon(')
+    expect(screen.getByTestId('dc-sensor-pie').contains(nth(layers, 0))).toBe(true)
+  })
+
+  it('a wedge with no value stays still: no motion layer, while the one with a value keeps its own', () => {
+    render(
+      <SensorPieCard
+        model={model([
+          reading('t', { visual: { kind: 'heat', tone: 'danger', speed: 'normal', dim: false } }),
+          reading('l', {
+            quantity: 'illuminance',
+            value: '—',
+            state: 'empty',
+            visual: { kind: 'ring', tone: 'primary', speed: 'normal', dim: false },
+          }),
+        ])}
+      />,
+    )
+    const layers = screen.getAllByTestId('dc-pie-fx')
+    expect(layers.map((l) => l.getAttribute('data-quantity'))).toEqual(['temperature'])
   })
 
   it('a reading with no data is a dashed wedge showing a dash, never 0', () => {
@@ -91,7 +126,7 @@ describe('SensorPieCard', () => {
     expect(css).toContain('prefers-reduced-motion:reduce')
   })
 
-  it('the selected wedge is highlighted in its own quantity colour and the others dim', () => {
+  it('the selected wedge is highlighted in its own palette colour and the others dim', () => {
     render(
       <SensorPieCard
         model={model([reading('a'), reading('b', { quantity: 'humidity' })])}
@@ -102,7 +137,9 @@ describe('SensorPieCard', () => {
     const [a, b] = screen.getAllByTestId('dc-pie-wedge')
     expect(b?.getAttribute('data-selected')).toBe('true')
     expect(b?.getAttribute('aria-pressed')).toBe('true')
-    expect(b?.querySelector(':scope > path')?.getAttribute('class')).toContain('stroke-info')
+    expect(b?.querySelector(':scope > path')?.getAttribute('class')).toMatch(
+      /stroke-chart-series-[a-h]$/,
+    )
     expect(a?.getAttribute('class')).toContain('opacity-40')
     expect(b?.getAttribute('class')).not.toContain('opacity-40')
     expect(screen.getByTestId('dc-pie-detail').textContent).toBe('chart')

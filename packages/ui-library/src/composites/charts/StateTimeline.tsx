@@ -53,6 +53,8 @@ export interface StateRowDef {
 
 export interface StateTimelineProps {
   readonly title: string
+  /** The title stays for screen readers only (a chart whose caller already names it). */
+  readonly hideTitle?: boolean
   readonly rows: readonly StateRowDef[]
   readonly range: ChartRange
   readonly syncKey?: string
@@ -117,6 +119,7 @@ export function stateStyle(
 
 export function StateTimeline({
   title,
+  hideTitle = false,
   rows,
   range,
   syncKey,
@@ -246,7 +249,12 @@ export function StateTimeline({
   return (
     <figure className={cn('min-w-0 m-0', className)} data-chart-frame="">
       <div className="flex items-baseline justify-between gap-2 mb-1 min-w-0">
-        <figcaption className="text-[10px] uppercase tracking-wider text-foreground-subtle truncate min-w-0">
+        <figcaption
+          className={cn(
+            'text-[10px] uppercase tracking-wider text-foreground-subtle truncate min-w-0',
+            hideTitle && 'sr-only',
+          )}
+        >
           {title}
         </figcaption>
         <div className="flex items-center gap-2 shrink-0">

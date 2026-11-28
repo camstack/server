@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The device-template help link points at dominevo.app
+- A composed sensor card (pie for two to six readings, grid for seven or more) draws exactly one layout, gives every reading its own chart colour, runs each reading's animation inside its wedge or tile, and opens a compact untitled chart in the reading's unit
 
 ## [0.1.0] - 2026-11-28
 

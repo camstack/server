@@ -1,4 +1,4 @@
-import type { HeroMeasurement, HeroMeasurementQuantity } from '@dominevo/types'
+import type { HeroMeasurement } from '@dominevo/types'
 import { type ReactElement, useEffect, useState } from 'react'
 import { useUiText } from '../../../contexts/ui-text'
 import { useUnitPreferences } from '../../../contexts/unit-preferences'
@@ -14,13 +14,14 @@ import {
 import { useRoleDisplayDefaults } from '../../device-item/role-display-defaults-context'
 import { measurementVisual } from '../scenes/sensor/model'
 import { readingStateOf } from '../scenes/sensor/pie-model'
+import { assignReadingSlots } from '../scenes/sensor/reading-colour'
 import { SensorGridCard } from '../scenes/sensor/SensorGridCard'
 import { type PieReading, SensorPieCard } from '../scenes/sensor/SensorPieCard'
 import type { CardOrientation } from '../shell/model'
 import { quantityLabel } from './measurement-label'
 import { measurementSinceText } from './measurement-since'
 import { SensorTrend } from './SensorTrend'
-import { DeviceHistoryView } from '../../device-history/DeviceHistoryView'
+import { ReadingHistory } from './ReadingHistory'
 import { useCardCommon } from './use-card-common'
 
 /** Two readings of one quantity would share a key: the index keeps them apart. */
@@ -79,10 +80,12 @@ export function MeasuredPieCard({
       unitPreferences,
       roleDefaults,
     })
+  const slots = assignReadingSlots(shown.map((m) => m.quantity))
   const readingOf = (m: HeroMeasurement, index: number): PieReading => {
     const text = textOf(m)
     return {
       id: idOf(m, index),
+      slot: slots[index] ?? 0,
       quantity: m.quantity,
       value: text.value,
       unit: text.unit,
@@ -123,6 +126,8 @@ export function MeasuredPieCard({
         deviceId={deviceId}
         measurement={pickedMeasurement}
         since={measurementSinceText(pickedMeasurement, t)}
+        unit={textOf(pickedMeasurement).unit}
+        slot={slots[picked] ?? 0}
       />
     )
   const common = {
@@ -135,46 +140,4 @@ export function MeasuredPieCard({
     ...(orientation === undefined ? {} : { orientation }),
   }
   return grid ? <SensorGridCard {...common} /> : <SensorPieCard {...common} />
-}
-
-interface ReadingHistoryProps {
-  readonly deviceId: number
-  readonly measurement: HeroMeasurement
-  readonly since: string | null
-}
-
-/** The state series of a reading that is on/off rather than a number (no trend line). */
-export const STATE_READING_HISTORY_KEY: Readonly<Partial<Record<HeroMeasurementQuantity, string>>> =
-  {
-    motion: 'cap:motion.detected',
-    contact: 'cap:contact.entryOpen',
-  }
-
-/** One reading's value and the last day of it; a state reading shows ITS series only, never the device's whole History. */
-export function ReadingHistory({
-  deviceId,
-  measurement,
-  since,
-}: ReadingHistoryProps): ReactElement {
-  const t = useUiText()
-  const seriesKey = measurement.historyKey ?? STATE_READING_HISTORY_KEY[measurement.quantity]
-  // The chart is the device-history view of this one series: it says itself
-  // whether the read is pending, absent or empty (D315), never a blank.
-  const chart =
-    seriesKey === undefined ? null : (
-      <DeviceHistoryView deviceId={deviceId} seriesKeys={[seriesKey]} fixedWindow="24h" />
-    )
-  return (
-    <div className="flex w-full flex-col items-center gap-2" data-testid="dc-pie-history">
-      <span className="text-sm font-medium text-foreground">
-        {quantityLabel(t, measurement.quantity)}
-      </span>
-      {since === null ? null : <span className="text-xs text-foreground-muted">{since}</span>}
-      {chart ?? (
-        <span className="text-xs text-foreground-muted" data-testid="dc-pie-no-history">
-          {t('uiLibrary.sensorPie.noHistory', 'No history is kept for this reading.')}
-        </span>
-      )}
-    </div>
-  )
 }

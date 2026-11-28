@@ -93,3 +93,25 @@ export function pieGeometry(count: number): readonly PieWedge[] {
     }
   })
 }
+
+/** Degrees between two points of a wedge's arc in the clip outline. */
+const CLIP_ARC_STEP_DEG = 4
+
+/**
+ * The CSS `polygon()` of a wedge as percentages of the pie's square (so it scales with
+ * it): the centre, then the arc from its start to its end.
+ */
+export function wedgeClipPolygon(wedge: PieWedge): string {
+  const radiusPct = (PIE_RADIUS / (PIE_CENTRE * 2)) * 100
+  const pct = (deg: number): string => {
+    const rad = (deg * Math.PI) / 180
+    const x = 50 + radiusPct * Math.sin(rad)
+    const y = 50 - radiusPct * Math.cos(rad)
+    return `${x.toFixed(2)}% ${y.toFixed(2)}%`
+  }
+  const steps = Math.max(1, Math.ceil((wedge.endDeg - wedge.startDeg) / CLIP_ARC_STEP_DEG))
+  const arc = Array.from({ length: steps + 1 }, (_, i) =>
+    pct(wedge.startDeg + ((wedge.endDeg - wedge.startDeg) * i) / steps),
+  )
+  return `polygon(50% 50%, ${arc.join(', ')})`
+}
