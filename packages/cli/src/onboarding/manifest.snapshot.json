@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "revision": 2,
-  "contentHash": "e3254a43b7d2146f",
-  "docsBaseUrl": "https://camstack-docs.zentik.app",
+  "revision": 3,
+  "contentHash": "027439a54540e59f",
+  "docsBaseUrl": "https://docs.dominevo.app",
   "steps": [
     {
       "id": "feasibility",

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Renamed to Dominevo: the package is now published as @dominevo/types, restarting at version 0.1.0.
+
 ## [1.2.644] - 2026-11-27
 
 ### Changed

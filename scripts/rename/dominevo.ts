@@ -153,6 +153,11 @@ function trackedFiles(): string[] {
   return out.split('\0').filter((f) => f.length > 0)
 }
 
+/** Tracked files read as binary (a NUL byte in the first 8 KB) and so never rewritten. */
+const skippedBinary: string[] = []
+/** A source or text extension: a NUL byte in one of these is a stray byte, not an image. */
+const TEXT_EXTENSION = /\.(?:[cm]?[jt]sx?|json|md|mdx|ya?ml|html?|css|sh|toml|txt|py|svg)$/u
+
 /** A text file: a regular file with no NUL byte in its first 8 KB. */
 function readText(file: string): string | undefined {
   const abs = path.join(ROOT, file)
@@ -160,7 +165,10 @@ function readText(file: string): string | undefined {
   const stat = lstatSync(abs)
   if (!stat.isFile()) return undefined
   const buf = readFileSync(abs)
-  if (buf.subarray(0, 8192).includes(0)) return undefined
+  if (buf.subarray(0, 8192).includes(0)) {
+    skippedBinary.push(file)
+    return undefined
+  }
   return buf.toString('utf8')
 }
 
@@ -350,6 +358,11 @@ function main(): void {
       `  ${String(n).padStart(6)} / ${String(filesTouched.get(rule)?.size ?? 0).padStart(5)}  ${rule}`,
     )
   }
+  const suspect = skippedBinary.filter((f) => TEXT_EXTENSION.test(f))
+  console.log(
+    `\nskipped as binary: ${skippedBinary.length} tracked files (${suspect.length} with a text extension)`,
+  )
+  for (const f of suspect) console.log(`  SKIPPED TEXT FILE (stray NUL byte?): ${f}`)
   console.log('\nlayer 2 left in place (see scripts/rename/LAYER2.md):')
   for (const [label, n] of [...remaining.entries()].toSorted((a, b) => b[1] - a[1])) {
     console.log(`  ${String(n).padStart(6)}  ${label}`)
@@ -357,3 +370,7 @@ function main(): void {
 }
 
 main()
+if (skippedBinary.some((f) => TEXT_EXTENSION.test(f))) {
+  console.error('refusing: a tracked text file was skipped as binary, fix its NUL byte first')
+  process.exitCode = 1
+}
