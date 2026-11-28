@@ -14,9 +14,9 @@
  *    reports three times in 400 ms is one event to a person.
  */
 
-import type { AutomationLeaf, BecomesOperator, DeviceBecomesLeaf, HoldSpec } from '@camstack/types'
-import { BecomesOperatorSchema, holdOf } from '@camstack/types'
-import { Input, Select, DurationInput } from '@camstack/ui-library'
+import type { AutomationLeaf, BecomesOperator, DeviceBecomesLeaf, HoldSpec } from '@dominevo/types'
+import { BecomesOperatorSchema, holdOf } from '@dominevo/types'
+import { Input, Select, DurationInput } from '@dominevo/ui-library'
 import { Trans, useTranslation } from 'react-i18next'
 import { SourceSelector } from '../../../components/device/customize/source-selector/SourceSelector'
 import { BUILD_EXCLUDED_TYPES } from '../flow/build-device-filters'

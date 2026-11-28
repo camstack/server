@@ -7,8 +7,8 @@
  * track cascade itself is `TrackPruneRunner`; the one-shot retired-settings
  * purges the pass runs first are `RetiredSettingsPurge`.
  */
-import type { AddonContext, TrackCascadeCounts } from '@camstack/types'
-import { errMsg } from '@camstack/types'
+import type { AddonContext, TrackCascadeCounts } from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
 import { deriveSuggestedBufferCap, FACE_DEFAULTS, resolveFaceSettings } from '../face-settings.js'
 import { type DeviceRetentionCutoffs, resolveRetentionSettings } from '../retention-policy.js'
 import type { EventStore } from '../store/event-store.js'

@@ -17,7 +17,7 @@
  * Fail-closed where it matters: two values that are not recognisably the SAME
  * destination are a change, and a change with a redacted secret is refused.
  */
-import type { ConfigCondition, ConfigField, TargetKind } from '@camstack/types'
+import type { ConfigCondition, ConfigField, TargetKind } from '@dominevo/types'
 
 /** What the comparison needs from an adapter. */
 export interface DestinationSpec {

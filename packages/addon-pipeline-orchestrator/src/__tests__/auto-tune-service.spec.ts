@@ -10,7 +10,7 @@ import type {
   NodeInferenceDevices,
   NodeMeasuredCapacity,
   PipelineSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { AutoTuneService, type AutoTuneServiceDeps } from '../auto-tune/auto-tune-service.js'
 import type { AgentSettingsMapBlob } from '../orchestrator-store-schemas.js'

@@ -9,7 +9,7 @@
  * Every number comes from the hub — `startedAt` and `observedAt` are both the
  * hub's clock — so nothing here subtracts a browser clock from a server one.
  */
-import type { StorageMigrationMoveProgress } from '@camstack/types'
+import type { StorageMigrationMoveProgress } from '@dominevo/types'
 import { formatBytes } from '../../../lib/format-size'
 
 /** What the UI renders for one mover, already worded. */

@@ -4,7 +4,7 @@
  * never reuses it. The API gives no MAC or serial this integration reads. A blank
  * id declares nothing, so the stored value is kept (D49).
  */
-import type { DeviceIdentifierKey, RawDeviceIdentifiers } from '@camstack/types'
+import type { DeviceIdentifierKey, RawDeviceIdentifiers } from '@dominevo/types'
 
 export interface PetkitIdentifierDeclaration {
   readonly identifiers: RawDeviceIdentifiers

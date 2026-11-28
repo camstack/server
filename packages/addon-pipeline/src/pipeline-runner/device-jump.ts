@@ -26,7 +26,7 @@ import {
   type RunnerJumpStepProvisioning,
   type StepDefinition,
   stepModelRunsOnFormat,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** One enabled inference device on the node, as the resolver sees it. */
 export interface JumpCandidateDevice {
@@ -124,7 +124,7 @@ export interface JumpSubtreeStep {
  * `face-embedding` child (no tflite build anywhere) doomed the call.
  * Unknown/custom addonIds (`getStepDef` → null) have no catalog to gate on
  * and never block. `getStepDef` is injected — this module stays catalog-free.
- * Each step is judged by `stepModelRunsOnFormat` (`@camstack/types`), the one
+ * Each step is judged by `stepModelRunsOnFormat` (`@dominevo/types`), the one
  * rule every placement reads: a legacy stub build counts only when named (D657).
  */
 export function buildSubtreeCanRun(
@@ -225,7 +225,7 @@ export interface DetailStepPlacement {
   /**
    * A jumped subtree was re-provisioned from the target's roster entry (D650).
    * `false` on a jump means the roster carried no `steps` (an orchestrator, or
-   * a `@camstack/types` closure, that predates D650): the step runs as sent,
+   * a `@dominevo/types` closure, that predates D650): the step runs as sent,
    * with the elected device's provisioning.
    */
   readonly provisioned: boolean

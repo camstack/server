@@ -6,8 +6,8 @@ import { LogRingBuffer } from './log-ring-buffer'
 import { ScopedLogger } from './scoped-logger'
 import { LoggingService } from './logging.service'
 import { ConfigService } from '../config/config.service'
-import type { ISettingsStore } from '@camstack/server/system'
-import type { LogEntry, ILogDestination } from '@camstack/types'
+import type { ISettingsStore } from '@dominevo/server/system'
+import type { LogEntry, ILogDestination } from '@dominevo/types'
 
 /**
  * In-memory settings store used by the test to drive `ConfigService.get`

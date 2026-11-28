@@ -12,7 +12,7 @@ import {
   type EventFire,
   type EventVocabularyEntry,
   type InferNativeProvider,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { ValueChangedEvent } from 'nodehomematic'
 import { homematicFacades } from '../homematic-facade-resolver.js'
 import { buttonEventsSection } from './hm-button-events-section.js'

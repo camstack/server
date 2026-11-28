@@ -41,7 +41,7 @@ import {
   type DeviceContext,
   type InferNativeProvider,
   parseAdminBase,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** Which HA page this camstack device corresponds to. */
 export type HaAdminLinkSubject =

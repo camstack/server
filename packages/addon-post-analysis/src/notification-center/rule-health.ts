@@ -26,7 +26,7 @@
  * Pure: the centre emits the edges this returns. The verdicts live in RAM, so a
  * restart re-announces a rule that is still broken — once.
  */
-import type { NcRule } from '@camstack/types'
+import type { NcRule } from '@dominevo/types'
 import type { NcPruneRecord } from './device-prune-ledger.js'
 import { referencedDeviceIds, referencedTargetIds } from './device-prune.js'
 import type { NcSkippedRuleRow } from './rule-store.js'

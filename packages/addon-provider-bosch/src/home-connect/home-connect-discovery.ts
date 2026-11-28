@@ -1,4 +1,4 @@
-import { DeviceType, type DiscoveredChildDevice } from '@camstack/types'
+import { DeviceType, type DiscoveredChildDevice } from '@dominevo/types'
 import type { HomeConnectApplianceInfo } from './home-connect-ws-client.js'
 
 export interface BuildHomeConnectCandidatesInput {

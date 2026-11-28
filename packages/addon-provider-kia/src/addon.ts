@@ -15,7 +15,7 @@ import {
   type RecordIntegrationInstances,
   type SystemEvent,
   collectOwnerIntegrationIds,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { KiaReconciler, type IntegrationLifecycleKind } from './kia-reconciler.js'
 import { KiaVehicleDevice } from './devices/kia-vehicle-device.js'
 import { buildKiaAdoptionProvider } from './kia-adoption-provider.js'

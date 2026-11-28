@@ -25,7 +25,7 @@
  *      the `defaultConfidence` of each model (D662).
  *
  * The model layers are collapsed by `resolveEffectiveStepModel` in
- * `@camstack/ui-library`, which is the ONE owner of that decision
+ * `@dominevo/ui-library`, which is the ONE owner of that decision
  * (`scripts/check-step-model-single-owner.ts` exists because three surfaces
  * once each had their own copy and disagreed). Nothing here restates it.
  *
@@ -45,8 +45,8 @@ import type {
   NodeInferenceDevice,
   PipelineAddonSchema,
   PipelineSchema,
-} from '@camstack/types'
-import { resolveEffectiveStepModel } from '@camstack/ui-library'
+} from '@dominevo/types'
+import { resolveEffectiveStepModel } from '@dominevo/ui-library'
 
 /** The root detector step — the one `proposeRetrainAnnotations` runs. */
 export const OBJECT_DETECTION_STEP_ID = 'object-detection'

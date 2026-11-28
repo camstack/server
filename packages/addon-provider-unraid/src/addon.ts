@@ -24,7 +24,7 @@ import {
   type SystemEvent,
   collectOwnerIntegrationIds,
   rowsDepsOver,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { UNRAID_SYSTEM } from './config.js'
 import { UnraidEntityDevice } from './devices/unraid-entity-device.js'
 import { UnraidInstanceDevice } from './devices/unraid-instance-device.js'

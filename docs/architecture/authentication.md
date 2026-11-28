@@ -181,7 +181,7 @@ verify of a session-grade token; an open WebSocket re-checks it on every call
 ## A terminal signs in by approval (D988)
 
 A shell with no TTY (an assistant's, a service) cannot prompt, and a password
-typed into it is refused. `camstack login <host>` there (or `--browser`) runs a
+typed into it is refused. `dominevo login <host>` there (or `--browser`) runs a
 device flow: `auth.cliLoginBegin` returns an 8-character code and a `cda_`
 device secret; the CLI prints the URL (`/approve`) and the code on separate
 lines, opens the browser only with `--open`, and polls `auth.cliLoginPoll`
@@ -201,7 +201,7 @@ the table is full the oldest request of the busiest address is evicted; approve,
 deny and the mint log `requestId`, address and client, never the code or secret.
 
 The assistant tools `setup_login` / `setup_login_wait` wrap the same flow and
-return only the URL, the code and a status. `camstack mcp update` and
+return only the URL, the code and a status. `dominevo mcp update` and
 `rollback` switch the installer's managed layout and never touch `~/.camstack`.
 
 ## Device certificates (D855)
@@ -305,19 +305,19 @@ permissions, a label, and an expiry preset.
 
 **One credential for every tool.** There is ONE token format; only the set of
 permissions differs (an admin session can do everything). Run
-`camstack login <host>` once: it stores the login JWT, its refresh token (`csr_…`)
+`dominevo login <host>` once: it stores the login JWT, its refresh token (`csr_…`)
 and `expiresAt` in `~/.camstack/<host>_<port>.json` (0600). The CLI, `scripts/hub/hub.mjs`,
 the operator scripts (`scripts/hub/credentials.mjs`) and the MCP all resolve the
 credential through `resolveCredentials` / `resolveFreshCredentials`
 (`packages/develop/src/hub`): that session, and nothing else (D1101): `--token`,
 `--token-file` and `$CAMSTACK_TOKEN` were removed, and a removed flag fails with a
-message that says `camstack login`. Guards `check-single-client-login` and
+message that says `dominevo login`. Guards `check-single-client-login` and
 `check-no-token-file-lookup`; the how-to is the `hub-access` skill. A session with less than 60 s left is renewed over HTTP with
 `auth.refreshSession` before use, and a 401 renews it once and retries once; a
-refusal says `run camstack login`. The permission tier is read from the token's
+refusal says `run dominevo login`. The permission tier is read from the token's
 CLAIMS (an admin JWT is admin); a token whose claims it cannot read is
 classified by asking the hub (`GET /api/auth/whoami`), never by its shape. The MCP never mints or asks for a password: when the credential is not
-admin its ops tools answer with the exact command to run (`camstack login`, or the
+admin its ops tools answer with the exact command to run (`dominevo login`, or the
 checkout-local form when the binary is not on PATH).
 
 ## A person is an admin or a viewer (D921)
@@ -351,9 +351,9 @@ users, the HA, Alexa and Google links, share links and tokens.
 `role: { feature }` labels, then codegen; the guards are
 `check-method-roles` and `check-viewer-calls-allowed`.
 
-## Finding the hub for `camstack login` (D838)
+## Finding the hub for `dominevo login` (D838)
 
-**Naming a hub.** `camstack login <host>` is `camstack login --server <host>`
+**Naming a hub.** `dominevo login <host>` is `dominevo login --server <host>`
 and there is ONE login: `--admin` / `--admin-days` were removed (D895) and an old
 invocation that still passes them prints a one-line warning ("one login, one token
 — drop --admin") and logs in as usual; naming two different hubs is an error.
@@ -365,7 +365,7 @@ EVERY server input — the positional, `--server`/`-s`, `$CAMSTACK_SERVER`,
 `hub.local:4443`, `https://host`, `[fe80::1]:4443`). `http://` is refused with a
 message — the hub API is https only. Never parse a server in a command.
 
-**Not naming one.** `login` (and `camstack discover`) lists the hubs announced over
+**Not naming one.** `login` (and `dominevo discover`) lists the hubs announced over
 mDNS (`_camstack._tcp`, the hub's HTTPS endpoint) unioned with the hubs this
 machine already knows (saved sessions, `$CAMSTACK_HUB_URL`,
 `scratchpad/.hub-url`), reachable ones only. The picker is shown for one hub as
@@ -379,7 +379,7 @@ retired it). Details and the container requirement:
 **Which saved session a command uses.** With no server given: the session of
 `$CAMSTACK_SERVER` if set and saved, else the most recently used one
 (`lastUsedAt`, stamped when `deploy`/`dev`/`watch` use a cached session; a file
-without it counts from `createdAt`). `camstack whoami` with several sessions and
+without it counts from `createdAt`). `dominevo whoami` with several sessions and
 no `--server` lists them all (server, user, admin role) and marks
 that default with `*`.
 
@@ -410,7 +410,7 @@ by its provider: that is the bridge format, and the allowlist that keeps
 **From the native app (D801).** The app's system browser holds no hub
 session, so step 3's cookie check cannot hold. The app passes
 `returnTo: 'camstack://auth-callback'` (allowlisted by `APP_AUTH_CALLBACK_URLS`
-in `@camstack/types`, the same list the admin-ui login handoff reads). The
+in `@dominevo/types`, the same list the admin-ui login handoff reads). The
 finish then PARKS the verified identity under a one-time `nlc_` code (60 s,
 single-use, `native-link-completions.ts`) and 302s to
 `camstack://auth-callback?link=<code>` (or `?linkError=`) — never under the hub
@@ -472,7 +472,7 @@ shows.
 **OAuth completions share that page.** A broker sign-in or sign-out (Google), and a
 refused account link (`/api/oauth2/authorize` asked by a browser), end on
 `/sso-complete#return=oauth&status=success|error&addon=…&broker=…&reason=<code>`
-(`oauthLandingUrl` / `parseOauthLandingFragment` in `@camstack/types`;
+(`oauthLandingUrl` / `parseOauthLandingFragment` in `@dominevo/types`;
 `pages/OauthLanding.tsx`). The fragment carries a status and a reason CODE from a
 closed list — never a token, a code or an error message; the page words the
 code (en/it). A popup posts `camstack:broker-oauth` to a same-origin opener and
@@ -530,7 +530,7 @@ The viewer never opens the admin-ui login. Two hub flows end at the app's
 custom scheme (`camstack://auth-callback`, or `camstack.dev://…` when the app
 asks with the allow-listed `redirect`) with a one-shot handoff code, and set no
 web session or cookie. The request is read by one function,
-`parseAppFlowRequest` (`@camstack/types`): `code_challenge` (S256, 43
+`parseAppFlowRequest` (`@dominevo/types`): `code_challenge` (S256, 43
 characters), `code_challenge_method=S256`, `state` (`[A-Za-z0-9._~-]{1,256}`),
 `purpose` (`new-session` | `step-up`), `redirect` (allow-list only).
 
@@ -560,7 +560,7 @@ characters), `code_challenge_method=S256`, `state` (`[A-Za-z0-9._~-]{1,256}`),
 
 **Confirmation before the code (D858 amendment).** A custom scheme can be
 claimed by any app, so neither browser leg hands the app a code directly: both
-end at `/auth/app/confirm` ("Sign in the CamStack app as <user>?", CSP by hash).
+end at `/auth/app/confirm` ("Sign in the Dominevo app as <user>?", CSP by hash).
 The code is minted only when Continue POSTs the one-shot, cookie-bound token
 (`app-confirmations.ts`, 120 s, burned by the first attempt); Cancel returns
 `error=cancelled`. An OIDC step-up asks the IdP for `prompt=login&max_age=0` and
@@ -568,7 +568,7 @@ the callback refuses a missing or stale `auth_time` (`step-up-not-fresh`). The
 OIDC pending states and WebAuthn challenges are bounded and refuse when full
 (`too-many-requests`).
 
-The hub pages of this flow (passkey, confirmation, refusals, and the OAuth2 consent screen) are all rendered by one shell, `server/backend/src/auth/app-page-shell.ts` (`renderAppPage`): theme tokens generated from `@camstack/ui-library/theme/tokens` for light and dark, the admin login card and button look, the inlined brand logo, safe areas. Its stylesheet is inline and pinned in the CSP by a hash computed from the served string (`appPageCsp`). The addon-owned OIDC start redirects a refused request to `/auth/app/refused?reason=<code>`, which the hub renders; add a page by calling the shell, never by writing a new `<style>`.
+The hub pages of this flow (passkey, confirmation, refusals, and the OAuth2 consent screen) are all rendered by one shell, `server/backend/src/auth/app-page-shell.ts` (`renderAppPage`): theme tokens generated from `@dominevo/ui-library/theme/tokens` for light and dark, the admin login card and button look, the inlined brand logo, safe areas. Its stylesheet is inline and pinned in the CSP by a hash computed from the served string (`appPageCsp`). The addon-owned OIDC start redirects a refused request to `/auth/app/refused?reason=<code>`, which the hub renders; add a page by calling the shell, never by writing a new `<style>`.
 
 Those pages speak English and Italian (D858 amendment). All prose is in `app-page-strings.ts`; `resolveAppPageLang` picks the language: the app's optional `lang` query parameter (`en` | `it`, carried through the OIDC pending state, the bridge claim `app.lang` and the confirmation entry) wins, else `Accept-Language`, else English, and neither is ever echoed. Script-written texts reach the page as `data-s-*` attributes so the script, and its CSP hash, never vary by language. A page that needs a new sentence adds a key to BOTH locales.
 

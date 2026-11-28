@@ -4,7 +4,7 @@
  * only on the first spawn. Reconcile (container) and the standalone watch must
  * re-apply the derived capabilities so such a child gains the cap.
  */
-import { type DeviceContext, DeviceType, type IDeviceRuntimeState } from '@camstack/types'
+import { type DeviceContext, DeviceType, type IDeviceRuntimeState } from '@dominevo/types'
 import type { Homematic, HmCustomEntity } from 'nodehomematic'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { HmContainerDevice } from '../devices/hm-container-device.js'

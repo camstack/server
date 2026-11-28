@@ -1,5 +1,5 @@
 import type { HAPConnection } from '@homebridge/hap-nodejs'
-import { type CommandOriginRequestOptions, commandOrigin } from '@camstack/types/addon'
+import { type CommandOriginRequestOptions, commandOrigin } from '@dominevo/types/addon'
 
 /**
  * The origin claim for a command a HomeKit controller wrote: the controller's

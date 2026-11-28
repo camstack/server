@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { AuthService } from './auth.service'
-import { staticJwtSigningKey } from '@camstack/server/system'
+import { staticJwtSigningKey } from '@dominevo/server/system'
 import type { ConfigService } from '../config/config.service'
-import type { TokenPayload } from '@camstack/types'
+import type { TokenPayload } from '@dominevo/types'
 
 function createMockConfig(overrides: Record<string, unknown> = {}): ConfigService {
   return {

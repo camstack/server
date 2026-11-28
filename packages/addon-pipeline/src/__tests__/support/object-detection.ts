@@ -1,4 +1,4 @@
-import type { DetectionBoundingBox, MacroClass, ObjectDetection } from '@camstack/types'
+import type { DetectionBoundingBox, MacroClass, ObjectDetection } from '@dominevo/types'
 
 /** Minimal first-level {@link ObjectDetection} for pipeline-runner specs. */
 export function makeObjectDetection(

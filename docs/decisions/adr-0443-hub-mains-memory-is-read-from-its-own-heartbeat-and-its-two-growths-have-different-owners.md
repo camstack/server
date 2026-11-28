@@ -14,7 +14,7 @@ last-verified: 2026-10-02
 
 ## Context
 
-hub-main (pid 7, `@camstack/server` 1.2.268 closure, `CAMSTACK_HUB_HEAP_MB=3072`,
+hub-main (pid 7, `@dominevo/server` 1.2.268 closure, `CAMSTACK_HUB_HEAP_MB=3072`,
 `MALLOC_ARENA_MAX=2`) sat at 5.67 GB RSS after 22 h against a 2.3 GB JS live
 set, with GC at 29.5 % of main-thread time and the live set growing ~57 MB/h
 (D441). The question the evening could not answer was whether the ~3.3 GB
@@ -82,7 +82,7 @@ of JSON; 72 MB of still-live sampled allocations):
   the queued JSON strings live in **old_space**. Nothing bounds it; nothing
   logs it; the queue is released only when the socket dies (the 18:31 release
   of the earlier episode was not this — see below).
-- **9.3 MB — `/data/addons/@camstack/addon-pipeline-orchestrator/dist/index.js`
+- **9.3 MB — `/data/addons/@dominevo/addon-pipeline-orchestrator/dist/index.js`
   evaluated INSIDE hub-main** (`loadCJSModuleWithModuleLoad`).
   `AddonRegistryService.registerForkedAddonCustomActions` purges the require
   cache and re-imports a forked addon's whole bundle, in hub-main, at every
@@ -125,7 +125,7 @@ it, and a forced GC on production is the operator's call.
 
 - **hub-main's memory question is answered from the `[mem] hub-main` line
   first.** Inside/outside, churn/retention, and the per-peer census are all
-  on it; `docker logs CamStack | grep '\[mem\] hub-main'` over 6 h is the
+  on it; `docker logs Dominevo | grep '\[mem\] hub-main'` over 6 h is the
   measurement, and it costs nothing. A heap snapshot is never the next step
   (the guard stands); the sampling heap profiler over the inspector is the
   next step for an **old_space** growth, and it is declared with its start
@@ -165,9 +165,9 @@ it, and a forced GC on production is the operator's call.
   logs, `/proc`, and `Runtime.evaluate` over an inspector that an earlier
   session had left listening on 127.0.0.1:9229 (closed at the end of this
   one; `kill -USR1 7` inside the container reopens it). None of the fixes
-  above is deployable with `camstack deploy`: the WS bound and the
+  above is deployable with `dominevo deploy`: the WS bound and the
   custom-actions loader are `server/backend`, the transport is
-  `@camstack/system` — all ride a published `@camstack/server` (D16).
+  `@dominevo/system` — all ride a published `@dominevo/server` (D16).
 - The container still carries `CAMSTACK_RUNNER_HEAP_SNAPSHOT=on` in its
   environment. Nothing reads it any more; it is removed at the next
   container recreate so it cannot be read as permission by anyone.

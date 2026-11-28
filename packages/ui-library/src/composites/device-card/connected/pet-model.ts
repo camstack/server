@@ -1,4 +1,4 @@
-import type { PetFeederStatus, PetFountainStatus } from '@camstack/types'
+import type { PetFeederStatus, PetFountainStatus } from '@dominevo/types'
 import type { PetFeederActivity, PetFeederHopper, PetFountainActivity } from '../scenes/pet/model'
 
 /** A vendor's "no fault" sentinel string; null and empty mean the same. */

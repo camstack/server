@@ -11,7 +11,7 @@
  * the agent emitted. Malformed entries (remote input) are dropped.
  */
 import { describe, expect, it } from 'vitest'
-import type { IReadinessRegistryRecord } from '@camstack/types'
+import type { IReadinessRegistryRecord } from '@dominevo/types'
 import { filterAgentAuthoritativeRecords } from './agent-readiness-pull'
 
 function rec(partial: Partial<IReadinessRegistryRecord>): IReadinessRegistryRecord {

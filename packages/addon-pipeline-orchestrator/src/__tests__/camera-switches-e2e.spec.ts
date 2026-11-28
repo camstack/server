@@ -14,8 +14,8 @@
  * every one of these.
  */
 
-import type { StreamSourceEntry } from '@camstack/types'
-import { EventCategory } from '@camstack/types'
+import type { StreamSourceEntry } from '@dominevo/types'
+import { EventCategory } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import PipelineOrchestratorAddon from '../index.js'
 import {

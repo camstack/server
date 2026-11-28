@@ -5,7 +5,7 @@
  * Separate from `index.ts` (the factory registry) only so the orchestrators can
  * import the uuid convention without importing the registry that imports them.
  */
-import { applianceExport, DeviceType } from '@camstack/types'
+import { applianceExport, DeviceType } from '@dominevo/types'
 import { uuid } from '@homebridge/hap-nodejs'
 import { instanceSalt } from '../hap-instance-kinds.js'
 

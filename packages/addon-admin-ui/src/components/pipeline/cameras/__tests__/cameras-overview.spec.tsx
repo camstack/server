@@ -5,7 +5,7 @@ import { render, screen } from '@testing-library/react'
 import React from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { CamerasOverview } from '../CamerasOverview'
-import type { CameraStatus } from '@camstack/types'
+import type { CameraStatus } from '@dominevo/types'
 
 expect.extend(jestDomMatchers)
 
@@ -22,9 +22,9 @@ vi.mock('../../../../hooks/useDevice', () => ({
   useDeviceList: () => mockUseDeviceList(),
 }))
 
-vi.mock('@camstack/ui-library', async () => {
+vi.mock('@dominevo/ui-library', async () => {
   const actual =
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+    await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return {
     Button: actual.Button,
     formatNumeric: actual.formatNumeric,

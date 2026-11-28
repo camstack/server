@@ -40,7 +40,7 @@
  * the other half of that page, not a replacement for it.
  */
 
-import type { NcSystemEventKind, NotificationAction } from '@camstack/types'
+import type { NcSystemEventKind, NotificationAction } from '@dominevo/types'
 
 /** The id this button travels under — in the callback and in the audit line. */
 const SERVER_UPDATE_BUTTON_ID = 'server-update-apply'

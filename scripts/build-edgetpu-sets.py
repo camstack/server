@@ -28,7 +28,7 @@ files carry different tokens, and each switch re-streams the incoming model
 The set is a pool-level artifact, never a model: each member is the same int8
 graph as its catalog entry's ``formats.tflite`` (D710). The members are compiled
 from the pinned CPU graphs below — Google's for the root SSD and the bird
-classifier, CamStack's published int8 graphs for YuNet and YOLOX (built by
+classifier, Dominevo's published int8 graphs for YuNet and YOLOX (built by
 build-yunet-edgetpu.py / build-yolox-plate-edgetpu.py, which also report the
 parity of those graphs).
 
@@ -101,11 +101,11 @@ tags:
   - camstack
 ---
 
-# Co-compiled Edge TPU set `{set_id}` — CamStack
+# Co-compiled Edge TPU set `{set_id}` — Dominevo
 
 Files for ONE Coral, compiled together by `edgetpu_compiler` 14.1 so they share
-the Edge TPU parameter cache instead of evicting each other (CamStack D724). A
-CamStack Coral pool loads this set when the models placed on it are covered by
+the Edge TPU parameter cache instead of evicting each other (Dominevo D724). A
+Dominevo Coral pool loads this set when the models placed on it are covered by
 it; load the files of one set on one Coral, never mixed with other sets or with
 the separately compiled builds. Built by `scripts/build-edgetpu-sets.py`.
 
@@ -177,7 +177,7 @@ def main() -> None:
             print(f"  {set_id:16s} {r['model']:60s} on-chip {tc.mib(r['on_chip_bytes'])}, "
                   f"streamed {tc.mib(r['streamed_bytes'])}, ops {r['ops_tpu']}/{r['ops_total']} on TPU")
         if MEMBERS[keys[0]][0] == "object-detection" and rows[0]["streamed_bytes"] != 0:
-            raise SystemExit(f"{set_id}: the root streams parameters — not a set CamStack publishes")
+            raise SystemExit(f"{set_id}: the root streams parameters — not a set Dominevo publishes")
         dest = work / "stage" / "edgetpuSets" / set_id
         shutil.rmtree(dest, ignore_errors=True)
         dest.mkdir(parents=True)

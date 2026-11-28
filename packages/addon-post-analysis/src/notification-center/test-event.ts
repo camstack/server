@@ -19,8 +19,8 @@
  * to sharp for the crop and the drawn box.
  */
 
-import type { MediaFileBytes, MediaFileKind } from '@camstack/types'
-import { NcSystemEventKindSchema } from '@camstack/types'
+import type { MediaFileBytes, MediaFileKind } from '@dominevo/types'
+import { NcSystemEventKindSchema } from '@dominevo/types'
 import { z } from 'zod'
 import type { BboxRect } from '../pipeline-analytics/pipeline/zones/geometry.js'
 import type { NcIncomingEvent, NcIntakeControls } from './event-intake.js'

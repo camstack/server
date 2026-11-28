@@ -16,7 +16,7 @@ import type {
   TerminalOutputBatch,
   TerminalProfileInfo,
   TerminalSessionInfo,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { settingsSchemaForProfile } from './profile-settings.js'
 import { buildProfiles, findProfile, type TerminalProfile } from './profiles.js'
 import type { PtyEnvMode, PtyProcess, PtySpawner } from './pty.js'

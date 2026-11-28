@@ -25,8 +25,8 @@ import type {
   ProviderRegistration,
   SecretsAccess,
   SystemEvent,
-} from '@camstack/types'
-import { CAMERA_SWITCH_ORDER, type CameraSwitchId, type RecordsAccess } from '@camstack/types'
+} from '@dominevo/types'
+import { CAMERA_SWITCH_ORDER, type CameraSwitchId, type RecordsAccess } from '@dominevo/types'
 import { vi } from 'vitest'
 import { DeviceRegistry } from '../../../kernel/device-registry.js'
 import { makeRecordsAccessForOwner } from '../../sqlite-storage/__tests__/support/records-world.js'

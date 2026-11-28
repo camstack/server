@@ -93,7 +93,7 @@ suspends the profile's hold (nothing is reversed) and skips its edge points
   actions' effects true. On drift the hold re-applies, with a bounded number of
   attempts per window; giving up is logged and recorded. A manual change during
   a hold is configurable per point: `respect` (default — the hold is suspended
-  until the next point) or `reassert` after a grace delay. A change CamStack
+  until the next point) or `reassert` after a grace delay. A change Dominevo
   itself made is never treated as manual;
 - `release`: end the current hold without acting.
 
@@ -123,7 +123,7 @@ Every point outcome (`done`, `missed`, `inactive`, `condition-false`, `failed`, 
   field (the old shape must be readable until every store is migrated).
 - The vocabulary gains `effect` entries; an action without one is edge-only in
   the UI, never a hold that silently does nothing.
-- Sun times need a solar calculation in `@camstack/types`; the private one in
+- Sun times need a solar calculation in `@dominevo/types`; the private one in
   post-analysis's scene condition resolver moves there and both use it.
 - The site location and timezone become a dependency of the scheduler; a site
   without a location cannot save a sun point (refused with a reason, not a
@@ -133,7 +133,7 @@ Every point outcome (`done`, `missed`, `inactive`, `condition-false`, `failed`, 
 
 ## Enforcement
 
-- Zod schemas in `@camstack/types` are the only definition of `ActionStep`,
+- Zod schemas in `@dominevo/types` are the only definition of `ActionStep`,
   `ActionTarget`, `TimeSpec` and the scheduler record; the admin UI and the
   viewer infer from them.
 - Specs: target resolution (domain + room, empty resolution logged), the time

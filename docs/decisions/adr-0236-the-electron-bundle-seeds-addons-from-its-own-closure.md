@@ -18,11 +18,11 @@ applies-to:
 The desktop app shipped every addon twice. `packages/desktop/package.json`
 `build.extraResources` copied `.deps/node_modules` whole into
 `Contents/Resources/node_modules`, and then re-copied six addons plus
-`@camstack/system` one by one into `Contents/Resources/addons/<short-name>`.
+`@dominevo/system` one by one into `Contents/Resources/addons/<short-name>`.
 `main.ts` pointed `CAMSTACK_BUNDLED_ADDONS_DIR` at that second tree, the launcher
 resolved `installSource: 'local'` from it, and `AddonInstaller` copied it a third
-time into `<dataDir>/addons/@camstack/*`. Measured 2026-08-25 on
-`release/mac-arm64/camstack.app/Contents/Resources`: `node_modules/@camstack`
+time into `<dataDir>/addons/@dominevo/*`. Measured 2026-08-25 on
+`release/mac-arm64/camstack.app/Contents/Resources`: `node_modules/@dominevo`
 285 MB / 15 packages, `addons/` 42 MB / 7 of those same packages.
 
 This is [D45](adr-0045.md) in the shape the docker image had until
@@ -39,12 +39,12 @@ launcher and `agent/main.ts` only seed from it.
 copy of the first, it was a DEGRADED one. (2026-07-21) plants each
 hoisted native into the addon's own `node_modules` so the seed subtree is
 self-contained, and `stage-deps.mjs` fails the build loudly if one is missing —
-the fix for a fresh-app first-boot FATAL. It verified `.deps/node_modules/@camstack/<addon>`,
+the fix for a fresh-app first-boot FATAL. It verified `.deps/node_modules/@dominevo/<addon>`,
 which is not what shipped: electron-builder DROPPED `node_modules` on every
 per-package `extraResources` entry. Measured on the same bundle, built at 00:22
 from a `.deps` tree that carried the natives at 23:50 the evening before: **zero
 `.node` files under `Resources/addons/**`, all of them under
-`Resources/node_modules/@camstack/**`.** So `copyBundledNativeModules` and
+`Resources/node_modules/@dominevo/**`.** So `copyBundledNativeModules` and
 `ensureAddonNativePrebuilds({ bundledSourceDir })` were both no-ops against the
 copy the installer actually seeded from, while the build printed
 `verified 6 bundled addon copies carry their native prebuilds`. A guard that
@@ -53,22 +53,22 @@ repo keeps paying for.
 
 ## Decision
 
-The packaged desktop app ships **one** copy of every `@camstack` package: the
+The packaged desktop app ships **one** copy of every `@dominevo` package: the
 staged closure at `Contents/Resources/node_modules`. `CAMSTACK_BUNDLED_ADDONS_DIR`
-names that closure's own scope dir, `Contents/Resources/node_modules/@camstack`,
+names that closure's own scope dir, `Contents/Resources/node_modules/@dominevo`,
 and `build.extraResources` carries no per-package `addons/<name>` entry. An npm
 scope dir already has the layout the second tree was hand-built to imitate —
-`AddonInstaller.findLocalPackage('@camstack/addon-pipeline')` strips the scope and
+`AddonInstaller.findLocalPackage('@dominevo/addon-pipeline')` strips the scope and
 joins `<dir>/addon-pipeline` — so this is a rename of the seed source, not a new
 mechanism.
 
 A consumer of `CAMSTACK_BUNDLED_ADDONS_DIR` must not assume the variable's DEPTH.
-`electronResourcesRoot` climbs past `@camstack` / `node_modules` / `addons`
+`electronResourcesRoot` climbs past `@dominevo` / `node_modules` / `addons`
 instead of taking one `path.dirname`.
 
 ## Consequences
 
-- 42 MB leaves the bundle and the bundle drops from three `@camstack` seed copies
+- 42 MB leaves the bundle and the bundle drops from three `@dominevo` seed copies
   to two (`Resources/node_modules`, plus the asar closure — see below).
 - The seed roster GROWS: the closure carries ten bootstrap packages where the
   hand-written list carried seven. `addon-auth`, `addon-decoder-nodeav` and
@@ -77,11 +77,11 @@ instead of taking one `path.dirname`.
 - The natives finally reach the seeded copy, which is what intended.
   `stage-deps.mjs` now plants into and verifies the closure's own package dirs
   (`bundledAddonSourceDirs`), which is what ships.
-- `@camstack/system` is still skipped by `shouldSkipClosureProvidedSeed` when the
+- `@dominevo/system` is still skipped by `shouldSkipClosureProvidedSeed` when the
   closure resolves it, so the desktop node keeps ONE system copy regardless.
 - **What this record does NOT fix.** `Resources/app.asar` carries a THIRD copy of
-  all 15 `@camstack` packages plus 268 k `node_modules` entries, because
-  `@camstack/server` is a production dependency of `@camstack/desktop` and
+  all 15 `@dominevo` packages plus 268 k `node_modules` entries, because
+  `@dominevo/server` is a production dependency of `@dominevo/desktop` and
   electron-builder bundles the app's dependency closure. `dist/main.js` needs
   none of it (tsup keeps only `electron`, `electron-updater`, `electron-store`
   external). Removing it is NOT a drive-by: `hostExternalAnchors` deliberately

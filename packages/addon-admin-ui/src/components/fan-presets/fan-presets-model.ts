@@ -10,7 +10,7 @@ import type {
   FanPreset,
   FanPresetAxis,
   FanPresetState,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export function upsertPreset(list: readonly FanPreset[], next: FanPreset): readonly FanPreset[] {
   return list.some((p) => p.id === next.id)

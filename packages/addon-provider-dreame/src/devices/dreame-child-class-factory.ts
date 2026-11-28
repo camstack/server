@@ -1,4 +1,4 @@
-import type { DeviceContext, IDevice } from '@camstack/types'
+import type { DeviceContext, IDevice } from '@dominevo/types'
 import { classifyDreameModel } from '../dreame-mapping.js'
 import { DreameAiSwitchDevice } from './dreame-ai-switch-device.js'
 import { DreameAutoSelectDevice } from './dreame-auto-select-device.js'

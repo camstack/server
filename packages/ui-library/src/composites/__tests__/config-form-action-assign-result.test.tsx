@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import type { ConfigField } from '@camstack/types'
+import type { ConfigField } from '@dominevo/types'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { ConfirmDialogProvider } from '../confirm-dialog'

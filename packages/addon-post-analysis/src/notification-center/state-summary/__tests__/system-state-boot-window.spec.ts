@@ -7,7 +7,7 @@
  * write-behind over the stored one the load had not read yet.
  */
 import { describe, expect, it, vi } from 'vitest'
-import type { InMemoryRecords } from '@camstack/types'
+import type { InMemoryRecords } from '@dominevo/types'
 import { makeSilentLogger } from '../../../pipeline-analytics/__tests__/test-helpers.js'
 import { slowWrites } from '../../__tests__/slow-writes.js'
 import { makeNcRecords, ncTable, withNcFaults } from '../../__tests__/support/nc-test-deps.js'
@@ -133,7 +133,7 @@ describe('the system-state ledger across a restart (D698)', () => {
       {
         target: 'server',
         nodeIds: ['hub'],
-        rows: [{ packageName: '@camstack/server', currentVersion: '1', latestVersion: '2' }],
+        rows: [{ packageName: '@dominevo/server', currentVersion: '1', latestVersion: '2' }],
       },
       SINCE,
     )

@@ -1,4 +1,4 @@
-import type { DiscoveredChildDevice } from '@camstack/types'
+import type { DiscoveredChildDevice } from '@dominevo/types'
 
 import { buildCandidateTree, type CandidateNode } from './scan-candidate-tree'
 

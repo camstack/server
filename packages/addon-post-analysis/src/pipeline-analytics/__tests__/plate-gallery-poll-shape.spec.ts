@@ -19,7 +19,7 @@
  * projection the store was ASKED for. The rows returned were never wrong.
  */
 
-import type { RecordKindHandle, RecordsAccess } from '@camstack/types'
+import type { RecordKindHandle, RecordsAccess } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { PlateGalleryProvider } from '../plate-gallery-provider.js'
 import { pipelineAnalyticsRecordKinds } from '../record-kinds.js'

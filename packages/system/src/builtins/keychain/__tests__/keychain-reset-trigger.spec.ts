@@ -9,7 +9,7 @@
 import { promises as fsp } from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import { buildSecretRef, KEYCHAIN_RESET_TRIGGER_ACTOR } from '@camstack/types'
+import { buildSecretRef, KEYCHAIN_RESET_TRIGGER_ACTOR } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { JWT_SIGNING_KEY_REF } from '../../../auth/jwt-signing-key.js'
 import { buildKeySourceCandidates, defaultKeyFilePath } from '../key-sources.js'

@@ -9,7 +9,7 @@
  * matches nobody — is the silent failure this whole area keeps producing.
  */
 
-import type { NcRule } from '@camstack/types'
+import type { NcRule } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { migrateIdentityNames } from '../rule-store.js'
 

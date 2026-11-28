@@ -15,7 +15,7 @@ import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
  * manual reload — same scheme used by `addon-pages`.
  *
  * The hub-local builtin `addon-widgets-aggregator` (see
- * `@camstack/server/system/builtins/addon-widgets-aggregator`) registers the
+ * `@dominevo/server/system/builtins/addon-widgets-aggregator`) registers the
  * provider. Splitting the public aggregator from the raw collection
  * keeps both ends in codegen — there's no hand-written wrapper.
  */

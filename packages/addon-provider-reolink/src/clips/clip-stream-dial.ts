@@ -39,7 +39,7 @@ import { randomBytes } from 'node:crypto'
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http'
 import type { AddressInfo } from 'node:net'
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 import {
   type ClipStreamHandlerDeps,

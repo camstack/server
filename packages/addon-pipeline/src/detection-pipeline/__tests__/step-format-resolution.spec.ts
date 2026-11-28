@@ -9,7 +9,7 @@
  * a node whose default is another format depends on it exactly as the
  * override did.
  */
-import type { IScopedLogger, PipelineStepInput } from '@camstack/types'
+import type { IScopedLogger, PipelineStepInput } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { DetectionPipelineProvider } from '../provider.js'
 import { getDefaultModelForFormat, getStepDefinition } from '../registry/step-definitions.js'

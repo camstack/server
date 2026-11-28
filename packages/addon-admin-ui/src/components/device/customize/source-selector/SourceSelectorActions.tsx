@@ -3,8 +3,8 @@
  * {@link DevicePicker} over the actions that exist and are not linked yet. A
  * pick is a draft the host confirms; nothing is linked on its own (D356).
  */
-import type { ActionEntry } from '@camstack/types'
-import { DevicePicker, type PickerItem } from '@camstack/ui-library'
+import type { ActionEntry } from '@dominevo/types'
+import { DevicePicker, type PickerItem } from '@dominevo/ui-library'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 

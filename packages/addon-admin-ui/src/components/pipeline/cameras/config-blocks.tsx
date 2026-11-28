@@ -11,21 +11,21 @@
  *                        classification.
  */
 import { Cpu, Film, Mic, Pin, Radio } from 'lucide-react'
-import { motionSourceLabel } from '@camstack/types'
+import { motionSourceLabel } from '@dominevo/types'
 import type {
   CameraAssignmentStatus,
   CameraBrokerProfile,
   CameraSensorsStatus,
   CameraSourceStream,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { cameraSensorsSummary } from './camera-card-model'
 import type { FlatPipelineStep, OrchestratorCameraSettings } from './camera-card-model'
 import type { ClusterNodeOption } from './use-cameras-overview'
 import { CardBlock, Chip, KVRow, StageInactive } from './card-primitives'
 import { useTranslation } from 'react-i18next'
 import i18n from '../../../i18n/index'
-import { Select } from '@camstack/ui-library'
-import { formatNumeric } from '@camstack/ui-library'
+import { Select } from '@dominevo/ui-library'
+import { formatNumeric } from '@dominevo/ui-library'
 
 // ---------------------------------------------------------------------------
 // Placement

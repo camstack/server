@@ -5,8 +5,8 @@
  * the window ends the next day. The leaf keeps its `kind`; the window keys
  * are stored exactly as the input emits them.
  */
-import type { TimeIsLeaf } from '@camstack/types'
-import { TimeWindowInput, useSystemGetSiteLocation } from '@camstack/ui-library'
+import type { TimeIsLeaf } from '@dominevo/types'
+import { TimeWindowInput, useSystemGetSiteLocation } from '@dominevo/ui-library'
 
 export interface TimeIsFieldsProps {
   readonly leaf: TimeIsLeaf

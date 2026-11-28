@@ -1,5 +1,5 @@
 import { fileURLToPath } from 'node:url'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { DeviceTemplateHost, type TemplateDeviceRow } from '../template-host.js'
 import { DeviceTemplateRenderer } from '../template-renderer.js'
@@ -145,7 +145,10 @@ describe('the clock and the device a render is for (BYS #450 P5)', () => {
   afterAll(() => clocked.dispose())
 
   it('now prints the clock in the server zone through time()', async () => {
-    const [out] = await hostFor.render(["{{ now | time('HH:mm') }} {{ now | time('DD/MM/YYYY') }}"], undefined)
+    const [out] = await hostFor.render(
+      ["{{ now | time('HH:mm') }} {{ now | time('DD/MM/YYYY') }}"],
+      undefined,
+    )
     expect(out).toMatchObject({ ok: true, text: '14:05 10/11/2026' })
   })
 
@@ -159,7 +162,10 @@ describe('the clock and the device a render is for (BYS #450 P5)', () => {
 
   it('camera carries the values the caller knows of the device', async () => {
     const [named, empty] = await hostFor.render(
-      ["{{ camera.lastPerson | default('') }}|{{ camera.lastPlate }}", "[{{ camera.lastPerson | default('') }}]"],
+      [
+        "{{ camera.lastPerson | default('') }}|{{ camera.lastPlate }}",
+        "[{{ camera.lastPerson | default('') }}]",
+      ],
       undefined,
       { deviceId: 7, values: { lastPerson: 'Mario', lastPlate: 'AB123CD' } },
     )

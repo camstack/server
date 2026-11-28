@@ -7,7 +7,7 @@
  */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, waitFor } from '@testing-library/react'
-import { ConfirmDialogProvider } from '@camstack/ui-library'
+import { ConfirmDialogProvider } from '@dominevo/ui-library'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -25,9 +25,9 @@ const h = vi.hoisted(() => ({
   records: {} as Record<string, unknown[]>,
 }))
 
-vi.mock('@camstack/ui-library', async () => {
+vi.mock('@dominevo/ui-library', async () => {
   const actual =
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+    await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   const query = (slot: { data: ProviderRow[] | undefined; error: Error | null }) => ({
     data: slot.data,
     error: slot.error,

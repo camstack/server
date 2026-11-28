@@ -3,7 +3,7 @@ import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 import { promisify } from 'node:util'
-import { asJsonObject, asString, parseJsonUnknown } from '@camstack/types'
+import { asJsonObject, asString, parseJsonUnknown } from '@dominevo/types'
 import { copyDirRecursive, copyExtraFileDirs, ensureDir, stripBundledDeps } from './fs-utils.js'
 
 const execFileAsync = promisify(execFile)
@@ -75,7 +75,7 @@ function readPackageJson(pkgJsonPath: string): PackageJsonView | null {
 }
 
 /** The one bootstrap package the server closure carries itself. */
-export const CLOSURE_PROVIDED_PACKAGE = '@camstack/server'
+export const CLOSURE_PROVIDED_PACKAGE = '@dominevo/server'
 
 /**
  * Should the bootstrap SKIP seeding `packageName` into /data/addons?
@@ -85,7 +85,7 @@ export const CLOSURE_PROVIDED_PACKAGE = '@camstack/server'
  *
  *  - seeding a copy the closure already provides creates one that WINS over
  *    the closure and is never refreshed (bootstrap is seed-only, and
- *    `camstack deploy` of a framework package is rejected on an image hub), so
+ *    `dominevo deploy` of a framework package is rejected on an image hub), so
  *    the node runs first-boot builtins forever while reporting the new
  *    version;
  *  - skipping it when it does NOT resolve is how a fresh deployment was once
@@ -111,7 +111,7 @@ export interface AddonInstallerConfig {
   /**
    * Override for "does the running closure already provide this package?".
    * Production leaves it unset (real `require.resolve`); a spec sets it to
-   * reach the branch that still seeds `@camstack/server/system`, which is otherwise
+   * reach the branch that still seeds `@dominevo/server/system`, which is otherwise
    * unreachable in a process where that package always resolves.
    */
   readonly isPackageResolvable?: (packageName: string) => boolean
@@ -128,7 +128,7 @@ export interface AddonInstallerConfig {
    */
   readonly resolveLatestVersion?: (packageName: string) => Promise<string | null>
   /**
-   * The `@camstack/server` version this process runs. When set, a registry
+   * The `@dominevo/server` version this process runs. When set, a registry
    * install at boot (`ensureRequiredPackages`) first reads the target's
    * `camstack.requires` and holds back a version that needs a newer server
    * (D989, planning#447): it is NOT installed, the reason names both versions.
@@ -169,8 +169,8 @@ type RequirementVerdict =
       readonly reason: string
     }
 
-import type { InstalledPackage, IScopedLogger, PackageRequires } from '@camstack/types'
-import { describeUnmet, errMsg, unmetRequirements } from '@camstack/types'
+import type { InstalledPackage, IScopedLogger, PackageRequires } from '@dominevo/types'
+import { describeUnmet, errMsg, unmetRequirements } from '@dominevo/types'
 import { AddonManifest } from './addon-manifest.js'
 import {
   ADDON_VERSION_REASON_REGISTRY_LATEST,
@@ -358,7 +358,7 @@ export class AddonInstaller {
   /**
    * Derive the bootstrap addon list from a meta-package's runtime dependencies.
    * Single source of truth: the meta-package's `package.json` declares which
-   * `@camstack/addon-*` packages the deployment needs. Replaces previously
+   * `@dominevo/addon-*` packages the deployment needs. Replaces previously
    * hardcoded lists — see design spec
    * docs/superpowers/specs/2026-05-20-docker-install-from-npm-design.md.
    */
@@ -369,7 +369,7 @@ export class AddonInstaller {
    * Overridable via `AddonInstallerConfig.isPackageResolvable` so a spec can
    * exercise BOTH sides. That matters more than it looks: the branch that
    * still seeds is the one protecting a fresh deployment from an unbootable
-   * node, and it is unreachable in a test process where `@camstack/server/system`
+   * node, and it is unreachable in a test process where `@dominevo/server/system`
    * always resolves.
    */
   private isResolvableFromClosure(packageName: string): boolean {
@@ -388,7 +388,7 @@ export class AddonInstaller {
     try {
       pkgPath = require.resolve(pkgJsonId)
     } catch {
-      // The meta-package (`@camstack/server`) is absent in this context
+      // The meta-package (`@dominevo/server`) is absent in this context
       // (e.g. a minimal test harness with no installed root package). The
       // bootstrap list is eagerly derived as a static field, so this must not
       // throw when the meta-package cannot be resolved.
@@ -397,34 +397,34 @@ export class AddonInstaller {
     const raw = fs.readFileSync(pkgPath, 'utf-8')
     const parsed = JSON.parse(raw) as BootstrapManifest
     const deps = Object.keys(parsed.dependencies ?? {})
-    // Agent-only bootstrap addons ride along in the @camstack/server closure so
-    // agent-role nodes can seed them (e.g. @camstack/addon-agent-ui), but they
+    // Agent-only bootstrap addons ride along in the @dominevo/server closure so
+    // agent-role nodes can seed them (e.g. @dominevo/addon-agent-ui), but they
     // are NOT part of the HUB bootstrap set — the hub must never install them.
     // They are declared as a runtime dependency (so the closure carries them)
     // AND listed here so this derivation excludes them, keeping the hub
     // REQUIRED_PACKAGES identical to the pre-single-root-consolidation set.
     const agentOnly = new Set(parsed.camstack?.agentOnlyBootstrapAddons ?? [])
-    // Bootstrap set = every @camstack/addon-* PLUS @camstack/server/system. core is the
+    // Bootstrap set = every @dominevo/addon-* PLUS @dominevo/server/system. core is the
     // system package that provides the REQUIRED infrastructure builtins
     // (storage-provider / settings / logging via its filesystem-storage etc.
     // addons); without it AddonRegistryService aborts boot with "No addon
     // provides required infrastructure capability storage-provider". It was
     // wrongly filtered out before (only ever present in data/addons via a
-    // manual `camstack deploy core`), so a fresh deployment could never boot.
-    // The install loop already special-cases '@camstack/server/system' (a failed core
+    // manual `dominevo deploy core`), so a fresh deployment could never boot.
+    // The install loop already special-cases '@dominevo/server/system' (a failed core
     // install is fatal), confirming it is meant to be in this list.
     // The framework is no dependency of the server (it IS the server, D989), so
     // the closure-provided package is appended by name; the seeding loop skips
     // it while the running closure resolves it.
     return Object.freeze([
-      ...deps.filter((name) => !agentOnly.has(name) && name.startsWith('@camstack/addon-')),
+      ...deps.filter((name) => !agentOnly.has(name) && name.startsWith('@dominevo/addon-')),
       CLOSURE_PROVIDED_PACKAGE,
     ])
   }
 
   /**
    * Bootstrap packages installed on first boot — derived from the
-   * `@camstack/server` meta-package's runtime dependencies. Adding a
+   * `@dominevo/server` meta-package's runtime dependencies. Adding a
    * bootstrap addon = adding it to `server/backend/package.json`.
    * See design spec
    * docs/superpowers/specs/2026-05-20-docker-install-from-npm-design.md.
@@ -434,24 +434,24 @@ export class AddonInstaller {
    * hub install and avoids shipping driver code unused on most hubs.
    */
   static readonly REQUIRED_PACKAGES: readonly string[] =
-    AddonInstaller.deriveBootstrapList('@camstack/server')
+    AddonInstaller.deriveBootstrapList('@dominevo/server')
 
   /**
-   * Agent-only bootstrap packages — derived from the `@camstack/server`
+   * Agent-only bootstrap packages — derived from the `@dominevo/server`
    * meta-package's `camstack.agentBootstrapAddons` manifest field (single
    * source of truth; the separate agent meta-package is gone).
-   * The agent runtime boots from the SAME `@camstack/server` closure, so its
+   * The agent runtime boots from the SAME `@dominevo/server` closure, so its
    * bootstrap addon set is declared alongside the hub's. Adding an agent
    * bootstrap addon = adding it to `server/backend/package.json`'s
    * `camstack.agentBootstrapAddons`.
    */
   static readonly AGENT_PACKAGES: readonly string[] =
-    AddonInstaller.deriveAgentBootstrapList('@camstack/server')
+    AddonInstaller.deriveAgentBootstrapList('@dominevo/server')
 
   /**
    * Derive the agent bootstrap addon list from a meta-package's
    * `camstack.agentBootstrapAddons` manifest field, prepending
-   * `@camstack/server/system` (the required infrastructure builtins carrier — same
+   * `@dominevo/server/system` (the required infrastructure builtins carrier — same
    * rationale as `deriveBootstrapList`). Mirrors `deriveBootstrapList`'s
    * `require.resolve` nuance: the meta-package may be absent in a deployment
    * (this field is eagerly evaluated at class-load), so a failed resolve
@@ -470,7 +470,7 @@ export class AddonInstaller {
       readonly camstack?: { readonly agentBootstrapAddons?: readonly string[] }
     }
     const addons = parsed.camstack?.agentBootstrapAddons ?? []
-    return Object.freeze(['@camstack/server', ...addons])
+    return Object.freeze(['@dominevo/server', ...addons])
   }
 
   /**
@@ -486,7 +486,7 @@ export class AddonInstaller {
    * restated 2026-10-25 — D942). A copy already under the addon root is left
    * alone when this installer is not on the npm source (a workspace or a
    * bundled desktop seed) and when the package is the closure-provided
-   * `@camstack/server/system` (a copy there would shadow the closure). Every other
+   * `@dominevo/server/system` (a copy there would shadow the closure). Every other
    * required addon already on disk is moved to registry `latest` when that
    * tag differs, higher or lower. An unreadable registry changes nothing.
    *
@@ -508,7 +508,7 @@ export class AddonInstaller {
 
       // An on-disk copy is not a pin. On the npm source it is moved to
       // registry `latest` when that tag differs (D942). A bundled seed is
-      // left alone, as is `@camstack/server/system` when the closure already provides
+      // left alone, as is `@dominevo/server/system` when the closure already provides
       // it — a copy under the addon root would shadow the closure (D15).
       if (fs.existsSync(path.join(addonDir, 'package.json'))) {
         if (
@@ -529,11 +529,11 @@ export class AddonInstaller {
         continue
       }
 
-      // `@camstack/server/system` is the exception, and the reason is that seed-only
+      // `@dominevo/server/system` is the exception, and the reason is that seed-only
       // is a TRAP for it specifically. It is host-provided (D15): every node
       // resolves it from the running server closure, which `applyServerUpdate`
       // keeps current. A copy under /data/addons does not get that update —
-      // `camstack deploy` of a framework package is rejected on an image hub,
+      // `dominevo deploy` of a framework package is rejected on an image hub,
       // so nothing refreshes it — and it WINS over the closure, so the node
       // runs first-boot builtins forever while reporting the new version.
       // Measured 2026-08-03: both agents on a 1.2.0 copy seeded 2026-07-21
@@ -588,7 +588,7 @@ export class AddonInstaller {
         await this.installFromNpm(packageName)
       } catch (err) {
         const msg = errMsg(err)
-        if (packageName === '@camstack/server') {
+        if (packageName === '@dominevo/server') {
           throw new Error(`Required package ${packageName} failed to install: ${msg}`, {
             cause: err,
           })
@@ -785,7 +785,7 @@ export class AddonInstaller {
    * can be in flight. See `AddonManifest.reconcileFromDisk` for the rules.
    *
    * Every correction is logged by name — a manifest that silently disagreed
-   * with disk is what made "@camstack/server/system 1.2.29" read as installed on a
+   * with disk is what made "@dominevo/server/system 1.2.29" read as installed on a
    * hub that deliberately has no copy of it.
    *
    * Returns the number of changes.
@@ -986,7 +986,7 @@ export class AddonInstaller {
    * (admin UI "Install addon" / "Reinstall" buttons).
    *
    * Always npm. The legacy "auto-use workspace symlink in dev" branch
-   * was removed; local development pushes via `camstack deploy` (CLI
+   * was removed; local development pushes via `dominevo deploy` (CLI
    * tarball upload).
    */
   async install(packageName: string, version?: string): Promise<{ name: string; version: string }> {
@@ -1003,7 +1003,7 @@ export class AddonInstaller {
    *
    * Without it a server update advances the closure and changes nothing: six
    * addons on the hub were behind by up to nineteen versions on 2026-09-17,
-   * each frozen at whenever somebody last ran `camstack deploy`.
+   * each frozen at whenever somebody last ran `dominevo deploy`.
    *
    * WHICH addons deserve this is not decided here — see `planAddonRealignment`,
    * which needs two gates because a version comparison alone would overwrite a
@@ -1055,7 +1055,7 @@ export class AddonInstaller {
     await fs.promises.rm(targetDir, { recursive: true, force: true })
     ensureDir(targetDir)
 
-    // Write stripped package.json (no @camstack/* deps)
+    // Write stripped package.json (no @dominevo/* deps)
     await fs.promises.writeFile(
       path.join(targetDir, 'package.json'),
       JSON.stringify(stripBundledDeps(pkgData), null, 2),
@@ -1123,7 +1123,7 @@ export class AddonInstaller {
     }
 
     // POST-INSTALL native-prebuild ENSURE. The `npm install` above RE-CREATES a
-    // traditional native (`better-sqlite3`, a runtime dep of `@camstack/server/system`)
+    // traditional native (`better-sqlite3`, a runtime dep of `@dominevo/server/system`)
     // SOURCE-ONLY on a toolchain-less host, clobbering the good `.node` the
     // pre-install `copyBundledNativeModules` planted (Mac desktop first-boot
     // FATAL, 2026-07-21 — the copy-before-install fix was empirically
@@ -1264,7 +1264,7 @@ export class AddonInstaller {
    * delete the aside copy.
    *
    * Why not a plain `fs.promises.rm(targetDir, {recursive})`: during a
-   * `camstack deploy` the addon's live runner still holds its native
+   * `dominevo deploy` the addon's live runner still holds its native
    * prebuilds (`.node`/`.so`) open. On the hub's shfs/FUSE `/data/addons`,
    * a recursive rm of a held subdir fails `ENOTEMPTY` mid-walk and leaves
    * the dir gutted. A rename only touches the dirent (metadata), so it
@@ -1375,13 +1375,13 @@ export class AddonInstaller {
    * path did not have it, and that is a whole outage class: an addon declaring
    * `camstack.runtimeDependencies` was broken by its FIRST OTA update, its dist
    * landing without `node_modules`. Every load then threw `Cannot find module`
-   * and the retry loop replayed it — `@camstack/addon-export-hap`, 126 failed
-   * load retries over 10.5h on 2026-08-12; `@camstack/addon-remote-storage`
+   * and the retry loop replayed it — `@dominevo/addon-export-hap`, 126 failed
+   * load retries over 10.5h on 2026-08-12; `@dominevo/addon-remote-storage`
    * (`@aws-sdk/*`, `webdav`) is the same landmine.
    *
-   * **Strip.** `@camstack/*` are host-provided system packages that resolve via
+   * **Strip.** `@dominevo/*` are host-provided system packages that resolve via
    * the host's node_modules (Node walks up from the installed addon dir). Left
-   * in, this `npm install` pulls the LAST PUBLISHED `@camstack/types` (etc.)
+   * in, this `npm install` pulls the LAST PUBLISHED `@dominevo/types` (etc.)
    * into the addon's OWN node_modules where it SHADOWS the host's fresh copy —
    * local additions to a system package silently never reach the deployed
    * addon. Addon dists are self-contained besides, so `stripBundledDeps` keeps
@@ -1585,7 +1585,7 @@ export class AddonInstaller {
   async installFromTgz(tgzPath: string): Promise<{ name: string; version: string }> {
     // STAGED UNPACK ON THE FUSE MOUNT + ATOMIC RENAME.
     //
-    // This runs on the LIVE hub event loop during a `camstack deploy`, and
+    // This runs on the LIVE hub event loop during a `dominevo deploy`, and
     // `this.addonsDir` is the slow Unraid shfs/FUSE `/data/addons`. The former
     // path extracted to /tmp then `fs.promises.cp`'d the large dist ACROSS to
     // the FUSE mount file-by-file on the main process. That recursive copy of a
@@ -2229,7 +2229,7 @@ export class AddonInstaller {
 
   private findLocalPackage(packageName: string): string | null {
     if (!this.bundledAddonsDir) return null
-    const shortName = packageName.replace('@camstack/', '')
+    const shortName = packageName.replace('@dominevo/', '')
     for (const dirName of [shortName, `addon-${shortName}`, shortName.replace('addon-', '')]) {
       const candidate = path.join(this.bundledAddonsDir, dirName)
       try {

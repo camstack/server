@@ -1,5 +1,5 @@
-import type { StorageLocation, StorageLocationDeclaration } from '@camstack/types'
-import { REDACTED_SECRET } from '@camstack/types'
+import type { StorageLocation, StorageLocationDeclaration } from '@dominevo/types'
+import { REDACTED_SECRET } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   type LocationSaveInput,

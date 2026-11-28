@@ -1,5 +1,5 @@
 /** An in-memory `SettingsStoreClient` for specs that need a real `MeshCertificateRegistry`. */
-import type { SettingsStoreClient } from '@camstack/types'
+import type { SettingsStoreClient } from '@dominevo/types'
 
 interface Row {
   readonly id: string

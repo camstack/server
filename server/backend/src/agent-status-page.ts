@@ -54,7 +54,7 @@ export function renderAgentStatusPage(data: AgentStatusData): string {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="refresh" content="5">
-  <title>CamStack Agent: ${escapeHtml(data.agentName)}</title>
+  <title>Dominevo Agent: ${escapeHtml(data.agentName)}</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace; background: #0f172a; color: #e2e8f0; padding: 2rem; }
@@ -77,7 +77,7 @@ export function renderAgentStatusPage(data: AgentStatusData): string {
   </style>
 </head>
 <body>
-  <h1>CamStack Agent</h1>
+  <h1>Dominevo Agent</h1>
   <p class="subtitle">${escapeHtml(data.agentId)} &mdash; auto-refreshes every 5s</p>
 
   <div class="grid">

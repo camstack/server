@@ -69,13 +69,13 @@ Status: **implemented 2026-10-09** (skills, docs split, pointers, local scripts,
 
 **Skills that call tools**
 - The skill names the tools by name in its steps, for example "Step 1: call `find_ui_component({need})`; if the MCP is absent, run `node scripts/ui/find-component.mjs <need>`".
-- Every tool is a function in `@camstack/develop` with a CLI twin (`camstack develop ui find …`). The skill therefore runs in Claude Code without the MCP, in Cursor or Codex through the CLI, and over MCP.
+- Every tool is a function in `@dominevo/develop` with a CLI twin (`dominevo develop ui find …`). The skill therefore runs in Claude Code without the MCP, in Cursor or Codex through the CLI, and over MCP.
 - A tool's result can say "next: step N of `camstack-ui`" to keep the agent on the workflow.
 
 **Subagents: the real failure mode.** A spawned or external agent only follows conventions it actually loaded. Layer it:
 - **(a) Agent definitions preload the skill.**
   - Claude Code subagent frontmatter accepts a `skills:` list that injects skills at start. Verify this on the installed version; if it is missing, inline "Your FIRST action is `Skill camstack-ui`" at the top of the body.
-  - Rewrite `frontend-architect` as a CamStack-specific `camstack-ui-engineer`, tracked under `.claude/agents/`, which needs a `!.claude/agents/` gitignore re-include.
+  - Rewrite `frontend-architect` as a Dominevo-specific `camstack-ui-engineer`, tracked under `.claude/agents/`, which needs a `!.claude/agents/` gitignore re-include.
   - It sets `skills: [camstack-ui, sync-docs]` and drops the "distinctive aesthetic" doctrine entirely. In this repo the brief is "consistent with the system", not "memorable".
 - **(b) Coordinator briefs include a fixed preamble.** "Load skill X before reading code. Done = the skill's checklist pasted with evidence (`check_ui_file` output, screenshot widths)." The coordinator then verifies the evidence block rather than trusting a summary. Put this template in root `AGENTS.md`.
 - **(c) Root `AGENTS.md` and `camstack/AGENTS.md`** get a skills-table row: "Any admin-ui / ui-library / addon page / viewer screen → `camstack-ui` (`.claude/skills/camstack-ui/SKILL.md`; MCP `get_skill camstack-ui`)". This is the only layer non-Claude harnesses see.
@@ -175,7 +175,7 @@ Generate `decision-table.md` and `tokens.md` from the catalogue where possible, 
   - Tailwind v4 with semantic utilities.
   - ui-library is host-provided (D15).
   - An addon page ships no CSS (D747), so a class works only if the admin-ui build scans the package. Pages mount through Module Federation and `mount-addon-page`.
-  - Values from `@camstack/types/client`, never the bare barrel (viewer rule; the web equivalent is to check the barrel before importing by name).
+  - Values from `@dominevo/types/client`, never the bare barrel (viewer rule; the web equivalent is to check the barrel before importing by name).
 - **Viewer**
   - React Native with `tokens.ts` (the same palette as the web theme; keep them 1:1, and `tokens.md` documents the mapping).
   - Its own kit under `src/components/ui`.
@@ -208,7 +208,7 @@ Generate `decision-table.md` and `tokens.md` from the catalogue where possible, 
 
 | Skill | Purpose / trigger | Tools | State |
 |---|---|---|---|
-| `add-capability` | New or changed `*.cap.ts`, "do I need a cap?" | `plan_capability`, `scaffold_capability`, `run_codegen`, `method_tiers_diff`, `cap_ship_plan`, `get_capability` | **Rewrite.** Add the cardinality archetypes (singleton, collection 32, deviceNative 73, device-dispatch, wrapper 13, internal 30). Fix §7 (`SKILL.md:126-130` says "deploy packages/types"; the truth is force-publish `@camstack/system` + `deploy packages/system`). Add `check-method-tiers --update`, the `CAP_INPUT_DEFAULTS` trap, hand-written interfaces that rot, and the agent `main.ts` array |
+| `add-capability` | New or changed `*.cap.ts`, "do I need a cap?" | `plan_capability`, `scaffold_capability`, `run_codegen`, `method_tiers_diff`, `cap_ship_plan`, `get_capability` | **Rewrite.** Add the cardinality archetypes (singleton, collection 32, deviceNative 73, device-dispatch, wrapper 13, internal 30). Fix §7 (`SKILL.md:126-130` says "deploy packages/types"; the truth is force-publish `@dominevo/system` + `deploy packages/system`). Add `check-method-tiers --update`, the `CAP_INPUT_DEFAULTS` trap, hand-written interfaces that rot, and the agent `main.ts` array |
 | `add-addon` | New addon or manifest entry | `scaffold_addon` (+ device-provider/storage/log-dest/export/page kinds), `validate_addon` (+ entries/icons/types-entry/page-css guards) | **Consolidate.** The repo copy (369 lines) is canonical; the pack copy (126) becomes its projection. Add a UI hand-off: "a page → `camstack-ui`" |
 | `release` | "Ship this", publish train, server-side change live, viewer OTA | `release_plan`, `release_status`, `cap_ship_plan` (describe-only) | **New, a merge of** `camstack-publish-ci`, `camstack-hub-image-deploy`, `~/camstack-homelab-ops` (deploy parts) and the viewer chain (`update:patch` → `build:orchestrator` → deploy → pin). Also: applyServerUpdate +1 restart, toggle-verify, pid and capabilities re-registration, and never dispatching Checks |
 | `keychain-secrets` | Any password, token or key field; `secretStatePaths` | `check_ui_file` (secret field), `search_knowledge` | **New.** Covers the schema `secret` type, no env vars, migration (`scripts/ops/keychain-migrate-hub.mjs`), the `PasswordInput`/`ConfigSecretField` UI, and reveal-in-dialog. Source: `docs/architecture/secrets-keychain.md` |
@@ -234,7 +234,7 @@ Generate `decision-table.md` and `tokens.md` from the catalogue where possible, 
 - **Phase 1, about 3 days (the UI slice of plan P1, done first):**
   - the `camstack-ui` skill and its references;
   - the catalogue generator + committed `ui-components.{json,md}`;
-  - `find/get/list_ui_component`, `list_ui_tokens`, `check_ui_file` in `@camstack/develop` with CLI twins;
+  - `find/get/list_ui_component`, `list_ui_tokens`, `check_ui_file` in `@dominevo/develop` with CLI twins;
   - private-MCP skill serving (scan-based `list_skills`/`get_skill`, resources, the `new-ui-surface` prompt);
   - a `camstack-dev` entry in `.mcp.json`;
   - an MCP-level spawn test.
@@ -409,7 +409,7 @@ end-to-end from this machine.
 ### What differs from the plan above
 
 - No MCP work (operator constraint). The scripts are `scripts/ui/*.ts` run
-  with `tsx`, not `@camstack/develop` functions; the MCP can wrap them later.
+  with `tsx`, not `@dominevo/develop` functions; the MCP can wrap them later.
 - The catalogue is `docs/reference/ui-components.json` only (no `.md`), web
   library only; the viewer's kit has its own catalogue in its repository.
 - `ConfigSecretField` (§2) does not exist; the secret field is
@@ -437,9 +437,9 @@ sections above.
 | Skill | Was | Job |
 | --- | --- | --- |
 | `camstack-docs` | `sync-docs` (renamed, extended) | which docs exist, what is generated and how to regenerate it, the ADR ladder and numbering, `applies-to`/`covers`, generated-file conflicts (take a side, regenerate), skills and pointers |
-| `camstack-capability` | `add-capability` (renamed, rewritten) | need-a-cap check, cardinality archetypes (node-hosted = `singleton`, never `per-node`), auth tiers, codegen, `CAP_INPUT_DEFAULTS`, provider selection by binding, generated-client typing, force-publish `@camstack/system`; its stale "Ship it" fixed |
+| `camstack-capability` | `add-capability` (renamed, rewritten) | need-a-cap check, cardinality archetypes (node-hosted = `singleton`, never `per-node`), auth tiers, codegen, `CAP_INPUT_DEFAULTS`, provider selection by binding, generated-client typing, force-publish `@dominevo/system`; its stale "Ship it" fixed |
 | `camstack-server-change` | new | the server-side spine: three channels, typecheck ≠ build, `.d.ts` sweep, dev `deploy-server`, publish → `applyServerUpdate` per node → verify, registry lag, CI rules |
-| `camstack-addon` | `add-addon` (renamed, extended) | runtime traps (`super({})`, two device stores, forked slice staleness, `declareCollection`), `camstack deploy` traps and proof the new code runs |
+| `camstack-addon` | `add-addon` (renamed, extended) | runtime traps (`super({})`, two device stores, forked slice staleness, `declareCollection`), `dominevo deploy` traps and proof the new code runs |
 | `camstack-secrets` | new | declare by type, resolved reads and markers, no env/argv, 0600 files for children, the five secret guards |
 | `camstack-diagnose` | new; absorbed `camstack-server-api` | calling the API, what is running, three log tiers, where work ran, instrument first, error-signature table |
 | `camstack-publish-ci` | kept, rewritten | stale workflow/image/desktop names fixed; operator account removed; `force_packages` for caps; registry lag; tag rules |
@@ -487,10 +487,10 @@ state record with no reusable procedure → stays where it is.
 | Source | Items | (a) | (b) | (c) | (h) | Where (a) went |
 | --- | --- | --- | --- | --- | --- | --- |
 | Repo `.claude/skills/*/` | 10 | 10 (2 partly b, 3 partly c) | — | — | — | renamed / rewritten above; `camstack-server-api` merged into `camstack-diagnose` |
-| Repo single-file `.claude/skills/*.md` (graph-tool helpers) | 4 | — | — | 4 (not discovered by Claude Code; not CamStack-specific) | — | left in place, question to the operator |
+| Repo single-file `.claude/skills/*.md` (graph-tool helpers) | 4 | — | — | 4 (not discovered by Claude Code; not Dominevo-specific) | — | left in place, question to the operator |
 | Repo `.claude/agents/` | 1 | 1 | — | — | — | preloads `camstack-ui` + `camstack-docs` |
 | User-level `camstack-*` skills | 5 | 3 partly (architecture, homelab-ops, track-audit) | 3 partly (homelab-ops, track-audit, viewer) | 1 (api-reference, 136 of 167 caps) | — | architecture → `camstack-capability` / `camstack-diagnose` + docs; api-reference → `docs/reference/api.md`; viewer was already a pointer |
-| User-level `homelab-*`, `grafana-query`, `loki-logs`, `homeassistant` | 7 | — | 7 | — | — | untouched (not CamStack) |
+| User-level `homelab-*`, `grafana-query`, `loki-logs`, `homeassistant` | 7 | — | 7 | — | — | untouched (not Dominevo) |
 | Operator memory notes | 164 | 82 | 14 | 13 | 55 | below |
 | `AGENTS.md` / `CLAUDE.md` | 18 + per-package `CLAUDE.md` | rules stay; skill tables now generated | the root D328 rule names this hub's DB paths | — | — | skills link into them |
 | `docs/architecture`, `docs/decisions`, (planning repo: sessions/) | — | long form, linked not copied | — | 1 found (below) | sessions/shipped are history | every skill links its pages |
@@ -514,7 +514,7 @@ custom-action ESM cache, fixed by `importAddonModuleFresh`).
 ### Found stale while verifying (not fixed here)
 
 - `docs/architecture/update-and-release.md` §"Deploying a framework change in
-  development" still says an agent's addon-root `@camstack/system` is "the
+  development" still says an agent's addon-root `@dominevo/system` is "the
   node's only builtin infra" (D87); `server/backend/src/agent/main.ts` now
   loads builtins from the closure and skips that copy.
 - `scripts/hub/hub.mjs` hard-codes one hub's LAN address in a tracked file.

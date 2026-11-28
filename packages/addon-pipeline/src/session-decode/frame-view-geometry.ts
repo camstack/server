@@ -1,4 +1,4 @@
-import type { BoundingBox, FrameViewCrop, FrameViewGeometry, FrameViewSpec } from '@camstack/types'
+import type { BoundingBox, FrameViewCrop, FrameViewGeometry, FrameViewSpec } from '@dominevo/types'
 
 function positiveInteger(value: number, label: string): number {
   if (!Number.isFinite(value) || value <= 0) throw new Error(`${label} must be positive`)

@@ -18,7 +18,7 @@ import type {
   ProfileRtspEntry,
   ProfileSlot,
   WebrtcStreamChoice,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 import type { BuilderContext } from '../types.js'
 import {

@@ -27,7 +27,7 @@
  * every 30s. We enforce this per (userId, endpointId) tuple in-memory.
  */
 import { randomUUID } from 'node:crypto'
-import { type AddonContext, EventCategory, type IScopedLogger } from '@camstack/types'
+import { type AddonContext, EventCategory, type IScopedLogger } from '@dominevo/types'
 
 import { endpointAccessTarget } from './access/access-gate.js'
 import {

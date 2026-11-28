@@ -5,13 +5,13 @@
  *
  * Two parts, no script:
  *
- *   1. No `hubUrl` yet: the form. It is the CamStack page family — the hub's own
+ *   1. No `hubUrl` yet: the form. It is the Dominevo page family — the hub's own
  *      stylesheet and brand mark (`page-style.js`, generated from the hub's page
  *      shell), en/it — not a hand-written page.
  *   2. `hubUrl` given: the address is CHECKED before the browser is sent there.
  *      Syntax and `https` first, then not a local address (this runs in the
  *      cloud and cannot reach one), then one unauthenticated discovery request
- *      (`GET /api/oauth2/integrations`) that proves it is a CamStack hub, that
+ *      (`GET /api/oauth2/integrations`) that proves it is a Dominevo hub, that
  *      this Lambda's TLS trust accepts its certificate, and that it serves
  *      Alexa linking. Any failure re-renders the form with a plain sentence and a
  *      reason CODE; success is a 302 to the hub's own consent page.
@@ -45,13 +45,13 @@ const REASONS = [
 
 const STRINGS = {
   en: {
-    title: 'CamStack · Link your hub',
-    heading: 'Link CamStack to Alexa',
+    title: 'Dominevo · Link your hub',
+    heading: 'Link Dominevo to Alexa',
     intro:
-      'Enter the public HTTPS address of your CamStack hub. Alexa will then ask that hub to authorise this Echo.',
+      'Enter the public HTTPS address of your Dominevo hub. Alexa will then ask that hub to authorise this Echo.',
     label: 'Hub address',
     placeholder: 'https://camstack.example.com',
-    hint: 'The address shown in CamStack under Connectivity → Alexa. It must be reachable from the internet (a tunnel, a reverse proxy or a public address).',
+    hint: 'The address shown in Dominevo under Connectivity → Alexa. It must be reachable from the internet (a tunnel, a reverse proxy or a public address).',
     submit: 'Continue',
     code: 'Code: ',
     reasons: {
@@ -64,20 +64,20 @@ const STRINGS = {
         'Could not reach that address from the internet. Check the address, and that the hub is running and published.',
       tls_error:
         'The hub answered, but its HTTPS certificate is not trusted. Use an address with a certificate from a public authority.',
-      not_camstack: 'That address answers, but it is not a CamStack hub (or the hub is too old).',
+      not_camstack: 'That address answers, but it is not a Dominevo hub (or the hub is too old).',
       integration_missing:
         'This hub does not offer Alexa linking. Install and enable the Alexa export on it, then try again.',
       hub_starting: 'The hub is still starting up. Wait a moment and try again.',
     },
   },
   it: {
-    title: 'CamStack · Collega il tuo hub',
-    heading: 'Collega CamStack ad Alexa',
+    title: 'Dominevo · Collega il tuo hub',
+    heading: 'Collega Dominevo ad Alexa',
     intro:
-      'Inserisci l’indirizzo HTTPS pubblico del tuo hub CamStack. Alexa chiederà poi a quell’hub di autorizzare questo Echo.',
+      'Inserisci l’indirizzo HTTPS pubblico del tuo hub Dominevo. Alexa chiederà poi a quell’hub di autorizzare questo Echo.',
     label: 'Indirizzo dell’hub',
     placeholder: 'https://camstack.example.com',
-    hint: 'L’indirizzo mostrato in CamStack sotto Connettività → Alexa. Deve essere raggiungibile da internet (un tunnel, un reverse proxy o un indirizzo pubblico).',
+    hint: 'L’indirizzo mostrato in Dominevo sotto Connettività → Alexa. Deve essere raggiungibile da internet (un tunnel, un reverse proxy o un indirizzo pubblico).',
     submit: 'Continua',
     code: 'Codice: ',
     reasons: {
@@ -91,7 +91,7 @@ const STRINGS = {
       tls_error:
         'L’hub ha risposto, ma il suo certificato HTTPS non è attendibile. Usa un indirizzo con un certificato di un’autorità pubblica.',
       not_camstack:
-        'Quell’indirizzo risponde, ma non è un hub CamStack (oppure l’hub è troppo vecchio).',
+        'Quell’indirizzo risponde, ma non è un hub Dominevo (oppure l’hub è troppo vecchio).',
       integration_missing:
         'Questo hub non offre il collegamento ad Alexa. Installa e abilita l’export Alexa, poi riprova.',
       hub_starting: 'L’hub si sta ancora avviando. Attendi un momento e riprova.',
@@ -191,7 +191,7 @@ function classifyNetworkError(err) {
   return 'unreachable'
 }
 
-/** Prove `base` is a CamStack hub that serves Alexa linking, as THIS Lambda sees it. */
+/** Prove `base` is a Dominevo hub that serves Alexa linking, as THIS Lambda sees it. */
 async function probeHub(base, deps) {
   let res
   try {

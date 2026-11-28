@@ -21,7 +21,7 @@ import {
   type IDevice,
   type IDeviceAdoptionProvider,
   type SystemEvent,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import {
   buildBoardCreationSchema,

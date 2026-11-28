@@ -4,7 +4,7 @@
  * approves or denies. The code is never taken from the URL, so a link cannot
  * pre-fill it: only someone reading it off their own terminal can approve.
  */
-import { Button, Input, trpc } from '@camstack/ui-library'
+import { Button, Input, trpc } from '@dominevo/ui-library'
 import { Loader2, TerminalSquare } from 'lucide-react'
 import { useState, type FormEvent, type JSX } from 'react'
 import { useTranslation } from 'react-i18next'

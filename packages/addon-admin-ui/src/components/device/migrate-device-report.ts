@@ -32,7 +32,7 @@ import {
   type CameraSwitchId,
   type MigrateDeviceResult,
   type MigrateSwitchReport,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /**
  * The one question the banner answers.

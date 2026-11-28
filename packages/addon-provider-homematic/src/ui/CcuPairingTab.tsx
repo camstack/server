@@ -7,7 +7,7 @@ import {
   Input,
   SectionCard,
   Select,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import {
   CcuDevicesResultSchema,
   INSTALL_MODES,

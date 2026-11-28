@@ -18,9 +18,9 @@
  * window and the recipients.
  */
 
-import type { NcTaxonomy, Target } from '@camstack/types'
-import { DeviceType } from '@camstack/types'
-import type { DataColumn } from '@camstack/ui-library'
+import type { NcTaxonomy, Target } from '@dominevo/types'
+import { DeviceType } from '@dominevo/types'
+import type { DataColumn } from '@dominevo/ui-library'
 import {
   Badge,
   Button,
@@ -31,7 +31,7 @@ import {
   TooltipTrigger,
   useDeviceManagerListAll,
   useSystem,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { FlaskConical, Images, Plus } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'

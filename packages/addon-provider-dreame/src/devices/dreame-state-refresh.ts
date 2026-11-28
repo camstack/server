@@ -13,7 +13,7 @@ import {
   deviceStateRefreshCapability,
   type InferNativeProvider,
   type StateRefreshPolicy,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** The part of a device context the refresh registration uses. */
 export type DreameRefreshContext = Pick<DeviceContext, 'registerNativeCap' | 'unregisterNativeCap'>

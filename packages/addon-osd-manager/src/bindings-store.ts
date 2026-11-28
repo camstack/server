@@ -5,7 +5,7 @@
  * through Zod on every read and write (`BaseAddon.deviceState`), so no field
  * can be dropped on save by a hand-listed persist.
  */
-import { type OsdSlotBinding, OsdSlotBindingSchema } from '@camstack/types'
+import { type OsdSlotBinding, OsdSlotBindingSchema } from '@dominevo/types'
 import { z } from 'zod'
 
 /** Store key inside the addon's per-device store. */

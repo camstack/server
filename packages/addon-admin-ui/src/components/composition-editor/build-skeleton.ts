@@ -13,7 +13,7 @@ import {
   primaryCapForRole,
   requiredTopLevelKeys,
   validateComposition,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 function capDefinition(name: string) {
   return ALL_CAPABILITY_DEFINITIONS.find((def) => def.name === name)

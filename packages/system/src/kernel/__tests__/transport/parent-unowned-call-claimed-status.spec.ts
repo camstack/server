@@ -13,7 +13,7 @@
  * `local-child-registry-claimed-status.spec.ts` drives that production path.
  */
 import { describe, expect, it, vi } from 'vitest'
-import type { StatusOverlayAnswer } from '@camstack/types'
+import type { StatusOverlayAnswer } from '@dominevo/types'
 import { createParentUnownedCallHandler } from '../../transport/parent-unowned-call.js'
 import type { CapRoute } from '../../transport/cap-route.js'
 import type { CapRouteResolver } from '../../transport/cap-route-resolver.js'

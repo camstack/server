@@ -1,4 +1,4 @@
-import { PresenceStatusSchema } from '@camstack/types'
+import { PresenceStatusSchema } from '@dominevo/types'
 import { detectionValue, iface, unshaped } from './shared.js'
 import type { GenericAdapter } from './types.js'
 

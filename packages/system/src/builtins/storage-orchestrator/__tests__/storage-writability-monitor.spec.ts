@@ -2,8 +2,8 @@
  * "No writable location for a declared type" is an alert, through the existing
  * alert centre (liveness findings), and only from an ANSWERED state (D315).
  */
-import type { StorageLocation, StorageLocationDeclarer } from '@camstack/types'
-import { EventCategory } from '@camstack/types'
+import type { StorageLocation, StorageLocationDeclarer } from '@dominevo/types'
+import { EventCategory } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   StorageWritabilityMonitor,
@@ -29,7 +29,7 @@ function loc(mode: StorageLocation['mode'], id = 'eventMedia:default'): StorageL
 
 const loaded: StorageLocationDeclarer = {
   addonId: 'pipeline-analytics',
-  packageName: '@camstack/addon-post-analysis',
+  packageName: '@dominevo/addon-post-analysis',
   loaded: true,
   declarations: [EVENT_MEDIA],
 }

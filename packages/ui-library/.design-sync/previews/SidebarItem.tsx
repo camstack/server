@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { SidebarItem } from '@camstack/ui-library'
+import { SidebarItem } from '@dominevo/ui-library'
 import { Camera, Bell, LayoutGrid, Settings } from 'lucide-react'
 
 const Frame = ({ children }: { children: ReactNode }) => (

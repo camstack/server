@@ -10,7 +10,7 @@
  * fired again. Now an unreachable probe keeps the last known list and leaves a
  * never-answered node unanswered.
  */
-import type { PipelineSchema } from '@camstack/types'
+import type { PipelineSchema } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import PipelineOrchestratorAddon from '../index.js'
 import {

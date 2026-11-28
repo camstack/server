@@ -16,7 +16,7 @@ import {
   type ExpressionValue,
   type FieldOutcome,
   type StatefulExpressionMemory,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { PulseFieldSeed } from './pulse-seed.js'
 
 export const NO_FIELDS: ReadonlySet<string> = new Set()

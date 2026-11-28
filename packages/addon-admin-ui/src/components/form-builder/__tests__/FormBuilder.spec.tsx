@@ -5,7 +5,7 @@
  * full-bleed (no grid wrapper) while normal multi-field sections keep the
  * standard `@container` grid.
  *
- * @camstack/ui-library is partially mocked so that:
+ * @dominevo/ui-library is partially mocked so that:
  *   - `isFieldVisible` keeps its real implementation (needed for the
  *     visibleFieldCount gate in SectionCard).
  *   - `ConfigFormField` is replaced with a lightweight stub that renders a
@@ -15,11 +15,11 @@
  */
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import type { ConfigField, ConfigUISchema } from '@camstack/types'
+import type { ConfigField, ConfigUISchema } from '@dominevo/types'
 
-vi.mock('@camstack/ui-library', async () => {
+vi.mock('@dominevo/ui-library', async () => {
   const actual =
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+    await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return {
     ...actual,
     ConfigFormField: ({ field }: { readonly field: ConfigField }) => (

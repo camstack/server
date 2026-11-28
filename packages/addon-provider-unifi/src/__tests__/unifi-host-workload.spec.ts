@@ -5,7 +5,7 @@ import {
   deriveWorkloadControls,
   workloadCapability,
   workloadTransition,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { settingsToConnection } from '../config.js'
 import type { UnifiControllerClient } from '../unifi-client-contract.js'

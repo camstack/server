@@ -67,7 +67,7 @@ import {
   RecordIntegrationInstances,
   RevConflictError,
   isInstanceOn,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 import { ActionSceneExports } from './action-scenes.js'
 import { createApiDeviceGateway, type DeviceGateway } from './device-gateway.js'

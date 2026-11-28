@@ -1,5 +1,5 @@
 /**
- * `camstack login` / `discover` hub finding (D838): mDNS announcements UNION
+ * `dominevo login` / `discover` hub finding (D838): mDNS announcements UNION
  * the hubs this machine knows, deduped by host:port, unreachable dropped, and
  * a picker only when there is a choice.
  */
@@ -15,7 +15,7 @@ import {
   type HubPrompts,
   pickHub,
 } from '../discovery/hub-picker.js'
-import type { MdnsHub } from '@camstack/develop/hub-discovery'
+import type { MdnsHub } from '@dominevo/develop/hub-discovery'
 
 let dir: string
 

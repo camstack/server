@@ -31,7 +31,7 @@
  *    that both sides read ONE constant can.
  */
 import { describe, expect, it } from 'vitest'
-import { createDurableState } from '@camstack/types'
+import { createDurableState } from '@dominevo/types'
 import { z } from 'zod'
 import { buildGlobalSettingsSchema, EMBEDDING_ENABLED_DEFAULT } from '../settings-schema.js'
 

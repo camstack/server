@@ -29,7 +29,7 @@ import {
   useCapabilityNodePresence,
   useClusterNodes,
   useTerminalSessionServerShellStatus,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Terminal as TerminalIcon, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'

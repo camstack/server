@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest'
 import * as jestDomMatchers from '@testing-library/jest-dom/matchers'
 import { render, screen } from '@testing-library/react'
 import React from 'react'
-import type { CameraSensorsStatus } from '@camstack/types'
+import type { CameraSensorsStatus } from '@dominevo/types'
 import { StreamsMotionBlock } from '../config-blocks'
 import type { OrchestratorCameraSettings } from '../camera-card-model'
 

@@ -8,7 +8,7 @@
  * round-trip fidelity, a RAM-cache mirror, and stale-key pruning so the row
  * count stays bounded when rules stop watching a key.
  */
-import type { InMemoryRecords } from '@camstack/types'
+import type { InMemoryRecords } from '@dominevo/types'
 import { makeNcRecords, ncTable, seedRows } from './support/nc-test-deps.js'
 import { describe, it, expect, beforeEach } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'

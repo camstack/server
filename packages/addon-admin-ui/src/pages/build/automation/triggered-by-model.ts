@@ -9,14 +9,14 @@ import type {
   AutomationRecipe,
   AutomationWhen,
   TriggeredByLeaf,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   forEachLeaf,
   hasTriggeredByLeaves,
   isEventLeaf,
   isLeaf,
   stepConditionsOf,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** One trigger row a `triggered-by` row can name. */
 export interface TriggerRow {

@@ -23,7 +23,7 @@ import type { BrokerRegistries } from './provider-registry.js'
 function buildCapabilitiesAccess(
   broker: ServiceBroker | undefined,
   localRegs: BrokerRegistries,
-): import('@camstack/types').CapabilitiesAccess {
+): import('@dominevo/types').CapabilitiesAccess {
   const collectRemoteEntries = (capName: string): Array<readonly [string, unknown]> => {
     if (broker === undefined) return []
     const bkr = asBrokerLike(broker)

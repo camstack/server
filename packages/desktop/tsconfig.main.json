@@ -17,13 +17,13 @@
     ],
     "ignoreDeprecations": "6.0",
     "paths": {
-      "@camstack/node-root": [
+      "@dominevo/node-root": [
         "../node-root/src/index.ts"
       ],
-      "@camstack/types": [
+      "@dominevo/types": [
         "../types/src/index.ts"
       ],
-      "@camstack/owner-only-file": [
+      "@dominevo/owner-only-file": [
         "../types/src/util/owner-only-file.ts"
       ]
     },

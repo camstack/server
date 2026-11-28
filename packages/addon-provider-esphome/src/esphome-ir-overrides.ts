@@ -1,4 +1,4 @@
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { parseIrServices, type IrServicesSetting } from './esphome-ir-plan.js'
 
 /**

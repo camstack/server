@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/schema",
   "version": 2,
-  "title": "CamStack addon generator",
-  "description": "Scaffold a new CamStack addon workspace package.",
+  "title": "Dominevo addon generator",
+  "description": "Scaffold a new Dominevo addon workspace package.",
   "type": "object",
   "properties": {
     "name": {
       "type": "string",
-      "description": "Addon name (without scope). Used as the folder name, the package name (under `@camstack/`), and the addon manifest id.",
+      "description": "Addon name (without scope). Used as the folder name, the package name (under `@dominevo/`), and the addon manifest id.",
       "x-prompt": "What name should the addon have? (e.g. `weather-station`)"
     },
     "directory": {

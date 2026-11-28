@@ -44,8 +44,8 @@ import type {
   RunDetailSubtreeResult,
   ScoredLabel,
   SuppliedRootOutput,
-} from '@camstack/types'
-import { CROP_SUPPLY_SOURCES, deriveDetailCropRect } from '@camstack/types'
+} from '@dominevo/types'
+import { CROP_SUPPLY_SOURCES, deriveDetailCropRect } from '@dominevo/types'
 import { getSharp } from '../shared/lazy-sharp.js'
 import type { DetailStepPlacement } from './device-jump.js'
 import {

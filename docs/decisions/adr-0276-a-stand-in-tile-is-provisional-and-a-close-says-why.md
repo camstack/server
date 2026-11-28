@@ -98,9 +98,9 @@ is the same choice stated in the store: old rows are left exactly as they are.
   (byte-size included) — ask the provenance.
 - The wire `Track.previewMissReason` is typed in
   `packages/types` and therefore reaches TYPED consumers only with a
-  published `@camstack/server`; the value itself flows on addon redeploy (the
+  published `@dominevo/server`; the value itself flows on addon redeploy (the
   cap router is a structural pass-through on output). The addon-local column
-  and the D276 upgrade behaviour are live on `camstack deploy
+  and the D276 upgrade behaviour are live on `dominevo deploy
   packages/addon-post-analysis` alone.
 - The capture starvation itself (dead decode-worker leases on agent-a,
   70 % stale-drop windows) is NOT fixed here — it is made legible per track.

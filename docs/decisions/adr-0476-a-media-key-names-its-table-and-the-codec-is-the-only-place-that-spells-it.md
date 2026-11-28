@@ -64,7 +64,7 @@ the migration's target state (no row with `ownerKind = 'event'` except the
 
 **`event` is retired as a media owner kind.** `MediaStore.OWNER_KINDS` (the
 authority on what may own media) drops it and gains `motion` / `object` /
-`audio`; `@camstack/types`' `MEDIA_OWNER_TYPES` must always be a superset —
+`audio`; `@dominevo/types`' `MEDIA_OWNER_TYPES` must always be a superset —
 enforced by a new guard,
 `packages/addon-post-analysis/src/pipeline-analytics/store/__tests__/owner-kinds-authority.spec.ts`.
 Every site that built or read a media key by string template now goes through
@@ -146,7 +146,7 @@ label.
 **`videoclips-shared.ts`'s `MediaOwnerKind` and
 `event-thumbnail-resolver.ts`'s `CropForcedOwnerKind`** — two more
 hand-spelled owner unions — drop `'event'`. `MediaOwnerKind` becomes
-`EventOwnerType | 'track'` (imported from `@camstack/types`, not
+`EventOwnerType | 'track'` (imported from `@dominevo/types`, not
 re-declared), and `videoclips-provider.ts`'s `resolveVouchedEvents` now
 queries the media-presence probe once PER EVENT KIND that has any ids
 (motion/object/audio, each only when non-empty) instead of one combined

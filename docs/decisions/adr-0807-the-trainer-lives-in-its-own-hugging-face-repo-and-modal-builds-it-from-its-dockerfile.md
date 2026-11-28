@@ -15,7 +15,7 @@ applies-to:
 ## Context
 
 The trainer imports Ultralytics (AGPL-3.0), so it must never run inside
-CamStack (D661/D703) and its Corresponding Source must be public. The operator
+Dominevo (D661/D703) and its Corresponding Source must be public. The operator
 asked for it to live on Hugging Face rather than in a GitHub repo. The plan
 assumed a GHCR image Modal would pull; the A0 spike read the pinned `modal`
 JS SDK (0.11.0) and found `images.fromRegistry(base).dockerfileCommands([...])`

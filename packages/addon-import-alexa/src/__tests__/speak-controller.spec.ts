@@ -4,7 +4,7 @@ import {
   makeInMemoryRecords,
   recordInstanceSwitch,
   type Target,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   AlexaSpeakController,
@@ -266,14 +266,14 @@ describe('stored Echo targets', () => {
     const h = harness({ brokers: ONE, targets: mapTargets([echoTarget('t-kitchen', false)]) })
     const sent = await h.controller.provider.send({
       targetId: 't-kitchen',
-      notification: { body: 'hello', title: 'CamStack', format: 'text', priority: 3 },
+      notification: { body: 'hello', title: 'Dominevo', format: 'text', priority: 3 },
     })
     expect(sent).toMatchObject({ success: false, error: 'target disabled' })
   })
 })
 
 describe('the records are the one source of the Echo targets', () => {
-  const NOTIFICATION = { body: 'hello', title: 'CamStack', format: 'text', priority: 3 } as const
+  const NOTIFICATION = { body: 'hello', title: 'Dominevo', format: 'text', priority: 3 } as const
 
   it('sends to a target an instance created after start, without a restart', async () => {
     const { ports, store } = await recordTargets()

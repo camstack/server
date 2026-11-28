@@ -1,4 +1,4 @@
-import type { GpuInfo } from '@camstack/types'
+import type { GpuInfo } from '@dominevo/types'
 
 /**
  * Filesystem seam for Intel iGPU detection — the classifier stays a pure,

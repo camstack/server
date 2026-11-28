@@ -1,4 +1,4 @@
-import { isSecretMarker } from '@camstack/types'
+import { isSecretMarker } from '@dominevo/types'
 
 /**
  * The camera SMTP password an operator wrote on the Email tab, when it is a real value to push

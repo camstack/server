@@ -27,10 +27,10 @@
  * an audio match — the editor simply never let anybody ask for one.
  */
 import { ncTable } from './support/nc-test-deps.js'
-import type { InMemoryRecords } from '@camstack/types'
+import type { InMemoryRecords } from '@dominevo/types'
 import { ncRecordKinds } from '../record-kinds.js'
-import type { AudioEvent, NcRuleInput } from '@camstack/types'
-import { NcRuleInputSchema } from '@camstack/types'
+import type { AudioEvent, NcRuleInput } from '@dominevo/types'
+import { NcRuleInputSchema } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   type FakeSettingsStore,

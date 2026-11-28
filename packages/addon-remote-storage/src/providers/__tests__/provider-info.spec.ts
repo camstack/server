@@ -16,7 +16,7 @@
  * safety constraint, not gain a convenience.
  */
 import { describe, it, expect } from 'vitest'
-import type { IScopedLogger, LogExtras, LogTags } from '@camstack/types'
+import type { IScopedLogger, LogExtras, LogTags } from '@dominevo/types'
 import { S3StorageProvider } from '../s3/s3-provider.js'
 import { SftpStorageProvider } from '../sftp/sftp-provider.js'
 import { WebDavStorageProvider } from '../webdav/webdav-provider.js'

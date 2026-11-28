@@ -5,7 +5,7 @@
  * series. Energy bars and a camera's occupancy are not lanes: they stay in
  * the single charts.
  */
-import type { DeviceHistorySeriesInfo } from '@camstack/types'
+import type { DeviceHistorySeriesInfo } from '@dominevo/types'
 import type { HistoryChartSpec } from './history-model'
 
 type LinesSpec = Extract<HistoryChartSpec, { type: 'lines' }>

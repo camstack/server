@@ -17,7 +17,7 @@ import {
   type SystemEvent,
   collectOwnerIntegrationIds,
   rowsDepsOver,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { ENPAL_SYSTEM } from './config.js'
 import { EnpalEquipmentDevice } from './devices/enpal-equipment-device.js'
 import { buildEnpalAdoptionProvider } from './enpal-adoption-provider.js'

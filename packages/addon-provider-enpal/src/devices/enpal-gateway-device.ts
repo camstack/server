@@ -7,7 +7,7 @@ import {
   DeviceType,
   deviceAdminLinkCapability,
   type InferNativeProvider,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { ENPAL_SYSTEM } from '../config.js'
 import { ENPAL_BOX_ID, accessoryChildSpecs } from '../enpal-equipment.js'

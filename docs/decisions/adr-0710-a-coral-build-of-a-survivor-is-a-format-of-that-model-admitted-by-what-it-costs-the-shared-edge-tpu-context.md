@@ -23,7 +23,7 @@ Coral-elected camera jumps to another device of the node (D650/D657).
 
 The first Coral plan written after it (`docs/design/2026-10-05-coral-license-clean-set.md`,
 first version) undid D703 by the back door: it proposed promoting SSDLite
-MobileDet into the CamStack catalog next to the SSD survivor, and adding
+MobileDet into the Dominevo catalog next to the SSD survivor, and adding
 Google's AIY bird Edge TPU file as its own model. Both are sibling models of a
 step that D703 had just reduced to one — the very shape (`bird-classifier-aiy-edgetpu`,
 `ssdlite-mobiledet-coco-edgetpu`) D703 deleted.
@@ -44,7 +44,7 @@ step's surviving model** — `formats.tflite` on the same catalog entry, same
 `modelId`, same labels and same licence record (plus a `modifications` line) —
 never a new model id. No `-edgetpu` sibling is added to any step, object
 detection included: MobileDet stays reachable as a plus catalog catalog import
-(Model Studio), not as a CamStack catalog entry.
+(Model Studio), not as a Dominevo catalog entry.
 
 A build is admitted only when all of these hold, and the change that adds it
 states each one:
@@ -103,7 +103,7 @@ measured:
 1. **Licence.** The Google AIY Birds V1 full-integer quant from
    `google-coral/test_data` (commit `104342d2`), Apache-2.0 — the same model
    and licence record as the ONNX survivor, plus a `modifications` line. It is
-   compiled, not re-quantised: a CamStack calibration would be new weights.
+   compiled, not re-quantised: a Dominevo calibration would be new weights.
 2. **Contract parity.** Normalisation is in the graph (input uint8, scale
    1/128, zero point 128 — the pool feeds raw pixels), the output is a uint8
    softmax dequantised by `edgetpu_dequant`. On 224 crops (103 bird boxes cut

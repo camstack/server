@@ -1,4 +1,4 @@
-import { userError, rowsDepsOver } from '@camstack/types'
+import { userError, rowsDepsOver } from '@dominevo/types'
 import {
   BaseDeviceProvider,
   integrationInstancesCapability,
@@ -10,7 +10,7 @@ import {
   errMsg,
   isSecretMarker,
   memoizePinnedFfmpeg,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type {
   AddonInitResult,
   ConfigUISchema,
@@ -22,7 +22,7 @@ import type {
   RecordIntegrationInstances,
   SavedDevice,
   SystemEvent,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { WyzeClientRegistry } from './client-registry.js'
 import { WYZE_ADDON_ID } from './constants.js'
 import { buildCreationFormSchema } from './creation-schema.js'

@@ -1,5 +1,5 @@
-import type { FieldProbeResult } from '@camstack/types'
-import { makeSourceBrokerId } from '@camstack/types'
+import type { FieldProbeResult } from '@dominevo/types'
+import { makeSourceBrokerId } from '@dominevo/types'
 import {
   useDeviceManagerGetDevice,
   useDeviceManagerGetDeviceAggregate,
@@ -8,7 +8,7 @@ import {
   useDeviceManagerUpdateDeviceFieldsBatch,
   useStreamBrokerProbeStream,
   useStreamBrokerRegenerateRtspToken,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef } from 'react'

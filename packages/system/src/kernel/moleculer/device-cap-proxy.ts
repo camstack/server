@@ -19,7 +19,7 @@
 // between the two sides readable in one place.
 
 import { randomUUID } from 'node:crypto'
-import { implementedMethodsOf } from '@camstack/types/node'
+import { implementedMethodsOf } from '@dominevo/types/node'
 import { withDefaultSwitchToggle } from './switch-toggle.js'
 import type {
   AddonApi,
@@ -39,7 +39,7 @@ import type {
   IScopedLogger,
   NativeCapOptions,
   StateRefreshPolicy,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   addonSliceHandleApi,
   BOOT_RECOVERY_BACKOFF_MS,
@@ -53,7 +53,7 @@ import {
   emitReadiness,
   expandCapMethods,
   sleep,
-} from '@camstack/types/addon'
+} from '@dominevo/types/addon'
 import type { ServiceBroker } from 'moleculer'
 import {
   createChildrenBatchLoader,
@@ -661,13 +661,13 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
     parentDeviceId: number | null = null,
     initialRuntimeState: Record<string, unknown> = {},
     persistedConfig: Record<string, unknown> = {},
-    deviceMeta: import('@camstack/types').DeviceMeta | null = null,
+    deviceMeta: import('@dominevo/types').DeviceMeta | null = null,
   ): DeviceContext => {
     // Per-context runtime-state reference — set by `BaseDevice`
     // constructor via `bindRuntimeState`. Used inside
     // `registerNativeCap` below to attach each cap's runtime-state
     // schema to the device's `runtimeState` instance.
-    let runtimeStateRef: import('@camstack/types').IDeviceRuntimeState | null = null
+    let runtimeStateRef: import('@dominevo/types').IDeviceRuntimeState | null = null
     return {
       id,
       stableId,
@@ -678,7 +678,7 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
       // returns the whole subtree (container + every child) in one query —
       // generic across all providers, derived purely from the existing
       // `parentDeviceId` / `DeviceType.Container` structure.
-      logger: ((): import('@camstack/types').IScopedLogger => {
+      logger: ((): import('@dominevo/types').IScopedLogger => {
         const base = opts.logger.child(stableId)
         const containerDeviceId =
           parentDeviceId ?? (deviceMeta?.type === DeviceType.Container ? id : null)
@@ -694,7 +694,7 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
       },
       persistConfig: async (
         data: unknown,
-        options?: import('@camstack/types').DevicePersistConfigOptions,
+        options?: import('@dominevo/types').DevicePersistConfigOptions,
       ) => {
         const dataRecord = toPlainRecord(data)
         if (!dataRecord) {
@@ -989,7 +989,7 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
   const resolveParentIntegrationId = async (parentId: number): Promise<string | undefined> => {
     const parentMeta = (await callDeviceManager(api, 'loadMeta', { deviceId: parentId }).catch(
       () => null,
-    )) as import('@camstack/types').DeviceMeta | null
+    )) as import('@dominevo/types').DeviceMeta | null
     return parentMeta?.integrationId ?? undefined
   }
 
@@ -1010,7 +1010,7 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
    */
   const spawnAccessoryChild = async (
     parent: IDevice,
-    spec: import('@camstack/types').AccessoryChildSpec,
+    spec: import('@dominevo/types').AccessoryChildSpec,
     spawnOptions: AccessorySpawnAttemptOptions = { final: false },
   ): Promise<IDevice> => {
     const childStableId = `${parent.stableId}-${spec.stableIdSuffix}`
@@ -1034,7 +1034,7 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
   }
   const spawnAccessoryChildSteps = async (
     parent: IDevice,
-    spec: import('@camstack/types').AccessoryChildSpec,
+    spec: import('@dominevo/types').AccessoryChildSpec,
     childStableId: string,
     onAllocated: (id: number) => void,
     spawnOptions: AccessorySpawnAttemptOptions,
@@ -1066,7 +1066,7 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
     // setName call.
     const existingMeta = (await callDeviceManager(api, 'loadMeta', { deviceId: id }).catch(
       () => null,
-    )) as import('@camstack/types').DeviceMeta | null
+    )) as import('@dominevo/types').DeviceMeta | null
     const isFirstSpawn = !existingMeta || existingMeta.name === childStableId
     // Collapse the per-child meta pre-seed into ONE `applyInitialMeta` call
     // (was up to 6 individual setter round-trips — the dominant cost when
@@ -1097,7 +1097,7 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
     // A child with no explicit integrationId belongs to its parent's integration
     // (an explicit spec value wins). Without this it falls to the addon default.
     const integrationId = spec.meta.integrationId ?? (await resolveParentIntegrationId(parent.id))
-    const initialMeta: import('@camstack/types').DeviceManagerApplyInitialMetaInput = {
+    const initialMeta: import('@dominevo/types').DeviceManagerApplyInitialMetaInput = {
       deviceId: id,
       linkDeviceId,
       ...(isFirstSpawn && spec.meta.name !== undefined ? { name: spec.meta.name } : {}),
@@ -1148,7 +1148,7 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
         Record<string, unknown>
       >,
       callDeviceManager(api, 'loadMeta', { deviceId: id }).catch(() => null) as Promise<
-        import('@camstack/types').DeviceMeta | null
+        import('@dominevo/types').DeviceMeta | null
       >,
     ])
     // Self-heal a restored accessory child whose CONFIG row was lost. Such a child
@@ -1188,7 +1188,7 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
       const [rt, meta] = await Promise.all([
         loadRuntimeStateFor(id, childStableId, 'rebuild'),
         callDeviceManager(api, 'loadMeta', { deviceId: id }).catch(() => null) as Promise<
-          import('@camstack/types').DeviceMeta | null
+          import('@dominevo/types').DeviceMeta | null
         >,
       ])
       return () => spec.factory(buildContext(childStableId, id, parent.id, rt, mergedConfig, meta))
@@ -1297,7 +1297,7 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
       DeviceClass: DeviceConstructor<T>,
       config: Record<string, unknown>,
       parentDeviceId: number | null = null,
-      initialMeta: import('@camstack/types').InitialDeviceMeta | undefined = undefined,
+      initialMeta: import('@dominevo/types').InitialDeviceMeta | undefined = undefined,
     ): Promise<T> => {
       const id = await deviceApi.allocateDeviceId(stableId)
       // Idempotency guard (mirrors `spawnAccessoryChild`): a parent's
@@ -1447,7 +1447,7 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
           Record<string, unknown>
         >,
         callDeviceManager(api, 'loadMeta', { deviceId: id }).catch(() => null) as Promise<
-          import('@camstack/types').DeviceMeta | null
+          import('@dominevo/types').DeviceMeta | null
         >,
       ])
       const childCtx = buildContext(
@@ -1466,7 +1466,7 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
         const [rt, meta] = await Promise.all([
           loadRuntimeStateFor(id, stableId, 'rebuild'),
           callDeviceManager(api, 'loadMeta', { deviceId: id }).catch(() => null) as Promise<
-            import('@camstack/types').DeviceMeta | null
+            import('@dominevo/types').DeviceMeta | null
           >,
         ])
         return () =>
@@ -1591,7 +1591,7 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
       const lifecycleHost = device as IDevice & {
         onProbe?: () => Promise<void>
         onActivate?: () => Promise<void>
-        getAccessoryChildren?: () => import('@camstack/types').AccessoryChildrenAnswer
+        getAccessoryChildren?: () => import('@dominevo/types').AccessoryChildrenAnswer
         _kernelReprobe?: () => Promise<void>
       }
 
@@ -2012,7 +2012,7 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
     applyDerivedSpec: async (
       deviceId: number,
       derived: {
-        type?: import('@camstack/types').DeviceType
+        type?: import('@dominevo/types').DeviceType
         role?: string
         config?: Record<string, unknown>
       },

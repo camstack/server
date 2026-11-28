@@ -16,8 +16,8 @@
  * Harness copied from `device-activity-motion.spec.ts` — same white-box
  * internals cast, same fire() helper.
  */
-import type { IEventBus, RunnerCameraConfig } from '@camstack/types'
-import { EventCategory } from '@camstack/types'
+import type { IEventBus, RunnerCameraConfig } from '@dominevo/types'
+import { EventCategory } from '@dominevo/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { makeRunnerCameraConfig } from '../../__tests__/support/runner-camera-config.js'
 import PipelineRunnerAddon, { cameraOwnsMotionViaSensor } from '../index.js'

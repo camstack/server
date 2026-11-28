@@ -3,14 +3,14 @@
  * `notification-rules.helpers.ts` (review M7). Pure.
  */
 
-import type { NcConditions, NcDelivery, NcDroppedCondition } from '@camstack/types'
+import type { NcConditions, NcDelivery, NcDroppedCondition } from '@dominevo/types'
 import {
   droppedConditionsForKind,
   isSystemRuleKind,
   NC_SENSOR_TRANSITION_UNSUPPORTED_REASON,
   ruleKindOf,
   ruleKindSpec,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { conditionSupportedByRule } from './rule-form-parsers'
 import { formScopedConditions, type NcRuleFormState } from './rule-form-state'
 import i18n from '../../i18n/index'

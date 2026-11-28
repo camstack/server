@@ -20,7 +20,7 @@
  * anything the plan could not reproduce.
  */
 
-import { Button, Tooltip, TooltipContent, TooltipTrigger, useSystem } from '@camstack/ui-library'
+import { Button, Tooltip, TooltipContent, TooltipTrigger, useSystem } from '@dominevo/ui-library'
 import { useMutation } from '@tanstack/react-query'
 import { AlertTriangle, Loader2, Send } from 'lucide-react'
 import { useState } from 'react'

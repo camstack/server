@@ -6,8 +6,8 @@ const describeFetch = vi.fn()
 const approveMutate = vi.fn()
 const denyMutate = vi.fn()
 
-vi.mock('@camstack/ui-library', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@camstack/ui-library')>()),
+vi.mock('@dominevo/ui-library', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@dominevo/ui-library')>()),
   useSystem: () => ({}),
   trpc: {
     useUtils: () => ({ auth: { cliLoginDescribe: { fetch: describeFetch } } }),

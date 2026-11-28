@@ -2,7 +2,7 @@
  *  module so `videoclips-provider` and `videoclip-visits` can both import
  *  them without a cycle. */
 
-import type { EventOwnerType } from '@camstack/types'
+import type { EventOwnerType } from '@dominevo/types'
 
 export interface EventLike {
   readonly id: string
@@ -64,7 +64,7 @@ export interface FootageRange {
  * owning track's).
  *
  * `'event'` was ONE kind covering three tables; D476 split it into the three
- * real owner types (`EventOwnerType`, from `@camstack/types` — the authority
+ * real owner types (`EventOwnerType`, from `@dominevo/types` — the authority
  * this union must not drift from) plus `'track'` for the fallback. A presence
  * probe must now ask per EVENT KIND: an id from the motion bucket and an id
  * from the object bucket can be the same number post-D474 and are answered by

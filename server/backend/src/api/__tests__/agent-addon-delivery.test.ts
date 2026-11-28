@@ -1,7 +1,7 @@
 /**
  * `deliverAddonToAgent` — the ONE way a bundle reaches an agent.
  *
- * The regression this pins: `camstack deploy <pkg> -n <agent>` used a second,
+ * The regression this pins: `dominevo deploy <pkg> -n <agent>` used a second,
  * hand-written delivery body that called `$agent.deploy` and STOPPED. The bytes
  * landed, the manifest bumped, the CLI printed `✓` — and every runner on the
  * agent kept executing the previous dist, forever. Verified on agent-a
@@ -12,7 +12,7 @@
  * so they cannot drift apart again.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { type AgentDeliveryBroker, deliverAddonToAgent } from '../agent-addon-delivery.js'
 
@@ -44,7 +44,7 @@ function makeBroker(handlers: { deploy?: () => unknown; reload?: () => unknown }
       if (action === '$agent.deploy') {
         return handlers.deploy
           ? handlers.deploy()
-          : { success: true, addonId: '@camstack/addon-x', path: '/data/addons/@camstack/addon-x' }
+          : { success: true, addonId: '@dominevo/addon-x', path: '/data/addons/@dominevo/addon-x' }
       }
       if (action === '$agent.reload') {
         return handlers.reload ? handlers.reload() : { loaded: ['runner-a'] }
@@ -62,7 +62,7 @@ describe('deliverAddonToAgent', () => {
       broker,
       logger: makeLogger(),
       nodeId: 'agent-a',
-      packageName: '@camstack/addon-x',
+      packageName: '@dominevo/addon-x',
       source: SOURCE,
     })
 
@@ -76,7 +76,7 @@ describe('deliverAddonToAgent', () => {
     const { broker, calls } = makeBroker({
       deploy: () => ({
         success: true,
-        addonId: '@camstack/addon-x',
+        addonId: '@dominevo/addon-x',
         appliedSha256: 'b'.repeat(64),
       }),
     })
@@ -84,7 +84,7 @@ describe('deliverAddonToAgent', () => {
       broker,
       logger: makeLogger(),
       nodeId: 'agent-a',
-      packageName: '@camstack/addon-x',
+      packageName: '@dominevo/addon-x',
       source: SOURCE,
     })
 
@@ -98,7 +98,7 @@ describe('deliverAddonToAgent', () => {
     const { broker } = makeBroker({
       deploy: () => ({
         success: true,
-        addonId: '@camstack/addon-x',
+        addonId: '@dominevo/addon-x',
         appliedSha256: SOURCE.sha256,
       }),
     })
@@ -106,7 +106,7 @@ describe('deliverAddonToAgent', () => {
       broker,
       logger: makeLogger(),
       nodeId: 'agent-a',
-      packageName: '@camstack/addon-x',
+      packageName: '@dominevo/addon-x',
       source: SOURCE,
     })
     expect(result.success).toBe(true)
@@ -119,7 +119,7 @@ describe('deliverAddonToAgent', () => {
       broker,
       logger: makeLogger(),
       nodeId: 'agent-a',
-      packageName: '@camstack/addon-x',
+      packageName: '@dominevo/addon-x',
       source: SOURCE,
     })
     expect(result.success).toBe(true)
@@ -133,7 +133,7 @@ describe('deliverAddonToAgent', () => {
       broker,
       logger,
       nodeId: 'agent-a',
-      packageName: '@camstack/addon-x',
+      packageName: '@dominevo/addon-x',
       source: SOURCE,
     })
     expect(result.success).toBe(true)
@@ -147,7 +147,7 @@ describe('deliverAddonToAgent', () => {
       broker,
       logger: makeLogger(),
       nodeId: 'agent-a',
-      packageName: '@camstack/addon-x',
+      packageName: '@dominevo/addon-x',
       source: SOURCE,
     })
     expect(result.success).toBe(false)
@@ -165,7 +165,7 @@ describe('deliverAddonToAgent', () => {
       broker,
       logger: makeLogger(),
       nodeId: 'agent-a',
-      packageName: '@camstack/addon-x',
+      packageName: '@dominevo/addon-x',
       source: SOURCE,
     })
     expect(result.success).toBe(false)
@@ -226,14 +226,14 @@ describe('deliverAddonToAgent — delivery window', () => {
       broker: wrapped,
       logger: makeLogger(),
       nodeId: 'agent-a',
-      packageName: '@camstack/addon-x',
+      packageName: '@dominevo/addon-x',
       source: SOURCE,
       deliveryLedger: l.ledger,
     })
 
     expect(seenOpen).toEqual(['$agent.deploy', '$agent.reload'])
     expect(l.isOpen()).toBe(false)
-    expect(l.opened[0]?.packageName).toBe('@camstack/addon-x')
+    expect(l.opened[0]?.packageName).toBe('@dominevo/addon-x')
   })
 
   it('closes the window even when the delivery throws', async () => {
@@ -248,7 +248,7 @@ describe('deliverAddonToAgent — delivery window', () => {
       broker,
       logger: makeLogger(),
       nodeId: 'agent-a',
-      packageName: '@camstack/addon-x',
+      packageName: '@dominevo/addon-x',
       source: SOURCE,
       deliveryLedger: l.ledger,
     })

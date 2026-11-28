@@ -1,7 +1,7 @@
 /**
  * Named OSD templates — durable in the addon's own (global) store.
  */
-import { type OsdNamedTemplate, OsdNamedTemplateSchema } from '@camstack/types'
+import { type OsdNamedTemplate, OsdNamedTemplateSchema } from '@dominevo/types'
 import { z } from 'zod'
 
 export const OSD_TEMPLATES_KEY = 'namedTemplates'

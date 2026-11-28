@@ -1,4 +1,4 @@
-import { resolveParentNames, Checkbox, DurationInput } from '@camstack/ui-library'
+import { resolveParentNames, Checkbox, DurationInput } from '@dominevo/ui-library'
 /**
  * Notification RULES management page (slice D1 — list + CRUD shell).
  *
@@ -9,7 +9,7 @@ import { resolveParentNames, Checkbox, DurationInput } from '@camstack/ui-librar
  *   2. ADD   — `ItemFormDialog` hosting the rule SCAFFOLD form (name,
  *              enabled, trigger, target picker, priority, media, template).
  *   3. EDIT  — same modal pre-filled from the row; saves via `updateRule`.
- *   4. DELETE — the shared confirm dialog (`useConfirm`, `@camstack/ui-library`)
+ *   4. DELETE — the shared confirm dialog (`useConfirm`, `@dominevo/ui-library`)
  *              → `deleteRule`.
  *
  * Open state is URL-owned via `useItemFormUrl({ editKey: 'rule' })` so deep
@@ -30,7 +30,7 @@ import type {
   NcTemplateVarContext,
   NcTestResult,
   Target,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   AlarmStateSchema,
   DeviceType,
@@ -48,7 +48,7 @@ import {
   stateVocabularyFor,
   systemEventDeliveryModesOf,
   systemFamilyOfKind,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   Badge,
   Button,
@@ -72,7 +72,7 @@ import {
   useItemFormUrl,
   useSystem,
   useUrlQueryParam,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { AlertCircle, BellRing, CheckCircle, FlaskConical, Loader2, Plus } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -835,7 +835,7 @@ interface RuleFormDialogProps {
    *  (D315). */
   readonly fleet: DeviceFleetView
   /** The Actions the hub lists; {@link RuleFormDialogProps.actionsAnswered} says whether it answered. */
-  readonly actions: readonly import('@camstack/types').ActionEntry[]
+  readonly actions: readonly import('@dominevo/types').ActionEntry[]
   readonly actionsAnswered: boolean
   readonly initialEditTab?: NcRuleTabKey
   readonly onEditTabChange?: (tab: NcRuleTabKey) => void
@@ -980,7 +980,7 @@ function RuleFormDialog({
   // WHICH KIND of rule this is — the trigger AND its discriminating condition.
   // Everything per-kind on this dialog (the tab label, which media controls
   // exist, which conditions are offered) reads from here rather than from a
-  // handful of `if (delivery === …)` branches. See `@camstack/types` `rule-kinds.ts`.
+  // handful of `if (delivery === …)` branches. See `@dominevo/types` `rule-kinds.ts`.
   const kind = ruleKindOf(form)
   const kindSpec = ruleKindSpec(kind)
   // D897: the picture modes this kind can honour, and whether the rule fires

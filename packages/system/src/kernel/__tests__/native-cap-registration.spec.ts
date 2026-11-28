@@ -16,7 +16,7 @@ import {
   type IEventBus,
   type IScopedLogger,
   type SystemEvent,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { CapabilityRegistry } from '../capability-registry.js'
 import { DeviceRegistry } from '../device-registry.js'
 import { createBrokerDeviceManagerApi } from '../moleculer/device-cap-proxy.js'

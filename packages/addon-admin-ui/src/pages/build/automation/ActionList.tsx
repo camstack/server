@@ -19,7 +19,7 @@
  * Cap steps use the shared Device→Action picker (same block as NC Sequences).
  */
 
-import type { AutomationAction } from '@camstack/types'
+import type { AutomationAction } from '@dominevo/types'
 import { AutomationCodeEditor } from '../../../components/code/AutomationCodeEditor'
 import {
   Badge,
@@ -29,8 +29,8 @@ import {
   Select,
   Switch,
   type DeviceListState,
-} from '@camstack/ui-library'
-import { PARALLEL_STEPS_MAX, STOP_REASON_MAX, WAIT_MAX_SECONDS } from '@camstack/types'
+} from '@dominevo/ui-library'
+import { PARALLEL_STEPS_MAX, STOP_REASON_MAX, WAIT_MAX_SECONDS } from '@dominevo/types'
 import { Plus, Trash2 } from 'lucide-react'
 import { CommandStep } from '../flow/CommandStep'
 import { toneBorderClass } from '../flow/RunsPanel'

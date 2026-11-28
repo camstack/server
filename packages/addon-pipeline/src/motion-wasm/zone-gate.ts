@@ -1,6 +1,6 @@
 /**
  * Motion-stage zone gating — thin wrapper over the canonical
- * {@link evaluateZoneRules} helper in `@camstack/types/utils`.
+ * {@link evaluateZoneRules} helper in `@dominevo/types/utils`.
  * Translates a motion region's pixel-space bbox into the normalised
  * (0–1) center the shared evaluator expects, and returns the
  * passed/excluded partition.
@@ -13,8 +13,8 @@
  * with no class).
  */
 
-import type { Zone, ZoneRule, ZoneRuleEvalResult } from '@camstack/types'
-import { evaluateZoneRules } from '@camstack/types'
+import type { Zone, ZoneRule, ZoneRuleEvalResult } from '@dominevo/types'
+import { evaluateZoneRules } from '@dominevo/types'
 
 export interface MotionRegionLike {
   readonly bbox: { readonly x: number; readonly y: number; readonly w: number; readonly h: number }

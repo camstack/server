@@ -9,7 +9,7 @@
  * it falls through to npm, and when npm cannot read either the read FAILS with
  * a typed {@link RegistryReadError} the caller reports as such.
  */
-import { compareVersions, PackageRequiresSchema, type PackageRequires } from '@camstack/types'
+import { compareVersions, PackageRequiresSchema, type PackageRequires } from '@dominevo/types'
 
 export type RegistryReadFailure = 'auth' | 'unavailable'
 

@@ -10,11 +10,11 @@
  * It is operator tooling for one device-specific bug, so its labels are plain
  * English, not translated. Classification lives in `lib/debug-layers.ts`.
  */
-import { cn } from '@camstack/ui-library'
+import { cn } from '@dominevo/ui-library'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { ReactNode } from 'react'
-import { Switch } from '@camstack/ui-library'
+import { Switch } from '@dominevo/ui-library'
 import {
   DEBUG_NO_BLUR_CLASS,
   classifyLayer,

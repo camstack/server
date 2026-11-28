@@ -8,7 +8,7 @@
  * the poller is armed with NO reference to the auto-update channel, and its
  * interval is a setting rather than a constant.
  */
-import type { IScopedLogger, NodeLiveness } from '@camstack/types'
+import type { IScopedLogger, NodeLiveness } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   DEFAULT_UPDATE_CHECK_INTERVAL_SECONDS,

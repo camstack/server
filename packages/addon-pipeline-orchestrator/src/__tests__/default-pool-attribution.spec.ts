@@ -9,7 +9,7 @@
  * by `deviceKey`, so it reported `devices: []` and Load balancing → Node load
  * showed the Mac "1/1 attached" but "0 sessions" on its only accelerator.
  */
-import type { AddonApi, IScopedLogger, RunnerLocalLoad } from '@camstack/types'
+import type { AddonApi, IScopedLogger, RunnerLocalLoad } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { AgentLoadService } from '../agent-load-service.js'
 import { attributeDefaultPoolSessions } from '../default-pool-attribution.js'

@@ -3,7 +3,7 @@
  * gone with it, so "On nodes" must stop listing it.
  */
 import { describe, expect, it } from 'vitest'
-import { createDurableState, type IScopedLogger } from '@camstack/types'
+import { createDurableState, type IScopedLogger } from '@dominevo/types'
 import { ModelAvailabilityMapSchema } from '../model-studio-actions.js'
 import { createNodeRemovalHook } from '../node-removal.js'
 

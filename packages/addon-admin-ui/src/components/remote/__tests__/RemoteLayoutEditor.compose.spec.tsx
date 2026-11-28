@@ -2,7 +2,7 @@ import {
   BUILTIN_REMOTE_COMPONENTS,
   type RemoteLayoutComponent,
   type RemoteLayoutPayload,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { useState } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -11,8 +11,8 @@ import { RemoteLayoutEditor } from '../RemoteLayoutEditor'
 
 let served: readonly RemoteLayoutComponent[] | undefined = BUILTIN_REMOTE_COMPONENTS
 
-vi.mock('@camstack/ui-library', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@camstack/ui-library')>()
+vi.mock('@dominevo/ui-library', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dominevo/ui-library')>()
   return {
     ...actual,
     useRemoteLayoutComponentsListComponents: () => ({

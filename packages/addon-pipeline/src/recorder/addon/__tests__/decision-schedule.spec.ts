@@ -18,7 +18,7 @@
  * as `bandActiveAt` reads them (`getDay()`/`getHours()`), so the suite is
  * timezone-independent.
  */
-import type { RecordingConfig } from '@camstack/types'
+import type { RecordingConfig } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   GATE_INCLUSIVE_EPSILON_MS,

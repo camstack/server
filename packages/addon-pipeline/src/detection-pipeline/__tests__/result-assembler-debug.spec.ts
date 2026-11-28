@@ -14,7 +14,7 @@
  */
 import { describe, it, expect } from 'vitest'
 import { buildFrameResult, type MutableObjectDetection } from '../pipeline/result-assembler.js'
-import type { FrameStepTiming } from '@camstack/types'
+import type { FrameStepTiming } from '@dominevo/types'
 
 function makeFirstLevel(id: string): MutableObjectDetection {
   return {

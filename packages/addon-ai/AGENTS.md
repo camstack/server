@@ -9,7 +9,7 @@ gathers context and wires the seams.
 <!-- camstack-skills-pointer:begin — written by `npx tsx scripts/skills/gen-skill-pointers.ts`; edit the generator, not this block -->
 Follow the skill; do not reconstruct the procedure (any agent can open the file):
 
-- A new or changed addon or manifest entry; `camstack deploy` → `camstack-addon` (`.claude/skills/camstack-addon/SKILL.md`)
+- A new or changed addon or manifest entry; `dominevo deploy` → `camstack-addon` (`.claude/skills/camstack-addon/SKILL.md`)
 <!-- camstack-skills-pointer:end -->
 
 ## Package notes — read before changing this package

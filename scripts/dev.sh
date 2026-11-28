@@ -2,7 +2,7 @@
 set -e
 
 # ============================================================================
-# dev.sh — CamStack development server with optional agent(s)
+# dev.sh — Dominevo development server with optional agent(s)
 #
 # Usage:
 #   npm run dev                       # Hub + admin UI + 2 agents (default)
@@ -86,7 +86,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 # ----------------------------------------------------------------------------
-# Kill any prior CamStack processes BEFORE we start. Stale launchers and
+# Kill any prior Dominevo processes BEFORE we start. Stale launchers and
 # forked workers hold ports (4443 HTTPS, 6000 Moleculer TCP transport, 8554
 # RTSP restream) and the apple-sound-classifier binary — leaving them
 # running causes `EADDRINUSE`, duplicate native-cap registrations, and
@@ -193,13 +193,13 @@ esac
 #   2. Addons — best-effort. One broken addon (e.g. addon-broken-fixture, a
 #      deliberate test artifact) must not wedge the entire dev environment.
 #
-# NB: Nx project ids carry the `@camstack/` scope (`sdk` is the lone
+# NB: Nx project ids carry the `@dominevo/` scope (`sdk` is the lone
 # exception). The previous `'types,kernel,sdk,ui-library,addon-*'` glob
 # silently matched ZERO addons and omitted core entirely.
 # ----------------------------------------------------------------------------
 echo "[dev] Building system packages (blocking — Nx cache, ~1-2s warm)..."
 npx nx run-many -t build \
-  --projects='@camstack/types,@camstack/server/system,sdk,@camstack/ui-library' \
+  --projects='@dominevo/types,@dominevo/server/system,sdk,@dominevo/ui-library' \
   --output-style=stream \
   --parallel=4 || {
     echo "[dev] FATAL: a system package failed to build — refusing to boot on stale dist." >&2
@@ -207,7 +207,7 @@ npx nx run-many -t build \
     exit 1
   }
 
-# Agents are now the SAME @camstack/server as the hub, booted with
+# Agents are now the SAME @dominevo/server as the hub, booted with
 # CAMSTACK_ROLE=agent — `packages/agent` no longer exists. Dev agents run the
 # BUILT `server/backend/dist/launcher.js` (no watch, matching the old agent
 # semantics), so we must produce a fresh server dist before spawning them. The
@@ -223,12 +223,12 @@ fi
 
 echo "[dev] Building addon dist/ (best-effort — Nx cache, ~1-2s warm)..."
 npx nx run-many -t build \
-  --projects='@camstack/addon-*' \
-  --exclude='@camstack/addon-broken-fixture' \
+  --projects='@dominevo/addon-*' \
+  --exclude='@dominevo/addon-broken-fixture' \
   --output-style=stream \
   --parallel=4 || {
     echo "[dev] WARNING: one or more addons failed to build — server will load their last-good dist." >&2
-    echo "[dev]          Run 'npx nx run-many -t build --projects=@camstack/addon-*' to see which." >&2
+    echo "[dev]          Run 'npx nx run-many -t build --projects=@dominevo/addon-*' to see which." >&2
   }
 
 # Base processes: server + admin UI
@@ -239,7 +239,7 @@ COLORS="blue,magenta"
 # to exercise the gate.
 
 # Install source is now `npm` everywhere (symlink mode removed). Local
-# development pushes addons via `camstack deploy <pkg>` after build —
+# development pushes addons via `dominevo deploy <pkg>` after build —
 # no automation, no symlinks. See AddonInstaller / install-source-policy.
 COMMANDS=(
   "npm run serve -w ${BACKEND_DIR}"
@@ -254,7 +254,7 @@ if [ "$WATCH" = true ]; then
   COMMANDS[0]="bash scripts/dev-watch-packages.sh"
 fi
 
-# Optional: agents — the SAME @camstack/server booted with CAMSTACK_ROLE=agent.
+# Optional: agents — the SAME @dominevo/server booted with CAMSTACK_ROLE=agent.
 # Last agent starts WITHOUT hub address (discovery mode) so we can
 # test the autonomous boot + UI config flow. All others get explicit hub.
 for i in $([ "$AGENT_COUNT" -gt 0 ] && seq 0 $((AGENT_COUNT - 1))); do
@@ -299,7 +299,7 @@ fi
 LOG_FILE="${BACKEND_DIR}/log.txt"
 
 echo ""
-echo "  CamStack Dev"
+echo "  Dominevo Dev"
 echo "  ============"
 echo "  Processes: ${NAMES}"
 echo "  Clean:     ${CLEAN_MODE}"

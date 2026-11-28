@@ -16,7 +16,7 @@ import {
   createRecordsAccess,
   type IScopedLogger,
   type RecordsAccess,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { makeRecordsWorld } from '../../sqlite-storage/__tests__/support/records-world.js'
 import { SqliteSettingsBackend } from '../../sqlite-storage/sqlite-settings-backend.js'

@@ -6,7 +6,7 @@
  *
  * Usage in the addon's dev-shell.tsx:
  * ```tsx
- * import { mountAddonPage } from '@camstack/ui'
+ * import { mountAddonPage } from '@dominevo/ui'
  * import MyPage from './page'
  * mountAddonPage(MyPage)
  * ```

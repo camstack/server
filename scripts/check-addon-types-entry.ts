@@ -5,7 +5,7 @@
  * exists and breaks tooling that trusts the declaration.
  *
  * Framework packages (`types`, `system`, `sdk`, …) and addons that opt into
- * DTS in their Vite preset may keep `types`. Every other CamStack addon must
+ * DTS in their Vite preset may keep `types`. Every other Dominevo addon must
  * not declare one until its build actually writes the file.
  *
  * Usage: npx tsx scripts/check-addon-types-entry.ts
@@ -18,11 +18,11 @@ const PACKAGES = path.join(ROOT, 'packages')
 
 /** Packages allowed to declare `types` without being a self-contained addon. */
 const FRAMEWORK_ALLOWLIST: ReadonlySet<string> = new Set([
-  '@camstack/types',
-  '@camstack/server',
-  '@camstack/server-framework',
-  '@camstack/sdk',
-  '@camstack/ui-library',
+  '@dominevo/types',
+  '@dominevo/server',
+  '@dominevo/server-framework',
+  '@dominevo/sdk',
+  '@dominevo/ui-library',
 ])
 
 interface PackageJson {

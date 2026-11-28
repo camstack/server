@@ -8,7 +8,7 @@
  * The pipeline sections come from the REAL schema builders through
  * `_camera-aggregate.generated.json` (regenerate with `_gen-camera-aggregate.ts`).
  */
-import { CAMERA_SWITCH_CATALOG, CAMERA_SWITCH_ORDER } from '@camstack/types'
+import { CAMERA_SWITCH_CATALOG, CAMERA_SWITCH_ORDER } from '@dominevo/types'
 import generated from './_camera-aggregate.generated.json'
 import {
   ANALYTICS_WIDGETS,

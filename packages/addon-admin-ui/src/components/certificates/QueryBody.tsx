@@ -3,7 +3,7 @@
  * has not answered is "reading", one that failed says why and offers a retry,
  * and only an ANSWER with no rows is "nothing" — which the caller renders.
  */
-import { ErrorBox } from '@camstack/ui-library'
+import { ErrorBox } from '@dominevo/ui-library'
 import { Loader2 } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'

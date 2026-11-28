@@ -1,4 +1,4 @@
-import type { DiscardedDetection } from '@camstack/types'
+import type { DiscardedDetection } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { selectLowScoreContinuations } from '../pipeline/tracker/low-score-continuation.js'
 

@@ -85,7 +85,7 @@ export function ruleBelongsToAlarm(rule: NcAlarmMembershipSubject): boolean {
 }
 
 /**
- * A rule gated on `armed_*` auto-triggers the CamStack `alarm-panel` on match
+ * A rule gated on `armed_*` auto-triggers the Dominevo `alarm-panel` on match
  * — no `onTrigger` Action required. Sirens are never part of this path.
  * An explicit `alarm-panel.trigger` step without an armed gate stays
  * explicit actuation only ({@link ruleBelongsToAlarm}).

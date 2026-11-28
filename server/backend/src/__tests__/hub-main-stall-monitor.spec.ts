@@ -24,9 +24,9 @@ const MAIN = path.resolve(__dirname, '..', 'main.ts')
 describe('hub-main arms the event-loop stall monitor', () => {
   const source = fs.readFileSync(MAIN, 'utf-8')
 
-  it('imports it from @camstack/server/system rather than re-implementing it', () => {
+  it('imports it from @dominevo/server/system rather than re-implementing it', () => {
     expect(source).toMatch(/startEventLoopStallMonitor/)
-    expect(source).toMatch(/from '@camstack\/server\/system'/)
+    expect(source).toMatch(/from '@dominevo\/server\/system'/)
   })
 
   it('arms it only once the logging service exists, so the lines reach Loki', () => {

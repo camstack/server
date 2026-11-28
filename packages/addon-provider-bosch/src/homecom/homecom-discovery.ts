@@ -1,4 +1,4 @@
-import { DeviceType, type DiscoveredChildDevice } from '@camstack/types'
+import { DeviceType, type DiscoveredChildDevice } from '@dominevo/types'
 import type { HomeComDiscoverableDevice } from './homecom-gateway.js'
 
 export interface BuildHomeComCandidatesInput {

@@ -4,7 +4,7 @@
  * the HF model table) are built from these records, so an entry without one is
  * a model the product ships without saying on what terms.
  */
-import type { ModelCatalogEntry } from '@camstack/types'
+import type { ModelCatalogEntry } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import * as catalogs from '../registry/model-catalogs.js'
 
@@ -50,7 +50,7 @@ describe('every detection-pipeline catalog entry declares its licence', () => {
     }
   })
 
-  it('a precision / resolution variant states what CamStack changed', () => {
+  it('a precision / resolution variant states what Dominevo changed', () => {
     const int8 = ENTRIES.find((e) => e.id === 'yolo26n-int8')
     expect(int8?.license?.modifications).toContain('INT8')
     const reduced = ENTRIES.find((e) => e.id === 'yolov9t-320')

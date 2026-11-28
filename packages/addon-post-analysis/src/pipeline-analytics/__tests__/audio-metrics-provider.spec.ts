@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import type { IScopedLogger, DeviceProxy } from '@camstack/types'
+import type { IScopedLogger, DeviceProxy } from '@dominevo/types'
 import { AudioMetricsProvider } from '../audio-metrics-provider.js'
 
 function makeLogger(): IScopedLogger {

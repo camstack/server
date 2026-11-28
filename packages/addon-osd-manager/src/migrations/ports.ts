@@ -1,4 +1,4 @@
-import type { MigrationApiV1 } from '@camstack/types'
+import type { MigrationApiV1 } from '@dominevo/types'
 import type { BindingsToTemplatesPorts } from './bindings-to-templates.js'
 
 /** The part of the migration API the OSD catalogue uses. */

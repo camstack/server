@@ -54,8 +54,8 @@
 // This module is in the addon-runner's closure: the batch bound comes from the
 // lightweight entry, and the logger interface is type-only (erased). Pulling a
 // runtime VALUE off the root barrel here costs ~146MB RSS per forked runner (D28).
-import type { IScopedLogger } from '@camstack/types'
-import { DEVICE_CHILDREN_BATCH_MAX } from '@camstack/types/addon'
+import type { IScopedLogger } from '@dominevo/types'
+import { DEVICE_CHILDREN_BATCH_MAX } from '@dominevo/types/addon'
 
 /**
  * The child fields the accessory reconcile reads. Deliberately narrower than

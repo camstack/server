@@ -13,7 +13,7 @@
  *    exclusion, the drop reasons, unmapped-cap gate, non-object slice → null
  */
 
-import type { SensorEvent } from '@camstack/types'
+import type { SensorEvent } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   composeEventKinds,

@@ -7,7 +7,7 @@
  *
  * Marker: `{ requests: [{ livePath, snapshotPath }] }`, both relative to the
  * data dir. The snapshot is COPIED (temp file + rename) and kept, so the same
- * restore can be asked for again. The launcher has no `@camstack/*` imports.
+ * restore can be asked for again. The launcher has no `@dominevo/*` imports.
  */
 import * as fs from 'node:fs'
 import * as path from 'node:path'

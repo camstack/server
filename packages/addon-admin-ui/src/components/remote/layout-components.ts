@@ -1,7 +1,7 @@
 /**
  * The palette side of the template editor (D973): merge the components the
  * `remote-layout-components` cap serves, and put one on the grid. Placement is
- * `insertComponent` from `@camstack/types`; this adds the search for the first
+ * `insertComponent` from `@dominevo/types`; this adds the search for the first
  * free spot and the "stretch to the grid's width" scale.
  */
 import {
@@ -10,7 +10,7 @@ import {
   insertComponent,
   type RemoteLayoutComponent,
   type RemoteLayoutPayload,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export interface PlaceOptions {
   /** Stretch the component to the whole grid width when the columns divide. */

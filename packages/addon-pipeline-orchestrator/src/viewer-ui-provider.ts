@@ -1,5 +1,5 @@
 /**
- * viewer-ui provider — the pipeline-orchestrator serves the CamStack viewer web
+ * viewer-ui provider — the pipeline-orchestrator serves the Dominevo viewer web
  * SPA (mirrors what the now-removed standalone addon-viewer-ui used to do).
  *
  * Why here: the orchestrator is a hub bootstrap addon (always installed + baked),
@@ -10,7 +10,7 @@
  * publish/image CI does not, which is exactly why we copy a pre-built dist rather
  * than build it here). vite emits only into `dist/`, so `assets/viewer` survives
  * the addon build; `assets` is in the package `files`, so it ships on
- * `camstack deploy`. The hub's `main.ts` resolves the `viewer-ui` singleton at
+ * `dominevo deploy`. The hub's `main.ts` resolves the `viewer-ui` singleton at
  * boot and mounts the SPA at `/viewer/camstack`.
  *
  * `index.js` runs from `dist/`, so the SPA root is one level up + `assets/viewer`.
@@ -18,7 +18,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import type { IViewerUiProvider } from '@camstack/types'
+import type { IViewerUiProvider } from '@dominevo/types'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 

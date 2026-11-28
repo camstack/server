@@ -1,18 +1,18 @@
 {
-  "name": "@camstack/desktop",
-  "version": "0.1.8",
+  "name": "@dominevo/desktop",
+  "version": "0.1.0",
   "private": true,
-  "description": "CamStack — single desktop app (hub or agent, chosen at first run)",
+  "description": "Dominevo — single desktop app (hub or agent, chosen at first run)",
   "repository": {
     "type": "git",
-    "url": "https://github.com/camstack/server.git",
+    "url": "https://github.com/dominevo/server.git",
     "directory": "packages/desktop"
   },
   "homepage": "https://camstack-docs.zentik.app",
   "bugs": {
-    "url": "https://github.com/camstack/server/issues"
+    "url": "https://github.com/dominevo/server/issues"
   },
-  "author": "CamStack <noreply@camstack.local>",
+  "author": "Dominevo <noreply@camstack.local>",
   "main": "dist/main.js",
   "scripts": {
     "build": "tsup",
@@ -32,7 +32,7 @@
   },
   "build": {
     "appId": "com.camstack.app",
-    "productName": "CamStack",
+    "productName": "Dominevo",
     "executableName": "camstack",
     "electronVersion": "42.4.1",
     "directories": {
@@ -120,7 +120,7 @@
       "gatekeeperAssess": false,
       "entitlements": "assets/entitlements.mac.plist",
       "entitlementsInherit": "assets/entitlements.mac.plist",
-      "artifactName": "CamStack-${version}-${arch}.${ext}",
+      "artifactName": "Dominevo-${version}-${arch}.${ext}",
       "notarize": false,
       "extendInfo": {
         "CamstackTeamId": "${env.APPLE_TEAM_ID}"
@@ -131,7 +131,7 @@
         "nsis"
       ],
       "icon": "assets/icon.ico",
-      "artifactName": "CamStack-Setup-${version}.${ext}",
+      "artifactName": "Dominevo-Setup-${version}.${ext}",
       "extraResources": [
         {
           "from": "dist/service-supervisor.js",
@@ -153,21 +153,21 @@
       ],
       "category": "Utility",
       "icon": "assets/icon.png",
-      "artifactName": "CamStack-${version}-${arch}.${ext}"
+      "artifactName": "Dominevo-${version}-${arch}.${ext}"
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "shortcutName": "CamStack"
+      "shortcutName": "Dominevo"
     }
   },
   "dependencies": {
-    "@camstack/server": "*",
+    "@dominevo/server": "0.1.0",
     "electron-store": "^11.0.0",
     "electron-updater": "^6.3.0"
   },
   "devDependencies": {
-    "@camstack/node-root": "*",
+    "@dominevo/node-root": "0.1.0",
     "@electron/rebuild": "^4.0.0",
     "electron": "^42.0.0",
     "electron-builder": "^26.0.0",
@@ -184,7 +184,7 @@
   },
   "camstack": {
     "requires": {
-      "server": ">=1.2.718"
+      "server": ">=0.1.0"
     }
   }
 }

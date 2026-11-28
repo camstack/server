@@ -70,7 +70,7 @@ the entries, and a test refuses a row that names no catalog entry.
 **An override is bound to the model it was made for.** It is stored as the
 plain value under its own key, plus a sibling key `<key>ModelId` that names
 the model. Fields flagged `bindsToModel` (the three floors) follow one
-rule, in `@camstack/types` `pipeline/model-bound-settings.ts`. The runner
+rule, in `@dominevo/types` `pipeline/model-bound-settings.ts`. The runner
 and the editors both use that rule:
 
 ```
@@ -131,9 +131,9 @@ catalog default.
   detector is not on any catalog model's scale.
 - The classifier `minConfidence` sliders (D662) are not bound yet. They
   could take `bindsToModel` with no new mechanism.
-- **Release.** This changes `@camstack/types` (catalog schema field, config
-  field flag, the shared rule) and `@camstack/ui-library`. Both are bundled
-  by `addon-pipeline` and `addon-admin-ui`. Until a `@camstack/server` with
+- **Release.** This changes `@dominevo/types` (catalog schema field, config
+  field flag, the shared rule) and `@dominevo/ui-library`. Both are bundled
+  by `addon-pipeline` and `addon-admin-ui`. Until a `@dominevo/server` with
   the new types is installed, the hub's `customModelRegistry` route strips
   `defaultClassFloors` from a registration, because it validates with
   `ModelCatalogEntrySchema`. The catalog rows ride the `addon-pipeline`

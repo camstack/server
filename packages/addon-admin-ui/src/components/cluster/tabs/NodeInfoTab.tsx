@@ -2,9 +2,9 @@ import { useState } from 'react'
 import { Check, Pencil, X } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 
-import { useNodesRenameNode, Button, Input, KeyValueList } from '@camstack/ui-library'
+import { useNodesRenameNode, Button, Input, KeyValueList } from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
-import { formatNumeric } from '@camstack/ui-library'
+import { formatNumeric } from '@dominevo/ui-library'
 
 interface NodeInfoTabProps {
   readonly nodeId: string

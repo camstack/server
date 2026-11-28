@@ -23,6 +23,8 @@
 const APPLE_TEAM_ID = 'C3F24V5NS5'
 const BUNDLE_ID = 'com.apocaliss92.camstack'
 const BUNDLE_ID_DEV = 'com.apocaliss92.camstack.dev'
+/** The Dominevo viewer app (store id `app.dominevo.viewer`); the camstack ids above stay for the installed previous app. */
+const BUNDLE_ID_DOMINEVO = 'app.dominevo.viewer'
 
 /** The only path family the app claims on this domain. */
 const VIEWER_COMPONENT = '/viewer/camstack/*'
@@ -33,7 +35,9 @@ export interface AppLinkFiles {
 }
 
 export function buildAppLinkFiles(androidCertSha256: readonly string[]): AppLinkFiles {
-  const appIds = [`${APPLE_TEAM_ID}.${BUNDLE_ID}`, `${APPLE_TEAM_ID}.${BUNDLE_ID_DEV}`]
+  const appIds = [BUNDLE_ID_DOMINEVO, BUNDLE_ID, BUNDLE_ID_DEV].map(
+    (id) => `${APPLE_TEAM_ID}.${id}`,
+  )
   return {
     appleAppSiteAssociation: {
       applinks: {
@@ -49,7 +53,7 @@ export function buildAppLinkFiles(androidCertSha256: readonly string[]): AppLink
       },
       webcredentials: { apps: appIds },
     },
-    assetLinks: [BUNDLE_ID, BUNDLE_ID_DEV].map((pkg) => ({
+    assetLinks: [BUNDLE_ID_DOMINEVO, BUNDLE_ID, BUNDLE_ID_DEV].map((pkg) => ({
       relation: ['delegate_permission/common.handle_all_urls'],
       target: {
         namespace: 'android_app',

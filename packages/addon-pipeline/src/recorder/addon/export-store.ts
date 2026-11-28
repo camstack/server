@@ -35,8 +35,8 @@
  * upsert makes that class of loss unrepresentable — a write names ONE row.
  */
 import path from 'node:path'
-import { ExportRecordSchema } from '@camstack/types'
-import type { ExportRecord, RecordKindHandle, RecordsAccess } from '@camstack/types'
+import { ExportRecordSchema } from '@dominevo/types'
+import type { ExportRecord, RecordKindHandle, RecordsAccess } from '@dominevo/types'
 import { recorderRecordKinds } from './record-kinds.js'
 
 /**

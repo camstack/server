@@ -5,7 +5,7 @@
  * so a scoped token is judged per camera. `settings: null` reaches the
  * provider — it is how a step's camera-wide layer is cleared.
  */
-import type { CapabilityDefinition } from '@camstack/types'
+import type { CapabilityDefinition } from '@dominevo/types'
 import {
   ACCESS_ROLES,
   buildRoleScopes,
@@ -13,7 +13,7 @@ import {
   pipelineOrchestratorCapability,
   resolveMethodAuth,
   type TokenScope,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { buildCapRouterForTest, invokeProcedure, makeCtx } from './harness.js'
 

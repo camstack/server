@@ -4,8 +4,8 @@
  * renders (a template saved by an older client), the catalog never offers it, and the rule
  * that still uses it is named once in the log.
  */
-import type { IScopedLogger } from '@camstack/types'
-import { isKnownTemplateVar } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
+import { isKnownTemplateVar } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { NcDispatcher } from '../dispatcher.js'
 import type { NcOutboxEntry } from '../outbox.js'

@@ -1,5 +1,5 @@
-import { DeviceType } from '@camstack/types'
-import type { DeviceSearchItem, DeviceSearchResult } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
+import type { DeviceSearchItem, DeviceSearchResult } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   capabilityLabel,

@@ -9,7 +9,7 @@ import { buildLibPreset } from '../../tools/build/vite-lib.preset.ts'
  *
  * `inlineConst: false` — rolldown 1.0.3 (vite 8.0.16) PANICS on this bundle
  * ("no entry found for key", `module_finalizers/mod.rs:512` / `:610`) as soon
- * as `@camstack/types` re-exports any new string constant through an entry
+ * as `@dominevo/types` re-exports any new string constant through an entry
  * this addon bundles: measured 2026-09-29 with a one-line probe
  * `export { PROBE_STR } from './zzprobe/p.js'` on `types/src/node.ts`, and
  * with D540's `NO_PINNED_FFMPEG_DETAIL` / `FFMPEG_PATH_ENV`. The cross-chunk

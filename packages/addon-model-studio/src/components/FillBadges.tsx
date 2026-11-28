@@ -4,7 +4,7 @@
  * operator sees, before activating it, which steps can take their result from
  * this model ("Use the root model" on the step) and which classes it lacks.
  */
-import { describeRootSupply, type RootStepSupply, USE_ROOT_MODEL_DEFAULTS } from '@camstack/types'
+import { describeRootSupply, type RootStepSupply, USE_ROOT_MODEL_DEFAULTS } from '@dominevo/types'
 import { useT } from '../i18n/index.js'
 
 type SupplyT = ReturnType<typeof useT>['t']

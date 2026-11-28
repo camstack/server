@@ -1,5 +1,5 @@
-import type { IScopedLogger, SceneMonitor } from '@camstack/types'
-import { SCENE_DIVERGED } from '@camstack/types'
+import type { IScopedLogger, SceneMonitor } from '@dominevo/types'
+import { SCENE_DIVERGED } from '@dominevo/types'
 import sharp from 'sharp'
 import { describe, expect, it, vi } from 'vitest'
 import type { SceneDeviceMonitor, SceneEngineDeps, SceneEngineResult } from '../scene-engine.js'

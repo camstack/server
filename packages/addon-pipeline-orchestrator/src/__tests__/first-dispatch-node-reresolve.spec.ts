@@ -34,7 +34,7 @@ import type {
   CameraDetectionConfig,
   PipelineSchema,
   PipelineStepInputOutput,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { CORAL_GPU_CATALOG } from './attach-pipeline-fixtures.js'
 
 function model(id: string, formats: readonly string[] = ['onnx']) {

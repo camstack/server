@@ -25,7 +25,7 @@
  * are not per-camera filterable. Neither channel below claims them.
  */
 
-import { declareLogChannel } from '@camstack/types'
+import { declareLogChannel } from '@dominevo/types'
 
 /**
  * The Baichuan control channel itself: every protocol frame the lib sends and

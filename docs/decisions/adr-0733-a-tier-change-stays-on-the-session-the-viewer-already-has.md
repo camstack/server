@@ -122,7 +122,7 @@ in place; D635's delivery judgement is unchanged.
 - The mid-session GOP replay is the same one `goLive` (D42) and a source
   re-dial already perform on a live track.
 - Deploy order: the stream-broker addon (`addon-pipeline`) with the framework
-  that routes `applyDownlinkProbe` (a published `@camstack/server`), THEN the
+  that routes `applyDownlinkProbe` (a published `@dominevo/server`), THEN the
   player (ui-library in that same server for the admin UI; the viewer's embed
   build for the app). A new player on an old hub keeps the legacy climb; an old
   player on a new hub keeps opening its second session, now the last one

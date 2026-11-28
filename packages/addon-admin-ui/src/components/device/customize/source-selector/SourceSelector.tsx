@@ -8,7 +8,7 @@ import {
   type CameraSensorMode,
   type CustomizeEventEdge,
   defaultThresholdSamples,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   Button,
   DeviceName,
@@ -19,7 +19,7 @@ import {
   useDeviceManagerListAll,
   useDeviceStateGetSnapshot,
   DurationInput,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { type ReactNode, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { SuggestedDevices } from '../assignments/SuggestedDevices'

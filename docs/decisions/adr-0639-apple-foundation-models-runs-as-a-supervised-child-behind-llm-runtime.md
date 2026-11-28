@@ -78,7 +78,7 @@ Rejected:
 ## Consequences
 
 - **A framework change.** The new kind, the three `llm-runtime` methods and the
-  new output fields ship only in a `@camstack/server` release. After that,
+  new output fields ship only in a `@dominevo/server` release. After that,
   addon-ai must be redeployed on every node.
 - **Rebuilding the binary** needs a Mac with SDK 26 or newer. The build is a
   no-op when the stamps are current.

@@ -54,14 +54,14 @@ import type {
   ConfigDeviceActionButtonField,
   FieldInlineAction,
   FieldProbeResult,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   isKeychainStoredField,
   isSecretClear,
   isSecretFieldView,
   type TimeWindow,
   TimeWindowDraftSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { useClusterNodes as useClusterNodesHook } from '../hooks/use-cluster-nodes'
 import { useCapabilityNodePresence } from '../hooks/use-capability-presence'
 import { ConfigIconFieldControl } from './config-icon-field'
@@ -3390,7 +3390,7 @@ export function FormField({
 
 // Backwards-compatible alias — the admin-ui FormBuilder used to
 // `import { FormField } from './FormField'`. After consolidation
-// it imports `FormField` from `@camstack/ui-library`; the original
+// it imports `FormField` from `@dominevo/ui-library`; the original
 // `ConfigFormField` name is the stable canonical export, but `FormField`
 // is exported here to ease the migration without renaming every call site.
 export { FormField as ConfigFormField }

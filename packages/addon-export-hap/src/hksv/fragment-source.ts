@@ -33,9 +33,9 @@
  *   explicit: when that characteristic is false the fragments MUST NOT carry
  *   audio, and an fMP4 fragment has no second plane to strip it on.
  */
-import type { FfmpegInvocation, IScopedLogger, PinnedFfmpegResolver } from '@camstack/types'
-import type { FfmpegSpawnFn, Fmp4Subscription } from '@camstack/types/node'
-import { Fmp4FragmentChild, Fmp4FragmentPlane } from '@camstack/types/node'
+import type { FfmpegInvocation, IScopedLogger, PinnedFfmpegResolver } from '@dominevo/types'
+import type { FfmpegSpawnFn, Fmp4Subscription } from '@dominevo/types/node'
+import { Fmp4FragmentChild, Fmp4FragmentPlane } from '@dominevo/types/node'
 
 import { buildRecordingInvocation } from './recording-invocation.js'
 import { HKSV_PREBUFFER_MS } from './recording-options.js'

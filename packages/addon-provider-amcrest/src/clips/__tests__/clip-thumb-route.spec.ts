@@ -10,7 +10,7 @@ import {
   CLIP_STILL_REASON_CODE_HEADER,
   CLIP_STILL_REASON_HEADER,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 
 import { createClipThumbHandler } from '../clip-data-plane.js'

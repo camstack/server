@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { DeviceRole, DeviceType } from '@camstack/types'
+import { DeviceRole, DeviceType } from '@dominevo/types'
 import { mapHaEntityToCamStack, inferParentDeviceType } from '../ha-domain-mapping.js'
 
 describe('ha-domain-mapping — humidifier', () => {

@@ -7,7 +7,7 @@ import {
   makeInMemoryRecords,
   type CalendarRecordPorts,
   type RecordKindHandle,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import { googleBrokersEntryKind } from '../../broker-record-kinds.js'

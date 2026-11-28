@@ -2,7 +2,7 @@
  * Section bodies of the quick modal: an automation lists its last runs (each
  * opens the full run) and an action runs from the modal and lists executions.
  */
-import type { ActionEntry, AutomationRunTrace, CoreBlock } from '@camstack/types'
+import type { ActionEntry, AutomationRunTrace, CoreBlock } from '@dominevo/types'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
@@ -27,8 +27,8 @@ const FAILED: AutomationRunTrace = {
 const runMutate = vi.fn()
 let traces: readonly AutomationRunTrace[] = [FAILED]
 
-vi.mock('@camstack/ui-library', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@camstack/ui-library')>()),
+vi.mock('@dominevo/ui-library', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@dominevo/ui-library')>()),
   useCoreBlocksGetTraces: () => ({ data: { traces, lastError: null }, error: null }),
   useActionsGetTraces: () => ({ data: { traces }, error: null }),
   useActionsRun: () => ({ mutate: runMutate, isPending: false, error: null }),

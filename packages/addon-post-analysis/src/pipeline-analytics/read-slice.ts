@@ -24,7 +24,7 @@
  * slice is a real answer and is returned as one.
  */
 
-import type { SliceHandle } from '@camstack/types'
+import type { SliceHandle } from '@dominevo/types'
 
 /**
  * The loaded slice, or `undefined` when it has never loaded and the one

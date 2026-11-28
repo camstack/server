@@ -3,7 +3,7 @@
  * `paramName`) so admin-ui hooks (`useSearchParams`, deep links, Navigate)
  * stay in sync. Addon federated pages import `SectionedPage` directly.
  */
-import { SectionedPage, type SectionedPageProps } from '@camstack/ui-library'
+import { SectionedPage, type SectionedPageProps } from '@dominevo/ui-library'
 import { useCallback, type JSX } from 'react'
 import { useSearchParams } from 'react-router-dom'
 

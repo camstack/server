@@ -3,7 +3,7 @@
  * run itself (that is `face-rescore-job.spec.ts`).
  */
 import { describe, expect, it } from 'vitest'
-import type { LogExtras } from '@camstack/types'
+import type { LogExtras } from '@dominevo/types'
 import { FaceRescoreJob, type FaceRescorePorts } from '../face-rescore-job.js'
 import { FaceRescoreScheduler } from '../face-rescore-scheduler.js'
 import type {

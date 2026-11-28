@@ -1,11 +1,11 @@
-import { DeviceType, DeviceRole } from '@camstack/types'
+import { DeviceType, DeviceRole } from '@dominevo/types'
 import type { HmChannel, HmDataPoint, HmDevice } from 'nodehomematic'
 
 /**
  * PURE mapping of a Homematic device's MAINTENANCE channel + firmware
  * descriptor fields into provider-internal "derived entity" descriptors.
  *
- * A later Container task turns each {@link HmDerivedEntity} into a CamStack
+ * A later Container task turns each {@link HmDerivedEntity} into a Dominevo
  * accessory child (diagnostic Sensor or an Update child). These helpers are
  * side-effect-free: the same device snapshot always yields the same result.
  * They decide ONLY which children exist and how they are typed — the device
@@ -33,7 +33,7 @@ export interface HmDerivedEntity {
   readonly key: string
   readonly deviceType: DeviceType
   readonly role: DeviceRole | null
-  /** CamStack cap names the derived child registers. */
+  /** Dominevo cap names the derived child registers. */
   readonly capabilities: readonly string[]
   /** Human label, e.g. `Operating voltage`, `Signal (device)`, `Firmware`. */
   readonly name: string

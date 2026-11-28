@@ -1,5 +1,5 @@
 /**
- * One Zigbee2MQTT device as one CamStack device. Its primary function picks the device type (see
+ * One Zigbee2MQTT device as one Dominevo device. Its primary function picks the device type (see
  * `z2m-exposes.ts`); every other reading is a cap of the same device. State is pushed by the server
  * through the hub, never polled, and every slice is recomputed from the last state message and
  * rewritten only when it changed. Commands go out as `<friendly_name>/set`, the name resolved from
@@ -48,7 +48,7 @@ import {
   type CoverState,
   type HvacMode,
   type LockState,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { zigbeeDeviceSchema, type ZigbeeDeviceConfig } from './z2m-device-config.js'
 import { type Z2mCap, type Z2mPlan, planZ2mDevice, roleForPrimaryCap } from './z2m-exposes.js'
 import { type Z2mConnection } from './z2m-client.js'

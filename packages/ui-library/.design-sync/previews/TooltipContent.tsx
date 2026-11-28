@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Tooltip, TooltipTrigger, TooltipContent } from '@camstack/ui-library'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@dominevo/ui-library'
 import { Volume2, Wifi } from 'lucide-react'
 
 const Frame = ({ children }: { children: ReactNode }) => (

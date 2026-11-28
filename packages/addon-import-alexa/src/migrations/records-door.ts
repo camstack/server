@@ -1,4 +1,4 @@
-import type { DefinedRecordKind, MigrationApiV1, MigrationRecordsKindV1 } from '@camstack/types'
+import type { DefinedRecordKind, MigrationApiV1, MigrationRecordsKindV1 } from '@dominevo/types'
 import type { z } from 'zod'
 
 /** One record kind as the migrations call it: positional ids, the row carries `id` and `data`. */

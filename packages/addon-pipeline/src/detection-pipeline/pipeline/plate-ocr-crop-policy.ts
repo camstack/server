@@ -43,7 +43,7 @@
  * plate arrived as a 76 px padded crop and six junk ROIs landed under 70
  * (measured with `yolov8n-plate` boxes at +15%).
  */
-import type { PostprocessorType } from '@camstack/types'
+import type { PostprocessorType } from '@dominevo/types'
 
 import type { AbsoluteBbox } from './crop-utils.js'
 

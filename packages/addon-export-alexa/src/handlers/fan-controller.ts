@@ -12,7 +12,7 @@
  * the state the command set, projected from the slice read before it. A custom
  * preset that did not fully apply is an ErrorResponse naming the step.
  */
-import type { AddonContext, IScopedLogger } from '@camstack/types'
+import type { AddonContext, IScopedLogger } from '@dominevo/types'
 import { z } from 'zod'
 import {
   type FanSlice,

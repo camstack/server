@@ -34,7 +34,7 @@ import {
   Save,
   Trash2,
 } from 'lucide-react'
-import { DeviceType, type DeviceInfo } from '@camstack/types'
+import { DeviceType, type DeviceInfo } from '@dominevo/types'
 import { useSystem } from '../../contexts/system-context.js'
 import { useDeviceProxy } from '../../hooks/use-device-proxy.js'
 import { useDevices } from '../../hooks/use-devices.js'

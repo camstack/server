@@ -36,7 +36,7 @@ import type {
   MaskShapeKind,
   PrivacyMaskOptions,
   PrivacyMaskRegion,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { EyeOff, Hexagon, Mic, MicOff, Square, Trash2 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState, type JSX } from 'react'
 import { usePlayerOverlayLayer } from '../../contexts/player-overlays'

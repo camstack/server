@@ -7,7 +7,7 @@
  * `pipeline-analytics/index.ts` verbatim (Plan B, extraction 5): the inline
  * blocks of `processFrame` became methods, in the same places in its order.
  */
-import type { AddonContext, IScopedLogger, ObjectEventDraft } from '@camstack/types'
+import type { AddonContext, IScopedLogger, ObjectEventDraft } from '@dominevo/types'
 import type { BirthCandidate } from '../confirmation-gate.js'
 import type { ConfirmationGateSettings } from '../confirmation-gate-settings.js'
 import { sessionDetectorOf } from '../confirmation-session-detector.js'

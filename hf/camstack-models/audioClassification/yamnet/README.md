@@ -10,7 +10,7 @@
 | Code licence | Apache-2.0 |
 | **Weights licence** | Apache-2.0 ([`LICENSES/Apache-2.0.txt`](../../LICENSES/Apache-2.0.txt)) |
 | Training data | AudioSet ontology and labels © Google LLC, CC BY 4.0 ([`LICENSES/CC-BY-4.0.txt`](../../LICENSES/CC-BY-4.0.txt)), https://research.google.com/audioset/ |
-| CamStack modifications | converted from TensorFlow with tf2onnx; OpenVINO IR derived from the ONNX |
+| Dominevo modifications | converted from TensorFlow with tf2onnx; OpenVINO IR derived from the ONNX |
 | Commercial use | permitted by Apache-2.0 |
 
-CamStack redistributes the files in this folder; every change from the upstream is stated above. Converting a model does not change its licence. The collection statement is [`LICENSE`](../../LICENSE); every model's attribution is in [`THIRD_PARTY_MODELS.md`](../../THIRD_PARTY_MODELS.md).
+Dominevo redistributes the files in this folder; every change from the upstream is stated above. Converting a model does not change its licence. The collection statement is [`LICENSE`](../../LICENSE); every model's attribution is in [`THIRD_PARTY_MODELS.md`](../../THIRD_PARTY_MODELS.md).

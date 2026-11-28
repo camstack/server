@@ -20,7 +20,7 @@ import {
   type TrainingJob,
   type TrainingResult,
   TrainingResultSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { type BaseModelSpec, findBaseModel } from './base-models.js'
 import { ARTIFACT_RETENTION_MS } from './job-engine.js'
 import type { JobMutator } from './job-mutator.js'
@@ -64,7 +64,7 @@ export function catalogEntryFromDraft(input: {
   return {
     id: draft.id,
     name: draft.name,
-    description: `${draft.description} Fine-tuned from ${base.modelId} by CamStack Training (job ${job.id}, ${String(job.frameCount)} frames from ${String(job.request.selection.collectionIds.length)} collection(s)).`,
+    description: `${draft.description} Fine-tuned from ${base.modelId} by Dominevo Training (job ${job.id}, ${String(job.frameCount)} frames from ${String(job.request.selection.collectionIds.length)} collection(s)).`,
     inputSize: { ...draft.inputSize },
     labels: [],
     preprocessMode: 'letterbox',
@@ -75,7 +75,7 @@ export function catalogEntryFromDraft(input: {
       code: 'AGPL-3.0-only',
       upstream: { name: 'Ultralytics YOLOv9', url: 'https://github.com/ultralytics/ultralytics' },
       attribution: `© Ultralytics, AGPL-3.0 (YOLOv9 weights); ${result.licence}. Corresponding source: ${TRAINER_SOURCE_URL} at revision ${result.trainer.revision}.`,
-      modifications: `fine-tuned on the operator's own frames (${String(job.frameCount)} frames; collections ${job.request.selection.collectionIds.join(', ')}) and exported by CamStack Training`,
+      modifications: `fine-tuned on the operator's own frames (${String(job.frameCount)} frames; collections ${job.request.selection.collectionIds.join(', ')}) and exported by Dominevo Training`,
     },
     formats,
   }

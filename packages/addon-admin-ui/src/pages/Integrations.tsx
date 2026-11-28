@@ -40,7 +40,7 @@ import {
   ViewSwitch,
   type ViewSwitchOption,
   Button,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { LayoutGrid, Plug, Plus, Radar, RefreshCw, Table2 } from 'lucide-react'
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'

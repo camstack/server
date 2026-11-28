@@ -4,7 +4,7 @@ import type {
   DetectionEvent,
   TrackedDetection,
   TrackedObjectState,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { DetectionEventEmitter } from '../event-emitter.js'
 
 const BOX: BoundingBox = { x: 0, y: 0, w: 20, h: 20 }

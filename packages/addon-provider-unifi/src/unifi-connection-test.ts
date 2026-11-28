@@ -2,7 +2,7 @@
  * The UniFi connection test (planning#581): sign in with the connection as typed, find the site,
  * list the infra devices once, and answer a typed verdict with a reason the operator can act on.
  */
-import { errMsg, type IntegrationTestConnectionResult } from '@camstack/types'
+import { errMsg, type IntegrationTestConnectionResult } from '@dominevo/types'
 import type { UnifiConnectionConfig } from './config.js'
 import type { UnifiControllerClientFactory } from './unifi-client-contract.js'
 import { type UnifiCredentialKind, unifiCredentialOf } from './unifi-client-factory.js'

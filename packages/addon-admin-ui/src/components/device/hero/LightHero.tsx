@@ -6,7 +6,7 @@ import {
   useSystem,
   Button,
   Slider,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { formatRelativeTime } from './format'
 import type { HeroProps } from './HeroRegistry'
 import { MotionTriggerToggle } from './MotionTriggerToggle'

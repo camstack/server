@@ -2,8 +2,8 @@
  * The fields of a `triggered-by` row: one toggle per trigger row of the
  * automation. The row is true for the run one of the pressed triggers started.
  */
-import type { TriggeredByLeaf } from '@camstack/types'
-import { Button } from '@camstack/ui-library'
+import type { TriggeredByLeaf } from '@dominevo/types'
+import { Button } from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 import type { AutomationDevice } from './automation-data'
 import { PickerLabel } from './FieldPicker'

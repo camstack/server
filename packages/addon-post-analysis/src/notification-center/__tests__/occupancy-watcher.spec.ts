@@ -25,7 +25,7 @@
  * timestamp assertion untouched.
  */
 
-import type { CameraOccupancySnapshot } from '@camstack/types'
+import type { CameraOccupancySnapshot } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { occupancyKey, OccupancyWatcher, type OccupancyStateRow } from '../occupancy-watcher.js'
 

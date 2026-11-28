@@ -51,9 +51,9 @@ const queries = vi.hoisted(() => ({
   },
 }))
 
-vi.mock('@camstack/ui-library', async () => {
+vi.mock('@dominevo/ui-library', async () => {
   const actual =
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+    await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return {
     ...actual,
     useIntegrationsList: () => queries.integrations,
@@ -102,8 +102,8 @@ function renderPage(): ReactElement {
 }
 
 const addonRows = [
-  { manifest: { id: 'provider-reolink', packageName: '@camstack/addon-provider-reolink' } },
-  { manifest: { id: 'core-blocks', packageName: '@camstack/server' } },
+  { manifest: { id: 'provider-reolink', packageName: '@dominevo/addon-provider-reolink' } },
+  { manifest: { id: 'core-blocks', packageName: '@dominevo/server' } },
 ]
 
 beforeEach(() => {

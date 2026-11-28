@@ -4,7 +4,7 @@ import { restartIntentExists } from '../node-supervisor-io'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import { RESTART_INTENT_FILE, SERVER_ROOT_DIRNAME } from '@camstack/node-root'
+import { RESTART_INTENT_FILE, SERVER_ROOT_DIRNAME } from '@dominevo/node-root'
 
 describe('hang probe', () => {
   it('is a no-op off macOS and without a pid', async () => {

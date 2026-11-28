@@ -1,12 +1,12 @@
 /**
  * Router-level spec for `pipelineExecutor` — covers the reference-media
  * and audio-capabilities endpoints that remain on the cap after the
- * benchmark methods moved to `@camstack/addon-benchmark` (2026-04-14,
+ * benchmark methods moved to `@dominevo/addon-benchmark` (2026-04-14,
  * dispatched via `api.addons.custom`). The full benchmark E2E surface
  * is now tested inside the benchmark addon's own spec files.
  */
 import { describe, it, expect } from 'vitest'
-import type { InferProvider, pipelineExecutorCapability } from '@camstack/types'
+import type { InferProvider, pipelineExecutorCapability } from '@dominevo/types'
 import { makeCtx, invokeProcedure, buildCapRouterForTest } from './harness.js'
 
 /** What the router dispatches to — the cap's own provider type, not the hand-written twin. */

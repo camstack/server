@@ -12,7 +12,7 @@
  * value leaves the request byte-for-byte unchanged. An adapter that starts
  * using `showWhen` without a fixture here fails the first test.
  */
-import { type ConfigField, type Notification, prepareNotification } from '@camstack/types'
+import { type ConfigField, type Notification, prepareNotification } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { NotifierAdapter } from '../adapters/adapter.js'
 import { NOTIFIER_ADAPTERS } from '../adapters/registry.js'
@@ -58,7 +58,7 @@ const VALID_CONFIGS: Readonly<Record<string, readonly Readonly<Record<string, un
   ],
 }
 
-const NOTIFICATION: Notification = { body: 'ping', title: 'CamStack', format: 'text', priority: 3 }
+const NOTIFICATION: Notification = { body: 'ping', title: 'Dominevo', format: 'text', priority: 3 }
 
 function conditionalFields(adapter: NotifierAdapter): readonly ConfigField[] {
   return adapter.descriptor.configSchema.sections.flatMap((s) =>

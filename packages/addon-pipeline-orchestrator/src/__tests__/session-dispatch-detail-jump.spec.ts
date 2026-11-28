@@ -11,7 +11,7 @@
  * `face-detection:no-compatible-model,…` on every Coral session and ran object
  * detection only.
  */
-import { CAMERA_TRIGGER } from '@camstack/types'
+import { CAMERA_TRIGGER } from '@dominevo/types'
 import {
   createDurableState,
   type AddonContext,
@@ -21,7 +21,7 @@ import {
   type RunnerCameraConfig,
   type RunnerInferenceDevice,
   type RunnerLocalLoad,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { ZodType } from 'zod'
 import { describe, expect, it } from 'vitest'
 import { PipelineSettingsStore } from '../pipeline-settings-store.js'

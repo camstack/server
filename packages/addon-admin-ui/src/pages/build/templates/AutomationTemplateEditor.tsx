@@ -10,8 +10,8 @@ import {
   type AutomationRecipe,
   type AutomationTemplatePayload,
   exportAutomationTemplate,
-} from '@camstack/types'
-import { Badge, Button, FormField, Input, SectionCard, Textarea } from '@camstack/ui-library'
+} from '@dominevo/types'
+import { Badge, Button, FormField, Input, SectionCard, Textarea } from '@dominevo/ui-library'
 import { Copy, Download, FileText } from 'lucide-react'
 import { type ReactNode, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -175,7 +175,7 @@ export function AutomationTemplateEditor({
         <p className="text-xs text-foreground-muted">
           {t(
             'build.templates.builtInHint',
-            'Shipped with CamStack and read-only. Duplicate it to make a copy you can change.',
+            'Shipped with Dominevo and read-only. Duplicate it to make a copy you can change.',
           )}
         </p>
       )}

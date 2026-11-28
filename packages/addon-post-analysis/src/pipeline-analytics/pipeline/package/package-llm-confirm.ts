@@ -8,7 +8,7 @@
  */
 
 import { randomUUID } from 'node:crypto'
-import { PackageLlmVerdictSchema, type PackageLlmVerdict } from '@camstack/types'
+import { PackageLlmVerdictSchema, type PackageLlmVerdict } from '@dominevo/types'
 import { parseModelJson } from '../../../shared/llm-vision/parse-model-json.js'
 
 /**

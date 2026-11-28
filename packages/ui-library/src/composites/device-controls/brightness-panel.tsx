@@ -5,7 +5,7 @@ import { useDeviceCommand } from '../../hooks/use-device-command'
 import { useDragValue } from '../../hooks/use-drag-value'
 import { cn } from '../../lib/cn'
 import { useUiText } from '../../contexts/ui-text'
-import type { BrightnessStatus } from '@camstack/types'
+import type { BrightnessStatus } from '@dominevo/types'
 import type { ControlPanelProps } from './types'
 
 export function BrightnessPanel({ trpc, deviceId, layout }: ControlPanelProps): ReactNode {

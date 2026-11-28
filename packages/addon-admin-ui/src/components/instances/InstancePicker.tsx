@@ -5,7 +5,7 @@
  * "Create new…" for any instance the link can point at. An optional link (`required: false`) keeps
  * an empty choice in both, and `disabled` is passed through.
  */
-import { InstancePlainSelect, type InstancePickerSlotProps } from '@camstack/ui-library'
+import { InstancePlainSelect, type InstancePickerSlotProps } from '@dominevo/ui-library'
 import type { JSX } from 'react'
 import { BrokerPicker } from '../brokers/BrokerPicker'
 import { InstanceLinkCreate } from './InstanceLinkCreate'

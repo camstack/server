@@ -2,7 +2,7 @@
  * The Unraid connection test (planning#581): sign in with the API key as the form holds it — the
  * client's `connect()` is one authenticated read — and answer a typed verdict with a reason.
  */
-import { errMsg, type IntegrationTestConnectionResult } from '@camstack/types'
+import { errMsg, type IntegrationTestConnectionResult } from '@dominevo/types'
 import type { UnraidConnectionConfig } from './config.js'
 import type { UnraidClientFactory } from './unraid-client-contract.js'
 import { UnraidClientError } from './unraid-client-live.js'

@@ -23,7 +23,7 @@ applies-to:
 
 `face-embedding` defaulted to `arcface-r100`: a re-upload with no author, no
 dataset and no licence (`license: 'UNKNOWN'`), and a ResNet34 despite its id.
-CamStack is going public, and the default is what every new install downloads
+Dominevo is going public, and the default is what every new install downloads
 and runs. `auraface-r100` (fal.ai AuraFace v1, Apache-2.0, a real iResNet-100)
 has been in the catalog since 2026-08-21, with builds for onnx, openvino and
 coreml, and this hub has run it through the cluster row since that day. A
@@ -53,7 +53,7 @@ ArcFace's least-bad value. At 0.55 AuraFace auto-matched 1 probe in 496
 ## Decision
 
 - **Default.** `auraface-r100` is the `face-embedding` `defaultModelId` in the
-  step catalog and in its `@camstack/types` mirror (`CLUSTER_MODEL_SCOPED_STEPS`,
+  step catalog and in its `@dominevo/types` mirror (`CLUSTER_MODEL_SCOPED_STEPS`,
   AuraFace listed first). onnx, openvino and coreml each resolve to it; no
   per-format override is declared. `arcface-r100` stays selectable, not
   legacy, as the rollback target.
@@ -90,7 +90,7 @@ ArcFace's least-bad value. At 0.55 AuraFace auto-matched 1 probe in 496
   and read as "never written" for the whole D294 window.
 
   **One interpretation of the stored value** (fix round 4), shared by the
-  owner and the runtime (`interpretStoredClusterModel`, `@camstack/types`):
+  owner and the runtime (`interpretStoredClusterModel`, `@dominevo/types`):
   `null` and `''` are ABSENT (the form clears a field with a `null` patch,
   and every hydrated surface reads a stored `null` as the default); any
   non-empty string is the choice, verbatim; only a non-string is
@@ -196,8 +196,8 @@ ArcFace's least-bad value. At 0.55 AuraFace auto-matched 1 probe in 496
   three nodes (hub: OpenVINO GPU/NPU; agent-a: OpenVINO GPU; Mac:
   CoreML). Neither face model has a tflite build, so a Coral-only node could
   not run face-embedding before this change either. Nothing moves there.
-- `@camstack/types` changes, so the default reaches an unconfigured cluster
-  only through a `@camstack/server` release.
+- `@dominevo/types` changes, so the default reaches an unconfigured cluster
+  only through a `@dominevo/server` release.
 
 **Rollback.**
 
@@ -211,14 +211,14 @@ ArcFace's least-bad value. At 0.55 AuraFace auto-matched 1 probe in 496
 
 **Release order.**
 
-1. A `@camstack/server` release carrying the `getClusterModelChoice` cap
+1. A `@dominevo/server` release carrying the `getClusterModelChoice` cap
    method (router and access map) and the kernel's `readAddonStoreResult`
    settings view. `cluster-model-scope.ts` and `BaseAddon.readStoredGlobalKey`
-   live in `@camstack/types`, which self-contained addons BUNDLE, so they
+   live in `@dominevo/types`, which self-contained addons BUNDLE, so they
    travel with the addons. Out of order is safe: every skew cell refuses by
    name (`three-way-read-unavailable` or `method-unavailable`).
 2. `git pull`.
-3. `camstack deploy packages/addon-pipeline-orchestrator` (the owner method),
+3. `dominevo deploy packages/addon-pipeline-orchestrator` (the owner method),
    then `packages/addon-post-analysis` and `packages/addon-pipeline`, then
    `packages/addon-admin-ui`.
 

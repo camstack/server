@@ -49,10 +49,10 @@ import {
   type PeerBytesTicket,
   type PeerBytesWriteOptions,
   type PeerBytesWriteResult,
-} from '@camstack/types/addon'
+} from '@dominevo/types/addon'
 // Types are free at runtime — only the VALUE import had to move off the
 // barrel (D28); this one stays where every sibling takes it.
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 export interface AddonPeerBytesFacility {
   readonly peerBytes: AddonPeerBytes

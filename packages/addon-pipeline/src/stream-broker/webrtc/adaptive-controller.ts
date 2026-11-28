@@ -1,4 +1,4 @@
-import { CAM_PROFILE_ORDER, type CamProfile, type WebrtcTryBlocker } from '@camstack/types'
+import { CAM_PROFILE_ORDER, type CamProfile, type WebrtcTryBlocker } from '@dominevo/types'
 import { LossTracker, type LossSample, type LossTrackerConfig } from './loss-tracker.js'
 import {
   StallTracker,

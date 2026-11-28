@@ -12,7 +12,7 @@ import type {
   InferenceInput,
   ModelCatalogEntry,
   StepDefinition,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { PipelineExecutor, type RootInputViewProvider } from '../executor.js'
 import type { ExecutableStep, ExecutableTree } from '../tree-builder.js'
 

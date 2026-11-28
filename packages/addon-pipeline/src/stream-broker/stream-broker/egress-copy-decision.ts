@@ -38,7 +38,7 @@
  * stream mid-life is handled by the consumer releasing and re-acquiring
  * (there is no `reconfigure` by design, D67), not by re-keying live children.
  */
-import type { EgressTranscodeRequest } from '@camstack/types'
+import type { EgressTranscodeRequest } from '@dominevo/types'
 
 /** The requested video shape — the `encode.video` block of a request. */
 export type EgressVideoRequest = EgressTranscodeRequest['encode']['video']

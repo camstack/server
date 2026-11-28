@@ -19,8 +19,8 @@ import type {
   IEventBus,
   ObjectDetection,
   PipelineInferenceResultPayload,
-} from '@camstack/types'
-import { createEvent, EventCategory } from '@camstack/types'
+} from '@dominevo/types'
+import { createEvent, EventCategory } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import { CONFIRMATION_CROP_MAX_WIDTH } from '../index.js'
 import { TrackResidentState } from '../pipeline/track-resident-state.js'

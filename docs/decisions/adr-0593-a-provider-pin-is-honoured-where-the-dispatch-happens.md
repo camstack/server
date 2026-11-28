@@ -96,10 +96,10 @@ rejection and never a hang.
   probably refuse too, but not before each of the 44 is looked at.
 - **Shipping.** This code is NOT bundled into a self-contained addon — the
   addon dist names `brokerTransportLink` only in a comment and imports
-  `@camstack/system/addon-utils` as an external. The transport link runs from
-  `/opt/camstack-hub/node_modules/@camstack/system`, inside the
-  `@camstack/server` closure, so the fix goes live on a SERVER INSTALL and a
-  `camstack deploy` of the addon does nothing for it.
+  `@dominevo/system/addon-utils` as an external. The transport link runs from
+  `/opt/camstack-hub/node_modules/@dominevo/system`, inside the
+  `@dominevo/server` closure, so the fix goes live on a SERVER INSTALL and a
+  `dominevo deploy` of the addon does nothing for it.
 
 ## Enforcement
 

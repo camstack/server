@@ -86,7 +86,7 @@ one. An empty match answers `null` per field, never `0` — "nothing is here" an
   two array lengths. A bounded stream cannot count what it deliberately did not
   fetch.
 - `settings-store` and `data-store-provider` grew a method, so this is not live
-  until a `@camstack/server` containing it is published.
+  until a `@dominevo/server` containing it is published.
 - **This does NOT by itself shrink the recorder's heap.** Removing the scans
   removes their CPU and their per-round allocation; what keeps ~7.1 M rows
   resident is `SegmentHourLedger.hydrateIndex` reseeding every archived hour at

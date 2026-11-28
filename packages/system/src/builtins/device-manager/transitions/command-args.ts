@@ -5,7 +5,7 @@
  * over {@link COMMAND_ARGS_MAX_BYTES} is replaced by a marker, never cut — a
  * half-stored value reads as the whole one.
  */
-import { collectZodSecretPaths } from '@camstack/types'
+import { collectZodSecretPaths } from '@dominevo/types'
 import type { z } from 'zod'
 import { isSecretArgumentKey, redactLogMeta } from '../../../logging/log-redactor.js'
 

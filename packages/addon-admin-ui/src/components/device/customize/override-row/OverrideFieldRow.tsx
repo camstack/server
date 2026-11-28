@@ -13,7 +13,7 @@ import {
   type CompositionFieldSource,
   type CompositionSourceRef,
   unitCompanionField,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   Badge,
   Button,
@@ -26,7 +26,7 @@ import {
   DropdownContent,
   DropdownItem,
   DropdownTrigger,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { LiveValueText } from '../assignments/LiveValueText'
@@ -38,7 +38,7 @@ import { SourceSelector } from '../source-selector/SourceSelector'
 import type { SourcePick } from '../source-picker-pick'
 import { sourcePickOf } from '../source-picker-pick'
 import type { PickerDevice, WireableCatalog } from '../source-picker-model'
-import { useDeviceManagerGetWireableFields, useDeviceStateGetSnapshot } from '@camstack/ui-library'
+import { useDeviceManagerGetWireableFields, useDeviceStateGetSnapshot } from '@dominevo/ui-library'
 import { useConfirmRemove } from '../use-confirm-remove'
 import type { CustomizationHandle } from '../use-customization'
 import { vocabularyFieldLabel } from '../vocabulary-field-label'

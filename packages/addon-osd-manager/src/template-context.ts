@@ -3,7 +3,7 @@
  * render is read. The renderer is the hub's; this module only shapes the call
  * and judges the answer.
  */
-import type { DeviceTemplateRender, DeviceTemplateThisDevice } from '@camstack/types'
+import type { DeviceTemplateRender, DeviceTemplateThisDevice } from '@dominevo/types'
 
 /** The `camera.<name>` values the manager supplies besides the camera's own state. */
 export const RECOGNITION_VALUE_NAMES = ['lastPerson', 'lastPlate'] as const

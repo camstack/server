@@ -21,7 +21,7 @@ import { NcRuleActionRunner, type NcActionCatalog } from './rule-actions.js'
 import { NcRuleStore } from './rule-store.js'
 import { buildServerUpdateButtons, serverUpdateButtonRefusal } from './server-update-buttons.js'
 import { NcTextCatalog } from './text-catalog.js'
-import type { IScopedLogger, NcSystemEventKind, NotificationAction } from '@camstack/types'
+import type { IScopedLogger, NcSystemEventKind, NotificationAction } from '@dominevo/types'
 import { randomUUID } from 'node:crypto'
 import type { NcAlarmPanelPort, NotificationCenterDeps } from './index.js'
 

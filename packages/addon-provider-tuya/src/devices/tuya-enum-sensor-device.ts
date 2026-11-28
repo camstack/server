@@ -3,7 +3,7 @@ import {
   enumSensorCapability,
   type EnumSensorStatus,
   type InferNativeProvider,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { readStringDp } from '../tuya-dp-mapping.js'
 import { tuyaChildSchema, TuyaChildDevice } from './tuya-child-device.js'

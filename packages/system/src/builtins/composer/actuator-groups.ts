@@ -27,7 +27,7 @@ import {
   sharedActuatorFeatures,
   sharedActuatorMethods,
   sharedColorModes,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { type ActuatorDispatchInput, setActuatorDispatcher } from './actuator-dispatch.js'
 
 export interface ActuatorMemberReady {

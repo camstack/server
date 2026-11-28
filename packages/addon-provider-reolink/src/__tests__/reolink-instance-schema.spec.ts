@@ -8,8 +8,8 @@ import type {
   ConfigUISchema,
   IIntegrationInstancesProvider,
   RecordIntegrationInstances,
-} from '@camstack/types'
-import { DeviceType } from '@camstack/types'
+} from '@dominevo/types'
+import { DeviceType } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { ReolinkProviderAddon } from '../addon.js'
 import { isHubIntegration } from '../hub-connection.js'

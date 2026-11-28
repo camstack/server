@@ -21,8 +21,8 @@
  * and the first two tests below flip to `true` — the exact live leak.
  */
 
-import type { TokenScope } from '@camstack/types'
-import { DeviceType } from '@camstack/types'
+import type { TokenScope } from '@dominevo/types'
+import { DeviceType } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { checkScopeAccess, type DeviceScopeLookup } from '../scope-access.js'
 

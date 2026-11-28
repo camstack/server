@@ -40,7 +40,7 @@ import {
   type RecordsAccess,
   type SettingsStoreClient,
   transformSecretWrite,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { readAllRows } from '../../records/read-all-rows.js'
 import { coreBlocksRecordKinds, type CoreBlockSettingsBodySchema } from './record-kinds.js'
 import type { z } from 'zod'

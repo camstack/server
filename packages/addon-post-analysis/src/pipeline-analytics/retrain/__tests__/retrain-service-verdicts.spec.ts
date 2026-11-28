@@ -3,7 +3,7 @@
  * the staging worklist and the frames copied from the answered track carry the
  * verdict, and a track nobody answered carries none.
  */
-import type { MediaFileRef, RetrainVerdict, Track } from '@camstack/types'
+import type { MediaFileRef, RetrainVerdict, Track } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { makeAnalyticsWorld } from '../../__tests__/fake-records.js'
 import { makeSilentLogger } from '../../__tests__/test-helpers.js'

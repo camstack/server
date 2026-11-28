@@ -15,7 +15,7 @@ import * as fs from 'node:fs/promises'
 import * as os from 'node:os'
 import * as path from 'node:path'
 import { pathToFileURL } from 'node:url'
-import type { ConfigUISchema } from '@camstack/types'
+import type { ConfigUISchema } from '@dominevo/types'
 
 function looksLikeSchema(value: unknown): value is ConfigUISchema {
   if (value === null || typeof value !== 'object') return false

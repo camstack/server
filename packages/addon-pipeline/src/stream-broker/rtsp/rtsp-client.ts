@@ -1,6 +1,6 @@
 import * as net from 'node:net'
 import { createHash, randomUUID } from 'node:crypto'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { copyOwned, type PacketAllocator } from '../stream-broker/owned-buffer.js'
 import { INTERLEAVED_MAGIC } from './rtsp-types.js'
 import { parseSdp, extractVideoTrack, extractAudioTrack, resolveTrackUrl } from './sdp-parser.js'

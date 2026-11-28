@@ -96,7 +96,7 @@ any ──► failed{reason}   cancelling ──► cancelled   lost   expired (
 | **Providers** | DataTable of entries; one form (type → `configSchema` + `ConfigFormBuilder`) via `createEntry` + `updateEntry`; Delete = `deleteEntry`; secrets keychain (D787/D829), not D634 |
 
 Legacy `/retrain` and Library `?tab=retrain` redirect here. Public operator
-pages: `camstack/docs` → Detection → Training data / Training.
+pages: `dominevo/docs` → Detection → Training data / Training.
 
 ### The annotation editor
 
@@ -277,7 +277,7 @@ of them.
 
 Addon edits under `packages/addon-training` (orchestrator page, Modal
 provider) and `packages/addon-post-analysis` (corpus / archive) are not live
-until `camstack deploy` of those packages (hub default). Cap / types changes
-travel inside the `@camstack/server` closure — they need a server install that
+until `dominevo deploy` of those packages (hub default). Cap / types changes
+travel inside the `@dominevo/server` closure — they need a server install that
 contains them, not only an addon deploy. See
 `docs/architecture/update-and-release.md`.

@@ -1,4 +1,4 @@
-import type { BulkUpdateItem } from '@camstack/types'
+import type { BulkUpdateItem } from '@dominevo/types'
 import { addonProcessProblem } from '../../lib/addon-process-problem.js'
 import {
   Badge,
@@ -17,7 +17,7 @@ import {
   useAddonsRestartAddon,
   useAddonsRetryLoad,
   useAddonsSetAddonAutoUpdate,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   AlertOctagon,
@@ -96,7 +96,7 @@ export interface AddonHealth {
   inGracePeriod: boolean
 }
 
-/** Where an addon may be deployed. Mirrors `AddonPlacement` in @camstack/types. */
+/** Where an addon may be deployed. Mirrors `AddonPlacement` in @dominevo/types. */
 export type AddonPlacement = 'hub-only' | 'agent-only' | 'any-node'
 
 export interface AddonListItem {
@@ -441,7 +441,7 @@ interface AddonCardProps {
   /** When true, all action buttons are disabled (bulk update in progress) */
   readonly disabledByBulk?: boolean
   /**
-   * True when this card represents the `@camstack/server/system` framework
+   * True when this card represents the `@dominevo/server/system` framework
    * package. Renders a "System" badge and signals to the parent that
    * updating it restarts the hub (the parent gates the update behind a
    * confirmation modal).
@@ -672,7 +672,7 @@ export function AddonCard({
           {/* Row 2: package name + bundle/system/bulk badges — secondary,
               wraps, never steals the name's space. The package name is shown
               only when it adds information (i.e. differs from the display
-              name) to avoid redundant "@camstack/x (@camstack/x)" noise. */}
+              name) to avoid redundant "@dominevo/x (@dominevo/x)" noise. */}
           <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 mt-0.5">
             {displayPkgName !== displayName && (
               <span className="text-[10px] text-foreground-subtle font-mono truncate max-w-full">

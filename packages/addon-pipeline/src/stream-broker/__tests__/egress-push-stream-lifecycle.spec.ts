@@ -44,7 +44,7 @@ import type {
   EncodedPacket,
   EgressTranscodeRequest,
   IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 const DEVICE = 112
 

@@ -1,4 +1,4 @@
-import type { UiTextFn } from '@camstack/ui-library'
+import type { UiTextFn } from '@dominevo/ui-library'
 import type { TFunction } from 'i18next'
 import i18n from './index'
 

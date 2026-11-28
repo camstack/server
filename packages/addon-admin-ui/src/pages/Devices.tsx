@@ -30,7 +30,7 @@ import {
   useDeviceManagerListAll,
   useIntegrationsList,
   useSystem,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 
 import { useEventInvalidation } from '../hooks/useEventInvalidation'
 import { useAdminDeviceRemoval } from '../hooks/useAdminDeviceRemoval'

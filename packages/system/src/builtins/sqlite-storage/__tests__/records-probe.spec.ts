@@ -4,7 +4,7 @@
  * statement that scans, sorts, hides the kind or reads the row behind an index.
  */
 import Database from 'better-sqlite3'
-import { defineRecordKinds } from '@camstack/types'
+import { defineRecordKinds } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import { judgeStatement, probeKind } from '../records/records-probe.js'

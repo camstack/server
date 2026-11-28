@@ -51,7 +51,7 @@ A write to a camera setting is **refused before the wire against what the camera
 itself stated**, and **verified after it by re-reading**; success is the
 read-back agreeing, never the absence of a thrown error. A field is reported
 writable only from the camera's own statement of what it accepts — a limit
-CamStack failed to read is not a limit of none, and closes the control. Where
+Dominevo failed to read is not a limit of none, and closes the control. Where
 the accepted values are a SET they are declared as one (`*Allowed`), the form
 renders a select from it, and the set beats a range wherever both exist. An
 advisory list is not a refusal reason: it constrains nothing and the read-back
@@ -68,7 +68,7 @@ overwriting all three.
   land while the schedule half does not. The error names each field the camera
   kept, and the slice is refreshed either way, so the UI shows what is really
   there rather than what was asked.
-- A camera CamStack has not read yet reports every field readable: false,
+- A camera Dominevo has not read yet reports every field readable: false,
   writable: false, with "has not read this camera yet" — not-yet-known must not
   look like unsupported (D315).
 - `REOLINK_PRE_RECORD_ON_SECONDS` duplicates `DEFAULT_PRE_RECORD_SECONDS` in

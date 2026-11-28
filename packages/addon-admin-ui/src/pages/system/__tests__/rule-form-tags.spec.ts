@@ -4,8 +4,8 @@
  * `[]` — the hub's merge would otherwise keep the stored tags. The rules list
  * reads them through the same accessors `TaggedDataTable` uses for Build.
  */
-import type { NcRule } from '@camstack/types'
-import { NC_CONDITION_CATALOG } from '@camstack/types'
+import type { NcRule } from '@dominevo/types'
+import { NC_CONDITION_CATALOG } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   buildRuleInput,

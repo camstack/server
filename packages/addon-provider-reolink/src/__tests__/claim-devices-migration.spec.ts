@@ -6,7 +6,7 @@ import {
   defineAddonMigrations,
   type ClaimDevicesPorts,
   type MigrationOwnerResult,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { MIGRATED_FROM_HUB_KEY } from '../hub-connection.js'
 import { CLAIM_DEVICES_DATE, REOLINK_CLAIM_MIGRATION } from '../migrations/index.js'

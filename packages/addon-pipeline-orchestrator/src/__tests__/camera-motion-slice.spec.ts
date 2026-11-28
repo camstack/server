@@ -17,7 +17,7 @@ import {
   MOTION_CLOSE_AFTER_MS,
   type MotionSources,
   type MotionStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { CameraIdsRead } from '../camera-sensors/controller.js'
 import {

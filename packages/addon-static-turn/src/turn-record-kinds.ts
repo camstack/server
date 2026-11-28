@@ -3,7 +3,7 @@
  * `static-turn`, listed on the TURN Servers page. The credential is a keychain marker bound to
  * the row, so deleting the row deletes the secret.
  */
-import { type DefinedRecordKind, defineEntryKind } from '@camstack/types'
+import { type DefinedRecordKind, defineEntryKind } from '@dominevo/types'
 import { z } from 'zod'
 
 export type TurnServerBody = {

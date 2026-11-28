@@ -1,4 +1,4 @@
-import { CompositionSchema } from '@camstack/types'
+import { CompositionSchema } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { LockDoorGate } from '../lock-door-gate.js'
 import { doorSensorOf, lockDoorLinkOf, seedLockDoors } from '../lock-door-sensor.js'

@@ -7,7 +7,7 @@
  * A reading the API did not report is unknown: an absent `power` field, a `null` level, an
  * entity that keeps its last value, never 0 (D393).
  */
-import { type BatteryStatus, DeviceRole, DeviceType, type PowerMeterStatus } from '@camstack/types'
+import { type BatteryStatus, DeviceRole, DeviceType, type PowerMeterStatus } from '@dominevo/types'
 import type { UnraidUpsInfo } from './unraid-client-contract.js'
 import type { UnraidEntityDescriptor, UnraidEntityIdentity } from './unraid-mapping.js'
 import { entityIdentity } from './unraid-mapping.js'

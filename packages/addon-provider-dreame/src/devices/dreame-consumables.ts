@@ -17,7 +17,7 @@ import {
   errMsg,
   type InferRuntimeState,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { isDue } from './dreame-state-refresh.js'
 
 export const CONSUMABLES_CAP_NAME = 'consumables'

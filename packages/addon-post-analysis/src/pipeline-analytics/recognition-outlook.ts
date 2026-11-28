@@ -22,7 +22,7 @@
  * until its track closes or the window's deadline. The plate recogniser's held state is
  * therefore not an input (stated in D692).
  */
-import type { DetailStepAnnounce } from '@camstack/types'
+import type { DetailStepAnnounce } from '@dominevo/types'
 import type { NcRecognitionOutlook } from '../notification-center/grouped/grouped-inputs.js'
 import type { LabelKind } from './pipeline/label-tier.js'
 

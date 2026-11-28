@@ -23,7 +23,7 @@ import {
   type TimeSite,
   validateSchedulerInput,
   type WeekdayKey,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** The site as `system.getSiteLocation` answers it. */
 export interface SiteView {

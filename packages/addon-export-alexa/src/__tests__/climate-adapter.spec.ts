@@ -5,7 +5,7 @@
  */
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
-import { type AddonContext, commandEffects } from '@camstack/types'
+import { type AddonContext, commandEffects } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   GENERIC_ADAPTERS,

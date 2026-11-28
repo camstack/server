@@ -9,7 +9,7 @@ import {
   type CompositionFieldsFeature,
   type CompositionSourceRef,
   unitCompanionField,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { featureOf, withFeature, withoutFeature } from '../customization-save'
 
 export const SELF_VALUE_BINDING = 'v'

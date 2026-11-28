@@ -21,7 +21,7 @@ import {
   trpc,
   useConfirm,
   type DataColumn,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Loader2, Plus, Radar, RefreshCw } from 'lucide-react'
 import { useMemo, useState, type ReactNode } from 'react'
 

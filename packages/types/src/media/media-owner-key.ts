@@ -20,7 +20,7 @@
  * the key is built in the addon, in `ui-library` and in the notification
  * dispatcher, and read positionally in admin-ui (`split(':')[1]` for an owner
  * id). Positional reads are silently wrong the moment a segment moves, and
- * there is no compiler that notices. It lives in `@camstack/types` because both
+ * there is no compiler that notices. It lives in `@dominevo/types` because both
  * an addon and the UI packages must reach it, and addons may not import each
  * other.
  *

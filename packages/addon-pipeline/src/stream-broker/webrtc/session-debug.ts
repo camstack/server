@@ -3,7 +3,7 @@ import type {
   WebrtcClimbHold,
   WebrtcLadderDecision,
   WebrtcSessionDebug,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /**
  * The SERVER half of the stream-debug overlay, as a pure projection.

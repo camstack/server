@@ -36,7 +36,7 @@ history and its dashboard placement, with nothing in any log.
 
 **The claim that used to justify (1) and (4) — "numeric ids are reallocated by a
 re-sync" — is false.** `allocateNextDeviceId`
-(`@camstack/server/system`, `builtins/device-manager/device-meta-store.ts`) is a
+(`@dominevo/server/system`, `builtins/device-manager/device-meta-store.ts`) is a
 monotonic counter: `nextDeviceId ?? 1`, then `current + 1`. A freed id is never
 re-issued, so the worst case after a re-adoption is an ORPHANED entity, never a
 mis-addressed one — the same worst case a changed `stableId` already had. Do not
@@ -102,7 +102,7 @@ Named here rather than shipped looking implemented:
 - **`package_detected`** — fed only when a track's best class is `package`.
   `pipeline-analytics.package-delivered` / `package-picked-up` are the real
   signals and are not yet subscribed.
-- **The synthetic devices** — "Notification Center" and "CamStack Server" from
+- **The synthetic devices** — "Notification Center" and "Dominevo Server" from
   the spec's addendum are NOT built. The catalog has no synthetic path yet; the
   sources all exist (`notificationRules.listRules` / `setRuleEnabled`,
   `nodes.topology`, `addons.list`, `alerts.list` for the liveness findings,
@@ -271,7 +271,7 @@ broker, so the name is applied to `dev.name` per broker at announce
 
 ## Retired
 
-`@camstack/addon-export-ha-mqtt` was deleted on 2026-08-09 and deprecated on
+`@dominevo/addon-export-ha-mqtt` was deleted on 2026-08-09 and deprecated on
 npm. Its exposed set was empty (`linkState: unlinked`, `exposedDeviceCount: 0`),
 so nothing was migrated. Its capability-map discipline survives in
 `entity-catalog.ts` — `CAP_ENTITY_MAP` + `CAPS_NOT_EXPORTED` + `unclassifiedCaps()`,

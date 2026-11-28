@@ -3,7 +3,7 @@
  * class filter is the event list's own kind menu. Every one of them narrows
  * the list and the density bar together (`review-filters.ts`).
  */
-import { Checkbox, Select } from '@camstack/ui-library'
+import { Checkbox, Select } from '@dominevo/ui-library'
 import type { ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { IdentityFilter, ReviewFilters } from './review-filters'

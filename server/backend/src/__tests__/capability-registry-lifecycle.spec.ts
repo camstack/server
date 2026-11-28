@@ -1,5 +1,5 @@
-import { CapabilityRegistry, isInfraCapability } from '@camstack/server/system'
-import type { IScopedLogger } from '@camstack/types'
+import { CapabilityRegistry, isInfraCapability } from '@dominevo/server/system'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 
 // ─── Mock helpers ────────────────────────────────────────────────────

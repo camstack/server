@@ -6,7 +6,7 @@ import {
   ErrorBox,
   KebabMenu,
   type DataColumn,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Pencil, Plus, Trash2 } from 'lucide-react'
 import {
   HeatingGroupSchema,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { IntegrationInstanceDescription } from '@camstack/types'
+import type { IntegrationInstanceDescription } from '@dominevo/types'
 import { buildInstanceKindOptions, type DescribedHolder } from '../instance-kinds'
 
 const dual: IntegrationInstanceDescription = {

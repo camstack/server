@@ -4,7 +4,7 @@
  * never sees a refused conversion as a pickable option.
  */
 import { Select, type SelectChangeEvent } from '../../primitives/select'
-import { normalizeUnit, type UnitDimension, unitsForDimension } from '@camstack/types'
+import { normalizeUnit, type UnitDimension, unitsForDimension } from '@dominevo/types'
 import type { ReactNode } from 'react'
 
 const FIELD_CLASS =

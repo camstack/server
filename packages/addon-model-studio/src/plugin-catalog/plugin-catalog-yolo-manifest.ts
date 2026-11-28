@@ -17,10 +17,10 @@
  * - TFLite (incl. EdgeTPU) output is the 6-tensor DFL split-head →
  *   `postprocessor: 'yolo-split-dfl'` (not the step-default `yolo`);
  * - plugin catalog default preprocess is RGB resize/stretch to the square.
- *   `settings.pad` is opt-in and not equivalent to CamStack letterbox,
+ *   `settings.pad` is opt-in and not equivalent to Dominevo letterbox,
  *   so every entry uses `preprocessMode: 'resize'`.
  */
-import type { LabelDefinition, ModelCatalogEntry } from '@camstack/types'
+import type { LabelDefinition, ModelCatalogEntry } from '@dominevo/types'
 import manifestData from './plugin-catalog-yolo-manifest-data.json' with { type: 'json' }
 import { PLUGIN_CATALOG_YOLOV9_UNKNOWN } from '../model-licenses.js'
 

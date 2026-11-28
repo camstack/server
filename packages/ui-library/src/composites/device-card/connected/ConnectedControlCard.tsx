@@ -1,4 +1,4 @@
-import type { ControlSetValueInput } from '@camstack/types'
+import type { ControlSetValueInput } from '@dominevo/types'
 import type { ReactElement } from 'react'
 import { useOptionalSystem, useTrpcClient } from '../../../contexts/system-context'
 import { useUiText } from '../../../contexts/ui-text'

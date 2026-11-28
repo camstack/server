@@ -26,7 +26,7 @@ import type { ParkedFrameClient } from '../runtime/parked-frame-client.js'
 import type { ParkedSubjectSlab } from '../services/event-media-dispatcher.js'
 import type { MediaStore } from '../store/media-store.js'
 import type { TrackStore } from '../store/track-store.js'
-import { type AddonContext, errMsg, type ParkedFrameKind } from '@camstack/types'
+import { type AddonContext, errMsg, type ParkedFrameKind } from '@dominevo/types'
 import type { FrameState } from '../frame/frame-state.js'
 import { ENRICHMENT_CAPTURE_STALE_MS } from './capture-timing.js'
 

@@ -47,7 +47,7 @@ export const ModelFormatEntrySchema = z.object({
     .readonly()
     .optional(),
   /**
-   * Content revision of the artefact, for one hosted OFF the CamStack mirror.
+   * Content revision of the artefact, for one hosted OFF the Dominevo mirror.
    * A format on the mirror leaves it unset: its revision (the sha256 of its
    * weight file) comes from the downloader's generated table, kept in step
    * with the mirror by `scripts/check-hosted-model-revisions.ts` (D744). A
@@ -77,7 +77,7 @@ export type ModelOnDiskState = z.infer<typeof ModelOnDiskStateSchema>
 /**
  * The numeric precision of one format's BUILD (D746) — reported only when the
  * build states it (file-name token, an INT8 variant, an EdgeTPU compile, a
- * CamStack Core ML export). Absent means "not stated", never "fp32".
+ * Dominevo Core ML export). Absent means "not stated", never "fp32".
  */
 export const ModelFormatPrecisionSchema = z.enum(['fp32', 'fp16', 'int8'])
 
@@ -159,7 +159,7 @@ export type ModelVariantGroup = z.infer<typeof ModelVariantGroupSchema>
 
 /**
  * Where a catalog entry came from. The pipeline stepper partitions the picker
- * by this id (CamStack / plus catalog / plugin catalog / Custom). Absent on older durable
+ * by this id (Dominevo / plus catalog / plugin catalog / Custom). Absent on older durable
  * registry rows — {@link inferModelProvider} fills it at read time. Built-in
  * catalog entries omit it and `getSchema` treats them as `camstack`.
  */
@@ -177,7 +177,7 @@ export interface InferModelProviderInput {
  * Resolve a catalog entry's picker provider. An explicit stamp always wins;
  * otherwise plus catalog/plugin catalog are recognised from id prefix or description.
  * Unstamped BYO registry rows fall through to `custom`. Family `yolov9` is
- * NOT a plugin catalog signal — CamStack ships that family too.
+ * NOT a plugin catalog signal — Dominevo ships that family too.
  */
 export function inferModelProvider(entry: InferModelProviderInput): ModelProviderId {
   if (entry.provider !== undefined) return entry.provider
@@ -209,7 +209,7 @@ const ModelLicenseRecordSchema = z.object({
   url: z.string().url().optional(),
   /** Attribution the licence REQUIRES, verbatim. */
   attribution: z.string().min(1).optional(),
-  /** What CamStack changed. Required when `hosting` is `camstack-hf` (guard). */
+  /** What Dominevo changed. Required when `hosting` is `camstack-hf` (guard). */
   modifications: z.string().min(1).optional(),
   /** Who serves the file a node downloads. */
   hosting: z.enum(MODEL_HOSTING).optional(),
@@ -227,7 +227,7 @@ const ModelLicenseRecordSchema = z.object({
  * Every machine licence surface (`THIRD_PARTY_MODELS.md`, the Hugging Face
  * model table) is GENERATED from these records by
  * `scripts/gen-model-licenses.ts` (D661). Operator-facing docs live in
- * `camstack/docs` → `/docs/detection/models`.
+ * `dominevo/docs` → `/docs/detection/models`.
  */
 export const ModelLicenseSchema = z.preprocess(
   (value) => (typeof value === 'string' ? { weights: value } : value),
@@ -415,14 +415,14 @@ export const ModelCatalogEntrySchema = z.object({
   group: ModelVariantGroupSchema.optional(),
   /**
    * Catalog source for the pipeline stepper's provider-first picker. Absent on
-   * built-in CamStack entries (treated as `camstack`) and on registry rows
+   * built-in Dominevo entries (treated as `camstack`) and on registry rows
    * persisted before this field existed (`inferModelProvider` fills those).
    */
   provider: ModelProviderIdSchema.optional(),
   /**
    * Per-MODEL class map override. Absent ⇒ the step's `StepDefinition.classMap`
    * applies (plus catalog / COCO public catalog). Set on a custom model whose raw
-   * labels already ARE the CamStack macros (plugin catalog identity map).
+   * labels already ARE the Dominevo macros (plugin catalog identity map).
    */
   classMap: DetectionCatalogClassMapSchema.optional(),
   /**

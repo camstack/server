@@ -28,7 +28,7 @@
  * ## Level honesty
  *
  * The cross-process shm frame flow this file was written next to no longer
- * exists: `@camstack/shm-ring` and its multi-process ring specs were deleted
+ * exists: `@dominevo/shm-ring` and its multi-process ring specs were deleted
  * (D763). What stays true, and what this spec covers, is the kernel-side half —
  * the runner topology and the crash → cap-drop wiring — at the same plan-level /
  * TCP-cluster level `addon-runner.spec.ts` uses, deliberately NOT a flaky
@@ -36,8 +36,8 @@
  */
 import { describe, it, expect, afterEach } from 'vitest'
 import { ServiceBroker } from 'moleculer'
-import { resolveRunnerId, resolveAddonPlacement, isIsolatedBuiltin } from '@camstack/types'
-import type { AddonDeclaration, RunnerAddonPlacement, RunnerPlan } from '@camstack/types'
+import { resolveRunnerId, resolveAddonPlacement, isIsolatedBuiltin } from '@dominevo/types'
+import type { AddonDeclaration, RunnerAddonPlacement, RunnerPlan } from '@dominevo/types'
 import { HubNodeRegistry } from '../../moleculer/node-registry.js'
 import { createHubService } from '../../moleculer/hub-service.js'
 import type { HubServiceDeps } from '../../moleculer/hub-service.js'
@@ -60,7 +60,7 @@ interface PlanAddonEntry {
 function deriveRunnerPlan(entries: readonly PlanAddonEntry[]): RunnerPlan {
   const plan = new Map<string, RunnerAddonPlacement[]>()
   for (const entry of entries) {
-    if (entry.packageName === '@camstack/server' && !isIsolatedBuiltin(entry.declaration)) continue
+    if (entry.packageName === '@dominevo/server' && !isIsolatedBuiltin(entry.declaration)) continue
     if (resolveAddonPlacement(entry.declaration) === 'agent-only') continue
     const runnerId = resolveRunnerId(entry.declaration, entry.addonId)
     const bucket = plan.get(runnerId) ?? []
@@ -75,7 +75,7 @@ function mediaAddon(addonId: string): PlanAddonEntry {
   return {
     addonId,
     addonDir: `/opt/addons/${addonId}`,
-    packageName: '@camstack/addon-pipeline',
+    packageName: '@dominevo/addon-pipeline',
     declaration: { execution: { group: undefined, placement: 'any-node' } },
   }
 }

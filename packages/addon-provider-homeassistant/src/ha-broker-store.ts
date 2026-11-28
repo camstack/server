@@ -5,7 +5,7 @@ import {
   type RecordKindHandle,
   type RecordsAccess,
   RecordSecretUnavailableError,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { HaBrokerEntrySchema, type HaBrokerEntry } from './ha-broker-registry.js'
 import { haBrokersEntryKind, type HaBrokerBody, HA_BROKERS_KIND } from './broker-record-kinds.js'
 

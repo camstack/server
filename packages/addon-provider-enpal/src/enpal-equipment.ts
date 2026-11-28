@@ -3,7 +3,7 @@ import {
   type AccessoryChildSpec,
   type ChildLayout,
   type ChildLayoutEntry,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { ENPAL_SYSTEM } from './config.js'
 import { findSpec, isSensorSpecId } from './enpal-catalog.js'

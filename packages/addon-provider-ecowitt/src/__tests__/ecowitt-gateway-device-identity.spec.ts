@@ -13,7 +13,7 @@ import {
   type IScopedLogger,
   mergeIdentifiers,
   type SetIdentifiersInput,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { type EcowittConfig, settingsToEcowittConfig } from '../config.js'
 import {

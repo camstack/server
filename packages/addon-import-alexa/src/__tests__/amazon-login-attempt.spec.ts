@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { LoginProxyResponseView } from '@camstack/types'
+import type { LoginProxyResponseView } from '@dominevo/types'
 import { AmazonLoginAttempt, amazonUpstreams } from '../amazon-auth/login-attempt.js'
 import { FIXTURE_SECRETS, fixtureText } from './helpers/amazon-fake.js'
 import { recordingLogger } from './helpers/recording-logger.js'

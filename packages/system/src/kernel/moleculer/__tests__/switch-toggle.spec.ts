@@ -4,7 +4,7 @@
  * installed at native-cap registration for a provider that did not write it.
  */
 import { describe, expect, it, vi } from 'vitest'
-import type { IScopedLogger, LogExtras } from '@camstack/types'
+import type { IScopedLogger, LogExtras } from '@dominevo/types'
 import {
   classifySwitchOn,
   SwitchToggleRefusedError,

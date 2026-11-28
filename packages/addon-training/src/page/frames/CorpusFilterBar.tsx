@@ -2,7 +2,7 @@
  * Frames filter bar: work-state chips (CHIP_*), multi camera, single collection,
  * multi annotated classes, plus Export for the current filter set.
  */
-import type { RetrainCollection, RetrainFrameWorkState, RetrainMacroClass } from '@camstack/types'
+import type { RetrainCollection, RetrainFrameWorkState, RetrainMacroClass } from '@dominevo/types'
 import {
   Button,
   CHIP_ACTIVE,
@@ -15,7 +15,7 @@ import {
   hubPath,
   usePipelineAnalyticsGetRetrainExportUrl,
   type PickerItem,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Download, Loader2 } from 'lucide-react'
 import { useMemo, useState, type JSX } from 'react'
 import { useT } from '../../i18n/index.js'

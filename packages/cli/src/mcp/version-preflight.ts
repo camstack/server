@@ -96,7 +96,7 @@ export class VersionPreflight {
     if (warning !== null) return warning
     const failure = failureReason(probe)
     if (failure === null) return null
-    this.log(`camstack mcp: version check unavailable: ${failure}`)
+    this.log(`dominevo mcp: version check unavailable: ${failure}`)
     if (this.failureShown) return null
     this.failureShown = true
     return `version check unavailable: ${failure}`
@@ -150,7 +150,7 @@ class PreflightTransport implements Transport {
   ): Promise<void> {
     if (message.params?.name !== VERSION_CHECK_TOOL) {
       const line = await this.preflight.lineForCall().catch((err: unknown) => {
-        process.stderr.write(`camstack mcp: version preflight failed: ${errorText(err)}\n`)
+        process.stderr.write(`dominevo mcp: version preflight failed: ${errorText(err)}\n`)
         return null
       })
       if (line !== null) this.lines.set(message.id, line)

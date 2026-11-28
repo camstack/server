@@ -1,7 +1,7 @@
 // The audio chunk plane's byte format and its ONE expansion to f32le. On the
 // bare entry because both `addon-pipeline` (the broker) and
 // `addon-pipeline-orchestrator` (the window accumulator) bundle it into their
-// own dist, so the lever ships with `camstack deploy` (D455).
+// own dist, so the lever ships with `dominevo deploy` (D455).
 export * from './audio/audio-chunk-format.js'
 export * from './brokers/smtp-inbound.js'
 export type {
@@ -152,7 +152,7 @@ export * from './camera/stream-pick.js'
 export * from './ffmpeg/encode-defaults.js'
 // The reader half of the fMP4 sink. Pure and dependency-free, so it sits in the
 // bare entry beside the argv builder that produces the bytes it cuts; the plane
-// and the child that own state and a process are under `@camstack/types/node`.
+// and the child that own state and a process are under `@dominevo/types/node`.
 export * from './ffmpeg/fmp4-box-splitter.js'
 export * from './ffmpeg/hwaccel.js'
 // The notification gif's filter chain — shared by the broker's ring derive and
@@ -162,7 +162,7 @@ export * from './ffmpeg/gif-derive.js'
 // resolution and the egress sharing key. Lives here (not in an addon) because
 // `addon-pipeline`, `addon-export-hap` and `addon-export-alexa` all need it and
 // addons may never import each other. The node-only spawn/lifecycle wrapper is
-// under `@camstack/types/node` so browser bundles never traverse
+// under `@dominevo/types/node` so browser bundles never traverse
 // `node:child_process`.
 export * from './ffmpeg/invocation.js'
 export * from './ffmpeg/sharing-key.js'
@@ -566,7 +566,7 @@ export * from './types/tracked.js'
 // addon's scoped settings (`addonSettings.getScopedSettings`).
 
 // The one bearer-principal / scope derivation, shared by the kernel,
-// server/backend AND addons (which may not import @camstack/server/system).
+// server/backend AND addons (which may not import @dominevo/server/system).
 export {
   type BearerPayloadShape,
   type BearerPrincipal,
@@ -2959,7 +2959,7 @@ export { evaluateZoneRules, type ZoneRuleEvalResult } from './utils/zone-rule-ev
 // `node:crypto`, which Vite externalises in browser bundles and crashes
 // at runtime when an admin-UI module transitively pulls it in. Server-
 // side consumers (Alexa/HAP export adapters) import it from
-// `@camstack/types/node` instead.
+// `@dominevo/types/node` instead.
 
 // Client-side helpers
 export { bindAddonActions } from './helpers/bind-addon-actions.js'
@@ -2989,9 +2989,9 @@ export {
 } from './inference/runtime-capabilities.js'
 
 // Node-only infrastructure utilities are exposed on the
-// `@camstack/types/node` sub-entry, NOT here. Keeping `node:fs` / `node:path`
+// `@dominevo/types/node` sub-entry, NOT here. Keeping `node:fs` / `node:path`
 // imports out of the root entry is what lets the browser-side widget
-// bundlers (Vite + rollup) consume `@camstack/types` without choking on
+// bundlers (Vite + rollup) consume `@dominevo/types` without choking on
 // `__vite-browser-external` placeholders.
 
 export type { SiteZone } from './device/site-zone.js'

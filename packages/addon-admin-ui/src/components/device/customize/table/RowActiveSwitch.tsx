@@ -3,7 +3,7 @@
  * for every kind whose stored feature can be switched off (a power source, an
  * identity-link row, an event). A row is never given a checkbox of its own.
  */
-import { Switch } from '@camstack/ui-library'
+import { Switch } from '@dominevo/ui-library'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 

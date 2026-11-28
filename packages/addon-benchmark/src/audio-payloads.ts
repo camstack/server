@@ -19,19 +19,19 @@
  *    classification of a different one. `buildAudioRunInput` refuses to
  *    produce a filename-less payload rather than leaving that reachable.
  */
-import type { AudioResult, ScoredLabel } from '@camstack/types'
+import type { AudioResult, ScoredLabel } from '@dominevo/types'
 import { translate } from './i18n/index.js'
 
 /**
  * The debug step key BOTH audio producers write.
  *
- * Ideally this constant would live in `@camstack/types` next to
+ * Ideally this constant would live in `@dominevo/types` next to
  * `AudioResult` and be imported by the writers and this reader alike,
  * making the mismatch unrepresentable. It cannot yet: this page is a
- * Module-Federation remote that declares `@camstack/types` with
- * `import: false`, so it consumes the HOST's copy — a new `@camstack/types`
+ * Module-Federation remote that declares `@dominevo/types` with
+ * `import: false`, so it consumes the HOST's copy — a new `@dominevo/types`
  * export type-checks here and is `undefined` at runtime until a
- * `@camstack/server` carrying it is installed. Until that train,
+ * `@dominevo/server` carrying it is installed. Until that train,
  * `packages/addon-benchmark/src/__tests__/audio-payloads.spec.ts` reads the
  * literal off both producers and asserts it equals this value.
  */

@@ -32,8 +32,8 @@ function seedVersionDir(root: string): string {
   writeDevUploadManifest(versionDir, {
     version: VERSION,
     packages: {
-      '@camstack/server': 'camstack-server.tgz',
-      '@camstack/types': 'camstack-types.tgz',
+      '@dominevo/server': 'camstack-server.tgz',
+      '@dominevo/types': 'camstack-types.tgz',
     },
   })
   return versionDir

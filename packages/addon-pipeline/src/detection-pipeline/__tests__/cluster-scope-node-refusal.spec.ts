@@ -10,8 +10,8 @@
  * It uses the REAL provider and the REAL catalog. A stub catalog would only
  * prove the stub.
  */
-import type { IScopedLogger } from '@camstack/types'
-import { DEFAULT_CLUSTER_STEP_MODELS } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
+import { DEFAULT_CLUSTER_STEP_MODELS } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { assumeKnownClusterRowIsDefaults } from './fixtures/known-cluster-row.js'
 import { DetectionPipelineProvider } from '../provider.js'

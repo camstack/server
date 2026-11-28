@@ -13,7 +13,7 @@ import {
   systemEventFamilyProblems,
   type NcSystemEventCondition,
   type SystemEvent,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { NcDeviceLookup } from '../device-directory.js'
 import { incomingFromSystemEvent } from '../event-intake.js'

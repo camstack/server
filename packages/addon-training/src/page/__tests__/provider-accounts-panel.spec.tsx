@@ -1,4 +1,4 @@
-import type { TrainingProviderDescriptor } from '@camstack/types'
+import type { TrainingProviderDescriptor } from '@dominevo/types'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { ProviderAccountsPanel, TRAINING_PROVIDERS_PATH } from '../ProviderAccountsPanel.js'

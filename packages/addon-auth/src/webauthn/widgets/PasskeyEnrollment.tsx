@@ -16,8 +16,8 @@
 import { useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { AlertCircle, Fingerprint, KeyRound, Loader2, Trash2 } from 'lucide-react'
-import { useSystem, type WidgetProps, Button, Input } from '@camstack/ui-library'
-import type { PasskeySummary } from '@camstack/types'
+import { useSystem, type WidgetProps, Button, Input } from '@dominevo/ui-library'
+import type { PasskeySummary } from '@dominevo/types'
 import { runPasskeyAuthentication, runPasskeyRegistration } from './passkey-ceremony'
 import { useT } from '../../i18n'
 

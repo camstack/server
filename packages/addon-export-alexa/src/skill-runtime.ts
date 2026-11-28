@@ -21,7 +21,7 @@ import {
   RecordSecretUnavailableError,
   readExposedName,
   exposedNameStoreOf,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { z } from 'zod'
 
 import { ActionSceneExports } from './action-scenes.js'

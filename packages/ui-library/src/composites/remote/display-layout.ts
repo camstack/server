@@ -3,7 +3,7 @@
  * built-in preset that covers the most of the device's roles — the same
  * starting layouts the layout editor offers — so a key is never a raw id.
  */
-import type { RemoteLayoutPayload } from '@camstack/types'
+import type { RemoteLayoutPayload } from '@dominevo/types'
 import { REMOTE_LAYOUT_PRESETS } from './layout-presets'
 
 export function layoutForRemoteCommands(

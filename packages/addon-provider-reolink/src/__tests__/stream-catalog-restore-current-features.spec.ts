@@ -5,7 +5,7 @@
  * hold may open, so the restored catalog must carry the camera's CURRENT
  * features, never the stored ones.
  */
-import { streamCatalogCapability } from '@camstack/types'
+import { streamCatalogCapability } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { ReolinkCamera } from '../reolink-camera.js'
 

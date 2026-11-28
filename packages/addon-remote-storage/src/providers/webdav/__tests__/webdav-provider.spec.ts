@@ -17,7 +17,7 @@ import type {
   ResponseDataDetailed,
   BufferLike,
 } from 'webdav'
-import type { IScopedLogger, StorageLocation, LogExtras, LogTags } from '@camstack/types'
+import type { IScopedLogger, StorageLocation, LogExtras, LogTags } from '@dominevo/types'
 import { WebDavStorageProvider } from '../webdav-provider.js'
 
 const noopLogger: IScopedLogger = {

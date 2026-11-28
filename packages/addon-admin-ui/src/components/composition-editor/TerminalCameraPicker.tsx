@@ -4,7 +4,7 @@
  * Terminal at all the picker links to the Terminal page, where one is made.
  * A list that has not answered is never "none" (D315).
  */
-import { Select, useCoreBlocksListCompositions, useInstancesOfCap } from '@camstack/ui-library'
+import { Select, useCoreBlocksListCompositions, useInstancesOfCap } from '@dominevo/ui-library'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'

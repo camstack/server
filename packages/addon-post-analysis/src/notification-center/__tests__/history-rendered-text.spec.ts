@@ -2,7 +2,7 @@
  * History keeps the title and body that were sent. A detection row used to
  * store neither, so the history page could not show the sentence the phone got.
  */
-import { NcHistoryEntrySchema } from '@camstack/types'
+import { NcHistoryEntrySchema } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import { NcDispatcher, type NcSendInput, type NcTargetRef } from '../dispatcher.js'

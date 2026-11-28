@@ -1,5 +1,5 @@
 /**
- * Camera & PTZ types — shared between CamStack app and proxy.
+ * Camera & PTZ types — shared between Dominevo app and proxy.
  */
 
 // ---------------------------------------------------------------------------

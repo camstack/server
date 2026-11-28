@@ -8,7 +8,7 @@ import type {
   LlmRuntimeStatus,
   ManagedRuntimeConfig,
   ModelCatalogEntry,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { LlmCallRequest, LlmClient } from '../client/llm-client.js'
 import type { LlamaStartConfig, LlamaSupervisor } from '../runtime/llama-supervisor.js'

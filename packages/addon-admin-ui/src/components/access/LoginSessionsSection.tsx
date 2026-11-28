@@ -4,7 +4,7 @@
  * can be neither signed out nor selected here: ending it is the page's own
  * Sign out.
  */
-import { trpc, useConfirm } from '@camstack/ui-library'
+import { trpc, useConfirm } from '@dominevo/ui-library'
 import { LogOut, MonitorSmartphone } from 'lucide-react'
 import { useMemo, useState, type ReactNode } from 'react'
 

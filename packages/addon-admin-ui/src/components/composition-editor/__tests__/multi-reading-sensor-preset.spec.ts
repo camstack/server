@@ -8,9 +8,9 @@ import {
   type CompositionSourceRef,
   DeviceRole,
   DeviceType,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
-import { sensorLayoutOf } from '@camstack/ui-library'
+import { sensorLayoutOf } from '@dominevo/ui-library'
 import { missingSlots, presetById, type CompositionPreset } from '../composition-presets'
 
 const ref = (stableId: string): CompositionSourceRef => ({

@@ -20,7 +20,7 @@
  */
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 /** Called for each finalized segment whose flat file is on disk. `flatAbsPath`
  *  is the absolute path of the flat `<epochSec>.m4s` file under `outDir`; the

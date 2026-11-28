@@ -3,7 +3,7 @@ import {
   type GroupCommandResult,
   type GroupHelperSpec,
   type HelperSpec,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { actuatorDispatcher, type ActuatorDispatchInput } from '../actuator-dispatch.js'
 import {

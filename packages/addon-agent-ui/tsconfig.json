@@ -10,7 +10,7 @@
     "rootDir": "..",
     "declaration": false,
     "paths": {
-      "@camstack/ui-library": [
+      "@dominevo/ui-library": [
         "../ui-library/src/index.ts"
       ]
     },

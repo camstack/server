@@ -23,7 +23,7 @@
  *    is worse than one that failed loudly.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { displayLabel } from '../pipeline/label-tier.js'
 import type { PlannedTrack, TrainingExportPlan } from './dataset-plan.js'
 import { tarBlocks, tarNameTooLong, tarTrailer } from './tar-stream.js'

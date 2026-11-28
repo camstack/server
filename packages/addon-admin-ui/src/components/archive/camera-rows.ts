@@ -15,7 +15,7 @@ import type {
   HealthFinding,
   RecordingDeviceUsage,
   RecordingStorageMode,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** The slice of a CameraStatus the table reads. */
 export type RowStatusFacts = Pick<

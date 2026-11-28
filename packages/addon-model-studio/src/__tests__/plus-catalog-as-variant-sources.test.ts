@@ -5,7 +5,7 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
-import { buildModelVariantGroups } from '@camstack/types'
+import { buildModelVariantGroups } from '@dominevo/types'
 import {
   plusFacets,
   toPlusModelSummaries,

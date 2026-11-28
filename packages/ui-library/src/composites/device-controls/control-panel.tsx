@@ -19,7 +19,7 @@ import {
   type ControlStatus,
   type DeviceDisplayOverride,
   type ReadingQuantity,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 // ── Datetime input normalization helpers ──────────────────────────────────────
 //

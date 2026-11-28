@@ -21,7 +21,7 @@ import {
   compositionSourceKey,
   type ExpressionValue,
   toExpressionValue,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { type DeviceSnapshot, readPath } from './source-picker-model'
 import i18n from '../../../i18n/index'
 

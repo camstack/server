@@ -4,8 +4,8 @@
  * from GitHub when opened and parsed here by the one parser; nothing is stored
  * and the operator applies the result explicitly, like the SmartIR import.
  */
-import type { SmartIrDraft } from '@camstack/types'
-import { Button, Input } from '@camstack/ui-library'
+import type { SmartIrDraft } from '@dominevo/types'
+import { Button, Input } from '@dominevo/ui-library'
 import { ChevronRight, FileText, Folder } from 'lucide-react'
 import { type ReactNode, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'

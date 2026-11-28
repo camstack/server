@@ -1,4 +1,4 @@
-import { DeviceRole, DeviceType } from '@camstack/types'
+import { DeviceRole, DeviceType } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { decodeDeviceRow } from '../device-row-store.js'
 

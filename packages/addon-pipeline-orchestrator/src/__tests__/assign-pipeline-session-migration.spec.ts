@@ -21,8 +21,8 @@
  * two-node broker, then call `assignPipeline` mid-session.
  */
 import { afterEach, describe, expect, it } from 'vitest'
-import { EventCategory } from '@camstack/types'
-import type { CameraDetectionConfig } from '@camstack/types'
+import { EventCategory } from '@dominevo/types'
+import type { CameraDetectionConfig } from '@dominevo/types'
 import PipelineOrchestratorAddon from '../index.js'
 import {
   makeFakeBroker,

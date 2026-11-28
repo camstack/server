@@ -4,8 +4,8 @@
  * a patch can never replace a map half-read, and while the keychain is locked the state takes NO
  * write (a half-read record must never overwrite the credential, D49).
  */
-import type { IScopedLogger, RecordKindHandle } from '@camstack/types'
-import { RecordSecretUnavailableError } from '@camstack/types'
+import type { IScopedLogger, RecordKindHandle } from '@dominevo/types'
+import { RecordSecretUnavailableError } from '@dominevo/types'
 import { EMPTY_SKILL_STATE, type SkillStateBody } from './skill-records.js'
 
 export interface SkillStateStoreDeps {

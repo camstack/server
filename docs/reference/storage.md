@@ -4,7 +4,7 @@
 
 # Storage map
 
-Every SQLite table CamStack creates, and the file that owns it. There is no
+Every SQLite table Dominevo creates, and the file that owns it. There is no
 schema file to read — tables come into existence five different ways, so a
 map showing only one of them would be worse than none.
 

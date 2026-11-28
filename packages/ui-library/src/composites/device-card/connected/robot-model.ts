@@ -1,5 +1,5 @@
 /** Pure mapping from `vacuum-control` / `lawn-mower-control` to the robot scene. */
-import type { LawnMowerControlStatus, VacuumControlStatus } from '@camstack/types'
+import type { LawnMowerControlStatus, VacuumControlStatus } from '@dominevo/types'
 import type { RobotActivity } from '../illustrations/RobotIllustration'
 
 const FULL = 100

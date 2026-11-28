@@ -1,4 +1,4 @@
-import { climateControlCapability } from '@camstack/types'
+import { climateControlCapability } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { climateSliceFromState } from '../devices/ha-climate-device.js'
 import type { HaEntityState } from '../ha-types.js'

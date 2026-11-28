@@ -15,7 +15,7 @@ import {
   type InferNativeProvider,
   type IScopedLogger,
   type StateRefreshPolicy,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { EcowittConfig } from './config.js'
 import type { EcowittFacadeResolver } from './ecowitt-gateway.js'
 

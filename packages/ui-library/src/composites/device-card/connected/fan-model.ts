@@ -9,7 +9,7 @@ import {
   type FanOscillationAxis,
   type FanPreset,
   type FanPresetApplyResult,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { MenuOption } from '../parts/MenuButton'
 import type { FanAxisModel, FanCardModel } from '../scenes/fan/model'
 

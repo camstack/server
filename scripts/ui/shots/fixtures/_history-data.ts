@@ -10,7 +10,7 @@ import type {
   DeviceHistoryQueryResult,
   DeviceHistoryResolution,
   DeviceHistorySeriesInfo,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { D, H, MINUTE, NOW } from './_time'
 
 type Kind = DeviceHistorySeriesInfo['kind']

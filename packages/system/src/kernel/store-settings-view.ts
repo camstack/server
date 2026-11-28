@@ -2,8 +2,8 @@
  * The sync-`ISettingsStore` backend of `ConfigManager.createSettingsView`.
  * Split out of `config-manager.ts` (D675) so that file stays one class.
  */
-import type { StoredKeyRead } from '@camstack/types'
-import { asJsonObject } from '@camstack/types/addon'
+import type { StoredKeyRead } from '@dominevo/types'
+import { asJsonObject } from '@dominevo/types/addon'
 import type { SettingsViewBackend } from './settings-view-types.js'
 
 /** The `ConfigManager` surface this backend reads and writes through. */

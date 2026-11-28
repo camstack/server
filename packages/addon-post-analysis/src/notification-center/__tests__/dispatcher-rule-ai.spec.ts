@@ -16,7 +16,7 @@
  * And the neutralisation: a row with no `ai` policy must reach `send` having
  * never touched the analyst, with a body byte-for-byte what it was before.
  */
-import type { MediaFile } from '@camstack/types'
+import type { MediaFile } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import { NcDispatcher, type NcSendInput, type NcTargetRef } from '../dispatcher.js'

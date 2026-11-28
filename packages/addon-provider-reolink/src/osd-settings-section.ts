@@ -12,7 +12,7 @@ import {
   type ConfigSection,
   type ConfigSelectField,
   OPERATOR_WRITTEN_STALE_MS,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { ReolinkCameraConfig } from './schema.js'
 
 /**
@@ -34,7 +34,7 @@ import type { ReolinkCameraConfig } from './schema.js'
  *
  * There is deliberately NO operator-override input here (D62-shape): the
  * driver config used to hold a second copy of these facts (`osd*` keys) that
- * shadowed the camera forever after one CamStack write. The snapshot is the
+ * shadowed the camera forever after one Dominevo write. The snapshot is the
  * only source; a write invalidates it by triggering the post-save `osd`
  * slice re-read, so the form always shows what the camera actually holds.
  *

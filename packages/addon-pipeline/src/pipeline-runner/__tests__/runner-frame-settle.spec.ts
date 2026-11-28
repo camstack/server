@@ -7,7 +7,7 @@
  * superseded on the latest-only queue, cleared by a detach, or failed. Every
  * such exit is a frame the burst's verdict did NOT see, and it has to count.
  */
-import type { DecodedFrame, FrameResult } from '@camstack/types'
+import type { DecodedFrame, FrameResult } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { makeScopedLogger } from '../../__tests__/support/scoped-logger.js'
 

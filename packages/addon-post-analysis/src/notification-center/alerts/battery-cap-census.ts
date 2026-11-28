@@ -7,7 +7,7 @@
  * restarting holds no native binding at all, and that is no answer about the
  * battery: the census says so with `nativeBindings: 0`.
  */
-import { batteryCapability } from '@camstack/types'
+import { batteryCapability } from '@dominevo/types'
 
 export interface NcBatteryCapCensus {
   /** The device still has a `battery` binding. */

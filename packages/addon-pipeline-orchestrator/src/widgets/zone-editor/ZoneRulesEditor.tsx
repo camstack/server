@@ -17,8 +17,8 @@
  */
 import { Plus, Trash2, Save } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import type { Zone, ZoneRule, ZoneRuleStage, DeviceProxy } from '@camstack/types'
-import { MACRO_LABELS } from '@camstack/types'
+import type { Zone, ZoneRule, ZoneRuleStage, DeviceProxy } from '@dominevo/types'
+import { MACRO_LABELS } from '@dominevo/types'
 import { useT } from '../../i18n/index.js'
 import { zoneRuleStageTitle } from './zone-rule-stage.js'
 import { stageHasClassFilter } from './zone-rule-class-filter.js'
@@ -35,7 +35,7 @@ import {
   TEXT_SECTION_LABEL,
   Button,
   Input,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 
 // Pre-built macro class chips. The pipeline today only routes the three
 // macro classes (person / vehicle / animal); rules referencing raw COCO

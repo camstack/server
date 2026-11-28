@@ -34,7 +34,7 @@
  * would make it answer the per-camera question wrongly.
  */
 
-import type { IScopedLogger, NcRuleTarget } from '@camstack/types'
+import type { IScopedLogger, NcRuleTarget } from '@dominevo/types'
 import { deviceDisplayLabel, type NcDeviceIdentity } from '../device-directory.js'
 import type { NcArtifactPublishMeta } from '../artifact-index.js'
 import type { NcArtifactPublication } from '../artifact-plane.js'

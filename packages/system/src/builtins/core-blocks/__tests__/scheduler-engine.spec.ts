@@ -5,7 +5,7 @@ import {
   type SchedulerPoint,
   type SchedulerProfile,
   DeviceType,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { ALL_DAYS, at, harness } from './scheduler-support.js'
 import type { StepConditionDoor } from '../step-condition-door.js'

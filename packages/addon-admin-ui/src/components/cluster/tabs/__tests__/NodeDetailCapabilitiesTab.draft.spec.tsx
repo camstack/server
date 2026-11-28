@@ -3,7 +3,7 @@
  * with the STORED binding, never with the displayed default: choosing the default provider while
  * nothing is bound still writes the explicit binding.
  */
-import { selectOption } from '@camstack/ui-library/testing'
+import { selectOption } from '@dominevo/ui-library/testing'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -13,8 +13,8 @@ const state = vi.hoisted(() => ({
   setBinding: vi.fn(),
 }))
 
-vi.mock('@camstack/ui-library', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@camstack/ui-library')>()),
+vi.mock('@dominevo/ui-library', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@dominevo/ui-library')>()),
   usePipelineOrchestratorGetCapabilityBindings: () => ({
     data: state.bindings,
     isLoading: false,

@@ -17,7 +17,7 @@ let providers: Array<{ provider: string; label: string }> = []
 let ownLinks: Array<Record<string, unknown>> = []
 let userLinks: Array<Record<string, unknown>> = []
 
-vi.mock('@camstack/ui-library', () => ({
+vi.mock('@dominevo/ui-library', () => ({
   Button: ({ children, onClick }: { children: unknown; onClick: () => void }) => (
     <button onClick={onClick}>{children as string}</button>
   ),
@@ -247,7 +247,7 @@ describe('LinkedSignInsSection', () => {
   it('shows the outcome the SSO finish sent back', () => {
     window.history.replaceState(null, '', '/system/my-access?linkError=conflict')
     render(<LinkedSignInsSection />)
-    expect(screen.getByText(/already linked to another CamStack user/)).toBeTruthy()
+    expect(screen.getByText(/already linked to another Dominevo user/)).toBeTruthy()
   })
 })
 

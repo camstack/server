@@ -46,8 +46,8 @@
  * surface is {@link CgroupFileReader}, one method wide.
  */
 
-import type { ContainerMemorySnapshot, IScopedLogger } from '@camstack/types'
-import { errMsg } from '@camstack/types'
+import type { ContainerMemorySnapshot, IScopedLogger } from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
 import { readFileSync } from 'node:fs'
 
 /**
@@ -83,14 +83,14 @@ export const CGROUP_MOUNT_ROOT = '/sys/fs/cgroup'
  *
  * **debugfs, and it is not mounted in our containers.** Verified on the live
  * hub on 2026-08-29: readable on the Unraid host (`6014 shrinkable [0 free]
- * objects, 1194934272 bytes`), `ENOENT` inside the `CamStack` container where
+ * objects, 1194934272 bytes`), `ENOENT` inside the `Dominevo` container where
  * `native-metrics` actually runs. It is probed ONCE per process and latched —
  * a bind mount cannot appear under a running container — so an absent file
  * costs one failed `open` for the life of the runner and one log line, never a
  * failure per tick.
  *
  * Making it populate is a one-line change on the container, not here:
- * mounting `/sys/kernel/debug` read-only into `CamStack` fills this field on
+ * mounting `/sys/kernel/debug` read-only into `Dominevo` fills this field on
  * the next sample with no code change.
  */
 export const I915_GEM_OBJECTS_PATH = '/sys/kernel/debug/dri/0/i915_gem_objects'

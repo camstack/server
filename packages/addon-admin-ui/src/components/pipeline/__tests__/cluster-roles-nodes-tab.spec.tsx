@@ -1,6 +1,6 @@
 /// <reference types="@testing-library/jest-dom" />
 
-import { selectOption, selectOptionLabels } from '@camstack/ui-library/testing'
+import { selectOption, selectOptionLabels } from '@dominevo/ui-library/testing'
 import * as jestDomMatchers from '@testing-library/jest-dom/matchers'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, within } from '@testing-library/react'
@@ -56,8 +56,8 @@ const NODES = [
     addons: [],
   },
 ]
-vi.mock('@camstack/ui-library', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@camstack/ui-library')>()
+vi.mock('@dominevo/ui-library', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dominevo/ui-library')>()
   return {
     ...actual,
     useClusterNodes: () => ({ nodes: NODES }),

@@ -5,7 +5,7 @@
  * (`agent-bootstrap`) to convert a `ChildLogMessage` received over a UDS
  * channel into the `writeFromWorker` / `log-receiver.ingest` entry shape.
  *
- * Kept in `@camstack/kernel` so both the hub (server/backend) and the agent
+ * Kept in `@dominevo/kernel` so both the hub (server/backend) and the agent
  * (`packages/agent`) can import it without cross-package coupling.
  *
  * The shape produced mirrors the existing `$hub.log` / `onLog` mapping in
@@ -13,7 +13,7 @@
  * are omitted rather than set to `undefined` so callers never receive stray
  * keys in spread operations.
  */
-import type { LogTags } from '@camstack/types'
+import type { LogTags } from '@dominevo/types'
 import type { ChildLogMessage } from './child-cap-protocol.js'
 
 /**

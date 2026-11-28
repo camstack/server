@@ -22,7 +22,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 // `components/pipeline/__tests__/` already use.
 expect.extend(jestDomMatchers)
 
-import type { CapabilityRegistryAnswer } from '@camstack/ui-library'
+import type { CapabilityRegistryAnswer } from '@dominevo/ui-library'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { parseSseBuffer } from '../../../lib/terminal-io'
 
@@ -164,9 +164,9 @@ vi.mock('../../../components/instances/InstancesTable', () => ({
   ),
 }))
 
-vi.mock('@camstack/ui-library', async () => {
+vi.mock('@dominevo/ui-library', async () => {
   const actual =
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+    await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   const query = <T,>(data: T) => ({ data, isLoading: false, isError: false, refetch: vi.fn() })
   return {
     ...actual,

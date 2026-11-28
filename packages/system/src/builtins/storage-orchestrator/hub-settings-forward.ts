@@ -64,7 +64,7 @@ import {
   type IScopedLogger,
   type ISettingsStoreProvider,
   settingsStoreCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   HUB_CAP_FWD_ACTION,
   type HubCapForwardParams,
@@ -96,7 +96,7 @@ export type HubForwardCall = <TResult>(envelope: HubForwardEnvelope) => Promise<
  * Unset or `'hub'` means hub — the launcher's own default, mirrored from
  * `resolveNodeRole` (`server/backend/src/node-role.ts`) the same way
  * `settingsStoreIsAuthoritativeHere` mirrors it, and duplicated rather than
- * imported for the same reason: `@camstack/server/system` is a dependency OF the
+ * imported for the same reason: `@dominevo/server/system` is a dependency OF the
  * backend, not the other way round.
  *
  * Anything else is an agent, and an agent's answer is the hub's store.

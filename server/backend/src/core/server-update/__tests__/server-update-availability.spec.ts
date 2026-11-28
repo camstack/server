@@ -1,5 +1,5 @@
 import * as path from 'node:path'
-import type { IEventBus, IScopedLogger, SystemEvent } from '@camstack/types'
+import type { IEventBus, IScopedLogger, SystemEvent } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { ServerUpdateService } from '../server-update.service.js'
 
@@ -37,7 +37,7 @@ describe('ServerUpdateService availability event', () => {
       category: 'update.available',
       data: {
         target: 'server',
-        packageName: '@camstack/server',
+        packageName: '@dominevo/server',
         latestVersion: '99.0.0',
       },
     })

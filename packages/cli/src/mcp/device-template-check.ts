@@ -4,8 +4,8 @@
  * through the one renderer; a template it would refuse is refused here, with its reason,
  * instead of failing silently the first time the automation runs.
  */
-import { DeviceTemplateRefusalSchema, collectDeviceTemplates, holdVarSlots } from '@camstack/types'
-import type { HubClient } from '@camstack/develop'
+import { DeviceTemplateRefusalSchema, collectDeviceTemplates, holdVarSlots } from '@dominevo/types'
+import type { HubClient } from '@dominevo/develop'
 import { z } from 'zod'
 import { readQuery } from './ops-hub.js'
 

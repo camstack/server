@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import type { ConfigUISchema } from '@camstack/types'
+import type { ConfigUISchema } from '@dominevo/types'
 import { buildSignInGuideFields, type SignInGuideInput } from '../shared/sign-in-guide.js'
 import { HOMECOM_REDIRECT_URI } from '../shared/sign-in-redirects.js'
 

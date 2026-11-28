@@ -14,7 +14,7 @@
  * on every write, so a tail is never swallowed while the store is in use — and
  * {@link EmbeddingRefusalReport.flush} reports everything left.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 /** Why an object embedding was not written. */
 export type EmbeddingRefusalReason =

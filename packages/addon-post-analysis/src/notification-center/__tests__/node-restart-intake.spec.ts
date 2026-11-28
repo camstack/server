@@ -1,4 +1,4 @@
-import { createEvent, type PendingRestartMarkerPayload } from '@camstack/types'
+import { createEvent, type PendingRestartMarkerPayload } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { incomingFromSystemEvent } from '../event-intake.js'
 import { NcTextCatalog } from '../text-catalog.js'
@@ -41,8 +41,8 @@ describe('system.restarting → node-restarting / node-updating', () => {
     const system = restarting({
       kind: 'framework-update',
       requestedAt: 1_000,
-      requestedBy: 'server-update: @camstack/server@1.2.500',
-      packageName: '@camstack/server',
+      requestedBy: 'server-update: @dominevo/server@1.2.500',
+      packageName: '@dominevo/server',
       fromVersion: '1.2.499',
       toVersion: '1.2.500',
       nodeId: 'agent-a',
@@ -53,12 +53,12 @@ describe('system.restarting → node-restarting / node-updating', () => {
       bodyKey: 'system.node-updating.body',
       textParams: {
         nodeId: 'agent-a',
-        packageName: '@camstack/server',
+        packageName: '@dominevo/server',
         fromVersion: '1.2.499',
         toVersion: '1.2.500',
       },
       nodeId: 'agent-a',
-      packageName: '@camstack/server',
+      packageName: '@dominevo/server',
     })
   })
 
@@ -67,19 +67,19 @@ describe('system.restarting → node-restarting / node-updating', () => {
       kind: 'framework-update',
       what: 'desktop-shell',
       requestedAt: 1_000,
-      packageName: 'CamStack desktop app',
+      packageName: 'Dominevo desktop app',
       fromVersion: '1.2.10',
       toVersion: '1.2.11',
       nodeId: 'mac-mini',
     })
     expect(shell).toMatchObject({
       kind: 'node-updating',
-      textParams: { nodeId: 'mac-mini', packageName: 'CamStack desktop app', toVersion: '1.2.11' },
+      textParams: { nodeId: 'mac-mini', packageName: 'Dominevo desktop app', toVersion: '1.2.11' },
     })
     const closure = restarting({
       kind: 'framework-update',
       requestedAt: 1_000,
-      packageName: '@camstack/server',
+      packageName: '@dominevo/server',
       toVersion: '1.2.11',
       nodeId: 'mac-mini',
     })
@@ -100,7 +100,7 @@ describe('system.restarting → node-restarting / node-updating', () => {
     const system = restarting({
       kind: 'system',
       requestedAt: 1,
-      requestedBy: 'server-update: @camstack/server@1.2.501',
+      requestedBy: 'server-update: @dominevo/server@1.2.501',
     })
     expect(system).toMatchObject({
       kind: 'node-updating',
@@ -117,7 +117,7 @@ describe('system.restarting → node-restarting / node-updating', () => {
     const system = restarting({
       kind: 'framework-update',
       requestedAt: 1,
-      packageName: '@camstack/server',
+      packageName: '@dominevo/server',
       fromVersion: '1.2.499',
       toVersion: '1.2.500',
       nodeId: 'hub',
@@ -126,7 +126,7 @@ describe('system.restarting → node-restarting / node-updating', () => {
     const en = new NcTextCatalog({ language: 'en' })
     const vars = system?.textParams ?? {}
     expect(en.text({ key: system?.bodyKey ?? '', vars })).toBe(
-      '@camstack/server on hub is updating 1.2.499 → 1.2.500 and restarts now',
+      '@dominevo/server on hub is updating 1.2.499 → 1.2.500 and restarts now',
     )
     expect(italian.text({ key: system?.titleKey ?? '', vars })).toBe('Nodo in aggiornamento — hub')
     const plain = restarting({ kind: 'manual', requestedAt: 1, nodeId: 'mac-mini' })

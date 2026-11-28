@@ -8,7 +8,7 @@ import {
   type AutomationHttpRequestStep,
   type AutomationProbeStep,
   HTTP_HEADERS_MAX,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export type HttpHeaders = NonNullable<AutomationHttpRequestStep['headers']>
 

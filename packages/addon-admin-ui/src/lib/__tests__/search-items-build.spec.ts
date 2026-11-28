@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { generateAutomationBlock, LINKED_TRIGGER_TEMPLATE_ID } from '@camstack/types'
+import { generateAutomationBlock, LINKED_TRIGGER_TEMPLATE_ID } from '@dominevo/types'
 import type {
   ActionEntry,
   CompositionView,
   CoreBlock,
   Scheduler,
   TemplateRecord,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { filterSearchItems } from '../global-search'
 import { buildBuildSearchItems, buildEditorPath } from '../search-items-build'
 

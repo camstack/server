@@ -25,7 +25,7 @@
  * server idle-tears-down (the lookup returns null): the lib's real
  * `created.sdp` is always what gets advertised.
  */
-import type { CamStreamDescriptor } from '@camstack/types'
+import type { CamStreamDescriptor } from '@dominevo/types'
 
 /**
  * Minimal view of a live rfc4571 loopback server needed to upgrade a native

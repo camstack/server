@@ -7,7 +7,7 @@
  * tombstoned removal as any device (D865), each one listed in the log. A row
  * whose parent exists is never touched, and neither is a top-level row.
  */
-import type { MigrationProcedureResult } from '@camstack/types'
+import type { MigrationProcedureResult } from '@dominevo/types'
 
 export interface OrphanRow {
   readonly id: number

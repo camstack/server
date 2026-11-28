@@ -3,7 +3,7 @@
  * Hub-local: read off the registered provider object. Cross-process: carried by
  * the `DeviceBindingsChanged` event the worker emits at registration.
  */
-import { CapabilityRegistry, DeviceRegistry } from '@camstack/server/system'
+import { CapabilityRegistry, DeviceRegistry } from '@dominevo/server/system'
 import {
   type AddonContext,
   coverCapability,
@@ -11,7 +11,7 @@ import {
   type IEventBus,
   type IScopedLogger,
   type SystemEvent,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { makeRecordsAccessForOwner } from '../../sqlite-storage/__tests__/support/records-world.js'
 import { DeviceManagerAddon } from '../device-manager.addon.js'

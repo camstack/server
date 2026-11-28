@@ -23,7 +23,7 @@ import {
   useFaceGalleryListRecentFaces,
   useFaceGalleryUnassignFace,
   useFaceGalleryUnassignFaces,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   CheckSquare,

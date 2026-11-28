@@ -1,4 +1,4 @@
-import type { DeviceHistoryQueryManyEntry } from '@camstack/types'
+import type { DeviceHistoryQueryManyEntry } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { readItemId } from '../../../device-history/use-device-history'
 import { pickPrimaryTrend, primaryTrendKeys } from '../primary-trend'

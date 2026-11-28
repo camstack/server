@@ -3,7 +3,7 @@
  */
 import { describe, expect, it, vi } from 'vitest'
 import { Accessory, Categories, uuid as HapUuid } from '@homebridge/hap-nodejs'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { BridgeHost } from '../bridge-host.js'
 import { MAX_BRIDGED_ACCESSORIES } from '../bridge-policy.js'
 
@@ -23,7 +23,7 @@ function makeHost(publish = vi.fn(async () => {})) {
     withTags: () => log,
   }
   const host = new BridgeHost({
-    displayName: 'CamStack Bridge',
+    displayName: 'Dominevo Bridge',
     uuid: HapUuid.generate('camstack:test:bridge'),
     pincode: '123-45-678',
     logger: log,

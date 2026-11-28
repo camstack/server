@@ -19,7 +19,7 @@ import type {
   ObjectDetection,
   PipelineStepInput,
   RunnerCameraConfig,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { makeRunnerCameraConfig } from '../../__tests__/support/runner-camera-config.js'
 import { localFrameRegistry } from '../../session-decode/local-frame-registry.js'

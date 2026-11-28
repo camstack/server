@@ -6,7 +6,7 @@
  * empty rather than look broken, and a room's zone must be edited in exactly
  * one place.
  */
-import { selectOption } from '@camstack/ui-library/testing'
+import { selectOption } from '@dominevo/ui-library/testing'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 

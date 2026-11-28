@@ -14,7 +14,7 @@ import {
   type DataColumn,
   type DataTableFilterConfig,
   type KebabMenuItem,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { ExternalLink, Pencil, SlidersHorizontal, Trash2 } from 'lucide-react'
 import {
   CcuDevicesResultSchema,

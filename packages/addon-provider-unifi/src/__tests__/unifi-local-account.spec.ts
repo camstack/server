@@ -7,7 +7,7 @@
  * push updates a port's link without a poll; a refusal keeps its reason through the connection
  * test; with an API key too, the account lays its ports over the key's devices by MAC.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { settingsToConnection } from '../config.js'
 import { UnifiAiounifiClient } from '../unifi-client-aiounifi.js'

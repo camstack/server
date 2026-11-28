@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { DeviceType, type DiscoveredChildDevice } from '@camstack/types'
+import { DeviceType, type DiscoveredChildDevice } from '@dominevo/types'
 
 import { candidateSearchText } from '../adopt-candidate-search'
 

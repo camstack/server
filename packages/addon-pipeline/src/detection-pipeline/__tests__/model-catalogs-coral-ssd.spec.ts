@@ -9,7 +9,7 @@ import {
 import { buildPoolModelConfigForStep } from '../engine/engine-factory.js'
 import { postprocessorConsumesNms } from '../registry/model-knob-applicability.js'
 
-/** The one CamStack-offered Coral OD model (D703 follow-up: rivals deleted). */
+/** The one Dominevo-offered Coral OD model (D703 follow-up: rivals deleted). */
 const CORAL_DEFAULT_ID = 'ssd-mobilenet-v2-coco-edgetpu'
 /** The Coral default since D908: the YOLOv9-s @320 build beats the SSD on the same TPU. */
 const CORAL_FORMAT_DEFAULT_ID = 'yolov9s-320-edgetpu'
@@ -17,8 +17,8 @@ const DELETED_CORAL_IDS = ['efficientdet-lite0-edgetpu', 'ssdlite-mobiledet-coco
 
 const coralDefault = OBJECT_DETECTION_MODELS.find((m) => m.id === CORAL_DEFAULT_ID)
 
-describe('OBJECT_DETECTION_MODELS — CamStack Coral SSD survivor', () => {
-  it('is the only CamStack SSD tflite detector, selectable (not legacy)', () => {
+describe('OBJECT_DETECTION_MODELS — Dominevo Coral SSD survivor', () => {
+  it('is the only Dominevo SSD tflite detector, selectable (not legacy)', () => {
     expect(coralDefault).toBeDefined()
     expect(coralDefault?.legacy).not.toBe(true)
     // Beside it only the YOLOv9-s Coral builds (selectable, never a default —

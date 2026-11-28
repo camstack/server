@@ -1,4 +1,4 @@
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IScopedLogger } from '@dominevo/types'
 
 /** What {@link backfillPrimaryChildPreference} needs from the device and the device-manager. */
 export interface PreferenceBackfillInput {

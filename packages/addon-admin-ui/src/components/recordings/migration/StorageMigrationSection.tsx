@@ -12,7 +12,7 @@
  *
  * Backed by the `storage-migration` capability
  * (`packages/types/src/capabilities/storage-migration.cap.ts`), wired into
- * `@camstack/ui-library`'s generated hooks as `useStorageMigrationPlan` /
+ * `@dominevo/ui-library`'s generated hooks as `useStorageMigrationPlan` /
  * `useStorageMigrationStart` / `useStorageMigrationStatus` /
  * `useStorageMigrationCancel`. Only these four operator-facing methods are
  * called here — the per-participant primitives
@@ -55,7 +55,7 @@ import type {
   StorageMigrationPlan,
   StorageMigrationResidue,
   StorageMigrationSources,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   EmptyState,
   useConfirm,
@@ -70,8 +70,8 @@ import {
   useStorageMigrationStatus,
   Button,
   Select,
-} from '@camstack/ui-library'
-import { mayWriteToLocation } from '@camstack/types'
+} from '@dominevo/ui-library'
+import { mayWriteToLocation } from '@dominevo/types'
 import { AlertTriangle, ArrowRightLeft, Loader2, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useCapabilityPresence } from '../../../lib/capability-presence'

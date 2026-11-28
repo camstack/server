@@ -1,5 +1,5 @@
 import { LoggingService } from '../logging/logging.service'
-import { errMsg } from '@camstack/types'
+import { errMsg } from '@dominevo/types'
 
 interface NpmSearchResult {
   name: string

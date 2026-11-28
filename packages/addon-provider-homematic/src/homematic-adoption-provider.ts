@@ -1,12 +1,12 @@
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IScopedLogger } from '@dominevo/types'
 import type {
   IDeviceAdoptionProvider,
   AdoptionStatus,
   AdoptionFilter,
   DeviceRole,
-} from '@camstack/types'
-import type { DiscoveredChildDevice } from '@camstack/types'
-import { DeviceType, gatewayDeviceName } from '@camstack/types'
+} from '@dominevo/types'
+import type { DiscoveredChildDevice } from '@dominevo/types'
+import { DeviceType, gatewayDeviceName } from '@dominevo/types'
 import type { HmCustomEntity } from 'nodehomematic'
 import type { HmDiscoverable } from './homematic-discovery.js'
 import {
@@ -58,7 +58,7 @@ export interface HmAdoptionProviderDeps {
   /** Whether the CCU session of `integrationId` is connected (drives the Gateway candidate status). */
   readonly isOnline: (integrationId: string) => boolean
   /**
-   * Return all top-level CamStack devices that were adopted from a Homematic
+   * Return all top-level Dominevo devices that were adopted from a Homematic
    * source (the CCU box, Containers and standalone entities). The provider
    * filters to those whose `config.system === 'homematic'`.
    */
@@ -71,7 +71,7 @@ export interface HmAdoptionProviderDeps {
     readonly nativeId: string
     readonly name: string
   }) => Promise<{ readonly deviceId: number }>
-  /** Create one adopted CamStack device (a Container parent plus its accessory children). */
+  /** Create one adopted Dominevo device (a Container parent plus its accessory children). */
   readonly adoptDevice: (input: {
     readonly hmAddress: string
     readonly integrationId: string
@@ -79,7 +79,7 @@ export interface HmAdoptionProviderDeps {
     readonly name: string
   }) => Promise<{ readonly deviceId: number; readonly accessoryDeviceIds: readonly number[] }>
   /**
-   * Create ONE standalone top-level CamStack device for a single Homematic
+   * Create ONE standalone top-level Dominevo device for a single Homematic
    * entity (the `'entities'` granularity). Returns the new device id.
    */
   readonly adoptStandaloneEntity: (input: {
@@ -95,7 +95,7 @@ export interface HmAdoptionProviderDeps {
   readonly removeDevice: (camDeviceId: number) => Promise<void>
   /** Load an adopted device's flat config (for resync). Null if not found. */
   readonly findDeviceConfig: (camDeviceId: number) => Promise<Record<string, unknown> | null>
-  /** List existing CamStack location labels (for fuzzy-match on import). */
+  /** List existing Dominevo location labels (for fuzzy-match on import). */
   readonly listLocations?: () => Promise<readonly string[]>
   /** Assign an imported location to a device; returns the (possibly grown) known set. */
   readonly assignLocation?: (
@@ -120,7 +120,7 @@ const ENTITIES_FILTER: AdoptionFilter = { id: 'entities', label: 'Entities' } as
 const ADOPTION_FILTER_ENTITIES = 'entities'
 
 /**
- * Native id -> CamStack deviceId for every adopted top-level Homematic device of
+ * Native id -> Dominevo deviceId for every adopted top-level Homematic device of
  * one integration: the Gateway, the Containers and the standalone entities. A
  * Container carries `hmAddress` only, an entity also `hmEntityKey`, the Gateway
  * its own `nativeId` and no address. Ids are namespaced by the integration, so

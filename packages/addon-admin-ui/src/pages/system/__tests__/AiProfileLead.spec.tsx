@@ -4,8 +4,8 @@
  * through the lead-draft context, and the changes one widget makes together (config and model)
  * arrive as ONE set of values. The dialog saves them with its own "Save changes".
  */
-import { selectOption, waitForSelectRows } from '@camstack/ui-library/testing'
-import type { IntegrationInstance, IntegrationInstanceDescription } from '@camstack/types'
+import { selectOption, waitForSelectRows } from '@dominevo/ui-library/testing'
+import type { IntegrationInstance, IntegrationInstanceDescription } from '@dominevo/types'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -34,8 +34,8 @@ vi.mock('react-i18next', () => ({
   }),
 }))
 
-vi.mock('@camstack/ui-library', async () => {
-  const real = await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+vi.mock('@dominevo/ui-library', async () => {
+  const real = await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return {
     ...real,
     useSystem: () => ({

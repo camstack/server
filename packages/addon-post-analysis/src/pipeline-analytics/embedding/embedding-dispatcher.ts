@@ -6,7 +6,7 @@ import type {
   IEventBus,
   IScopedLogger,
   TypedSystemEvent,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   createEvent,
   EMBEDDING_MODEL_FAILED,
@@ -14,7 +14,7 @@ import {
   EMBEDDING_REQUIREMENTS_UNAVAILABLE,
   EventCategory,
   embeddingRefusalOf,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { extractCrop } from '../../shared/frame/crop-extractor.js'
 import { resolveFrame } from '../../shared/frame/resolve-frame.js'
 import type { EmbeddingConfig, EmbeddingStoredEvent } from './embedding-config.js'

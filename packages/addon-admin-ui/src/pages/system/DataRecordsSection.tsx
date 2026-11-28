@@ -3,7 +3,7 @@
  * kinds (entry kinds editable, the rest read-only) behind compact filters, and
  * the data left behind by deleted devices as a second view of the same section.
  */
-import { DataRecordsHub, SECTION_BODY, Tabs, TabsList, TabsTrigger } from '@camstack/ui-library'
+import { DataRecordsHub, SECTION_BODY, Tabs, TabsList, TabsTrigger } from '@dominevo/ui-library'
 import type { JSX } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router-dom'

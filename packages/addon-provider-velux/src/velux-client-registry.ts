@@ -1,4 +1,4 @@
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IScopedLogger } from '@dominevo/types'
 import { sameVeluxConnection, type VeluxConnectionConfig } from './config.js'
 import type { VeluxGatewayClientFactory } from './velux-client-contract.js'
 import { VeluxIntegrationManager } from './velux-integration-manager.js'

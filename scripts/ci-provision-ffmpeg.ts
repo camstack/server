@@ -28,8 +28,8 @@
  */
 import { appendFileSync, existsSync, mkdirSync, rmSync, symlinkSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
-import type { IScopedLogger, LogExtras } from '@camstack/types'
-import { FFMPEG_RELEASE, ensureFfmpeg } from '@camstack/types/node'
+import type { IScopedLogger, LogExtras } from '@dominevo/types'
+import { FFMPEG_RELEASE, ensureFfmpeg } from '@dominevo/types/node'
 
 /** A logger that prints — this is a CI step, and its lines are the evidence. */
 function consoleLogger(scope: string): IScopedLogger {

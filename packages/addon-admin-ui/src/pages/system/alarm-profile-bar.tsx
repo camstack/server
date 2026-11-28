@@ -4,8 +4,8 @@
  * The Default profile is always present and cannot be deleted. Creating without
  * a clone source starts at system defaults; cloning copies the selected profile.
  */
-import type { NcAlarmProfilesView } from '@camstack/types'
-import { Button, Input, Select } from '@camstack/ui-library'
+import type { NcAlarmProfilesView } from '@dominevo/types'
+import { Button, Input, Select } from '@dominevo/ui-library'
 import { Copy, Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'

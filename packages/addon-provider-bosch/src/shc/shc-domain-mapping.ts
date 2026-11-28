@@ -1,4 +1,4 @@
-import { DeviceRole, DeviceType, type ClimateControlStatus, type HvacMode } from '@camstack/types'
+import { DeviceRole, DeviceType, type ClimateControlStatus, type HvacMode } from '@dominevo/types'
 import type { ShcDeviceKind, ShcDeviceSummary, ShcRoomClimateState } from './shc-types.js'
 
 const ROOM_CLIMATE_MODEL = 'ROOM_CLIMATE_CONTROL'
@@ -106,7 +106,7 @@ const CLIMATE_MODES: readonly HvacMode[] = ['off', 'heat', 'auto']
 const SHC_SETPOINT_MIN = 5
 const SHC_SETPOINT_MAX = 30
 
-/** Map Bosch RoomClimateControl state JSON → CamStack climate-control slice. */
+/** Map Bosch RoomClimateControl state JSON → Dominevo climate-control slice. */
 export function mapRoomClimateStateToSlice(state: ShcRoomClimateState): ClimateControlStatus {
   const now = Date.now()
   const mode = mapShcModeToHvac(state)

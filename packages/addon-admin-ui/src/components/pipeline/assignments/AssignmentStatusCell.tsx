@@ -3,10 +3,10 @@
  * configured fps, inference time, queue and drops — two fixed lines, so a
  * snapshot arriving or ageing out never changes the row's height.
  */
-import { PhaseIcon, getPhaseVisual, useUiText } from '@camstack/ui-library'
+import { PhaseIcon, getPhaseVisual, useUiText } from '@dominevo/ui-library'
 import type { CameraMetricsSnapshot } from './use-camera-metrics'
 import { useTranslation } from 'react-i18next'
-import { formatNumeric } from '@camstack/ui-library'
+import { formatNumeric } from '@dominevo/ui-library'
 
 export function AssignmentStatusCell({
   snap,

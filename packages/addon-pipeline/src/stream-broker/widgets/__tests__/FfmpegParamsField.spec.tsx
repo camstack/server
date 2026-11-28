@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 import './setup.js'
-import { selectOption } from '@camstack/ui-library/testing'
+import { selectOption } from '@dominevo/ui-library/testing'
 import { fireEvent, render, screen } from '@testing-library/react'
-import type { DerivedEncodePreview, EncodeProfile } from '@camstack/types'
+import type { DerivedEncodePreview, EncodeProfile } from '@dominevo/types'
 import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import { FfmpegParamsCore as FfmpegParamsField } from '../FfmpegParamsField.js'

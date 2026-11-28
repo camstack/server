@@ -36,7 +36,7 @@ using.
 
 ## Decision
 
-The vocabulary is ONE list, in `@camstack/types`: keys, groups, bilingual
+The vocabulary is ONE list, in `@dominevo/types`: keys, groups, bilingual
 search synonyms and the ranking function. It contains no React, no lucide and
 no glyph, because that is the only kind of thing the two surfaces can share.
 Each surface keeps a glyph TABLE keyed by it, and each table must cover the

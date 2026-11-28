@@ -3,7 +3,7 @@ import {
   type PublicEndpointReader,
   prepareNotification,
   type Target,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   buildNotifyServiceData,

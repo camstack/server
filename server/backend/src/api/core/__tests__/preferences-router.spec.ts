@@ -15,13 +15,13 @@
  *     → the session rows are refused;
  *   - stamp a fixed owner instead of `principal.id` → B reads A's rows.
  */
-import { attachUserManagementInternal, type UserManagementInternal } from '@camstack/server/system'
+import { attachUserManagementInternal, type UserManagementInternal } from '@dominevo/server/system'
 import {
   createRecordsAccess,
   type CredentialTokenClaims,
   type TokenPayload,
   type TokenScope,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { TRPCError } from '@trpc/server'
 import { describe, expect, it } from 'vitest'
 import { makeRecordsWorld } from '../../../../../../packages/system/src/builtins/sqlite-storage/__tests__/support/records-world.js'

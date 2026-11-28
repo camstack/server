@@ -107,7 +107,7 @@ on-touch.
 ## Ship
 
 - Admin-ui only until a library prop is required → then `ui-library` first,
-  rebuild admin-ui against it, `camstack deploy addon-admin-ui` (hub).
+  rebuild admin-ui against it, `dominevo deploy addon-admin-ui` (hub).
 - No server publish for pure CSS/component swaps.
 - Refresh the baseline table in `docs/ui/anti-patterns.md` when P0–P2 land.
 

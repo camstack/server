@@ -15,8 +15,8 @@
  * way the process can end — any exit, a spawn error, and `dispose()` itself.
  */
 import type { ChildProcess } from 'node:child_process'
-import type { IScopedLogger } from '@camstack/types'
-import { errMsg } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
 
 /** The backend process ended (or was disposed) while — or before — a request waited on it. */
 export class AudioBackendExitedError extends Error {

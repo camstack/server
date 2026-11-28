@@ -1,13 +1,13 @@
 /**
  * Network → "Addresses": one table of every address this hub is reached at —
- * the detected endpoints, the operator's custom addresses and the CamStack
+ * the detected endpoints, the operator's custom addresses and the Dominevo
  * app link — each ticked for the roles it serves. App connections take many rows;
  * Notification taps, Public endpoint and Internal take one (ticking another row moves it).
  * An empty column is automatic, and the summary says what is in use.
  */
-import type { HubAddressBook, HubAddressRow } from '@camstack/types'
-import { validateCustomAddress } from '@camstack/types'
-import { Button, Card, Checkbox, type DataColumn, DataTable, Input } from '@camstack/ui-library'
+import type { HubAddressBook, HubAddressRow } from '@dominevo/types'
+import { validateCustomAddress } from '@dominevo/types'
+import { Button, Card, Checkbox, type DataColumn, DataTable, Input } from '@dominevo/ui-library'
 import { AlertTriangle, Bell, Globe, Home, Plus, Smartphone, Trash2 } from 'lucide-react'
 import { type ReactElement, useState } from 'react'
 import { useTranslation } from 'react-i18next'

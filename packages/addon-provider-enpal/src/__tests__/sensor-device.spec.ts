@@ -13,7 +13,7 @@ import {
   type IDeviceRuntimeState,
   type IEventBus,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { EnpalSensorDevice } from '../devices/enpal-sensor-device.js'
 

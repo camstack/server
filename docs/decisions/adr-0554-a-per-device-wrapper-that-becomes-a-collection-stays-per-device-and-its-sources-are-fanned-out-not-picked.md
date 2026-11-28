@@ -132,7 +132,7 @@ were not knowable from reading:
   `aggregateCollectionCall` was written to end (2026-07-30, `notification-output`).
 - The child UDS dispatcher's collection graceful-skip now covers
   `videoclips.listClips` / `listSources` (generated `COLLECTION_ARRAY_METHODS`):
-  a provider bundling an older `@camstack/types` without `listSources` answers
+  a provider bundling an older `@dominevo/types` without `listSources` answers
   `[]` across that boundary instead of erroring the caller. In-process the
   dispatcher handles the same case itself (decision 5's fallback).
 - **Not decided here, and it should be decided before slice 2 ships a second
@@ -191,7 +191,7 @@ this line of work exists to end.
 get videoclips prendere un provider opzionale, di default va su camstack"* [the get videoclips takes an optional provider, by default it goes to camstack],
 *"l'utilizzatore è uno solo"* [there is only one consumer]. `listClips`'s `sources?: string[]` view filter is
 replaced by `provider?: string` — one addon id, from a `listSources` row, absent
-meaning the device's bound provider (CamStack on every camera today, because
+meaning the device's bound provider (Dominevo on every camera today, because
 that is what `getBindings` answers with). A pin the device is not bound to is
 refused BY NAME, never served by another provider (D552's
 `rejectUnresolvedAddonPin` rule). The provider-side half of the old filter went
@@ -227,7 +227,7 @@ questions it raised:
 **What "bound" means for a collection cap: a DERIVED set, never an operator
 action.** *"Tutti i providers funzionano sempre, non serve
 disattivarli/attivarli … loro vivono lì."* [All providers always work, there is no need to deactivate/activate them … they live there.] A source exists for a camera
-because a configuration elsewhere put it there — CamStack always, Reolink
+because a configuration elsewhere put it there — Dominevo always, Reolink
 because it is that camera's provider, HKSV because the camera is exported —
 and none of those is a tick box. So `getBindings` gained **step 0**: every
 provider addon of every collection capability that applies to the device's
@@ -337,7 +337,7 @@ collapses them to one.
 ## Amended 2026-09-20 (later) — naming the provider is REQUIRED; there was never a default to have
 
 The amendment above wrote `listClips`'s `provider` as optional, *"absent meaning
-the device's bound provider (CamStack on every camera today, because that is
+the device's bound provider (Dominevo on every camera today, because that is
 what `getBindings` answers with)"*, and the cap's docblock repeated it. **No
 code ever implemented it.** `device-collection-dispatch.ts` has one narrowing
 step, `pinnedProvider`, and an absent pin narrows nothing: the call falls
@@ -358,7 +358,7 @@ the viewer and read the Reolink rows at the top of the merge as "the default
 resolved to Reolink"; it is worse than that — there is no resolution at all.
 
 **The suite was green the whole time, and it never asked the question.** The
-case named *"names none and gets the device's bound provider — CamStack on this
+case named *"names none and gets the device's bound provider — Dominevo on this
 fleet"* bound the camera to ONE provider, where decision 6 ("one source is not a
 merge") gives the same answer whatever the rule is. Eleven lines above, in the
 same file, *"another camera, in the SAME build, still sees every source it has"*
@@ -375,7 +375,7 @@ both passing.
    one" is not a value that exists. The only thing that could name one is a
    per-device single-valued authority — which is exactly what decision 3
    rejected, and what `setWrapperActive` now throws for by name.
-2. **Refusing beats naming CamStack.** Resolving absence to the recorder would
+2. **Refusing beats naming Dominevo.** Resolving absence to the recorder would
    privilege one addon by id inside a dispatcher that is cap-generic and a
    surface whose premise is that sources are peers, would need a new framework
    field with exactly one user, and would be wrong on the first camera with no

@@ -1,4 +1,4 @@
-import { CAP_CUSTOMIZE_CATALOG, type CompositionFieldsFeature, DeviceType } from '@camstack/types'
+import { CAP_CUSTOMIZE_CATALOG, type CompositionFieldsFeature, DeviceType } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import en from '../../../../../i18n/en.json'
 import it_ from '../../../../../i18n/it.json'

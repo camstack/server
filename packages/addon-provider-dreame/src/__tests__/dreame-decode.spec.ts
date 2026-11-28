@@ -5,7 +5,7 @@ import {
   DeviceRuntimeState,
   DeviceType,
   type VacuumControlStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { classifyDreameModel, controlCapForKind, deviceTypeForKind } from '../dreame-mapping.js'
 import {

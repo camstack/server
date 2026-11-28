@@ -5,7 +5,7 @@
  * caches the answer. A refusal comes back as a sentence the field can show on
  * its eye, not as a transport code.
  */
-import { SecretRevealProvider, useKeychainAdminReveal } from '@camstack/ui-library'
+import { SecretRevealProvider, useKeychainAdminReveal } from '@dominevo/ui-library'
 import type { ReactNode } from 'react'
 import { useCallback } from 'react'
 import i18n from '../../i18n/index'

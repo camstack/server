@@ -5,7 +5,7 @@ import {
   type DiscoveredChildDevice,
   type IDeviceAdoptionProvider,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { UNRAID_SYSTEM } from './config.js'
 import {
   buildUnraidCandidates,

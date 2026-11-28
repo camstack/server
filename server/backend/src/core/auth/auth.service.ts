@@ -1,5 +1,5 @@
-import { AuthManager } from '@camstack/server/system'
-import type { TokenPayload } from '@camstack/types'
+import { AuthManager } from '@dominevo/server/system'
+import type { TokenPayload } from '@dominevo/types'
 
 /**
  * A session-grade token whose server-side session is gone (logged out,

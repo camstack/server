@@ -10,7 +10,7 @@
  */
 import * as fs from 'node:fs'
 import * as path from 'node:path'
-import { mkdirOwnerOnlySync, writeOwnerOnlyFileSync } from '@camstack/types/node'
+import { mkdirOwnerOnlySync, writeOwnerOnlyFileSync } from '@dominevo/types/node'
 
 /** First cloudflared release that understands `tunnel run --token-file`. */
 export const MIN_TOKEN_FILE_VERSION: readonly [number, number, number] = [2025, 4, 0]

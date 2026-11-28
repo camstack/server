@@ -10,7 +10,7 @@
  *  4. the picture kind / buttons it asked for ride on the row for the dispatcher.
  * A rule with no override freezes exactly what it did before.
  */
-import type { IScopedLogger, NcTargetOverrides } from '@camstack/types'
+import type { IScopedLogger, NcTargetOverrides } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import { buildCalendarEventsOutboxInputs } from '../calendar-events/calendar-events-delivery.js'

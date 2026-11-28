@@ -1,5 +1,5 @@
-import { DeviceRole, DeviceType, SWITCH_DEFAULT_OPTIONS } from '@camstack/types'
-import type { IScopedLogger } from '@camstack/types'
+import { DeviceRole, DeviceType, SWITCH_DEFAULT_OPTIONS } from '@dominevo/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { HeroLayoutService, type HeroLayoutReader } from '../hero-layout-service.js'
 

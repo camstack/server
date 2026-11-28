@@ -97,7 +97,7 @@ track gate.**
 - An import that states its own floors keeps them. A template may carry
   `defaultClassFloors`.
 - plus catalog's `threshold` is a different gate. It is a median over a track's
-  recent scores, zeros included. CamStack confirms identity through the
+  recent scores, zeros included. Dominevo confirms identity through the
   tracker (D683), not with a score median, so it is not carried.
 
 **The plugin catalog values are not adopted.** Its 0.2 is a candidate cut, the

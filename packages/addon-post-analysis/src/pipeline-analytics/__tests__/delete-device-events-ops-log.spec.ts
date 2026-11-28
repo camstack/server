@@ -4,7 +4,7 @@
  * it wrote ~16k empty `prune / orphaned-device` rows a day. A manual delete is
  * still audited even when empty, and a removal that removed something too.
  */
-import type { IScopedLogger, OpsLogEntry } from '@camstack/types'
+import type { IScopedLogger, OpsLogEntry } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { AnalyticsQueryFacade } from '../analytics-query-facade.js'
 import type { EventStore } from '../store/event-store.js'

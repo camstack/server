@@ -13,7 +13,7 @@
  *  - Revoke identity: final for that leaf; the node is disconnected and must
  *    be paired again.
  */
-import { DataTable, TABLE_SCROLL_MAX_H, trpc, useConfirm } from '@camstack/ui-library'
+import { DataTable, TABLE_SCROLL_MAX_H, trpc, useConfirm } from '@dominevo/ui-library'
 import { Server } from 'lucide-react'
 import { useMemo, useState, type ReactNode } from 'react'
 

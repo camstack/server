@@ -9,7 +9,7 @@
  * directly and pass them in explicitly, so the section-building logic is a
  * pure, independently-testable function of its inputs.
  */
-import type { ConfigSection } from '@camstack/types'
+import type { ConfigSection } from '@dominevo/types'
 import {
   CLUSTER_MODEL_SCOPED_STEPS,
   CLUSTER_MODEL_SECTION_ID,
@@ -41,7 +41,7 @@ import {
   NATIVE_LEASE_TILE_BUDGET_KEY,
   RunnerCameraDeviceUIFields,
   readDetailCropConvention,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { ACTIVITY_DETECTION_FPS_DEFAULT } from './device-detection-settings.js'
 import {
   type ClusterRoles,
@@ -62,7 +62,7 @@ export interface GlobalSettingsSchemaOptions {
 }
 
 // Store identity of the cluster-wide crop convention. Defined in
-// `@camstack/types` (NOT here) because the reader is a different addon — the
+// `@dominevo/types` (NOT here) because the reader is a different addon — the
 // pipeline runner, which reads this addon's global settings through the
 // hub-routed `addon-settings` cap, the same neutral-owner idiom
 // `decoder-backend.ts` uses. Addons never import each other, so a key defined

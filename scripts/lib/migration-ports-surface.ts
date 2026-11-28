@@ -16,8 +16,8 @@ function importAllowed(specifier: string): boolean {
   return (
     specifier.startsWith('.') ||
     specifier === 'zod' ||
-    specifier === '@camstack/types' ||
-    specifier.startsWith('@camstack/types/')
+    specifier === '@dominevo/types' ||
+    specifier.startsWith('@dominevo/types/')
   )
 }
 
@@ -49,7 +49,7 @@ function importSpecifiers(code: string): readonly string[] {
 }
 
 /**
- * Rule 1: under a `migrations/` directory no `ctx.` / `this.ctx`, and only `@camstack/types`, zod and
+ * Rule 1: under a `migrations/` directory no `ctx.` / `this.ctx`, and only `@dominevo/types`, zod and
  * local files are imported. Catalogue sources are an addon's `migrations/` and the hub's `src/migrations/hub/`;
  * the engine and the definition helpers are not migrations. Rule 2: `defineAddonMigrations(` is called only by the seam, except
  * from a file the shrink-only `pending` list names (a catalogue not moved onto the API yet).
@@ -70,7 +70,7 @@ export function portsSurfaceProblems(
       for (const specifier of importSpecifiers(code)) {
         if (!importAllowed(specifier)) {
           problems.push(
-            `${file.path}: imports '${specifier}'; a migration source imports @camstack/types, zod and local files only`,
+            `${file.path}: imports '${specifier}'; a migration source imports @dominevo/types, zod and local files only`,
           )
         }
       }

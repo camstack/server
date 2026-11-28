@@ -4,7 +4,7 @@
  * pipeline detection (a sensor event is stamped `sensor`, so a `pipeline`
  * source would silence it for good).
  */
-import { ruleSeedForSection } from '@camstack/types'
+import { ruleSeedForSection } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { changeRuleDelivery, emptyRuleForm } from '../notification-rules.helpers'
 

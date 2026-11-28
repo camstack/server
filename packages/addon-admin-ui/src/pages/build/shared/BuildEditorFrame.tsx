@@ -6,7 +6,7 @@
  * section gives it (`SectionedPage fill`), so the page never grows a second
  * scrollbar and the save bar never leaves the screen.
  */
-import { Button, IconButton } from '@camstack/ui-library'
+import { Button, IconButton } from '@dominevo/ui-library'
 import { ArrowLeft, Loader2, Pencil, type LucideIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'

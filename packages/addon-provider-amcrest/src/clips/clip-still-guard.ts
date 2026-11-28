@@ -19,7 +19,7 @@
  * A success resets the count. Held in memory, per runner: a restart forgets,
  * which costs at most two more dials.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 import type { MintRefusal } from './clip-still-refusal.js'
 

@@ -14,7 +14,7 @@
  *
  * Refusing is the only safe option here: there is no escaping convention this
  * provider could apply that smbclient's own parser is guaranteed to undo the
- * same way. Every path CamStack itself generates (archive names are a UUID and
+ * same way. Every path Dominevo itself generates (archive names are a UUID and
  * a timestamp) passes untouched, so the refusal costs nothing real.
  */
 const FORBIDDEN_PATH_CHARS = /["'`$;&|<>\r\n\\]/

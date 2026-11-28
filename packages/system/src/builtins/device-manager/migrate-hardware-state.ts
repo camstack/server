@@ -62,7 +62,7 @@ import {
   parseSecretRef,
   type SecretRefParts,
   type SecretsAccess,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { LINKED_DEVICES_RESERVED_KEYS } from './device-linked-devices.js'
 import type { DeviceManagerSettings } from './device-meta-store.js'
 import { type OwnedCaps, splitRuntimeBlob } from './field-ownership.js'

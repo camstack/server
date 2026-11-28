@@ -3,7 +3,7 @@ import {
   isSecretMarker,
   SECRET_CLEAR,
   type ConfigAccountSignInField,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { useRef, useState, type ReactElement } from 'react'
 import { useUiText } from '../contexts/ui-text'
 import { Button } from '../primitives/button'

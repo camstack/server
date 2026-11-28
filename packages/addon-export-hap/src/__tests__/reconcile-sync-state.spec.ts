@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import type { ExportTargetEntry } from '@camstack/types/node'
+import type { ExportTargetEntry } from '@dominevo/types/node'
 import { syncStateFromJson, syncStateToJson } from '../reconcile/sync-state.js'
 
 describe('hap sync-state serialization', () => {

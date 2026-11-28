@@ -1,5 +1,5 @@
-import type { SecondFactorKind, SessionTokens } from '@camstack/sdk'
-import type { TokenScope } from '@camstack/types'
+import type { SecondFactorKind, SessionTokens } from '@dominevo/sdk'
+import type { TokenScope } from '@dominevo/types'
 import type { ReactNode } from 'react'
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import {

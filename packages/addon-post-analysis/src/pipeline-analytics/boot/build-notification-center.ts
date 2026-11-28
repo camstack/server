@@ -5,7 +5,7 @@
  */
 
 import { sleepingCameraProbe } from './sleeping-camera-probe.js'
-import type { CameraOccupancySnapshot, IScopedLogger } from '@camstack/types'
+import type { CameraOccupancySnapshot, IScopedLogger } from '@dominevo/types'
 import {
   commandOrigin,
   errMsg,
@@ -13,7 +13,7 @@ import {
   kebabToCamel,
   readDeviceStateFrom,
   viewerLinkBaseOf,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { ruleFireOriginOf } from '../../notification-center/rule-fire-origin.js'
 import { readAlarmOpenings } from '../../notification-center/alarm/alarm-openings.js'
 import {
@@ -641,7 +641,7 @@ export class BuildNotificationCenter extends BuildNotificationCenterBase {
         // hosts for the same notification. A system event's admin tap uses it.
         publicUrlBase: async () => pickArtifactBaseUrl(await this.ncEndpoints()),
         // Where a camera tap opens (D709, D734): the `notificationTaps` role —
-        // the CamStack app link carrying the hub as `hub=` (the default), or
+        // the Dominevo app link carrying the hub as `hub=` (the default), or
         // the hub address flagged for taps. Set on the admin Network page.
         tapBase: async () =>
           viewerLinkBaseOf(await this.ctx.api.localNetwork.getNotificationEndpoint.query()),

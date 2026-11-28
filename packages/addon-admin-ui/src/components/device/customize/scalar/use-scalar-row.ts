@@ -15,8 +15,8 @@ import {
   isRunningOptOut,
   targetFeature,
   scalarTargetCount,
-} from '@camstack/types'
-import { type DeviceNameFields, useDeviceLabel } from '@camstack/ui-library'
+} from '@dominevo/types'
+import { type DeviceNameFields, useDeviceLabel } from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 import { useCandidateDevices } from '../assignments/use-source-candidates'
 import { currentComposition } from '../customization-read'

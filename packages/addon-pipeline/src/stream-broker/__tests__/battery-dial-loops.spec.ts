@@ -18,7 +18,7 @@
  */
 import * as net from 'node:net'
 import { Socket } from 'node:net'
-import type { IScopedLogger, StreamSource } from '@camstack/types'
+import type { IScopedLogger, StreamSource } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { StreamBroker } from '../stream-broker/stream-broker.js'
 import { RtspSession } from '../rtsp/rtsp-session.js'

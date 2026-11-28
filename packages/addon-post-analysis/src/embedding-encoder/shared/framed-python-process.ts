@@ -1,5 +1,5 @@
 import { type ChildProcess, spawn } from 'node:child_process'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 /**
  * One embedded-Python subprocess speaking the length-prefixed frame protocol

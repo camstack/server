@@ -10,8 +10,8 @@
  * adapter is opt-in — `BrokerWebrtcServer.createSession` still works
  * unchanged and the existing WebRTC viewer path doesn't go through it.
  */
-import { errMsg } from '@camstack/types'
-import type { RtpEgress, RtpEgressStartOptions } from '@camstack/types'
+import { errMsg } from '@dominevo/types'
+import type { RtpEgress, RtpEgressStartOptions } from '@dominevo/types'
 import type { Logger } from './types.js'
 import type { AdaptiveSession } from './session.js'
 

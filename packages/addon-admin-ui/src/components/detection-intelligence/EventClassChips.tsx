@@ -3,7 +3,7 @@
  * animal …). Every chip starts on; switching one off hides that class from the
  * list AND from everything that draws the same list (the density bar).
  */
-import { ToggleChipRow, type ToggleChip } from '@camstack/ui-library'
+import { ToggleChipRow, type ToggleChip } from '@dominevo/ui-library'
 import { useMemo, type JSX } from 'react'
 import { useTranslation } from 'react-i18next'
 

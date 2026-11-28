@@ -3,7 +3,7 @@ import { copyFileSync, existsSync, mkdirSync, readFileSync, renameSync, rmSync }
 import { writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { X509Certificate as PeculiarCertificate } from '@peculiar/x509'
-import { writeOwnerOnlyFileSync } from '@camstack/types/node'
+import { writeOwnerOnlyFileSync } from '@dominevo/types/node'
 import type { CertRegenerationReason } from './cert-evaluation.js'
 import {
   evaluateExistingCert,

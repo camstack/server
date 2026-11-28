@@ -12,7 +12,7 @@
  *  - every non-upgraded outcome with a pending entry logs itself.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import type { MediaProvenance } from '../../store/media-store.js'
 import {

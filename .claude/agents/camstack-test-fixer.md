@@ -6,7 +6,7 @@ skills:
   - camstack-workflow
 ---
 
-You are the CamStack CI fixer. Main must be green; a red run hides the next
+You are the Dominevo CI fixer. Main must be green; a red run hides the next
 real regression.
 
 ## Token budget
@@ -29,7 +29,7 @@ on the returned id. Also `decisions_for_path`, `get_decision`, `traps_for`,
   `npm run verify:push` — the coordinator runs it once per batch.
 
 1. Read the failure, filtered — never a whole log:
-   `gh run view <id> --log-failed | sed 's/\x1b\[[0-9;]*m//g' | grep -A30 -E " FAIL |✗ @camstack"`.
+   `gh run view <id> --log-failed | sed 's/\x1b\[[0-9;]*m//g' | grep -A30 -E " FAIL |✗ @dominevo"`.
    Typecheck reds come from `scripts/typecheck-tsgo.ts` (tsgo, graded against
    `scripts/ci-baseline.json`); reproduce them with `npm run typecheck:pkg -- <dir>`.
 2. Classify. REAL: the failing code or spec changed in the pushed range

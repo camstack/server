@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Popover, PopoverTrigger, PopoverContent } from '@camstack/ui-library'
+import { Popover, PopoverTrigger, PopoverContent } from '@dominevo/ui-library'
 import { Settings, Video, Bell, Moon } from 'lucide-react'
 
 const Frame = ({ children }: { children: ReactNode }) => (

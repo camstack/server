@@ -6,7 +6,7 @@
  * Tests verify correct event emission, payload shape, and subscriber filtering.
  */
 import { describe, it, expect, beforeEach } from 'vitest'
-import { EventCategory } from '@camstack/types'
+import { EventCategory } from '@dominevo/types'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -317,6 +317,6 @@ describe('Detection EventBus flow', () => {
   })
 
   // Benchmark progress event tests removed — benchmark moved to
-  // `@camstack/addon-benchmark` (2026-04-14) and is no longer part of
+  // `@dominevo/addon-benchmark` (2026-04-14) and is no longer part of
   // the core event taxonomy.
 })

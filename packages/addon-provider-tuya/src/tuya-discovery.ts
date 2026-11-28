@@ -1,4 +1,4 @@
-import type { DiscoveredChildDevice } from '@camstack/types'
+import type { DiscoveredChildDevice } from '@dominevo/types'
 import { classifyTuyaCategory, deviceTypeForKind } from './tuya-dp-mapping.js'
 import type { TuyaCatalogEntry } from './tuya-gateway.js'
 
@@ -9,14 +9,14 @@ function capForKind(kind: 'switch' | 'kettle'): string {
 
 export interface BuildTuyaCandidatesInput {
   readonly entries: readonly TuyaCatalogEntry[]
-  /** tuyaDeviceId → adopted CamStack device id. */
+  /** tuyaDeviceId → adopted Dominevo device id. */
   readonly adopted: ReadonlyMap<string, number>
 }
 
 /**
  * Map an account's cloud catalog entries to adoption candidates. Every entry is
  * adoptable (unknown categories fall back to a raw on/off switch); the candidate
- * `type` is the CamStack DeviceType the entry will materialise as. Pure: no
+ * `type` is the Dominevo DeviceType the entry will materialise as. Pure: no
  * network I/O, no side-effects. Mirrors `buildDreameCandidates`.
  */
 export function buildTuyaCandidates(input: BuildTuyaCandidatesInput): DiscoveredChildDevice[] {

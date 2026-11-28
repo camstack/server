@@ -5,7 +5,7 @@
  * 0 and saves 0. A number the operator typed survives a trigger change; a
  * number that was only the previous kind's default follows the new kind.
  */
-import { NC_CONDITION_CATALOG, type NcRule } from '@camstack/types'
+import { NC_CONDITION_CATALOG, type NcRule } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   applyDeliveryChoice,

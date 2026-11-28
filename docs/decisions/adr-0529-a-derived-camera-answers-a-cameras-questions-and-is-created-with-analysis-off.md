@@ -43,7 +43,7 @@ and a decode nobody pays today.
 
 It is created with the analysis family switched OFF, by writing the authority
 that already owns each function (the wrapper binding, D62), from ONE list:
-`DERIVED_CAMERA_SILENCED_CAP_NAMES` in `@camstack/types`. Applied at creation
+`DERIVED_CAMERA_SILENCED_CAP_NAMES` in `@dominevo/types`. Applied at creation
 only, so an operator who turns analysis back on wins permanently.
 
 Motion is the OR of the sources; the audio level is the loudest CURRENT reading;

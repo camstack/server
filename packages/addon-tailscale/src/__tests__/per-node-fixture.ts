@@ -11,7 +11,7 @@ import {
   type MigrationOwnerResult,
   preconditionOf,
   runAddonMigrations,
-} from '@camstack/types'
+} from '@dominevo/types'
 import Database from 'better-sqlite3'
 import { ADDON_SETTINGS_TABLE, type SettingsPerNodePorts } from '../settings-per-node.js'
 

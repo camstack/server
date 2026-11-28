@@ -11,7 +11,7 @@
  *     prohibit biometric classification of individuals; a consumer whose tag
  *     says that is what it does is refused before dispatch.
  */
-import type { AppleFmAvailability, LlmProfile } from '@camstack/types'
+import type { AppleFmAvailability, LlmProfile } from '@dominevo/types'
 import { appleNodeIdOf } from './kinds/provider-config.js'
 import { APPLE_SYSTEM_MODEL } from './runtime/apple/afm-protocol.js'
 

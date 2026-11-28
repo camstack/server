@@ -1,4 +1,4 @@
-import { ACTUATOR_METHODS, ACTUATOR_TEMPLATE_IDS, type FanOutCall } from '@camstack/types'
+import { ACTUATOR_METHODS, ACTUATOR_TEMPLATE_IDS, type FanOutCall } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { type ActuatorInvokeApi, invokeActuatorCall } from '../actuator-invoke.js'
 

@@ -64,7 +64,7 @@
 import { randomUUID } from 'node:crypto'
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 /**
  * The storage class the artifact shelf lives in: `artifacts`, SHARED with

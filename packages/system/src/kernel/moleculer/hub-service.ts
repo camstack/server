@@ -1,5 +1,5 @@
 import type { ServiceSchema, Context } from 'moleculer'
-import type { LogTags } from '@camstack/types'
+import type { LogTags } from '@dominevo/types'
 import type { RegisterNodeParams, RegisterNodeResult } from './node-registry.js'
 import type { MeshIdentityGate } from './mesh-identity.js'
 
@@ -25,7 +25,7 @@ interface HubServiceDeps {
   readonly onRegisterNode?: (params: RegisterNodeParams) => void
   /** Explicit deregistration (graceful shutdown). `$node.disconnected` covers crashes. */
   readonly onUnregisterNode?: (nodeId: string) => void
-  /** The hub's running `@camstack/server` version, carried on the `registerNode` ack. */
+  /** The hub's running `@dominevo/server` version, carried on the `registerNode` ack. */
   readonly getServerVersion?: () => string | null
   /**
    * The hub's mesh identity gate (D857). When present, `registerNode` asks it

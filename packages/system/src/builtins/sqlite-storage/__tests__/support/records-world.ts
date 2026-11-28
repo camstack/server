@@ -15,7 +15,7 @@ import {
   type KeychainResolveEntry,
   type KeychainResolveResult,
   type KeychainTransport,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { RecordsEngine } from '../../records/records-engine.js'
 import { RecordsProvider } from '../../records/records-provider.js'
 import type { PlacementRouter } from '../../placement-router.js'

@@ -3,7 +3,7 @@ import * as fs from 'node:fs'
 import * as path from 'node:path'
 import * as os from 'node:os'
 import { createHash } from 'node:crypto'
-import type { ModelCatalogEntry } from '@camstack/types'
+import type { ModelCatalogEntry } from '@dominevo/types'
 import { ModelDownloadService } from '../src/download/model-download-service'
 
 /**

@@ -11,7 +11,7 @@
  *
  * The cost is stated plainly because it does not go away: **the provider
  * cannot work without the `smbclient` binary on PATH.** It is absent from the
- * CamStack container image. The binary is obtained through the framework's
+ * Dominevo container image. The binary is obtained through the framework's
  * manifest-declared system dependencies (`camstack.addons[].systemDependencies`
  * → `installManifestSystemDeps`), which runs before this addon's capabilities
  * register — and when that fails, {@link SmbBinaryUnavailableError} is what

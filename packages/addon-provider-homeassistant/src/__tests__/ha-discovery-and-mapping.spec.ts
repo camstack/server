@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { DeviceType, DeviceRole, DeviceFeature } from '@camstack/types'
+import { DeviceType, DeviceRole, DeviceFeature } from '@dominevo/types'
 import { HaDiscoveredDeviceSchema } from '../ha-discovery-types.js'
 import { mapHaEntityToCamStack, inferParentDeviceType } from '../ha-domain-mapping.js'
 

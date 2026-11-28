@@ -25,13 +25,13 @@ import { resolveHubAuth } from './hub/credentials.mjs'
 import { createTRPCClient, createWSClient, wsLink } from '@trpc/client'
 import superjson from 'superjson'
 import WebSocket from 'ws'
-import type { AppRouter } from '@camstack/types'
+import type { AppRouter } from '@dominevo/types'
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
 
 const DURATION_SEC = Number.parseInt(process.argv[2] ?? '30', 10)
-// The `camstack login` session is the only credential (D1101): log in once with
-// `camstack login <host>`; nothing here asks for a password.
+// The `dominevo login` session is the only credential (D1101): log in once with
+// `dominevo login <host>`; nothing here asks for a password.
 const hubAuth = await resolveHubAuth(
   process.env['CAMSTACK_SERVER'] ? { server: process.env['CAMSTACK_SERVER'] } : {},
 )

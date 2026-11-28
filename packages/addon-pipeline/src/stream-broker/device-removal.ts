@@ -14,7 +14,7 @@ import {
   type EventFilter,
   type IScopedLogger,
   type SystemEvent,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { RetractDeviceOptions } from './stream-broker/stream-broker-manager.js'
 
 /** The addon's `subscribe`, narrowed to what this wiring needs. */

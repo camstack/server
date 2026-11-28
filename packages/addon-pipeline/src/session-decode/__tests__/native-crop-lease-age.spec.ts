@@ -16,7 +16,7 @@
  * and it sits in-process, in front of the round trip.
  */
 
-import type { FrameHandle } from '@camstack/types'
+import type { FrameHandle } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { NATIVE_CROP_LEASE_MAX_AGE_MS } from '../native-crop-lease-age.js'
 import { NativeCropRegistry } from '../native-crop-registry.js'

@@ -6,7 +6,7 @@
  * and core routes alike. `?method=<router.method>` selects one and scrolls to
  * it (the address `/system/api-explorer?method=…` redirects here).
  */
-import { EmptyState, ErrorBox, SectionCard, Skeleton, trpc } from '@camstack/ui-library'
+import { EmptyState, ErrorBox, SectionCard, Skeleton, trpc } from '@dominevo/ui-library'
 import { Braces, MousePointerClick } from 'lucide-react'
 import { type ReactNode, useCallback, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'

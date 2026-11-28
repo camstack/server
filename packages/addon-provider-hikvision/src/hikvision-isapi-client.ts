@@ -5,7 +5,7 @@ import {
   type IncomingMessage,
 } from 'node:http'
 import { Agent as HttpsAgent, request as httpsRequest } from 'node:https'
-import type { IScopedLogger, LogExtras } from '@camstack/types'
+import type { IScopedLogger, LogExtras } from '@dominevo/types'
 import { buildAuthHeader, type DigestState, parseChallenge } from './digest-auth.js'
 import { patchMotionTriggerLinkageXml } from './hikvision-motion-linkage.js'
 import { hikvisionIgnoredAlarmReason } from './hikvision-alarm-ignore.js'

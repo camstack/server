@@ -2,7 +2,7 @@
  * The transition ledger over the REAL records engine (two in-memory SQLite
  * files, the real provider). Only the hub and time are stand-ins.
  */
-import { createRecordsAccess, type DeviceTransition } from '@camstack/types'
+import { createRecordsAccess, type DeviceTransition } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { makeRecordsWorld } from '../../../sqlite-storage/__tests__/support/records-world.js'
 import { type CapturedLog, recordingLogger } from '../../__tests__/support/real-door.js'

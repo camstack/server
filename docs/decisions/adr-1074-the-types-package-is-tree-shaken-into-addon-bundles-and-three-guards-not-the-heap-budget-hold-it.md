@@ -18,14 +18,14 @@ applies-to:
 
 ## Context
 
-[D15](adr-0015.md) has every addon inline `@camstack/types`, and
+[D15](adr-0015.md) has every addon inline `@dominevo/types`, and
 [D28](adr-0028.md) keeps that inlined copy from costing a runner more heap than a
 budget allows. The budget did its job as a tripwire and nothing more: five addons
 sat on the 60 MB line, and each time the types package grew (a cap, a device type)
 the dated entry in `addon-dist-footprint-budgets.json` was raised, with a reason
 that read "the shared inlined types schemas, not this addon's code".
 
-That sentence was the finding. `@camstack/types` reached an addon as ONE
+That sentence was the finding. `@dominevo/types` reached an addon as ONE
 pre-bundled 5 MB ESM (`dist/index.mjs`), and a bundler cannot tree-shake a top-level
 initializer it cannot prove pure: `const X = z.object(...)`, `method(...)`,
 `Object.freeze({...})` and every `.extend(...)` chain are calls. Measured on the
@@ -42,7 +42,7 @@ statements exist for their effect, they populate the event taxonomy.
 
 ## Decision
 
-`@camstack/types` is tree-shakable, and the rule that keeps it so is three guards on
+`@dominevo/types` is tree-shakable, and the rule that keeps it so is three guards on
 the BUILT addons, with the heap budget demoted to a backstop.
 
 - `packages/types` also emits `dist/esm/`, one ESM file per source module
@@ -67,7 +67,7 @@ listed in `sideEffects` instead of the flag being dropped.
   statements in the reolink dist: 2,752 KB to 562 KB.
 - The default budget falls from 60 to 45 MB; the dated entries that only recorded
   the types growth are gone, and pipeline-analytics keeps one for its own code.
-- D15 stands: the addon still carries its own copy of `@camstack/types`. The copy is
+- D15 stands: the addon still carries its own copy of `@dominevo/types`. The copy is
   now the part of it the addon reaches.
 - D28 stands for the runner (the barrel stays out of it); for addons the rule is
   these guards, and a budget no longer excuses a failure of them.

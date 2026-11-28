@@ -154,7 +154,7 @@ how one passage takes four tiles.
 
 ### 1.2 A real mosaic, reconstructed tile by tile
 
-`docker logs CamStack | grep 'summary produced'`, the 19:37 delivery:
+`docker logs Dominevo | grep 'summary produced'`, the 19:37 delivery:
 
 ```
 ruleId=6f294ef8 deviceIds=101,102 windowStart=1787331237907 windowEnd=1787333686885
@@ -992,7 +992,7 @@ Three consequences to build for:
 - `TrackCascadeFamily` is a **closed union of five**
   (`delete-track-cascade.ts:22`), mirrored in `TrackCascadeTally`,
   `addLeafCounts`, `mergeCascadeTallies` and `TrackCascadeCounts` in
-  `@camstack/types`. A `'groups'` family widens all of them.
+  `@dominevo/types`. A `'groups'` family widens all of them.
 - `retention/__tests__/cascade-completeness.spec.ts` cross-checks the seeder
   table against `TRACK_OWNED_FAMILIES` **in both directions**. A declared family
   with no seeder fails immediately — which is the guard that makes the "last

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { z } from 'zod'
-import { customAction, defineCustomActions } from '@camstack/types'
-import type { CustomActionCaller } from '@camstack/types'
+import { customAction, defineCustomActions } from '@dominevo/types'
+import type { CustomActionCaller } from '@dominevo/types'
 import { CustomActionRegistry } from '../custom-action-registry.js'
 
 describe('CustomActionRegistry', () => {

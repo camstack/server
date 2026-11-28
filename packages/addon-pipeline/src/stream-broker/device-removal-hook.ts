@@ -16,7 +16,7 @@ import {
   type DeviceRemovedResult,
   type IDeviceRemovalHookProvider,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export interface BrokerRemovalHookDeps {
   readonly logger: IScopedLogger

@@ -96,9 +96,9 @@ writes an hour, forever, for an alert nobody wants).
 - A mute or snooze change does not re-offer a pending raise; only a rule
   change does.
 - The viewer's rule mirror carries `excludeDeviceIds` ahead of the published
-  `@camstack/types`; `nc-rule-mirror-parity.spec.ts` names it in a
+  `@dominevo/types`; `nc-rule-mirror-parity.spec.ts` names it in a
   self-expiring `AHEAD_OF_PUBLISHED` list that fails once the release carries
-  it. The viewer must ship after the `@camstack/server` train.
+  it. The viewer must ship after the `@dominevo/server` train.
 - `listDeviceIdsByCaps` walks every device's bindings SERVER-side (the
   `getAllBindings` pass, ~0.5 s on this hub) and ships only ids. An older hub
   lacks it: both UIs say they could not check, never "no opening" (D315).

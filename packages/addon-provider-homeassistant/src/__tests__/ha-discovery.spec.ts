@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import { buildDiscoveryCandidates } from '../ha-discovery.js'
 
 describe('buildDiscoveryCandidates', () => {
@@ -76,7 +76,7 @@ describe('buildDiscoveryCandidates', () => {
       hidden_by: null,
       entity_category: 'diagnostic',
     },
-    // Unmapped-domain entity — still skipped (no CamStack mapping).
+    // Unmapped-domain entity — still skipped (no Dominevo mapping).
     {
       entity_id: 'tts.home_assistant_cloud',
       unique_id: 'uid-tts-1',

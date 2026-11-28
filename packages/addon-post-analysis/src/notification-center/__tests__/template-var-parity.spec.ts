@@ -29,7 +29,7 @@ import {
   type NcSystemEventKind,
   type NcTemplateVarContext,
   type SystemEvent,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { NcTextCatalog } from '../text-catalog.js'
 import type { NcApplianceCycleFacts } from '../appliance-cycle.js'
 import { NC_STATE_SUMMARY_SECTION_IDS } from '../state-summary/state-model.js'
@@ -760,13 +760,13 @@ const SYSTEM_SAMPLES: readonly SystemSample[] = [
         target: 'addon',
         packages: [
           {
-            packageName: '@camstack/addon-recorder',
+            packageName: '@dominevo/addon-recorder',
             currentVersion: '1.2.377',
             latestVersion: '1.2.378',
             nodeId: 'hub',
           },
           {
-            packageName: '@camstack/addon-notifier',
+            packageName: '@dominevo/addon-notifier',
             currentVersion: '2.0.1',
             latestVersion: '2.0.2',
             nodeId: 'agent-a',
@@ -779,7 +779,7 @@ const SYSTEM_SAMPLES: readonly SystemSample[] = [
     build: () =>
       fromBus('update.available', {
         target: 'addon',
-        packageName: '@camstack/addon-recorder',
+        packageName: '@dominevo/addon-recorder',
         currentVersion: '1.2.377',
         latestVersion: '1.2.378',
         nodeId: 'hub',
@@ -790,7 +790,7 @@ const SYSTEM_SAMPLES: readonly SystemSample[] = [
     build: () =>
       fromBus('update.available', {
         target: 'server',
-        packageName: '@camstack/server',
+        packageName: '@dominevo/server',
         currentVersion: '1.0.10',
         latestVersion: '1.0.11',
         nodeId: 'hub',
@@ -803,13 +803,13 @@ const SYSTEM_SAMPLES: readonly SystemSample[] = [
         target: 'server',
         packages: [
           {
-            packageName: '@camstack/server',
+            packageName: '@dominevo/server',
             currentVersion: '1.0.10',
             latestVersion: '1.0.11',
             nodeId: 'hub',
           },
           {
-            packageName: '@camstack/server',
+            packageName: '@dominevo/server',
             currentVersion: '1.0.10',
             latestVersion: '1.0.11',
             nodeId: 'agent-a',
@@ -833,7 +833,7 @@ const SYSTEM_SAMPLES: readonly SystemSample[] = [
     name: 'addon.updated',
     build: () =>
       fromBus('addon.updated', {
-        packageName: '@camstack/addon-recorder',
+        packageName: '@dominevo/addon-recorder',
         fromVersion: '1.2.377',
         toVersion: '1.2.378',
         nodeId: 'hub',
@@ -860,7 +860,7 @@ const SYSTEM_SAMPLES: readonly SystemSample[] = [
       fromBus('system.restarting', {
         kind: 'framework-update',
         requestedAt: 1,
-        packageName: '@camstack/server',
+        packageName: '@dominevo/server',
         fromVersion: '1.0.10',
         toVersion: '1.0.11',
         nodeId: 'agent-a',

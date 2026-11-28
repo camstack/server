@@ -20,7 +20,7 @@
  * undoes a label, not a letter.
  */
 
-import type { RetrainMacroClass } from '@camstack/types'
+import type { RetrainMacroClass } from '@dominevo/types'
 import {
   Button,
   Input,
@@ -29,7 +29,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Ban, Check, Info, Trash2 } from 'lucide-react'
 import { useEffect, useRef, type JSX } from 'react'
 import { boxLook } from './lib/retrain-box-look.js'

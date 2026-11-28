@@ -13,7 +13,7 @@ import type {
   CalendarListEventsInput,
   ICalendarSourceProvider,
   IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { HaBrokerRegistry } from './ha-broker-registry.js'
 import type { PublishTargetHa } from './ha-integration-manager.js'
 import { type HaEntityState, HaEntityStateSchema } from './ha-types.js'

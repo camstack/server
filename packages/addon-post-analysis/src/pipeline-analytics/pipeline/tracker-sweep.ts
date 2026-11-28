@@ -4,7 +4,7 @@
  * so a camera whose frames stopped still ends its tracklets and commits its
  * fusions, and the closer asks `canClose` in the processor's own frame clock.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { TrackFusion } from './tracker-v2/index.js'
 
 /**

@@ -5,7 +5,7 @@
  * fresh sign-ins and credential changes. A session stored before the terminal id was kept (the
  * tsvesync 1.4 era) loads, is adopted or refused like any other, and gains a terminal id.
  */
-import { createDurableState, type IScopedLogger } from '@camstack/types'
+import { createDurableState, type IScopedLogger } from '@dominevo/types'
 import { VeSync } from 'tsvesync'
 import { describe, expect, it } from 'vitest'
 import { vesyncConnectionSchema, type VeSyncConnectionConfig } from '../config.js'

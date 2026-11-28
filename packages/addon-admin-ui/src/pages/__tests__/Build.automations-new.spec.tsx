@@ -37,8 +37,8 @@ vi.mock('../build/CustomDeviceTab', () => ({
   CustomDeviceTab: () => <div data-testid="custom-device-body" />,
 }))
 
-vi.mock('@camstack/ui-library', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@camstack/ui-library')>()
+vi.mock('@dominevo/ui-library', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dominevo/ui-library')>()
   return {
     ...actual,
     useSystem: () => ({
@@ -58,7 +58,7 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
   }
 })
 
-import { ConfirmDialogProvider } from '@camstack/ui-library'
+import { ConfirmDialogProvider } from '@dominevo/ui-library'
 import { subscribeToasts, type LocalToast } from '../../components/ui/toast-bus'
 import { BuildPage } from '../Build'
 

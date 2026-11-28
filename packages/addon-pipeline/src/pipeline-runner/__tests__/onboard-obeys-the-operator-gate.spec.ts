@@ -24,7 +24,7 @@
  * the whole frame, reported on every frame — ~280 `score-floor` discards in one
  * minute, surviving only because a tracker floor happened to catch it.
  */
-import type { CameraNativeDetection } from '@camstack/types'
+import type { CameraNativeDetection } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 
 import { makeCameraNativeDetection } from '../../__tests__/support/camera-native-detection.js'

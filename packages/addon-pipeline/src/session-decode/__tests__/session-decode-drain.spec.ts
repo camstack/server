@@ -12,7 +12,7 @@
  * child, so the chain under test is exactly the production one:
  * teardown → iterator.return() → coordinator finally → drain → kill.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { LocalFrameRegistry } from '../local-frame-registry.js'
 import {

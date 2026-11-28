@@ -11,7 +11,7 @@
  *     `interfaceName`. The bare interfaceName goes only when the node row exists, so deleting it
  *     can never lose the value. A `@<nodeId>` row is never touched.
  */
-import { type MigrationPlan, type MigrationProcedureResult, preconditionOf } from '@camstack/types'
+import { type MigrationPlan, type MigrationProcedureResult, preconditionOf } from '@dominevo/types'
 import { ADDON_SETTINGS_TABLE, type HubNodeFieldsPorts, nodeKeyOf } from './hub-node-fields.js'
 
 export interface DropGlobalKnobsPorts extends HubNodeFieldsPorts {

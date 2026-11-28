@@ -1,5 +1,5 @@
 import type { ReolinkBaichuanApi } from '@apocaliss92/nodelink-js'
-import type { IntercomAbility, IScopedLogger } from '@camstack/types'
+import type { IntercomAbility, IScopedLogger } from '@dominevo/types'
 import { encodeImaAdpcm } from './intercom-encoder.js'
 
 /**

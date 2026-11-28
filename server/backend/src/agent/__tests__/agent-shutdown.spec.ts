@@ -2,7 +2,7 @@
  * The agent's graceful shutdown is bounded, re-entry guarded and says why it started.
  * A SIGTERM once hung 9.5 minutes on an addon's `shutdown()`, leaving the node alive but deregistered.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createAgentShutdown, killSelfHard, type ShutdownStep } from '../agent-shutdown'
 

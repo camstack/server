@@ -30,7 +30,7 @@ import type {
   RetrainCorpusPage,
   RetrainFrameWorkState,
   RetrainFrame as WireFrame,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { RetrainAnnotationStore } from './retrain-annotation-store.js'
 import { compareCorpusNewestFirst, workStateOf } from './retrain-corpus-query.js'
 import { corpusDeviceIds } from './retrain-corpus-walk.js'

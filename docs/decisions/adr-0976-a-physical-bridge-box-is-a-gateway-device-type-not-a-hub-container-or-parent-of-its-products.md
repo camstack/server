@@ -11,7 +11,7 @@ applies-to:
 
 ## Context
 
-The Velux KLF-200 is a box that talks to the shutters over radio and to CamStack over a LAN socket. It is a
+The Velux KLF-200 is a box that talks to the shutters over radio and to Dominevo over a LAN socket. It is a
 device in its own right (it reboots, has firmware, has a web page) but it is not the shutters. The first
 Velux addon modelled it as a `Hub` that every cover was bound to, as a standalone device the operator added by
 hand. That conflated two things: the bridge box, and the per-equipment grouping that `Hub` and `Container`

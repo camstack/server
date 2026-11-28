@@ -3,7 +3,7 @@
  * One lane per clip PROVIDER from `videoclips.listSources`, each with its own
  * clips query; a lane that could not answer says so instead of an empty bar.
  */
-import type { Clip, ClipSource } from '@camstack/types'
+import type { Clip, ClipSource } from '@dominevo/types'
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 

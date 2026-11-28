@@ -11,7 +11,7 @@ import {
   buildTreeFromAddons,
   OBJECT_DETECTION_STEP_ID,
 } from '../pipeline-resolver.js'
-import type { PipelineSchema, PipelineEngineChoice, CameraPipelineSettings } from '@camstack/types'
+import type { PipelineSchema, PipelineEngineChoice, CameraPipelineSettings } from '@dominevo/types'
 
 const ENGINE_CPU: PipelineEngineChoice = { runtime: 'python', backend: 'cpu', format: 'onnx' }
 
@@ -481,7 +481,7 @@ function makeCoralHubCatalog(): PipelineSchema {
   }
 }
 
-// D657 — ONE placement rule (`stepModelRunsOnFormat`, @camstack/types): a
+// D657 — ONE placement rule (`stepModelRunsOnFormat`, @dominevo/types): a
 // LEGACY build is a catalog stub (the Coral face SSD has no working
 // postprocessor) and never provisions a format on its own. Counting it kept
 // face-detection on a Coral, where it resolved to a model with no tflite build.

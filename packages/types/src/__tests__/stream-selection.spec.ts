@@ -4,7 +4,7 @@
  * entries. The smart-auto path (resolution-targeted picking) lets
  * Alexa default to its 720p sweet spot and HomeKit to its 1080p sweet
  * spot without re-encoding a 4K source. The picker lives in
- * `@camstack/types` so every exporter calls the same code path.
+ * `@dominevo/types` so every exporter calls the same code path.
  */
 import { describe, it, expect } from 'vitest'
 import { pickPreferredRtspEntry, type RtspEntryLike } from '../stream-selection.js'

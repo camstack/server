@@ -31,7 +31,7 @@ describe('localCaCommonName', () => {
     expect(localCaCommonName('')).toBe(CA_COMMON_NAME)
     expect(localCaCommonName('  \t\u0007 ')).toBe(CA_COMMON_NAME)
     // The product's own fallback name says nothing about the hub.
-    expect(localCaCommonName('CamStack')).toBe(CA_COMMON_NAME)
+    expect(localCaCommonName('Dominevo')).toBe(CA_COMMON_NAME)
   })
 
   it('strips control characters and collapses whitespace', () => {

@@ -1,4 +1,4 @@
-import { defaultIntegrationMigrations } from '@camstack/types'
+import { defaultIntegrationMigrations } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { hikvisionConnectionsEntryKind, hikvisionRecordKinds } from '../hikvision-instances.js'
 

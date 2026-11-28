@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import type { ModelCatalogEntry } from '@camstack/types'
+import type { ModelCatalogEntry } from '@dominevo/types'
 // eslint-disable-next-line no-restricted-imports -- the revision rule is the downloader's (build-time dep, as in provider.ts)
-import { resolveFormatRevision } from '@camstack/server/system/addon-utils'
+import { resolveFormatRevision } from '@dominevo/server/system/addon-utils'
 import * as catalogs from '../registry/model-catalogs.js'
 
-// D744 — every artefact on the CamStack mirror carries a revision (the sha256
+// D744 — every artefact on the Dominevo mirror carries a revision (the sha256
 // of its weight file, generated from the mirror into the downloader's table),
 // so ANY in-place replacement reaches the nodes that hold the old bytes. The
 // YOLO26 @320/@256 CoreML packages were replaced in place under D742 (a

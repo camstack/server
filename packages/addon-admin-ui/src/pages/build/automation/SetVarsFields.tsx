@@ -3,7 +3,7 @@
  * and may name another variable (`{{vars.x}}`); the steps after this one read
  * what it wrote.
  */
-import { Button, Input } from '@camstack/ui-library'
+import { Button, Input } from '@dominevo/ui-library'
 import { Plus, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { PickerLabel } from './FieldPicker'

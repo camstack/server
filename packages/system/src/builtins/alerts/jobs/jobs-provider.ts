@@ -25,7 +25,7 @@ import {
   type JobState,
   type JobSummary,
   type JobUpdateInput,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { canCancelJob, canSeeJob, selectJobsToPrune, type JobRetention } from './job-policy.js'
 import type { JobStore, StoredJob } from './job-store.js'
 

@@ -1,5 +1,5 @@
 /**
- * Stands in for the bare `@camstack/types` entry when a generated block is
+ * Stands in for the bare `@dominevo/types` entry when a generated block is
  * bundled inside a spec. Deep modules only: the real entry pulls the whole
  * package (and every capability) into a one-file test bundle.
  */

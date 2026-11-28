@@ -16,7 +16,7 @@ import {
   makeSpawnFn,
   type SpawnTrace,
 } from '../../../__tests__/support/spawn-fake-child.js'
-import type { IScopedLogger, EncodedPacket } from '@camstack/types'
+import type { IScopedLogger, EncodedPacket } from '@dominevo/types'
 import { brokerTranscodeInvocation } from '../ffmpeg-invocation.js'
 import { TranscodeEgress } from '../transcode-egress.js'
 import type { TranscodeEgressDeps, RtspRestreamerLike } from '../transcode-egress.js'

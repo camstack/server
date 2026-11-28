@@ -4,14 +4,14 @@
  * Builds the per-capability tRPC routers DYNAMICALLY at hub boot by
  * iterating `ALL_CAPABILITY_DEFINITIONS`, instead of importing the
  * statically codegen'd `createCapRouter_<Cap>` value functions baked into
- * `@camstack/server`. Moving the CONSTRUCTION here means a capability
- * update ships via the framework plugin (`@camstack/types` +
- * `@camstack/server/system`, live-updated together) WITHOUT a `@camstack/server`
+ * `@dominevo/server`. Moving the CONSTRUCTION here means a capability
+ * update ships via the framework plugin (`@dominevo/types` +
+ * `@dominevo/server/system`, live-updated together) WITHOUT a `@dominevo/server`
  * image rebuild.
  *
  * Type vs value split:
  *   - The runtime VALUE is built here, generically.
- *   - The static AppRouter TYPE stays codegen'd into `@camstack/types`
+ *   - The static AppRouter TYPE stays codegen'd into `@dominevo/types`
  *     (`generated/addon-api.ts`) via the `generated-cap-routers.ts`
  *     per-cap router factory TYPES. The server delegation site assigns
  *     this builder's output to that static type at the single documented
@@ -29,14 +29,14 @@
  * output the hub does not own against the hub's OWN (framework-versioned,
  * therefore potentially stale) copy of the cap def silently STRIPS fields
  * a fresher addon added (a self-contained addon bundles its own newer
- * `@camstack/types`; the hub-closure copy lags). That is exactly how
+ * `@dominevo/types`; the hub-closure copy lags). That is exactly how
  * `models[].group.resolution` vanished from `pipelineExecutor.getSchema`.
  * Cap dispatch is structural (CLAUDE.md invariant): the owning provider is
  * typed to return a complete `z.infer<output>` and is the SOLE authority
  * for the payload shape, so the hub forwards it verbatim. Input validation
  * is retained (`.input(...)`) — the hub still guards the client boundary.
  *
- * This module owns NO tRPC primitives of its own: `@camstack/server/system`
+ * This module owns NO tRPC primitives of its own: `@dominevo/server/system`
  * cannot import the server's `TrpcContext`-bound procedures. The server
  * passes them in via {@link CapRouterPrimitives} (the `t` half of the
  * `buildCapRouters(t, services)` contract), keeping the kernel free of any
@@ -63,7 +63,7 @@ import {
   procedureAuthKey,
   resolveCapMount,
   resolveMethodAuth,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import {
   commandActorFromContext,

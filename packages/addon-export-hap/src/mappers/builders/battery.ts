@@ -15,7 +15,7 @@
  */
 import { Characteristic, Service, type Service as HapService } from '@homebridge/hap-nodejs'
 
-import { BatteryStatusSchema } from '@camstack/types'
+import { BatteryStatusSchema } from '@dominevo/types'
 
 import type { BuilderContext, BuilderHandle } from '../types.js'
 import { applyUpdates, reader } from './generic/characteristic-update.js'

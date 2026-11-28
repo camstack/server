@@ -1,4 +1,4 @@
-import { consumablesCapability, locationCapability, vehicleCapability } from '@camstack/types'
+import { consumablesCapability, locationCapability, vehicleCapability } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { consumablesStatusOf, locationStatusOf, vehicleStatusOf } from '../kia-domain-mapping.js'
 import { silentState, sportageState } from './kia-fixtures.js'

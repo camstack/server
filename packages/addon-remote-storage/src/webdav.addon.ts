@@ -1,5 +1,5 @@
-import type { ProviderRegistration } from '@camstack/types'
-import { BaseAddon, storageProviderCapability } from '@camstack/types'
+import type { ProviderRegistration } from '@dominevo/types'
+import { BaseAddon, storageProviderCapability } from '@dominevo/types'
 import { WebDavStorageProvider } from './providers/webdav/webdav-provider.js'
 
 /**

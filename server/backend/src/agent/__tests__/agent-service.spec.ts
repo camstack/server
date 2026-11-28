@@ -81,25 +81,25 @@ describe('$agent service', () => {
   })
 
   it('undeploy does NOT remove a package dir still shared by other loaded addons', async () => {
-    // Regression: `@camstack/addon-pipeline` ships many addons (decoder-ffmpeg,
+    // Regression: `@dominevo/addon-pipeline` ships many addons (decoder-ffmpeg,
     // recorder, motion-wasm, …) from ONE package dir. Undeploying a single
     // member (e.g. a version-skew `decoder-nodeav` the hub does not know) must
     // NOT rmSync the whole shared bundle — that wipes every sibling runner,
     // which then crash-loops on the missing package.json.
     broker = new ServiceBroker({ nodeID: 'agent-test', transporter: 'Fake', logger: false })
     const addonsDir = path.join(tmpDir, 'addons')
-    const pkgDir = path.join(addonsDir, '@camstack/addon-pipeline')
+    const pkgDir = path.join(addonsDir, '@dominevo/addon-pipeline')
     fs.mkdirSync(pkgDir, { recursive: true })
     fs.writeFileSync(path.join(pkgDir, 'package.json'), '{}', 'utf-8')
 
     const loadedAddons = new Map<string, LoadedAddonEntry>([
       [
         'decoder-nodeav',
-        { id: 'decoder-nodeav', status: 'running', packageName: '@camstack/addon-pipeline' },
+        { id: 'decoder-nodeav', status: 'running', packageName: '@dominevo/addon-pipeline' },
       ],
       [
         'decoder-ffmpeg',
-        { id: 'decoder-ffmpeg', status: 'running', packageName: '@camstack/addon-pipeline' },
+        { id: 'decoder-ffmpeg', status: 'running', packageName: '@dominevo/addon-pipeline' },
       ],
     ])
     const schema = createAgentService({
@@ -125,14 +125,14 @@ describe('$agent service', () => {
   it('undeploy removes the package dir when no other loaded addon shares it', async () => {
     broker = new ServiceBroker({ nodeID: 'agent-test', transporter: 'Fake', logger: false })
     const addonsDir = path.join(tmpDir, 'addons')
-    const pkgDir = path.join(addonsDir, '@camstack/addon-pipeline')
+    const pkgDir = path.join(addonsDir, '@dominevo/addon-pipeline')
     fs.mkdirSync(pkgDir, { recursive: true })
     fs.writeFileSync(path.join(pkgDir, 'package.json'), '{}', 'utf-8')
 
     const loadedAddons = new Map<string, LoadedAddonEntry>([
       [
         'decoder-nodeav',
-        { id: 'decoder-nodeav', status: 'running', packageName: '@camstack/addon-pipeline' },
+        { id: 'decoder-nodeav', status: 'running', packageName: '@dominevo/addon-pipeline' },
       ],
     ])
     const schema = createAgentService({

@@ -4,7 +4,7 @@
  * The switch exists once the list is stored: a row that only shows the native
  * items has nothing to switch off.
  */
-import { IconButton } from '@camstack/ui-library'
+import { IconButton } from '@dominevo/ui-library'
 import { Pencil } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'

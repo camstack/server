@@ -1,7 +1,7 @@
 import { buildLibPreset } from '../../tools/build/vite-lib.preset.ts'
 
 /**
- * `@camstack/types/client` — built ALONE, after the main build (D721).
+ * `@dominevo/types/client` — built ALONE, after the main build (D721).
  *
  * Alone because of one knob: `moduleSideEffects: false`. Rolldown otherwise
  * keeps every module the barrel imports in case its top level has an effect,

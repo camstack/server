@@ -4,7 +4,7 @@
  * every card on the tab reads at the size and case of the rest of the page.
  * A card owns no data.
  */
-import { SectionCard } from '@camstack/ui-library'
+import { SectionCard } from '@dominevo/ui-library'
 import type { LucideIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
 

@@ -49,13 +49,13 @@
  * teardown closure is invoked. Mirrors the `FrameHandlePoller` recovery
  * shape so video and audio plumbing self-heal identically.
  */
-import { errMsg, nodePin } from '@camstack/types'
+import { errMsg, nodePin } from '@dominevo/types'
 import type {
   AddonApi,
   AudioChunkFormat,
   DecodedAudioChunkWire,
   IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /**
  * Poll period when the broker is on the SAME node — audio chunks arrive

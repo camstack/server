@@ -1,4 +1,4 @@
-import { linkedTriggerValues, type TemplateInstance } from '@camstack/types'
+import { linkedTriggerValues, type TemplateInstance } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   draftOps,

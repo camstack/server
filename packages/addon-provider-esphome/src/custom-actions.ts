@@ -1,4 +1,4 @@
-import { BoardKeyFailureReasonSchema, customAction, defineCustomActions } from '@camstack/types'
+import { BoardKeyFailureReasonSchema, customAction, defineCustomActions } from '@dominevo/types'
 import { z } from 'zod'
 
 const ServiceArgTypeSchema = z.enum([

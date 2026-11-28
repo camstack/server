@@ -32,10 +32,10 @@ import type {
   IKernelHwAccel,
   IScopedLogger,
   RtpSource,
-} from '@camstack/types'
-import { errMsg, makeSourceBrokerId } from '@camstack/types'
+} from '@dominevo/types'
+import { errMsg, makeSourceBrokerId } from '@dominevo/types'
 // Node-only: it SPAWNS ffmpeg to ask what it can encode.
-import { probeFfmpegBinary, type FfmpegBinaryCapabilities } from '@camstack/types/node'
+import { probeFfmpegBinary, type FfmpegBinaryCapabilities } from '@dominevo/types/node'
 import { DEFAULT_VAAPI_RENDER_DEVICE, rankDecodeHwAccels } from '../../shared/ffmpeg-decode-args.js'
 import {
   brokerTranscodeInvocation,
@@ -430,7 +430,7 @@ export class TranscodePipelineManager {
       {
         brokerId,
         targetCodec: opts.targetCodec,
-        // Built for the ONE shared builder (`@camstack/types`
+        // Built for the ONE shared builder (`@dominevo/types`
         // `ffmpeg/invocation.ts`). The broker used to have its own
         // `buildFfmpegArgs` here; it was deleted, and the WebRTC/derived legs
         // that had a SECOND, hardware-blind one now come through this same

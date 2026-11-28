@@ -3,7 +3,7 @@
  * while their row points at them (deleting "orphans" would delete a user's 2FA),
  * and an orphan once the row is gone.
  */
-import { buildSecretRef, makeSecretMarker } from '@camstack/types'
+import { buildSecretRef, makeSecretMarker } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { createKeychainUsageCheck } from '../keychain-usage.js'
 import { MemoryDoor } from './memory-door.js'

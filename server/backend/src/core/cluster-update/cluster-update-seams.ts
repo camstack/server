@@ -11,7 +11,7 @@ import type {
   IScopedLogger,
   ServerPackageStatus,
   ServerUpdateActionResult,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** One node as the topology reports it; only what the update decides on. */
 export interface ClusterNodeView {

@@ -1,6 +1,6 @@
 import { useUiText } from '../contexts/ui-text'
 import { useEffect, useRef, useState, useCallback, type JSX, type ReactNode } from 'react'
-import type { CamProfile, WebrtcSessionDebug } from '@camstack/types'
+import type { CamProfile, WebrtcSessionDebug } from '@dominevo/types'
 import { nextReconnectAction, type ReconnectAction } from './reconnect-schedule'
 import { hubOrigin } from '../lib/hub-mount'
 import {

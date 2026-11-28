@@ -4,7 +4,7 @@
  * where the gateway named values to choose from, so a write never leaves
  * `allowed` (the same rules the device page's hero followed, D1026).
  */
-import type { HeatPumpCircuit, HeatPumpOptionSetting, HeatPumpStatus } from '@camstack/types'
+import type { HeatPumpCircuit, HeatPumpOptionSetting, HeatPumpStatus } from '@dominevo/types'
 import type { UiTextFn } from '../../../contexts/ui-text'
 import { formatNumeric } from '../../../lib/format-numeric'
 import {

@@ -52,8 +52,8 @@ import type {
   NcTestResult,
   NcRuleTagsEntry,
   NcTaggedRuleKind,
-} from '@camstack/types'
-import { NC_CONDITION_CATALOG, NC_TAXONOMY, servedTemplateVars } from '@camstack/types'
+} from '@dominevo/types'
+import { NC_CONDITION_CATALOG, NC_TAXONOMY, servedTemplateVars } from '@dominevo/types'
 import { randomUUID } from 'node:crypto'
 import type { NcAlarmPanelPort, NotificationCenterDeps } from './index.js'
 
@@ -74,7 +74,7 @@ export function historyRecordKind(kind: NcOutboxRecordKind): NcHistoryEntry['rec
 /**
  * The system-event half of a history row, in the CAP's shape.
  *
- * The cap contract (`NcHistoryEntry`, frozen in `@camstack/types`) wants a
+ * The cap contract (`NcHistoryEntry`, frozen in `@dominevo/types`) wants a
  * title and a body, and a row written since the text catalog carries keys
  * instead. So history resolves them through the SAME catalog the delivery used
  * — history must read as what the operator was actually sent, and a page that

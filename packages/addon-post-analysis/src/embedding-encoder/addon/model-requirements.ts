@@ -46,11 +46,11 @@ import type {
   EmbeddingModelFailure,
   EmbeddingTower,
   IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   embeddingRequirementsFailedError,
   embeddingRequirementsUnavailableError,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** First cooldown after a failed attempt; doubles per failure up to the cap. */
 export const REQUIREMENTS_COOLDOWN_BASE_MS = 5_000

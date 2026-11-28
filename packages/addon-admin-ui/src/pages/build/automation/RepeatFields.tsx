@@ -13,7 +13,7 @@ import {
   REPEAT_ITERATIONS_MAX,
   REPEAT_STEPS_MAX,
   WAIT_MAX_SECONDS,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   type DeviceListState,
   DeviceValuePicker,
@@ -21,7 +21,7 @@ import {
   ErrorBox,
   Input,
   Select,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 import type { ScopeVariable } from '../flow/ArgField'
 import { ActionList } from './ActionList'

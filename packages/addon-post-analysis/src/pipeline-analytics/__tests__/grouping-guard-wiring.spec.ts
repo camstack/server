@@ -10,7 +10,7 @@ import {
   type NcRuleClearableKey,
   type NcRuleInput,
   NcRuleInputSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import {
   NcGroupedConfirmRefusal,

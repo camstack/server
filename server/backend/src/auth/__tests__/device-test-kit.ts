@@ -3,7 +3,7 @@
  * "device" that owns a P-256 key and signs like the viewer will (raw r||s).
  */
 import { webcrypto } from 'node:crypto'
-import type { SecretsAccess } from '@camstack/types'
+import type { SecretsAccess } from '@dominevo/types'
 
 export function fakeSecrets(): SecretsAccess {
   const values = new Map<string, string>()

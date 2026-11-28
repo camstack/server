@@ -1,4 +1,4 @@
-import type { PipelineSchema } from '@camstack/types'
+import type { PipelineSchema } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { teacherCandidates } from '../lib/retrain-teacher.js'
 

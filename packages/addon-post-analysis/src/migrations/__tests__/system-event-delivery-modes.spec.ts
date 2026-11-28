@@ -17,8 +17,8 @@ import {
   runAddonMigrations,
   systemEventSummaryScheduleOf,
   systemEventSummarySplitOf,
-} from '@camstack/types'
-import { canonicalHash } from '@camstack/types/node'
+} from '@dominevo/types'
+import { canonicalHash } from '@dominevo/types/node'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { type RuleBody, RuleBodySchema } from '../../notification-center/record-kinds.js'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'

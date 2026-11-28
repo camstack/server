@@ -1,4 +1,4 @@
-import { DeviceType, type DiscoveredChildDevice } from '@camstack/types'
+import { DeviceType, type DiscoveredChildDevice } from '@dominevo/types'
 import type { EchoDevice } from './speak/worker-protocol.js'
 import type { AlexaAppliance } from './alexa-client.js'
 import { mapAlexaCapabilitiesToCamStack } from './alexa-domain-mapping.js'
@@ -15,7 +15,7 @@ import { mapAlexaCapabilitiesToCamStack } from './alexa-domain-mapping.js'
  */
 export function buildAlexaApplianceCandidate(input: {
   readonly appliance: AlexaAppliance
-  /** Adopted CamStack device id for this appliance, or null when not adopted. */
+  /** Adopted Dominevo device id for this appliance, or null when not adopted. */
   readonly adoptedDeviceId: number | null
 }): DiscoveredChildDevice {
   const { appliance, adoptedDeviceId } = input
@@ -62,7 +62,7 @@ export function isAdoptableEcho(device: EchoDevice): boolean {
 
 export function buildAlexaEchoCandidate(input: {
   readonly device: EchoDevice
-  /** Adopted CamStack device id for this Echo, or null when not adopted. */
+  /** Adopted Dominevo device id for this Echo, or null when not adopted. */
   readonly adoptedDeviceId: number | null
 }): DiscoveredChildDevice {
   const { device, adoptedDeviceId } = input

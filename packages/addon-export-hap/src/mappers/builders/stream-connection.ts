@@ -32,7 +32,7 @@
  * Every failing session on this hub logged `audioPacketTimeMs=20`. The signal
  * was in the log the whole time and nothing read it.
  */
-import type { CamProfile } from '@camstack/types'
+import type { CamProfile } from '@dominevo/types'
 
 /**
  * `packet_time` at or above this means the audio is travelling through a

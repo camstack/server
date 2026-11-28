@@ -52,7 +52,7 @@ const DATA_ROOT_ENV: NodeJS.ProcessEnv = {
 
 /** npm's real wording for the failure the hub hit at 21:04:38Z on 2026-09-19. */
 const ECONNRESET_OUTPUT =
-  'Command failed: npm install --omit=dev --no-audit --no-fund --loglevel=error @camstack/server@1.2.353\n' +
+  'Command failed: npm install --omit=dev --no-audit --no-fund --loglevel=error @dominevo/server@1.2.353\n' +
   'npm error code ECONNRESET\nnpm error network aborted\n' +
   'npm error network This is a problem related to network connectivity.'
 

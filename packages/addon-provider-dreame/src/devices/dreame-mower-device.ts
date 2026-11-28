@@ -10,7 +10,7 @@ import {
   type RunningStateStatus,
   runningFromLawnMower,
   runningStateCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   clampBatteryLevel,
   clampPercent,

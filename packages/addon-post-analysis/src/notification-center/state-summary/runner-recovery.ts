@@ -19,7 +19,7 @@
  *   named reported `running`. (That method answers `[]` for an agent it could
  *   not reach — no addon found is "no evidence", never "recovered".)
  */
-import { coreBlockIdFromAddonId } from '@camstack/types'
+import { coreBlockIdFromAddonId } from '@dominevo/types'
 import type { NcCrashLoopRunner } from './system-state-ledger.js'
 
 /** A runner-ish thing and its lifecycle state, as both reads answer it. */

@@ -6,7 +6,7 @@
  * dozens of rooms. The selection itself stays in the URL (`?room=`), owned by
  * the page — this component only draws the choice and reports it.
  */
-import { OptionSelect, type OptionSelectOption } from '@camstack/ui-library'
+import { OptionSelect, type OptionSelectOption } from '@dominevo/ui-library'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 

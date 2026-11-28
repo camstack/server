@@ -11,14 +11,14 @@
  * Append is BEST-EFFORT (`append` catches + logs, never throws) — a failed
  * audit write must not fail the operation it records.
  */
-import { OpsLogEntrySchema, OPS_LOG_DEFAULT_LIMIT } from '@camstack/types'
+import { OpsLogEntrySchema, OPS_LOG_DEFAULT_LIMIT } from '@dominevo/types'
 import type {
   IScopedLogger,
   OpsLogEntry,
   OpsLogQueryInput,
   OpsLogOp,
   OpsLogReason,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { EventLedgerCollection } from './event-ledger-collection.js'
 
 /**

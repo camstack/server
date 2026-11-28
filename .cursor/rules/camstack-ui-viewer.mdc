@@ -1,5 +1,5 @@
 ---
-description: CamStack viewer (React Native) UI rules — kit, tokens.ts, SheetModal, i18n en+it; layout changes need the operator
+description: Dominevo viewer (React Native) UI rules — kit, tokens.ts, SheetModal, i18n en+it; layout changes need the operator
 globs: camstack/src/**, camstack/app/**, camstack/embed/src/**, camstack/locales/**
 alwaysApply: false
 ---

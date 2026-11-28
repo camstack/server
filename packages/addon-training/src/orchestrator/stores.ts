@@ -11,7 +11,7 @@ import {
   type RecordKindHandle,
   type TrainingJob,
   TrainingJobSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { trainingRecordKinds } from './record-kinds.js'
 
 /** Legacy collection name — kept for the adoption mapper / docs. */

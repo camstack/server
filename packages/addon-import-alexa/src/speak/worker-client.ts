@@ -5,7 +5,7 @@
  * then requests fail instead of looping.
  */
 import { type ChildProcess, spawn } from 'node:child_process'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import {
   ECHO_COMMAND_DEADLINE_MS,
   ECHO_READ_DEADLINE_MS,
@@ -59,7 +59,7 @@ export interface AlexaWorkerDeps {
 
 /** Per-call knobs. Both are optional; an op without a default deadline waits as long as it takes. */
 export interface WorkerRequestOptions {
-  /** Numeric CamStack device id the call is for; tags the timing line. */
+  /** Numeric Dominevo device id the call is for; tags the timing line. */
   readonly deviceId?: number
   /** Rejects the caller when the call has not started, or not finished, by then. */
   readonly deadlineMs?: number

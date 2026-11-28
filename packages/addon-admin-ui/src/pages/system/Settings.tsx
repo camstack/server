@@ -24,7 +24,7 @@
  * location, and the cap is server-provided so it answers regardless.
  */
 
-import { useClusterNodes } from '@camstack/ui-library'
+import { useClusterNodes } from '@dominevo/ui-library'
 import { Settings as SettingsIcon } from 'lucide-react'
 import { AdminPage } from '../../components/AdminPage'
 import { BootstrapSettingsForm } from '../../components/system/BootstrapSettingsForm'

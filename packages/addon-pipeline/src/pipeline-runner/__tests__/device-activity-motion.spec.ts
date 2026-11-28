@@ -14,8 +14,8 @@
  *     for a forty-minute cleaning run is exactly what this source exists to
  *     avoid.
  */
-import type { IEventBus, RunnerCameraConfig } from '@camstack/types'
-import { EventCategory } from '@camstack/types'
+import type { IEventBus, RunnerCameraConfig } from '@dominevo/types'
+import { EventCategory } from '@dominevo/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { makeRunnerCameraConfig } from '../../__tests__/support/runner-camera-config.js'
 import PipelineRunnerAddon from '../index.js'

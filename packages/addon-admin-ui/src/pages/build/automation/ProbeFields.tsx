@@ -8,8 +8,8 @@ import {
   PROBE_TIMEOUT_MAX_S,
   REACH_RETRY_INTERVAL_S,
   REACH_RETRY_MAX_S,
-} from '@camstack/types'
-import { Input, Select, DurationInput } from '@camstack/ui-library'
+} from '@dominevo/types'
+import { Input, Select, DurationInput } from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 import { PickerLabel } from './FieldPicker'
 import { probeExpect, probeRetry, probeSaveAs, wholeNumber } from './reach-step-model'

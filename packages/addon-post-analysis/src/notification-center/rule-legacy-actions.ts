@@ -11,7 +11,7 @@
  * (`migrations/rule-actions-to-actions.ts`) that rewrites the stored row. The
  * store row is never touched here (D49: a read does not destroy).
  */
-import { NcRuleActionsSchema } from '@camstack/types'
+import { NcRuleActionsSchema } from '@dominevo/types'
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)

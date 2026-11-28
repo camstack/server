@@ -1,4 +1,4 @@
-import { isAlarmControllableCap, type NcAlarmSensorState } from '@camstack/types'
+import { isAlarmControllableCap, type NcAlarmSensorState } from '@dominevo/types'
 import { classifyCoveredOpening, type NcAlarmOpening } from './alarm-openings.js'
 
 /**

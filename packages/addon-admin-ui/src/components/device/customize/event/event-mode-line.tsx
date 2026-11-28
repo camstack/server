@@ -2,8 +2,8 @@
  * Per-source camera-sensor mode control (motion span). Shared by span dialog
  * and {@link SourceSelector} event kind.
  */
-import type { CameraSensorMode } from '@camstack/types'
-import { Select } from '@camstack/ui-library'
+import type { CameraSensorMode } from '@dominevo/types'
+import { Select } from '@dominevo/ui-library'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 

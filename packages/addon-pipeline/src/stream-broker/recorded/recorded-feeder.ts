@@ -1,5 +1,5 @@
 import { SNAP_MAX_DISTANCE_MS } from './playback-profile-fallback.js'
-import { errMsg } from '@camstack/types'
+import { errMsg } from '@dominevo/types'
 import { clampPlaybackRate } from './control-protocol'
 import type { DemuxPathCounts, DemuxPathTally } from './demux-path-tally'
 import { FeedOrigin, MonotonicClock } from './feed-clock'

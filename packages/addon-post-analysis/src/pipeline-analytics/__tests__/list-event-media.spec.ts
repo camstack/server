@@ -24,7 +24,7 @@
  * makes the same point for the track side — this is the event side of it.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { AnalyticsQueryFacade } from '../analytics-query-facade.js'
 import { MediaStore } from '../store/media-store.js'

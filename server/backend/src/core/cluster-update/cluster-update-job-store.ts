@@ -11,7 +11,7 @@ import {
   errMsg,
   type ClusterUpdateJob,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { ClusterUpdateJobStore } from './cluster-update-seams.js'
 
 export const CLUSTER_UPDATE_JOB_FILE = path.join('cluster-update', 'job.json')

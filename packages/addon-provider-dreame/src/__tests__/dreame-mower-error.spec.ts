@@ -1,5 +1,5 @@
 import { MowerChargingStatus, MowerFault, mowerFaultSeverity } from '@apocaliss92/nodedreame'
-import { type DeviceContext, DeviceType, type IDeviceRuntimeState } from '@camstack/types'
+import { type DeviceContext, DeviceType, type IDeviceRuntimeState } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { DreameMowerDevice } from '../devices/dreame-mower-device.js'
 import { mowerErrorReading } from '../dreame-mower-decode.js'

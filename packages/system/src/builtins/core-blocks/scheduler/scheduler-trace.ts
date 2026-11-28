@@ -10,7 +10,7 @@ import {
   type AutomationStepTrace,
   type SchedulerOutcome,
   type TraceValue,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 const LEDGER_OUTCOME: Readonly<Record<SchedulerOutcome, AutomationRunOutcome>> = {
   done: 'ran',

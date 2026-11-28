@@ -22,8 +22,8 @@ import {
   typedToStored,
   useDaylightPhaseGetPhase,
   useDaylightPhaseSetSettings,
-} from '@camstack/ui-library'
-import { baseUnitForQuantity } from '@camstack/types'
+} from '@dominevo/ui-library'
+import { baseUnitForQuantity } from '@dominevo/types'
 import { useQueryClient } from '@tanstack/react-query'
 import { Sun } from 'lucide-react'
 import { useEffect, useState } from 'react'

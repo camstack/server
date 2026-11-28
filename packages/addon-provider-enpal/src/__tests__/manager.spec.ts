@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { settingsToConnection } from '../config.js'
 import type { FetchLike } from '../enpal-client.js'

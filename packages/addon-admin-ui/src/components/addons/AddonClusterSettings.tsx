@@ -3,7 +3,7 @@
  * the addon EXCEPT what a feature page claims (`lib/cluster-settings-claims.ts`),
  * with a link to each of those pages instead — one control per value.
  */
-import { Button } from '@camstack/ui-library'
+import { Button } from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 import {
   addonDialogOmissions,

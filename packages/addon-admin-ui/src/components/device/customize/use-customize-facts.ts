@@ -5,12 +5,12 @@
  * (`getWireableFields`), and what the customization already composes.
  */
 import { liveWireableCatalog } from './source-picker-model'
-import type { Composition, DeviceInfo } from '@camstack/types'
+import type { Composition, DeviceInfo } from '@dominevo/types'
 import {
   useCoreBlocksListComposableCaps,
   useDeviceManagerGetBindings,
   useDeviceManagerGetWireableFields,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { nativeCapNames } from './assignment-availability'
 import { type CustomizeFacts, knownOf } from './customize-facts'
 

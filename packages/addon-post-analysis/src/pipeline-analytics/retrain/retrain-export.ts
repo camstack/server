@@ -27,7 +27,7 @@ import {
   type NativeCropBbox,
   type RetrainExportFilter,
   type RetrainExportLayout,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { Coordinates } from '../scene/condition-resolver.js'
 import type { RetrainAnnotation } from './retrain-annotation-store.js'
 import { workStateOf } from './retrain-corpus-query.js'

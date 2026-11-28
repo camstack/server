@@ -4,7 +4,7 @@
  * addon id; the hub checks it against the manifest the agent registered, which at the child's
  * PRE-INIT register carried no caps, so the addon was unknown until after its init had run.
  */
-import { HubNodeRegistry, RunnerOfAddon } from '@camstack/server/system'
+import { HubNodeRegistry, RunnerOfAddon } from '@dominevo/server/system'
 import { describe, expect, it, vi } from 'vitest'
 import { isRunnerHostedByNode } from '../../core/moleculer/runner-hosted-on-node.js'
 import { buildAgentChildUdsManifest } from '../agent-child-manifest.js'

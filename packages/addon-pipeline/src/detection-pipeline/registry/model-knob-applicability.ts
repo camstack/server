@@ -35,8 +35,8 @@ import type {
   ModelCatalogEntry,
   PostprocessorType,
   StepDefinition,
-} from '@camstack/types'
-import { LABEL_SUPPLY_MACRO, rootSuppliesOf } from '@camstack/types'
+} from '@dominevo/types'
+import { LABEL_SUPPLY_MACRO, rootSuppliesOf } from '@dominevo/types'
 import { resolveEffectivePostprocessorForEntry } from './effective-postprocessor.js'
 import { getStepDefinition } from './step-definitions.js'
 

@@ -4,7 +4,7 @@
  *
  * ## The failure this catches
  *
- * `@camstack/addon-export-alexa` committed the built-in Alexa skill's Login
+ * `@dominevo/addon-export-alexa` committed the built-in Alexa skill's Login
  * With Amazon "Send Alexa Events" client secret to source (`public-skill.ts`),
  * with a comment explaining why that was fine. The package is PUBLIC on npm, so
  * every one of its versions shipped the secret to anyone who ran `npm pack`.

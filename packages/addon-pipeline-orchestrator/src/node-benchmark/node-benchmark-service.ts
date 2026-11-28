@@ -40,7 +40,7 @@ import {
   type NodeBenchRunnerInputRaw,
   type NodeBenchRunnerStatus,
   nodeBenchmarkRefusals,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { NodeBenchmarkPersistence } from './node-benchmark-store.js'
 
 /** How the service drives the node's runner (nodePin'd cap calls in production). */

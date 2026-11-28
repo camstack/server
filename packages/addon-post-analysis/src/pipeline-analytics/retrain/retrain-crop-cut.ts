@@ -15,7 +15,7 @@ import {
   type DetailCropConvention,
   deriveDetailCropRect,
   type NativeCropBbox,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export interface RetrainCropInput {
   readonly frameBytes: Buffer

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { BATTERY_UNREACHABLE_AFTER_MS } from '@camstack/types'
+import { BATTERY_UNREACHABLE_AFTER_MS } from '@dominevo/types'
 import {
   WAKE_DEMAND_BOUND_MS,
   isStreamOutageReason,

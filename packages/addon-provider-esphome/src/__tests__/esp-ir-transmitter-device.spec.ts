@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { DeviceType, readErrorI18n } from '@camstack/types'
+import { DeviceType, readErrorI18n } from '@dominevo/types'
 import { ESP_IR_MAX_TIMINGS, EspIrTransmitterDevice } from '../devices/esp-ir-transmitter-device.js'
 import { espLinkHub } from '../esphome-link-hub.js'
 import { FakeLink } from './fake-link.js'

@@ -1,4 +1,4 @@
-import type { ErrorI18nPayload, TranslationParams } from '@camstack/types'
+import type { ErrorI18nPayload, TranslationParams } from '@dominevo/types'
 
 /**
  * An error the FAR END of a channel answered with.

@@ -4,7 +4,7 @@
  * client installs to trust the hub); the cluster CA signs what nodes present
  * to the hub, and its listener state says whether any node can connect.
  */
-import { Badge, Button, SettingRow, useLocalNetworkGetTlsStatus } from '@camstack/ui-library'
+import { Badge, Button, SettingRow, useLocalNetworkGetTlsStatus } from '@dominevo/ui-library'
 import { AlertTriangle, Download } from 'lucide-react'
 import type { ReactNode } from 'react'
 

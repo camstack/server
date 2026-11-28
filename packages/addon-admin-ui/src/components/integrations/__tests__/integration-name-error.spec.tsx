@@ -4,13 +4,13 @@
  * field error and a submit-time reason; a filled name shows neither.
  */
 import { fireEvent, render, screen } from '@testing-library/react'
-import { ConfirmDialogProvider } from '@camstack/ui-library'
+import { ConfirmDialogProvider } from '@dominevo/ui-library'
 import { describe, expect, it, vi } from 'vitest'
 import type { ConfigUISchema } from '../../../types/config-ui'
 import { ProviderConfigForm } from '../ProviderConfigForm'
 
-vi.mock('@camstack/ui-library', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@camstack/ui-library')>()),
+vi.mock('@dominevo/ui-library', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@dominevo/ui-library')>()),
   useIntegrationInstancesTestInstance: () => ({ mutate: vi.fn(), isPending: false }),
   useAddonsCustom: () => ({ mutateAsync: vi.fn() }),
 }))

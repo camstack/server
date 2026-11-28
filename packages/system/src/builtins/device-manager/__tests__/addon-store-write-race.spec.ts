@@ -30,14 +30,14 @@
  * (`settings-door-view.ts`: `loadPrefixed` → `replacePrefixed`).
  */
 
-import { CapabilityRegistry, DeviceRegistry } from '@camstack/server/system'
+import { CapabilityRegistry, DeviceRegistry } from '@dominevo/server/system'
 import type {
   AddonContext,
   IDeviceManagerProvider,
   IEventBus,
   IScopedLogger,
   ProviderRegistration,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { makeRecordsAccessForOwner } from '../../sqlite-storage/__tests__/support/records-world.js'
 import { DeviceManagerAddon } from '../device-manager.addon.js'

@@ -3,7 +3,7 @@
  * day. The list is `schedulers.list` with where each hold stands
  * (`schedulers.getStatus`); selection lives in the URL (`?scheduler=`, `?new=1`).
  */
-import type { Scheduler, SchedulerStatus } from '@camstack/types'
+import type { Scheduler, SchedulerStatus } from '@dominevo/types'
 import {
   Badge,
   type BadgeVariant,
@@ -20,7 +20,7 @@ import {
   useSchedulersSetEnabled,
   useSchedulersUpdate,
   TaggedDataTable,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { schedulerSearchText, schedulerTags } from '../tag-accessors'
 import { useQueryClient } from '@tanstack/react-query'
 import { CalendarClock, Plus } from 'lucide-react'

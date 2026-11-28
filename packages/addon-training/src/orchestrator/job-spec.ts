@@ -9,7 +9,7 @@ import {
   type TrainingJob,
   type TrainingJobSpec,
   TrainingJobSpecSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { BaseModelSpec } from './base-models.js'
 import { PRESETS } from './planner.js'
 

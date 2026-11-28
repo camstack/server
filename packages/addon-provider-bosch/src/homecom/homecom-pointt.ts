@@ -1,4 +1,4 @@
-import type { HvacMode } from '@camstack/types'
+import type { HvacMode } from '@dominevo/types'
 import type { HomeComResourceFamily } from './homecom-device-type.js'
 import { hvacModesFromAllowed } from './homecom-domain-mapping.js'
 import type { HomeComDhw, HomeComHeatingCircuit } from './homecom-domain-mapping.js'

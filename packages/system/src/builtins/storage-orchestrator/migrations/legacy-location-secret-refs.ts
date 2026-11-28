@@ -3,7 +3,7 @@
  * location's own record (`row/storage_locations/<id>`). Only the migration
  * `storage-orchestrator/2026-11-07-location-secrets-to-record` reads this shape.
  */
-import { buildSecretRef, isSecretMarker, parseSecretRef, type SecretMarker } from '@camstack/types'
+import { buildSecretRef, isSecretMarker, parseSecretRef, type SecretMarker } from '@dominevo/types'
 import { STORAGE_RECORD_OWNER } from '../location-secret-refs.js'
 
 /** The keychain collection of the legacy per-row refs (the table it was named for is gone). */

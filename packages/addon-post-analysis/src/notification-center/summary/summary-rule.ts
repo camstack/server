@@ -12,8 +12,8 @@
  *
  * ## Why this schema lives in the ADDON and not in `packages/types`
  *
- * `@camstack/types` is `external` in every mode of the build preset, so the
- * addon resolves it at runtime from the `@camstack/server` closure. A field
+ * `@dominevo/types` is `external` in every mode of the build preset, so the
+ * addon resolves it at runtime from the `@dominevo/server` closure. A field
  * added there is not live until a framework train is published AND installed —
  * and worse, a NEW field on a cap-validated shape is *silently stripped* at save
  * until that train lands. The timelapse rule paid that price with three cascaded
@@ -22,7 +22,7 @@
  * This rule rides no `NcDelivery` member, no cap method and no codegen. It
  * reaches the outside world through the `nc.*SummaryRule*` bridge actions
  * (`addons.custom`), exactly like `NcTestEventInputSchema` does — so a field
- * added here is live on the next `camstack deploy packages/addon-post-analysis`.
+ * added here is live on the next `dominevo deploy packages/addon-post-analysis`.
  * Promotion into `packages/types` later is additive and needs no migration.
  *
  * ## The `.partial()` trap this file exists to avoid
@@ -45,7 +45,7 @@ import {
   NcTargetOverridesSchema,
   TagIdsFieldSchema,
   TagsFieldSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 
 /** `{{var}}` templating — the same vocabulary the timelapse and rule bodies use. */

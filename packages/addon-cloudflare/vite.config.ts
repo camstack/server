@@ -3,9 +3,9 @@ import { buildLibPreset } from '../../tools/build/vite-lib.preset.ts'
 /**
  * Cloudflare bundle — 2 entries (cloudflare-tunnel, cloudflare-turn).
  *
- * Merges the former `@camstack/addon-cloudflare-tunnel` and
- * `@camstack/addon-cloudflare-turn` packages into a single multi-entry
- * bundle (same pattern as `@camstack/addon-pipeline`). Each addon keeps
+ * Merges the former `@dominevo/addon-cloudflare-tunnel` and
+ * `@dominevo/addon-cloudflare-turn` packages into a single multi-entry
+ * bundle (same pattern as `@dominevo/addon-pipeline`). Each addon keeps
  * its own id + capabilities + runner — only the npm package is merged,
  * NOT the processes (no shared `execution.group`).
  *

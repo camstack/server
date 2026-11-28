@@ -7,8 +7,8 @@ import {
   type CompositionExpressionSource,
   type CompositionFieldSource,
   type CompositionSourceRef,
-} from '@camstack/types'
-import { formulaProblem } from '@camstack/types'
+} from '@dominevo/types'
+import { formulaProblem } from '@dominevo/types'
 import {
   Button,
   Dialog,
@@ -18,7 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
   ExpressionInput,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { nextBindingName } from '../../../composition-editor/draft-reducer'
@@ -31,7 +31,7 @@ import {
   useDeviceManagerGetWireableFields,
   useDeviceManagerListAll,
   useDeviceStateGetSnapshot,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 
 const NO_NAMES: ReadonlyMap<string, string> = new Map()
 

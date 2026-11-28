@@ -1,7 +1,7 @@
 /**
  * The subject path — the ONE geometry of a track's path over a frame (D903).
  *
- * The implementation lives in `@camstack/types` (`geometry/subject-path.ts`)
+ * The implementation lives in `@dominevo/types` (`geometry/subject-path.ts`)
  * because the hub's notification picture draws the same line and a server
  * addon cannot take this React bundle. Re-exported here so a UI surface finds
  * it beside the rest of the library; it adds nothing and copies nothing.
@@ -21,4 +21,4 @@ export {
   type SubjectPathSample,
   subjectPathSampleFromBox,
   subjectPathSvgPoints,
-} from '@camstack/types'
+} from '@dominevo/types'

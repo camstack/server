@@ -9,7 +9,7 @@ import { type CapabilityDefinition, type InferProvider, method } from './capabil
  * `docs/superpowers/specs/2026-07-03-notification-output-notifier-matrix.md`):
  * callers emit ONE canonical `Notification`; each provider declares a
  * per-kind capability descriptor (`TargetKind`), and the pure degrade
- * engine (`@camstack/types` `prepareNotification`) transcodes / degrades the
+ * engine (`@dominevo/types` `prepareNotification`) transcodes / degrades the
  * message to what the kind supports — callers never special-case a service.
  *
  * DESIGN DECISIONS (locked):
@@ -95,7 +95,7 @@ export type NotificationFormat = z.infer<typeof NotificationFormatSchema>
  * mapping, and "the field is documented" is not "the value renders".
  *
  * Adding a member is TRAIN-BOUND. The enum lives in the published
- * `@camstack/server` closure and the cap seam validates against the HUB's copy,
+ * `@dominevo/server` closure and the cap seam validates against the HUB's copy,
  * so an addon that emits a token the running hub does not know does not lose an
  * icon — its whole `send` fails Zod validation and the notification never
  * arrives. Never emit a new token from an addon before the train carrying it.

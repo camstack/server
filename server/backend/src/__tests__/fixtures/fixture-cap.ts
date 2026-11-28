@@ -1,4 +1,4 @@
-import type { CapabilityDefinition } from '@camstack/types'
+import type { CapabilityDefinition } from '@dominevo/types'
 
 /**
  * A capability a fixture addon registers, named and nothing else. The test

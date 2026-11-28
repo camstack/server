@@ -1,4 +1,4 @@
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { HmChannel, HmDevice, Homematic } from 'nodehomematic'
 import { directLinksOfKey, isHmipDevice, keyEventProgramName } from '../ccu/ccu-button-events.js'
 import { channelNameLookup, type HmChannelNames } from '../ccu/hm-channel-names.js'

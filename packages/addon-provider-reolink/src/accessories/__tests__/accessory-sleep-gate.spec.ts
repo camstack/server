@@ -6,7 +6,7 @@
  * sleeping battery camera: it serves its persisted state and the parent's wake
  * transition (`alignAuxDevicesState('wake')`) refreshes it.
  */
-import { type DeviceContext, DeviceType, type IDeviceRuntimeState } from '@camstack/types'
+import { type DeviceContext, DeviceType, type IDeviceRuntimeState } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import type { ReolinkAccessoryHost } from '../base.js'
 import { FloodlightAccessory } from '../floodlight.js'

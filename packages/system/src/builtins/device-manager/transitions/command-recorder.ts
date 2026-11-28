@@ -17,7 +17,7 @@ import {
   type DeviceTransition,
   type IScopedLogger,
   type TransitionValue,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { redactLogText } from '../../../logging/log-redactor.js'
 
 /** Longest error text a row keeps. */

@@ -8,13 +8,13 @@ function feed(arch: string, opts: { version?: string } = {}): string {
   return [
     `version: ${v}`,
     'files:',
-    `  - url: CamStack-${v}-${arch}.zip`,
+    `  - url: Dominevo-${v}-${arch}.zip`,
     `    sha512: zip-${arch}`,
     '    size: 100',
-    `  - url: CamStack-${v}-${arch}.dmg`,
+    `  - url: Dominevo-${v}-${arch}.dmg`,
     `    sha512: dmg-${arch}`,
     '    size: 200',
-    `path: CamStack-${v}-${arch}.zip`,
+    `path: Dominevo-${v}-${arch}.zip`,
     `sha512: zip-${arch}`,
     `releaseDate: '2026-10-29T10:00:00.000Z'`,
     '',
@@ -27,12 +27,12 @@ describe('merge-mac-feeds', () => {
   it('two single-arch feeds merge into four files, header from the first leg', () => {
     const merged: string = mergeFeeds([feed('x64'), feed('arm64')])
     expect(urls(merged)).toEqual([
-      'CamStack-0.1.1-x64.zip',
-      'CamStack-0.1.1-x64.dmg',
-      'CamStack-0.1.1-arm64.zip',
-      'CamStack-0.1.1-arm64.dmg',
+      'Dominevo-0.1.1-x64.zip',
+      'Dominevo-0.1.1-x64.dmg',
+      'Dominevo-0.1.1-arm64.zip',
+      'Dominevo-0.1.1-arm64.dmg',
     ])
-    expect(merged).toContain('path: CamStack-0.1.1-x64.zip')
+    expect(merged).toContain('path: Dominevo-0.1.1-x64.zip')
     expect(merged).toContain('sha512: zip-x64\nreleaseDate')
     expect(merged.match(/^path:/gm)).toHaveLength(1)
     expect([...feedArches(merged)].sort()).toEqual(['arm64', 'x64'])
@@ -54,8 +54,8 @@ describe('merge-mac-feeds', () => {
 
   it('reads flow-style items of a hand-repaired feed', () => {
     const repaired =
-      'version: 0.1.1\nfiles:\n  - {url: CamStack-0.1.1-x64.zip, sha512: a, size: 1}\npath: CamStack-0.1.1-x64.zip\nsha512: a\n'
-    expect(mergeFeeds([repaired, feed('arm64')])).toContain('{url: CamStack-0.1.1-x64.zip')
+      'version: 0.1.1\nfiles:\n  - {url: Dominevo-0.1.1-x64.zip, sha512: a, size: 1}\npath: Dominevo-0.1.1-x64.zip\nsha512: a\n'
+    expect(mergeFeeds([repaired, feed('arm64')])).toContain('{url: Dominevo-0.1.1-x64.zip')
   })
 
   it('reports an expected arch the feed lacks', () => {

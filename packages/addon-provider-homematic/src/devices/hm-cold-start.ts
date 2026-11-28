@@ -7,8 +7,8 @@ import type {
   LockControlStatus,
   MotionStatus,
   SwitchStatus,
-} from '@camstack/types'
-import { eventTypesOfVocabulary } from '@camstack/types'
+} from '@dominevo/types'
+import { eventTypesOfVocabulary } from '@dominevo/types'
 import type { HmChannel } from 'nodehomematic'
 
 /**
@@ -104,7 +104,7 @@ export function keyEventVocabulary(keyChannels: readonly HmChannel[]): readonly 
 }
 
 /**
- * The CamStack cap names that are ACTUATORS — driven by the library's typed
+ * The Dominevo cap names that are ACTUATORS — driven by the library's typed
  * custom entities (correct channel), NOT by the raw mapped channels. The
  * raw-channel sensor/event loop skips these so they are not double-registered.
  */

@@ -149,7 +149,7 @@ Re-wiring it is therefore a deliberate act with five red tests in the way.
   behind it). D561's probe is otherwise unchanged; the storage question stays
   skipped on a hub child, because that disk is the parent's.
 - **`ClipSourceSchema.via` is gone.** Nothing consumed it outside the provider
-  and its spec; no UI read it. `@camstack/types` changes, so this is a
+  and its spec; no UI read it. `@dominevo/types` changes, so this is a
   framework train.
 - One alarm window per hub-child day matched no listed file (1 of 21 on day
   16). It is counted on the log line (`unmatchedWindows`) and contributes no

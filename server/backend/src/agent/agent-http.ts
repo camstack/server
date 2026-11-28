@@ -16,7 +16,7 @@ import {
   loadAgentHttps,
   UnlockTicketJtiStore,
   verifyAgentUiUnlockTicket,
-} from '@camstack/server/system'
+} from '@dominevo/server/system'
 import { type SniffingListener, startSniffingListener } from './agent-sniffing-listener.js'
 import {
   isAuthorizedAgentRequest,
@@ -27,7 +27,7 @@ import {
 } from './agent-http-auth.js'
 import { registerAgentPairingRoutes } from './agent-pairing-routes.js'
 import { isAgentPaired, pinnedMeshCaCert } from './agent-pairing-store.js'
-import { writeOwnerOnlyFileSync } from '@camstack/types/node'
+import { writeOwnerOnlyFileSync } from '@dominevo/types/node'
 import { seededAgentName } from './agent-config.js'
 import type { AgentUpdateControls } from './agent-update-routes.js'
 import { registerAgentUpdateRoutes } from './agent-update-routes.js'
@@ -131,7 +131,7 @@ export interface AgentHttpConfig {
    */
   readonly updateControls?: AgentUpdateControls
   /**
-   * Running `@camstack/server` version. The product release is read from
+   * Running `@dominevo/server` version. The product release is read from
    * `CAMSTACK_PRODUCT_VERSION` and is not this value (D943).
    */
   readonly serverVersion?: string | null
@@ -193,7 +193,7 @@ export function readUiDistCandidate(baseDir: string): UiDistCandidate | null {
 /**
  * Pick between the dataDir-installed copy and the app-bundled copy: the
  * NEWER version wins; on a tie the installed copy wins (it is the one
- * `camstack deploy` updates).
+ * `dominevo deploy` updates).
  *
  * Rationale: bootstrap addon install is seed-only (first boot), so a
  * packaged desktop app that ships a newer agent-ui in its resources would
@@ -221,7 +221,7 @@ export function resolveUiDistDir(
   // `CAMSTACK_BUNDLED_ADDONS_DIR` — a dir of package dirs keyed by SHORT name
   // (`<dir>/addon-agent-ui`), the same shape `AddonInstaller.findLocalPackage`
   // joins onto. On a packaged desktop that is the closure's own scope dir,
-  // `Contents/Resources/node_modules/@camstack`; it was a second, hand-copied
+  // `Contents/Resources/node_modules/@dominevo`; it was a second, hand-copied
   // `Contents/Resources/addons` tree until 2026-08-25.
   bundledAddonsDir?: string,
 ): string | null {
@@ -233,7 +233,7 @@ export function resolveUiDistDir(
   // that read an addon out of the closure, and an addon is loaded from the
   // addon root — see `scripts/check-addon-root-is-the-only-load-path.ts` (D518).
 
-  const installed = readUiDistCandidate(path.join(dataDir, 'addons', '@camstack', 'addon-agent-ui'))
+  const installed = readUiDistCandidate(path.join(dataDir, 'addons', '@dominevo', 'addon-agent-ui'))
   const bundled = bundledAddonsDir
     ? readUiDistCandidate(path.join(bundledAddonsDir, 'addon-agent-ui'))
     : null

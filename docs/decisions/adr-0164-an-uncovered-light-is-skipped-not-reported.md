@@ -94,8 +94,8 @@ vision model reaches a scene through `confirm` instead, which is wired.
   `configFromRecord`, which is the only path a stored scene reaches the engine
   by, so no migration step is needed.
 - **Train-bound.** The two new fields and the patch member live in
-  `@camstack/types`; the engine, provider and UI behaviour deploy, but an older
-  `@camstack/server` will strip the new fields on the cap path.
+  `@dominevo/types`; the engine, provider and UI behaviour deploy, but an older
+  `@dominevo/server` will strip the new fields on the cap path.
 - The latch is now written by strictly fewer paths than before, which is the
   right direction for the one fact nothing else in the system can regenerate.
 

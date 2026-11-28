@@ -6,17 +6,17 @@
  * ## The failure this catches
  *
  * `addon-pages-wiring.spec.ts` in `server/backend` reaches the benchmark addon
- * through `await import('@camstack/addon-benchmark')`. nx builds its project
+ * through `await import('@dominevo/addon-benchmark')`. nx builds its project
  * graph from `package.json` dependencies and STATIC imports; a dynamic import
  * inside a spec is not an edge. So when changed the addon's
  * `onInitialize`, `nx show projects --affected` answered
- * `["@camstack/addon-benchmark"]` — the package that OWNS the spec was not in
+ * `["@dominevo/addon-benchmark"]` — the package that OWNS the spec was not in
  * the list, the spec did not run on push, and it sat red on main for weeks
  * (see the private session log, 2026-09).
  *
  * ## What it checks
  *
- * For every workspace package, every `import('@camstack/<name>')` found in a
+ * For every workspace package, every `import('@dominevo/<name>')` found in a
  * `*.spec.ts` / `*.spec.tsx` / `*.test.ts(x)` under `src/` names a package that
  * is either the package itself, a dependency of any kind (`dependencies`,
  * `devDependencies`, `optionalDependencies`, `peerDependencies`), or
@@ -51,7 +51,7 @@ interface Violation {
 }
 
 const SPEC_FILE = /\.(spec|test)\.tsx?$/
-const DYNAMIC_IMPORT = /import\(\s*['"](@camstack\/[a-z0-9-]+)['"]\s*\)/g
+const DYNAMIC_IMPORT = /import\(\s*['"](@dominevo\/[a-z0-9-]+)['"]\s*\)/g
 
 function listPackageDirs(): readonly string[] {
   const dirs: string[] = []

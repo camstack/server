@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { AppDeclarationSchema } from '@camstack/types'
+import { AppDeclarationSchema } from '@dominevo/types'
 import { buildAdminApp } from '../../server/admin-app'
 import { buildAdminNavManifest } from '../nav-data'
 import { buildNavSections, navIconFor, type NavTranslate } from '../nav-items'

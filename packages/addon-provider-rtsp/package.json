@@ -1,7 +1,7 @@
 {
-  "name": "@camstack/addon-provider-rtsp",
-  "version": "1.2.161",
-  "description": "Generic RTSP camera device provider addon for CamStack",
+  "name": "@dominevo/addon-provider-rtsp",
+  "version": "0.1.0",
+  "description": "Generic RTSP camera device provider addon for Dominevo",
   "keywords": [
     "camstack",
     "addon",
@@ -14,12 +14,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/camstack/server.git",
+    "url": "https://github.com/dominevo/server.git",
     "directory": "packages/addon-provider-rtsp"
   },
   "homepage": "https://camstack-docs.zentik.app",
   "bugs": {
-    "url": "https://github.com/camstack/server/issues"
+    "url": "https://github.com/dominevo/server/issues"
   },
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -59,7 +59,7 @@
       }
     ],
     "requires": {
-      "server": ">=1.2.944"
+      "server": ">=0.1.0"
     }
   },
   "files": [
@@ -77,11 +77,11 @@
     "publish:npm": "npm publish --access public"
   },
   "peerDependencies": {
-    "@camstack/types": "*",
+    "@dominevo/types": "0.1.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@camstack/types": "*",
+    "@dominevo/types": "0.1.0",
     "better-sqlite3": "^12.8.0",
     "typescript": "~6.0.3",
     "vite": "^8.0.11",

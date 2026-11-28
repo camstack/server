@@ -1,4 +1,4 @@
-import type { HubAddressBook, HubAddressRow } from '@camstack/types'
+import type { HubAddressBook, HubAddressRow } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { roleToggle, summarizeRoles } from '../address-table-model'
 
@@ -116,7 +116,7 @@ describe('summarizeRoles', () => {
       {
         role: 'notificationTaps',
         title: 'Notification taps',
-        inUse: 'CamStack app link',
+        inUse: 'Dominevo app link',
         automatic: true,
       },
       {

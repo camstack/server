@@ -7,7 +7,7 @@ import {
   type EventEmitterStatus,
   type EventFire,
   type InferNativeProvider,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { EspState } from '../esphome-link.js'
 import { EspChildDevice, type EspStateOrigin } from './esp-child-device.js'
 

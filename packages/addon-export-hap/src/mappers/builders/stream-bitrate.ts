@@ -58,12 +58,12 @@ import type {
   ProfileSlot,
   StreamParamsStatus,
   WebrtcStreamChoice,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   HAP_KEYFRAME_INTERVAL_SEC,
   pickPreferredRtspEntry,
   RATE_CONTROL_TIGHT,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /**
  * Fraction of the negotiated ceiling we actually aim the encoder at.
@@ -446,7 +446,7 @@ export interface VideoEncodeArgsInput {
 
 /**
  * The video half of the ffmpeg plan, in the SHARED vocabulary
- * (`@camstack/types` `ffmpeg/invocation.ts`). This function used to emit
+ * (`@dominevo/types` `ffmpeg/invocation.ts`). This function used to emit
  * arguments; it now describes them, and `buildFfmpegArgs` emits every one — the
  * repo keeps exactly one argv builder, and HomeKit stopped being an exception
  * to that (D67, `scripts/check-ffmpeg-primitive.ts` Rule 1).

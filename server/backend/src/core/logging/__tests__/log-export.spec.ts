@@ -5,7 +5,7 @@
  * and the ops MCP tool.
  */
 
-import type { LogReadEntry, LogReadQuery, LogReadResult } from '@camstack/types'
+import type { LogReadEntry, LogReadQuery, LogReadResult } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   exportLogEntries,

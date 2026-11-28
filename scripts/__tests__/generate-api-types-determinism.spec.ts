@@ -12,10 +12,10 @@
  * `getType().getText()` produced `import("packages/types/dist")` — a
  * build-artifact path with no leading slash, baked straight into a shipped
  * type file. `git diff --exit-code` against the committed, portable
- * `import("@camstack/types")` then failed on every CI run, forever.
+ * `import("@dominevo/types")` then failed on every CI run, forever.
  *
  * Reproduced here with a MINIMAL synthetic package (not the real
- * `@camstack/types`, which needs a multi-second full build) — the shape that
+ * `@dominevo/types`, which needs a multi-second full build) — the shape that
  * matters is just: a node_modules-symlinked package whose `dist/*.d.ts` sits
  * inside the consumer tsconfig's `baseUrl`. `expandCoreRouters` in
  * `generate-api-types.ts` fixes this by overriding `baseUrl: undefined` on
@@ -39,7 +39,7 @@ describe('AppRouter expansion — specifier is a pure function of source, not of
   let root: string
 
   // Mirrors the shape that actually breaks: a node_modules-symlinked package
-  // (like `@camstack/types` under npm workspaces) whose `dist/*.d.ts` lies
+  // (like `@dominevo/types` under npm workspaces) whose `dist/*.d.ts` lies
   // inside the consumer tsconfig's `baseUrl` — exactly the SERVER tsconfig's
   // `"baseUrl": "../.."`, which reaches the repo root and therefore always
   // contains `packages/types/dist` once built.
@@ -52,18 +52,18 @@ describe('AppRouter expansion — specifier is a pure function of source, not of
     // not have, on macOS or CI — silently defeats the repro by making the
     // realpath-resolved package dist and the literal baseUrl disagree on
     // their common prefix. Normalizing here matches the real topology: one
-    // symlink (`node_modules/@camstack/… -> ../../packages/…`), not two.
+    // symlink (`node_modules/@dominevo/… -> ../../packages/…`), not two.
     root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'api-types-baseurl-')))
-    fs.mkdirSync(path.join(root, 'node_modules/@camstack'), { recursive: true })
+    fs.mkdirSync(path.join(root, 'node_modules/@dominevo'), { recursive: true })
     fs.mkdirSync(path.join(root, 'packages/widgets/dist'), { recursive: true })
     fs.mkdirSync(path.join(root, 'consumer'), { recursive: true })
 
-    fs.symlinkSync('../../packages/widgets', path.join(root, 'node_modules/@camstack/widgets'))
+    fs.symlinkSync('../../packages/widgets', path.join(root, 'node_modules/@dominevo/widgets'))
     writeDist('x')
 
     fs.writeFileSync(
       path.join(root, 'packages/widgets/package.json'),
-      JSON.stringify({ name: '@camstack/widgets', version: '1.0.0', types: './dist/index.d.ts' }),
+      JSON.stringify({ name: '@dominevo/widgets', version: '1.0.0', types: './dist/index.d.ts' }),
     )
     fs.writeFileSync(
       path.join(root, 'consumer/tsconfig.json'),
@@ -87,7 +87,7 @@ describe('AppRouter expansion — specifier is a pure function of source, not of
     )
     fs.writeFileSync(
       path.join(root, 'consumer/factory.ts'),
-      "import type { Widget } from '@camstack/widgets'\n" +
+      "import type { Widget } from '@dominevo/widgets'\n" +
         'export function makeWidget(): Widget {\n' +
         "  return { id: 'x' }\n" +
         '}\n',
@@ -143,12 +143,12 @@ describe('AppRouter expansion — specifier is a pure function of source, not of
     // reported in CI, here as `import("packages/widgets/dist")`.
     const text = expandWidgetType('inherit')
     expect(text).toContain('import("packages/widgets/dist")')
-    expect(text).not.toContain('@camstack/widgets')
+    expect(text).not.toContain('@dominevo/widgets')
   })
 
   it('with baseUrl: undefined, TS prints the portable package-name specifier', () => {
     const text = expandWidgetType(undefined)
-    expect(text).toContain('import("@camstack/widgets")')
+    expect(text).toContain('import("@dominevo/widgets")')
     expect(text).not.toContain('packages/widgets')
   })
 
@@ -164,20 +164,20 @@ describe('AppRouter expansion — specifier is a pure function of source, not of
     const second = expandWidgetType(undefined)
 
     expect(second).toBe(first)
-    expect(first).toContain('import("@camstack/widgets")')
+    expect(first).toContain('import("@dominevo/widgets")')
   })
 
   it('cleanupExpandedRouterType normalizes the baseUrl-relative form as a defensive backstop', () => {
     const broken = 'output: import("packages/types/dist").CapabilityInfo[]'
     expect(cleanupExpandedRouterType(broken, root)).toBe(
-      'output: import("@camstack/types").CapabilityInfo[]',
+      'output: import("@dominevo/types").CapabilityInfo[]',
     )
   })
 
   it('cleanupExpandedRouterType still normalizes the absolute-path form', () => {
     const broken = `output: import("${root}/packages/types/dist/index").CapabilityInfo[]`
     expect(cleanupExpandedRouterType(broken, root)).toBe(
-      'output: import("@camstack/types").CapabilityInfo[]',
+      'output: import("@dominevo/types").CapabilityInfo[]',
     )
   })
 })

@@ -19,7 +19,7 @@
 import { spawn } from 'node:child_process'
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
-import { decodeProfileId, type NodeDecodeProfile } from '@camstack/types'
+import { decodeProfileId, type NodeDecodeProfile } from '@dominevo/types'
 import { type AccessUnit, splitAccessUnits } from './annexb-access-units.js'
 
 /** Seconds of stream the pacer loops. */

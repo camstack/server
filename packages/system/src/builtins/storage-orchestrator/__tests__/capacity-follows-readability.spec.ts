@@ -14,8 +14,8 @@
  * nobody is looking at.
  */
 import { describe, expect, it } from 'vitest'
-import { mayReadLocation, STORAGE_LOCATION_MODES } from '@camstack/types'
-import type { StorageLocationMode } from '@camstack/types'
+import { mayReadLocation, STORAGE_LOCATION_MODES } from '@dominevo/types'
+import type { StorageLocationMode } from '@dominevo/types'
 
 const config = (): Record<string, unknown> => ({ basePath: '/recordings' })
 

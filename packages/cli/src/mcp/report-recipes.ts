@@ -8,7 +8,7 @@
  * `LINE_MAX_CHARS`, the hub's repeats folded into one line with a count. A read
  * that fails is a section that says so, never an empty one (D393).
  */
-import type { HubClient } from '@camstack/develop'
+import type { HubClient } from '@dominevo/develop'
 import type { McpContext } from './context.js'
 import { readViewerLines, VIEWER_LEVELS } from './client-logs.js'
 import { debugReport, type DebugIssue } from './debug-report.js'

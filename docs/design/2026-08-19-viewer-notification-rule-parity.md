@@ -17,9 +17,9 @@ covers:
 # Viewer notification-rule authoring — parity with the admin UI
 
 > Status: **implemented, 2026-08-19. Phases 0-3 all shipped.** Phase 0 (zone
-> names) and Phase 1 (the shared kind/section model in `@camstack/types`, the
+> names) and Phase 1 (the shared kind/section model in `@dominevo/types`, the
 > viewer's section strip + seeded creates + kind-filtered editor) landed on
-> 2026-08-18/19 with `@camstack/types@1.2.89`. Phase 2 (timelapse + summary
+> 2026-08-18/19 with `@dominevo/types@1.2.89`. Phase 2 (timelapse + summary
 > authorable from the viewer, and `nc.upsertSummaryRule` relaxed off `admin`)
 > and Phase 3 (the duplicate collapse, and the exclusion sentences translated)
 > landed on 2026-08-19 — see §5 for what each one actually became, and §3 for
@@ -48,7 +48,7 @@ covers:
 > sound rule actually has), the **section model** (one list tab and one seeded
 > "New rule" per kind), and the **name-resolving pickers**. All three are pure
 > TypeScript with no DOM in them — exactly the kind of module this repo
-> already ships to both surfaces through `@camstack/types`
+> already ships to both surfaces through `@dominevo/types`
 > (`src/notification/condition-taxonomy.ts` et al.). The plan is to make that
 > the norm rather than the exception.
 
@@ -57,7 +57,7 @@ covers:
 ## 1. What ships today — admin UI
 
 The admin editor lives in `packages/addon-admin-ui/src/pages/system/` (web,
-React DOM, `@camstack/ui-library` primitives — `Tabs`, `Dialog`, `Select`,
+React DOM, `@dominevo/ui-library` primitives — `Tabs`, `Dialog`, `Select`,
 `Input`, `DataTable`).
 
 ### 1.1 The section model (list level)
@@ -113,8 +113,8 @@ the admin bundle.** The viewer filters conditions on `appliesTo` alone
 `sensorKinds`, `eventTypeTokens` and `source` — the exact "in occupancy
 alcuni campi non hanno senso" failure the admin fixed on 2026-08-14.
 
-Why it was admin-local and not in `@camstack/types`: the file's own docblock
-(`:28–40`) claimed `@camstack/types` reaches the admin UI as a
+Why it was admin-local and not in `@dominevo/types`: the file's own docblock
+(`:28–40`) claimed `@dominevo/types` reaches the admin UI as a
 Module-Federation singleton *provided by the host*, so a newly added export
 would read `undefined` until a server closure carrying it is installed. **That
 claim was wrong for this surface, and Phase 3 checked it rather than inheriting
@@ -138,7 +138,7 @@ gone.
 
 ### 1.5 Timelapse and summary — separate rule families, separate editors
 
-- **Timelapse**: rule model in `@camstack/types`
+- **Timelapse**: rule model in `@dominevo/types`
   (`packages/types/src/notification/timelapse-rule.ts` — deliberately NOT a
   cap; it rides the addon bridge). Admin editor
   `NotificationTimelapseEditor.tsx` (schedule-defined window, cameras,
@@ -191,9 +191,9 @@ condition surface with RN primitives (`Section`, `SelectRow`, `StepperRow`,
 | 3 | **Zone conditions show raw ids.** `zones` (`zoneSelection`) and `zonesExclude` (`zoneIdList`) render a free-text `TagsInput` with placeholder "zone id" — the operator types UUIDs. The viewer ALREADY has the name path: `data/use-zones.ts:24–40` (`useZoneRefs`, `zones.listZones` by cap) and `OccupancyField.tsx:29,58` already picks zones by name with deleted-zone handling (`occupancy-condition.ts:9–13`). The two generic zone widgets just never got wired to it. | `ConditionField.tsx:130–134` and `:752–770` | `useZoneOptions`, §1.4 |
 | 4 | **No kind model.** Conditions filter on `appliesTo` only (`rule-editor.ts:114`), so an occupancy rule is offered sensor/event/source fields the engine fails closed on; no "Save will drop X because Y" warning. | `ConditionForm.tsx:143–158` | `notification-rule-kinds.ts`, §1.3 |
 | 5 | **Raw trigger select, `system-event` included.** The user picks a delivery enum member (`RuleEditorScreen.tsx:136–142`, `NC_DELIVERY_OPTIONS` `rule-editor.ts:289–295`) instead of picking a *kind* of rule; system rules are authorable in the viewer even though the operator wants them out. | | Kind is chosen by the section, delivery is derived (§1.1) |
-| 6 | **No timelapse, no summary.** The bridge already serves both (`nc-actions.ts:265/281/290` timelapse — `caller: 'required'`, personal; `:324/342/351` summary — list is caller-scoped, upsert/delete are `auth: 'admin'`), and the rule models exist (`timelapse-rule.ts` even ships in `@camstack/types` the viewer already depends on). The viewer calls none of them; these rules are invisible in the app. | `data/notification-center.ts` (no `nc.*Timelapse*`/`nc.*Summary*`) | §1.5 |
+| 6 | **No timelapse, no summary.** The bridge already serves both (`nc-actions.ts:265/281/290` timelapse — `caller: 'required'`, personal; `:324/342/351` summary — list is caller-scoped, upsert/delete are `auth: 'admin'`), and the rule models exist (`timelapse-rule.ts` even ships in `@dominevo/types` the viewer already depends on). The viewer calls none of them; these rules are invisible in the app. | `data/notification-center.ts` (no `nc.*Timelapse*`/`nc.*Summary*`) | §1.5 |
 | 7 | **Group order drift.** Viewer `GROUP_ORDER` puts `occupancy`,`audio` before `package` (`ConditionForm.tsx:32–44`); admin puts `package` first (`notification-condition-fields.ts:158–172`). Also the admin appends unknown server groups; the viewer silently drops them (`GROUP_ORDER.filter` at `ConditionForm.tsx:100` — a new server group renders nothing). | | |
-| 8 | **Stale duplication that is now unblockable.** `camstack/src/components/notifications/condition-taxonomy.ts:1–7` says it stays a local copy "because the viewer pins `@camstack/types@0.1.42`". The viewer now depends on `^1.2.81` (`camstack/package.json:59`) and the installed package ships `dist/notification/condition-taxonomy` + `audio-condition` + `schedule` + `timelapse-rule`. The collapse-to-re-export the file itself asks for is actionable today. | | canonical copies in `packages/types/src/notification/` |
+| 8 | **Stale duplication that is now unblockable.** `camstack/src/components/notifications/condition-taxonomy.ts:1–7` says it stays a local copy "because the viewer pins `@dominevo/types@0.1.42`". The viewer now depends on `^1.2.81` (`camstack/package.json:59`) and the installed package ships `dist/notification/condition-taxonomy` + `audio-condition` + `schedule` + `timelapse-rule`. The collapse-to-re-export the file itself asks for is actionable today. | | canonical copies in `packages/types/src/notification/` |
 | 9 | **Labels/i18n.** Viewer uses `v2.nc.rules.*` i18n keys (en + it); admin hard-codes English strings. Same concepts, independently worded. | | |
 
 What the viewer does **better** than the admin, and must not lose: the pure
@@ -208,19 +208,19 @@ the Hermes-safe idioms (`rule-editor.ts:557–564`).
 
 ### Option A — export the admin component into the viewer: **rejected**
 
-The admin editor is React DOM: `@camstack/ui-library` peer-depends on
+The admin editor is React DOM: `@dominevo/ui-library` peer-depends on
 `react-dom` (`packages/ui-library/package.json:45`), the widgets are
 `<input>`/Tailwind-class DOM, and the addon is a Module-Federation web
 bundle. The viewer is React Native (Hermes) rendering native views (plus
 RN-web for the PWA — where DOM *would* load, but then iOS/Android would need
 a second implementation anyway, which is the same problem plus a fork).
-Deployment trains also differ: admin UI ships with `camstack deploy`,
+Deployment trains also differ: admin UI ships with `dominevo deploy`,
 the viewer ships via EAS OTA. There is no component-level export that
 survives all of that.
 
 ### Option B — shared, RN-free form-model primitives; per-platform renderers
 
-Hoist the **model** — not the widgets — into `@camstack/types
+Hoist the **model** — not the widgets — into `@dominevo/types
 src/notification/`, the channel that already carries `condition-taxonomy.ts`
 to both surfaces:
 
@@ -246,16 +246,16 @@ fallback strings; the viewer maps ids to its `v2.nc.rules.*` keys.
 real, but it applies to addon widget REMOTES and not to the admin UI. The admin
 UI is the module-federation **HOST**: `packages/addon-admin-ui/vite.config.ts`
 declares `federation({ name: 'admin_ui_host', remotes: {}, shared: {
-'@camstack/types': { singleton: true, requiredVersion: false, import: typesEsm
+'@dominevo/types': { singleton: true, requiredVersion: false, import: typesEsm
 } } })` where `typesEsm = workspaceEsmEntry('../types')`, and
-`resolve.alias['@camstack/types']` points at `../types/src/index.ts`. Both are
+`resolve.alias['@dominevo/types']` points at `../types/src/index.ts`. Both are
 BUILD-TIME workspace paths, so the admin UI *provides* the singleton, bundled
 from the monorepo copy — it never consumes one from a server closure. A
 consumer looks different and exists: `packages/addon-benchmark/vite.config.ts`
 declares the same package `import: false`, which is what "reads `undefined`
 until the host has it" actually describes. Empirically, after the collapse the
 exclusion sentences appear in `dist/assets/dist-*.js` — the admin UI's own
-`@camstack/types` provider chunk, beside `NC_CONDITION_CATALOG`. Existing
+`@dominevo/types` provider chunk, beside `NC_CONDITION_CATALOG`. Existing
 practice already contradicted the claim too: `notification-rules.helpers.ts`
 imports `NC_CONDITION_CATALOG` / `NC_AUDIO_DEFAULTS` / `audioIsFailClosed`, and
 `notification-timelapse.helpers.ts` imports `TimelapseRuleSchema` and
@@ -264,7 +264,7 @@ viewer must tolerate older hubs, so anything hoisted must stay pure
 logic/constants — never transport, never a schema the viewer needs to relax for
 back-compat. (3) A types change still rides the framework release train
 (`docs/architecture/update-and-release.md`) *for the server*; the admin UI gets
-it on its own `camstack deploy` from the same workspace.
+it on its own `dominevo deploy` from the same workspace.
 
 ### Option C — disciplined duplication under a shared contract, no shared code
 
@@ -280,7 +280,7 @@ has is the same failure wearing a different hat.
 ### Recommendation: **Option B as the destination, Option C's specs as the transition mechanism.**
 
 The precedent already exists and works: `condition-taxonomy.ts` was hoisted
-to `@camstack/types`, the viewer kept a spec-pinned local copy while its
+to `@dominevo/types`, the viewer kept a spec-pinned local copy while its
 dependency lagged, and today the pin has caught up (#8) and the copy can
 collapse to a re-export. Every new shared piece follows that exact
 lifecycle: **hoist to `packages/types/src/notification/` → consume natively
@@ -335,7 +335,7 @@ verbatim on save exactly as `formToInput` does today).
 **Timelapse editor (new, small).** Personal (`caller: 'required'` upsert):
 name, cameras, weekly windows (existing `ScheduleField`), framerate +
 cadence with "Automatic" dense cadence, targets, caption. Schemas imported
-from `@camstack/types` `timelapse-rule.ts` — no local mirror needed, the
+from `@dominevo/types` `timelapse-rule.ts` — no local mirror needed, the
 type already ships in the pinned package.
 
 **Summary editor (new, admin-gated).** `nc.upsertSummaryRule` is
@@ -407,7 +407,7 @@ the work is the section scaffold + filtering + specs).
   (`nc.listTimelapseRules`, `nc.upsertTimelapseRule`,
   `nc.deleteTimelapseRule`; `nc.listSummaryRules`, `nc.upsertSummaryRule`,
   `nc.deleteSummaryRule`) + hooks in `use-notification-center.ts`. Timelapse
-  schemas imported from `@camstack/types`; the summary rule is a viewer-local
+  schemas imported from `@dominevo/types`; the summary rule is a viewer-local
   mirror (its schema deliberately lives in the addon, §1.5). The four
   hand-rolled per-element parse loops collapsed into one `parsePerItem`.
 - `TimelapseEditorScreen.tsx` + `timelapse-form.ts` (pure);
@@ -436,7 +436,7 @@ the work is the section scaffold + filtering + specs).
   `!isAdmin` to `!isAdmin && ownerUserId !== callerId`. `nc.testSummaryRule`
   stays admin — it DELIVERS. **This is a bridge action, not a cap**, so there is
   no codegen and no framework train: `npm run codegen:check` reports no drift
-  and it ships on `camstack deploy packages/addon-post-analysis`.
+  and it ships on `dominevo deploy packages/addon-post-analysis`.
 - **The degrade is a capability probe, not a caught 403.** `nc.listSummaryRules`
   now returns `canAuthor`; the viewer mirror has it `.optional()`, so an older
   hub (which says nothing) is read as "this hub refuses your write" and the tab
@@ -448,7 +448,7 @@ relaxation).
 ### Phase 3 — collapse the debt — **DONE 2026-08-19**
 
 - `camstack/src/components/notifications/condition-taxonomy.ts` is a re-export
-  of `@camstack/types` (its own TODO, unblocked). Explicit rather than
+  of `@dominevo/types` (its own TODO, unblocked). Explicit rather than
   `export *`: the shared module also exports `NC_BASE_CONDITION_KEYS` /
   `isBaseConditionKey` and this app's base set is deliberately different (it
   adds `systemEvent`). The existing spec now exercises the shared
@@ -457,7 +457,7 @@ relaxation).
   agree cannot satisfy.
 - The admin UI's `notification-rule-kinds.ts` and its equality spec are
   **deleted**; `NotificationRules.tsx`, `NotificationRuleConditions.tsx` and
-  `notification-rules.helpers.ts` import from `@camstack/types` directly. The
+  `notification-rules.helpers.ts` import from `@dominevo/types` directly. The
   MF-singleton reason for keeping the copy did not survive being checked (§3).
   The section MODEL went with it — `notification-rules.helpers.ts` now
   re-exports `ruleMatchesSection` / `ruleSeedForSection` /
@@ -507,7 +507,7 @@ Complexity as built: **M**.
 
 Claims that must be re-checked at implementation time, not assumed from this
 document: export parity between the viewer's local `condition-taxonomy.ts`
-and the published `@camstack/types@1.2.81` copy (the local file gained i18n
+and the published `@dominevo/types@1.2.81` copy (the local file gained i18n
 key wiring); whether `NcViewerTimelapseRuleSchema`'s `readOnly` extension is
 mirrored correctly viewer-side; and that no admin rule in the wild carries a
 delivery this viewer build cannot classify (fallback is `detection`, same as

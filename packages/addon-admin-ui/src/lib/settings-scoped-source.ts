@@ -12,7 +12,7 @@ import {
   type ConfigUISchemaWithValues,
   type ScopedSettingsDeclaration,
   type ScopedSettingsScope,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { SettingsFieldScope } from './settings-field-scope'
 
 /** The (capability, scope) that stores a field. */

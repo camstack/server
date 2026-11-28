@@ -1,7 +1,7 @@
 {
-  "name": "CamStack Admin",
-  "short_name": "CamStack",
-  "description": "CamStack camera management admin panel",
+  "name": "Dominevo Admin",
+  "short_name": "Dominevo",
+  "description": "Dominevo camera management admin panel",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#0c0a09",

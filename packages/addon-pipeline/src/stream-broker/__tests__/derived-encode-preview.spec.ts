@@ -4,7 +4,7 @@
  * (profile x probed source -> effective encode). The start-path / preview parity
  * and the real probe read are in `derived-source-codec.spec.ts`.
  */
-import type { DerivedSourceProbe, EncodeProfile } from '@camstack/types'
+import type { DerivedSourceProbe, EncodeProfile } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { computeDerivedEncode } from '../derived/derived-transcode-args.js'
 

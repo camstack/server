@@ -8,7 +8,7 @@
  */
 
 import type { ServerResponse } from 'node:http'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { NcActionPlane } from '../action-plane.js'
 import { NcActionTokenRegistry, type NcRunActionGrant, signActionToken } from '../action-token.js'

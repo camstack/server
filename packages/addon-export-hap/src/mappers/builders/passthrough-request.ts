@@ -21,7 +21,7 @@
  * Pure: it builds the ask, it does not make it. The broker is not needed to
  * assert what HomeKit is asking.
  */
-import type { PickStreamPreferences, PickStreamRequirements, StreamCodec } from '@camstack/types'
+import type { PickStreamPreferences, PickStreamRequirements, StreamCodec } from '@dominevo/types'
 
 import { TierVideoCodec } from '../../multi-tier/video-stream-tiers.js'
 

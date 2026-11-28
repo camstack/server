@@ -10,8 +10,8 @@ import {
   MeshCrl,
   signMembershipProof,
   verifyMembershipAnswer,
-} from '@camstack/server/system'
-import type { IScopedLogger, SettingsStoreClient } from '@camstack/types'
+} from '@dominevo/server/system'
+import type { IScopedLogger, SettingsStoreClient } from '@dominevo/types'
 import Fastify from 'fastify'
 import { X509Certificate } from 'node:crypto'
 import { describe, expect, it } from 'vitest'

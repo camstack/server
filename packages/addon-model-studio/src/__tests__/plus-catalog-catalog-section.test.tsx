@@ -7,7 +7,7 @@
  */
 import { afterEach, describe, expect, it } from 'vitest'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
-import type { AddonPageProps } from '@camstack/ui-library'
+import type { AddonPageProps } from '@dominevo/ui-library'
 import { PlusCatalogSection, type UploadPrefill } from '../tabs/PlusCatalogSourceSections.js'
 
 function fakeTrpc(tfliteNodes: readonly string[] = ['hub']): AddonPageProps['trpc'] {

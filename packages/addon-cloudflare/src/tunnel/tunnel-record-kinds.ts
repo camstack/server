@@ -4,7 +4,7 @@
  * addon mints are keychain markers bound to the row. Where the tunnel forwards to (`localHost`,
  * `localPortMode`, `localPort`) is NOT here: it is a fact of the node (D986).
  */
-import { type DefinedRecordKind, defineEntryKind } from '@camstack/types'
+import { type DefinedRecordKind, defineEntryKind } from '@dominevo/types'
 import { z } from 'zod'
 
 /** A single-instance addon keeps its record under its own addon id. */

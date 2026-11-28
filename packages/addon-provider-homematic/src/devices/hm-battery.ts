@@ -4,7 +4,7 @@ import {
   type DeviceContext,
   type IDeviceRuntimeState,
   type InferNativeProvider,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { HmChannel, HmDevice } from 'nodehomematic'
 import { isBatteryOperatedDevice } from '../homematic-diagnostics-mapping.js'
 

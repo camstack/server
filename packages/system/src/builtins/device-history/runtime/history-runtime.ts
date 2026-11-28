@@ -18,7 +18,7 @@ import type {
   DeviceHistoryStatus,
   IScopedLogger,
   ReadingQuantity,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   CaptureEngine,
   type HistoryCatalog,

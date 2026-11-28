@@ -16,7 +16,7 @@ import {
   consumeDesktopInstallRequest,
   desktopInstallRequestPath,
   serverRootDir,
-} from '@camstack/node-root'
+} from '@dominevo/node-root'
 
 export type InstallRequestOutcome =
   | { readonly kind: 'none' }

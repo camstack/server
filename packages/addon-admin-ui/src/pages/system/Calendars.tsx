@@ -10,7 +10,7 @@ import {
   type CalendarPreferences,
   calendarEventLocalSpan,
   calendarEventOnLocalDay,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   Button,
   Checkbox,
@@ -26,7 +26,7 @@ import {
   useCalendarsListCalendars,
   useCalendarsListEvents,
   useCalendarsSetCalendarPreference,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react'
 import { type ReactNode, useCallback, useMemo, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'

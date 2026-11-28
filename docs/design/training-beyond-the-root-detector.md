@@ -385,7 +385,7 @@ constant plus a prefix migration, not a project.
     never exercised — training-screen.md M3).
 
 Not in the order and not in the plan: fine-tuning of SCRFD, ArcFace, CLIP, AIY
-Birds, YAMNet; a second canvas; a train engine inside CamStack
+Birds, YAMNet; a second canvas; a train engine inside Dominevo
 (a declared non-goal in [model-studio-design.md](model-studio-design.md)).
 
 ---

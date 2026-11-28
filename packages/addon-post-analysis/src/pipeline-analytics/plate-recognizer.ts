@@ -2,7 +2,7 @@ import type {
   FrameHandle,
   IScopedLogger,
   PipelineAnalyticsPlateGalleryChangedPayload,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { LiveHierarchyCapture } from './ensure-track-hierarchy.js'
 import type { TrackedDetectionOut } from './pipeline/frame-processor.js'
 import type { KeyFrameCropFn, KeyFrameCropRefusalReason } from './pipeline/keyframe-crop.js'

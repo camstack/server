@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next'
  * a row opens the editor, and delete asks through the shared confirm dialog.
  */
 
-import type { DataColumn } from '@camstack/ui-library'
+import type { DataColumn } from '@dominevo/ui-library'
 import {
   Badge,
   Card,
@@ -16,7 +16,7 @@ import {
   TABLE_SCROLL_MAX_H,
   useConfirm,
   Button,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Loader2, Trash2 } from 'lucide-react'
 import { type MouseEvent, type ReactNode } from 'react'
 

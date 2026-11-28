@@ -9,7 +9,7 @@
  * and wrong the first time somebody disabled a rule.
  */
 
-import type { AlarmArmMode } from '@camstack/types'
+import type { AlarmArmMode } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { NcTextCatalog } from '../../text-catalog.js'
 import {

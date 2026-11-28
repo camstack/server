@@ -3,7 +3,7 @@
  * every device is exposed. For specs that exercise a handler, not the gate —
  * the gate itself is pinned by `directive-user-scoping.spec.ts`.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { AlexaAccessGate } from '../../access/access-gate.js'
 import type { EndpointAccessDeps } from '../../access/endpoint-access.js'
 import type { VisionContext } from '../../handlers/data-controller.js'

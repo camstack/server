@@ -3,7 +3,7 @@
  * query that answered, and the window it names is the one the hub answered
  * with (`horizonMs`), never a constant.
  */
-import type { NcRuleLastRuns } from '@camstack/types'
+import type { NcRuleLastRuns } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   lastRunHorizonPhrase,

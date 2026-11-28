@@ -1,5 +1,5 @@
 import { TuyaCloudError } from '@apocaliss92/nodetuya'
-import { errMsg, type IConnectionProbe, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IConnectionProbe, type IScopedLogger } from '@dominevo/types'
 import { tuyaConfigSchema } from './config.js'
 import type { TuyaCloudFactory } from './tuya-integration-manager.js'
 
@@ -22,9 +22,7 @@ export interface TuyaConnectionTestDeps {
   readonly logger: IScopedLogger
 }
 
-export function buildTuyaConnectionTestProvider(
-  deps: TuyaConnectionTestDeps,
-): IConnectionProbe {
+export function buildTuyaConnectionTestProvider(deps: TuyaConnectionTestDeps): IConnectionProbe {
   const { makeCloud, logger } = deps
 
   return {

@@ -9,8 +9,8 @@
  *    `params.priority`, which the dispatcher would otherwise read first.
  * 4. A rule with no overrides freezes exactly what it froze before.
  */
-import type { InMemoryRecords, NcRuleInput, ObjectEvent } from '@camstack/types'
-import { NcRuleInputSchema } from '@camstack/types'
+import type { InMemoryRecords, NcRuleInput, ObjectEvent } from '@dominevo/types'
+import { NcRuleInputSchema } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import { NotificationCenter } from '../index.js'

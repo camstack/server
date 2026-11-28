@@ -26,9 +26,9 @@ import type {
   AutomationWhen,
   DeviceIsLeaf,
   TraceNodeOutcome,
-} from '@camstack/types'
-import { baseUnitForQuantity, countWhenLeaves, isLeaf, MAX_WHEN_LEAVES } from '@camstack/types'
-import { Badge, Button, DisclosureChevron, Select } from '@camstack/ui-library'
+} from '@dominevo/types'
+import { baseUnitForQuantity, countWhenLeaves, isLeaf, MAX_WHEN_LEAVES } from '@dominevo/types'
+import { Badge, Button, DisclosureChevron, Select } from '@dominevo/ui-library'
 import { Plus, Trash2, Ungroup } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'

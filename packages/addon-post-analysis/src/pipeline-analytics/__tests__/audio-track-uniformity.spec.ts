@@ -21,8 +21,8 @@
  * So these assertions are about FIELDS, never about `source`.
  */
 
-import type { AudioDetection, AudioResult, IEventBus, Track } from '@camstack/types'
-import { createEvent, EventCategory } from '@camstack/types'
+import type { AudioDetection, AudioResult, IEventBus, Track } from '@dominevo/types'
+import { createEvent, EventCategory } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import { TRACKS_COLLECTION } from '../store/track-store.js'
 import { type Booted, bootAnalytics } from './boot-analytics.js'

@@ -9,8 +9,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const st = vi.hoisted(() => ({ setPref: vi.fn() }))
 
-vi.mock('@camstack/ui-library', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@camstack/ui-library')>()),
+vi.mock('@dominevo/ui-library', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@dominevo/ui-library')>()),
   useCalendarsListCalendars: () => ({
     isPending: false,
     isError: false,

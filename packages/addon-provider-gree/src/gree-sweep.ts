@@ -1,6 +1,6 @@
 import { networkInterfaces } from 'node:os'
 import type { DiscoveredDevice } from '@apocaliss92/nodegree'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { discoverGreeDevices } from './gree-integration-manager.js'
 import { scanGreeSubnets, type GreeSweep } from './gree-subnet-scan.js'
 

@@ -1,7 +1,7 @@
 import { describe, it, expect, afterEach, vi } from 'vitest'
 import { ServiceBroker } from 'moleculer'
 import { createAddonService } from '../../moleculer/addon-service-factory.js'
-import type { ICamstackAddon, AddonDeclaration } from '@camstack/types'
+import type { ICamstackAddon, AddonDeclaration } from '@dominevo/types'
 
 function makeTestAddon(overrides?: Partial<ICamstackAddon>): ICamstackAddon {
   return {

@@ -4,7 +4,7 @@
  * scoped notification-target provider over in-memory records. A faked `admitsUserCaller` is the
  * very thing that would supply the answer production forgot to fetch.
  */
-import { buildCapRouters, CapabilityRegistry } from '@camstack/server/system'
+import { buildCapRouters, CapabilityRegistry } from '@dominevo/server/system'
 import {
   buildUserScopedNotificationTargetInstances,
   integrationInstancesCapability,
@@ -13,7 +13,7 @@ import {
   makeInMemoryRecords,
   notificationTargetKinds,
   type TargetKind,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   type CapProxyProvider,

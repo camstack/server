@@ -22,7 +22,7 @@
  */
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, act } from '@testing-library/react'
-import type { ServerPackageStatus, ServerUpdateActionResult } from '@camstack/types'
+import type { ServerPackageStatus, ServerUpdateActionResult } from '@dominevo/types'
 
 const applySpy = vi.fn<(input: unknown) => Promise<ServerUpdateActionResult>>()
 const restartSpy = vi.fn<(input: unknown) => Promise<ServerUpdateActionResult>>()
@@ -32,7 +32,7 @@ const statusHolder = vi.hoisted(() => ({ current: null as unknown }))
 
 function status(over: Partial<ServerPackageStatus> = {}): ServerPackageStatus {
   return {
-    packageName: '@camstack/server',
+    packageName: '@dominevo/server',
     runningVersion: '1.2.201',
     nodeRuntimeVersion: 'v24.0.0',
     activeVersion: '1.2.201',
@@ -50,9 +50,9 @@ function status(over: Partial<ServerPackageStatus> = {}): ServerPackageStatus {
   }
 }
 
-vi.mock('@camstack/ui-library', async () => {
+vi.mock('@dominevo/ui-library', async () => {
   const actual =
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+    await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return {
     Button: actual.Button,
     Input: actual.Input,
@@ -91,7 +91,7 @@ const HUB = {
   name: 'Hub',
   isHub: true,
   isOnline: true,
-  rootPackage: { name: '@camstack/server', version: '1.2.201' },
+  rootPackage: { name: '@dominevo/server', version: '1.2.201' },
 }
 
 async function clickUpdate(): Promise<void> {
@@ -128,13 +128,13 @@ describe('NodeServerManagementSection — the node answer reaches the screen', (
       accepted: true,
       targetVersion: '1.2.205',
       restarting: true,
-      message: 'Staged @camstack/server@1.2.205 — restarting to apply.',
+      message: 'Staged @dominevo/server@1.2.205 — restarting to apply.',
     })
     render(<NodeServerManagementSection node={HUB} />)
 
     await clickUpdate()
 
-    expect(screen.getByRole('status').textContent).toContain('Staged @camstack/server@1.2.205')
+    expect(screen.getByRole('status').textContent).toContain('Staged @dominevo/server@1.2.205')
   })
 
   it('renders a staging FAILURE as an error, apart from a refusal', async () => {

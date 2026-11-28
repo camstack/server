@@ -8,7 +8,7 @@ import {
   type IScopedLogger,
   type InferNativeProvider,
   type InferProvider,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { SnapshotAddon } from '../snapshot.addon.js'
 import { freshSnapshotDataDir } from './scratch-data-dir.js'
 

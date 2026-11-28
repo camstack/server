@@ -20,7 +20,7 @@
 import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
-import { type IScopedLogger, resolveLocationMode } from '@camstack/types'
+import { type IScopedLogger, resolveLocationMode } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { type RecordingsLocation, recordingsLocationOfMode } from '../addon/roots.js'
 import { RecordingIndex } from '../recording-index.js'

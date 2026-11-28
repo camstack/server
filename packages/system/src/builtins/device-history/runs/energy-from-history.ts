@@ -10,7 +10,7 @@ import {
   DEVICE_HISTORY_ENERGY_KEY,
   type DeviceHistorySubject,
   type DeviceHistoryQueryResult,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export const MIN_HISTORY_WINDOW_MS: number = 10 * 60_000
 const MAX_POINTS = 5000

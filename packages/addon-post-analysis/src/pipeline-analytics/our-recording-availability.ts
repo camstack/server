@@ -18,7 +18,7 @@
  * make an unreachable recorder look exactly like a camera nobody records
  * (D393). The callers already handle a throw and log it as a read failure.
  */
-import { RECORDING_SOURCE_CAMSTACK_ADDON } from '@camstack/types'
+import { RECORDING_SOURCE_CAMSTACK_ADDON } from '@dominevo/types'
 
 /** The bit of the addon api this module needs. Structural, so the real
  *  `ctx.api` satisfies it and a test double can too. */
@@ -66,7 +66,7 @@ export async function ourRecordingAvailability(
   })
   if (answer.read === 'unreadable') {
     throw new Error(
-      `recording.getAvailability: the CamStack archive was unreadable for device ${String(input.deviceId)} — no claim is made about its footage`,
+      `recording.getAvailability: the Dominevo archive was unreadable for device ${String(input.deviceId)} — no claim is made about its footage`,
     )
   }
   return { ranges: answer.ranges, profilesWithFootage: answer.profilesWithFootage }

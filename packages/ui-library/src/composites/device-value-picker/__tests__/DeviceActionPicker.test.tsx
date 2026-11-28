@@ -6,7 +6,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { type ReactNode, useState } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { AutomationCommandStep } from '@camstack/types'
+import type { AutomationCommandStep } from '@dominevo/types'
 
 vi.mock('../device-value-panel', () => ({
   DeviceValuePanel: (props: { readonly onSelect: (v: { deviceId: number }) => void }) => (
@@ -91,12 +91,7 @@ describe('DeviceActionPicker', () => {
 
   it('reopens an entry on its action and replaces it', () => {
     const onValue = vi.fn()
-    render(
-      <Harness
-        start={[OFF]}
-        onValue={onValue}
-      />,
-    )
+    render(<Harness start={[OFF]} onValue={onValue} />)
     fireEvent.click(screen.getByText('switch.off · {"kind":"devices","ids":[7]}'))
     fireEvent.click(screen.getByTestId('choose-action'))
     fireEvent.click(screen.getByTestId('dap-confirm'))
@@ -107,12 +102,7 @@ describe('DeviceActionPicker', () => {
 
   it('removes an entry', () => {
     const onValue = vi.fn()
-    render(
-      <Harness
-        start={[OFF]}
-        onValue={onValue}
-      />,
-    )
+    render(<Harness start={[OFF]} onValue={onValue} />)
     fireEvent.click(screen.getByRole('button', { name: /remove/i }))
     expect(onValue).toHaveBeenLastCalledWith([])
   })

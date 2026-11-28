@@ -11,7 +11,7 @@ import {
   createSecretsAccess,
   isSecretMarker,
   makeSecretMarker,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import { integrationRegistryRecordKinds } from '../integration-record-kinds.js'

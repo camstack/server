@@ -6,7 +6,7 @@
  * index would let `ensureSeeded` skip a claimed device's row and the next
  * native write would erase its `$owned` — the exact direction the brief named.
  */
-import type { AddonStoreRead, IScopedLogger } from '@camstack/types'
+import type { AddonStoreRead, IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import type { DeviceManagerSettings } from '../device-meta-store.js'
 import { FIELD_CLAIMS_INDEX_KEY, FieldClaimsIndex } from '../field-claims-index.js'

@@ -2,7 +2,7 @@
   "haHeatOnly": {
     "endpointId": "7__dev",
     "manufacturerName": "camstack",
-    "description": "CamStack climate",
+    "description": "Dominevo climate",
     "friendlyName": "Clima",
     "displayCategories": ["THERMOSTAT"],
     "capabilities": [
@@ -82,7 +82,7 @@
   "haHeatCoolRange": {
     "endpointId": "7__dev",
     "manufacturerName": "camstack",
-    "description": "CamStack climate",
+    "description": "Dominevo climate",
     "friendlyName": "Clima",
     "displayCategories": ["THERMOSTAT"],
     "capabilities": [
@@ -259,7 +259,7 @@
   "greeAc": {
     "endpointId": "7__dev",
     "manufacturerName": "camstack",
-    "description": "CamStack climate",
+    "description": "Dominevo climate",
     "friendlyName": "Clima",
     "displayCategories": ["AIR_CONDITIONER"],
     "capabilities": [

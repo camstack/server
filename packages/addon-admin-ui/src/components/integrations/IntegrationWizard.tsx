@@ -3,8 +3,8 @@ import type {
   ConfigFieldWithValue,
   ConfigUISchema,
   ConfigUISchemaWithValues,
-} from '@camstack/types'
-import { prefilledIntegrationName } from '@camstack/types'
+} from '@dominevo/types'
+import { prefilledIntegrationName } from '@dominevo/types'
 import {
   Dialog,
   DialogBody,
@@ -19,7 +19,7 @@ import {
   useIntegrationInstancesInstanceFormSchema,
   useIntegrationsGetAvailableTypes,
   Button,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'

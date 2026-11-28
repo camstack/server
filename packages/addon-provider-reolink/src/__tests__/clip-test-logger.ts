@@ -5,7 +5,7 @@
  * about a camera carries `tags: { deviceId }` and every branch that drops work
  * says so, and a fake that swallowed `extras` would make both untestable.
  */
-import type { IScopedLogger, LogExtras } from '@camstack/types'
+import type { IScopedLogger, LogExtras } from '@dominevo/types'
 
 export interface RecordedLine {
   readonly message: string

@@ -4,7 +4,7 @@
  * so a sensor event fanned out per linked camera is excluded exactly where an
  * include would have tested it.
  */
-import { NcRuleInputSchema, type ObjectEvent, type SensorEvent } from '@camstack/types'
+import { NcRuleInputSchema, type ObjectEvent, type SensorEvent } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   deviceEventRuleMayFireOnKind,

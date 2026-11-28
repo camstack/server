@@ -16,13 +16,13 @@ import {
   EMBEDDING_REQUIREMENTS_UNAVAILABLE,
   embeddingRefusalOf,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 const ensureMock = vi.fn<(modelId: string, format?: string) => Promise<string>>()
 
-vi.mock('@camstack/server/system/addon-utils', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@camstack/server/system/addon-utils')>()
+vi.mock('@dominevo/server/system/addon-utils', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dominevo/server/system/addon-utils')>()
   class FakeModelDownloadService {
     ensure(modelId: string, format?: string): Promise<string> {
       return ensureMock(modelId, format)
@@ -31,7 +31,7 @@ vi.mock('@camstack/server/system/addon-utils', async (importOriginal) => {
   return { ...actual, ModelDownloadService: FakeModelDownloadService }
 })
 
-const { ModelDownloadHttpError } = await import('@camstack/server/system/addon-utils')
+const { ModelDownloadHttpError } = await import('@dominevo/server/system/addon-utils')
 const { default: EmbeddingEncoderAddon } = await import('../index.js')
 const { REQUIREMENTS_COOLDOWN_MAX_MS } = await import('../model-requirements.js')
 

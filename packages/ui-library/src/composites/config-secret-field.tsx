@@ -28,7 +28,7 @@ import {
   isSecretFieldView,
   SECRET_CLEAR,
   type SecretFieldView,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { type ReactNode, useContext, useEffect, useState, type JSX } from 'react'
 import { createSharedContext } from '../lib/shared-context'
 import { PasswordInput } from '../primitives/password-input'

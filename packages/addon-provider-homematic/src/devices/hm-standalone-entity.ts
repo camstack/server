@@ -1,4 +1,4 @@
-import type { SavedDevice } from '@camstack/types'
+import type { SavedDevice } from '@dominevo/types'
 
 /**
  * Standalone-entity restore predicate for the Homematic `'entities'` adoption

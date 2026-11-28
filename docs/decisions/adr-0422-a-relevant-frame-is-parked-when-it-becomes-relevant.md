@@ -37,7 +37,7 @@ crop registry that sat pinned at `4096/4096`.
 
 **What was tried first, and what it cost.** D419 bounded the lease at ten
 seconds, on the belief that a p90 ask lands at 4.3 s. That figure came from
-sizing prose in `@camstack/types` `pipeline/native-lease.ts`, not from a
+sizing prose in `@dominevo/types` `pipeline/native-lease.ts`, not from a
 measurement of this path. Deployed 2026-09-09 ~14:00 it took the fleet's
 `keyFrame` presence from **99.5% to 76.6%** and produced tracks with **zero
 media in 11.8%** of cases, against 0.0% before (628 tracks, 32 cameras). It also
@@ -147,7 +147,7 @@ lifetime.
   `addon-post-analysis`: a hub that parks against a runner without the method
   logs `track frame park impossible … (version skew)` once per camera per
   minute and writes no key frame or best shot until the runners catch up. The
-  cap change also travels in `@camstack/types`, so the server train must
+  cap change also travels in `@dominevo/types`, so the server train must
   carry it (D16).
 
 ## Enforcement

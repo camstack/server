@@ -9,7 +9,7 @@ import type {
   FrameResult,
   ObjectDetection,
   PipelineStepInputOutput,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import type { DetailSubtreeDeps } from '../detail-subtree.js'
 import { runDetailSubtree } from '../detail-subtree.js'

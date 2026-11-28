@@ -43,8 +43,8 @@
  * evicted one is. A failure for one (device, profile, location) is logged and
  * never aborts the pass.
  */
-import { errMsg } from '@camstack/types'
-import type { IScopedLogger } from '@camstack/types'
+import { errMsg } from '@dominevo/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { selectRedundantSegments } from '../redundant-segments.js'
 import type { SegmentRow } from '../types.js'
 import type { HeapDeltaTracker } from './heap-delta.js'

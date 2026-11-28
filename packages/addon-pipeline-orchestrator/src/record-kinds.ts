@@ -13,7 +13,7 @@ import {
   NodeBenchmarkManifestSchema,
   NodeBenchmarkResultSchema,
   NodeBenchmarkRunSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** Legacy collection name — kept for adoption mapper and docs. */
 export const NODE_STRESS_MOVES_COLLECTION = 'pipeline-orchestrator:node-stress-moves'

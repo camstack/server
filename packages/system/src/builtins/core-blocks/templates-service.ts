@@ -26,7 +26,7 @@ import {
   type RecordKindHandle,
   type TemplateRecord,
   type TemplateUser,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { AutomationTemplateInstances } from './automation-template-instances.js'
 import type { TemplateRowBody } from './record-kinds.js'
 
@@ -133,7 +133,7 @@ export class TemplatesService implements ITemplateProvider {
 
   readonly update: ITemplateProvider['update'] = async ({ id, name, payload, tags }) => {
     if (isBuiltinTemplateId(id)) {
-      return { status: 'refused', reason: 'read-only', detail: `"${id}" ships with CamStack` }
+      return { status: 'refused', reason: 'read-only', detail: `"${id}" ships with Dominevo` }
     }
     const existing = await this.deps.templates.get(id)
     if (existing === null) {

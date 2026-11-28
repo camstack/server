@@ -18,5 +18,5 @@ export default defineConfig({
   // `fileURLToPath(undefined)` throws at runtime). Needed by
   // `resolveFixturesDir()` in benchmark-addon.ts.
   shims: true,
-  external: ['@camstack/types'],
+  external: ['@dominevo/types'],
 })

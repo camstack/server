@@ -12,8 +12,8 @@
  * rule. The read projection now treats a non-positive window as absent and clamps a positive
  * out-of-range one, says so once per rule, and a row that still fails is named with its reason.
  */
-import type { InMemoryRecords } from '@camstack/types'
-import { NC_GROUPING_MAX_SEC } from '@camstack/types'
+import type { InMemoryRecords } from '@dominevo/types'
+import { NC_GROUPING_MAX_SEC } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { makeLogRecorder } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import { ncRecordKinds } from '../record-kinds.js'

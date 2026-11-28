@@ -2,7 +2,7 @@ import * as os from 'node:os'
 import * as fs from 'node:fs'
 import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
-import { describeNvidia, errMsg, scoreRuntimes, enumerateInferenceDevices } from '@camstack/types'
+import { describeNvidia, errMsg, scoreRuntimes, enumerateInferenceDevices } from '@dominevo/types'
 import type {
   HardwareInfo,
   GpuInfo,
@@ -13,7 +13,7 @@ import type {
   PlatformCapabilities,
   IScopedLogger,
   AcceleratorCompute,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   type CoralDetection,
   type CoralFs,
@@ -142,7 +142,7 @@ export class PlatformScorer {
    * On failure, `error` fires once with the exception. Cached after first call.
    *
    * Scores are hardware-driven only (no Python module import subprocess):
-   * `scoreRuntimes` from `@camstack/types` is the single source of truth.
+   * `scoreRuntimes` from `@dominevo/types` is the single source of truth.
    */
   async probe(
     onPhase?: (phase: string, payload?: Record<string, unknown>) => void,

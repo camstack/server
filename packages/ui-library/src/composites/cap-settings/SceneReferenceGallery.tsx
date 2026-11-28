@@ -39,7 +39,7 @@
 
 import { useUiText } from '../../contexts/ui-text'
 import { useConfirm } from '../confirm-dialog'
-import type { SceneMonitor, SceneReference } from '@camstack/types'
+import type { SceneMonitor, SceneReference } from '@dominevo/types'
 import { ImageOff, Trash2 } from 'lucide-react'
 import { useState, type JSX } from 'react'
 import { hubPath } from '../../lib/hub-mount'

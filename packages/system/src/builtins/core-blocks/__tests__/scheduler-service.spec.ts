@@ -3,12 +3,12 @@ import {
   type BoundCapsReader,
   type SchedulerInput,
   SchedulerError,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { RunsLedger } from '../runs-ledger.js'
 import { SchedulersService } from '../scheduler/scheduler-service.js'
 import { ALL_DAYS, at, harness, ROME } from './scheduler-support.js'
-import { capUnitResolver, ALL_CAPABILITY_DEFINITIONS, createRecordsAccess } from '@camstack/types'
+import { capUnitResolver, ALL_CAPABILITY_DEFINITIONS, createRecordsAccess } from '@dominevo/types'
 import { makeRecordsWorld } from '../../sqlite-storage/__tests__/support/records-world.js'
 import { coreBlocksRecordKinds } from '../record-kinds.js'
 

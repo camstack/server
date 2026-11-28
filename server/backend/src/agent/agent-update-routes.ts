@@ -5,7 +5,7 @@
  * The agent UI exists for the node nobody else can reach. So the split here
  * is not cosmetic:
  *
- *   • FRAMEWORK (`@camstack/server`) — fully local. `RootUpdateService`
+ *   • FRAMEWORK (`@dominevo/server`) — fully local. `RootUpdateService`
  *     resolves `latest` with `npm view` and stages the closure with
  *     `npm install` straight from the registry (`node-root/root-update-service.ts`),
  *     then arms a swap-on-restart. The hub is not in that path at ANY point:
@@ -27,7 +27,7 @@
  * And `applyServerUpdate` is reached with NO caller-supplied version — the
  * route always applies registry `latest`. An endpoint that installs an
  * arbitrary version string is a remote-code-execution primitive; the
- * dev-channel path (`camstack deploy-server`, which does take a version) stays
+ * dev-channel path (`dominevo deploy-server`, which does take a version) stays
  * where it already is, on the hub's authenticated tRPC surface.
  */
 import type { FastifyInstance } from 'fastify'
@@ -35,7 +35,7 @@ import type {
   ServerPackageStatus,
   ServerUpdateActionResult,
   ServerUpdateCheckResult,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { AgentAddonUpdateEntry, AgentAddonUpdateReport } from './agent-addon-updates.js'
 import {
   type AgentHubAddonControls,
@@ -76,7 +76,7 @@ export interface AgentServerUpdateView {
   /**
    * The outcome of the most recent apply, VERBATIM — refusals included
    * ("Refused: another operation is in flight (staging).",
-   * "Refused: @camstack/server@X is already running."). These are the useful
+   * "Refused: @dominevo/server@X is already running."). These are the useful
    * sentences; the UI renders them rather than swallowing them.
    */
   readonly lastApply: ServerUpdateActionResult | null

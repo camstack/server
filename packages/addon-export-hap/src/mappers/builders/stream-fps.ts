@@ -29,14 +29,14 @@
  */
 import type { Resolution } from '@homebridge/hap-nodejs'
 
-import { pickPreferredRtspEntry } from '@camstack/types'
+import { pickPreferredRtspEntry } from '@dominevo/types'
 import type {
   CamProfile,
   CameraStream,
   ProfileRtspEntry,
   ProfileSlot,
   WebrtcStreamChoice,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /**
  * Rate advertised when nothing could be probed. Matches the historical

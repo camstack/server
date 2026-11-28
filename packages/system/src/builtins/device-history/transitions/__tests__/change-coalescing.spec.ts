@@ -1,5 +1,5 @@
 /** The one burst rule of the derived device changes (D1084). */
-import type { TransitionValue } from '@camstack/types'
+import type { TransitionValue } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   coalesceChanges,

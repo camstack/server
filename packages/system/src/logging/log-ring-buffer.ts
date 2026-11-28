@@ -1,5 +1,5 @@
-import type { LogLevel, LogEntry, LogFilter, LogTags } from '@camstack/types'
-import { getDebugInterest, isDebugChannelName, logLevelAtMost } from '@camstack/types'
+import type { LogLevel, LogEntry, LogFilter, LogTags } from '@dominevo/types'
+import { getDebugInterest, isDebugChannelName, logLevelAtMost } from '@dominevo/types'
 
 export type { LogLevel, LogEntry, LogFilter }
 

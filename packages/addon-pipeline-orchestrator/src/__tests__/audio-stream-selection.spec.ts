@@ -9,7 +9,7 @@
  * edge. So one listener that wanted only sound paid for a full video re-encode,
  * and the feeder could never be released while it listened.
  */
-import type { CamProfile } from '@camstack/types'
+import type { CamProfile } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { selectAudioCamStream, toAudioStreamPick } from '../audio-stream-selection.js'
 

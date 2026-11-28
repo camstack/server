@@ -8,7 +8,7 @@
  * a claim an unanswered read may make (D315).
  */
 
-import { useSystem } from '@camstack/ui-library'
+import { useSystem } from '@dominevo/ui-library'
 import { useQuery } from '@tanstack/react-query'
 import { Info } from 'lucide-react'
 import { NC_ADDON_ID } from './notification-rule-status'

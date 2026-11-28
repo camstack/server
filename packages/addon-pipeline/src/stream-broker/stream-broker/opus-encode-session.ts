@@ -19,8 +19,8 @@
  * boundary at frame-rate uncompressed" rule — PCM crosses as a cap RPC exactly
  * as the decode client already does, and what comes back is compressed Opus.
  */
-import type { DecodedAudioChunk, IScopedLogger } from '@camstack/types'
-import { errMsg } from '@camstack/types'
+import type { DecodedAudioChunk, IScopedLogger } from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
 import type { AudioCodecCapApi } from './audio-codec-proxy.js'
 
 /** One encoded Opus access unit handed to the sender (a whole RTP payload). */

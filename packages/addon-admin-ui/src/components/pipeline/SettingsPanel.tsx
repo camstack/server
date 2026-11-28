@@ -19,7 +19,7 @@
 import type { ReactNode } from 'react'
 import { Save, RotateCcw } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { Button } from '@camstack/ui-library'
+import { Button } from '@dominevo/ui-library'
 
 export interface SettingsPanelProps {
   readonly title?: string

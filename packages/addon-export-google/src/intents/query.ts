@@ -11,7 +11,7 @@
  * linked Google account could read the state of any device id it guessed,
  * including ones the operator never exported.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 import type { ActionSceneExports } from '../action-scenes.js'
 import { parseActionSceneId } from '../action-scenes.js'

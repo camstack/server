@@ -9,7 +9,7 @@
  * corpus — past the end of a page the next page is fetched and its first frame
  * opens.
  */
-import type { RetrainCollection, RetrainCorpusFilter, RetrainFrame } from '@camstack/types'
+import type { RetrainCollection, RetrainCorpusFilter, RetrainFrame } from '@dominevo/types'
 import {
   deviceListStateOf,
   useDeviceManagerListAll,
@@ -21,7 +21,7 @@ import {
   usePipelineAnalyticsListRetrainCorpusPage,
   usePipelineAnalyticsRenameRetrainCollection,
   type PickerItem,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useCallback, useEffect, useMemo, useState, type JSX } from 'react'
 import { CorpusAnnotateOverlay } from './CorpusAnnotateOverlay.js'
 import { useT } from '../../i18n/index.js'

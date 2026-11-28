@@ -12,7 +12,7 @@
  *
  * Pure: no I/O, so the mapping is pinned by a spec without an event bus.
  */
-import { AlarmPanelStatusSchema } from '@camstack/types'
+import { AlarmPanelStatusSchema } from '@dominevo/types'
 import { z } from 'zod'
 import { parseCameraEndpointId } from '../handlers/endpoint-id.js'
 import { genericPropertiesFor } from '../handlers/generic-state.js'

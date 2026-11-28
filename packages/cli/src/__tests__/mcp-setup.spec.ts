@@ -10,7 +10,7 @@ import {
   type ConnectOutcome,
   type HubClient,
   type HubHttpMethod,
-} from '@camstack/develop'
+} from '@dominevo/develop'
 import type { FetchFn, McpContext } from '../mcp/context.js'
 import { createPublicServer } from '../mcp/server.js'
 import { composeToDockerRun } from '../mcp/setup-compose.js'
@@ -107,7 +107,7 @@ describe('setup_install_guide — routes', () => {
     const file = g.files[0]
     expect(file?.source).toBe(TEMPLATE_URLS.compose.hub)
     const body = file?.body ?? ''
-    expect(body).toContain('ghcr.io/camstack/camstack:intel-latest')
+    expect(body).toContain('ghcr.io/dominevo/dominevo:intel-latest')
     expect(body).not.toContain(':amd-latest')
     expect(body).toContain('- /srv/cam/data:/data')
     expect(body).toContain('- /mnt/disk/rec:/recordings')
@@ -119,7 +119,7 @@ describe('setup_install_guide — routes', () => {
     expect(body).not.toContain(':/config')
     expect(g.mustNotOmit.join('\n')).toContain('pids')
     expect(g.steps.join('\n')).toContain('admin / changeme')
-    expect(g.steps.join('\n')).toContain('camstack login')
+    expect(g.steps.join('\n')).toContain('dominevo login')
   })
 
   it('docker-compose with a Coral enables the USB bus and the cgroup rule', async () => {
@@ -155,7 +155,7 @@ describe('setup_install_guide — routes', () => {
     expect(run).toContain('--restart unless-stopped')
     expect(run).toContain('-v /srv/cam/data:/data')
     expect(run).toContain('-e CAMSTACK_MEDIA_ROOT=/recordings')
-    expect(run).toContain('ghcr.io/camstack/camstack:amd-latest')
+    expect(run).toContain('ghcr.io/dominevo/dominevo:amd-latest')
     expect(run).not.toMatch(/camstack:latest/)
     expect(run).toContain('--group-add 44')
   })
@@ -184,8 +184,8 @@ describe('setup_install_guide — routes', () => {
       await installGuide({ hostKind: 'unraid', role: 'hub', accelerator: 'amd' }, fakeFetch),
     )
     expect(g.steps.join('\n')).toContain(TEMPLATE_URLS.unraid.hub)
-    expect(g.files[0]?.body).toContain('<Name>CamStack</Name>')
-    expect(g.edits.join('\n')).toContain('ghcr.io/camstack/camstack:amd-latest')
+    expect(g.files[0]?.body).toContain('<Name>Dominevo</Name>')
+    expect(g.edits.join('\n')).toContain('ghcr.io/dominevo/dominevo:amd-latest')
   })
 
   it('proxmox-lxc: a one-line command with the role, image tag and recordings path', async () => {
@@ -202,7 +202,7 @@ describe('setup_install_guide — routes', () => {
     )
     const cmd = g.steps.find((s) => s.includes('install-camstack-proxmox.sh')) ?? ''
     expect(cmd).toContain('ROLE=agent')
-    expect(cmd).toContain('IMAGE_TAG=ghcr.io/camstack/camstack:intel-latest')
+    expect(cmd).toContain('IMAGE_TAG=ghcr.io/dominevo/dominevo:intel-latest')
     expect(cmd).toContain('RECORDINGS_HOST_PATH=/mnt/disk/rec')
     expect(cmd).toContain(TEMPLATE_URLS.proxmoxInstaller)
   })
@@ -244,7 +244,7 @@ describe('setup_install_guide — routes', () => {
         fakeFetch,
       ),
     )
-    expect(g.files[0]?.body).toContain(`ghcr.io/camstack/camstack:${tag}`)
+    expect(g.files[0]?.body).toContain(`ghcr.io/dominevo/dominevo:${tag}`)
     expect(g.imageTag).toBe(tag)
   })
 
@@ -290,8 +290,8 @@ describe('setup_install_guide — routes', () => {
   it('macos-desktop: both dmg assets of the latest release, no viewer', async () => {
     const g = ready(await installGuide({ hostKind: 'macos-desktop', role: 'hub' }, fakeFetch))
     const text = g.steps.join('\n')
-    expect(text).toContain('CamStack-0.1.4-arm64.dmg')
-    expect(text).toContain('CamStack-0.1.4-x64.dmg')
+    expect(text).toContain('Dominevo-0.1.4-arm64.dmg')
+    expect(text).toContain('Dominevo-0.1.4-x64.dmg')
     expect(text).not.toContain('CamStackViewer-')
     expect(text).toContain('Hub (full server)')
   })
@@ -349,7 +349,7 @@ function writeSession(server: string): void {
 }
 
 describe('setup_connect', () => {
-  it('reachable without a session: says to run camstack login, no verification bypass', async () => {
+  it('reachable without a session: says to run dominevo login, no verification bypass', async () => {
     const r = await connectTool('hub.example.test', {
       sessionDir: dir,
       env: {},
@@ -359,7 +359,7 @@ describe('setup_connect', () => {
     expect(r.server).toBe('https://hub.example.test:4443')
     expect(r.session).toEqual({ exists: false, username: null })
     expect(r.tls?.caPinned).toBe(false)
-    expect(r.next).toContain('camstack login https://hub.example.test:4443')
+    expect(r.next).toContain('dominevo login https://hub.example.test:4443')
   })
 
   it('reports a pinned CA and an existing session', async () => {
@@ -392,7 +392,7 @@ describe('setup_connect', () => {
     })
     expect(r.status).toBe('unreachable')
     expect(r.tls?.hint).toContain('never switched off')
-    expect(r.next).toContain('camstack login')
+    expect(r.next).toContain('dominevo login')
   })
 
   it('refuses a plain-http address', async () => {
@@ -457,7 +457,7 @@ describe('setup_add_node', () => {
         ok: false,
         reason: 'no-session',
         message: 'none',
-        action: 'run `camstack login <host>`',
+        action: 'run `dominevo login <host>`',
       }),
     )
     expect(r.guide.status).toBe('ready')
@@ -499,7 +499,7 @@ describe('setup_add_node', () => {
           tls: {},
           client,
           adminHint: null,
-          loginCommand: 'camstack login',
+          loginCommand: 'dominevo login',
         },
       }),
     )

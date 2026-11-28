@@ -20,7 +20,7 @@ import type {
   ConfigUISchema,
   IntegrationTestConnectionResult,
   ProviderRegistration,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   BaseAddon,
   type ResolvedInstance,
@@ -35,7 +35,7 @@ import {
   bareAddonId,
   isInstanceOn,
   isSameAddonId,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { LokiConfig } from './loki-destination.js'
 import { LokiDestinationSet } from './loki-destination-set.js'
 import {

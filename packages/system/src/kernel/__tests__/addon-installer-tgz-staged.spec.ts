@@ -21,7 +21,7 @@ import * as path from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AddonInstaller } from '../addon-installer.js'
 
-const PKG = '@camstack/test-pipe'
+const PKG = '@dominevo/test-pipe'
 
 /** npm-pack-layout tgz with dist/ + a python/ extra `files` dir. */
 function makeTgz(tmpRoot: string, version: string): string {

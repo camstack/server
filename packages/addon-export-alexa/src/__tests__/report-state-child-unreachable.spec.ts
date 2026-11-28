@@ -8,7 +8,7 @@
  * now), not an empty StateReport, and the hub log gets one warning per child
  * per window instead of two per poll.
  */
-import type { AddonContext, IScopedLogger } from '@camstack/types'
+import type { AddonContext, IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { handleReportState } from '../handlers/report-state.js'
 

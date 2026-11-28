@@ -5,7 +5,7 @@ import { vitestWorkers } from '../../vitest.workers'
 
 /**
  * Package runs (`test:related`) do not load the root vitest config, whose
- * alias sends `@camstack/types` at this checkout's dist. Without it a worktree
+ * alias sends `@dominevo/types` at this checkout's dist. Without it a worktree
  * loads the main checkout's types through the shared `node_modules` link.
  */
 const typesEntry = path.join(
@@ -14,7 +14,7 @@ const typesEntry = path.join(
 )
 
 /**
- * Vitest config for `@camstack/addon-post-analysis`.
+ * Vitest config for `@dominevo/addon-post-analysis`.
  *
  * Until 2026-09-29 this package had NO `test` target, so `nx run-many -t test`
  * (CI's `npm run test`) and `nx affected -t test` never collected its ~680
@@ -30,7 +30,7 @@ const typesEntry = path.join(
  */
 export default defineConfig({
   resolve: {
-    alias: [{ find: /^@camstack\/types$/, replacement: typesEntry }],
+    alias: [{ find: /^@dominevo\/types$/, replacement: typesEntry }],
   },
   test: {
     ...vitestWorkers(),

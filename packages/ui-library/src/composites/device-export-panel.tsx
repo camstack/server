@@ -56,7 +56,7 @@ import {
   ExportInstanceSchema,
   ExposedDeviceSchema,
   type ExportInstance,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   Bell,

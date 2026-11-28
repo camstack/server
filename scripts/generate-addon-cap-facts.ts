@@ -1,9 +1,9 @@
 #!/usr/bin/env tsx
 /**
  * Codegen: emit the capability FACTS two addons read at runtime, as plain data
- * on `@camstack/types/addon` — so neither imports `ALL_CAPABILITY_DEFINITIONS`.
+ * on `@dominevo/types/addon` — so neither imports `ALL_CAPABILITY_DEFINITIONS`.
  *
- * WHY THIS EXISTS (addon footprint, D28): an addon bundles `@camstack/types`.
+ * WHY THIS EXISTS (addon footprint, D28): an addon bundles `@dominevo/types`.
  * Reaching `ALL_CAPABILITY_DEFINITIONS` from addon server code inlines the Zod
  * schema graph of every capability (~11,000 builder calls) and evaluates it at
  * load: +~100 MB of private heap in each runner that holds the addon

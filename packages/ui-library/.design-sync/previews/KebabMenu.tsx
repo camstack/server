@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { KebabMenu } from '@camstack/ui-library'
+import { KebabMenu } from '@dominevo/ui-library'
 import { Camera, RotateCw, Download, Trash2 } from 'lucide-react'
 
 const Frame = ({ children }: { children: ReactNode }) => (

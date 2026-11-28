@@ -2,10 +2,10 @@ import {
   ClusterNodeHistoryBodySchema,
   readAllRows,
   type ClusterNodeHistoryBody,
-} from '@camstack/server/system'
-import type { IScopedLogger, RecordKindHandle } from '@camstack/types'
+} from '@dominevo/server/system'
+import type { IScopedLogger, RecordKindHandle } from '@dominevo/types'
 import { z } from 'zod'
-import { errMsg } from '@camstack/types'
+import { errMsg } from '@dominevo/types'
 import type { NodePackageEntry } from './agent-addon-backfill.js'
 type ClusterNodeHistoryKind = RecordKindHandle<ClusterNodeHistoryBody>
 

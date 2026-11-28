@@ -27,7 +27,7 @@ import {
   pruneDeletedEntities,
   runExportedAction,
   sendToExportedTarget,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 import { z } from 'zod'
 
@@ -289,8 +289,8 @@ export class ExportedEntities {
         deviceId: null,
         dev: {
           ids: [deviceKey],
-          name: 'CamStack Actions and Notifications',
-          mf: 'CamStack',
+          name: 'Dominevo Actions and Notifications',
+          mf: 'Dominevo',
           mdl: 'Synthetic',
         },
         cmps,

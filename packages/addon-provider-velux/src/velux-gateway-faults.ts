@@ -1,4 +1,4 @@
-import { type DeviceFault, ERROR_STATUS_COLD, type ErrorStatus } from '@camstack/types'
+import { type DeviceFault, ERROR_STATUS_COLD, type ErrorStatus } from '@dominevo/types'
 import type { VeluxNodeSource } from './velux-node-resolver.js'
 
 /** How long the gateway must stay unreachable before it is a fault of its own (below it: `connection-lost`). */

@@ -1,4 +1,4 @@
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { vi } from 'vitest'
 import { isIntegrationInstancesProvider } from '../../../core/addon/integration-instances-provider'
 import {

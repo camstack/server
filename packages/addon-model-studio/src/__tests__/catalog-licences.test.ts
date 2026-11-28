@@ -1,6 +1,6 @@
 /**
  * The two catalogs Model Studio itself writes — the pinned plugin catalog YOLOv9
- * manifest and the plus catalog public catalog — are CamStack's offer, not the
+ * manifest and the plus catalog public catalog — are Dominevo's offer, not the
  * operator's upload, so every entry declares its licence (D661).
  */
 import { describe, expect, it } from 'vitest'

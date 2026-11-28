@@ -38,7 +38,7 @@ import {
   type MigrationProcedureResult,
   NcRuleActionsSchema,
   type RecordKindHandle,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { RuleBody, SequenceBody } from '../notification-center/record-kinds.js'
 import { allRows } from './device-template-var.js'
 

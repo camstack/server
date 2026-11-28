@@ -9,7 +9,7 @@ import {
   type RecordsAccess,
   RecordIntegrationInstances,
   REDACTED_SECRET,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { type HaBrokerBody, haBrokersEntryKind } from './broker-record-kinds.js'
 import { haBrokerSettingsSchema } from './ha-broker-settings-schema.js'
 import type { HaBrokerInfo } from './ha-integration-manager.js'

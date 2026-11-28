@@ -1,4 +1,4 @@
-import type { IScopedLogger, TerminalSessionInfo } from '@camstack/types'
+import type { IScopedLogger, TerminalSessionInfo } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { type TerminalCameraApi, TerminalCameraRelay } from '../terminal-camera-relay.js'
 import {

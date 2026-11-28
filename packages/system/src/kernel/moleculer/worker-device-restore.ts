@@ -12,8 +12,8 @@
  * the runner entry-point side effects (each runner is also an
  * executable that calls `main()` at import time).
  */
-import { errMsg, ReadinessRegistry, ReadinessTimeoutError } from '@camstack/types/addon'
-import type { ICamstackAddon, IEventBus, IScopedLogger } from '@camstack/types'
+import { errMsg, ReadinessRegistry, ReadinessTimeoutError } from '@dominevo/types/addon'
+import type { ICamstackAddon, IEventBus, IScopedLogger } from '@dominevo/types'
 
 export async function runWorkerDeviceRestoreWithRetry(
   addon: ICamstackAddon,
@@ -63,7 +63,7 @@ export async function runWorkerDeviceRestoreWithRetry(
     (
       context as {
         kernel?: {
-          readinessRegistry?: import('@camstack/types').IReadinessRegistry
+          readinessRegistry?: import('@dominevo/types').IReadinessRegistry
         }
       }
     ).kernel?.readinessRegistry ?? null

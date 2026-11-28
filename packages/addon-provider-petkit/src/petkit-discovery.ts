@@ -1,4 +1,4 @@
-import { DeviceType, type DiscoveredChildDevice } from '@camstack/types'
+import { DeviceType, type DiscoveredChildDevice } from '@dominevo/types'
 import { deviceTypeForRoster } from '@apocaliss92/nodepetkit'
 
 /**
@@ -15,7 +15,7 @@ export interface PetkitDiscoverable {
 
 export interface BuildPetkitCandidatesInput {
   readonly devices: readonly PetkitDiscoverable[]
-  /** petkitDeviceId → adopted CamStack device id. */
+  /** petkitDeviceId → adopted Dominevo device id. */
   readonly adopted: ReadonlyMap<string, number>
 }
 

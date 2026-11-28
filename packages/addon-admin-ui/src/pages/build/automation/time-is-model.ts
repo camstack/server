@@ -10,14 +10,14 @@ import {
   type TimeIsLeaf,
   type TimeWindow,
   type WeekdayKey,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   type TimeWindowEnd,
   toggleWindowDay,
   windowWrapsMidnight,
   withWindowEnd,
   withWindowMode,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 
 export const ALL_WEEKDAYS: readonly WeekdayKey[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
 

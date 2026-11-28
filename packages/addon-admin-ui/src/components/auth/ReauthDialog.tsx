@@ -18,7 +18,7 @@ import {
   DialogTitle,
   Input,
   useSystem,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { KeyRound, Loader2 } from 'lucide-react'
 import { type ReactNode, useCallback, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'

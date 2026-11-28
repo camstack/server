@@ -8,7 +8,7 @@
  * exists the links are `null` with the reason, not a guess.
  *
  * The media audit shares its rules with the private operator MCP
- * (`analyzeTrack`, in `@camstack/develop`) and adds what D400 requires: every
+ * (`analyzeTrack`, in `@dominevo/develop`) and adds what D400 requires: every
  * missing media kind is named, with the reason the track recorded for it.
  */
 import {
@@ -18,8 +18,8 @@ import {
   type HubClient,
   type MediaInfo,
   type Track,
-} from '@camstack/develop'
-import { buildViewerLink } from '@camstack/types'
+} from '@dominevo/develop'
+import { buildViewerLink } from '@dominevo/types'
 import { z } from 'zod'
 import type { McpContext } from './context.js'
 import { cap, readQuery, withHub, type NoSessionResult } from './ops-hub.js'

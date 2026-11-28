@@ -18,13 +18,13 @@ import {
   buildCapRouters,
   type CapRouterServices,
   type CapabilityRegistry,
-} from '@camstack/server/system'
+} from '@dominevo/server/system'
 import {
   type RecordingOnboardOptions,
   type RecordingOnboardStatus,
   recordingOnboardCapability,
   resolveCapMount,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { TRPCError } from '@trpc/server'
 import { describe, expect, it } from 'vitest'
 import { requireDeviceScoped } from '../../api/trpc/cap-mount-helpers.js'

@@ -21,7 +21,7 @@ import {
   CoreBlockSchema,
   DeviceType,
   type MigrationProcedureResult,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { CoreBlockRowBody } from '../record-kinds.js'
 import type { CoreBlocksMigrationPorts, StoredBlockRow } from './pump-cycle-split.js'
 

@@ -56,7 +56,7 @@ describe('resolveLaunchArgs', () => {
     'server-root',
     'current',
     'node_modules',
-    '@camstack',
+    '@dominevo',
     'server',
     'dist',
     'launch-args.js',

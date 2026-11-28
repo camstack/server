@@ -9,7 +9,7 @@
  *  - arrow keys walk the enabled rows and Enter picks the highlighted one;
  *  - a pick is remembered per `recentKey` and offered next time.
  */
-import type { AutomationLeafKind } from '@camstack/types'
+import type { AutomationLeafKind } from '@dominevo/types'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ConditionKindPicker, type ConditionKindPickerProps } from '../ConditionKindPicker'

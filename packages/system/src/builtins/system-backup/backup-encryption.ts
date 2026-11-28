@@ -366,7 +366,7 @@ export function createBackupDecryptStream(secretKey: string): Transform {
   const openHeader = (): void => {
     const header = queue.take(BACKUP_ENCRYPTION_HEADER_BYTES)
     const parsed = parseHeader(header)
-    if (parsed === null) throw new BackupDecryptError('this is not an encrypted CamStack backup')
+    if (parsed === null) throw new BackupDecryptError('this is not an encrypted Dominevo backup')
     if (parsed.keyId !== recipient.keyId) {
       throw new BackupKeyMismatchError(parsed.keyId, recipient.keyId)
     }

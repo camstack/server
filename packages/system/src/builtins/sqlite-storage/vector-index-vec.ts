@@ -35,13 +35,13 @@
  * reason.
  */
 
-import type { IScopedLogger, VectorFilter, VectorMetadata, VectorMetric } from '@camstack/types'
+import type { IScopedLogger, VectorFilter, VectorMetadata, VectorMetric } from '@dominevo/types'
 import {
   decodeVectorBase64,
   encodeVectorBase64,
   vectorDimFromBase64,
   vectorIndexDimConflictError,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { SqliteOpLabel, SqliteOpProfiler } from './query-profiler.js'
 import {
   PROMOTED_COLUMNS,

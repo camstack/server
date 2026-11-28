@@ -3,7 +3,7 @@
  * heartbeat-only camera, a stuck sensor, the not-forwarded camera and an
  * unsplit provider. Fake clock; the bridge's emits are recorded.
  */
-import type { CameraSensorMode, IScopedLogger, MotionSources } from '@camstack/types'
+import type { CameraSensorMode, IScopedLogger, MotionSources } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { type CameraSensorsMotion, CameraSensorsSource } from '../camera-sensors/source.js'
 

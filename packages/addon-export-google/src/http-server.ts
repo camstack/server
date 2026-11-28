@@ -28,8 +28,8 @@ import type {
   AddonHttpRequest,
   IAddonHttpRoute,
   IScopedLogger,
-} from '@camstack/types'
-import { TokenScopeSchema } from '@camstack/types'
+} from '@dominevo/types'
+import { TokenScopeSchema } from '@dominevo/types'
 import { z } from 'zod'
 
 import { GOOGLE_INSTANCE_ID } from './export-records.js'

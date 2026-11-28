@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { EventCategory } from '@camstack/types'
+import { EventCategory } from '@dominevo/types'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { EventCategoryPicker } from '../event-category-picker'

@@ -17,7 +17,7 @@ import {
   type DiscoveryObservation,
   type DiscoveryProposal,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { normalizeServiceType } from '../local-network/scan/dns-wire.js'
 import {
   type DiscoveryOrchestratorDeps,

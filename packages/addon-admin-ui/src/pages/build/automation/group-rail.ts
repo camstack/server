@@ -9,8 +9,8 @@
  * blocks all differ before a colour repeats. The colour follows the position:
  * moving a block moves it to its new slot.
  */
-import type { AutomationWhen } from '@camstack/types'
-import { isLeaf } from '@camstack/types'
+import type { AutomationWhen } from '@dominevo/types'
+import { isLeaf } from '@dominevo/types'
 
 /** Full class strings, so the Tailwind scan sees every one. */
 export const GROUP_RAIL_CLASSES = [

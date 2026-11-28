@@ -1,4 +1,4 @@
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { type Harness, T0, makeHarness } from '../../__tests__/support/harness.js'
 import type { RollupRow } from '../../rollup/rollup-math.js'

@@ -8,7 +8,7 @@
  * — got "device-history is starting — the history store is not open yet",
  * because the store only opens in `onHubReachable`.
  */
-import { createRecordsAccess, type AddonContext, type SystemEvent } from '@camstack/types'
+import { createRecordsAccess, type AddonContext, type SystemEvent } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import { makeRecordsWorld } from '../../sqlite-storage/__tests__/support/records-world.js'
 import { DeviceHistoryAddon } from '../device-history.addon.js'

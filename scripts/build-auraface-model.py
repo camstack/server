@@ -24,7 +24,7 @@ pins its sha256.
 THE BAKED NORMALISATION — do not drop it
 ----------------------------------------
 Upstream is a stock InsightFace ArcFace recogniser: ``ArcFaceONNX`` feeds
-``(RGB_uint8 - 127.5) / 127.5`` → [-1,1]. The CamStack inference pool feeds every
+``(RGB_uint8 - 127.5) / 127.5`` → [-1,1]. The Dominevo inference pool feeds every
 float model ``/255`` → [0,1] (``inference_pool._preprocess``; the OpenVINO PPP
 fast path scales by 255 to the same range) and has no ``inputNormalization``
 value for the difference.
@@ -142,7 +142,7 @@ def _bake_normalization(src: Path, dst: Path) -> None:
     model.doc_string = (
         # Byte-for-byte identical to the published artefact — do not reword.
         "AuraFace v1 (fal.ai) glintr100 R100 ArcFace recogniser, Apache-2.0. "
-        "Input `data_raw01`: RGB NCHW float in [0,1] (the CamStack pool's /255 tensor); "
+        "Input `data_raw01`: RGB NCHW float in [0,1] (the Dominevo pool's /255 tensor); "
         "the upstream (x-127.5)/127.5 normalisation is baked in as Mul(2)-Sub(1). "
         "Output `embedding`: 512-d, L2-normalise downstream."
     )

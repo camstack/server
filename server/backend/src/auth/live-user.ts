@@ -5,7 +5,7 @@
  * remaining lifetime, and an empty or unknown `userId` names nobody: both are
  * refused there (security review 2026-10-21).
  */
-import type { IUserManagementProvider } from '@camstack/types'
+import type { IUserManagementProvider } from '@dominevo/types'
 
 export interface LiveUserRegistry {
   getSingleton<T>(capability: string): T | null | undefined

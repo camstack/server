@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import type { IScopedLogger, LogExtras } from '@camstack/types'
+import type { IScopedLogger, LogExtras } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { reolinkDebugActions } from '../debug-actions.js'
 import {
@@ -17,7 +17,7 @@ import {
 
 /**
  * Raw-read debug surface (D346): "what does the camera actually report,
- * versus what CamStack believes?"
+ * versus what Dominevo believes?"
  *
  * The operator-facing failure this exists for: the settings form said the
  * channel-name overlay was ON while the camera had it OFF, and the camera's
@@ -220,7 +220,7 @@ describe('sleeping battery camera — refuse BEFORE login, loudly, with the beli
     expect(result.ok).toBe(false)
     if (result.ok) throw new Error('unreachable')
     expect(result.reason).toBe('sleeping')
-    // The refusal still answers "what does CamStack believe".
+    // The refusal still answers "what does Dominevo believe".
     expect(result.believed.snapshot).toMatchObject({ channelEnabled: false })
     expect(result.believed.age).toEqual({
       state: 'known',
@@ -365,7 +365,7 @@ describe('the action surface is admin-only and correctly wired', () => {
  *   1. the read is a HUB-level CGI over ALL channels
  *      (`getAllChannelsBatteryInfo`), so the slice projects the requested
  *      channel itself rather than introducing a second slice shape;
- *   2. there is no `deviceCache` field for battery at all — what CamStack
+ *   2. there is no `deviceCache` field for battery at all — what Dominevo
  *      believes lives in the `battery` capability's runtime state
  *      (percentage / charging / sleeping). The catalog therefore names a
  *      believed SOURCE, and no fake cache key was invented to make a

@@ -15,10 +15,10 @@ import {
   Button,
   FormSaveBar,
   Select,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 
-import { useConfirm } from '@camstack/ui-library'
-import type { CamProfile } from '@camstack/types'
+import { useConfirm } from '@dominevo/ui-library'
+import type { CamProfile } from '@dominevo/types'
 
 interface StreamsTabProps {
   /** Numeric device id — every cap (`cameraStreams`, `streamBroker`)

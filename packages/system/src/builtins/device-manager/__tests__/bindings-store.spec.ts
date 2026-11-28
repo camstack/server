@@ -8,7 +8,7 @@
  * plain in-memory object — no SQLite, no real filesystem.
  */
 
-import { CapabilityRegistry, DeviceRegistry } from '@camstack/server/system'
+import { CapabilityRegistry, DeviceRegistry } from '@dominevo/server/system'
 import {
   type AddonContext,
   DeviceType,
@@ -18,7 +18,7 @@ import {
   snapshotCapability,
   type IScopedLogger,
   type SystemEvent,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { makeRecordsAccessForOwner } from '../../sqlite-storage/__tests__/support/records-world.js'
 import { DeviceManagerAddon } from '../device-manager.addon.js'
@@ -815,7 +815,7 @@ describe('device-manager bindings store', () => {
  *
  * Operator, 2026-09-20: *"tutti i providers funzionano sempre, non serve
  * disattivarli/attivarli … loro vivono lì."* [all the providers always work, there is no need to deactivate/activate them … they live there.] A source exists for a camera
- * because a configuration elsewhere put it there — CamStack always, Reolink
+ * because a configuration elsewhere put it there — Dominevo always, Reolink
  * because it is that camera's provider, HKSV because the camera is exported —
  * and none of those is an operator visiting a tick box. So for a collection cap
  * `getBindings` answers the ADDONS that provide it, one entry each, and nothing

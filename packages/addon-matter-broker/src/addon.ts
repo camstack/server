@@ -23,7 +23,7 @@ import {
   type ProviderRegistration,
   type RecordIntegrationInstances,
   isInstanceOn,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { MatterAddonConfig } from './config.js'
 import { MatterBrokerRegistry } from './matter-broker-registry.js'
 import { sameConnection } from './matter-integration-manager.js'

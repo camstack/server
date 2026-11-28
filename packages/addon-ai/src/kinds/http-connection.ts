@@ -6,7 +6,7 @@
  * the bag directly: the bag is `Record<string, unknown>` on the wire, and this
  * is the one place that says what an HTTP kind keeps in it.
  */
-import type { LlmProfile, LlmProviderConfig } from '@camstack/types'
+import type { LlmProfile, LlmProviderConfig } from '@dominevo/types'
 import { z } from 'zod'
 
 export const HTTP_KINDS = ['openai-compatible', 'openai', 'anthropic', 'google'] as const

@@ -21,7 +21,7 @@ let a root detector's labels stand in for a classifier, with three parts the
 operator rejected once it was in use:
 
 - **A COCO exception.** `isCocoLabelmap` made every COCO root declare nothing,
-  and the code called that an operator decision. It was not one. CamStack's own
+  and the code called that an operator decision. It was not one. Dominevo's own
   YOLOv9 / YOLO26 name `dog`, `cat`, `bus`, `truck` exactly like a plus catalog
   model names `deer`: the exemption only hid what the root can do.
 - **A policy select that blocked.** `labelLink: run | skip-when-filled` applied
@@ -34,7 +34,7 @@ operator rejected once it was in use:
   step is opt-in, so the chip never rendered there.
 
 And it stopped at labels, while the same plus catalog model draws `license_plate`
-and `face` boxes that CamStack threw away as unmapped classes.
+and `face` boxes that Dominevo threw away as unmapped classes.
 
 ## Decision
 
@@ -103,7 +103,7 @@ dispatcher and the admin UI all call it.**
 
 ## Consequences
 
-- **A camera whose root is a CamStack COCO model stops dispatching the animal
+- **A camera whose root is a Dominevo COCO model stops dispatching the animal
   and vehicle classifiers by default.** Its animals and vehicles are named by
   the detector's own class at the detection's score; `deer`, `squirrel`,
   `Ambulance`, `Taxi`, `Van` are no longer produced on those cameras. An
@@ -123,8 +123,8 @@ dispatcher and the admin UI all call it.**
   gains `filledAs: 'label' | 'crop'`; an announce without it reads as a label
   supply, so an older runner behind a newer post-analysis still skips only
   classifiers.
-- Deploy order: `@camstack/types` (framework, via a published
-  `@camstack/server`), then `addon-pipeline` (it produces the root child boxes,
+- Deploy order: `@dominevo/types` (framework, via a published
+  `@dominevo/server`), then `addon-pipeline` (it produces the root child boxes,
   the new announce and honours `supplied`), then `addon-post-analysis`, then
   `addon-model-studio` and the admin UI. The two cap additions
   (`runDetailSubtree.supplied`, `runPipeline.suppliedRoot`) are additive.
@@ -135,7 +135,7 @@ dispatcher and the admin UI all call it.**
   label supply speaks its step's vocabulary, the plus catalog base set supplies a
   label step, and every built-in root supplies the animal and vehicle
   classifiers — an exemption for any family fails it.
-- Tests: the derivation, effectiveness across a root switch (CamStack COCO →
+- Tests: the derivation, effectiveness across a root switch (Dominevo COCO →
   plus catalog → plugin catalog → back), defaults and the retired-key read
   (`root-model-supply.spec.ts`); every plus catalog import path including the real
   Coral labelmap and the re-derived stored row (`plus-catalog-classmap.test.ts`);

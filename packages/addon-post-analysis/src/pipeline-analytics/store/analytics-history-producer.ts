@@ -7,9 +7,9 @@
  * from the `battery` cap — not produced here.
  */
 
-import type { DeviceHistoryIngestResult, IScopedLogger } from '@camstack/types'
+import type { DeviceHistoryIngestResult, IScopedLogger } from '@dominevo/types'
 import type { AnalyticsLtsSeries } from './analytics-history-keys.js'
-import { BucketAccumulator, type ClosedHistoryBucket } from '@camstack/types'
+import { BucketAccumulator, type ClosedHistoryBucket } from '@dominevo/types'
 import {
   ANALYTICS_AUDIO_LEVEL_KEY,
   ANALYTICS_HISTORY_BUCKET_SERIES,
@@ -18,7 +18,7 @@ import {
 } from './analytics-history-keys.js'
 
 export { ANALYTICS_AUDIO_LEVEL_KEY, ANALYTICS_HISTORY_BUCKET_SERIES, historyKeyForLtsSeries }
-export { occupancyScope, parseOccupancyScope } from '@camstack/types'
+export { occupancyScope, parseOccupancyScope } from '@dominevo/types'
 
 export interface DeviceHistoryWriteClient {
   declareSeries(input: {

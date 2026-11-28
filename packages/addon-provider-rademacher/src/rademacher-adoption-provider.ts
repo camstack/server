@@ -5,7 +5,7 @@ import {
   errMsg,
   type IDeviceAdoptionProvider,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   type AdoptableCover,
   buildRademacherCandidates,
@@ -36,7 +36,7 @@ export interface RademacherAdoptionProviderDeps {
 
 const DEVICES_FILTER: AdoptionFilter = { id: 'devices', label: 'Devices', isDefault: true } as const
 
-/** Native id → CamStack device id, for the top-level Rademacher devices of one integration. */
+/** Native id → Dominevo device id, for the top-level Rademacher devices of one integration. */
 async function adoptedMapForIntegration(
   integrationId: string,
   listAdopted: RademacherAdoptionProviderDeps['listAdopted'],

@@ -14,7 +14,7 @@ import { Checkbox } from '../primitives/checkbox'
 import { useUiText } from '../contexts/ui-text'
 import { DisclosureChevron } from '../primitives/disclosure-chevron'
 import { useState, type JSX } from 'react'
-import type { ObjectDetection, ScoredLabel } from '@camstack/types'
+import type { ObjectDetection, ScoredLabel } from '@dominevo/types'
 import { useClassPainter } from './display-palette-context'
 import { formatNumeric } from '../lib/format-numeric'
 

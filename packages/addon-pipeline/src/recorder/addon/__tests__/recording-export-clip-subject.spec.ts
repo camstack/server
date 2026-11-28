@@ -4,8 +4,8 @@
  * Every assertion here is a refusal that must be NAMED, or a projection that
  * must come from the catalog row and from nothing a caller supplied (D558).
  */
-import type { Clip, ExportClipSubject, ExportOptions } from '@camstack/types'
-import { clipExportFailureOf, exportSubjectOf } from '@camstack/types'
+import type { Clip, ExportClipSubject, ExportOptions } from '@dominevo/types'
+import { clipExportFailureOf, exportSubjectOf } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import type { ExportClipCatalog } from '../export-clip-catalog.js'
 import { getExportRecord } from '../export-store.js'

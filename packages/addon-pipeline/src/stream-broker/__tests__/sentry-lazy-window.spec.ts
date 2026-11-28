@@ -17,7 +17,7 @@
  *    (`synthetic-frame-containment.spec.ts`);
  *  - it stops on the FIRST non-placeholder packet, and on no other edge.
  */
-import type { EncodedPacket, IScopedLogger, StreamSource } from '@camstack/types'
+import type { EncodedPacket, IScopedLogger, StreamSource } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { StreamBroker } from '../stream-broker/stream-broker.js'
 

@@ -8,11 +8,7 @@
  * One deploy covers all 7 kinds.
  */
 import { z } from 'zod'
-import {
-  defineRecordKinds,
-  NcRuleSchema,
-  TimelapseRuleSchema,
-} from '@camstack/types'
+import { defineRecordKinds, NcRuleSchema, TimelapseRuleSchema } from '@dominevo/types'
 import { NcCalendarEventsRuleSchema } from './calendar-events/calendar-events-rule.js'
 import { NcRuleAiSchema } from './rule-ai.js'
 import { NcLanguageSchema } from './text-catalog.js'

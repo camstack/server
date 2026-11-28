@@ -1,6 +1,6 @@
 import { MiotError, MiotState, SuctionLevel } from '@apocaliss92/nodedreame'
 import type { ConsumableReading, MiotProp, VacuumCapabilities } from '@apocaliss92/nodedreame'
-import { ERROR_STATUS_COLD } from '@camstack/types'
+import { ERROR_STATUS_COLD } from '@dominevo/types'
 import type {
   ConsumableForm,
   ConsumableItem,
@@ -8,7 +8,7 @@ import type {
   ErrorStatus,
   VacuumControlStatus,
   VacuumState,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /**
  * Pure decode helpers for the Dreame vacuum. Translate the library's MIoT enum

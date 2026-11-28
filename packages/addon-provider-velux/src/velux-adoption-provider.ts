@@ -5,7 +5,7 @@ import {
   errMsg,
   type IDeviceAdoptionProvider,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { VeluxNode } from './velux-client-contract.js'
 import { buildVeluxCandidates, type ResolvedNativeId, resolveNativeId } from './velux-discovery.js'
 
@@ -31,7 +31,7 @@ export interface VeluxAdoptionProviderDeps {
 
 const DEVICES_FILTER: AdoptionFilter = { id: 'devices', label: 'Devices', isDefault: true } as const
 
-/** Native id → CamStack device id, for the top-level Velux devices of one integration. */
+/** Native id → Dominevo device id, for the top-level Velux devices of one integration. */
 async function adoptedMapForIntegration(
   integrationId: string,
   listAdopted: VeluxAdoptionProviderDeps['listAdopted'],

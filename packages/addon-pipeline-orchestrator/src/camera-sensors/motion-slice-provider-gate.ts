@@ -6,7 +6,7 @@
  * longer writes the slice. The runner was not the only pre-D696 writer: four
  * camera providers wrote it too — Hikvision and Amcrest raw on every VMD edge,
  * and all four (Hikvision, Amcrest, Reolink, Wyze) seeded `detected: false` at
- * every boot. `addon-pipeline` ships INSIDE `@camstack/server` (its closure is
+ * every boot. `addon-pipeline` ships INSIDE `@dominevo/server` (its closure is
  * re-aligned at boot, D518), so the runner always hands over at the server
  * step, before any provider step can run. With the runner gate alone, the
  * orchestrator then wrote every camera while the old providers still wrote
@@ -41,7 +41,7 @@
  * boot, a process coming up or leaving, and a motion edge seen on a closed
  * camera (at most one per `PROVIDER_GATE_STALE_REFRESH_MS`).
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 /**
  * The camera providers that wrote a camera's `motion` slice before D696: raw

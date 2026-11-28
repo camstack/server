@@ -39,7 +39,7 @@ import {
   type IdentityLinksRead,
   type IdentityMatchedKey,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { IdentityLinkCandidate, IdentityLinkCandidates } from './device-identity-index.js'
 import type { IdentityLinksStore } from './identity-links-store.js'
 

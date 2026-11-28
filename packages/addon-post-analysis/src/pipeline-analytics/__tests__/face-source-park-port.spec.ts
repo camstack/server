@@ -5,7 +5,7 @@
  * the older frame parked. And a parcel whose park lands after the track
  * closed is released anyway.
  */
-import type { FrameHandle, ParkedFrameKind } from '@camstack/types'
+import type { FrameHandle, ParkedFrameKind } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { FaceSourceParkOrder } from '../face-source-frame.js'
 import type { ParkOrder } from '../pipeline/track-park.js'

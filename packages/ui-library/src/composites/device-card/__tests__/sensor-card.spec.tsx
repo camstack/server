@@ -5,7 +5,7 @@
  * which devices it draws (a sensor with something to set keeps the hero card);
  * and the corner's "since".
  */
-import { DeviceType, type HeroModel, type HeroRow, temperatureMeasurement } from '@camstack/types'
+import { DeviceType, type HeroModel, type HeroRow, temperatureMeasurement } from '@dominevo/types'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { defaultUiText } from '../../../contexts/ui-text'

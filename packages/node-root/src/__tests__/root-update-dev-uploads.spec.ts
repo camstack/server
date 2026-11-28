@@ -64,7 +64,7 @@ beforeEach(() => {
   runningPkgPath = path.join(tmp, 'running-package.json')
   fs.writeFileSync(
     runningPkgPath,
-    JSON.stringify({ name: '@camstack/server', version: '1.1.50' }),
+    JSON.stringify({ name: '@dominevo/server', version: '1.1.50' }),
     'utf-8',
   )
 })
@@ -91,7 +91,7 @@ function makeInstallCapture(version: string): {
       fs.writeFileSync(path.join(pkgDir, 'dist', 'launcher.js'), '// entry', 'utf-8')
       fs.writeFileSync(
         path.join(pkgDir, 'package.json'),
-        JSON.stringify({ name: '@camstack/server', version }),
+        JSON.stringify({ name: '@dominevo/server', version }),
         'utf-8',
       )
       for (const rel of [
@@ -170,8 +170,8 @@ describe('stageClosure — dev-uploads branch', () => {
 
   it('stages from tarballs: file: dependency on the root tgz + overrides for the rest', async () => {
     const uploadsDir = seedDevUploads(DEV_VERSION, {
-      '@camstack/server': 'camstack-server.tgz',
-      '@camstack/types': 'camstack-types.tgz',
+      '@dominevo/server': 'camstack-server.tgz',
+      '@dominevo/types': 'camstack-types.tgz',
     })
     const { execNpm, calls } = makeInstallCapture(DEV_VERSION)
     const svc = makeService({ CAMSTACK_SERVER_BOOT_MODE: 'data-root' }, execNpm)
@@ -181,16 +181,16 @@ describe('stageClosure — dev-uploads branch', () => {
 
     expect(calls).toHaveLength(1)
     const call = calls[0]!
-    expect(call.args.some((a) => a.startsWith('@camstack/server@'))).toBe(false)
+    expect(call.args.some((a) => a.startsWith('@dominevo/server@'))).toBe(false)
     const pkgJson = call.stagingPackageJson as {
       dependencies?: Record<string, string>
       overrides?: Record<string, string>
     }
     expect(pkgJson.dependencies).toEqual({
-      '@camstack/server': `file:${path.join(uploadsDir, 'camstack-server.tgz')}`,
+      '@dominevo/server': `file:${path.join(uploadsDir, 'camstack-server.tgz')}`,
     })
     expect(pkgJson.overrides).toEqual({
-      '@camstack/types': `file:${path.join(uploadsDir, 'camstack-types.tgz')}`,
+      '@dominevo/types': `file:${path.join(uploadsDir, 'camstack-types.tgz')}`,
     })
 
     // The staged closure is armed for swap-on-restart (NOT under versions/).
@@ -201,7 +201,7 @@ describe('stageClosure — dev-uploads branch', () => {
 
   it('bounds the install with --before = build time + 5 min when the manifest carries one', async () => {
     const buildTimeMs = Date.parse('2026-11-24T10:00:00.000Z')
-    seedDevUploads(DEV_VERSION, { '@camstack/server': 'camstack-server.tgz' }, buildTimeMs)
+    seedDevUploads(DEV_VERSION, { '@dominevo/server': 'camstack-server.tgz' }, buildTimeMs)
     const { execNpm, calls } = makeInstallCapture(DEV_VERSION)
     const svc = makeService({ CAMSTACK_SERVER_BOOT_MODE: 'data-root' }, execNpm)
 
@@ -211,7 +211,7 @@ describe('stageClosure — dev-uploads branch', () => {
   })
 
   it('installs unbounded (no --before) when the manifest has no build time', async () => {
-    seedDevUploads(DEV_VERSION, { '@camstack/server': 'camstack-server.tgz' })
+    seedDevUploads(DEV_VERSION, { '@dominevo/server': 'camstack-server.tgz' })
     const { execNpm, calls } = makeInstallCapture(DEV_VERSION)
     const svc = makeService({ CAMSTACK_SERVER_BOOT_MODE: 'data-root' }, execNpm)
 
@@ -227,13 +227,13 @@ describe('stageClosure — dev-uploads branch', () => {
     it('merges the pins into overrides (file: entries win) and passes no --before', async () => {
       const dir = seedDevUploads(
         DEV_VERSION,
-        { '@camstack/server': 'camstack-server.tgz', '@camstack/types': 'camstack-types.tgz' },
+        { '@dominevo/server': 'camstack-server.tgz', '@dominevo/types': 'camstack-types.tgz' },
         BUILD_TIME,
       )
       fs.writeFileSync(
         path.join(dir, 'camstack-server.tgz'),
         tarballWith({
-          'closure-pins.json': JSON.stringify({ ...PINS, '@camstack/types': '9.9.9' }),
+          'closure-pins.json': JSON.stringify({ ...PINS, '@dominevo/types': '9.9.9' }),
         }),
       )
       const { execNpm, calls } = makeInstallCapture(DEV_VERSION)
@@ -244,7 +244,7 @@ describe('stageClosure — dev-uploads branch', () => {
       const pkgJson = calls[0]!.stagingPackageJson as { overrides?: Record<string, string> }
       expect(pkgJson.overrides).toEqual({
         ...PINS,
-        '@camstack/types': `file:${path.join(dir, 'camstack-types.tgz')}`,
+        '@dominevo/types': `file:${path.join(dir, 'camstack-types.tgz')}`,
       })
       expect(calls[0]!.args.some((a) => a.startsWith('--before'))).toBe(false)
     })
@@ -252,7 +252,7 @@ describe('stageClosure — dev-uploads branch', () => {
     it('keeps --before when the tarball ships no pins file', async () => {
       const dir = seedDevUploads(
         DEV_VERSION,
-        { '@camstack/server': 'camstack-server.tgz' },
+        { '@dominevo/server': 'camstack-server.tgz' },
         BUILD_TIME,
       )
       fs.writeFileSync(path.join(dir, 'camstack-server.tgz'), tarballWith({ 'other.json': '{}' }))
@@ -268,7 +268,7 @@ describe('stageClosure — dev-uploads branch', () => {
     it('keeps --before when the pins file is rejected', async () => {
       const dir = seedDevUploads(
         DEV_VERSION,
-        { '@camstack/server': 'camstack-server.tgz' },
+        { '@dominevo/server': 'camstack-server.tgz' },
         BUILD_TIME,
       )
       fs.writeFileSync(
@@ -293,7 +293,7 @@ describe('stageClosure — dev-uploads branch', () => {
 
     expect(calls).toHaveLength(1)
     const call = calls[0]!
-    expect(call.args).toContain('@camstack/server@1.1.51')
+    expect(call.args).toContain('@dominevo/server@1.1.51')
     expect(call.args.some((a) => a.startsWith('--before'))).toBe(false)
     const pkgJson = call.stagingPackageJson as Record<string, unknown>
     expect(pkgJson['dependencies']).toBeUndefined()
@@ -324,20 +324,20 @@ describe('stageClosure — dev-uploads branch', () => {
   })
 
   it('fails staging when the manifest lacks the root package', async () => {
-    seedDevUploads(DEV_VERSION, { '@camstack/types': 'camstack-types.tgz' })
+    seedDevUploads(DEV_VERSION, { '@dominevo/types': 'camstack-types.tgz' })
     const { execNpm } = makeInstallCapture(DEV_VERSION)
     const svc = makeService({ CAMSTACK_SERVER_BOOT_MODE: 'data-root' }, execNpm)
 
     const result = await svc.applyServerUpdate({ version: DEV_VERSION })
     expect(result.accepted).toBe(false)
-    expect(result.message).toMatch(/@camstack\/server/)
+    expect(result.message).toMatch(/@dominevo\/server/)
   })
 })
 
 describe('confirmBootHealthy — dev-uploads cleanup', () => {
   it(`keeps only the ${DEV_UPLOADS_KEEP_COUNT} most recent dev-uploads entries`, () => {
     const versions = [100, 101, 102, 103, 104].map((e) => `1.1.54-dev.${e}`)
-    for (const v of versions) seedDevUploads(v, { '@camstack/server': 'camstack-server.tgz' })
+    for (const v of versions) seedDevUploads(v, { '@dominevo/server': 'camstack-server.tgz' })
     const { execNpm } = makeInstallCapture(versions[4]!)
     const svc = makeService({ CAMSTACK_SERVER_BOOT_MODE: 'data-root' }, execNpm)
 

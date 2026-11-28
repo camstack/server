@@ -7,7 +7,7 @@ import {
   type CompositionSourceRef,
   compileScalarOverride,
   decodeScalarOverride,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { featureOf, withoutScalarTarget, withScalarTarget } from '../customization-save'
 

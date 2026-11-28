@@ -12,7 +12,7 @@ export default defineConfig({
   plugins: [react(), tailwindcss(), bundleModulesManifest()],
   resolve: {
     alias: {
-      '@camstack/ui-library': path.resolve(__dirname, '../ui-library/src'),
+      '@dominevo/ui-library': path.resolve(__dirname, '../ui-library/src'),
     },
   },
   server: {

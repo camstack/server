@@ -1,5 +1,5 @@
 import sharp from 'sharp'
-import { DEFAULT_EVENT_COLOR } from '@camstack/types'
+import { DEFAULT_EVENT_COLOR } from '@dominevo/types'
 
 /** A bounding box in PIXEL space, with an optional colour + caption. */
 export interface FrameBox {

@@ -22,7 +22,7 @@ import {
   type NcSystemEventKind,
   systemEventDeliveryProblems,
   describeSystemEventDeliveryProblem,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   Button,
   CHIP_ACTIVE,
@@ -32,7 +32,7 @@ import {
   Switch,
   cn,
   useSystem,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useMutation } from '@tanstack/react-query'
 
 import { HINT_CLASS } from './notification-condition-widgets'

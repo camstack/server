@@ -136,7 +136,7 @@ Bucketed at 30 min, the condition is **unbroken back to 2026-08-30 14:17 UTC**
 | CPU consumed | 916 ticks = 9.16 s over 10.05 s wall = **91.1 % of one core** |
 | runqueue wait (`schedstat` field 2, lifetime) | 78.8 s of 41 766 s = **0.19 %** — not host-CPU-starved |
 | state at sample | `R (running)`, 8 threads |
-| cmdline | `node --max-old-space-size=1024 …/@camstack/system/dist/addon-runner.js` |
+| cmdline | `node --max-old-space-size=1024 …/@dominevo/system/dist/addon-runner.js` |
 
 `hub/pipeline-analytics` (pid 66319) over the same kind of window: **6.1 % of
 one core** — consistent with a client that is I/O-bound on 32 round trips/s and

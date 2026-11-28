@@ -5,7 +5,7 @@
  * whole body instead of patching `devices` and "keeps a rename made through the instances door"
  * fails; mint ids from a count instead of the highest and "never reuses a live id" fails.
  */
-import { clearInstanceSwitches, makeInMemoryRecords, recordInstanceSwitch } from '@camstack/types'
+import { clearInstanceSwitches, makeInMemoryRecords, recordInstanceSwitch } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import {
   type HaExportTargetBody,

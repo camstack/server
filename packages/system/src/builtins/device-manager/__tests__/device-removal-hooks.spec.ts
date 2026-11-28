@@ -8,7 +8,7 @@
  *    confirmed, takes the absence check from TWO answered reads of the device
  *    ledger, and does nothing when a read fails.
  */
-import { DEVICE_TOMBSTONE_RETENTION_MS } from '@camstack/types'
+import { DEVICE_TOMBSTONE_RETENTION_MS } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { REMOVAL_RETRY_DELAYS_MS } from '../removal-cleanup.js'
 import {

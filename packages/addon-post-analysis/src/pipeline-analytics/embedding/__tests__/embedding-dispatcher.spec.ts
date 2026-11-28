@@ -49,13 +49,13 @@ import type {
   SystemEvent,
   TypedEventFilter,
   TypedSystemEvent,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   EMBEDDING_MODEL_FAILED,
   EMBEDDING_REQUIREMENTS_UNAVAILABLE,
   embeddingModelFailedError,
   embeddingRequirementsUnavailableError,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import type { EmbeddingConfig } from '../embedding-config.js'
 import type { EmbeddingDispatcherDeps } from '../embedding-dispatcher.js'

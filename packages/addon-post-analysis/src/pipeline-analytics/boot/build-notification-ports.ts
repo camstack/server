@@ -1,4 +1,4 @@
-import type { AddonContext } from '@camstack/types'
+import type { AddonContext } from '@dominevo/types'
 import { NcArtifactPlane } from '../../notification-center/artifact-plane.js'
 import type { PruneWindows } from '../../notification-center/prune-windows.js'
 import type { SummaryMosaicPorts } from '../../notification-center/summary/summary-mosaic.js'

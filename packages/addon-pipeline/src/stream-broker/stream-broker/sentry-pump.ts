@@ -25,7 +25,7 @@
  * `isPlaceholder: true` packet is built, because that flag belongs to the
  * broker's packet contract and the containment that reads it lives there.
  */
-import { errMsg, type IScopedLogger, type LogTags } from '@camstack/types'
+import { errMsg, type IScopedLogger, type LogTags } from '@dominevo/types'
 
 /** The cached, ready-to-emit synthetic access unit. */
 export interface SentryFrame {

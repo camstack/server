@@ -24,7 +24,7 @@
  * actually called — around each candidate.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 
 import type { AdoptionJobProvider, AdoptResult } from '../adoption-job-engine.js'

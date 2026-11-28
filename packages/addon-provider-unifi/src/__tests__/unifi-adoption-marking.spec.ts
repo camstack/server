@@ -3,7 +3,7 @@
  * (planning#689). The registry and resolver are real; the device registry is the one boundary
  * a spec supplies.
  */
-import { DeviceType, type DiscoveredChildDevice, type IScopedLogger } from '@camstack/types'
+import { DeviceType, type DiscoveredChildDevice, type IScopedLogger } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { connectionFromSettings, UNIFI_SYSTEM } from '../config.js'
 import { markPortChildren } from '../unifi-adoption-marking.js'

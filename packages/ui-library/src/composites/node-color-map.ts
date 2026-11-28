@@ -2,7 +2,7 @@
  * nodeId → palette slot for assignment pills, NodePicker and other cluster surfaces.
  * Reads persisted `color` from listAgentSettings; falls back to assignNodeColorId.
  */
-import { NodeColorIdSchema, assignNodeColorId, type NodeColorId } from '@camstack/types'
+import { NodeColorIdSchema, assignNodeColorId, type NodeColorId } from '@dominevo/types'
 
 export interface AgentSettingsColorRow {
   readonly nodeId: string

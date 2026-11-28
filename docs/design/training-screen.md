@@ -57,7 +57,7 @@ Separated in full, because the rest of the document leans on it.
 | How many rows in the retrain dataset? | `pipelineAnalytics.countUnstampedEventMedia {}` | `retrainFrames: { present: false, rows: 0 }` |
 | Where does `eventMedia` point today? | `storage.listLocations {}` | `eventMedia:ssd` → `/media-fast/eventMedia` (host: `/mnt/mixed/camstack/media`) |
 | Do the retrain blobs exist on disk? | `ls /mnt/mixed/camstack/media/eventMedia/retrain` | **does not exist** — no `retrain/` prefix |
-| Is the Retrain page really deployed? | grep on the bundle in `addons/@camstack/addon-admin-ui/dist` | **yes** — `listRetrainStaging`, `proposeRetrainAnnotations`, `saveRetrainAnnotations` appear in the `Events-*.js` chunk |
+| Is the Retrain page really deployed? | grep on the bundle in `addons/@dominevo/addon-admin-ui/dist` | **yes** — `listRetrainStaging`, `proposeRetrainAnnotations`, `saveRetrainAnnotations` appear in the `Events-*.js` chunk |
 | Do registered custom models exist? | `customModelRegistry.listModels` | **`[]`** — no fine-tuned model has ever come back in |
 
 **Measured conclusion: the chain is built and has never been walked.** Not
@@ -305,7 +305,7 @@ distant subject the box is drawn by eye.
 Only the marker. The viewer **feeds** the queue that the admin UI works, and does not
 work it. It is the state that the operator's request wants to change.
 
-### `@camstack/ui-library` — web-only, and that is not a detail
+### `@dominevo/ui-library` — web-only, and that is not a detail
 
 - `peerDependencies`: `react-dom`, `konva`, `react-konva`, `tailwindcss >=4`.
 - `exports`: `.`, `./theme`, `./tailwind/*`. **No `react-native` entrypoint.**
@@ -399,7 +399,7 @@ Ordered by how much it costs **not** to have it.
 10. A train engine (M1). It is a declared non-goal and it is not what is needed to
     "work an event".
 11. A YOLO/COCO format. The retrain-export carries the canonical box **plus** the three
-    derived geometries: a converter to YOLO is 30 lines outside CamStack and
+    derived geometries: a converter to YOLO is 30 lines outside Dominevo and
     does not need to live here. If one day it is needed, it will be one more
     derivation in the same place (`retrain-geometry.ts`), never a second copy in DB
     (D52).
@@ -451,9 +451,9 @@ surface has a rule that the other does not have.
 
 ### Where the core lives, and why not elsewhere
 
-`@camstack/retrain-core` is a new package, published on npm like the others,
+`@dominevo/retrain-core` is a new package, published on npm like the others,
 **because the viewer is a standalone repo in CI**. The viewer already depends on
-`@camstack/types ^1.2.200` and `@camstack/sdk ^1.2.21` and aliases them to the sources in
+`@dominevo/types ^1.2.200` and `@dominevo/sdk ^1.2.21` and aliases them to the sources in
 `tsconfig.json:11-16` for local development: the exact same mechanism, already
 proven, already in CI. (The viewer's `CLAUDE.md` warns that a type *not* declared
 in its `package.json` passes locally and dies in CI — so the package must be
@@ -461,11 +461,11 @@ declared there, not just aliased.)
 
 **Discarded alternatives:**
 
-- **`@camstack/ui-library`** — it is web-only by construction (react-dom, Konva,
+- **`@dominevo/ui-library`** — it is web-only by construction (react-dom, Konva,
   Tailwind) and **host-provided** (D15): the viewer cannot receive it without
   dragging in a second React. Putting pure TS in it would work only
   with a second entrypoint, i.e. with a second identity of the package.
-- **`@camstack/types`** — it is the wire contract. A UI reducer in there
+- **`@dominevo/types`** — it is the wire contract. A UI reducer in there
   confuses "what the network carries" with "how the screen behaves", and the
   next person would not know which of the two is changing.
 - **Just duplicate** — it is the current state, and it has already cost: `RETRAIN_MACRO_CLASSES`
@@ -490,7 +490,7 @@ defensible choice:
 - **No precedent:** the admin UI does not frame the embed anywhere
   (verified). It would be a first time on an admin-only surface.
 - **The shipping chain gets longer:** `sync:embed` → `build:orchestrator` →
-  `camstack deploy addon-pipeline-orchestrator` → submodule pin. A fix to a
+  `dominevo deploy addon-pipeline-orchestrator` → submodule pin. A fix to a
   resize handle would go through there.
 - **Annotation is touch-intensive.** Pinch/pan inside a WebView inside a
   ScrollView is the kind of problem this repo has already paid for.
@@ -607,7 +607,7 @@ sizing decision — the same one that D197 left open in writing — and must be 
   it because it needs the resolved addonId and the data plane's auth, and I did not want to
   touch surfaces that were not requested.
 - **The cost of the new package in the publish chain.** I know the viewer
-  consumes `@camstack/types` and `@camstack/sdk` from npm with a local alias, but I did not
+  consumes `@dominevo/types` and `@dominevo/sdk` from npm with a local alias, but I did not
   verify how much it weighs to add a fourth package to the release train nor whether
   `publish only affected` handles it without friction.
 - **Whether the operator ever opened the page.** Zero staging and zero blobs say

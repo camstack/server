@@ -1,4 +1,4 @@
-import type { ZoneRuleStage } from '@camstack/types'
+import type { ZoneRuleStage } from '@dominevo/types'
 
 /**
  * Zone-rule stages whose gate ACTUALLY reads `rule.classFilter`.

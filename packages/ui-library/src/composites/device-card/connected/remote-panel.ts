@@ -3,7 +3,7 @@
  * that template is still loading the view waits. With no template, the preset
  * that covers the most bound roles — never the raw command ids.
  */
-import type { MediaPlayerStatus, RemoteCommandList } from '@camstack/types'
+import type { MediaPlayerStatus, RemoteCommandList } from '@dominevo/types'
 import { layoutForRemoteCommands, layoutOf } from '../../remote'
 import type { CardRemotePanel } from '../shell/model'
 

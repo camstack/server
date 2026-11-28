@@ -38,7 +38,7 @@ describe('a number reaching a percent item level', () => {
     )
   })
 
-  it('does not offer a unit CamStack does not know', () => {
+  it('does not offer a unit Dominevo does not know', () => {
     expect(judgeSourceCompatibility(LEVEL, numeric('control', 'value', 'stints')).kind).toBe(
       'incompatible',
     )

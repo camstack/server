@@ -14,8 +14,8 @@
  * The vendor's boxed-sub-stream flag is the MECHANISM the pick drives, never a
  * second switch (D62): {@link armOnboardChannel} is its only writer here.
  */
-import type { AddonContext, CameraDetectionSource, IScopedLogger } from '@camstack/types'
-import { errMsg } from '@camstack/types'
+import type { AddonContext, CameraDetectionSource, IScopedLogger } from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
 
 export type OnboardGeometry = 'boxed' | 'while-streaming' | 'flag-only' | 'unknown'
 

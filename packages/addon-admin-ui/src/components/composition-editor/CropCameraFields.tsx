@@ -4,8 +4,8 @@
  * A source is a `(addonId, stableId)` ref in the draft; the picker works in
  * device ids, so the fleet row translates between the two.
  */
-import { DeviceType } from '@camstack/types'
-import { DeviceValuePicker } from '@camstack/ui-library'
+import { DeviceType } from '@dominevo/types'
+import { DeviceValuePicker } from '@dominevo/ui-library'
 import { type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useCandidateDevices } from '../device/customize/assignments/use-source-candidates'

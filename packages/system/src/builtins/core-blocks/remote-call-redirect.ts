@@ -23,7 +23,7 @@ import {
   REMOTE_MAX_REPEAT,
   REMOTE_MEDIA_COMMANDS,
   type RemoteMediaCommand,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { RemoteService } from './remote-service.js'
 
 const MEDIA_PLAYER = 'media-player'

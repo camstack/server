@@ -48,7 +48,7 @@ is the only one a fused port can carry.
 Rejected:
 
 - **A new `inputNormalization` value** (`'bgr255'`): it is a
-  `z.enum` in `@camstack/types` (a framework package, so a server release), and
+  `z.enum` in `@dominevo/types` (a framework package, so a server release), and
   it would need the same change in three places that must agree — the ONNX
   float path, the CoreML multiArray path and the OpenVINO PPP fold (which would
   also need a channel reversal). The bake puts the contract in one artefact and
@@ -65,7 +65,7 @@ Rejected:
 
 - `PostprocessorType` gained `'yunet'`. It is compile-time only (the schema is
   `z.custom`), so an addon built against it runs on a hub whose installed
-  `@camstack/types` predates it — the same property `'yolonas'` relies on.
+  `@dominevo/types` predates it — the same property `'yolonas'` relies on.
 - Re-publishing the artefacts from the raw OpenCV file without the bake gives
   0 faces, silently. `scripts/build-yunet-model.py` is the only supported path;
   its verify stage proves the bake exact against upstream fed `BGR·255`.

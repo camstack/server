@@ -21,7 +21,7 @@ import {
   DialogTitle,
   ErrorBox,
   useSystem,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { InstanceEditorDialog } from './InstanceEditorDialog'
 import { sectionDescription, type TypedIdRuleFor } from './instances-model'
 import { type InstanceKindMatch, useInstanceKinds } from './instance-kinds'

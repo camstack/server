@@ -23,8 +23,8 @@ import {
   useUiText,
   type DataColumn,
   type MeshNetwork,
-} from '@camstack/ui-library'
-import type { MeshNode, MeshTopology } from '@camstack/types'
+} from '@dominevo/ui-library'
+import type { MeshNode, MeshTopology } from '@dominevo/types'
 import { Map as MapIcon } from 'lucide-react'
 import { useState } from 'react'
 import { MeshMap } from './MeshMap'

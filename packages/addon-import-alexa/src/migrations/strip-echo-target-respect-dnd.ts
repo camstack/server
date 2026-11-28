@@ -8,7 +8,7 @@
  * Idempotent: a record or row without the key is not touched, and a pass that strips nothing
  * writes nothing and reports `already-done`.
  */
-import type { MigrationProcedureResult } from '@camstack/types'
+import type { MigrationProcedureResult } from '@dominevo/types'
 import type { EchoTargetMigrationPorts } from './strip-echo-target-volume-and-mode.js'
 
 export const STRIP_ECHO_TARGET_RESPECT_DND_ID =

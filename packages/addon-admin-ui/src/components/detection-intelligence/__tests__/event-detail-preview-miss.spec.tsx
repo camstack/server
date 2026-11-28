@@ -38,15 +38,15 @@ const listClipsCalls: { readonly input: unknown; readonly enabled: boolean }[] =
 let clipSources: readonly unknown[] = [
   {
     source: 'analytics',
-    label: 'CamStack recordings',
+    label: 'Dominevo recordings',
     addonId: 'recorder',
     availability: { state: 'ok' },
   },
 ]
 
-vi.mock('@camstack/ui-library', async () => {
+vi.mock('@dominevo/ui-library', async () => {
   const actual =
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+    await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   const empty = () => ({ data: undefined, isLoading: false })
   return {
     ...actual,
@@ -70,7 +70,7 @@ vi.mock('@camstack/ui-library', async () => {
   }
 })
 
-import { ConfirmDialogProvider } from '@camstack/ui-library'
+import { ConfirmDialogProvider } from '@dominevo/ui-library'
 import { EventDetailPanel } from '../EventDetailPanel'
 
 /** jsdom implements neither `<dialog>.showModal()` nor `.close()`; the Dialog
@@ -137,7 +137,7 @@ function trackRow(over: Record<string, unknown>): Record<string, unknown> {
  * provider (D554 amended).
  *
  * It used to send none, on the cap's documented default — *"absent means the
- * device's bound provider, which is CamStack on every camera"*. Nothing
+ * device's bound provider, which is Dominevo on every camera"*. Nothing
  * implemented that: measured on the live hub 2026-09-20, device 107 (bound to
  * `recorder` AND `provider-reolink`) answered a bare call with both sources'
  * rows merged newest-first, and this panel takes `clips[0]`. So the "View
@@ -150,7 +150,7 @@ describe('the clip link names the provider it is asking', () => {
     clipSources = [
       {
         source: 'analytics',
-        label: 'CamStack recordings',
+        label: 'Dominevo recordings',
         addonId: 'recorder',
         availability: { state: 'ok' },
       },

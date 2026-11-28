@@ -20,7 +20,7 @@
  * same bbox object. We verify this by running 3 frames and asserting on frame 3.
  */
 import { describe, it, expect, vi } from 'vitest'
-import type { FrameResult, ObjectDetection, Zone } from '@camstack/types'
+import type { FrameResult, ObjectDetection, Zone } from '@dominevo/types'
 import { FrameProcessor } from '../pipeline/frame-processor.js'
 import { ZoneEngine } from '../pipeline/zones/zone-engine.js'
 

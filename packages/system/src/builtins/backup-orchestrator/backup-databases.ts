@@ -6,7 +6,7 @@
  * configuration, so they ride a WEEKLY schedule whose archive is a consistent
  * full set. Pure functions, no I/O: the orchestrator feeds them what it read.
  */
-import type { DataStoreDatabase } from '@camstack/types'
+import type { DataStoreDatabase } from '@dominevo/types'
 import { DEFAULT_BACKUP_DATABASES } from '../system-backup/system-backup.service.js'
 import type { BackupSchedule } from './schedule-store.js'
 import type { SeedMarkers } from './seed-marker-store.js'

@@ -2,7 +2,7 @@
  * The hub retires a fixed integration row whose addon no longer declares
  * `integration-instances` — only with no live device on it (planning#580).
  */
-import type { Integration } from '@camstack/types'
+import type { Integration } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   type RetireDeviceRow,

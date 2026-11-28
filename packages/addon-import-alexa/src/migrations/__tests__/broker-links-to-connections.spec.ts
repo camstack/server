@@ -2,7 +2,7 @@
  * The Alexa integration link moves off the account record onto the integration's own record. The
  * fixture marks the account's name and an extra field: both must survive on the broker.
  */
-import { moveBrokerLinksToConnections, makeInMemoryRecords } from '@camstack/types'
+import { moveBrokerLinksToConnections, makeInMemoryRecords } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { alexaBrokersEntryKind, alexaConnectionsEntryKind } from '../../broker-record-kinds.js'
 import { ADDON_MIGRATIONS, BROKER_RECORD_MIGRATION_IDS } from '../index.js'

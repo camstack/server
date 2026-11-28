@@ -1,5 +1,5 @@
 /**
- * `camstack update` — self-upgrade.
+ * `dominevo update` — self-upgrade.
  *
  * Detection chain:
  *   • npx invocation (path contains `_npx/`) → no-op with friendly hint.
@@ -59,7 +59,7 @@ export async function runUpdate(args: readonly string[]): Promise<void> {
     return
   }
 
-  clack.intro('camstack update')
+  clack.intro('dominevo update')
 
   // Resolve the target version. Pinned wins; otherwise hit the registry.
   let target: string
@@ -78,7 +78,7 @@ export async function runUpdate(args: readonly string[]): Promise<void> {
   }
 
   // Compare with the currently installed version (read from this bundle's
-  // package.json — same source as `camstack --version`).
+  // package.json — same source as `dominevo --version`).
   const { createRequire } = await import('node:module')
   const { fileURLToPath } = await import('node:url')
   const { dirname, resolve } = await import('node:path')
@@ -121,5 +121,5 @@ export async function runUpdate(args: readonly string[]): Promise<void> {
     )
     throw err
   }
-  clack.outro(`✓ Installed camstack@${target}. Verify with: camstack --version`)
+  clack.outro(`✓ Installed camstack@${target}. Verify with: dominevo --version`)
 }

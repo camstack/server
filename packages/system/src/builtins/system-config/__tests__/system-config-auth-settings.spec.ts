@@ -1,4 +1,4 @@
-import type { AddonContext } from '@camstack/types'
+import type { AddonContext } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { InvalidCorsOriginError } from '../../../auth/origin.js'
 import { isPreloadedSystemKey, storeMayAnswer } from '../../../kernel/system-settings-policy.js'

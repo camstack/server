@@ -5,7 +5,7 @@
  * "All" pill and no Add button here — Add lives in the page header. The row is not drawn when
  * there is a single provider (a lone pill filters nothing) and no install link to show.
  */
-import { Button } from '@camstack/ui-library'
+import { Button } from '@dominevo/ui-library'
 import { Plus, type LucideIcon } from 'lucide-react'
 import type { ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'

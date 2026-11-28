@@ -22,7 +22,7 @@
 # STOPS at the first red stage with one line naming it:
 #   changelog -> test-load guards -> barrel guards (source) -> [codegen,
 #   opt-in] -> build -> tsgo -> footprint -> barrel guards (dist) -> repo
-#   script tests -> canary (the @camstack/types project and the admin-ui
+#   script tests -> canary (the @dominevo/types project and the admin-ui
 #   api-method-groups specs, where a capability change is first seen red) ->
 #   the affected test lanes.
 # `VERIFY_FULL=1` keeps the older behaviour: every stage runs whatever failed
@@ -187,7 +187,7 @@ fi
 # A fresh checkout/worktree has neither: build once (same command as CI).
 if [[ ! -f packages/nx-plugin/dist/index.js ]]; then
   echo "verify:push: nx-plugin dist missing — building it so nx can load"
-  npm run build -w @camstack/nx-plugin
+  npm run build -w @dominevo/nx-plugin
 fi
 
 # NX_DAEMON passes through untouched to every nx call below; it is printed so a
@@ -277,7 +277,7 @@ else
     FP_ARGS=()
     if [[ $FOOTPRINT_ALL -eq 0 ]]; then FP_ARGS=(--addons "$FOOTPRINT_ADDONS"); fi
     # The guard also needs the addon-runner dist; cached by nx when already built.
-    NODE_OPTIONS="--max-old-space-size=4096" npx nx run @camstack/server-framework:build >/dev/null || true
+    NODE_OPTIONS="--max-old-space-size=4096" npx nx run @dominevo/server-framework:build >/dev/null || true
     run_stage footprint FOOTPRINT_RESULT "addon dist footprint (D28) — ${FOOTPRINT_ADDONS:-all addons}" \
       env NODE_OPTIONS="--max-old-space-size=2048" npx tsx scripts/check-addon-dist-footprint.ts ${FP_ARGS[@]+"${FP_ARGS[@]}"}
   fi
@@ -303,8 +303,8 @@ fi
 if [[ -n "$TC_DIRS" ]]; then
   # The canary is a subset of the full lanes below; under VERIFY_FULL those
   # already report it, so it is not run twice.
-  if [[ $FULL -eq 0 && ( ",${AFFECTED_CSV}," == *",@camstack/types,"* || ",${AFFECTED_CSV}," == *",@camstack/addon-admin-ui,"* ) ]]; then
-    run_stage canary CANARY_RESULT "canary (@camstack/types tests, admin-ui api-method-groups)" \
+  if [[ $FULL -eq 0 && ( ",${AFFECTED_CSV}," == *",@dominevo/types,"* || ",${AFFECTED_CSV}," == *",@dominevo/addon-admin-ui,"* ) ]]; then
+    run_stage canary CANARY_RESULT "canary (@dominevo/types tests, admin-ui api-method-groups)" \
       env AFFECTED_CSV="$AFFECTED_CSV" scripts/ci/test-slot.sh --priority -- scripts/ci/verify-canary.sh
   fi
 

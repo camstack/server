@@ -50,7 +50,7 @@
  * responsibility.
  */
 
-import type { IScopedLogger, RecordKindHandle } from '@camstack/types'
+import type { IScopedLogger, RecordKindHandle } from '@dominevo/types'
 import type { NodeStressMoveBody } from './record-kinds.js'
 import type { StressFailoverHistoryEntry } from './node-stress.js'
 // Re-export: the legacy collection name, for the docs.

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import { resolvePrimaryChild, PRIORITY } from '../primary-child'
 import type { ChildRef } from '../primary-child'
 

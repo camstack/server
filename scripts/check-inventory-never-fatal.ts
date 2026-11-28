@@ -5,12 +5,12 @@
  *
  * ── The bug class this prevents ────────────────────────────────────────────
  * `package-inventory.ts` (D45) and `addon-root-inventory.ts` exist to EXPLAIN a
- * confusing layout: which copy of `@camstack/server/system` runs, which rival addon
+ * confusing layout: which copy of `@dominevo/server/system` runs, which rival addon
  * root is lying around. They are diagnostics. For a while both could also end
  * the process — `CAMSTACK_INVENTORY_STRICT=1` printed "refusing to boot on this
  * layout" and called `process.exit(1)`.
  *
- * That trade is wrong in this system whichever way it is set. A CamStack node
+ * That trade is wrong in this system whichever way it is set. A Dominevo node
  * that will not start is a house with no recording and no notifications, and the
  * layouts in question — an image seed under `/opt`, a stale `/data/framework`,
  * a retired Electron data root — are all survivable at runtime and all fixed by

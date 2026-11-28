@@ -47,9 +47,9 @@ const bootstrapSchemaDefinition: z.ZodType<BootstrapConfig> = z.object({
 export const bootstrapSchema: z.ZodType<BootstrapConfig> = bootstrapSchemaDefinition
 
 /**
- * Runtime defaults — re-exported from @camstack/types (canonical location).
+ * Runtime defaults — re-exported from @dominevo/types (canonical location).
  * Kept here for backward compatibility with existing kernel consumers.
  */
-export { RUNTIME_DEFAULTS } from '@camstack/types'
+export { RUNTIME_DEFAULTS } from '@dominevo/types'
 
 export type ServerMode = 'hub' | 'agent'

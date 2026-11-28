@@ -3,8 +3,8 @@
  * code kept in `data.i18n`) and the schema-localizing middleware (`labelKey` ->
  * catalog text in the request language, English otherwise).
  */
-import { getCatalogRegistry, resetCatalogRegistryForTests } from '@camstack/server/system'
-import { userError } from '@camstack/types'
+import { getCatalogRegistry, resetCatalogRegistryForTests } from '@dominevo/server/system'
+import { userError } from '@dominevo/types'
 import { TRPCError } from '@trpc/server'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { formatTrpcError } from '../cap-route-error-formatter.js'

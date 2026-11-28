@@ -8,7 +8,7 @@
  * Single authority, hub-resident, in-memory — rebuilt from the addons on every
  * mount (no persistence, no shadow copies).
  */
-import type { AddonDataPlaneEndpoint } from '@camstack/types'
+import type { AddonDataPlaneEndpoint } from '@dominevo/types'
 
 export interface DataPlaneMatch {
   readonly addonId: string

@@ -1,10 +1,10 @@
 /**
  * Dev shell — standalone runner for addon page development.
- * Uses DevShell from @camstack/ui for login, theme, and tRPC client setup.
+ * Uses DevShell from @dominevo/ui for login, theme, and tRPC client setup.
  */
 import './index.css'
 import ReactDOM from 'react-dom/client'
-import { DevShell } from '@camstack/ui-library'
+import { DevShell } from '@dominevo/ui-library'
 import BenchmarkPage from './page'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

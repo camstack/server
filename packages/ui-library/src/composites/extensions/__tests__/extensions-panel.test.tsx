@@ -13,7 +13,7 @@
  *    and saves through `setSlot` with the slot's own discriminant.
  */
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { EXTENSION_SLOTS, type ExtensionSlotRow } from '@camstack/types'
+import { EXTENSION_SLOTS, type ExtensionSlotRow } from '@dominevo/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 interface SlotsQuery {

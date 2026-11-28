@@ -4,7 +4,7 @@
  * retired). Asserts integration rows render and expand to the nested
  * per-integration device list.
  *
- * The integration + device queries are stubbed on `@camstack/ui-library`; the
+ * The integration + device queries are stubbed on `@dominevo/ui-library`; the
  * real `DeviceList` (generic + nested device mode) keeps its implementation so
  * the row → expansion → nested list wiring is exercised end to end.
  */
@@ -73,9 +73,9 @@ const devices = [
   },
 ]
 
-vi.mock('@camstack/ui-library', async () => {
+vi.mock('@dominevo/ui-library', async () => {
   const actual =
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+    await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return {
     ...actual,
     useIntegrationsList: () => ({ data: integrations, isLoading: false, refetch: vi.fn() }),

@@ -2,7 +2,7 @@ import {
   AutomationWaitUntilStepSchema,
   WAIT_MAX_SECONDS,
   WAIT_UNTIL_TIMEOUT_MAX_S,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { clampTimeout, clampWait, newWaitUntil } from '../wait-until-model'
 

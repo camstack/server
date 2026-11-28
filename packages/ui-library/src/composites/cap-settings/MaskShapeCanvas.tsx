@@ -113,7 +113,7 @@ import {
 } from 'react'
 import { Stage, Layer, Line, Rect, Circle, Text, Group, Arrow } from 'react-konva'
 import type Konva from 'konva'
-import type { MaskShape, MaskShapeKind, MaskPoint } from '@camstack/types'
+import type { MaskShape, MaskShapeKind, MaskPoint } from '@dominevo/types'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public API

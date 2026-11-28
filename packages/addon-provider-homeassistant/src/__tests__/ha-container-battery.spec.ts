@@ -1,4 +1,4 @@
-import { DeviceFeature, DeviceRole, DeviceType, type IDeviceRuntimeState } from '@camstack/types'
+import { DeviceFeature, DeviceRole, DeviceType, type IDeviceRuntimeState } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { deriveBatteryStatus, HaContainerDevice } from '../devices/ha-container-device.js'
 import type { HaEntityState } from '../ha-types.js'
@@ -116,7 +116,7 @@ async function makeContainer(
       child: vi.fn(),
       withTags: vi.fn(),
     },
-  } as unknown as import('@camstack/types').DeviceContext
+  } as unknown as import('@dominevo/types').DeviceContext
 
   const device = new HaContainerDevice(ctx)
   await device.onActivate()

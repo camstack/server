@@ -64,8 +64,8 @@ import type {
   IEventBus,
   ObjectDetection,
   PipelineInferenceResultPayload,
-} from '@camstack/types'
-import { EventCategory, createEvent } from '@camstack/types'
+} from '@dominevo/types'
+import { EventCategory, createEvent } from '@dominevo/types'
 import { encodeRgbCropToJpeg } from '../../shared/frame/encode-crop.js'
 import { ClosedRowMediaGate } from '../pipeline/closed-row-media-gate.js'
 import { TrackerSweep } from '../pipeline/tracker-sweep.js'

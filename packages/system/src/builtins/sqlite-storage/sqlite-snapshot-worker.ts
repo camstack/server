@@ -28,7 +28,7 @@
  * this module is loaded AS the snapshot thread.
  */
 import { isMainThread, parentPort, workerData } from 'node:worker_threads'
-import type { DatabaseSnapshotTable } from '@camstack/types'
+import type { DatabaseSnapshotTable } from '@dominevo/types'
 import Database from 'better-sqlite3'
 import {
   isSnapshotWorkerData,

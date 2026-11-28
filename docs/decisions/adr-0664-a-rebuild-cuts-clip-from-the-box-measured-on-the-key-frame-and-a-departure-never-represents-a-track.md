@@ -64,7 +64,7 @@ the target space, to redo vectors cut from the wrong box.
 ## Consequences
 
 - **Importance rises back to its pre-2026-09-07 level.** When a box-less departure won the confidence peak, the area term (`peakBboxAreaFrac`) was 0; it now comes from a measured row and adds up to 0.12 importance. More new tracks will pass `minImportance` notification rules and key-event thresholds. It is a correction, not a regression — watch the notification volume for a day after deploy.
-- **Deploy order:** addon-post-analysis first (every node), then the `@camstack/server` carrying the new status fields; a new server over the old addon fails `getObjectEmbeddingRebuildStatus` output validation.
+- **Deploy order:** addon-post-analysis first (every node), then the `@dominevo/server` carrying the new status fields; a new server over the old addon fails `getObjectEmbeddingRebuildStatus` output validation.
 
 What changes for each `bestEventId` consumer:
 

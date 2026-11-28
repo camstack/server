@@ -5,7 +5,7 @@ import {
   type CompositionSourceRef,
   mediaPlayerExtensionCommands,
   petFountainFromEntitiesComposition,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   argOf,

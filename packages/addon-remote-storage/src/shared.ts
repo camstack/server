@@ -2,7 +2,7 @@
  * Shared helpers for remote-storage providers (SFTP, S3, WebDAV).
  *
  * Mirrors the contract used by the canonical
- * `@camstack/server/system` `FilesystemStorageProvider`:
+ * `@dominevo/server/system` `FilesystemStorageProvider`:
  *   - path-traversal guard reused for `relativePath` resolution
  *   - chunked-upload / chunked-download session shapes (the actual
  *     fields differ per backend — provider-specific session types
@@ -11,7 +11,7 @@
  */
 import * as path from 'node:path'
 import { randomUUID } from 'node:crypto'
-import type { StorageLocation } from '@camstack/types'
+import type { StorageLocation } from '@dominevo/types'
 
 /** Idle TTL applied to every chunked upload + download session. */
 export const SESSION_IDLE_TTL_MS = 5 * 60 * 1000

@@ -24,7 +24,7 @@
  * (`auto === false`) never reaches this function — that is the manager's
  * `reconcileAutoAssignment`, unchanged.
  */
-import type { CamProfile } from '@camstack/types'
+import type { CamProfile } from '@dominevo/types'
 
 /** The fields the ranking reads — a projection of `CameraStreamInternal`. */
 export interface RankableStream {

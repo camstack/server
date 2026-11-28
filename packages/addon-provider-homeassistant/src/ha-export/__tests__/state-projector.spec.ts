@@ -752,9 +752,9 @@ describe('the derived half — the topic the catalog built IS the topic we publi
    * the secondary ones the guard's `{ field }` reader does not see.
    */
   it('reads only fields the capability actually declares', async () => {
-    const module: unknown = await import('@camstack/types')
+    const module: unknown = await import('@dominevo/types')
     const fieldsByCap = new Map<string, readonly string[]>()
-    if (!isRecord(module)) throw new Error('@camstack/types did not load as a module')
+    if (!isRecord(module)) throw new Error('@dominevo/types did not load as a module')
     for (const value of Object.values(module)) {
       if (!isRecord(value)) continue
       const { name, scope } = value

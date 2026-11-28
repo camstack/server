@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { IconButton } from '@camstack/ui-library'
+import { IconButton } from '@dominevo/ui-library'
 import { Play, Pause, Mic, Settings, Maximize2, Trash2, Camera, Volume2 } from 'lucide-react'
 
 const Frame = ({ children }: { children: ReactNode }) => (

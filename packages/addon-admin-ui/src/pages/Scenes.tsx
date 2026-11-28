@@ -21,7 +21,7 @@
  * ## What is reused, and what is new
  *
  * The per-camera editor — still frame, rectangle, per-variant captures, reset,
- * coverage line — is `SceneMonitorEditor` from `@camstack/ui-library`, unchanged
+ * coverage line — is `SceneMonitorEditor` from `@dominevo/ui-library`, unchanged
  * apart from losing its panel chrome. It is now imported directly instead of
  * being resolved through `HOST_WIDGETS`, and the widget id was removed in the
  * same commit as the cap's `deviceConfig` so that
@@ -34,7 +34,7 @@
  * camera picker, `?edit=<deviceId>` for the editor). Create and edit share the
  * editor on purpose: it already owns the draw / name / create flow.
  */
-import { DeviceType, type SceneMonitor } from '@camstack/types'
+import { DeviceType, type SceneMonitor } from '@dominevo/types'
 import {
   Badge,
   Button,
@@ -53,7 +53,7 @@ import {
   useDataTableFilter,
   useDeviceManagerListAll,
   useItemFormUrl,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Camera, Plus } from 'lucide-react'
 import { Suspense, useEffect, useMemo, useState } from 'react'
 import { useScenesFeed } from '../hooks/use-scenes-feed.js'

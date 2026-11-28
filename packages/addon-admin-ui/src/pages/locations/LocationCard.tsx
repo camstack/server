@@ -25,7 +25,7 @@
  * contact that carries it, or the collapse above costs the operator the
  * search too.
  */
-import type { IconKey, SiteZone } from '@camstack/types'
+import type { IconKey, SiteZone } from '@dominevo/types'
 import {
   Button,
   DataTable,
@@ -41,7 +41,7 @@ import {
   type DataColumn,
   type DataTableFilterConfig,
   type KebabMenuItem,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { ChevronDown, ChevronRight, Pencil, RefreshCw, Trash2, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'

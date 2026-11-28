@@ -1,18 +1,18 @@
-import type { PackageInstallation } from "@camstack/types";
-import { useAddonsListInstallations } from "@camstack/ui-library";
-import { AlertTriangle } from "lucide-react";
+import type { PackageInstallation } from '@dominevo/types'
+import { useAddonsListInstallations } from '@dominevo/ui-library'
+import { AlertTriangle } from 'lucide-react'
 import {
   AddonUninstallControls,
   ALL_PACKAGES,
   INSTALLATIONS_STALE_MS,
   type UninstallTargetNode,
-} from "./AddonUninstallControls";
-import { useTranslation } from "react-i18next";
-import { isSelfManagedPackage } from "../../lib/framework-packages";
+} from './AddonUninstallControls'
+import { useTranslation } from 'react-i18next'
+import { isSelfManagedPackage } from '../../lib/framework-packages'
 
 export interface NodeOnlyPackageGroup {
-  readonly packageName: string;
-  readonly rows: readonly PackageInstallation[];
+  readonly packageName: string
+  readonly rows: readonly PackageInstallation[]
 }
 
 /**
@@ -26,36 +26,31 @@ export function groupNodeOnlyPackages(
   installations: readonly PackageInstallation[],
   selectedNode: UninstallTargetNode,
 ): readonly NodeOnlyPackageGroup[] {
-  const groups = new Map<string, PackageInstallation[]>();
+  const groups = new Map<string, PackageInstallation[]>()
   for (const row of installations) {
-    if (row.isHub || row.onHub || isSelfManagedPackage(row.packageName))
-      continue;
-    if (!selectedNode.isHub && row.nodeId !== selectedNode.id) continue;
-    const rows = groups.get(row.packageName) ?? [];
-    rows.push(row);
-    groups.set(row.packageName, rows);
+    if (row.isHub || row.onHub || isSelfManagedPackage(row.packageName)) continue
+    if (!selectedNode.isHub && row.nodeId !== selectedNode.id) continue
+    const rows = groups.get(row.packageName) ?? []
+    rows.push(row)
+    groups.set(row.packageName, rows)
   }
   return [...groups]
     .map(([packageName, rows]) => ({ packageName, rows }))
-    .sort((a, b) => a.packageName.localeCompare(b.packageName));
+    .sort((a, b) => a.packageName.localeCompare(b.packageName))
 }
 
-export function NodeOnlyPackagesPanel({
-  selectedNode,
-}: {
-  selectedNode: UninstallTargetNode;
-}) {
-  const { t } = useTranslation();
+export function NodeOnlyPackagesPanel({ selectedNode }: { selectedNode: UninstallTargetNode }) {
+  const { t } = useTranslation()
   const { data } = useAddonsListInstallations(ALL_PACKAGES, {
     staleTime: INSTALLATIONS_STALE_MS,
-  });
+  })
   // Only a query that ANSWERED may say what is (not) there (D315).
-  if (data === undefined) return null;
-  const groups = groupNodeOnlyPackages(data.installations, selectedNode);
+  if (data === undefined) return null
+  const groups = groupNodeOnlyPackages(data.installations, selectedNode)
   const unreachable = data.unreachable.filter(
     (u) => selectedNode.isHub || u.nodeId === selectedNode.id,
-  );
-  if (groups.length === 0 && unreachable.length === 0) return null;
+  )
+  if (groups.length === 0 && unreachable.length === 0) return null
 
   return (
     <div className="rounded-lg border border-warning/30 bg-warning/5 px-3 py-2.5 space-y-2">
@@ -63,19 +58,19 @@ export function NodeOnlyPackagesPanel({
         <AlertTriangle className="h-3.5 w-3.5 text-warning" />
         {selectedNode.isHub
           ? t(
-              "addons.nodeOnlyPackagesPanel.installedOnAgentsButNot",
-              "Installed on agents but not on the hub",
+              'addons.nodeOnlyPackagesPanel.installedOnAgentsButNot',
+              'Installed on agents but not on the hub',
             )
           : t(
-              "addons.nodeOnlyPackagesPanel.installedOnButNotOn",
-              "Installed on {{name}} but not on the hub",
+              'addons.nodeOnlyPackagesPanel.installedOnButNotOn',
+              'Installed on {{name}} but not on the hub',
               { name: selectedNode.name },
             )}
       </div>
       {unreachable.length > 0 && (
         <div className="text-[10px] text-foreground-subtle">
-          {t("addons.nodeOnlyPackagesPanel.unreachable", {
-            nodes: unreachable.map((u) => u.nodeId).join(", "),
+          {t('addons.nodeOnlyPackagesPanel.unreachable', {
+            nodes: unreachable.map((u) => u.nodeId).join(', '),
           })}
         </div>
       )}
@@ -85,16 +80,14 @@ export function NodeOnlyPackagesPanel({
           className="flex items-center justify-between gap-3 flex-wrap rounded-md border border-border bg-surface px-3 py-2"
         >
           <div className="min-w-0">
-            <div className="text-xs font-mono text-foreground break-all">
-              {group.packageName}
-            </div>
+            <div className="text-xs font-mono text-foreground break-all">{group.packageName}</div>
             <div className="text-[10px] text-foreground-subtle">
               {group.rows
                 .map(
                   (r) =>
-                    `${r.nodeName}${r.version !== null ? ` ${r.version}` : ""}${r.isOnline ? "" : " (offline)"}`,
+                    `${r.nodeName}${r.version !== null ? ` ${r.version}` : ''}${r.isOnline ? '' : ' (offline)'}`,
                 )
-                .join(" · ")}
+                .join(' · ')}
             </div>
           </div>
           <AddonUninstallControls
@@ -106,5 +99,5 @@ export function NodeOnlyPackagesPanel({
         </div>
       ))}
     </div>
-  );
+  )
 }

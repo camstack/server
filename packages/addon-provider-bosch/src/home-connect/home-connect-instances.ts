@@ -18,7 +18,7 @@ import {
   type RecordsAccess,
   type SecretsAccess,
   type RowsMigrationLog,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import {
   boschRowsMigration,

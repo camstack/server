@@ -3,7 +3,7 @@
  * removes the node-scoped blobs and un-pins every camera that named it.
  */
 import { describe, expect, it } from 'vitest'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { createNodeRemovalHook, type NodeRemovalDeps } from '../node-removal.js'
 
 type Store = Record<string, unknown>

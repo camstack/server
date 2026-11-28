@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Badge, Button, DataTable, ErrorBox, type DataColumn } from '@camstack/ui-library'
+import { Badge, Button, DataTable, ErrorBox, type DataColumn } from '@dominevo/ui-library'
 import { RefreshCw, SlidersHorizontal } from 'lucide-react'
 import {
   CcuDeviceStateSchema,
@@ -21,7 +21,7 @@ export interface DevicePanelProps {
   readonly trpc: CcuTrpc
   readonly integrationId: string
   readonly address: string
-  /** The CamStack device the panel sits on, carried into the write's log line. */
+  /** The Dominevo device the panel sits on, carried into the write's log line. */
   readonly deviceId?: number
 }
 
@@ -74,7 +74,7 @@ function Diagnostics(props: { readonly state: CcuDeviceState }) {
 }
 
 /**
- * One CCU device on its CamStack device page: the maintenance readings, every
+ * One CCU device on its Dominevo device page: the maintenance readings, every
  * channel's VALUES, a manual write of each writable one (switch, level, key
  * press …) and the MASTER configuration. Every write asks the operator first.
  */

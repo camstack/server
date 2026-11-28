@@ -5,7 +5,7 @@
  * exponent, the `chnType` asymmetry, the `setGrd`/`toGrd` verbs — lives in
  * `@apocaliss92/nodelink-js` (`getPtzGuard` / `setPtzGuard` / `goToPtzGuard`)
  * since 0.7.2. It belongs there: it is knowledge about Baichuan, not about
- * CamStack, and a second copy here would diverge at the first firmware that
+ * Dominevo, and a second copy here would diverge at the first firmware that
  * changes one of those details.
  *
  * This constant stays because it is a PRODUCT decision, not a protocol fact.

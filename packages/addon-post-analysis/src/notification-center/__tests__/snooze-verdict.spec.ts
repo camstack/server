@@ -4,7 +4,7 @@
  * covering window, or a covering window an alarm rule is exempt from (D697).
  */
 
-import type { NcSnooze } from '@camstack/types'
+import type { NcSnooze } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { SnoozeExemptRule } from '../snooze-exempt.js'
 import { activeSnoozeFor } from '../snooze-policy.js'

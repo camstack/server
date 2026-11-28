@@ -1,6 +1,6 @@
 {
-  "name": "@camstack/addon-export-alexa",
-  "version": "1.2.210",
+  "name": "@dominevo/addon-export-alexa",
+  "version": "0.1.0",
   "description": "Alexa Smart Home Skill export — hub-side OAuth provider + directive handler. The companion AWS Lambda forwards Alexa directives to this addon's /addon/export-alexa/directive endpoint.",
   "keywords": [
     "camstack",
@@ -12,12 +12,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/camstack/server.git",
+    "url": "https://github.com/dominevo/server.git",
     "directory": "packages/addon-export-alexa"
   },
   "homepage": "https://camstack-docs.zentik.app",
   "bugs": {
-    "url": "https://github.com/camstack/server/issues"
+    "url": "https://github.com/dominevo/server/issues"
   },
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -59,7 +59,7 @@
       }
     ],
     "requires": {
-      "server": ">=1.2.968"
+      "server": ">=0.1.0"
     }
   },
   "files": [
@@ -77,15 +77,15 @@
     "test:watch": "vitest"
   },
   "peerDependencies": {
-    "@camstack/types": "*"
+    "@dominevo/types": "0.1.0"
   },
   "dependencies": {
     "sharp": "^0.35.2",
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@camstack/sdk": "*",
-    "@camstack/types": "*",
+    "@dominevo/sdk": "0.1.0",
+    "@dominevo/types": "0.1.0",
     "typescript": "~6.0.3",
     "vite": "^8.0.11",
     "vitest": "^4.0.0"

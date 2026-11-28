@@ -10,7 +10,7 @@ import {
   checkTemplatePayload,
   TEMPLATE_KINDS,
   type TemplateKind,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { TFunction } from 'i18next'
 import type { ReactNode } from 'react'
 import {
@@ -19,7 +19,7 @@ import {
   emptyLayout,
   layoutOf,
   REMOTE_LAYOUT_PRESETS,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { RemoteLayoutEditor } from './RemoteLayoutEditor'
 
 export interface TemplateKindView {

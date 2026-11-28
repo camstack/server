@@ -13,14 +13,14 @@ import {
   isSessionFile,
   resolveHubUrl,
   validateHubAddress,
-} from '@camstack/develop'
+} from '@dominevo/develop'
 import {
   type BrowseOptions,
   discoverHubs,
   type HubCandidate,
   type MdnsHub,
   type RawCandidate,
-} from '@camstack/develop/hub-discovery'
+} from '@dominevo/develop/hub-discovery'
 
 export type { HubCandidate }
 

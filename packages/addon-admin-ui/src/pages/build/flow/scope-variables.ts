@@ -3,11 +3,11 @@
  *
  * An action's variables are the ones it declares. An automation's are the ones
  * the event rows of its `when` tree put in the run's bag, named by
- * `triggerVariablesOf` in `@camstack/types`; an event that provides none
+ * `triggerVariablesOf` in `@dominevo/types`; an event that provides none
  * offers none (the "{x}" button stays hidden rather than guess).
  */
 
-import { type ActionVariable, type AutomationWhen, triggerVariablesOf } from '@camstack/types'
+import { type ActionVariable, type AutomationWhen, triggerVariablesOf } from '@dominevo/types'
 import type { TFunction } from 'i18next'
 import type { ScopeVariable } from './ArgField'
 

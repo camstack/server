@@ -1,4 +1,4 @@
-import type { EncodedPacket } from '@camstack/types'
+import type { EncodedPacket } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { RtpDepacketizer, type RtpPacketClass } from '../rtsp/rtp-depacketizer.js'
 import { RtpAccessUnitTracker, type RtpPacketAuFlags } from '../rtsp/rtp-access-unit-tracker.js'

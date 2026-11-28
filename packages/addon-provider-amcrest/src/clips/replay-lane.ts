@@ -61,7 +61,7 @@
  *   (this source arrives at ~1.1× realtime): that is not a lane, it is a
  *   hostage.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 /**
  * How long a PLAYBACK may wait for a slot that is being released.

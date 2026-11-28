@@ -20,7 +20,7 @@
  */
 import { constants as fsConstants } from 'node:fs'
 import path from 'node:path'
-import { errMsg, mayWriteToLocation, type StorageLocation } from '@camstack/types'
+import { errMsg, mayWriteToLocation, type StorageLocation } from '@dominevo/types'
 import type { LivenessFinding } from './liveness-checks.js'
 
 /** The local filesystem storage provider's id (`FilesystemStorageProvider.providerId`). */
@@ -160,7 +160,7 @@ export function storageRootFindings(
         title: 'Storage location not writable',
         message:
           `${blockedAt} is owned by ${String(stat.uid)}:${String(stat.gid)} with mode ` +
-          `${octalMode(stat.mode)}, and CamStack runs as ${processIdentity(probe)} — ` +
+          `${octalMode(stat.mode)}, and Dominevo runs as ${processIdentity(probe)} — ` +
           `nothing can be written there${below}. Locations affected: ` +
           `${locationIds.toSorted().join(', ')}. Fix the ownership on the host, e.g. ` +
           `chown -R ${uidFix}:${gidFix} <the host directory bound at ${blockedAt}>.`,

@@ -14,7 +14,7 @@
  * dropped-caps warn in `writeRow`.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { RuntimeStatePolicy } from '@camstack/types'
+import type { RuntimeStatePolicy } from '@dominevo/types'
 import { MirrorRowWriter, RuntimeStateDrainError } from '../mirror-row-writer.js'
 import { flushDebounce, harness, loadedIndex, POLICY } from './mirror-harness.js'
 

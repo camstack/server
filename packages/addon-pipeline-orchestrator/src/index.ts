@@ -102,7 +102,7 @@ import type {
   DurableState,
   ScopedSettings,
   ScopedSettingsScope,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   assignNodeColorId,
   addonWidgetsSourceCapability,
@@ -135,7 +135,7 @@ import {
   appSourceCapability,
   zoneRulesCapability,
   zonesCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { readRawKeys } from './migrations/drop-keys.js'
 import {
@@ -853,7 +853,7 @@ export default class PipelineOrchestratorAddon
           capability: nodeRemovalHookCapability,
           provider: createNodeRemovalHook(this.nodeRemovalDeps()),
         },
-        // Serve the CamStack viewer web SPA (dist staged into assets/viewer by
+        // Serve the Dominevo viewer web SPA (dist staged into assets/viewer by
         // the viewer repo's copy-dist-to-orchestrator.js). The hub's main.ts
         // mounts it at /viewer/camstack; it 404s cleanly when nothing is staged.
         { capability: viewerUiCapability, provider: createViewerUiProvider() },
@@ -2549,7 +2549,7 @@ export default class PipelineOrchestratorAddon
         nodeId === this.localNodeId
           ? await api.platformProbe.getCapabilities.query()
           : await api.platformProbe.getCapabilities.query({ nodeId })
-      // A version-skewed node (older @camstack/server/system) returns a capabilities
+      // A version-skewed node (older @dominevo/server/system) returns a capabilities
       // payload WITHOUT the `devices` enumeration → `caps.devices` is undefined.
       // Degrade to an empty device set (reachable, "no devices reported") rather
       // than crashing the whole board with `undefined.map`. The node still needs

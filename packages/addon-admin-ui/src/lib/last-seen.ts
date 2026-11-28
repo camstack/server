@@ -1,6 +1,6 @@
 /**
  * Normalise a topology `lastSeen` value into a millisecond epoch suitable for
- * `formatLastSeen` (from `@camstack/ui-library`).
+ * `formatLastSeen` (from `@dominevo/ui-library`).
  *
  * `TopologyNodeSchema.lastSeen` is an ISO string, but the shared `NodeData`
  * shape widens it to `string | number` (some legacy payloads send epoch ms).

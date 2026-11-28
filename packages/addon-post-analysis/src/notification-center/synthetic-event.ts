@@ -11,7 +11,7 @@ import {
   deriveSyntheticMedia,
   triggerCanCarryStill,
 } from './test-event.js'
-import type { IScopedLogger, MediaFileBytes } from '@camstack/types'
+import type { IScopedLogger, MediaFileBytes } from '@dominevo/types'
 import { randomUUID } from 'node:crypto'
 
 /**

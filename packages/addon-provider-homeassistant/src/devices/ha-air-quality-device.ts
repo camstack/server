@@ -5,7 +5,7 @@ import {
   type AirQualitySensorStatus,
   type DeviceRole,
   type ReadingQuantity,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { HaBaseChildDevice } from '../ha-base-child-device.js'
 import { takeReading } from '../ha-reading.js'
 import type { HaEntityState } from '../ha-types.js'

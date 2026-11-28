@@ -16,7 +16,7 @@ import {
   deriveFeatureProvenance,
   type IDeviceRuntimeState,
   implementedMethodsOf,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { FloodlightAccessory } from '../accessories/floodlight.js'
 import { SirenAccessory } from '../accessories/siren.js'

@@ -9,7 +9,7 @@
  */
 
 import { afterEach, describe, expect, it } from 'vitest'
-import type { InMemoryRecords } from '@camstack/types'
+import type { InMemoryRecords } from '@dominevo/types'
 import { ncTable, withNcFaults } from './support/nc-test-deps.js'
 import {
   boot,

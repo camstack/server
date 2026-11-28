@@ -15,7 +15,7 @@ import {
   type GatedResult,
   type GatedToolSpec,
   type HubClient,
-} from '@camstack/develop'
+} from '@dominevo/develop'
 import { text } from './tool-result.js'
 import { z } from 'zod'
 import type { McpContext, ToolTextResult } from './context.js'
@@ -502,14 +502,14 @@ export async function testNotificationTarget(
 export function registerNotifierTools(server: McpServer, ctx: McpContext): void {
   server.tool(
     'configure_notifiers',
-    'The notifier kinds a target can be created from (ntfy, telegram, email, …), each with its settings fields, which are required and which are SECRETS. Secrets are never tool arguments. Needs an admin `camstack login`.',
+    'The notifier kinds a target can be created from (ntfy, telegram, email, …), each with its settings fields, which are required and which are SECRETS. Secrets are never tool arguments. Needs an admin `dominevo login`.',
     {},
     async (): Promise<ToolTextResult> => text(await configureNotifiers(ctx)),
   )
 
   server.tool(
     'configure_notification_targets',
-    'Existing notification targets with their non-secret settings. A secret is shown only as set/unset, and a target missing a required secret is listed under `incomplete`. Needs an admin `camstack login`.',
+    'Existing notification targets with their non-secret settings. A secret is shown only as set/unset, and a target missing a required secret is listed under `incomplete`. Needs an admin `dominevo login`.',
     {},
     async (): Promise<ToolTextResult> => text(await configureNotificationTargets(ctx)),
   )

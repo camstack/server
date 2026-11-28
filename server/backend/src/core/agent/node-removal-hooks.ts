@@ -14,14 +14,14 @@
  * {@link clearSingletonNodeOverrides} (the per-node singleton overrides live in
  * the hub's capability registry and settings).
  */
-import type { CapabilityRegistry } from '@camstack/server/system'
+import type { CapabilityRegistry } from '@dominevo/server/system'
 import {
   clearNodeSettings,
   ClusterNodeTombstoneBodySchema,
   readAllRows,
   type ClusterNodeTombstoneBody,
-} from '@camstack/server/system'
-import { errMsg } from '@camstack/types'
+} from '@dominevo/server/system'
+import { errMsg } from '@dominevo/types'
 import type {
   INodeRemovalHookProvider,
   ISettingsStoreProvider,
@@ -29,7 +29,7 @@ import type {
   NodeRemovedInput,
   NodeRemovedResult,
   RecordKindHandle,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { ConfigService } from '../config/config.service'
 import { singletonPreferenceKey } from '../../api/core/capability-preference-writes'
 

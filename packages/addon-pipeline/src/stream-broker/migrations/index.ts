@@ -1,4 +1,4 @@
-import type { AddonMigration } from '@camstack/types'
+import type { AddonMigration } from '@dominevo/types'
 import { type NodeFieldsPorts, planNodeFields } from '../../node-fields-per-node.js'
 
 export const STREAM_BROKER_ID = 'stream-broker'

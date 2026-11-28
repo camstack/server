@@ -2,7 +2,7 @@ import type {
   AddonDeclaration,
   IntegrationInstanceDescription,
   IntegrationRole,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 const INSTANCES_CAP = 'integration-instances'
 

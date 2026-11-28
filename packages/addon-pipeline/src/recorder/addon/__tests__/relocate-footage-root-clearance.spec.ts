@@ -5,7 +5,7 @@
  * per root; `recording.relocateFootage` and the migration move ask it AFTER they
  * register the job, and cancel the job when it says no.
  */
-import type { IScopedLogger, MoverClearanceAnswer } from '@camstack/types'
+import type { IScopedLogger, MoverClearanceAnswer } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import type { RelocateEngine } from '../../relocate-engine.js'
 import type { SegmentStore } from '../../segment-store.js'

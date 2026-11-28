@@ -9,7 +9,7 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import type { FastifyInstance } from 'fastify'
-import type { AddonDeploySource } from '@camstack/server/system'
+import type { AddonDeploySource } from '@dominevo/server/system'
 import {
   AGENT_DEPLOY_CONTROL_TIMEOUT_MS,
   type AgentDeliveryBroker,
@@ -113,7 +113,7 @@ export function registerServerUploadPropagateRoute(
       return reply.status(404).send({
         error:
           `No hub-side upload for ${version} at ${versionDir}. ` +
-          'Upload first with `camstack deploy-server` (POST /api/server-upload).',
+          'Upload first with `dominevo deploy-server` (POST /api/server-upload).',
       })
     }
     const manifest = readDevUploadManifest(versionDir)

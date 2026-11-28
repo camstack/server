@@ -2,7 +2,7 @@
  * Unit tests for the WhatsApp / Green API notifier adapter. Pure — no network
  * for buildRequest; probe resolution helpers are pure too.
  */
-import { type Notification, prepareNotification } from '@camstack/types'
+import { type Notification, prepareNotification } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { HttpRequestPlan } from '../../adapters/adapter.js'
 import {

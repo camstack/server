@@ -9,7 +9,7 @@
  * (login/logout, BFCache resume).
  */
 import { useEffect, useRef, useState } from 'react'
-import type { SystemLiveEvent } from '@camstack/sdk'
+import type { SystemLiveEvent } from '@dominevo/sdk'
 import { useSystem } from '../contexts/system-context.js'
 
 export type LiveEventCallback<TData = unknown> = (event: SystemLiveEvent<TData>) => void

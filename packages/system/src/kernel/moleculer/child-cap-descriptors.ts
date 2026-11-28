@@ -1,4 +1,4 @@
-import type { CommandHoldOptions, StateRefreshPolicy } from '@camstack/types'
+import type { CommandHoldOptions, StateRefreshPolicy } from '@dominevo/types'
 import type { ChildCapDescriptor } from '../transport/child-cap-protocol.js'
 
 /** One hosted addon's contribution to the runner UNION manifest. */
@@ -30,7 +30,7 @@ export interface NativeCapSnapshotEntry {
  *   and deduplicating by capName alone would collapse two co-located providers
  *   of the same collection cap (e.g. `network-access` from cloudflare-tunnel
  *   AND tailscale-ingress) into one descriptor registered under a synthetic
- *   `addonId = childId` (the group name) — the "@camstack/addon-net-access"
+ *   `addonId = childId` (the group name) — the "@dominevo/addon-net-access"
  *   admin-UI bug.
  * - Device-scoped caps come from the native-cap snapshot — one descriptor per
  *   (capName, deviceId) pair, mode `'collection'`, stamped with the owning

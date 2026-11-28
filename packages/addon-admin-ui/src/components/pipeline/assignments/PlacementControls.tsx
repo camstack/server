@@ -9,7 +9,7 @@ import {
   Select,
   usePipelineOrchestratorGetNodeInferenceDevices,
   usePipelineOrchestratorGetPipelineDevicePin,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { nodePinOptions, type RoleState } from './assignment-rows'
 import { useTranslation } from 'react-i18next'
 

@@ -73,7 +73,7 @@ export interface KeyedSerializer {
  * same directory is still resolving, evicting half of a module graph that is
  * being evaluated — duplicate module instances, or a partially-purged one.
  *
- * It is not hypothetical: `@camstack/addon-remote-storage` ships four addon
+ * It is not hypothetical: `@dominevo/addon-remote-storage` ships four addon
  * ids (`sftp-storage`, `s3-storage`, `webdav-storage`, `smb-storage`) whose
  * entries all resolve into the same `dist/` directory, each on its own runner,
  * all in the same plan.

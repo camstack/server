@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { StreamBroker } from '../stream-broker/stream-broker'
-import type { BrokerConsumerAttribution, IScopedLogger } from '@camstack/types'
+import type { BrokerConsumerAttribution, IScopedLogger } from '@dominevo/types'
 
 function createMockLogger(): IScopedLogger {
   return {

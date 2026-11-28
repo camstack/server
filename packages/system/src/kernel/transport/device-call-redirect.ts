@@ -16,7 +16,7 @@
  * `null` means "not redirected — route as before". A non-null answer IS the
  * call's answer. A redirect that fails throws; the caller sees the failure.
  */
-import type { DeviceCall, DeviceCallAnswer } from '@camstack/types'
+import type { DeviceCall, DeviceCallAnswer } from '@dominevo/types'
 import { extractDeviceId } from './cap-route-resolver.js'
 
 /** The registry's questions, as an entry holds them. */

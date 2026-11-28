@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { SsoBridgeClaimsSchema, type TokenScope } from '@camstack/types'
+import { SsoBridgeClaimsSchema, type TokenScope } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { createOauthGrants, verifyPkceS256 } from '../oauth-grants.js'
 import type { OauthSession } from '../oauth-session-manager.js'

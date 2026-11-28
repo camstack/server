@@ -5,7 +5,7 @@
  */
 import { describe, expect, it, vi } from 'vitest'
 import { render } from '@testing-library/react'
-import type { PipelineAddonSchema } from '@camstack/types'
+import type { PipelineAddonSchema } from '@dominevo/types'
 import { PipelineStep, type PipelineStepDisplayConfig } from '../pipeline-step'
 
 const SCHEMA: PipelineAddonSchema = {

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { weatherStationFixtures } from '../__fixtures__/weather-station'

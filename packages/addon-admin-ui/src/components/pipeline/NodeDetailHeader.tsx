@@ -9,7 +9,7 @@
  * `useEventStreamLatest` — no tRPC roundtrip, push-driven.
  */
 
-import { useClusterTopology, useEventStreamLatest } from '@camstack/ui-library'
+import { useClusterTopology, useEventStreamLatest } from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 
 interface NodeDetailHeaderProps {

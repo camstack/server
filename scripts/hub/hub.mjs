@@ -1,16 +1,16 @@
-// Generic tRPC caller against YOUR hub, through the `camstack login` session.
+// Generic tRPC caller against YOUR hub, through the `dominevo login` session.
 //
 // Usage: node scripts/hub/hub.mjs <GET|POST> <path> '<json>'   ('-' as the JSON reads it from stdin)
 //        node scripts/hub/hub.mjs --server <url> ...
 //
 // No password, no login, no certificate bypass, no token flag (D1101). Run
-// `camstack login <host>` once, interactively: every tool uses that session
+// `dominevo login <host>` once, interactively: every tool uses that session
 // (~/.camstack/<host>_<port>.json), renewed automatically when it is about to expire,
 // and a 401 renews it once and retries once. A headless service is logged in once and
 // then refreshes unattended. `--token-file` and $CAMSTACK_TOKEN were removed.
 //
 // --server takes a host, host:port or https URL (normalised by the shared
-// normalizeHubAddress in @camstack/develop; port defaults to 4443).
+// normalizeHubAddress in @dominevo/develop; port defaults to 4443).
 // The hub address is never in this file: --server, else $CAMSTACK_HUB_URL, else
 // the gitignored scratchpad/.hub-url (one line, https://<hub-host>:4443), else
 // the cached session's server.
@@ -24,10 +24,10 @@ import { fileURLToPath } from 'node:url'
 
 let develop
 try {
-  develop = await import('@camstack/develop')
+  develop = await import('@dominevo/develop')
 } catch (err) {
   console.error(
-    `cannot load @camstack/develop (${err instanceof Error ? err.message : String(err)}) — run: npm run build -w packages/develop`,
+    `cannot load @dominevo/develop (${err instanceof Error ? err.message : String(err)}) — run: npm run build -w packages/develop`,
   )
   process.exit(1)
 }
@@ -65,7 +65,7 @@ const argv = process.argv.slice(2)
 // removed-flag:begin
 if (argv.includes('--token-file') || argv.includes('--token')) {
   console.error(
-    '--token / --token-file were removed: run `camstack login <host>` once, interactively; every tool then uses that session and renews it.',
+    '--token / --token-file were removed: run `dominevo login <host>` once, interactively; every tool then uses that session and renews it.',
   )
   process.exit(1)
 }
@@ -75,7 +75,7 @@ const [method, route, rawInput] = argv
 
 if (method === 'login') {
   console.error(
-    'hub.mjs no longer logs in with a password. Use `camstack login` (cached session at ~/.camstack/<host>.json).',
+    'hub.mjs no longer logs in with a password. Use `dominevo login` (cached session at ~/.camstack/<host>.json).',
   )
   process.exit(1)
 }
@@ -91,7 +91,7 @@ const hub = resolveHubUrl({
 })
 if (!hub) {
   console.error(
-    'no hub URL: pass --server, set CAMSTACK_HUB_URL, write scratchpad/.hub-url, or run `camstack login`',
+    'no hub URL: pass --server, set CAMSTACK_HUB_URL, write scratchpad/.hub-url, or run `dominevo login`',
   )
   process.exit(1)
 }

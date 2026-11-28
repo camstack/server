@@ -1,5 +1,5 @@
 /**
- * Public surface of @camstack/nx-plugin.
+ * Public surface of @dominevo/nx-plugin.
  *
  * The executor + generator are referenced by name through the
  * `executors.json` / `generators.json` manifest files at the package
@@ -22,6 +22,6 @@ export { default as deployExecutor } from './executors/deploy/executor.js'
 export type { DeployExecutorSchema } from './executors/deploy/schema.js'
 
 // `createNodesV2` is the Nx plugin auto-inference hook. Re-exported
-// here so `nx.json` → `"plugins": ["@camstack/nx-plugin"]` can pick
+// here so `nx.json` → `"plugins": ["@dominevo/nx-plugin"]` can pick
 // it up without an explicit entry point.
 export { createNodesV2 } from './plugin.js'

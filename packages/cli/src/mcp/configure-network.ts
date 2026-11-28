@@ -15,7 +15,7 @@
  * is never called: it returns relay credentials.
  */
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
-import { type DryRunOutcome, type GatedToolSpec, type HubClient } from '@camstack/develop'
+import { type DryRunOutcome, type GatedToolSpec, type HubClient } from '@dominevo/develop'
 import { text } from './tool-result.js'
 import { z } from 'zod'
 import {
@@ -325,7 +325,7 @@ export function registerNetworkTools(server: McpServer, ctx: McpContext): void {
   )
   server.tool(
     REMOTE_ACCESS_SET_TOOL,
-    'Change the cloudflare-tunnel local-origin node form (localHost, localPortMode, localPort). The tunnel mode, custom hostname and API token live on the tunnel integration instance (admin UI, /system/remote-access) and cannot be set here; the TURN addons keep their servers as integration instances (admin UI, /system/turn) and are not accepted. A secret is refused with secret-required and the admin-UI page to enter it. Two steps: call without confirm_token for a preview and a one-shot token, then call again with the SAME arguments and that token. Needs an admin `camstack login` session.',
+    'Change the cloudflare-tunnel local-origin node form (localHost, localPortMode, localPort). The tunnel mode, custom hostname and API token live on the tunnel integration instance (admin UI, /system/remote-access) and cannot be set here; the TURN addons keep their servers as integration instances (admin UI, /system/turn) and are not accepted. A secret is refused with secret-required and the admin-UI page to enter it. Two steps: call without confirm_token for a preview and a one-shot token, then call again with the SAME arguments and that token. Needs an admin `dominevo login` session.',
     {
       addonId: SettableRemoteAddonSchema,
       patch: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])),

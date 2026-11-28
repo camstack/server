@@ -7,7 +7,7 @@ import {
   type CompositionFieldSource,
   type CompositionFieldsFeature,
   type CompositionTargetDescription,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   HOST_ID,

@@ -18,7 +18,7 @@
  * kept flowing because `drainMotionQueues()` runs before that gate.
  */
 
-import type { DecodedFrame, FrameResult, IScopedLogger } from '@camstack/types'
+import type { DecodedFrame, FrameResult, IScopedLogger } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { RunnerConfig } from '../runner.js'
 import { PipelineRunner } from '../runner.js'

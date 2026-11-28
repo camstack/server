@@ -12,7 +12,7 @@ import {
   type RecordWhere,
   type RecordsAccess,
   type TransactOpResult,
-} from '@camstack/types'
+} from '@dominevo/types'
 /** Matches {@link EventStore.LEDGER_PAGE_SIZE} — kept local to avoid a circular import. */
 const LEDGER_PAGE_SIZE = 500
 

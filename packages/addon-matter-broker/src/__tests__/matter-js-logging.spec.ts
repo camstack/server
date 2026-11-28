@@ -1,6 +1,6 @@
 import { Logger, LogLevel } from '@matter/main'
 import { describe, expect, it } from 'vitest'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { attachMatterJsLogger } from '../matter-js-logging.js'
 
 function recorder(): { logger: IScopedLogger; lines: string[] } {

@@ -104,7 +104,7 @@ export function integrationHubHref(
  * The Addons catalog filtered to the packages that declare `capability`. The
  * builder lives in the UI library so an addon's own page can use it too.
  */
-export { addonCatalogHref } from '@camstack/types'
+export { addonCatalogHref } from '@dominevo/types'
 
 export interface IntegrationSelectionInput {
   /** Every selectable integration id, in display order. */

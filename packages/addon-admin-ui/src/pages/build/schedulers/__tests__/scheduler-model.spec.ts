@@ -1,4 +1,4 @@
-import { type NarrowActionStep, type SchedulerInput, schedulersCapability } from '@camstack/types'
+import { type NarrowActionStep, type SchedulerInput, schedulersCapability } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   checkSchedulerDraft,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { ConfigUISchema } from '@camstack/types'
+import type { ConfigUISchema } from '@dominevo/types'
 import { ExportHapAddon } from '../hap-export.addon.js'
 
 /**

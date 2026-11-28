@@ -27,7 +27,7 @@
  * window a test advances through and detach the device for the wrong reason.
  */
 
-import type { RecordingBand, RecordingConfig } from '@camstack/types'
+import type { RecordingBand, RecordingConfig } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { specRoot } from './spec-root.js'
 import { settleTurns, settleUntil } from './settle.js'

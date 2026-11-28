@@ -1,4 +1,4 @@
-import { SirenDurationUnit, type SirenOptions, SirenOptionsSource } from '@camstack/types'
+import { SirenDurationUnit, type SirenOptions, SirenOptionsSource } from '@dominevo/types'
 
 /**
  * The Hikvision siren is driven by holding an alarm input: the camera's

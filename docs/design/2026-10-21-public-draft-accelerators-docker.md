@@ -1,6 +1,6 @@
 # Public-docs draft: hardware accelerators with plain Docker (Coral USB / PCIe included)
 
-Status: DRAFT for the public docs (`camstack/docs`, D717/D822) — port it there;
+Status: DRAFT for the public docs (`dominevo/docs`, D717/D822) — port it there;
 this repo does not publish it. Companion drafts:
 `2026-10-21-public-draft-accelerators-proxmox.md` (Proxmox LXC) and
 `2026-10-21-public-draft-accelerators-desktop.md` (the desktop app).
@@ -45,14 +45,14 @@ the work off the CPU. It pays off most on weak CPUs and on busy nodes.
 | NVIDIA | the NVIDIA driver + NVIDIA Container Toolkit | `gpus: all` |
 | Coral USB | none (libusb) | `/dev/bus/usb` + cgroup rule `c 189:* rmw` |
 | Coral PCIe / M.2 | `gasket` + `apex` (DKMS, see below) | `/dev/apex_0`, `/dev/apex_1`, … |
-| Hailo | — | not supported by CamStack today |
+| Hailo | — | not supported by Dominevo today |
 
 ## Compose — uncomment what you have
 
 ```yaml
 services:
   camstack:
-    image: ghcr.io/camstack/camstack:intel-latest   # or amd-latest
+    image: ghcr.io/dominevo/dominevo:intel-latest   # or amd-latest
     restart: unless-stopped
     network_mode: host
     volumes:
@@ -116,7 +116,7 @@ The Edge TPU delegate is not in the image. Install it once, from inside the
 container; it lands under `/data/deps` and survives image updates:
 
 ```sh
-docker exec -u root camstack sh /data/addons/@camstack/addon-pipeline/python/edgetpu-install.sh
+docker exec -u root camstack sh /data/addons/@dominevo/addon-pipeline/python/edgetpu-install.sh
 ```
 
 It installs `ai-edge-litert` 2.1.6, the libedgetpu "std" delegate built for
@@ -136,7 +136,7 @@ card is there, the host driver is not) or `reason: device-not-accessible`
 
 ## Unraid template — uncomment what you have
 
-For `camstack/unraid-templates` (mirrored by hand, D717). Each block is one
+For `dominevo/unraid-templates` (mirrored by hand, D717). Each block is one
 `<Config>`; leave out what the box does not have.
 
 ```xml

@@ -4,9 +4,9 @@
  * restart does not send any section twice; the preview shows the split.
  */
 import { ncDurableRecordKinds } from '../nc-durable-record-kinds.js'
-import type { InMemoryRecords } from '@camstack/types'
+import type { InMemoryRecords } from '@dominevo/types'
 import { makeNcRecords, ncTable } from './support/nc-test-deps.js'
-import { DeviceType, NcRuleInputSchema, scheduleForSendTimes } from '@camstack/types'
+import { DeviceType, NcRuleInputSchema, scheduleForSendTimes } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import type { NcTargetRef } from '../dispatcher.js'

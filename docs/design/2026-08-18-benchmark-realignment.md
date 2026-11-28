@@ -35,25 +35,25 @@
 `packages/addon-benchmark/src/tabs/ModelsTab.tsx` is imported by nothing — <!-- drift-ok: fossil removed in Phase 3, cited here as history -->
 `page.tsx` has no import for it, and the only occurrence of the identifier in
 the package is its own declaration at `ModelsTab.tsx:85`. It is a model
-download/delete manager, which is the surface `@camstack/addon-model-studio`
+download/delete manager, which is the surface `@dominevo/addon-model-studio`
 owns today (`docs/reference/packages.md:49`), so it is a stale duplicate, not a
 missing feature.
 
 The page is a Module-Federation remote. `packages/addon-benchmark/vite.config.ts:71`
 declares `react`, `react-dom`, `@tanstack/react-query`, `@trpc/client`,
-`@trpc/react-query`, `@camstack/ui-library`, `@camstack/sdk` and
-`@camstack/types` as `singleton` with **`import: false`** — the remote ships no
+`@trpc/react-query`, `@dominevo/ui-library`, `@dominevo/sdk` and
+`@dominevo/types` as `singleton` with **`import: false`** — the remote ships no
 fallback copy and consumes the HOST's. `packages/addon-admin-ui/src/layouts/AddonPageLoader.tsx:12`
 confirms the host's React, react-query, tRPC and workspace packages are
 inherited, and `:213-221` shows the page is rendered inside the admin-ui
 provider tree with `system.trpcClient` passed as a prop.
 
 **The consequence that decides cost, and one trap.** Reusing a composite that
-`@camstack/ui-library` ALREADY exports costs one `camstack deploy
+`@dominevo/ui-library` ALREADY exports costs one `dominevo deploy
 packages/addon-benchmark`. Adding or changing a ui-library export is a framework
 change — and because of `import: false`, a benchmark page importing a NEW
 ui-library export type-checks locally and is `undefined` at runtime until a
-`@camstack/server` containing that ui-library is installed. Same failure shape
+`@dominevo/server` containing that ui-library is installed. Same failure shape
 as "your edit is probably not running", in a UI.
 
 ### 1.2 The structural mismatch (verified)
@@ -178,7 +178,7 @@ wherever the UI is put, until someone adds a routed leg.
 
 | Path | State |
 | --- | --- |
-| `packages/addon-benchmark/src/tabs/ModelsTab.tsx` | never imported; duplicates `@camstack/addon-model-studio` | <!-- drift-ok: fossil removed in Phase 3, cited here as history -->
+| `packages/addon-benchmark/src/tabs/ModelsTab.tsx` | never imported; duplicates `@dominevo/addon-model-studio` | <!-- drift-ok: fossil removed in Phase 3, cited here as history -->
 | `packages/addon-benchmark/src/page-types.ts` | zero importers (no `from './page-types'` anywhere in the tree) | <!-- drift-ok: fossil removed in Phase 3, cited here as history -->
 | `packages/addon-benchmark/src/types.ts` | 13 exported interfaces; only `AgentInfo` and `RuntimeOption` are imported — by `packages/addon-benchmark/src/components/AgentSelector.tsx:3` and `packages/addon-benchmark/src/components/RuntimeSelector.tsx:3` | <!-- drift-ok: fossil removed in Phase 3, cited here as history -->
 | `packages/addon-benchmark/src/components/AgentSelector.tsx`, `packages/addon-benchmark/src/components/ProgressBar.tsx` | no importer in the package | <!-- drift-ok: fossil removed in Phase 3, cited here as history -->
@@ -294,14 +294,14 @@ do not let it evaporate.
 ### Decision B — where does the capacity-ramp UI live?
 
 > **Option B1.** A new Benchmark tab ("Capacity"). Cost: one
-> `camstack deploy packages/addon-benchmark`. No framework train.
+> `dominevo deploy packages/addon-benchmark`. No framework train.
 >
 > **Option B2.** In admin-ui under `Pipeline → node`, beside
 > `NodeDeviceStepsMatrix`
 > (`packages/addon-admin-ui/src/components/pipeline/tabs/NodePipelineTab.tsx`,
 > `packages/addon-admin-ui/src/components/pipeline/tabs/NodeDeviceStepsMatrix.tsx`), <!-- drift-ok: superseded by the step inspector (D756) -->
 > where the `(node, deviceKey)` tuple already lives. Cost: an admin-ui change
-> ships inside the `@camstack/server` closure — a framework train / image
+> ships inside the `@dominevo/server` closure — a framework train / image
 > rebuild.
 
 **Recommendation: B1 first, B2 later or never**, with one caveat stated up
@@ -348,7 +348,7 @@ build with the `federation()` plugin, a `remoteEntry` filename and
 `packages/addon-admin-ui/vitest.config.ts` — a package that deliberately keeps a
 `vite.config.ts` and a separate `vitest.config.ts` side by side.
 
-**Verification.** `npm run test` names `@camstack/addon-benchmark` in its
+**Verification.** `npm run test` names `@dominevo/addon-benchmark` in its
 project list and reports the package's specs.
 
 **Mutation that must turn it red.** Break one assertion in
@@ -363,7 +363,7 @@ baseline, and do not "fix" them by narrowing the config until they are skipped.
 ### Phase 1 — delete the lies (cleanup; highest value ÷ effort)
 
 All five items are addon-local. **No codegen. One
-`camstack deploy packages/addon-benchmark`.**
+`dominevo deploy packages/addon-benchmark`.**
 
 | Item | Change | Files |
 | --- | --- | --- |
@@ -424,11 +424,11 @@ the PR.
 
 ### Phase 3 — remove the fossils (cleanup)
 
-**No codegen. One `camstack deploy packages/addon-benchmark`.**
+**No codegen. One `dominevo deploy packages/addon-benchmark`.**
 
 | Item | Action | Note |
 | --- | --- | --- |
-| P3.1 | delete `tabs/ModelsTab.tsx` | duplicate of `@camstack/addon-model-studio` |
+| P3.1 | delete `tabs/ModelsTab.tsx` | duplicate of `@dominevo/addon-model-studio` |
 | P3.2 | delete `page-types.ts` | zero importers |
 | P3.3 | delete the 11 unused interfaces in `types.ts` | keep `RuntimeOption`; keep `AgentInfo` only if P3.4 keeps `AgentSelector` |
 | P3.4 | delete `components/AgentSelector.tsx` and `components/ProgressBar.tsx` | no importer |
@@ -447,8 +447,8 @@ mismatch. Worth doing whichever way Decision A goes.
 
 | Item | Change | Files | Codegen | Ship |
 | --- | --- | --- | --- | --- |
-| P4.1 | add `deviceKey?: string` and `plane?: 'full' \| 'frame'` to `PipelineRunInputSchema`; forward both to `pipelineExecutor.runPipeline` | `benchmark-schemas.ts:206`, `benchmark-addon.ts:351` | **no** | `camstack deploy packages/addon-benchmark` |
-| P4.2 | add `deviceKey?` and `plane?` to `RunSyntheticBenchInputSchema`; forward on the slow path and on the cached fast path | `bench-actions.ts:68`, `pipeline-runner/index.ts:1398` and `:1222` | **no** | `camstack deploy packages/addon-pipeline` **on every node that must serve it** |
+| P4.1 | add `deviceKey?: string` and `plane?: 'full' \| 'frame'` to `PipelineRunInputSchema`; forward both to `pipelineExecutor.runPipeline` | `benchmark-schemas.ts:206`, `benchmark-addon.ts:351` | **no** | `dominevo deploy packages/addon-benchmark` |
+| P4.2 | add `deviceKey?` and `plane?` to `RunSyntheticBenchInputSchema`; forward on the slow path and on the cached fast path | `bench-actions.ts:68`, `pipeline-runner/index.ts:1398` and `:1222` | **no** | `dominevo deploy packages/addon-pipeline` **on every node that must serve it** |
 | P4.3 | make "live path" true: a run with `plane: 'frame'` + `deviceKey`, labelled as the root-plane dispatch it is; keep the full-tree run as a separate, differently-named button | `ImageTab.tsx:692` | no | benchmark deploy |
 
 Neither schema is a `*.cap.ts` — both are `defineCustomActions` catalogs, and
@@ -458,7 +458,7 @@ The cap already accepts both fields
 
 ⚠️ P4.2 is an `addon-pipeline` deploy, which is heavier than a benchmark deploy:
 it must reach each node whose devices the operator wants to bench, and the
-runner respawns. A successful `camstack deploy` is not evidence that a new
+runner respawns. A successful `dominevo deploy` is not evidence that a new
 action shape landed — verify it.
 
 **Mutation.** Remove the `deviceKey` spread ⇒ the forwarding spec goes red. The
@@ -485,7 +485,7 @@ run.
 5. The free-form tree survives as a secondary mode (Decision A's stated cost).
 
 ⚠️ Before writing a line: confirm each composite you plan to import is present
-in the *shipped* `@camstack/ui-library` the hub serves, not only in the tree.
+in the *shipped* `@dominevo/ui-library` the hub serves, not only in the tree.
 `import: false` turns a wrong guess into an `undefined` component at runtime,
 not a build error.
 
@@ -511,7 +511,7 @@ Under **B1** (recommended): a `Capacity` tab.
 
 | Item | Files | Codegen | Ship |
 | --- | --- | --- | --- |
-| P6.1 | `packages/addon-benchmark/src/tabs/CapacityTab.tsx` + a tab entry in `packages/addon-benchmark/src/page.tsx` | no | `camstack deploy packages/addon-benchmark` **and** `camstack deploy packages/addon-pipeline` on the hub | <!-- drift-ok: names benchmark code removed by D792 -->
+| P6.1 | `packages/addon-benchmark/src/tabs/CapacityTab.tsx` + a tab entry in `packages/addon-benchmark/src/page.tsx` | no | `dominevo deploy packages/addon-benchmark` **and** `dominevo deploy packages/addon-pipeline` on the hub | <!-- drift-ok: names benchmark code removed by D792 -->
 | P6.2 | (optional, later) node-routed custom actions so an agent can be ramped | `addon-call-gateway.ts:157`, `cap-providers.ts:1457`, `addons.cap.ts:246` | **yes** | framework train + image rebuild |
 
 The tab, minimally: a preflight stating node = hub and only hub until P6.2, the
@@ -535,11 +535,11 @@ before building a surface on top of it.
 | Phase | Kind | Codegen | How it goes live |
 | --- | --- | --- | --- |
 | 0 | prerequisite | no | merge (CI only) |
-| 1 | cleanup — delete a lie | no | `camstack deploy packages/addon-benchmark` |
+| 1 | cleanup — delete a lie | no | `dominevo deploy packages/addon-benchmark` |
 | 2 | prevention | no | merge (CI only) |
-| 3 | cleanup — fossils | no | `camstack deploy packages/addon-benchmark` |
-| 4.1 / 4.3 | new capability | no | `camstack deploy packages/addon-benchmark` |
-| 4.2 | new capability | no | `camstack deploy packages/addon-pipeline` **per node** |
+| 3 | cleanup — fossils | no | `dominevo deploy packages/addon-benchmark` |
+| 4.1 / 4.3 | new capability | no | `dominevo deploy packages/addon-benchmark` |
+| 4.2 | new capability | no | `dominevo deploy packages/addon-pipeline` **per node** |
 | 5 | blocked on A | no | benchmark deploy (a NEW ui-library export would make it a framework train) |
 | 6.1 | blocked on B | no | benchmark deploy |
 | 6.2 | optional | **yes** | framework train + image rebuild |
@@ -598,11 +598,11 @@ instead of quietly checking nothing — the failure mode that lets a guard rot
 into decoration.
 
 **A cleaner end state, when a framework train is due anyway.** Export the key as
-a named constant from `@camstack/types` beside `AudioResult`, have both writers
+a named constant from `@dominevo/types` beside `AudioResult`, have both writers
 and the UI import it, and reduce rule 3 to "no bare literal here" — the class
 becomes unrepresentable rather than merely detected. Because of `import: false`
-(§1.1) the benchmark page cannot use a new `@camstack/types` export until a
-`@camstack/server` carrying it is installed. Do not block Phase 1 on it.
+(§1.1) the benchmark page cannot use a new `@dominevo/types` export until a
+`@dominevo/server` carrying it is installed. Do not block Phase 1 on it.
 
 ### Wiring
 

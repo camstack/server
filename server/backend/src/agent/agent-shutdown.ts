@@ -8,7 +8,7 @@
  * next to the reason the shutdown started.
  */
 import * as fs from 'node:fs'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 export const SHUTDOWN_STEP_TIMEOUT_MS = 5_000
 export const SHUTDOWN_DEADLINE_MS = 15_000

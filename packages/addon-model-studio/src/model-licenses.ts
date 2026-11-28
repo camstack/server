@@ -1,14 +1,14 @@
 /**
  * Licence records for the catalogs Model Studio itself offers (D661): the
  * pinned plugin catalog YOLOv9 manifest and the plus catalog public catalog. Neither is
- * re-hosted by CamStack; a node downloads the file from the publisher.
+ * re-hosted by Dominevo; a node downloads the file from the publisher.
  *
  * Addons never import each other, so these duplicate records in
  * addon-pipeline's `registry/model-licenses.ts` for the same upstream names;
  * `scripts/check-catalog-licence.ts` fails when two records naming the same
  * upstream disagree on the weights licence or its URL.
  */
-import type { ModelLicense } from '@camstack/types'
+import type { ModelLicense } from '@dominevo/types'
 
 /**
  * plugin catalog's YOLOv9 ReLU detectors. Checked 2026-09-27 on

@@ -5,7 +5,7 @@
  * switch — its stored value is unknown, and an unknown is never an unchecked
  * switch.
  */
-import { Switch } from '@camstack/ui-library'
+import { Switch } from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 import { StepEffectLabel } from './StepEffectLabel'
 import { findNode, heldOffBy, nodeEffect, type StepSwitchRow } from './step-switches-model'

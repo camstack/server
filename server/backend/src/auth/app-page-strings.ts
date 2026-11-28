@@ -17,7 +17,7 @@ import {
   type AppPageLang,
   type AppStartRefusal,
   parseAppPageLang,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export type { AppPageLang }
 
@@ -77,11 +77,11 @@ export interface AppPageStrings {
 
 const EN: AppPageStrings = {
   confirm: {
-    title: 'Sign in the CamStack app',
-    heading: 'Sign in the CamStack app?',
-    signedInAsBefore: 'The CamStack app on this device will be signed in as ',
+    title: 'Sign in the Dominevo app',
+    heading: 'Sign in the Dominevo app?',
+    signedInAsBefore: 'The Dominevo app on this device will be signed in as ',
     signedInAsAfter: '.',
-    hint: 'Continue only if you just started this from the CamStack app.',
+    hint: 'Continue only if you just started this from the Dominevo app.',
     continueLabel: 'Continue',
     cancel: 'Cancel',
     noscript: 'JavaScript is required to continue.',
@@ -93,8 +93,8 @@ const EN: AppPageStrings = {
   },
   passkey: {
     title: 'Sign in with a passkey',
-    heading: 'Sign in to CamStack',
-    body: 'Use a passkey saved on this device to sign in to the CamStack app.',
+    heading: 'Sign in to Dominevo',
+    body: 'Use a passkey saved on this device to sign in to the Dominevo app.',
     button: 'Sign in with a passkey',
     cancel: 'Cancel',
     noscript: 'JavaScript is required to use a passkey.',
@@ -106,7 +106,7 @@ const EN: AppPageStrings = {
     reasons: APP_START_REFUSAL_MESSAGES,
   },
   consent: {
-    titlePrefix: 'CamStack · Authorize ',
+    titlePrefix: 'Dominevo · Authorize ',
     headingPrefix: 'Authorize ',
     signedInAs: 'Signed in as ',
     grantPrefix: 'This will grant: ',
@@ -125,11 +125,11 @@ const EN: AppPageStrings = {
 
 const IT: AppPageStrings = {
   confirm: {
-    title: "Accedi all'app CamStack",
-    heading: "Accedere all'app CamStack?",
-    signedInAsBefore: "L'app CamStack su questo dispositivo accederà come ",
+    title: "Accedi all'app Dominevo",
+    heading: "Accedere all'app Dominevo?",
+    signedInAsBefore: "L'app Dominevo su questo dispositivo accederà come ",
     signedInAsAfter: '.',
-    hint: "Continua solo se hai appena avviato l'operazione dall'app CamStack.",
+    hint: "Continua solo se hai appena avviato l'operazione dall'app Dominevo.",
     continueLabel: 'Continua',
     cancel: 'Annulla',
     noscript: 'Per continuare serve JavaScript.',
@@ -141,8 +141,8 @@ const IT: AppPageStrings = {
   },
   passkey: {
     title: 'Accedi con una passkey',
-    heading: 'Accedi a CamStack',
-    body: "Usa una passkey salvata su questo dispositivo per accedere all'app CamStack.",
+    heading: 'Accedi a Dominevo',
+    body: "Usa una passkey salvata su questo dispositivo per accedere all'app Dominevo.",
     button: 'Accedi con una passkey',
     cancel: 'Annulla',
     noscript: 'Per usare una passkey serve JavaScript.',
@@ -163,7 +163,7 @@ const IT: AppPageStrings = {
     },
   },
   consent: {
-    titlePrefix: 'CamStack · Autorizza ',
+    titlePrefix: 'Dominevo · Autorizza ',
     headingPrefix: 'Autorizza ',
     signedInAs: 'Accesso eseguito come ',
     grantPrefix: 'Concederà: ',

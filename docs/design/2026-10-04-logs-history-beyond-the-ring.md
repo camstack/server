@@ -17,7 +17,7 @@ Roadmap home: [roadmap.md § Logs history](../roadmap.md#logs-history--query-pas
 Admin **Logs → Viewer** reads only the in-memory ring behind `logs.query`.
 Operators already configure Winston / Loki (and peers) as destinations, but
 those sinks are write-only from the UI's point of view. Anything older than the
-ring requires leaving CamStack.
+ring requires leaving Dominevo.
 
 ## Decision (shape)
 
@@ -58,7 +58,7 @@ that looks like "no logs existed".
 
 1. **Winston** — read rotated files the destination already owns; parse into
    `LogStreamEntry`. Bound file bytes / time window.
-2. **Loki** — LogQL query using the same tag vocabulary CamStack already
+2. **Loki** — LogQL query using the same tag vocabulary Dominevo already
    ships; map streams → entries. Bound query cost (max streams / max lines).
 
 Further destinations (journald, S3 archives, …) implement the same interface.

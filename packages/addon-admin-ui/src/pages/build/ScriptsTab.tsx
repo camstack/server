@@ -30,7 +30,7 @@ import {
   type CoreBlockInput,
   coreBlockAddonId,
   coreBlockSourceKind,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   Badge,
   Button,
@@ -44,7 +44,7 @@ import {
   useSystem,
   type DataColumn,
   useUiText,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { blockSearchText, blockTags } from './tag-accessors'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { RotateCw, ScrollText, Trash2 } from 'lucide-react'

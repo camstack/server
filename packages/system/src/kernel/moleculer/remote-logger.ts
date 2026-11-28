@@ -1,5 +1,5 @@
 import type { ServiceBroker } from 'moleculer'
-import type { IScopedLogger, LogExtras, LogTags } from '@camstack/types'
+import type { IScopedLogger, LogExtras, LogTags } from '@dominevo/types'
 import { asBrokerLike, type BrokerLike } from './event-bus.js'
 
 // ─── Forked-runner remote-log pre-connect buffer ────────────────────────────

@@ -5,11 +5,11 @@
  * computed at (headroom, min sessions per device), and a `stale` answer
  * replaces the plan on screen instead of being written over.
  */
-import { selectOption } from '@camstack/ui-library/testing'
+import { selectOption } from '@dominevo/ui-library/testing'
 import * as jestDomMatchers from '@testing-library/jest-dom/matchers'
 import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import type { ReactNode } from 'react'
-import type { AutoTuneApplyResult, AutoTunePlan } from '@camstack/types'
+import type { AutoTuneApplyResult, AutoTunePlan } from '@dominevo/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 expect.extend(jestDomMatchers)
@@ -23,7 +23,7 @@ vi.mock('@tanstack/react-query', () => ({
   useQueryClient: () => ({ invalidateQueries: vi.fn() }),
 }))
 
-vi.mock('@camstack/ui-library', async (importOriginal) => {
+vi.mock('@dominevo/ui-library', async (importOriginal) => {
   const actual = await importOriginal<Record<string, unknown>>()
   const Pass = ({ children }: { readonly children?: ReactNode }) => <div>{children}</div>
   return {

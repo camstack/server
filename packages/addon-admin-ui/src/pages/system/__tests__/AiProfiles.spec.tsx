@@ -7,9 +7,9 @@
  * function cap with the model / vision / node columns read from each record's form values.
  */
 
-import { selectOption, selectOptionValues, waitForSelectRows } from '@camstack/ui-library/testing'
-import type { LlmDefault } from '@camstack/types'
-import { DETACHED_ROW_API, type LinkableInstance } from '@camstack/ui-library'
+import { selectOption, selectOptionValues, waitForSelectRows } from '@dominevo/ui-library/testing'
+import type { LlmDefault } from '@dominevo/types'
+import { DETACHED_ROW_API, type LinkableInstance } from '@dominevo/ui-library'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
@@ -45,8 +45,8 @@ vi.mock('react-i18next', () => ({
   }),
 }))
 
-vi.mock('@camstack/ui-library', async () => {
-  const real = await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+vi.mock('@dominevo/ui-library', async () => {
+  const real = await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return {
     ...real,
     useSystem: () => ({

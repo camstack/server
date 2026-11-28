@@ -23,7 +23,7 @@
  * nobody reached, and because a listing that waits for a UDP battery camera is
  * a spinner nobody can cancel (D224).
  */
-import { OPERATOR_WRITTEN_STALE_MS } from '@camstack/types'
+import { OPERATOR_WRITTEN_STALE_MS } from '@dominevo/types'
 
 /** A closed day's listing is immutable for this long. */
 export const CLOSED_DAY_TTL_MS = 24 * 60 * 60_000

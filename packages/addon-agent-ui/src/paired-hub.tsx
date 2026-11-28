@@ -6,7 +6,7 @@
  * hub-unlocked session - this card only renders behind that lock, so reaching
  * it already proves one of the two.
  */
-import { ConfirmActionButton, SettingRow } from '@camstack/ui-library'
+import { ConfirmActionButton, SettingRow } from '@dominevo/ui-library'
 import { Unlink } from 'lucide-react'
 import { useT } from './i18n'
 import { PAIRING_FORGET_PATH, describeFailure, groupFingerprint, sendPairing } from './pairing-api'

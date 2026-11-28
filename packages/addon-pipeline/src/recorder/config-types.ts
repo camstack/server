@@ -4,12 +4,12 @@ import {
   RecordingBandModeSchema,
   RecordingBandTriggersSchema,
   RecordingWeekdaySchema,
-} from '@camstack/types'
-import type { RecordingBand, RecordingBandMode, RecordingBandTriggers } from '@camstack/types'
+} from '@dominevo/types'
+import type { RecordingBand, RecordingBandMode, RecordingBandTriggers } from '@dominevo/types'
 
-// Re-export the canonical band schema pieces from `@camstack/types` under
+// Re-export the canonical band schema pieces from `@dominevo/types` under
 // recorder's historical public names so the two never drift (single source
-// of truth lives in `@camstack/types/interfaces/recording-config`).
+// of truth lives in `@dominevo/types/interfaces/recording-config`).
 export const WeekdaySchema = RecordingWeekdaySchema
 export const BandModeSchema = RecordingBandModeSchema
 export type BandMode = RecordingBandMode

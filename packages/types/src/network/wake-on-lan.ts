@@ -1,7 +1,7 @@
 /**
  * Wake-on-LAN: the pure part. Packet building and address arithmetic only, so
  * this file is safe in a browser bundle; the sender (a UDP socket) lives in
- * `wake-on-lan-node.ts`, exported from `@camstack/types/node`.
+ * `wake-on-lan-node.ts`, exported from `@dominevo/types/node`.
  */
 
 export const WOL_PORT_DEFAULT = 9

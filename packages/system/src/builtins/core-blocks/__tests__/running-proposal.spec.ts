@@ -4,7 +4,7 @@ import {
   type DeviceHistoryQueryPoint,
   type DeviceHistoryQueryResult,
   type DeviceHistorySeriesInfo,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { recordingLogger } from '../../composer/__tests__/fixtures.js'
 import { capSeriesKey } from '../../device-history/capture/capture-engine.js'

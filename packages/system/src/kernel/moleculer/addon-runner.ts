@@ -58,7 +58,7 @@ import type {
   ChildCustomActionCatalogs,
   ICamstackAddon,
   SecretsAccess,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { rehydrateSwitchesOnHubConnect } from './hub-connect-switches.js'
 import {
   errMsg,
@@ -66,7 +66,7 @@ import {
   isProviderOptionalMethodName,
   normalizeAddonInitResult,
   resolveSecretViewsIn,
-} from '@camstack/types/addon'
+} from '@dominevo/types/addon'
 import { resolveAddonClass } from '../addon-class-resolver.js'
 import { CustomActionRegistry } from '../custom-action-registry.js'
 import { installManifestNativeDeps } from '../deps/manifest-native-deps.js'
@@ -271,7 +271,7 @@ async function main(): Promise<void> {
 
   // Register the framework resolver BEFORE importing any addon: addons now live
   // in /data/addons (outside the framework node_modules), so their host-provided
-  // imports (@camstack/server/system, @camstack/types, …) must be redirected to
+  // imports (@dominevo/server/system, @dominevo/types, …) must be redirected to
   // CAMSTACK_FRAMEWORK_DIR. No-op in dev where workspace symlinks resolve them.
   registerFrameworkResolver(process.env['CAMSTACK_FRAMEWORK_DIR'])
 
@@ -300,14 +300,14 @@ async function main(): Promise<void> {
   // a sync API the storage cap can't satisfy across processes. We
   // build a local instance per addon-runner pointed at the same data
   // root the hub uses, so paths resolve identically.
-  // `FilesystemStorageProvider` lives in `@camstack/types/node` (the
-  // node-only sub-entry, lifted from `@camstack/server/system` in 2026-05 to break
+  // `FilesystemStorageProvider` lives in `@dominevo/types/node` (the
+  // node-only sub-entry, lifted from `@dominevo/server/system` in 2026-05 to break
   // the kernel ↔ core dependency cycle, then split off the root entry so
   // browser bundlers don't traverse `node:fs` / `node:path`).
-  let storageProvider: import('@camstack/types').IStorageProvider | undefined
+  let storageProvider: import('@dominevo/types').IStorageProvider | undefined
   let storageProviderError: unknown
   try {
-    const { FilesystemStorageProvider } = await import('@camstack/types/node')
+    const { FilesystemStorageProvider } = await import('@dominevo/types/node')
     storageProvider = new FilesystemStorageProvider(dataDir)
   } catch (err) {
     storageProviderError = err
@@ -392,7 +392,7 @@ async function main(): Promise<void> {
    */
   const addonDataPlanes = new Map<
     string,
-    readonly import('@camstack/types').AddonDataPlaneEndpoint[]
+    readonly import('@dominevo/types').AddonDataPlaneEndpoint[]
   >()
 
   /**

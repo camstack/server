@@ -3,7 +3,7 @@ import crypto from 'node:crypto'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import { deleteModelFromDisk, downloadFile } from '@camstack/server/system/addon-utils'
+import { deleteModelFromDisk, downloadFile } from '@dominevo/server/system/addon-utils'
 import { buildPluginCatalogRegistryDescriptor } from './plugin-catalog/plugin-catalog-import.js'
 import type {
   AddonInitResult,
@@ -16,7 +16,7 @@ import type {
   ImportModelBundleInput,
   ImportModelBundleResult,
   ProviderRegistration,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   addonPagesSourceCapability,
   appSourceCapability,
@@ -29,7 +29,7 @@ import {
   EventCategory,
   type ModelFormat,
   modelConvertCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { convertModel, type NodeHardware, recommendConvertNode } from './convert-orchestrator.js'
 import {
@@ -110,7 +110,7 @@ function resolveAddonPythonDir(): string {
   const candidates: string[] = []
   try {
     // Published package: resolve via node_modules
-    const pkgPath = require.resolve('@camstack/addon-model-studio/package.json')
+    const pkgPath = require.resolve('@dominevo/addon-model-studio/package.json')
     candidates.push(path.join(path.dirname(pkgPath), 'python'))
   } catch {
     // Not resolvable from here — fall through to __dirname-relative candidates
@@ -1179,7 +1179,7 @@ export class ModelStudioAddon extends BaseAddon<ModelStudioConfig> {
   }
 
   /**
-   * Delete one CamStack seed format on one node. Physically removes files from
+   * Delete one Dominevo seed format on one node. Physically removes files from
    * that node's modelsDir via `pipelineExecutor.deleteModel` + `nodePin`.
    */
   private async deleteSeedFromNode(input: {
@@ -1200,7 +1200,7 @@ export class ModelStudioAddon extends BaseAddon<ModelStudioConfig> {
       },
       nodePin(input.nodeId),
     )
-    this.ctx.logger.info('CamStack seed deleted from node disk', {
+    this.ctx.logger.info('Dominevo seed deleted from node disk', {
       meta: {
         modelId: input.modelId,
         format: input.format,

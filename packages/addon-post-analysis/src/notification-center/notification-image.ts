@@ -31,7 +31,7 @@
  *    subject's colour through its trail centres up to the frame shown — to
  *    every mode; on a `crop` it is mapped into the crop and clipped. The
  *    geometry is `buildSubjectPath` / `projectSubjectPath` from
- *    `@camstack/types`, the same the debug views draw.
+ *    `@dominevo/types`, the same the debug views draw.
  *
  * A mode that cannot be honoured ships `clean` and says why, once per record
  * (D400: "a branch that fails to produce media names the reason"): no subject
@@ -63,7 +63,7 @@ import {
   type SubjectPathRect,
   subjectPathSampleFromBox,
   subjectPathSvgPoints,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { NcOutboxEntry, NcOutboxPayload } from './outbox.js'
 import { isLinkedStillId } from './linked-stills.js'
 import { isStillShelfId } from './still-shelf.js'
@@ -154,7 +154,7 @@ export interface NcImageRenderRequest {
    * Absent or fewer than two points = no path.
    */
   readonly path?: readonly SubjectPathPoint[]
-  /** Class → palette hex. Absent: the bundled CamStack preset. */
+  /** Class → palette hex. Absent: the bundled Dominevo preset. */
   readonly paintClass?: (kind: string) => string
 }
 
@@ -296,7 +296,7 @@ export interface NcOverlayInput {
   readonly zones: readonly NcZonePolygon[]
   /** Path runs already projected into THIS picture's 0..1 space. */
   readonly paths?: ReadonlyArray<readonly SubjectPathPoint[]>
-  /** Class → palette hex. Absent: the bundled CamStack preset. */
+  /** Class → palette hex. Absent: the bundled Dominevo preset. */
   readonly paintClass?: (kind: string) => string
 }
 
@@ -634,7 +634,7 @@ export interface NcImageStageDeps {
     deviceId: number,
     zoneIds: readonly string[],
   ) => Promise<ReadonlyArray<ReadonlyArray<{ x: number; y: number }>>>
-  /** Class → palette hex. Absent: the bundled CamStack preset (D939). */
+  /** Class → palette hex. Absent: the bundled Dominevo preset (D939). */
   readonly paintClass?: (kind: string) => string
   /** The renderer — {@link renderNotificationImage} unless a spec counts calls. */
   readonly render?: (req: NcImageRenderRequest) => Promise<NcRenderedImage>

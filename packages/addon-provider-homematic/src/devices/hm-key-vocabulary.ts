@@ -1,4 +1,4 @@
-import type { EventVocabularyEntry, EventVocabularyKind } from '@camstack/types'
+import type { EventVocabularyEntry, EventVocabularyKind } from '@dominevo/types'
 import type { HmChannel, HmDevice } from 'nodehomematic'
 import { mapHmDeviceChannels } from '../homematic-mapping.js'
 import {

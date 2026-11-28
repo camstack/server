@@ -17,7 +17,7 @@ import {
   implementedMethodsOf,
   settleDeviceFeatures,
   valveCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { HaValveDevice } from '../devices/ha-valve-device.js'
 import { mapHaEntityToCamStack } from '../ha-domain-mapping.js'

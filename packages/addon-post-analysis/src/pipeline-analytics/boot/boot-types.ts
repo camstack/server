@@ -6,7 +6,7 @@
  * the addon module.
  */
 
-import type { AddonContext, MotionEventDraft } from '@camstack/types'
+import type { AddonContext, MotionEventDraft } from '@dominevo/types'
 import type { NcArtifactPublication } from '../../notification-center/artifact-plane.js'
 import { AudioMetricsProvider } from '../audio-metrics-provider.js'
 import { EventStore } from '../store/event-store.js'

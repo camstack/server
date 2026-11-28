@@ -7,7 +7,7 @@ import {
   deviceAdminLinkCapability,
   errMsg,
   type InferNativeProvider,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { ECOWITT_SYSTEM } from '../config.js'
 import { ecowittConnections } from '../ecowitt-client-registry.js'

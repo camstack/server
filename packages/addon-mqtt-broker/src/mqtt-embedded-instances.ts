@@ -12,7 +12,7 @@ import {
   RecordIntegrationInstances,
   type RecordsAccess,
   type ResolvedInstance,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   type MqttAclBody,
   mqttAclEntryKind,

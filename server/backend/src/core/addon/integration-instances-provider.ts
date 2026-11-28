@@ -2,7 +2,7 @@ import type {
   IIntegrationInstancesProvider,
   IntegrationInstance,
   IntegrationInstanceKind,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** Structural check for an addon's `integration-instances` provider. */
 export function isIntegrationInstancesProvider(

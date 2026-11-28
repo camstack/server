@@ -4,7 +4,7 @@
  *  B. a runner stopped for a restart writes its teardown offline into a ready group;
  *  C. the construction seed counted as an answer.
  */
-import type { IScopedLogger, StateRefreshPolicy } from '@camstack/types'
+import type { IScopedLogger, StateRefreshPolicy } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   childRefreshSource,

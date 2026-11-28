@@ -13,13 +13,13 @@
  * Disarm: stop merging `visibilityContext` into `renderedValues` in
  * FormBuilder -- the "analyzer is a source" case fails.
  */
-import type { ConfigUISchema } from '@camstack/types'
+import type { ConfigUISchema } from '@dominevo/types'
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
-vi.mock('@camstack/ui-library', async () => {
+vi.mock('@dominevo/ui-library', async () => {
   const actual =
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+    await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return {
     ...actual,
     ConfigFormField: ({ field }: { readonly field: { readonly key?: string } }) => (

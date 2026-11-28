@@ -21,7 +21,7 @@ import {
   type RecordKindHandle,
   RemoteLayoutPayloadSchema,
   type RemoteLayoutButton,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { readAllRows } from '../../../records/read-all-rows.js'
 import type { TemplateRowBody } from '../record-kinds.js'

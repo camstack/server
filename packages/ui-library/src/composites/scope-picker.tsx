@@ -31,7 +31,7 @@ import {
   type DeviceMetaLike,
   type DeviceSelector,
   type TokenScope,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 import { DeviceSelectorPicker, describeDeviceSelector } from './device-selector-picker'
 import { defaultUiText, useUiText, type UiTextFn } from '../contexts/ui-text'

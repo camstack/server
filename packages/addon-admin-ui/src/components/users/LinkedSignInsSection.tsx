@@ -1,7 +1,7 @@
 /**
  * "Linked sign-in accounts" — the profile half of D782.
  *
- * An OIDC login signs in ONLY the CamStack user its identity was linked to,
+ * An OIDC login signs in ONLY the Dominevo user its identity was linked to,
  * and only that user links it, from here: "Link <provider>" asks the hub for
  * a link intent bound to this session and runs the provider sign-in in a
  * popup window (D791) — the popup hands the outcome back and closes, and the
@@ -13,7 +13,7 @@
  * A link whose provider instance was removed, renamed or disabled stays
  * listed as unavailable and can still be removed.
  */
-import { trpc, useConfirm, Button } from '@camstack/ui-library'
+import { trpc, useConfirm, Button } from '@dominevo/ui-library'
 import { AlertCircle, CheckCircle, Link2, Loader2, Unlink } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { openSsoPopup, watchSsoPopup, withPopupFlag } from '../../lib/sso-popup'

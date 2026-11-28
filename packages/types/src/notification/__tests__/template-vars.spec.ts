@@ -48,7 +48,7 @@ describe('NC_TEMPLATE_VARS', () => {
   })
 
   it('the WIRE keeps the five pre-D637 kinds — installed viewers parse them strictly', () => {
-    // A viewer at @camstack/types 1.2.25x parses the served catalog with
+    // A viewer at @dominevo/types 1.2.25x parses the served catalog with
     // `z.enum(['detection','sensor','occupancy','sound','system'])`: one
     // `device-events` in one descriptor fails the whole `getTemplateCatalog`
     // parse and empties every {{var}} picker on the phone. The family split

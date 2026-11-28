@@ -14,7 +14,7 @@
  *     the original attack succeed.
  */
 import cookie from '@fastify/cookie'
-import { staticJwtSigningKey } from '@camstack/server/system'
+import { staticJwtSigningKey } from '@dominevo/server/system'
 import Fastify, { type FastifyInstance } from 'fastify'
 import { afterEach, describe, expect, it } from 'vitest'
 import { AuthService } from '../../core/auth/auth.service.js'

@@ -18,7 +18,7 @@ import { STAGING_DIR_NAME } from './recording-controller.js'
 
 /** The argv flag every recorder writer carries, used to narrow the table read. */
 export const SEGMENT_LIST_FLAG = '-segment_list'
-/** What the executable's name must contain. `camstack deploy`'s ffmpeg, a
+/** What the executable's name must contain. `dominevo deploy`'s ffmpeg, a
  *  jellyfin build and a system one all carry it. */
 export const DEFAULT_EXECUTABLE_MARKER = 'ffmpeg'
 

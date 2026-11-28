@@ -11,7 +11,7 @@
  */
 import { Socket } from 'node:net'
 import { Errors } from 'moleculer'
-import { classifyStoreError } from '@camstack/types'
+import { classifyStoreError } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { PeerAnsweredError } from '../transport/peer-answered-error.js'
 import { SocketChannel } from '../transport/socket-channel.js'

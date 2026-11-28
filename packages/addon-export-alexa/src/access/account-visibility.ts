@@ -27,7 +27,7 @@
  * scoped user's link is healed — the devices it should never have received
  * are queued for deletion like any other loss.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { AlexaAccessGate } from './access-gate.js'
 
 /** What a linked account may view, as persisted. */

@@ -42,7 +42,7 @@
 import type { Readable, Writable } from 'node:stream'
 
 import { BcMediaAnnexBDecoder, estimateVideoTiming } from '@apocaliss92/nodelink-js'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 import type { ReolinkClipRow } from './clip-catalog.js'
 import { CLIP_FETCH_BACKOFF_MS, CLIP_FETCH_MAX_ATTEMPTS } from './clip-mux.js'

@@ -6,8 +6,8 @@
  * asserts the exact `HttpRequestPlan` `buildRequest` emits — url / method /
  * headers / JSON body. No network is touched (discovery is not exercised here).
  */
-import type { Notification } from '@camstack/types'
-import { NotificationActionIconSchema, prepareNotification } from '@camstack/types'
+import type { Notification } from '@dominevo/types'
+import { NotificationActionIconSchema, prepareNotification } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { HttpRequestPlan, TargetConfig } from '../../adapters/adapter.js'
 import { zentikActionIcon, zentikAdapter } from '../../adapters/zentik.js'
@@ -61,7 +61,7 @@ describe('zentik descriptor', () => {
     expect(descriptor.caps.actionIcons).toBe(true)
     expect(descriptor.caps.sound).toBe(true)
     expect(descriptor.caps.ttl).toBe(true)
-    // No CamStack body truncate (operator: alarm/AI bodies must not clip).
+    // No Dominevo body truncate (operator: alarm/AI bodies must not clip).
     expect(descriptor.caps.bodyMaxLen).toBeGreaterThan(100_000)
     expect(descriptor.caps.levels.map((l) => [l.id, l.ordinal])).toEqual([
       ['SILENT', 1],
@@ -277,7 +277,7 @@ describe('zentik buildRequest — access-token auth', () => {
     expect((jsonBody(plan).title as string).length).toBe(100)
   })
 
-  it('does not truncate a long body (no CamStack bodyMaxLen cap)', () => {
+  it('does not truncate a long body (no Dominevo bodyMaxLen cap)', () => {
     const plan = planFor(TOKEN_CONFIG, notification({ body: 'b'.repeat(900) }))
     expect((jsonBody(plan).body as string).length).toBe(900)
   })

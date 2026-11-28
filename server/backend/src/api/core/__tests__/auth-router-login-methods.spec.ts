@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { AuthService } from '../../../core/auth/auth.service.js'
 import { createAuthRouter } from '../auth.router.js'
-import { staticJwtSigningKey } from '@camstack/server/system'
+import { staticJwtSigningKey } from '@dominevo/server/system'
 
 /**
  * D777 — `auth.listLoginMethods` offers a method only when its addon is

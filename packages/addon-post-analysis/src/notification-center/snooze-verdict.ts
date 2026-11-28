@@ -15,7 +15,7 @@
  * say so.
  */
 
-import type { NcSnooze } from '@camstack/types'
+import type { NcSnooze } from '@dominevo/types'
 import type { NcSnoozeGateInput } from './dispatcher.js'
 import { isSnoozeExempt, type ActionStepsOf, type SnoozeExemptRule } from './snooze-exempt.js'
 import type { SnoozeQuery } from './snooze-policy.js'

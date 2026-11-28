@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { IScopedLogger, LogExtras } from '@camstack/types'
+import type { IScopedLogger, LogExtras } from '@dominevo/types'
 import { KiaBridgeError, type KiaCommand, type KiaCommandResult } from '../kia-bridge.js'
 import { KiaBudgetExhaustedError } from '../kia-integration-manager.js'
 import { KiaVehicleHandle } from '../kia-device-handle.js'

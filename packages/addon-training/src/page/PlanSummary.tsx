@@ -1,5 +1,5 @@
 /** The planner's answer: split, estimate, warnings, refusal. Read-only. */
-import type { TrainingJobPlan } from '@camstack/types'
+import type { TrainingJobPlan } from '@dominevo/types'
 import { Trans, useT } from '../i18n/index.js'
 import { formatBytes, formatDuration } from './view-model.js'
 

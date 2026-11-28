@@ -15,7 +15,7 @@
  * unless the tier is read.
  */
 import { describe, expect, it } from 'vitest'
-import type { AddonContext, FrameHandle, IScopedLogger } from '@camstack/types'
+import type { AddonContext, FrameHandle, IScopedLogger } from '@dominevo/types'
 import { createNativeFrameTransport } from '../native-frame-transport.js'
 
 interface LoggedEntry {

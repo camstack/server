@@ -10,7 +10,7 @@
  *
  * The shell is the one response that has to differ: it tells the page where
  * it lives, and every URL the page composes derives from that
- * (`@camstack/ui-library` `lib/hub-mount.ts`). Assets are already relative
+ * (`@dominevo/ui-library` `lib/hub-mount.ts`). Assets are already relative
  * (`vite base: './'`), so they need nothing from us.
  *
  * Without the header nothing changes — the shell is served exactly as before.

@@ -22,7 +22,7 @@ import type {
   IScopedLogger,
   RecordKindHandle,
   RecordsAccess,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   canonicalStoredBlockTarget,
   CoreBlockSchema,
@@ -30,7 +30,7 @@ import {
   normalizeCoreBlockWrite,
   normalizeTags,
   resolveCoreBlockEntry,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { coreBlocksRecordKinds, type CoreBlockRowBodySchema } from './record-kinds.js'
 import type { z } from 'zod'
 

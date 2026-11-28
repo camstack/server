@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { render, screen, fireEvent, cleanup } from '@testing-library/react'
-import type { PipelineAddonSchema, DeviceStepConfig } from '@camstack/types'
+import type { PipelineAddonSchema, DeviceStepConfig } from '@dominevo/types'
 import { AgentStepEditor } from '../agent-step-editor'
 
 // A grouped catalog with TWO families: yolo26 (the FIRST family — what an

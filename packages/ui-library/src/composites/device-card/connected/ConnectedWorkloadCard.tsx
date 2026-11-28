@@ -1,4 +1,4 @@
-import { deriveWorkloadControls, type WorkloadAction } from '@camstack/types'
+import { deriveWorkloadControls, type WorkloadAction } from '@dominevo/types'
 import type { ReactElement } from 'react'
 import { useDeviceQuickDetailOpen } from '../../../contexts/device-quick-detail'
 import { useTrpcClient } from '../../../contexts/system-context'

@@ -2,7 +2,7 @@
 // Metrics data types — all Zod-inferred from the capability definition.
 // The legacy hand-authored interface was deleted in favor of single-source-
 // of-truth types on metricsProviderCapability. Import any of these from
-// '@camstack/types' the same as before.
+// '@dominevo/types' the same as before.
 // ===========================================================================
 
 import type { z } from 'zod'

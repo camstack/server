@@ -16,7 +16,7 @@
  * detection pipeline, so there is no cross-node ambiguity: this is THIS node.
  */
 import * as os from 'node:os'
-import type { KernelInferenceHardware, RunnerHardwareCapabilities } from '@camstack/types'
+import type { KernelInferenceHardware, RunnerHardwareCapabilities } from '@dominevo/types'
 
 /**
  * Summarise a local hardware probe into the runner's reported capabilities.

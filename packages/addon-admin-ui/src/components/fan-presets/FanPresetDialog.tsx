@@ -11,7 +11,7 @@ import type {
   FanPreset,
   FanPresetAxis,
   FanPresetState,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   Button,
   Dialog,
@@ -24,7 +24,7 @@ import {
   FormField,
   Input,
   useFanPresetsCapturePreset,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Camera, Loader2 } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'

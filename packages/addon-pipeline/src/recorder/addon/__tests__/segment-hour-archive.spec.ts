@@ -35,7 +35,7 @@
  * `adoptWalkedHour`. That repair is pinned in `segment-hour-seal.spec.ts`.
  */
 
-import type { IScopedLogger, LogExtras, SettingsStoreClient } from '@camstack/types'
+import type { IScopedLogger, LogExtras, SettingsStoreClient } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { selectEvictionsByBytes } from '../../evict-select.js'
 import { segmentRelPath } from '../../segment-path.js'

@@ -3,7 +3,7 @@ import {
   type InstanceUserFinder,
   fieldUserFinder,
   type ListedFieldRow,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** The addon whose integrations name an MQTT broker, and the field they keep that id in. */
 export const MQTT_HA_ADDON_ID = 'provider-mqtt-ha'

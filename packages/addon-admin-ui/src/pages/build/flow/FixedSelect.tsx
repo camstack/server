@@ -2,7 +2,7 @@
  * A `Select` held to a fixed width inside an inline sentence, where the
  * library select would otherwise stretch to the full row.
  */
-import { Select } from '@camstack/ui-library'
+import { Select } from '@dominevo/ui-library'
 import type { ComponentProps } from 'react'
 
 export type FixedSelectProps = Omit<ComponentProps<typeof Select>, 'className'> & {

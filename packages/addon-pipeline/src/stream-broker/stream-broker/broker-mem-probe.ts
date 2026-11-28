@@ -18,7 +18,7 @@
  */
 
 import { getHeapSpaceStatistics, getHeapStatistics } from 'node:v8'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { type SessionMemReading, sessionBackingBytes } from './session-mem.js'
 
 const MB = 1024 * 1024

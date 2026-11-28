@@ -75,7 +75,7 @@ collection called, who decided, and what stops the next one being wrong.**
 
 ```
 $ gh workflow list --all
-Release — CamStack (Docker + Electron)   active
+Release — Dominevo (Docker + Electron)   active
 Publish Packages                         active
 Prebuild shm-ring                        active
 CI                                       disabled_manually       ← 54 guards
@@ -695,7 +695,7 @@ rule: *"every guard in `scripts/` runs here"*.
 
 Each row states its **ship vehicle**, which is not the same for all of them:
 `packages/system` and `server/backend` changes ride the **train** (a published
-`@camstack/server`); `packages/addon-*` changes ship with **`camstack deploy`**;
+`@dominevo/server`); `packages/addon-*` changes ship with **`dominevo deploy`**;
 a table rename needs an offline **migration** at container stop.
 
 ### Phase 0 — turn the harness back on. **DONE, 2026-08-19.**
@@ -710,7 +710,7 @@ It went red immediately on the two violations in §0. That was the point.
 
 | # | Item | Cost | Vehicle | State |
 | --- | --- | --- | --- | --- |
-| 1.1 | `viewer-settings-snapshots` → `pipeline-analytics:viewer-settings-snapshots` | 1 row | `camstack deploy packages/addon-post-analysis` | **DONE** |
+| 1.1 | `viewer-settings-snapshots` → `pipeline-analytics:viewer-settings-snapshots` | 1 row | `dominevo deploy packages/addon-post-analysis` | **DONE** |
 | 1.2 | `device-manager:devices` — a class from the five that exist | 0 rows | train | **DONE** |
 
 **1.1, and the pattern every later rename reuses.** There is no rename on the
@@ -783,7 +783,7 @@ carefully, worth its own commit.
 
 A passkey is a **credential**: losing that one row locks a real login method out
 of a real account. Small does not mean safe. These two are addon-side, so they
-ship by `camstack deploy` and use the Phase-1 adoption pattern rather than an
+ship by `dominevo deploy` and use the Phase-1 adoption pattern rather than an
 offline script — but they still want a cold backup of the DB triple taken first,
 by the D182 procedure, because the cost of being wrong is not proportional to
 the row count.

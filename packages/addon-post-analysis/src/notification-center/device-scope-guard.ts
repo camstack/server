@@ -18,7 +18,7 @@
  * Not in Zod, for the reason `rule-family-guard.ts` gives: a cross-field
  * refine on the conditions schema would also run at LOAD.
  */
-import type { IScopedLogger, NcDelivery } from '@camstack/types'
+import type { IScopedLogger, NcDelivery } from '@dominevo/types'
 import {
   mergedFamilySubject,
   type NcRuleFamilyGuardContext,

@@ -2,12 +2,12 @@
  * The fake decode child and admitting pump the drain specs share (D652, D656):
  * the real pump + coordinator + registry, driven against a scripted child.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { vi } from 'vitest'
 import type { LocalFrameRegistry } from '../local-frame-registry.js'
 import type { ForkedChildLike } from '../session-decode-coordinator.js'
 import { type NativeCropRequester, startSessionDecodePump } from '../session-decode-pump.js'
-import type { DecodedFrame, FrameRef, FrameViewSpec } from '@camstack/types'
+import type { DecodedFrame, FrameRef, FrameViewSpec } from '@dominevo/types'
 import type { WorkerReply, WorkerRequest } from '../worker-protocol.js'
 import { testLease } from './test-lease-knobs.js'
 

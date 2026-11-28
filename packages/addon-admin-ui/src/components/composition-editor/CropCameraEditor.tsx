@@ -16,8 +16,8 @@ import {
   moveCropRect,
   resizeCropRect,
   seedCropRect,
-} from '@camstack/types'
-import { Button, SourceCropCanvas, type SourceCropDrag } from '@camstack/ui-library'
+} from '@dominevo/types'
+import { Button, SourceCropCanvas, type SourceCropDrag } from '@dominevo/ui-library'
 import { type ReactNode, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DEFAULT_SOURCE_ASPECT } from './helper-form-model'

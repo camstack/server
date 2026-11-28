@@ -18,7 +18,7 @@
 import { useId, useMemo, useState } from 'react'
 import { Activity } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
-import type { AudioMetricsHistory } from '@camstack/types'
+import type { AudioMetricsHistory } from '@dominevo/types'
 import {
   SectionCard,
   TimeSeriesChart,
@@ -26,7 +26,7 @@ import {
   useDeviceProxy,
   useSystem,
   type TimeSeriesDef,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useT } from '../../i18n/index.js'
 
 type WindowPreset = '5m' | '1h' | '24h'

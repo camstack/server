@@ -1,10 +1,10 @@
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IScopedLogger } from '@dominevo/types'
 import type {
   IDeviceAdoptionProvider,
   AdoptionStatus,
   AdoptionFilter,
   DiscoveredChildDevice,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { buildKiaCandidates, type KiaDiscoverable } from './kia-discovery.js'
 
 /**
@@ -50,7 +50,7 @@ export interface KiaAdoptionProviderDeps {
 /** The single granularity this provider advertises: whole-device adoption. */
 const DEVICES_FILTER: AdoptionFilter = { id: 'devices', label: 'Devices', isDefault: true } as const
 
-/** Build a `kiaVehicleId → CamStack deviceId` map for a single integration. */
+/** Build a `kiaVehicleId → Dominevo deviceId` map for a single integration. */
 async function adoptedMapForIntegration(
   integrationId: string,
   listAdoptedKia: KiaAdoptionProviderDeps['listAdoptedKia'],

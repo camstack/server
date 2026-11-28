@@ -10,7 +10,7 @@ import { t } from '../device/cap-vocabulary/l10n.js'
  * circulating drinking fountain: how much water is in the tank, how much the
  * pet drank, whether the pump runs.
  *
- * It has no native vendor provider of its own: a fountain reaches CamStack as
+ * It has no native vendor provider of its own: a fountain reaches Dominevo as
  * a container of loose entities (a pump switch, two number boxes, a "filter
  * changed" button), and an operator BUILDS the device from them — a composed
  * device of this type (D659, D967). Every method is therefore a forward to ONE

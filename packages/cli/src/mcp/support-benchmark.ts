@@ -19,14 +19,14 @@ import {
   type AcceleratorKind,
   type HardwareClassId,
   type HardwareInfo,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   runGated,
   type DryRunOutcome,
   type GatedResult,
   type GatedToolSpec,
   type HubClient,
-} from '@camstack/develop'
+} from '@dominevo/develop'
 import { z } from 'zod'
 import type { McpContext } from './context.js'
 import { benchmarkRowFor, type BenchmarkRow } from './ops-accelerators.js'

@@ -31,7 +31,7 @@ import {
   ROOT_FACE_REFINE_INPUT_PX,
   type RunDetailSubtreeInput,
   type SuppliedRootOutput,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { getStepDefinition } from '../detection-pipeline/registry/step-definitions.js'
 import { getSharp } from '../shared/lazy-sharp.js'
 import {

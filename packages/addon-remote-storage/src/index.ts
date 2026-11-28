@@ -1,5 +1,5 @@
 /**
- * @camstack/addon-remote-storage — public entry.
+ * @dominevo/addon-remote-storage — public entry.
  *
  * Ships FOUR addon manifest entries (sftp-storage / s3-storage /
  * webdav-storage / smb-storage), each registering one `storage-provider`

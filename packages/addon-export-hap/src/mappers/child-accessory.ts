@@ -18,8 +18,8 @@
  * Children without `switch` / `brightness` caps (status sensors,
  * IR LED, …) contribute no service.
  */
-import type { AddonContext } from '@camstack/types'
-import { DeviceType } from '@camstack/types'
+import type { AddonContext } from '@dominevo/types'
+import { DeviceType } from '@dominevo/types'
 
 import { buildChildSwitch } from './builders/child-switch.js'
 import { childServiceName } from './builders/service-names.js'

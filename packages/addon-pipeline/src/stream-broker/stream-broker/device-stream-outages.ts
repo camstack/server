@@ -9,7 +9,7 @@
  * it covers, and whether the offline event for it has been sent yet.
  */
 
-import type { BatteryPresence } from '@camstack/types'
+import type { BatteryPresence } from '@dominevo/types'
 import {
   STREAM_STALE_TIMEOUT_MS,
   type StaleStreamVerdict,

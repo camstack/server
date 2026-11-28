@@ -9,7 +9,7 @@ import {
   mountAddonPage,
   useUrlQueryParam,
   type AddonPageProps,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Box } from 'lucide-react'
 import { CatalogTab, parseCatalogSource, type CatalogSource } from './tabs/CatalogTab.js'
 import { ImportTab } from './tabs/ImportTab.js'
@@ -19,7 +19,7 @@ import { OperationModalProvider } from './components/OperationModalProvider.js'
 import { useT } from './i18n/index.js'
 import type { UploadPrefill } from './tabs/PlusCatalogSourceSections.js'
 
-// Catalog = CamStack/plugin catalog/plus catalog (plus catalog key lives under Catalog → plus catalog).
+// Catalog = Dominevo/plugin catalog/plus catalog (plus catalog key lives under Catalog → plus catalog).
 // Installed = inventory. Import = Custom. Logs = addon runner.
 const TABS = [{ id: 'catalog' }, { id: 'installed' }, { id: 'import' }, { id: 'logs' }] as const
 

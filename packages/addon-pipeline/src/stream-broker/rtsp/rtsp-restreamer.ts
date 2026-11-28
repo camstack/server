@@ -1,4 +1,4 @@
-import type { EncodedPacket, IScopedLogger } from '@camstack/types'
+import type { EncodedPacket, IScopedLogger } from '@dominevo/types'
 import { PacedRtpReplay } from '../paced-rtp-replay.js'
 import { preRollSpanBound } from '../pre-roll.js'
 import { AnnexBDeframer } from './annexb-deframer.js'

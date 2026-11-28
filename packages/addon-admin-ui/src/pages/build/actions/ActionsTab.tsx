@@ -7,7 +7,7 @@
  * read-only there. Selection lives in the URL (`?action=`, `?new=1`).
  */
 
-import type { ActionEntry } from '@camstack/types'
+import type { ActionEntry } from '@dominevo/types'
 import {
   Badge,
   type BadgeVariant,
@@ -22,7 +22,7 @@ import {
   useActionsUpdate,
   useItemFormUrl,
   TaggedDataTable,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { actionSearchText, actionTags } from '../tag-accessors'
 import { useQueryClient } from '@tanstack/react-query'
 import { ListChecks, Play, Plus } from 'lucide-react'

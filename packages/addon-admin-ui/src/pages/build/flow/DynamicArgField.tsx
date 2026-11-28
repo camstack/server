@@ -4,7 +4,7 @@
  * offer, and a list that could not be read, goes through unchanged.
  */
 
-import type { LooseVocabOpenArg, VocabLocale } from '@camstack/types'
+import type { LooseVocabOpenArg, VocabLocale } from '@dominevo/types'
 import { ArgField, type ScopeVariable } from './ArgField'
 import type { StepArgValue } from './command-vocab'
 import { isDynamicOffer } from './dynamic-offer'

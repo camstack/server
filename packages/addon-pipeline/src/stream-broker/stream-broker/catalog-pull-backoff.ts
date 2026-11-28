@@ -40,7 +40,7 @@
  * to bound. A 90-minute floor is not a spin: it is ~16 pulls a day for one
  * broken camera, against 2 880 before this.
  */
-import { BOOT_RECOVERY_BACKOFF_MS } from '@camstack/types'
+import { BOOT_RECOVERY_BACKOFF_MS } from '@dominevo/types'
 
 /**
  * Why a device's catalog is being reconciled.

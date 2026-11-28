@@ -13,7 +13,7 @@
  *                   point. NOT dropped: the caller keeps it pending and emits it
  *                   once the floor has passed, so a burst never loses its end.
  */
-import { type CapabilityHistoryField, HISTORY_DEFAULT_MIN_INTERVAL_MS } from '@camstack/types'
+import { type CapabilityHistoryField, HISTORY_DEFAULT_MIN_INTERVAL_MS } from '@dominevo/types'
 
 export interface RecordedState {
   readonly value: number

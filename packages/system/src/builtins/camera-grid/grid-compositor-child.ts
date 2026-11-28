@@ -44,8 +44,8 @@
  * The encoder is different: nothing downstream of it exists without it, so its
  * exit is the composition's exit, first time.
  */
-import { buildFfmpegArgs, errMsg } from '@camstack/types'
-import { FfmpegProcess } from '@camstack/types/node'
+import { buildFfmpegArgs, errMsg } from '@dominevo/types'
+import { FfmpegProcess } from '@dominevo/types/node'
 import type { Writable } from 'node:stream'
 import { buildGridSeedSpec, renderGridSeed } from './grid-canvas-seed.js'
 import { GridCompositor } from './grid-compositor.js'

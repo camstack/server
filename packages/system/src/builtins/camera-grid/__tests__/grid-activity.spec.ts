@@ -12,7 +12,7 @@ import {
   type FrameResult,
   type IEventBus,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { GridActivityForwarder, type GridActivityTarget } from '../grid-activity.js'
 
 const GRID_ID = 900

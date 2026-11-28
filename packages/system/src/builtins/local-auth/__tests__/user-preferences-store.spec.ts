@@ -14,7 +14,7 @@ import {
   createRecordsAccess,
   PREFERENCES_MAX_NAMESPACES,
   PREFERENCES_MAX_VALUE_BYTES,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { makeRecordsWorld } from '../../sqlite-storage/__tests__/support/records-world.js'
 import { localAuthPreferencesRecordKinds } from '../preferences-record-kinds.js'

@@ -9,7 +9,7 @@
  * LAN (current admin origin) and an optional public tunnel origin — it does
  * NOT build the path itself; prefer the row's `url` over reconstructing one.
  */
-import type { MediaFileKind } from '@camstack/types'
+import type { MediaFileKind } from '@dominevo/types'
 
 /**
  * kind → title. Keyed by the closed `MediaFileKind` union so a new media kind

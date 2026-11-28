@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { DeviceType, DeviceFeature, type IDeviceRuntimeState } from '@camstack/types'
+import { DeviceType, DeviceFeature, type IDeviceRuntimeState } from '@dominevo/types'
 import { HaContainerDevice } from '../ha-container-device.js'
 import { HaPowerMeterDevice } from '../ha-power-meter-device.js'
 import { HaEnumSensorDevice } from '../ha-enum-sensor-device.js'
@@ -9,7 +9,7 @@ import { deriveChildLayout } from '../../ha-container-reconcile.js'
 function buildCtx(
   persistedConfig: Record<string, unknown>,
   id = 1,
-): import('@camstack/types').DeviceContext {
+): import('@dominevo/types').DeviceContext {
   let runtimeStateRef: IDeviceRuntimeState | null = null
 
   return {
@@ -77,7 +77,7 @@ function buildCtx(
       addContext: vi.fn(),
       with: vi.fn(),
     },
-  } as unknown as import('@camstack/types').DeviceContext
+  } as unknown as import('@dominevo/types').DeviceContext
 }
 
 describe('HaContainerDevice.getAccessoryChildren', () => {
@@ -352,7 +352,7 @@ describe('HaContainerDevice.getAccessoryChildren', () => {
 })
 
 describe('HaContainerDevice.persistChildLayout (childLayout I/O + best-effort swallow)', () => {
-  function buildContainerCtx(): import('@camstack/types').DeviceContext {
+  function buildContainerCtx(): import('@dominevo/types').DeviceContext {
     return buildCtx({
       system: 'homeassistant',
       brokerId: 'broker-abc',

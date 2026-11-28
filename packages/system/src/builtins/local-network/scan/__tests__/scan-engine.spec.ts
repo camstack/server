@@ -1,4 +1,4 @@
-import type { DiscoveryMode, IScopedLogger, LocalInterface, LogExtras } from '@camstack/types'
+import type { DiscoveryMode, IScopedLogger, LocalInterface, LogExtras } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { buildPtrQuery } from '../dns-wire.js'
 import { runScan } from '../scan-engine.js'

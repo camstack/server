@@ -106,7 +106,7 @@ An unmarked guess in a document like this reads as fact, so there are none.
 
 | Marker | Means |
 | --- | --- |
-| **[measured]** | Read off the live hub on **2026-08-14**, container `CamStack`, `/data/addons-data/sqlite-settings/camstack.db`, opened `readonly: true` via `better-sqlite3`. Row counts, `dbstat` page sizes, `ops-log` detail strings, and `fs.existsSync` probes against `/recordings`. |
+| **[measured]** | Read off the live hub on **2026-08-14**, container `Dominevo`, `/data/addons-data/sqlite-settings/camstack.db`, opened `readonly: true` via `better-sqlite3`. Row counts, `dbstat` page sizes, `ops-log` detail strings, and `fs.existsSync` probes against `/recordings`. |
 | **[source]** | Read out of a file at the cited `file:line`. |
 | **[undetermined]** | Could not be established. Stated as a hole. |
 
@@ -208,7 +208,7 @@ tracks that lost only their root row.
   The zeros are a reporting contract. The orphan *census* is the evidence, not
   the zeros — but see §7.2, because a counter that is structurally always 0 is
   why nobody saw 18.9 GB accumulate.
-- **Not a stale deploy.** Hub runs `@camstack/addon-post-analysis` **1.2.75**
+- **Not a stale deploy.** Hub runs `@dominevo/addon-post-analysis` **1.2.75**
   against repo `1.2.76` **[measured]**, so the D61 cascade of 2026-08-06
  is live.
 - **Not the registry.** `buildTrackCascadeRegistry` (`index.ts:9800-9819`)

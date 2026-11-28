@@ -4,8 +4,8 @@
 
 | Manifest id | Entry | What it does |
 | --- | --- | --- |
-| `provider-homeassistant` | `src/addon.ts` | IMPORT — adopts HA devices into CamStack over the authenticated WebSocket. Owns the `broker` cap. |
-| `homeassistant-export` | `src/ha-export/ha-export.addon.ts` | EXPORT — pushes CamStack entities INTO Home Assistant over HTTP. |
+| `provider-homeassistant` | `src/addon.ts` | IMPORT — adopts HA devices into Dominevo over the authenticated WebSocket. Owns the `broker` cap. |
+| `homeassistant-export` | `src/ha-export/ha-export.addon.ts` | EXPORT — pushes Dominevo entities INTO Home Assistant over HTTP. |
 
 They ship together so the HA URL and token are not duplicated, and they run
 apart so a defect in export cannot respawn the runner that owns the devices
@@ -22,7 +22,7 @@ changing the entity map or the transport.
 <!-- camstack-skills-pointer:begin — written by `npx tsx scripts/skills/gen-skill-pointers.ts`; edit the generator, not this block -->
 Follow the skill; do not reconstruct the procedure (any agent can open the file):
 
-- A new or changed addon or manifest entry; `camstack deploy` → `camstack-addon` (`.claude/skills/camstack-addon/SKILL.md`)
+- A new or changed addon or manifest entry; `dominevo deploy` → `camstack-addon` (`.claude/skills/camstack-addon/SKILL.md`)
 <!-- camstack-skills-pointer:end -->
 
 ## Package notes — read before changing this package

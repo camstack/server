@@ -6,12 +6,12 @@
 
 import * as os from 'node:os'
 import * as path from 'node:path'
-import type { EnsureTlsResult } from '@camstack/server/system'
+import type { EnsureTlsResult } from '@dominevo/server/system'
 import {
   loadBootstrapConfig as loadKernelBootstrapConfig,
   readTlsEnabled,
-} from '@camstack/server/system'
-import { shortHostname } from '@camstack/types'
+} from '@dominevo/server/system'
+import { shortHostname } from '@dominevo/types'
 import type { BootstrapConfig } from '../core/config/config.schema'
 import { StorageLocationManager } from '../core/storage/storage-location-manager'
 
@@ -152,10 +152,10 @@ export async function setupInfra(bootstrapConfig: BootstrapConfig): Promise<Infr
   const tlsEnabled = readTlsEnabled(dataPath)
   console.log(`[Phase2c] HTTPS ${tlsEnabled ? 'on' : 'off (Network → Local access)'}`)
   if (tlsEnabled) {
-    // Use require() instead of import() — the ESM build of @camstack/server/system has
+    // Use require() instead of import() — the ESM build of @dominevo/server/system has
     // broken chunks with require("fs") when leaked .js files exist in core/src/.
     // CJS build works correctly and tsx supports require().
-    const core = require('@camstack/server/system') as typeof import('@camstack/server/system')
+    const core = require('@dominevo/server/system') as typeof import('@dominevo/server/system')
     // The certificate comes only from the admin UI (D726): the generated
     // local CA → leaf (D227), or an operator upload served verbatim.
     const extraSans = [...core.readExtraSans(dataPath)]

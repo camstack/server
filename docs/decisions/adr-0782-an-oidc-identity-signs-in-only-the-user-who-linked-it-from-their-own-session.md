@@ -27,11 +27,11 @@ An OIDC login named an identity `oidc:<instance>:<sub>` that had no user
 record, and `/api/auth/sso/finish` minted a FEDERATED session for it (D712):
 the instance's `defaultRole` decided whether it was admin, it carried no
 scopes or device grants, and it never appeared in the user list. Anyone the
-IdP would authenticate became a CamStack user with a role chosen per instance —
+IdP would authenticate became a Dominevo user with a role chosen per instance —
 including, with `defaultRole: admin`, an administrator nobody had created.
 
 The operator wants the opposite: an IdP account signs in only an existing
-CamStack user, and only because that user said so. Auto-creation, email
+Dominevo user, and only because that user said so. Auto-creation, email
 matching and group → role mapping were explicitly declined.
 
 Reading the finish also showed a second gap: a magic-link or OIDC login minted
@@ -61,7 +61,7 @@ other primary method (password, passkey-first) owes them.
 - **Login.** An OIDC bridge signs in the linked user through
   `mintForRecord` — the record decides role, scopes and devices. An unlinked
   identity goes back to the login page (`#error=sso-not-linked`) with "This
-  <provider> account is not linked to a CamStack user. Sign in normally and
+  <provider> account is not linked to a Dominevo user. Sign in normally and
   link it from your profile." The federated session and `defaultRole` are
   removed (`isAdmin` in an OIDC bridge is always false and ignored).
 - **Admins** see and remove a user's links (Users → Sign-in links); they
@@ -73,7 +73,7 @@ other primary method (password, passkey-first) owes them.
   passkey opted in as second factor, the finish returns a challenge
   (`#challenge=…&factors=…`) and the login page resumes at the factor step;
   only then is a session minted. The IdP's own MFA is not trusted to stand in
-  for CamStack's, because CamStack cannot see whether it happened.
+  for Dominevo's, because Dominevo cannot see whether it happened.
 
 ## Security review
 
@@ -120,8 +120,8 @@ other primary method (password, passkey-first) owes them.
   An OIDC login that worked as a federated session before now lands on the
   "not linked" message.
 - Magic-link and OIDC logins of a user with 2FA now ask for it.
-- The deploy set crosses packages: `@camstack/types` (cap + bridge claim),
-  `@camstack/system` (local-auth store, bridge claim carry-through), server,
+- The deploy set crosses packages: `@dominevo/types` (cap + bridge claim),
+  `@dominevo/system` (local-auth store, bridge claim carry-through), server,
   addon-auth and admin-ui. An addon-auth ahead of the hub loses `linkIntent`
   (the hub's bridge signer drops unknown claims), so the link fails closed.
 

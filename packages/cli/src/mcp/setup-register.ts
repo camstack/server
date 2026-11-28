@@ -39,7 +39,7 @@ import {
 } from './setup-streams.js'
 
 const TWO_STEP =
-  'Two steps: call without confirm_token for a dry-run diff and a one-shot token, then call again with the SAME arguments and that token. Needs an admin `camstack login`.'
+  'Two steps: call without confirm_token for a dry-run diff and a one-shot token, then call again with the SAME arguments and that token. Needs an admin `dominevo login`.'
 
 export function registerSetupReadTools(server: McpServer, ctx: McpContext): void {
   server.tool(
@@ -85,7 +85,7 @@ export function registerSetupReadTools(server: McpServer, ctx: McpContext): void
   )
   server.tool(
     'client_logs',
-    "Read-only. The viewer app's own log lines as the hub ingested them, oldest first: filter by since, deviceId, the viewer scope and level, and (hubs from this release tag them) user / platform / appVersion / sessionId. match says whether the lines were found by tag or, on an older hub, by the `[app:` text. A failed read is lines null with a reason, never an empty list. Needs an admin `camstack login`.",
+    "Read-only. The viewer app's own log lines as the hub ingested them, oldest first: filter by since, deviceId, the viewer scope and level, and (hubs from this release tag them) user / platform / appVersion / sessionId. match says whether the lines were found by tag or, on an older hub, by the `[app:` text. A failed read is lines null with a reason, never an empty list. Needs an admin `dominevo login`.",
     {
       since: z
         .string()
@@ -123,7 +123,7 @@ export function registerSetupReadTools(server: McpServer, ctx: McpContext): void
   )
   server.tool(
     'debug_report',
-    'Read-only support bundle for one problem: server and addon versions on every node; for a camera its streams (profile slots, derived streams with fps / bitrate / IDR / subscribers), churn in the window (slot changes, detection restarts, derived-encoder respawns) from logs tagged with the deviceId, recent tracks with media presence per kind (thumbnail / keyFrame) and the thumbnail URL shape the viewer requests. A read that failed is null with a reason, never 0. Secrets scrubbed. Needs an admin `camstack login`.',
+    'Read-only support bundle for one problem: server and addon versions on every node; for a camera its streams (profile slots, derived streams with fps / bitrate / IDR / subscribers), churn in the window (slot changes, detection restarts, derived-encoder respawns) from logs tagged with the deviceId, recent tracks with media presence per kind (thumbnail / keyFrame) and the thumbnail URL shape the viewer requests. A read that failed is null with a reason, never 0. Secrets scrubbed. Needs an admin `dominevo login`.',
     {
       deviceId: z.number().int().nonnegative().optional(),
       issue: z

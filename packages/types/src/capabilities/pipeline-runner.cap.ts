@@ -351,7 +351,7 @@ const detectionFpsField = { min: 1, max: 30, default: 10, step: 1 } as const
  *
  * Why not wider: `max` is 300 and raising it is TRAIN-BOUND, not addon-bound —
  * the host validates `attachCamera` against ITS copy of this schema, so a
- * runner asked for 600 would be rejected by the hub until a `@camstack/server`
+ * runner asked for 600 would be rejected by the hub until a `@dominevo/server`
  * carrying the wider bound is installed everywhere. 300 is the widest value
  * that ships with an addon deploy.
  */

@@ -1,4 +1,4 @@
-import { compositionSourceKey, type Composition } from '@camstack/types'
+import { compositionSourceKey, type Composition } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   HOST_ID,

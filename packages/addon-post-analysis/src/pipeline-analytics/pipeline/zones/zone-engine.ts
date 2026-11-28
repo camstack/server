@@ -1,4 +1,4 @@
-import type { Zone, ZoneRule } from '@camstack/types'
+import type { Zone, ZoneRule } from '@dominevo/types'
 import { normalizeToPixel, type BboxRect } from './geometry.js'
 import { bboxPolygonOverlap, maskPolygonOverlap } from './overlap.js'
 

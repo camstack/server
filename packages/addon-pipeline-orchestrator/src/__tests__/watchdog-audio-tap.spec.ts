@@ -14,8 +14,8 @@
  * to keep saying so. Losing the tap would have broken BOTH directions at once
  * — no proof of life, and no proof of death either.
  */
-import type { IEventBus, IScopedLogger, Unsubscribe } from '@camstack/types'
-import { EventCategory } from '@camstack/types'
+import type { IEventBus, IScopedLogger, Unsubscribe } from '@dominevo/types'
+import { EventCategory } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 
 import { makeIdleCameraSensors, makeIdleMotionSlice, makeLocalEventBus } from './e2e-helpers.js'

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { AppShell, DeviceSummaryCard } from '@camstack/ui-library'
+import { AppShell, DeviceSummaryCard } from '@dominevo/ui-library'
 import { Camera, Bell, LayoutGrid, Video, Cpu, Settings, Plus, RefreshCw } from 'lucide-react'
 
 // AppShell roots with `flex h-screen`; pin a fixed-height, clipped viewport so
@@ -16,7 +16,7 @@ const Frame = ({ children }: { children: ReactNode }) => (
 const Logo = () => (
   <div className="flex items-center gap-2 px-1 py-1">
     <div className="h-5 w-5 rounded bg-primary/80" />
-    <span className="text-xs font-semibold text-foreground">CamStack</span>
+    <span className="text-xs font-semibold text-foreground">Dominevo</span>
   </div>
 )
 

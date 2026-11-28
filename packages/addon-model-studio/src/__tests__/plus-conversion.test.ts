@@ -8,7 +8,7 @@
  * replacing would re-create the exact D208 silent-decode bug).
  */
 import { describe, expect, it } from 'vitest'
-import type { ModelCatalogEntry } from '@camstack/types'
+import type { ModelCatalogEntry } from '@dominevo/types'
 import { mergeConvertedFormats, runPlusConversions } from '../plus-catalog/plus-conversion.js'
 
 const baseEntry: ModelCatalogEntry = {

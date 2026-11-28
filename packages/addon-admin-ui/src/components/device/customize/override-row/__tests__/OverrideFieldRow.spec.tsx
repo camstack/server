@@ -2,7 +2,7 @@
  * A numeric override row offers from-device, formula, and convert-unit.
  * No free text input on the row itself.
  */
-import { DeviceType, type Composition, type DeviceInfo } from '@camstack/types'
+import { DeviceType, type Composition, type DeviceInfo } from '@dominevo/types'
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { type ReactNode } from 'react'
 import { describe, expect, it, vi } from 'vitest'
@@ -17,9 +17,9 @@ vi.mock('../../source-selector/SourceSelector', () => ({
   SourceSelector: () => null,
 }))
 
-vi.mock('@camstack/ui-library', async () => {
+vi.mock('@dominevo/ui-library', async () => {
   const actual =
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+    await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return {
     Input: actual.Input,
     ExpressionInput: actual.ExpressionInput,

@@ -49,7 +49,7 @@ A group is the one place a press-to-switch behaviour is written. A new trigger
 source needs a case in `group-triggers.ts`, the recipe builder and the editor.
 The migration converts only a plain switch command per button; anything else is
 named and left alone. A change to the generated block code (members in the
-trace) means a force-publish of `@camstack/server`.
+trace) means a force-publish of `@dominevo/server`.
 
 ## Enforcement
 

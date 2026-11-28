@@ -11,7 +11,7 @@ import {
   DeviceType,
   SOURCE_CAP_ACTIVE_FIELD,
   SOURCE_CAPS,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { pickerQueryTokens, pickerSearchText } from '../../../../pages/system/device-picker-model'
 import type { Known, QueryLike } from '../known'
 import i18n from '../../../../i18n/index'

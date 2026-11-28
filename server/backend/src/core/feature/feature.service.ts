@@ -1,3 +1,3 @@
-import { FeatureManager } from '@camstack/server/system'
+import { FeatureManager } from '@dominevo/server/system'
 
 export class FeatureService extends FeatureManager {}

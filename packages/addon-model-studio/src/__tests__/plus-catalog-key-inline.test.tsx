@@ -6,8 +6,8 @@
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import { selectOption, selectOptionValues } from '@camstack/ui-library/testing'
-import type { AddonPageProps } from '@camstack/ui-library'
+import { selectOption, selectOptionValues } from '@dominevo/ui-library/testing'
+import type { AddonPageProps } from '@dominevo/ui-library'
 import fixture from './testdata/plus-catalog-model-list.json'
 import { toPlusModelSummaries } from '../plus-catalog/plus-catalog-api.js'
 import { PlusCatalogSection } from '../tabs/PlusCatalogSourceSections.js'

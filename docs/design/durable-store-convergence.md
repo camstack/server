@@ -29,7 +29,7 @@ covers:
 > | `storage_locations` re-entry guard (§3.1, §7.10) | **FIXED.** `attachStore` now latches only after a successful `loadAll()`. Test neutralisation documented in the spec. |
 > | `share_view_tokens` full scan (§3.2, §7.10) | **FIXED**, and more generally: the backend now renders an index on a KV-blob field as an expression index matching the predicate, so any KV collection can be indexed. Asserted with `EXPLAIN QUERY PLAN`, not by checking the DDL ran. |
 > | June `preswap`/`rekey-bak` leftovers (§6.4, §7.7) | **DELETED** on the hub — 9.2 MB, 10 files (the 4 named plus their `-shm`/`-wal` companions). `PRAGMA quick_check` on the live DB: `ok`. |
-> | NVMe placement (§6.1, §7.6) | **RECORDED as D147**, with one finding that changes the answer: the Appdata Backup gap D96 predicted is REAL but arrives by a different mechanism — the path resolves fine; the `CamStack` container is on the plugin's skip list. Operator action, still open. |
+> | NVMe placement (§6.1, §7.6) | **RECORDED as D147**, with one finding that changes the answer: the Appdata Backup gap D96 predicted is REAL but arrives by a different mechanism — the path resolves fine; the `Dominevo` container is on the plugin's skip list. Operator action, still open. |
 > | `liveness` 263 → 730 (§6.6, §7.9) | **NOT A LEAK.** 728 device subjects + 2 nodes, 728 distinct deviceIds, zero unknown ids against 781 configured devices. Recorded in the ledger's docblock. |
 > | Phase 3 — framework home (§5) | **NOT DONE**, as recommended. Deferred and decoupled — and the price of deferring is now visible: a **third** byte-identical copy of the primitive landed in `addon-pipeline` on 2026-08-17, and `TWINS` in `scripts/check-durable-state-declared.ts` pins three pairs where it pinned one. |
 > | `device-mutes` / `texts` (§7.4) | Classified, not migrated — the recommended split. |
@@ -421,7 +421,7 @@ cannot adopt the primitive at all today:**
 - `packages/types/src/addon/durable-state.ts` is a **different mechanism**
   (a typed handle over one store key — no collection, no mirror, no boot load,
   no write mode). It is not a home for this.
-- Per D132, a framework home is not live until a whole `@camstack/server` is
+- Per D132, a framework home is not live until a whole `@dominevo/server` is
   published, which is the release-train reason the duplication exists.
 
 There is also a **door mismatch**: `DurableLedger` is typed against
@@ -488,7 +488,7 @@ judged in-contract).
 
 **No data migration, no format change, no downtime.** Each store keeps its
 declared columns and its keys; only the code that surrounds them changes. Ships
-via `camstack deploy packages/addon-post-analysis`.
+via `dominevo deploy packages/addon-post-analysis`.
 
 **Verification, per D132's own standard:** each migration must be paired with a
 test whose CONTROL fails when the seed/keep-RAM gate is neutralised. A green
@@ -499,7 +499,7 @@ failure mode this repo has hit twice.
 
 Not recommended as part of this work. It requires either a third byte-identical
 copy (and widening the guard from a 2-way to a 3-way comparison) or the real
-`types`/`system` extraction gated on a `@camstack/server` publish. **The three
+`types`/`system` extraction gated on a `@dominevo/server` publish. **The three
 stores it unblocks hold 3, 4 and 0 rows.** The one with real value is
 `cluster-node-history`'s read-per-write, and that can be fixed with a five-line
 RAM cache without the primitive at all.

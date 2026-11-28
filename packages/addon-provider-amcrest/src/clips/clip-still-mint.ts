@@ -43,7 +43,7 @@
  * `tags: { deviceId }`, the numeric id, because "why is 3836 worse than 1436"
  * is the only question anyone asks of these lines.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 import type { AmcrestClipRow } from './clip-search.js'
 import { type ClipStillCut, type ClipStillWindow, clipStillWindow } from './clip-still.js'

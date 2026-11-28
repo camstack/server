@@ -9,7 +9,7 @@ import { createHash } from 'node:crypto'
 import { createReadStream } from 'node:fs'
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import path from 'node:path'
-import type { AddonPeerBytes } from '@camstack/types'
+import type { AddonPeerBytes } from '@dominevo/types'
 import type { ArtifactPort } from './ports.js'
 
 const BUNDLE = 'bundle.tar'

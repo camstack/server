@@ -1,4 +1,4 @@
-import type { ClimateControlStatus, HvacMode } from '@camstack/types'
+import type { ClimateControlStatus, HvacMode } from '@dominevo/types'
 import type { HomeComBridgeWrite, HomeComBridgeZone } from './homecom-bridge.js'
 import {
   climateSliceFromCircuit,

@@ -85,7 +85,7 @@ Diagnostics added, passive: the GC census line carries the V8 trigger flag names
 every V8 space (the 415 MB boot floor needs attributing — not fixed here), and
 the `analytics resident heartbeat` carries `mapSizes`.
 
-### Passive verification plan (after the next `@camstack/server` + addon deploy)
+### Passive verification plan (after the next `@dominevo/server` + addon deploy)
 
 On `[mem] hub/pipeline-analytics`, over a day-time window against a day of the
 old build: major/minor GC ratio (`gc=majN/minM`, `gcMajPerMin`) down, and

@@ -48,7 +48,7 @@ parameter it carries is one the target already parses.
 1. The mapping is one pure module (`system-event-tap-url.ts`), reached only
    through `defaultTapUrl`, which stays the single owner of "where a tap
    lands". Addon updates → `/system/addons?node=`; a node's own
-   (`@camstack/server`) update → `/system/cluster?node=`; a camera that stopped
+   (`@dominevo/server`) update → `/system/cluster?node=`; a camera that stopped
    → `/devices/<id>?tab=stream-broker`. A kind with no page an operator must
    visit gets **no** link.
 2. Everything the link needs is **frozen on the outbox row** at intake — kind,
@@ -60,7 +60,7 @@ parameter it carries is one the target already parses.
    nothing — fall back to the default node **and say so**. A silent fallback is
    what turns a stale link into an operator reading the hub's list believing it
    is the agent's.
-4. The standard node selector is `NodePicker` (`@camstack/ui-library`), on
+4. The standard node selector is `NodePicker` (`@dominevo/ui-library`), on
    breadth of use — seven call sites across four packages against the Cluster
    page's one. The Cluster page's `NodeSelector` is **not** folded into it: its
    chips carry the per-node fleet answer (status, CPU, memory) and an offline

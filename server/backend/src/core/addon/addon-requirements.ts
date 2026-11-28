@@ -11,7 +11,7 @@ import {
   unmetRequirements,
   type PackageRequires,
   type UnmetRequirement,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { readInstalledAddonVersions } from './installed-addon-versions.js'
 import { resolveHubClosurePackageDir } from './package-dir-utils.js'
 
@@ -25,9 +25,9 @@ export function requiresOfVersionDoc(
   return parsed.success ? parsed.data : undefined
 }
 
-/** The version of the `@camstack/server` this process runs, or `null` when it cannot be read. */
+/** The version of the `@dominevo/server` this process runs, or `null` when it cannot be read. */
 export function readRunningServerVersion(): string | null {
-  const dir = resolveHubClosurePackageDir('@camstack/server')
+  const dir = resolveHubClosurePackageDir('@dominevo/server')
   if (dir === null) return null
   try {
     const raw: unknown = JSON.parse(fs.readFileSync(path.join(dir, 'package.json'), 'utf-8'))
@@ -60,9 +60,9 @@ export function unmetAddonRequirements(
   })
 }
 
-/** What the running `@camstack/server` requires of addon packages; empty when it declares none or cannot be read. */
+/** What the running `@dominevo/server` requires of addon packages; empty when it declares none or cannot be read. */
 export function readRunningServerAddonMinimums(): Readonly<Record<string, string>> {
-  const dir = resolveHubClosurePackageDir('@camstack/server')
+  const dir = resolveHubClosurePackageDir('@dominevo/server')
   if (dir === null) return {}
   try {
     const raw: unknown = JSON.parse(fs.readFileSync(path.join(dir, 'package.json'), 'utf-8'))

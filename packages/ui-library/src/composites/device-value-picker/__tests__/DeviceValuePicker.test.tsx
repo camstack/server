@@ -10,7 +10,7 @@
  *  - a picked device the hub no longer has stays, with Pick another / Remove;
  *  - a schema form keeps storing the device id as a string.
  */
-import type { DeviceSearchItem, DeviceSearchResult } from '@camstack/types'
+import type { DeviceSearchItem, DeviceSearchResult } from '@dominevo/types'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 

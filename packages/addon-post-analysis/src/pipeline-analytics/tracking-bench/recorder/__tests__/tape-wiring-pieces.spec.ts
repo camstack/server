@@ -28,7 +28,7 @@
  *  - (D681 follow-up) in `defaultTapeStatusCameras`, return the input unchanged:
  *    "default status drops an Off camera with nothing held" fails.
  */
-import type { Zone, ZoneRule } from '@camstack/types'
+import type { Zone, ZoneRule } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { makeLogRecorder } from '../../../__tests__/test-helpers.js'
 import type { FaceIdentityVerdict } from '../../../face-recognizer.js'

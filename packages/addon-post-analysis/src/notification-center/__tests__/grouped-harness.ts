@@ -12,10 +12,10 @@
  */
 
 import { makeFakeActions } from './fake-actions.js'
-import type { InMemoryRecords } from '@camstack/types'
+import type { InMemoryRecords } from '@dominevo/types'
 import { makeNcRecords, ncTable } from './support/nc-test-deps.js'
-import type { IScopedLogger, NcRuleInput, ObjectEvent, Track } from '@camstack/types'
-import { NcRuleInputSchema } from '@camstack/types'
+import type { IScopedLogger, NcRuleInput, ObjectEvent, Track } from '@dominevo/types'
+import { NcRuleInputSchema } from '@dominevo/types'
 import {
   type FakeSettingsStore,
   makeFakeSettingsStore,

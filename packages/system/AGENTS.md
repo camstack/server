@@ -1,12 +1,12 @@
 # packages/system — the kernel
 
-`@camstack/server` is the kernel and the builtins. It absorbed the former
+`@dominevo/server` is the kernel and the builtins. It absorbed the former
 `packages/kernel` and `packages/core` <!-- drift-ok: naming absorbed packages -->,
 so anything referring to those is stale.
 
 Host-provided: addons do **not** bundle this, they resolve it from the running
 closure ([D15](../../docs/decisions/adr-0015.md)). Which means a change here
-reaches a node only through a root-package install, never `camstack deploy` in
+reaches a node only through a root-package install, never `dominevo deploy` in
 production — see `docs/architecture/update-and-release.md`.
 
 ## Skills for this package
@@ -53,8 +53,8 @@ Follow the skill; do not reconstruct the procedure (any agent can open the file)
   `src/builtins/device-manager/device-aggregation.ts`.
   ([D12](../../docs/decisions/adr-0012.md))
 - **`better-sqlite3` lives in this package's own `node_modules`**, which is why
-  `@camstack/server` is an addon-bundle external rather than inlined.
-- **Never install this package under `/data/addons/@camstack/server/system`.** A
+  `@dominevo/server` is an addon-bundle external rather than inlined.
+- **Never install this package under `/data/addons/@dominevo/server/system`.** A
   leftover copy there silently wins over the published closure.
 - **`deleteLocation` occupancy is the class subtree**
   (`location-occupancy.ts`, D327) — not a `readdir` of a shared recordings
@@ -66,7 +66,7 @@ Follow the skill; do not reconstruct the procedure (any agent can open the file)
   and a repoint on overlapping roots refuse each other — `homekitClips` once
   deleted `eventMedia`'s files on a shared root.
 - **The live sqlite file is the sqlite-settings bind** (D328). sqlite3 only
-  with CamStack stopped, against the path `docker inspect` names.
+  with Dominevo stopped, against the path `docker inspect` names.
 - **A backup never copies the live database files.** `createArchive` asks the
   `owner` (→ `database-snapshot`) which databases it owns and for their
   snapshot, and archives `<db>.backup-snapshot`; a live database nobody owns,

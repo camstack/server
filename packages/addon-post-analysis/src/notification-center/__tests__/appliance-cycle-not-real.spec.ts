@@ -3,7 +3,7 @@
  * says it was aborted or a standby blip is not announced - and the drop is
  * logged. Wired through the real facts resolver over fake run ports.
  */
-import type { DeviceRun } from '@camstack/types'
+import type { DeviceRun } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { applianceCycleFactsFromRuns } from '../appliance-cycle-runs.js'
 import { NcDispatcher, type NcSendInput } from '../dispatcher.js'

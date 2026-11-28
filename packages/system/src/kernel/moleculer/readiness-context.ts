@@ -1,5 +1,5 @@
-import type { IEventBus, IScopedLogger } from '@camstack/types'
-import { ReadinessRegistry } from '@camstack/types/addon'
+import type { IEventBus, IScopedLogger } from '@dominevo/types'
+import { ReadinessRegistry } from '@dominevo/types/addon'
 import type { ServiceBroker } from 'moleculer'
 import { asBrokerLike } from './event-bus.js'
 
@@ -13,7 +13,7 @@ interface UdsReadinessClient {
   /** True once `start()` has connected and registered with the parent. */
   readonly isConnected: boolean
   /** Request the current readiness snapshot from the parent over UDS. */
-  requestReadinessSnapshot(): Promise<readonly import('@camstack/types').IReadinessRegistryRecord[]>
+  requestReadinessSnapshot(): Promise<readonly import('@dominevo/types').IReadinessRegistryRecord[]>
   /** Register a callback fired each time the client connects (including reconnects). */
   onConnected(cb: () => void): void
 }
@@ -88,7 +88,7 @@ function getOrInitReadinessRegistry(
     const hydrateFromHub = async (): Promise<void> => {
       try {
         const snapshot = await bkr.call<
-          readonly import('@camstack/types').IReadinessRegistryRecord[]
+          readonly import('@dominevo/types').IReadinessRegistryRecord[]
         >('$readiness.getSnapshot', {})
         if (Array.isArray(snapshot) && snapshot.length > 0) {
           const applied = registry.hydrate(snapshot)

@@ -4,7 +4,7 @@
  * `tokens` as an ARRAY of the exact grants written, and the migration's ports must converge
  * from any record state a failed earlier pass left.
  */
-import { createRecordsAccess, createSecretsAccess, type RecordKindHandle } from '@camstack/types'
+import { createRecordsAccess, createSecretsAccess, type RecordKindHandle } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   makeFakeKeychain,

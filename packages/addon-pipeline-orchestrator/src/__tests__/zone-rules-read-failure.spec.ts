@@ -16,7 +16,7 @@
  *     `listRulesChecked` is that way.
  */
 import { describe, it, expect, vi } from 'vitest'
-import type { ZoneRule, IScopedLogger, DeviceProxy } from '@camstack/types'
+import type { ZoneRule, IScopedLogger, DeviceProxy } from '@dominevo/types'
 import { ZoneRulesProvider } from '../zone-rules-provider.js'
 
 const packageRule: ZoneRule = {

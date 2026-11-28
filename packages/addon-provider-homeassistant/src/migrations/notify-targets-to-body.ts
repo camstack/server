@@ -15,7 +15,7 @@ import {
   retiredTargetsOver,
   targetRowPortsOver,
   type TargetRowPorts,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { HaTargetStore } from '../ha-notification-output.js'
 
 /** The retired kind, as it was declared; read by the migration and by the store while a row stays in it. */

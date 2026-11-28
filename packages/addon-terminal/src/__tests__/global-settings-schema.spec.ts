@@ -11,7 +11,7 @@
  *     (`btmArgs`, not `btm.args`). If a future refactor renames a key, every
  *     node's stored `<key>@<nodeId>` value silently reverts to the default.
  */
-import type { ConfigField, ConfigUISchema } from '@camstack/types'
+import type { ConfigField, ConfigUISchema } from '@dominevo/types'
 import { beforeAll, describe, expect, it, vi } from 'vitest'
 
 // `./pty.js` loads the `node-pty` native binding at import time, which a unit

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 
-import { deviceIntegrationResolver } from '@camstack/ui-library'
+import { deviceIntegrationResolver } from '@dominevo/ui-library'
 import { splitOrphanDevices, type OrphanSplitDevice } from '../devices-orphan-split'
 
 /** Registered integrations built from (id, addonId) pairs — the shape

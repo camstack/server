@@ -1,4 +1,4 @@
-import { IntegrationSessionReporter, type SessionLossReason } from '@camstack/types'
+import { IntegrationSessionReporter, type SessionLossReason } from '@dominevo/types'
 import { MqttHaBrokerFault } from './mqtt-ha-broker-session.js'
 
 export function classifyMqttHaSessionError(err: unknown): SessionLossReason | null {

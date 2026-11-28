@@ -1,6 +1,6 @@
 /**
  * The hub's ZIP writer against the MCP's reader (planning#729): `ZipSink` output
- * is read back through `summarizeLogsExport({ zip: true })` from @camstack/develop,
+ * is read back through `summarizeLogsExport({ zip: true })` from @dominevo/develop,
  * so a format drift between the two fails here. The reader's own specs build
  * their archives by hand.
  */
@@ -8,7 +8,7 @@ import { EventEmitter } from 'node:events'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import { summarizeLogsExport } from '@camstack/develop'
+import { summarizeLogsExport } from '@dominevo/develop'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { DownloadSink } from '../../../api/backup-download-pump.js'
 import { ZipSink } from '../zip-sink.js'

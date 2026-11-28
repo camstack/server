@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { MatterBrokerEntrySchema } from '../config.js'
 import { MatterBrokerStore } from '../matter-broker-store.js'
-import { makeInMemoryRecords } from '@camstack/types'
+import { makeInMemoryRecords } from '@dominevo/types'
 import { matterBrokersEntryKind } from '../broker-record-kinds.js'
 
 async function makeMatterRecords() {

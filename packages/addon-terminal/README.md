@@ -1,10 +1,10 @@
 # Terminal
 
-Interactive terminal sessions (pty + xterm) as a CamStack addon.
+Interactive terminal sessions (pty + xterm) as a Dominevo addon.
 
 <!-- readme:generated:start (derived from the manifest; edit outside this block) -->
 
-Package `@camstack/addon-terminal` on npm.
+Package `@dominevo/addon-terminal` on npm.
 
 ## What it provides
 
@@ -15,11 +15,11 @@ Package `@camstack/addon-terminal` on npm.
 
 - Placement: any-node.
 - Python: Terminal installs `python/requirements.txt` into its own environment.
-- A CamStack hub. An agent is used only where the placement above allows it.
+- A Dominevo hub. An agent is used only where the placement above allows it.
 
 ## Documentation
 
-- [docs/architecture/terminal.md](https://github.com/camstack/server/blob/main/docs/architecture/terminal.md)
+- [docs/architecture/terminal.md](https://github.com/dominevo/server/blob/main/docs/architecture/terminal.md)
 
 See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
 

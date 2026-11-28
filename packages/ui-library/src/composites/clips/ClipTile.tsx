@@ -21,7 +21,7 @@
 import { useEffect, useMemo, useRef, useState, type JSX } from 'react'
 import { useUiText } from '../../contexts/ui-text.js'
 import { hubPath } from '../../lib/hub-mount.js'
-import type { Clip } from '@camstack/types'
+import type { Clip } from '@dominevo/types'
 import { Badge } from '../../primitives/badge.js'
 import { Card } from '../../primitives/card.js'
 import { Skeleton } from '../../primitives/skeleton.js'

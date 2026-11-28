@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import { childEntityId, type ContainerChild } from '../container-primary'
-import { resolveContainerPrimaryChild } from '@camstack/types'
+import { resolveContainerPrimaryChild } from '@dominevo/types'
 
 /** Container 4127 declares nothing, so the heuristic still decides. */
 const CONTAINER_TYPE = DeviceType.Container

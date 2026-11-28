@@ -26,7 +26,7 @@ import type {
   PreparedTransactOp,
   RetrainFrame as WireFrame,
   RetrainVerdictSubject,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { RecoveredStill } from '../recorded-still.js'
 import type { RetrainAnnotationStore } from './retrain-annotation-store.js'
 import type {

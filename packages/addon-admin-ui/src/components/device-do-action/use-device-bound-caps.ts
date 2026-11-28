@@ -3,7 +3,7 @@
  * (Actions / Automations) so both surfaces ask the same question.
  */
 
-import { useSystem } from '@camstack/ui-library'
+import { useSystem } from '@dominevo/ui-library'
 import { type UseQueryResult, useQuery } from '@tanstack/react-query'
 
 const STALE_MS = 60_000

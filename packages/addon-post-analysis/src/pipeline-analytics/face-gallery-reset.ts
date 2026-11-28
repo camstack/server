@@ -49,7 +49,7 @@
  * `dryRun` analyses and chooses exactly as a real run (re-alignment included,
  * when asked) and writes nothing.
  */
-import { cosineSimilarity, type IScopedLogger } from '@camstack/types'
+import { cosineSimilarity, type IScopedLogger } from '@dominevo/types'
 import {
   FACE_ALIGNMENT_SCRFD_V2,
   type FaceAlignmentVersion,

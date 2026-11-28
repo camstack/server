@@ -5,12 +5,12 @@ import * as path from 'node:path'
 /**
  * Auto-inference plugin. Any workspace package whose `package.json`
  * declares `camstack.addons[]` automatically gains a `deploy` target
- * wired to `@camstack/nx-plugin:deploy` — no manual project.json edit
+ * wired to `@dominevo/nx-plugin:deploy` — no manual project.json edit
  * required.
  *
  * Register in `nx.json`:
  *   {
- *     "plugins": ["@camstack/nx-plugin"]
+ *     "plugins": ["@dominevo/nx-plugin"]
  *   }
  *
  * The matcher scans for `package.json` files (any depth) and inspects
@@ -34,7 +34,7 @@ export const createNodesV2: CreateNodesV2 = [
               name: projectName,
               targets: {
                 deploy: {
-                  executor: '@camstack/nx-plugin:deploy',
+                  executor: '@dominevo/nx-plugin:deploy',
                   dependsOn: ['build'],
                   cache: false,
                   options: {},

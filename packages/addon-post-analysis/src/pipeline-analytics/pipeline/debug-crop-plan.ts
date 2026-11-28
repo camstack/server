@@ -34,7 +34,7 @@
  * ## This is NOT a second crop-derivation authority (D52)
  *
  * `deriveDetailCropRect` derives the rectangle an ENRICHMENT step is measured
- * on — a CLIP/detail/face model input, in `@camstack/types`, called only by the
+ * on — a CLIP/detail/face model input, in `@dominevo/types`, called only by the
  * RUNNER. Nothing here reaches a model, a vector index or a gallery tile: a
  * debug crop is a picture for a human, written only for a track an operator has
  * already marked, and read only by that operator. Same standing as

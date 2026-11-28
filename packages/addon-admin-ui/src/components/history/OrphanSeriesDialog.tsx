@@ -8,7 +8,7 @@
  * no-longer-orphan series is absent from it by definition).
  */
 import { useMemo, useState, type ReactNode } from 'react'
-import type { DeviceHistoryOrphanList } from '@camstack/types'
+import type { DeviceHistoryOrphanList } from '@dominevo/types'
 import {
   Button,
   DataTable,
@@ -20,7 +20,7 @@ import {
   DialogTitle,
   TABLE_SCROLL_MAX_H,
   useConfirm,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Loader2, RefreshCw, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import {

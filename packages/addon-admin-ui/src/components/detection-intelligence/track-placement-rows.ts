@@ -8,7 +8,7 @@
  * track names no placement — a row written before the field is unknown, and
  * rendering it as a node would be a confident lie.
  */
-import type { Track, TrackPlacement } from '@camstack/types'
+import type { Track, TrackPlacement } from '@dominevo/types'
 
 export type TrackPlacementRowKind = 'detected' | 'opened' | 'closed'
 

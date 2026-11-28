@@ -4,7 +4,7 @@ import {
   type HubIdentity,
   Rademacher,
 } from '@apocaliss92/noderademacher'
-import { errMsg, type IScopedLogger, type StateRefreshReason } from '@camstack/types'
+import { errMsg, type IScopedLogger, type StateRefreshReason } from '@dominevo/types'
 import type { RademacherConnectionConfig } from './config.js'
 
 /** Status of a single Rademacher hub connection. */

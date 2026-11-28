@@ -8,8 +8,8 @@ export const OS_VERSION = '18.3.1'
 export const USER_AGENT = `AmazonWebView/Amazon Alexa/${APP_VERSION}/iOS/${OS_VERSION}/iPhone`
 /** The Alexa app device type a registration presents as. */
 export const DEVICE_TYPE = 'A2IVLV5VM2W81'
-/** The registration name a CamStack sign-in records on the Amazon account. */
-export const DEFAULT_DEVICE_APP_NAME = 'CamStack'
+/** The registration name a Dominevo sign-in records on the Amazon account. */
+export const DEFAULT_DEVICE_APP_NAME = 'Dominevo'
 /** The name a registration made before the name was recorded refreshes under. */
 export const LEGACY_DEVICE_APP_NAME = 'ioBroker Alexa2'
 

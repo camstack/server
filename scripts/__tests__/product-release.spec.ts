@@ -7,7 +7,7 @@ import {
 
 /**
  * The product release (image tag, desktop app, GitHub release) is its own
- * line, starting at 0.1.0 beta. It is not `@camstack/server`'s version.
+ * line, starting at 0.1.0 beta. It is not `@dominevo/server`'s version.
  */
 describe('deriveProductVersion', () => {
   const aligned = { fileVersion: '0.1.0', desktopVersion: '0.1.0' }
@@ -24,15 +24,15 @@ describe('deriveProductVersion', () => {
     })
     expect(result.problems).toEqual([])
     expect(result.version).toBe('0.1.0')
-    expect(result.releaseName).toBe('CamStack 0.1.0 beta')
+    expect(result.releaseName).toBe('Dominevo 0.1.0 beta')
     expect(result.isRelease).toBe(true)
     expect(result.tag).toBe('v0.1.0')
   })
 
   it('labels beta only while the major is 0', () => {
-    expect(productReleaseName('0.2.1')).toBe('CamStack 0.2.1 beta')
-    expect(productReleaseName('1.0.0')).toBe('CamStack 1.0.0')
-    expect(productReleaseName('1.2.621')).toBe('CamStack 1.2.621')
+    expect(productReleaseName('0.2.1')).toBe('Dominevo 0.2.1 beta')
+    expect(productReleaseName('1.0.0')).toBe('Dominevo 1.0.0')
+    expect(productReleaseName('1.2.621')).toBe('Dominevo 1.2.621')
   })
 
   it('a workflow_dispatch bumps the committed product version and does not touch npm', () => {
@@ -47,7 +47,7 @@ describe('deriveProductVersion', () => {
     })
     expect(result.problems).toEqual([])
     expect(result.version).toBe('0.1.1')
-    expect(result.releaseName).toBe('CamStack 0.1.1 beta')
+    expect(result.releaseName).toBe('Dominevo 0.1.1 beta')
     expect(result.isRelease).toBe(false)
     expect(result.tag).toBe('')
   })
@@ -64,7 +64,7 @@ describe('deriveProductVersion', () => {
     })
     expect(result.problems).toEqual([])
     expect(result.version).toBe('0.1.0')
-    expect(result.releaseName).toBe('CamStack 0.1.0 beta')
+    expect(result.releaseName).toBe('Dominevo 0.1.0 beta')
     expect(result.isRelease).toBe(true)
     expect(result.tag).toBe('v0.1.0')
   })

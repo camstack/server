@@ -14,78 +14,78 @@ The single root package every node boots. Hub vs agent is `CAMSTACK_ROLE`, not a
 
 | Package | Directory | Version | Reaches a node via | What it is |
 | --- | --- | --- | --- | --- |
-| `@camstack/server` | `server/backend` | 1.2.974 | the update itself | — |
+| `@dominevo/server` | `server/backend` | 0.1.0 | the update itself | — |
 
 ## Framework (4)
 
-Host-provided: addons do NOT bundle these, they resolve them from the running closure. Consequence worth knowing: a framework change reaches a node ONLY through a root-package install (`applyServerUpdate` / "Update all"), pinned to the exact version the published `@camstack/server` carries. `camstack deploy` cannot ship it.
+Host-provided: addons do NOT bundle these, they resolve them from the running closure. Consequence worth knowing: a framework change reaches a node ONLY through a root-package install (`applyServerUpdate` / "Update all"), pinned to the exact version the published `@dominevo/server` carries. `dominevo deploy` cannot ship it.
 
 | Package | Directory | Version | Reaches a node via | What it is |
 | --- | --- | --- | --- | --- |
-| `@camstack/develop` | `packages/develop` | 0.1.60 | `@camstack/server` closure | CamStack developer tooling — catalogue, scaffold, validate, and example lookup shared by the CLI and MCP server. |
-| `@camstack/sdk` | `packages/sdk` | 1.2.160 | `@camstack/server` closure | — |
-| `@camstack/types` | `packages/types` | 1.2.644 | `@camstack/server` closure | Shared types, interfaces, and model catalogs for the CamStack detection ecosystem |
-| `@camstack/ui-library` | `packages/ui-library` | 1.2.517 | `@camstack/server` closure | — |
+| `@dominevo/develop` | `packages/develop` | 0.1.0 | `@dominevo/server` closure | Dominevo developer tooling — catalogue, scaffold, validate, and example lookup shared by the CLI and MCP server. |
+| `@dominevo/sdk` | `packages/sdk` | 0.1.0 | `@dominevo/server` closure | — |
+| `@dominevo/types` | `packages/types` | 0.1.0 | `@dominevo/server` closure | Shared types, interfaces, and model catalogs for the Dominevo detection ecosystem |
+| `@dominevo/ui-library` | `packages/ui-library` | 0.1.0 | `@dominevo/server` closure | — |
 
 ## Addons (53)
 
-Each declares one or more `camstack.addons[]` entries and lives in `<dataDir>/addons/`. Updated with `camstack deploy` (or the Addons page) — NOT by a root-package update. The ones marked _image-seeded_ are also dependencies of the root package: the image copies them into the addons dir on first boot, after which the addons-dir copy is what loads and the closure copy is inert.
+Each declares one or more `camstack.addons[]` entries and lives in `<dataDir>/addons/`. Updated with `dominevo deploy` (or the Addons page) — NOT by a root-package update. The ones marked _image-seeded_ are also dependencies of the root package: the image copies them into the addons dir on first boot, after which the addons-dir copy is what loads and the closure copy is inert.
 
 | Package | Directory | Version | Reaches a node via | What it is |
 | --- | --- | --- | --- | --- |
-| `@camstack/addon-admin-ui` | `packages/addon-admin-ui` | 1.2.765 | addons dir (image-seeded) | Admin UI — Vite frontend build and server-side addon |
-| `@camstack/addon-agent-ui` | `packages/addon-agent-ui` | 1.2.452 | addons dir (image-seeded) | Agent UI — lightweight status dashboard served by every agent node |
-| `@camstack/addon-ai` | `packages/addon-ai` | 0.4.185 | addons dir | AI addon for CamStack — the `llm` collection provider (cloud, LAN, and camstack-managed local llama.cpp profiles) plus the per-node `llm-runtime` managed executor. |
-| `@camstack/addon-auth` | `packages/addon-auth` | 1.2.184 | addons dir (image-seeded) | Authentication bundle — OIDC and WebAuthn/passkey. Multi-entry npm package shipping 2 addons under a single bundle; each addon keeps its own id, capabilities, and runner. |
-| `@camstack/addon-benchmark` | `packages/addon-benchmark` | 1.2.318 | addons dir (image-seeded) | Benchmark page: measure what one node can carry (the orchestrator's node benchmark), inspect one image or one sound |
-| `@camstack/addon-cloudflare` | `packages/addon-cloudflare` | 1.2.165 | addons dir | Cloudflare bundle — Tunnel (network-access) + TURN relay (turn-provider). Multi-entry npm package shipping 2 addons under a single bundle. |
-| `@camstack/addon-decoder-nodeav` | `packages/addon-decoder-nodeav` | 1.2.150 | addons dir (image-seeded) | Standalone in-process node-av decoder addon for CamStack |
-| `@camstack/addon-export-alexa` | `packages/addon-export-alexa` | 1.2.210 | addons dir | Alexa Smart Home Skill export — hub-side OAuth provider + directive handler. The companion AWS Lambda forwards Alexa directives to this addon's /addon/export-alexa/directive endpoint. |
-| `@camstack/addon-export-google` | `packages/addon-export-google` | 0.1.140 | addons dir | Google Home Export — hub-side smart-home fulfillment (SYNC / QUERY / EXECUTE / DISCONNECT) for the non-camera fleet, served over the hub's own OAuth account link. No Google credential is stored, sent or required. |
-| `@camstack/addon-export-hap` | `packages/addon-export-hap` | 1.2.212 | addons dir | HomeKit (HAP) exporter for CamStack devices. Publishes each exposed device as its own HomeKit accessory: cameras and doorbells with SRTP streaming, HomeKit Secure Video, motion, two-way audio, PTZ and battery; switches, lights, locks and sensors through a capability→service table. |
-| `@camstack/addon-google-services` | `packages/addon-google-services` | 0.2.54 | addons dir | Google — Google brokers (OAuth2): Calendar as calendar-source, Gmail send as smtp-provider. |
-| `@camstack/addon-import-alexa` | `packages/addon-import-alexa` | 0.2.210 | addons dir | Alexa device-import provider for CamStack — imports the smart-home devices in a user's Alexa account via the unofficial alexa-remote2 cookie/token client (the inverse of the Alexa exporter) |
-| `@camstack/addon-matter-broker` | `packages/addon-matter-broker` | 0.2.183 | addons dir | Matter broker addon for CamStack — owns a Matter fabric (commissioning + the long-lived controller) via the matter.js controller and brokers commissioned Matter nodes into CamStack |
-| `@camstack/addon-model-studio` | `packages/addon-model-studio` | 1.1.350 | addons dir | Custom detection model registry, conversion & distribution for CamStack |
-| `@camstack/addon-mqtt-broker` | `packages/addon-mqtt-broker` | 1.2.162 | addons dir | MQTT broker registry addon for CamStack — manages external broker entries + an optional embedded aedes broker. Consumers spin up their own `mqtt.js` clients via the `mqtt-broker` cap. |
-| `@camstack/addon-notifiers` | `packages/addon-notifiers` | 1.2.643 | addons dir (image-seeded) | System notifiers addon for CamStack — a `notification-output` collection provider hosting per-kind notifier adapters (ntfy, pushover, gotify, telegram, discord, webhook, zentik). |
-| `@camstack/addon-osd-manager` | `packages/addon-osd-manager` | 0.1.324 | addons dir | Binds camera on-screen-display slots to live state and recognitions |
-| `@camstack/addon-pipeline` | `packages/addon-pipeline` | 1.2.692 | addons dir (image-seeded) | Pipeline bundle — runner, detection, motion, audio + stream broker. Multi-entry npm package shipping pipeline addons under a single bundle. |
-| `@camstack/addon-pipeline-orchestrator` | `packages/addon-pipeline-orchestrator` | 1.2.731 | addons dir (image-seeded) | Hub-side camera-to-agent load balancer — tracks runner capacity and dispatches attachCamera calls to the optimal pipeline-runner instance |
-| `@camstack/addon-post-analysis` | `packages/addon-post-analysis` | 1.2.734 | addons dir (image-seeded) | Post-Analysis bundle — enrichment, embedding-encoder, pipeline-analytics. Multi-entry npm package shipping addons that consume pipeline output. |
-| `@camstack/addon-provider-amcrest` | `packages/addon-provider-amcrest` | 0.2.179 | addons dir | Amcrest/Dahua camera device provider addon for CamStack — Dahua CGI over HTTP(S) with digest auth (snapshot, RTSP catalog, PTZ, image/day-night config) |
-| `@camstack/addon-provider-bosch` | `packages/addon-provider-bosch` | 0.1.65 | addons dir | Bosch smart-home device-provider addons for CamStack — SHC, Home Connect, and HomeCom cloud integrations (scaffold) |
-| `@camstack/addon-provider-dreame` | `packages/addon-provider-dreame` | 0.2.184 | addons dir | Dreame robot-vacuum / lawn-mower device-provider addon for CamStack — wraps the @apocaliss92/nodedreame Dreamehome cloud client |
-| `@camstack/addon-provider-dreo` | `packages/addon-provider-dreo` | 0.2.173 | addons dir | Dreo smart-device (fan / air-circulator / purifier / heater / humidifier) device-provider addon for CamStack — runs the maintained Python Dreo library (pydreo-community, REST + WebSocket) in a bundled worker |
-| `@camstack/addon-provider-ecowitt` | `packages/addon-provider-ecowitt` | 0.2.176 | addons dir | Ecowitt weather-station device-provider addon for CamStack — wraps the @apocaliss92/nodewitt local-poll / push client |
-| `@camstack/addon-provider-enpal` | `packages/addon-provider-enpal` | 0.1.30 | addons dir | Enpal solar-box device-provider addon for CamStack — PV, battery, grid, house and heat-pump readings from the box's own web-page channel, its local InfluxDB or its device page |
-| `@camstack/addon-provider-esphome` | `packages/addon-provider-esphome` | 0.1.30 | addons dir | ESPHome device-provider addon for CamStack: one broker per board, spoken over the native API (Noise) with esphome-client |
-| `@camstack/addon-provider-gree` | `packages/addon-provider-gree` | 0.2.167 | addons dir | Gree air-conditioner device-provider addon for CamStack — wraps the @apocaliss92/nodegree local-UDP client (LAN discovery + AES control), exposing climate-control and fan-control |
-| `@camstack/addon-provider-hikvision` | `packages/addon-provider-hikvision` | 1.2.196 | addons dir | Hikvision camera device provider addon for CamStack — ISAPI over HTTP(S) with digest auth (snapshot, alarm stream, RTSP discovery) |
-| `@camstack/addon-provider-homeassistant` | `packages/addon-provider-homeassistant` | 1.2.705 | addons dir | Home Assistant device provider addon for CamStack |
-| `@camstack/addon-provider-homematic` | `packages/addon-provider-homematic` | 1.2.218 | addons dir | Homematic / HomematicIP (CCU3 / RaspberryMatic) device-provider addon for CamStack — wraps the nodehomematic library |
-| `@camstack/addon-provider-kia` | `packages/addon-provider-kia` | 0.1.1 | addons dir | Kia Connect (Kia UVO / Hyundai Bluelink) vehicle device-provider addon for CamStack: reads the car (odometer, range, fuel, locks, doors, tyre warnings, position) and locks, unlocks and pre-conditions it through the maker cloud, in a bundled Python worker |
-| `@camstack/addon-provider-mqtt-ha` | `packages/addon-provider-mqtt-ha` | 0.1.56 | addons dir | Home Assistant MQTT discovery import provider for CamStack — adopts entities published on homeassistant/+/+/config |
-| `@camstack/addon-provider-onvif` | `packages/addon-provider-onvif` | 1.2.164 | addons dir | ONVIF camera device provider addon for CamStack |
-| `@camstack/addon-provider-petkit` | `packages/addon-provider-petkit` | 0.2.174 | addons dir | PetKit smart-feeder device-provider addon for CamStack — wraps the @apocaliss92/nodepetkit PetKit cloud client |
-| `@camstack/addon-provider-rademacher` | `packages/addon-provider-rademacher` | 0.2.171 | addons dir | Rademacher HomePilot device-provider addon for CamStack — wraps the @apocaliss92/noderademacher local-hub client (roller shutters over the cover cap) |
-| `@camstack/addon-provider-reolink` | `packages/addon-provider-reolink` | 1.2.264 | addons dir | Reolink camera device provider addon for CamStack — native Baichuan protocol |
-| `@camstack/addon-provider-rtsp` | `packages/addon-provider-rtsp` | 1.2.161 | addons dir | Generic RTSP camera device provider addon for CamStack |
-| `@camstack/addon-provider-tuya` | `packages/addon-provider-tuya` | 0.2.165 | addons dir | Tuya / Smart Life device-provider addon for CamStack — account-onboarded (Tuya IoT cloud fetch of device localKeys) + LOCAL DP control via the @apocaliss92/nodetuya encrypted-LAN client, exposing switch / water-heater-family kettle entities |
-| `@camstack/addon-provider-unifi` | `packages/addon-provider-unifi` | 0.2.177 | addons dir | UniFi Network controller device-provider addon for CamStack — local-controller infra switches/APs (as containers) + network-client presence. No cameras. |
-| `@camstack/addon-provider-unraid` | `packages/addon-provider-unraid` | 0.2.177 | addons dir | Unraid device-provider addon for CamStack — an adoption creates the server as its workload Host (WebGUI link, identifiers, array, disk and notification entities), and one workload device per Docker container and VM |
-| `@camstack/addon-provider-velux` | `packages/addon-provider-velux` | 0.2.177 | addons dir | Velux KLF-200 integration for CamStack — the gateway, local-gateway windows (with rain sensor) and shutter covers (positional, no tilt) |
-| `@camstack/addon-provider-vesync` | `packages/addon-provider-vesync` | 0.2.172 | addons dir | VeSync cloud-account device-provider addon for CamStack — Levoit / Cosori air purifiers as Fan devices (power, speed, preset, child-lock, display, air-quality + filter-life sensors) |
-| `@camstack/addon-provider-wyze` | `packages/addon-provider-wyze` | 0.2.178 | addons dir | Wyze camera device-provider addon for CamStack — wraps the @apocaliss92/wyze-bridge-js P2P/DTLS client, feeding the stream-broker via the pull-rfc4571 lazy-publish path (a structural twin of addon-provider-reolink) |
-| `@camstack/addon-provider-zigbee-z2m` | `packages/addon-provider-zigbee-z2m` | 0.1.1 | addons dir | Connects to an existing Zigbee2MQTT server and exposes its devices. |
-| `@camstack/addon-remote-storage` | `packages/addon-remote-storage` | 1.2.147 | addons dir | Remote storage providers (SFTP, S3, WebDAV, SMB) — unifies remote backends behind the storage-provider cap |
-| `@camstack/addon-smtp-nodemailer` | `packages/addon-smtp-nodemailer` | 1.2.159 | addons dir | SMTP email provider addon for CamStack — wraps `nodemailer` and registers a `smtp-provider` cap collection entry. Used by notifier addons. |
-| `@camstack/addon-static-turn` | `packages/addon-static-turn` | 1.2.150 | addons dir | Static / self-hosted (coturn) TURN provider for CamStack |
-| `@camstack/addon-tailscale` | `packages/addon-tailscale` | 1.2.157 | addons dir | Tailscale bundle for CamStack — joins the host to a tailnet (client) and exposes the hub via Serve/Funnel (ingress). Multi-entry npm package shipping 2 addons under a single bundle. |
-| `@camstack/addon-terminal` | `packages/addon-terminal` | 0.1.170 | addons dir | Interactive terminal sessions (pty + xterm) as a CamStack addon |
-| `@camstack/addon-training` | `packages/addon-training` | 0.1.142 | addons dir | Cloud training for CamStack: fine-tune the root detector on your own frames, on your own GPU-cloud account |
-| `@camstack/addon-waste-collections` | `packages/addon-waste-collections` | 0.1.46 | addons dir | Waste collection schedules via the vendored HACS waste_collection_schedule Python core — full source catalog as calendar-source. |
-| `@camstack/server-framework` | `packages/system` | _private_ | addons dir | Source of the kernel + builtins. Private workspace: its built dist ships inside the @camstack/server tarball as @camstack/server/system. |
+| `@dominevo/addon-admin-ui` | `packages/addon-admin-ui` | 0.1.0 | addons dir (image-seeded) | Admin UI — Vite frontend build and server-side addon |
+| `@dominevo/addon-agent-ui` | `packages/addon-agent-ui` | 0.1.0 | addons dir (image-seeded) | Agent UI — lightweight status dashboard served by every agent node |
+| `@dominevo/addon-ai` | `packages/addon-ai` | 0.1.0 | addons dir | AI addon for Dominevo — the `llm` collection provider (cloud, LAN, and camstack-managed local llama.cpp profiles) plus the per-node `llm-runtime` managed executor. |
+| `@dominevo/addon-auth` | `packages/addon-auth` | 0.1.0 | addons dir (image-seeded) | Authentication bundle — OIDC and WebAuthn/passkey. Multi-entry npm package shipping 2 addons under a single bundle; each addon keeps its own id, capabilities, and runner. |
+| `@dominevo/addon-benchmark` | `packages/addon-benchmark` | 0.1.0 | addons dir (image-seeded) | Benchmark page: measure what one node can carry (the orchestrator's node benchmark), inspect one image or one sound |
+| `@dominevo/addon-cloudflare` | `packages/addon-cloudflare` | 0.1.0 | addons dir | Cloudflare bundle — Tunnel (network-access) + TURN relay (turn-provider). Multi-entry npm package shipping 2 addons under a single bundle. |
+| `@dominevo/addon-decoder-nodeav` | `packages/addon-decoder-nodeav` | 0.1.0 | addons dir (image-seeded) | Standalone in-process node-av decoder addon for Dominevo |
+| `@dominevo/addon-export-alexa` | `packages/addon-export-alexa` | 0.1.0 | addons dir | Alexa Smart Home Skill export — hub-side OAuth provider + directive handler. The companion AWS Lambda forwards Alexa directives to this addon's /addon/export-alexa/directive endpoint. |
+| `@dominevo/addon-export-google` | `packages/addon-export-google` | 0.1.0 | addons dir | Google Home Export — hub-side smart-home fulfillment (SYNC / QUERY / EXECUTE / DISCONNECT) for the non-camera fleet, served over the hub's own OAuth account link. No Google credential is stored, sent or required. |
+| `@dominevo/addon-export-hap` | `packages/addon-export-hap` | 0.1.0 | addons dir | HomeKit (HAP) exporter for Dominevo devices. Publishes each exposed device as its own HomeKit accessory: cameras and doorbells with SRTP streaming, HomeKit Secure Video, motion, two-way audio, PTZ and battery; switches, lights, locks and sensors through a capability→service table. |
+| `@dominevo/addon-google-services` | `packages/addon-google-services` | 0.1.0 | addons dir | Google — Google brokers (OAuth2): Calendar as calendar-source, Gmail send as smtp-provider. |
+| `@dominevo/addon-import-alexa` | `packages/addon-import-alexa` | 0.1.0 | addons dir | Alexa device-import provider for Dominevo — imports the smart-home devices in a user's Alexa account via the unofficial alexa-remote2 cookie/token client (the inverse of the Alexa exporter) |
+| `@dominevo/addon-matter-broker` | `packages/addon-matter-broker` | 0.1.0 | addons dir | Matter broker addon for Dominevo — owns a Matter fabric (commissioning + the long-lived controller) via the matter.js controller and brokers commissioned Matter nodes into Dominevo |
+| `@dominevo/addon-model-studio` | `packages/addon-model-studio` | 0.1.0 | addons dir | Custom detection model registry, conversion & distribution for Dominevo |
+| `@dominevo/addon-mqtt-broker` | `packages/addon-mqtt-broker` | 0.1.0 | addons dir | MQTT broker registry addon for Dominevo — manages external broker entries + an optional embedded aedes broker. Consumers spin up their own `mqtt.js` clients via the `mqtt-broker` cap. |
+| `@dominevo/addon-notifiers` | `packages/addon-notifiers` | 0.1.0 | addons dir (image-seeded) | System notifiers addon for Dominevo — a `notification-output` collection provider hosting per-kind notifier adapters (ntfy, pushover, gotify, telegram, discord, webhook, zentik). |
+| `@dominevo/addon-osd-manager` | `packages/addon-osd-manager` | 0.1.0 | addons dir | Binds camera on-screen-display slots to live state and recognitions |
+| `@dominevo/addon-pipeline` | `packages/addon-pipeline` | 0.1.0 | addons dir (image-seeded) | Pipeline bundle — runner, detection, motion, audio + stream broker. Multi-entry npm package shipping pipeline addons under a single bundle. |
+| `@dominevo/addon-pipeline-orchestrator` | `packages/addon-pipeline-orchestrator` | 0.1.0 | addons dir (image-seeded) | Hub-side camera-to-agent load balancer — tracks runner capacity and dispatches attachCamera calls to the optimal pipeline-runner instance |
+| `@dominevo/addon-post-analysis` | `packages/addon-post-analysis` | 0.1.0 | addons dir (image-seeded) | Post-Analysis bundle — enrichment, embedding-encoder, pipeline-analytics. Multi-entry npm package shipping addons that consume pipeline output. |
+| `@dominevo/addon-provider-amcrest` | `packages/addon-provider-amcrest` | 0.1.0 | addons dir | Amcrest/Dahua camera device provider addon for Dominevo — Dahua CGI over HTTP(S) with digest auth (snapshot, RTSP catalog, PTZ, image/day-night config) |
+| `@dominevo/addon-provider-bosch` | `packages/addon-provider-bosch` | 0.1.0 | addons dir | Bosch smart-home device-provider addons for Dominevo — SHC, Home Connect, and HomeCom cloud integrations (scaffold) |
+| `@dominevo/addon-provider-dreame` | `packages/addon-provider-dreame` | 0.1.0 | addons dir | Dreame robot-vacuum / lawn-mower device-provider addon for Dominevo — wraps the @apocaliss92/nodedreame Dreamehome cloud client |
+| `@dominevo/addon-provider-dreo` | `packages/addon-provider-dreo` | 0.1.0 | addons dir | Dreo smart-device (fan / air-circulator / purifier / heater / humidifier) device-provider addon for Dominevo — runs the maintained Python Dreo library (pydreo-community, REST + WebSocket) in a bundled worker |
+| `@dominevo/addon-provider-ecowitt` | `packages/addon-provider-ecowitt` | 0.1.0 | addons dir | Ecowitt weather-station device-provider addon for Dominevo — wraps the @apocaliss92/nodewitt local-poll / push client |
+| `@dominevo/addon-provider-enpal` | `packages/addon-provider-enpal` | 0.1.0 | addons dir | Enpal solar-box device-provider addon for Dominevo — PV, battery, grid, house and heat-pump readings from the box's own web-page channel, its local InfluxDB or its device page |
+| `@dominevo/addon-provider-esphome` | `packages/addon-provider-esphome` | 0.1.0 | addons dir | ESPHome device-provider addon for Dominevo: one broker per board, spoken over the native API (Noise) with esphome-client |
+| `@dominevo/addon-provider-gree` | `packages/addon-provider-gree` | 0.1.0 | addons dir | Gree air-conditioner device-provider addon for Dominevo — wraps the @apocaliss92/nodegree local-UDP client (LAN discovery + AES control), exposing climate-control and fan-control |
+| `@dominevo/addon-provider-hikvision` | `packages/addon-provider-hikvision` | 0.1.0 | addons dir | Hikvision camera device provider addon for Dominevo — ISAPI over HTTP(S) with digest auth (snapshot, alarm stream, RTSP discovery) |
+| `@dominevo/addon-provider-homeassistant` | `packages/addon-provider-homeassistant` | 0.1.0 | addons dir | Home Assistant device provider addon for Dominevo |
+| `@dominevo/addon-provider-homematic` | `packages/addon-provider-homematic` | 0.1.0 | addons dir | Homematic / HomematicIP (CCU3 / RaspberryMatic) device-provider addon for Dominevo — wraps the nodehomematic library |
+| `@dominevo/addon-provider-kia` | `packages/addon-provider-kia` | 0.1.0 | addons dir | Kia Connect (Kia UVO / Hyundai Bluelink) vehicle device-provider addon for Dominevo: reads the car (odometer, range, fuel, locks, doors, tyre warnings, position) and locks, unlocks and pre-conditions it through the maker cloud, in a bundled Python worker |
+| `@dominevo/addon-provider-mqtt-ha` | `packages/addon-provider-mqtt-ha` | 0.1.0 | addons dir | Home Assistant MQTT discovery import provider for Dominevo — adopts entities published on homeassistant/+/+/config |
+| `@dominevo/addon-provider-onvif` | `packages/addon-provider-onvif` | 0.1.0 | addons dir | ONVIF camera device provider addon for Dominevo |
+| `@dominevo/addon-provider-petkit` | `packages/addon-provider-petkit` | 0.1.0 | addons dir | PetKit smart-feeder device-provider addon for Dominevo — wraps the @apocaliss92/nodepetkit PetKit cloud client |
+| `@dominevo/addon-provider-rademacher` | `packages/addon-provider-rademacher` | 0.1.0 | addons dir | Rademacher HomePilot device-provider addon for Dominevo — wraps the @apocaliss92/noderademacher local-hub client (roller shutters over the cover cap) |
+| `@dominevo/addon-provider-reolink` | `packages/addon-provider-reolink` | 0.1.0 | addons dir | Reolink camera device provider addon for Dominevo — native Baichuan protocol |
+| `@dominevo/addon-provider-rtsp` | `packages/addon-provider-rtsp` | 0.1.0 | addons dir | Generic RTSP camera device provider addon for Dominevo |
+| `@dominevo/addon-provider-tuya` | `packages/addon-provider-tuya` | 0.1.0 | addons dir | Tuya / Smart Life device-provider addon for Dominevo — account-onboarded (Tuya IoT cloud fetch of device localKeys) + LOCAL DP control via the @apocaliss92/nodetuya encrypted-LAN client, exposing switch / water-heater-family kettle entities |
+| `@dominevo/addon-provider-unifi` | `packages/addon-provider-unifi` | 0.1.0 | addons dir | UniFi Network controller device-provider addon for Dominevo — local-controller infra switches/APs (as containers) + network-client presence. No cameras. |
+| `@dominevo/addon-provider-unraid` | `packages/addon-provider-unraid` | 0.1.0 | addons dir | Unraid device-provider addon for Dominevo — an adoption creates the server as its workload Host (WebGUI link, identifiers, array, disk and notification entities), and one workload device per Docker container and VM |
+| `@dominevo/addon-provider-velux` | `packages/addon-provider-velux` | 0.1.0 | addons dir | Velux KLF-200 integration for Dominevo — the gateway, local-gateway windows (with rain sensor) and shutter covers (positional, no tilt) |
+| `@dominevo/addon-provider-vesync` | `packages/addon-provider-vesync` | 0.1.0 | addons dir | VeSync cloud-account device-provider addon for Dominevo — Levoit / Cosori air purifiers as Fan devices (power, speed, preset, child-lock, display, air-quality + filter-life sensors) |
+| `@dominevo/addon-provider-wyze` | `packages/addon-provider-wyze` | 0.1.0 | addons dir | Wyze camera device-provider addon for Dominevo — wraps the @apocaliss92/wyze-bridge-js P2P/DTLS client, feeding the stream-broker via the pull-rfc4571 lazy-publish path (a structural twin of addon-provider-reolink) |
+| `@dominevo/addon-provider-zigbee-z2m` | `packages/addon-provider-zigbee-z2m` | 0.1.0 | addons dir | Connects to an existing Zigbee2MQTT server and exposes its devices. |
+| `@dominevo/addon-remote-storage` | `packages/addon-remote-storage` | 0.1.0 | addons dir | Remote storage providers (SFTP, S3, WebDAV, SMB) — unifies remote backends behind the storage-provider cap |
+| `@dominevo/addon-smtp-nodemailer` | `packages/addon-smtp-nodemailer` | 0.1.0 | addons dir | SMTP email provider addon for Dominevo — wraps `nodemailer` and registers a `smtp-provider` cap collection entry. Used by notifier addons. |
+| `@dominevo/addon-static-turn` | `packages/addon-static-turn` | 0.1.0 | addons dir | Static / self-hosted (coturn) TURN provider for Dominevo |
+| `@dominevo/addon-tailscale` | `packages/addon-tailscale` | 0.1.0 | addons dir | Tailscale bundle for Dominevo — joins the host to a tailnet (client) and exposes the hub via Serve/Funnel (ingress). Multi-entry npm package shipping 2 addons under a single bundle. |
+| `@dominevo/addon-terminal` | `packages/addon-terminal` | 0.1.0 | addons dir | Interactive terminal sessions (pty + xterm) as a Dominevo addon |
+| `@dominevo/addon-training` | `packages/addon-training` | 0.1.0 | addons dir | Cloud training for Dominevo: fine-tune the root detector on your own frames, on your own GPU-cloud account |
+| `@dominevo/addon-waste-collections` | `packages/addon-waste-collections` | 0.1.0 | addons dir | Waste collection schedules via the vendored HACS waste_collection_schedule Python core — full source catalog as calendar-source. |
+| `@dominevo/server-framework` | `packages/system` | _private_ | addons dir | Source of the kernel + builtins. Private workspace: its built dist ships inside the @dominevo/server tarball as @dominevo/server/system. |
 
 ## Tooling (6)
 
@@ -93,9 +93,9 @@ Build, dev and CLI packages. Not loaded at runtime.
 
 | Package | Directory | Version | Reaches a node via | What it is |
 | --- | --- | --- | --- | --- |
-| `camstack` | `packages/cli` | 1.2.244 | npm, standalone tool | CLI tool for managing and running CamStack server |
-| `@camstack/desktop` | `packages/desktop` | _private_ | not published (private) | CamStack — single desktop app (hub or agent, chosen at first run) |
-| `@camstack/mcp-develop` | `packages/mcp-develop` | 0.1.33 | npm, standalone tool | Library behind `camstack mcp --toolsets develop`: registers the addon-author tools (catalogue, scaffold, validate, find_example, track review) on an MCP server. The standalone server binary is retired. |
-| `@camstack/node-root` | `packages/node-root` | _private_ | not published (private) | CamStack shared node-root boot core — zero-dep starter machinery (state schema/IO, boot plan, semver compare, workspace detect, root update service) bundled INTO each node starter at build time. Never published; never a runtime dependency. |
-| `@camstack/nx-plugin` | `packages/nx-plugin` | 1.1.37 | npm, standalone tool | Nx plugin for CamStack addon authors — `deploy` executor and `addon` generator. Drop into any Nx workspace to package + push addons to a running CamStack hub from the CLI. |
-| `@camstack/werift-turn-fix` | `packages/werift-turn-fix` | _private_ | not published (private) | Automated acceptance test scaffold for verifying the werift TURN/NAT relay bug and its patch |
+| `dominevo` | `packages/cli` | 0.1.0 | npm, standalone tool | CLI tool for managing and running Dominevo server |
+| `@dominevo/desktop` | `packages/desktop` | _private_ | not published (private) | Dominevo — single desktop app (hub or agent, chosen at first run) |
+| `@dominevo/mcp-develop` | `packages/mcp-develop` | 0.1.0 | npm, standalone tool | Library behind `dominevo mcp --toolsets develop`: registers the addon-author tools (catalogue, scaffold, validate, find_example, track review) on an MCP server. The standalone server binary is retired. |
+| `@dominevo/node-root` | `packages/node-root` | _private_ | not published (private) | Dominevo shared node-root boot core — zero-dep starter machinery (state schema/IO, boot plan, semver compare, workspace detect, root update service) bundled INTO each node starter at build time. Never published; never a runtime dependency. |
+| `@dominevo/nx-plugin` | `packages/nx-plugin` | 0.1.0 | npm, standalone tool | Nx plugin for Dominevo addon authors — `deploy` executor and `addon` generator. Drop into any Nx workspace to package + push addons to a running Dominevo hub from the CLI. |
+| `@dominevo/werift-turn-fix` | `packages/werift-turn-fix` | _private_ | not published (private) | Automated acceptance test scaffold for verifying the werift TURN/NAT relay bug and its patch |

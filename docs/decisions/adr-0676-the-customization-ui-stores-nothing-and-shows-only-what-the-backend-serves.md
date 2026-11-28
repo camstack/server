@@ -30,7 +30,7 @@ composed `motion.detected` formula (superseded the same day by the camera-sensor
 bridge, D672), a `for(cond, ms)` builtin (it does not exist), a flat fleet-wide field
 list (each device's fields cost a `getBindings`, measured up to 5.24 s). And four
 things the UI needs did not exist: which caps a type can be GIVEN, unit conversion
-inside a composition, the doorbell builder outside `@camstack/system`, and a way to
+inside a composition, the doorbell builder outside `@dominevo/system`, and a way to
 show one Extensions slot.
 
 ## Decision
@@ -57,14 +57,14 @@ device only from the composer's own answered `deviceId`.
   anywhere (shown read-only in the Doorbell card during D671's one-release overlap).
   The cap, both slots and owners stay until slice 6.
 - The doorbell preset and the D671 migration share `buildDoorbellCompositionFeature`
-  in `@camstack/types`; a preset can never write a shape the migration would refuse.
+  in `@dominevo/types`; a preset can never write a shape the migration would refuse.
 - `convert()` now works inside every composition (the unit table is the `convert`
   hook of `evaluateCompositionField`); the editor's preview runs that same function.
 - The orchestrator's `setCameraSensors` is NOT a framework change: framework
-  changes (types, system, ui-library) publish inside `@camstack/server`, but
-  `@camstack/addon-pipeline-orchestrator` is a self-contained addon
+  changes (types, system, ui-library) publish inside `@dominevo/server`, but
+  `@dominevo/addon-pipeline-orchestrator` is a self-contained addon
   (`externals: 'self-contained'`) that publishes and deploys on its own. Release
-  order: (1) publish the framework in `@camstack/server`, plus the orchestrator
+  order: (1) publish the framework in `@dominevo/server`, plus the orchestrator
   addon; (2) update the server on the agents, then on the hub; (3) update
   `pipeline-orchestrator` on the hub; (4) deploy `admin-ui`. An older server
   answers `listComposableCaps` with an error the UI shows as unknown; an older

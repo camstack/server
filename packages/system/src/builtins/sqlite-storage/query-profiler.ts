@@ -1,4 +1,4 @@
-import type { IScopedLogger, LogTags } from '@camstack/types'
+import type { IScopedLogger, LogTags } from '@dominevo/types'
 import { sqlShape } from './statement-shape.js'
 
 /**

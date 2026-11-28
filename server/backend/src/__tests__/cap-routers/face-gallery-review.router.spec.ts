@@ -13,7 +13,7 @@
  * So: assert on what the PROVIDER received, not on what came back.
  */
 import { describe, expect, it } from 'vitest'
-import type { FaceInfo, IFaceGalleryProvider, ListRecentFacesInput } from '@camstack/types'
+import type { FaceInfo, IFaceGalleryProvider, ListRecentFacesInput } from '@dominevo/types'
 import { buildCapRouterForTest, invokeProcedure, makeCtx } from './harness.js'
 
 interface Recorded {

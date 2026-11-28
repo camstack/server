@@ -26,7 +26,7 @@ three feeders is one lost session, not three.
 ## Decision
 
 An addon that keeps a cloud session for an integration reports two facts to
-`IntegrationSessionReporter` (`@camstack/types`) and nothing else: `failure(id,
+`IntegrationSessionReporter` (`@dominevo/types`) and nothing else: `failure(id,
 err)` when a call fails and `ok(id)` when one succeeds. The addon supplies a
 `classify(err)` that answers "is this the cloud ending OUR session?" with a
 reason (`kicked`, `auth-rejected`, `token-expired`) or `null` — a network error

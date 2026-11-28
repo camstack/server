@@ -3,8 +3,8 @@
  * for the device (its caps' event triggers), through the same resolution the
  * state and action pickers use. The raw `EventCategory` enum is never the list.
  */
-import type { ResolvedVocabTrigger, VocabLocale } from '@camstack/types'
-import { CAP_VOCABULARY_BY_NAME, vocabularyTriggersForDevice } from '@camstack/types'
+import type { ResolvedVocabTrigger, VocabLocale } from '@dominevo/types'
+import { CAP_VOCABULARY_BY_NAME, vocabularyTriggersForDevice } from '@dominevo/types'
 
 export interface EventOption {
   /** The `EventCategory` a stored trigger carries. */

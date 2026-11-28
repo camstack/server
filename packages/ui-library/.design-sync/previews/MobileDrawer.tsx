@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { MobileDrawer } from '@camstack/ui-library'
+import { MobileDrawer } from '@dominevo/ui-library'
 
 const Frame = ({ children }: { children: ReactNode }) => (
   <div className="dark bg-background text-foreground p-5 rounded-lg">{children}</div>
@@ -21,7 +21,7 @@ export const Hero = () => (
       <MobileDrawer open onClose={noop}>
         <div className="flex flex-col h-full">
           <div className="px-4 py-3 border-b border-border">
-            <span className="text-sm font-semibold text-foreground">CamStack</span>
+            <span className="text-sm font-semibold text-foreground">Dominevo</span>
           </div>
           <nav className="flex-1 p-2 space-y-1">
             {[

@@ -26,111 +26,111 @@ function decisionFor(decisions: readonly BootstrapDecision[], pkg: string): Boot
 describe('planFirstBootAddons', () => {
   it('fetches latest when nothing is on disk — the whole version contract', () => {
     const plan = planFirstBootAddons({
-      required: ['@camstack/addon-pipeline'],
+      required: ['@dominevo/addon-pipeline'],
       installed: {},
-      closureVersions: { '@camstack/addon-pipeline': '1.2.64' },
+      closureVersions: { '@dominevo/addon-pipeline': '1.2.64' },
       closureProvided: [],
     })
-    const d = decisionFor(plan.decisions, '@camstack/addon-pipeline')
+    const d = decisionFor(plan.decisions, '@dominevo/addon-pipeline')
     expect(d.action).toBe('install-npm')
     expect(d.installedVersion).toBeNull()
-    expect(plan.wouldInstall).toEqual(['@camstack/addon-pipeline'])
+    expect(plan.wouldInstall).toEqual(['@dominevo/addon-pipeline'])
   })
 
   it('adopts an installed copy whatever its version — a deploy outranks the closure', () => {
     // Live hub, 2026-08-13: addon-pipeline 1.2.69 installed, closure copy 1.2.64.
     const plan = planFirstBootAddons({
-      required: ['@camstack/addon-pipeline'],
-      installed: { '@camstack/addon-pipeline': '1.2.69' },
-      closureVersions: { '@camstack/addon-pipeline': '1.2.64' },
+      required: ['@dominevo/addon-pipeline'],
+      installed: { '@dominevo/addon-pipeline': '1.2.69' },
+      closureVersions: { '@dominevo/addon-pipeline': '1.2.64' },
       closureProvided: [],
     })
-    const d = decisionFor(plan.decisions, '@camstack/addon-pipeline')
+    const d = decisionFor(plan.decisions, '@dominevo/addon-pipeline')
     expect(d.action).toBe('adopt-installed')
     expect(d.twoVersions).toBe(true)
-    expect(plan.twoVersions).toEqual(['@camstack/addon-pipeline'])
+    expect(plan.twoVersions).toEqual(['@dominevo/addon-pipeline'])
     expect(plan.needsRegistry).toBe(false)
   })
 
   it('adopts an OLDER installed copy too — nothing here ever upgrades or downgrades', () => {
     const plan = planFirstBootAddons({
-      required: ['@camstack/addon-admin-ui'],
-      installed: { '@camstack/addon-admin-ui': '1.2.33' },
-      closureVersions: { '@camstack/addon-admin-ui': '1.2.50' },
+      required: ['@dominevo/addon-admin-ui'],
+      installed: { '@dominevo/addon-admin-ui': '1.2.33' },
+      closureVersions: { '@dominevo/addon-admin-ui': '1.2.50' },
       closureProvided: [],
     })
-    expect(decisionFor(plan.decisions, '@camstack/addon-admin-ui').action).toBe('adopt-installed')
+    expect(decisionFor(plan.decisions, '@dominevo/addon-admin-ui').action).toBe('adopt-installed')
     expect(plan.wouldInstall).toEqual([])
   })
 
   it('says nothing about two versions when they agree', () => {
     const plan = planFirstBootAddons({
-      required: ['@camstack/addon-auth'],
-      installed: { '@camstack/addon-auth': '1.2.14' },
-      closureVersions: { '@camstack/addon-auth': '1.2.14' },
+      required: ['@dominevo/addon-auth'],
+      installed: { '@dominevo/addon-auth': '1.2.14' },
+      closureVersions: { '@dominevo/addon-auth': '1.2.14' },
       closureProvided: [],
     })
-    expect(decisionFor(plan.decisions, '@camstack/addon-auth').twoVersions).toBe(false)
+    expect(decisionFor(plan.decisions, '@dominevo/addon-auth').twoVersions).toBe(false)
     expect(plan.twoVersions).toEqual([])
   })
 
   it('never seeds a package the closure already provides', () => {
     const plan = planFirstBootAddons({
-      required: ['@camstack/server', '@camstack/addon-auth'],
+      required: ['@dominevo/server', '@dominevo/addon-auth'],
       installed: {},
-      closureVersions: { '@camstack/server': '1.2.84' },
-      closureProvided: ['@camstack/server'],
+      closureVersions: { '@dominevo/server': '1.2.84' },
+      closureProvided: ['@dominevo/server'],
     })
-    expect(decisionFor(plan.decisions, '@camstack/server').action).toBe('skip-closure-provided')
-    expect(decisionFor(plan.decisions, '@camstack/addon-auth').action).toBe('install-npm')
+    expect(decisionFor(plan.decisions, '@dominevo/server').action).toBe('skip-closure-provided')
+    expect(decisionFor(plan.decisions, '@dominevo/addon-auth').action).toBe('install-npm')
   })
 
   it('installs a closure-provided package that is NOT resolvable — the unbootable-node case', () => {
     const plan = planFirstBootAddons({
-      required: ['@camstack/server'],
+      required: ['@dominevo/server'],
       installed: {},
       closureVersions: {},
       closureProvided: [],
     })
-    expect(decisionFor(plan.decisions, '@camstack/server').action).toBe('install-npm')
+    expect(decisionFor(plan.decisions, '@dominevo/server').action).toBe('install-npm')
   })
 
   it('treats an unreadable installed package.json as absent, and says so', () => {
     const plan = planFirstBootAddons({
-      required: ['@camstack/addon-notifiers'],
-      installed: { '@camstack/addon-notifiers': null },
+      required: ['@dominevo/addon-notifiers'],
+      installed: { '@dominevo/addon-notifiers': null },
       closureVersions: {},
       closureProvided: [],
     })
-    const d = decisionFor(plan.decisions, '@camstack/addon-notifiers')
+    const d = decisionFor(plan.decisions, '@dominevo/addon-notifiers')
     expect(d.action).toBe('install-npm')
     expect(d.reason).toContain('unreadable')
   })
 
   it('reports whether the boot needs the registry at all — the offline question', () => {
     const offlineSafe = planFirstBootAddons({
-      required: ['@camstack/addon-pipeline'],
-      installed: { '@camstack/addon-pipeline': '1.2.69' },
+      required: ['@dominevo/addon-pipeline'],
+      installed: { '@dominevo/addon-pipeline': '1.2.69' },
       closureVersions: {},
       closureProvided: [],
     })
     expect(offlineSafe.needsRegistry).toBe(false)
 
     const firstBoot = planFirstBootAddons({
-      required: ['@camstack/addon-pipeline', '@camstack/addon-auth'],
+      required: ['@dominevo/addon-pipeline', '@dominevo/addon-auth'],
       installed: {},
       closureVersions: {},
       closureProvided: [],
     })
     expect(firstBoot.needsRegistry).toBe(true)
-    expect(firstBoot.wouldInstall).toEqual(['@camstack/addon-pipeline', '@camstack/addon-auth'])
+    expect(firstBoot.wouldInstall).toEqual(['@dominevo/addon-pipeline', '@dominevo/addon-auth'])
   })
 })
 
 describe('formatFirstBootPlan', () => {
   it('says which mode it is in — an observe line must never read as an install', () => {
     const plan = planFirstBootAddons({
-      required: ['@camstack/addon-pipeline'],
+      required: ['@dominevo/addon-pipeline'],
       installed: {},
       closureVersions: {},
       closureProvided: [],
@@ -138,13 +138,13 @@ describe('formatFirstBootPlan', () => {
     const text = formatFirstBootPlan(plan, 'observe').join('\n')
     expect(text).toContain('observe')
     expect(text).toContain('nothing was installed')
-    expect(text).toContain('@camstack/addon-pipeline@latest')
+    expect(text).toContain('@dominevo/addon-pipeline@latest')
   })
 
   it('is silent about nothing — a plan with no work still states the roster it checked', () => {
     const plan = planFirstBootAddons({
-      required: ['@camstack/addon-pipeline'],
-      installed: { '@camstack/addon-pipeline': '1.2.69' },
+      required: ['@dominevo/addon-pipeline'],
+      installed: { '@dominevo/addon-pipeline': '1.2.69' },
       closureVersions: {},
       closureProvided: [],
     })
@@ -156,9 +156,9 @@ describe('formatFirstBootPlan', () => {
 
   it('names the two-version packages as INFO, not as work', () => {
     const plan = planFirstBootAddons({
-      required: ['@camstack/addon-pipeline'],
-      installed: { '@camstack/addon-pipeline': '1.2.69' },
-      closureVersions: { '@camstack/addon-pipeline': '1.2.64' },
+      required: ['@dominevo/addon-pipeline'],
+      installed: { '@dominevo/addon-pipeline': '1.2.69' },
+      closureVersions: { '@dominevo/addon-pipeline': '1.2.64' },
       closureProvided: [],
     })
     const text = formatFirstBootPlan(plan, 'observe').join('\n')

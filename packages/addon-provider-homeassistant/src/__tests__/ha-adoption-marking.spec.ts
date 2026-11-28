@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import { markAdoption, type AdoptionRegistryDevice } from '../ha-adoption-marking.js'
 import type { HaDiscoveredDevice, HaDiscoveredEntity } from '../ha-discovery-types.js'
 
@@ -39,7 +39,7 @@ const registry: AdoptionRegistryDevice[] = [
 ]
 
 describe('markAdoption', () => {
-  it('reports the CamStack id of an adopted device and of its live children', () => {
+  it('reports the Dominevo id of an adopted device and of its live children', () => {
     const [a] = markAdoption(
       [haDevice('dev-a', [entity('switch.one'), entity('switch.two')])],
       registry,

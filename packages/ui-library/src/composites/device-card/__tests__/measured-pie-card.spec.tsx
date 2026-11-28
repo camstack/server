@@ -4,7 +4,7 @@
  * trend, and a click on a reading opens that reading's history chart under the card
  * (one at a time, a second click closes it).
  */
-import type { HeroMeasurement } from '@camstack/types'
+import type { HeroMeasurement } from '@dominevo/types'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { plugFixtures } from '../__fixtures__/plug'

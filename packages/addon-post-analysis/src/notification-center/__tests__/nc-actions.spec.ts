@@ -19,8 +19,8 @@
 
 import { ncRecordKinds } from '../record-kinds.js'
 import { makeNcRecords } from './support/nc-test-deps.js'
-import type { NcRuleInput, NcSnoozeInput } from '@camstack/types'
-import { NcRuleInputSchema, notificationRulesCapability } from '@camstack/types'
+import type { NcRuleInput, NcSnoozeInput } from '@dominevo/types'
+import { NcRuleInputSchema, notificationRulesCapability } from '@dominevo/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import {
   type FakeSettingsStore,

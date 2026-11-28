@@ -7,7 +7,7 @@
  */
 import { useQueries } from '@tanstack/react-query'
 import { useMemo } from 'react'
-import type { IntegrationInstance, IntegrationInstanceDescription } from '@camstack/types'
+import type { IntegrationInstance, IntegrationInstanceDescription } from '@dominevo/types'
 import { useSystem } from '../contexts/system-context'
 import { useAddonsListCapabilityProviders } from '../generated/system-hooks'
 

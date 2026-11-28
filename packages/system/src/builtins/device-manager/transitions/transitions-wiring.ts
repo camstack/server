@@ -11,8 +11,8 @@ import {
   vocabActionIdFor,
   type DeviceCommandSettledEvent,
   type DeviceTransition,
-} from '@camstack/types'
-import type { IScopedLogger } from '@camstack/types'
+} from '@dominevo/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { z } from 'zod'
 import { getCommandObserverRegistry } from '../../../kernel/command-observation.js'
 import type { DeviceStateMirror } from '../device-state-mirror.js'

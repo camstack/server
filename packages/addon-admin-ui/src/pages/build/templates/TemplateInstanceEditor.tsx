@@ -14,8 +14,8 @@ import type {
   CoreBlockInput,
   TemplateInputValues,
   TemplateInstanceProblem,
-} from '@camstack/types'
-import { Badge, Button, Input, useConfirm } from '@camstack/ui-library'
+} from '@dominevo/types'
+import { Badge, Button, Input, useConfirm } from '@dominevo/ui-library'
 import { Loader2 } from 'lucide-react'
 import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'

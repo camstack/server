@@ -2,7 +2,7 @@
  * Unified Rules bags — All concatenates every family; strip tabs filter.
  */
 import { describe, expect, it } from 'vitest'
-import type { NcRule } from '@camstack/types'
+import type { NcRule } from '@dominevo/types'
 import { parseCalendarEventsRules } from '../notification-calendar-events.helpers'
 import { parseSummaryRules } from '../notification-summaries.helpers'
 import { parseTimelapseRules } from '../notification-timelapse.helpers'

@@ -8,13 +8,13 @@
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-// eslint-disable-next-line no-restricted-imports -- model-download helpers are a build-time dep, not a runtime addon coupling. Same waiver `addon-embedding-encoder` uses for `ModelDownloadService`. The duplicate copy that lived at `./engine/model-downloader.ts` was deleted; canonical implementation lives in `@camstack/server/system/download/model-downloader`.
+// eslint-disable-next-line no-restricted-imports -- model-download helpers are a build-time dep, not a runtime addon coupling. Same waiver `addon-embedding-encoder` uses for `ModelDownloadService`. The duplicate copy that lived at `./engine/model-downloader.ts` was deleted; canonical implementation lives in `@dominevo/server/system/download/model-downloader`.
 import {
   adoptModelRevisions,
   deleteModelFromDisk,
   ensureModel,
   isModelDownloaded,
-} from '@camstack/server/system/addon-utils'
+} from '@dominevo/server/system/addon-utils'
 import type {
   AddonCapabilityInfo,
   AddonContext,
@@ -55,7 +55,7 @@ import type {
   RawFrameFormat,
   RootStepSupply,
   StepDefinition,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   APPLE_SA_TO_MACRO,
   createEvent,
@@ -67,8 +67,8 @@ import {
   rootSuppliesOf,
   sleep,
   YAMNET_TO_MACRO,
-} from '@camstack/types'
-import { readProcessCost } from '@camstack/types/node'
+} from '@dominevo/types'
+import { readProcessCost } from '@dominevo/types/node'
 import { buildSubtreeCanRun } from '../pipeline-runner/device-jump.js'
 import { localFrameRegistry } from '../session-decode/local-frame-registry.js'
 import { ClusterModelSource } from '../shared/cluster-model-source.js'
@@ -271,7 +271,7 @@ function assembleBatchedFrameResult(
 //
 // Benchmark helpers (STEP_REFERENCE_IMAGES, computeLatencyStats,
 // loadReferenceImageBase64, isBenchmarkHistoryArray, resolveReferenceImagesDir)
-// moved to `@camstack/addon-benchmark` (2026-04-14) along with the runBenchmark
+// moved to `@dominevo/addon-benchmark` (2026-04-14) along with the runBenchmark
 // / history methods. This provider only keeps `runPipeline` + reference-image
 // listing, which addon-benchmark now consumes via the cap router.
 
@@ -858,7 +858,7 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
    * (2026-08-18 OOM audit: the pools, not the recorder, were the host's OOM
    * driver — grow for hours, kernel-killed at 3.8/8.8 GB, respawn, repeat).
    * Policy, restart budget and the `pool memory` Loki line live in
-   * `@camstack/types` (`PoolMemoryWatchdog`); this provider only enumerates
+   * `@dominevo/types` (`PoolMemoryWatchdog`); this provider only enumerates
    * its pools and exposes its EXISTING dispose-and-recreate machinery as the
    * restart action. Started in `init()`, stopped in `shutdown()`.
    */
@@ -1213,7 +1213,7 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
    * That false positive is not cosmetic. It is a readiness gate answering yes
    * on another machine's evidence, and it is exactly the log line that made a
    * node with NO platform-probe addon at all (agent-a, 2026-08-07: its
-   * `@camstack/server/system` package had been renamed out of `/data/addons`) look
+   * `@dominevo/server/system` package had been renamed out of `/data/addons`) look
    * like a node with a lossy event path. The pin makes the answer local: an
    * inline `nodeId` is the routing pin that survives the forked-addon → parent
    * UDS hop (`parent-unowned-call.ts`), the same mechanism the orchestrator's
@@ -1979,7 +1979,7 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
   // Orchestrator Settings / Config Schema
   // ═══════════════════════════════════════════════════════════════════════════
   //
-  // Moved to `@camstack/addon-pipeline-orchestrator` as part of the pipeline
+  // Moved to `@dominevo/addon-pipeline-orchestrator` as part of the pipeline
   // page redesign. That addon now owns:
   //   - The ConfigUISchema sections for motion / detection / audio / balancer
   //     / failover (via its `getConfigSchema()` method)
@@ -3808,10 +3808,10 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
 
   /** Download a model with retry + exponential backoff */
   private async downloadWithRetry(
-    entry: import('@camstack/types').ModelCatalogEntry,
-    format: import('@camstack/types').ModelFormat,
+    entry: import('@dominevo/types').ModelCatalogEntry,
+    format: import('@dominevo/types').ModelFormat,
     maxRetries: number,
-    onProgress?: import('@camstack/server/system').DownloadProgressCallback,
+    onProgress?: import('@dominevo/server/system').DownloadProgressCallback,
   ): Promise<void> {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
@@ -3898,7 +3898,7 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
    * faster than N sequential `runPipeline` calls.
    */
   async runPipelineBatch(input: {
-    readonly steps: readonly import('@camstack/types').PipelineStepInput[]
+    readonly steps: readonly import('@dominevo/types').PipelineStepInput[]
     readonly frames: readonly FrameInput[]
     readonly deviceId?: number
     readonly sessionId?: string
@@ -3933,7 +3933,7 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
   }
 
   private async runPipelineBatchImpl(input: {
-    readonly steps: readonly import('@camstack/types').PipelineStepInput[]
+    readonly steps: readonly import('@dominevo/types').PipelineStepInput[]
     readonly frames: readonly FrameInput[]
     readonly deviceId?: number
     readonly sessionId?: string
@@ -5399,7 +5399,7 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
   }): Promise<{
     success: boolean
     error?: string
-    frame?: import('@camstack/types').AudioResult
+    frame?: import('@dominevo/types').AudioResult
   }> {
     const api = this.addonCtx?.api
     if (!api) {
@@ -5471,7 +5471,7 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
       const endMs = (sampleCount / chunk.sampleRate) * 1000
       const detections = ranked
         .filter((l) => l.score >= minConfidence)
-        .map((l, i): import('@camstack/types').AudioDetection => ({
+        .map((l, i): import('@dominevo/types').AudioDetection => ({
           id: `a${i + 1}`,
           kind: 'audio',
           startMs,
@@ -5491,7 +5491,7 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
           },
         }))
 
-      const frame: import('@camstack/types').AudioResult = {
+      const frame: import('@dominevo/types').AudioResult = {
         kind: 'audio-window',
         windowId: `audio-test-${Date.now()}`,
         deviceId: 0,
@@ -5542,8 +5542,8 @@ export function buildSchemaSlots(
   formats: ReadonlySet<ModelFormat>,
   modelsDir: string,
   customByStep?: ReadonlyMap<string, readonly ModelCatalogEntry[]>,
-): import('@camstack/types').PipelineSlotSchema[] {
-  const slotMap = new Map<string, import('@camstack/types').PipelineAddonSchema[]>()
+): import('@dominevo/types').PipelineSlotSchema[] {
+  const slotMap = new Map<string, import('@dominevo/types').PipelineAddonSchema[]>()
   const formatList = [...formats]
 
   for (const pipelineStep of ALL_PIPELINE_STEPS) {
@@ -5669,15 +5669,15 @@ export function buildSchemaSlots(
   }
 
   return Array.from(slotMap.entries()).map(([slot, addons]) => ({
-    id: slot as import('@camstack/types').PipelineSlot,
+    id: slot as import('@dominevo/types').PipelineSlot,
     label: slotLabels[slot] ?? slot,
     priority: slotPriority[slot] ?? 99,
-    parentSlot: (parentSlot[slot] ?? null) as import('@camstack/types').PipelineSlot | null,
+    parentSlot: (parentSlot[slot] ?? null) as import('@dominevo/types').PipelineSlot | null,
     addons,
   }))
 }
 
-function resolveChildSlots(slot: string): import('@camstack/types').PipelineSlot[] {
+function resolveChildSlots(slot: string): import('@dominevo/types').PipelineSlot[] {
   switch (slot) {
     case 'detector':
       return ['cropper', 'classifier', 'refiner']

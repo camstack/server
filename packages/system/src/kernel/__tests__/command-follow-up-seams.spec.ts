@@ -4,7 +4,7 @@
  * link. A follow-up that throws never fails the command; a refused command
  * still runs it, then the refusal reaches the caller.
  */
-import { method, type CapabilityDefinition } from '@camstack/types'
+import { method, type CapabilityDefinition } from '@dominevo/types'
 import { createTRPCClient } from '@trpc/client'
 import { initTRPC } from '@trpc/server'
 import { describe, expect, it } from 'vitest'

@@ -15,8 +15,8 @@
  * AND after the accessor swap.
  */
 
-import type { AddonContext, IEventBus, IScopedLogger, SystemEvent } from '@camstack/types'
-import { EventCategory } from '@camstack/types'
+import type { AddonContext, IEventBus, IScopedLogger, SystemEvent } from '@dominevo/types'
+import { EventCategory } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ReolinkProviderAddon } from '../addon.js'
 

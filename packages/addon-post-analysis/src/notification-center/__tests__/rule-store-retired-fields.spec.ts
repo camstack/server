@@ -5,10 +5,10 @@
  * rows: a fake that handed the store already-parsed rules would hide exactly the Zod strip this
  * task exists to get ahead of.
  */
-import type { InMemoryRecords } from '@camstack/types'
+import type { InMemoryRecords } from '@dominevo/types'
 import { ncRecordKinds } from '../record-kinds.js'
 import { describe, expect, it } from 'vitest'
-import { NcRuleUpdateInputSchema } from '@camstack/types'
+import { NcRuleUpdateInputSchema } from '@dominevo/types'
 import { instrumentRecords } from '../../pipeline-analytics/__tests__/fake-records.js'
 import {
   makeLogRecorder,

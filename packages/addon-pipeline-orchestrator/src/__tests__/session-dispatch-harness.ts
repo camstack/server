@@ -10,7 +10,7 @@ import type {
   MotionSources,
   RunnerCameraConfig,
   RunnerLocalLoad,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { RoundRobinInferenceDeviceRotation } from '../device-balancer.js'
 import {
   SessionDispatchController,

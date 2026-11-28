@@ -7,7 +7,7 @@
  * `state-summary:<ruleId>:<windowEndMs>:<sectionId>`, titled and worded by its
  * section. A section with nothing open sends nothing.
  */
-import { DeviceType, NcRuleInputSchema, type NcRule } from '@camstack/types'
+import { DeviceType, NcRuleInputSchema, type NcRule } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { NcDeviceIdentity } from '../../device-directory.js'
 import type { NcLivenessRow } from '../../liveness-ledger.js'

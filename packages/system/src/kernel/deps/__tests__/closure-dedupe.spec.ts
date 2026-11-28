@@ -14,7 +14,7 @@ import * as os from 'node:os'
 import * as path from 'node:path'
 import { createRequire } from 'node:module'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import {
   closureSatisfiesRange,
   collectAddonTreeState,
@@ -132,21 +132,21 @@ describe('planClosureDedupe', () => {
     expect(plan.keeps).toContainEqual({ name: 'onvif', reason: 'not-in-closure' })
   })
 
-  it('never links @camstack/* or declared native dependencies', () => {
+  it('never links @dominevo/* or declared native dependencies', () => {
     const plan = planClosureDedupe({
       candidates: [
-        { name: '@camstack/types', version: '1.0.0' },
+        { name: '@dominevo/types', version: '1.0.0' },
         { name: 'onnxruntime-node', version: '1.20.0' },
       ],
       closureVersions: new Map([
-        ['@camstack/types', '1.0.0'],
+        ['@dominevo/types', '1.0.0'],
         ['onnxruntime-node', '1.20.0'],
       ]),
       requirements: new Map(),
       neverLink: new Set(['onnxruntime-node']),
     })
     expect(plan.links).toEqual([])
-    expect(plan.keeps).toContainEqual({ name: '@camstack/types', reason: 'camstack-package' })
+    expect(plan.keeps).toContainEqual({ name: '@dominevo/types', reason: 'camstack-package' })
     expect(plan.keeps).toContainEqual({ name: 'onnxruntime-node', reason: 'never-link' })
   })
 
@@ -188,7 +188,7 @@ describe('collectAddonTreeState', () => {
     fs.writeFileSync(
       path.join(addonDir, 'package.json'),
       JSON.stringify({
-        name: '@camstack/addon-x',
+        name: '@dominevo/addon-x',
         version: '1.0.0',
         dependencies: { 'vendor-lib': '^1.0.0' },
       }),

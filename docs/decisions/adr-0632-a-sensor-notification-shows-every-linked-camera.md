@@ -32,11 +32,11 @@ Two things stood in the way of composing that picture honestly:
    the camera saw at the trigger.
 
 The rule ships in two steps. The schema field below travels in
-`@camstack/types` on the `@camstack/server` train; the code that captures,
+`@dominevo/types` on the `@dominevo/server` train; the code that captures,
 excludes, and composes lives in `addon-post-analysis` and reaches the hub by
-an addon deploy (`camstack deploy packages/addon-post-analysis`). The addon
-inlines `@camstack/types`, so it knows the field on its own deploy; the hub's
-cap-router input validation uses the copy `@camstack/system` inlines, so until
+an addon deploy (`dominevo deploy packages/addon-post-analysis`). The addon
+inlines `@dominevo/types`, so it knows the field on its own deploy; the hub's
+cap-router input validation uses the copy `@dominevo/system` inlines, so until
 the server release is installed a rule saved through `notificationRules.*`
 has `linkedCameras` stripped and reads as absent — the default, `mosaic` —
 and the addon deploy is safe on either side of that train.

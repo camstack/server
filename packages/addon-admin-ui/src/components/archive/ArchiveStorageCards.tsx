@@ -3,7 +3,7 @@
  * mode, D385), occupancy and who writes there. The detail — change state,
  * delete, drain progress — is the existing locations table, opened from the card.
  */
-import type { StorageLocation } from '@camstack/types'
+import type { StorageLocation } from '@dominevo/types'
 import {
   Badge,
   Button,
@@ -13,7 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
   EmptyState,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { HardDrive } from 'lucide-react'
 import { useState, type ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'

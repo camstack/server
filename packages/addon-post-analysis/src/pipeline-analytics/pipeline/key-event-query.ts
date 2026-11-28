@@ -8,7 +8,7 @@
  * importance desc, and trims to `limit`.
  */
 
-import type { KeyEvent, Track } from '@camstack/types'
+import type { KeyEvent, Track } from '@dominevo/types'
 import type { ImportancePeak } from './key-event-recompute.js'
 import { computeImportance } from './key-event-scoring.js'
 import { displayLabel } from './label-tier.js'

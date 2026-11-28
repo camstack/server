@@ -7,7 +7,7 @@
  * A disabled `Button` takes no pointer events, so the tooltip sits on the
  * wrapper around it.
  */
-import { Button } from '@camstack/ui-library'
+import { Button } from '@dominevo/ui-library'
 import { ArrowDown, ArrowUp } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'

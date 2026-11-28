@@ -1,4 +1,4 @@
-import { Badge, Button, ItemFormDialog, useConfirm } from '@camstack/ui-library'
+import { Badge, Button, ItemFormDialog, useConfirm } from '@dominevo/ui-library'
 import { MousePointerClick } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import {

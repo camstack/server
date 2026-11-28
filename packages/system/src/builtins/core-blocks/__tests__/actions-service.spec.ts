@@ -12,7 +12,7 @@ import {
   DeviceType,
   createRecordsAccess,
   IDLE_ACTION_STATUS,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 
 import { runWithCapCallContext } from '../../../kernel/cap-call-scope.js'

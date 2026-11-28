@@ -8,7 +8,7 @@
  * nothing here costs a query.
  */
 import { describe, expect, it } from 'vitest'
-import { resolveParentNames, type ParentResolvable } from '@camstack/ui-library'
+import { resolveParentNames, type ParentResolvable } from '@dominevo/ui-library'
 
 const fleet: readonly ParentResolvable[] = [
   { id: 1, name: 'Sala', parentDeviceId: null },

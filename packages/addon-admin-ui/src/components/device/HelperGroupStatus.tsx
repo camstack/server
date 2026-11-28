@@ -9,7 +9,7 @@ import {
   groupTemplate,
   type HelperMember,
   isHistoryHelper,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   ErrorBox,
   SECTION_BODY,
@@ -22,7 +22,7 @@ import {
   useDeviceStateGetSnapshot,
   resolveDeviceLabel,
   useDeviceLabelById,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Boxes } from 'lucide-react'
 import { type ReactNode, useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'

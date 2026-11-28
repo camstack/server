@@ -1047,7 +1047,7 @@ export const deviceManagerCapability = {
      *  writes and emits nothing. `null` clears every read kind. Accepted only from the provider that OWNS the device: the
      *  caller stamp the transport sets (`callerAddonId`) must equal the row's
      *  `addonId`, so an operator session — which carries no stamp — is refused.
-     *  Build the value with `normaliseIdentifiers` (`@camstack/types`); a device
+     *  Build the value with `normaliseIdentifiers` (`@dominevo/types`); a device
      *  calls it through `BaseDevice.declareIdentifiers`. */
     setIdentifiers: method(
       z.object({

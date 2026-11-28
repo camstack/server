@@ -1,5 +1,5 @@
 /**
- * `camstack cluster-update` — the terminal face of the ONE cluster update job
+ * `dominevo cluster-update` — the terminal face of the ONE cluster update job
  * (planning#493). It previews the hub's plan, asks, starts
  * `clusterUpdate.startClusterUpdate` and follows it by its id until it ends —
  * the same job the admin UI "Update all" and the MCP `ops_update_apply` start.
@@ -7,13 +7,13 @@
  */
 import { assertNoRemovedTokenFlags, REMOVED_TOKEN_FLAG_OPTIONS } from './removed-token-flags.js'
 import { parseArgs } from 'node:util'
-import { tryConnectHub, type HubClient } from '@camstack/develop'
+import { tryConnectHub, type HubClient } from '@dominevo/develop'
 import {
   ClusterUpdatePlanSchema,
   type ClusterUpdateJob,
   type ClusterUpdatePlan,
   type ClusterUpdateStep,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { readQuery } from '../mcp/ops-hub.js'
 import {
   hubOptions,
@@ -105,7 +105,7 @@ export async function clusterUpdateCommand(
 }
 
 export const CLUSTER_UPDATE_HELP = [
-  'Usage: camstack cluster-update [options]',
+  'Usage: dominevo cluster-update [options]',
   '',
   'Runs the hub-side cluster update job (the same as the admin UI "Update all"):',
   'backup, the hub server, each online agent verified (target + capabilities),',

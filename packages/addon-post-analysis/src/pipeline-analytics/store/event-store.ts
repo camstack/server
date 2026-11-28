@@ -25,8 +25,8 @@ import type {
   ObjectEvent,
   ObjectEventDraft,
   SettingsStoreClient,
-} from '@camstack/types'
-import { MotionTriggeredBySchema, type MotionTimelineSample } from '@camstack/types'
+} from '@dominevo/types'
+import { MotionTriggeredBySchema, type MotionTimelineSample } from '@dominevo/types'
 import { decodeMotionTimeline, encodeMotionTimeline } from './motion-timeline-codec.js'
 import { decodeMotionEdges, encodeMotionEdges } from './motion-edge-codec.js'
 import { roundBbox } from './position-codec.js'

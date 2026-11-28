@@ -20,7 +20,7 @@
  * at the call site; narrowing occurs after `useDeviceStateSlice`.
  */
 import type { ReactNode } from 'react'
-import type { DeviceProxy, ReadingQuantity, SliceHandle } from '@camstack/types'
+import type { DeviceProxy, ReadingQuantity, SliceHandle } from '@dominevo/types'
 import {
   useDeviceProxy,
   useDeviceStateSlice,

@@ -72,7 +72,7 @@ class PreloadLibusb(unittest.TestCase):
 
 class EdgetpuLibraryPath(unittest.TestCase):
     """The delegate the pool loads — the same lookup as the TS probe
-    (`chooseEdgetpuDelegate` in `@camstack/types`): override, then the copy
+    (`chooseEdgetpuDelegate` in `@dominevo/types`): override, then the copy
     staged under the node data root, then the hub's historical path."""
 
     LEGACY = "/data/deps/edgetpu/lib/libedgetpu.so.1"

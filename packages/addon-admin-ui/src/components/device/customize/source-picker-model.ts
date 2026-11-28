@@ -11,7 +11,7 @@ import type {
   CompositionSourceRef,
   DeviceInfo,
   WireableScalarKind,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { sourceFor } from './source-for'
 
 export interface PickerDevice {

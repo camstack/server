@@ -63,7 +63,7 @@ the proposals the operator turned down.
   inside the transaction, then deleteWhere / insertMany / update ops). No cap
   method gets a bespoke engine path.
 - What the operator did is computed by ONE pure function, `classifyRetrainReview`
-  (`@camstack/types/client`): `added | removed | reclassified | adjusted |
+  (`@dominevo/types/client`): `added | removed | reclassified | adjusted |
   unchanged | model-error`, with `model-error` never folded into `removed` (a
   removed proposal teaches nothing; a model error teaches a specific false
   positive). List answers carry the server-computed `review`. A legacy frame is
@@ -85,8 +85,8 @@ the proposals the operator turned down.
 - A new nullable JSON column on annotations (`origin`) and two on frames
   (`revision` INTEGER NOT NULL DEFAULT 0, `dismissed` JSON). Added in place by the
   additive path of `declareCollection`; no row is rewritten.
-- A cap and types change: `@camstack/types`, `@camstack/system` and
-  `@camstack/server` must be published and applied (a hub on the old closure
+- A cap and types change: `@dominevo/types`, `@dominevo/system` and
+  `@dominevo/server` must be published and applied (a hub on the old closure
   has no `transact`, so a new post-analysis addon refuses to save there).
   `addon-post-analysis`, `addon-training` and `mcp-develop` ship separately.
 - Specs that fake the settings store need `transact`.

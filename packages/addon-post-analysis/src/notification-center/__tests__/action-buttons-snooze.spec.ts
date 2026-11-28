@@ -9,8 +9,8 @@
  *  - `snoozeOptions: []` gets none, which is the operator's explicit override.
  */
 
-import type { NcRule } from '@camstack/types'
-import { NC_DEFAULT_SNOOZE_MINUTES } from '@camstack/types'
+import type { NcRule } from '@dominevo/types'
+import { NC_DEFAULT_SNOOZE_MINUTES } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { buildSnoozeButtons, type SnoozeButtonRule, snoozeChoices } from '../action-buttons.js'
 

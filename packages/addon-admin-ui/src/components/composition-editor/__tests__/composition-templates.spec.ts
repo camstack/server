@@ -13,7 +13,7 @@ import {
   validateComposition,
   type CompositionSourceDescription,
   type ValidateCompositionContext,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   compositionTemplateDraft,

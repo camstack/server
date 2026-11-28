@@ -13,7 +13,7 @@
  *     enabled block with a token budget.
  *   - google: `thinkingConfig.thinkingBudget` — 0 is off.
  */
-import type { LlmProfile } from '@camstack/types'
+import type { LlmProfile } from '@dominevo/types'
 import { descriptorOf } from '../kinds/descriptors.js'
 import { openAiReasoningOf } from './local-model-features.js'
 

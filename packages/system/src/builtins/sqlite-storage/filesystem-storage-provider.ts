@@ -10,7 +10,7 @@
  * sessions for moving multi-GB archives without buffering the whole
  * archive in memory. Sessions auto-expire after 5 minutes idle.
  *
- * The legacy `FilesystemStorageProvider` in `@camstack/types/node` is
+ * The legacy `FilesystemStorageProvider` in `@dominevo/types/node` is
  * deliberately untouched — it still backs the sync `ctx.kernel.storage`
  * helper that addons like `pipeline-analytics` use to derive paths
  * synchronously. That sync API will be retired in a later refactor;
@@ -25,7 +25,7 @@ import type {
   IStorageProviderImpl,
   StorageLocation,
   StorageProviderInfoSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { z } from 'zod'
 
 type StorageProviderInfo = z.infer<typeof StorageProviderInfoSchema>

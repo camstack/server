@@ -35,7 +35,7 @@ import {
   type RootSuppliableStepId,
   type RootSupplyState,
   type ScoredLabel,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { resolveDefaultDetectionModel } from '../detection-pipeline/default-detection-model.js'
 import { resolveDeviceEngine } from '../detection-pipeline/engine/resolve-device-engine.js'
 import { getStep, getStepDefinition } from '../detection-pipeline/registry/step-definitions.js'

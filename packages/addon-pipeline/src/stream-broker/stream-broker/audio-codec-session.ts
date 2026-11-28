@@ -10,8 +10,8 @@
  * of `AudioRtpDecoder` (the legacy PCMU/PCMA path) so the broker's
  * call sites can swap implementations without further branching.
  */
-import type { DecodedAudioChunk, IScopedLogger } from '@camstack/types'
-import { errMsg } from '@camstack/types'
+import type { DecodedAudioChunk, IScopedLogger } from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
 import type { AudioCodecCapApi } from './audio-codec-proxy.js'
 import { depacketizeRfc3640, type Rfc3640Options } from '../rtsp/audio/aac-config.js'
 

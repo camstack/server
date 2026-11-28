@@ -19,7 +19,7 @@ import {
   type PowerMeterStatus,
   type ReadingQuantity,
   type SmokeStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { decodeBinary, decodeNumber, decodeText } from '../esphome-decode.js'
 import { takeReading } from '../esphome-reading.js'
 import type { EspState } from '../esphome-link.js'

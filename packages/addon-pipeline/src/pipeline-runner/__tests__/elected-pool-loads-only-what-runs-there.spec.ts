@@ -21,7 +21,7 @@ import type {
   FrameInput,
   FrameResult,
   PipelineStepInput,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 interface AddonInternals {
   onInitialize(): Promise<unknown>

@@ -4,7 +4,7 @@ import {
   type DeviceContext,
   type ImageStatus,
   type InferNativeProvider,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   MowerDevice as DreameMower,
   MowerStatus,

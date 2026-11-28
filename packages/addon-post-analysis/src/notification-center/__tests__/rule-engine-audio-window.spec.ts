@@ -15,8 +15,8 @@
  *  - fail-closed for a condition that names neither labels nor a threshold.
  */
 
-import type { AudioEvent, NcRule, ObjectEvent } from '@camstack/types'
-import { NcRuleInputSchema, NcRuleSchema } from '@camstack/types'
+import type { AudioEvent, NcRule, ObjectEvent } from '@dominevo/types'
+import { NcRuleInputSchema, NcRuleSchema } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { makeTestAudioEvent, makeTestObjectEvent } from '../../__tests__/support/events.js'
 import type { AudioWindowHit, AudioWindowSpec } from '../audio-rule-matcher.js'

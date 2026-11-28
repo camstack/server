@@ -14,7 +14,7 @@ applies-to:
 
 ## Context
 
-The operator asked for the clips CamStack did NOT record — the ones a Reolink
+The operator asked for the clips Dominevo did NOT record — the ones a Reolink
 camera keeps on its SD card, the ones a Reolink Home Hub keeps for its
 children, and later the ones HomeKit Secure Video is sent — to appear in a
 camera's device details, with thumbnails, behind a provider picker. Reolink
@@ -32,7 +32,7 @@ camera logged into; every call `nativeOnly`):
   children (ch 0, 1, 3) from its own storage while every child stays asleep —
   `battery.getStatus` read `sleeping:true` with an unmoved `lastContactAt`
   before, between and after, and the hub log carried no line for those ids.
-  The child UID is needed per request; CamStack already persists it in
+  The child UID is needed per request; Dominevo already persists it in
   `deviceMeta.metadata.uid`, and the hub's cmd 145 push arrives ~12 s after
   `subscribeEvents()`, not on login.
 - Nothing marks the end of a cmd 5 download: no 201, no trailing frame; a
@@ -438,7 +438,7 @@ D544), arriving through the UI.
 
 ## Consequences
 
-- `@camstack/types` and `@camstack/system` change (mount kind, collection
+- `@dominevo/types` and `@dominevo/system` change (mount kind, collection
   dispatch, additive schema) — a framework train — before any addon deploy
   shows anything. The first visible slice is later than a swap would have been;
   that is the accepted price of never hiding a source.

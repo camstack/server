@@ -3,9 +3,9 @@
  *
  * Manifest ids stay per-artifact (`…-onnx`, `…-openvino-fp32`, …). The Library /
  * pipeline / availability key is one id per (variant × size × precision × res)
- * with `formats{}` accumulated — same contract as CamStack `yolov9m-320`.
+ * with `formats{}` accumulated — same contract as Dominevo `yolov9m-320`.
  */
-import type { CustomModelDescriptor, ModelCatalogEntry, ModelFormat } from '@camstack/types'
+import type { CustomModelDescriptor, ModelCatalogEntry, ModelFormat } from '@dominevo/types'
 import {
   getPluginCatalogManifestEntry,
   PLUGIN_CATALOG_YOLO_MANIFEST,

@@ -4,7 +4,7 @@ import {
   parseBaichuanWebhookBody,
   type ReolinkSimpleEvent,
 } from '@apocaliss92/nodelink-js'
-import type { DataPlaneHandler, IScopedLogger } from '@camstack/types'
+import type { DataPlaneHandler, IScopedLogger } from '@dominevo/types'
 
 /**
  * The Baichuan HaCfg webhook (battery sleep push, cmd 807) as a plane of this addon's HTTP data

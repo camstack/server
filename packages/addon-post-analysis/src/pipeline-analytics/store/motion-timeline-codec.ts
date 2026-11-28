@@ -15,7 +15,7 @@
  * and never `[]` — one row's garbage must not take out the event read path,
  * and an absent column (a row written before this one) reads the same way.
  */
-import type { MotionTimelineSample } from '@camstack/types'
+import type { MotionTimelineSample } from '@dominevo/types'
 
 const ENCODED_PREFIX = 'mt1:'
 const SAMPLE_HEADER_BYTES = 5

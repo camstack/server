@@ -39,8 +39,8 @@ import {
   createAddonContext,
   registerEventBusService,
 } from '../../moleculer/addon-context-factory.js'
-import type { AddonDeclaration } from '@camstack/types'
-import { ReadinessRegistry, ReadinessTimeoutError, emitReadiness } from '@camstack/types'
+import type { AddonDeclaration } from '@dominevo/types'
+import { ReadinessRegistry, ReadinessTimeoutError, emitReadiness } from '@dominevo/types'
 
 // ── Harness helpers (copied from cluster-event-delivery.cluster.spec.ts) ─────
 

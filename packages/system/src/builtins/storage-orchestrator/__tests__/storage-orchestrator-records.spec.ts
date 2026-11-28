@@ -5,13 +5,13 @@ import type {
   IStorageProviderImpl,
   RecordsAccess,
   StorageLocationDeclaration,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   createRecordsAccess,
   createSecretsAccess,
   normalizeNodeId,
   storageCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   makeFakeKeychain,

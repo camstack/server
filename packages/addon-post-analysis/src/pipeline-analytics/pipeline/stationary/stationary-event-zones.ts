@@ -10,7 +10,7 @@
  * the registry and does not depend on it).
  */
 
-import type { IScopedLogger, Zone } from '@camstack/types'
+import type { IScopedLogger, Zone } from '@dominevo/types'
 import { computeStationaryEntryZones, type StationaryZoneInput } from './stationary-zones.js'
 
 export interface StationaryEventZoneEntry extends StationaryZoneInput {

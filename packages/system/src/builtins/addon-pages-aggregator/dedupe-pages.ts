@@ -16,7 +16,7 @@
  * We keep the FIRST occurrence (entry order is the source fan-out order, which
  * preserves the hub-local provider ahead of remote ones).
  */
-import type { AddonPageInfo } from '@camstack/types'
+import type { AddonPageInfo } from '@dominevo/types'
 
 /** Stable identity for an addon page, independent of which node reported it. */
 function pageKey(info: AddonPageInfo): string {

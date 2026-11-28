@@ -66,7 +66,7 @@ export function buildMqttHaEntityKey(input: {
   return `${input.component}/${input.objectId}`
 }
 
-/** CamStack stable id: `mqtt:{brokerId}:entity:{entityKey}`. */
+/** Dominevo stable id: `mqtt:{brokerId}:entity:{entityKey}`. */
 export function buildMqttHaStableId(brokerId: string, entityKey: string): string {
   return `mqtt:${brokerId}:entity:${entityKey}`
 }

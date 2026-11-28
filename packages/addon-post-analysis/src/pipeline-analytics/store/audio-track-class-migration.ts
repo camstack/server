@@ -29,7 +29,7 @@
  * bounded, idempotent, resumable, marker-gated, and run OFF the readiness path.
  */
 
-import type { IScopedLogger, SettingsStoreClient } from '@camstack/types'
+import type { IScopedLogger, SettingsStoreClient } from '@dominevo/types'
 import type { MigrationMarkerPort } from './migration-marker-store.js'
 import { AUDIO_TRACK_CLASS } from './audio-track-class.js'
 

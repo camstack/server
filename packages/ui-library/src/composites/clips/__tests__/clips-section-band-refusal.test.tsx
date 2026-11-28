@@ -50,7 +50,7 @@ vi.mock('../clip-band.js', async (importOriginal) => {
 vi.mock('../../../generated/system-hooks', () => ({
   useVideoclipsListSources: () => ({
     status: 'success',
-    data: [{ source: 'analytics', label: 'CamStack recordings', availability: { state: 'ok' } }],
+    data: [{ source: 'analytics', label: 'Dominevo recordings', availability: { state: 'ok' } }],
   }),
   useVideoclipsListClips: (_input: unknown, options?: { enabled?: boolean }) => {
     clipCalls.push({ enabled: options?.enabled ?? true })

@@ -11,7 +11,7 @@
  * treat exactly like a motion episode.
  */
 import { describe, expect, it } from 'vitest'
-import type { RecordingConfig } from '@camstack/types'
+import type { RecordingConfig } from '@dominevo/types'
 import {
   bandTriggerSources,
   DEVICE_DECISION_BAND,

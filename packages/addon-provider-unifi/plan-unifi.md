@@ -47,7 +47,7 @@ fan-out compact and compiling while honouring the container model.
 
 ## Mapping (existing caps only — nothing new needed)
 
-| Source | CamStack DeviceType | Cap | Notes |
+| Source | Dominevo DeviceType | Cap | Notes |
 |---|---|---|---|
 | UniFi controller | `Gateway` (`UnifiGatewayDevice`) | `device-admin-link` | connection lives on the integration (`mode: account`); the adoption provider offers the Gateway, infra and client candidates |
 | infra device (switch/AP/gateway) | `Container` (`UnifiInfraDevice`) | — (fans out children) | `features[]` descriptor list → accessory children; `DeviceFeature.Resyncable` |

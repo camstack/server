@@ -9,7 +9,7 @@ import {
   type HeatPumpCircuit,
   type HeatPumpStatus,
   type WaterHeaterStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { defaultUiText } from '../../../contexts/ui-text'

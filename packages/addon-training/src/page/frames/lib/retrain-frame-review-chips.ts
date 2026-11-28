@@ -5,7 +5,7 @@
  * The class is the review box's CURRENT `macroClass`; an older hub sends none, so
  * it falls back to `origin.macroClass`, and a box with neither is classless.
  */
-import type { RetrainCorpusPageFrame, RetrainMacroClass } from '@camstack/types'
+import type { RetrainCorpusPageFrame, RetrainMacroClass } from '@dominevo/types'
 import { BOX_DIFF_KINDS, type BoxDiffKind } from './retrain-live-review.js'
 
 export interface FrameReviewChip {

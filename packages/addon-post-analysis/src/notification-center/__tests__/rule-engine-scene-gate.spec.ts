@@ -10,8 +10,8 @@
  * See D159 for the semantics and `scene-state-cache.spec.ts` for the mirror.
  */
 
-import type { NcRule, ObjectEvent } from '@camstack/types'
-import { NcRuleInputSchema, NcRuleSchema } from '@camstack/types'
+import type { NcRule, ObjectEvent } from '@dominevo/types'
+import { NcRuleInputSchema, NcRuleSchema } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { evaluateRule, subjectFromObjectEvent, subjectFromOccupancyEvent } from '../rule-engine.js'
 import type { NcSceneObservation } from '../scene-state-cache.js'

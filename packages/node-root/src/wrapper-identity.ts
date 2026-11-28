@@ -6,7 +6,7 @@
  * ## The rule (D437): observe what you can, declare only what you cannot
  *
  * On 2026-08-02 `scripts/check-deployment-templates.ts` proved every day that
- * the templates DECLARED `ghcr.io/camstack/camstack:intel-latest`, while the
+ * the templates DECLARED `ghcr.io/dominevo/dominevo:intel-latest`, while the
  * hub actually ran `camstack-server:intel-1.1.74` from a repository that had
  * been renamed and received no builds. The declaration was right, reality was
  * not, and nothing compared them. A `CAMSTACK_WRAPPER=docker` written into a
@@ -41,9 +41,9 @@
  *    `in-sync` without evidence.
  *
  * Zero-dep (bundled next to the starter); the shape it returns is
- * `WrapperIdentitySchema` in `@camstack/types` (type-only import).
+ * `WrapperIdentitySchema` in `@dominevo/types` (type-only import).
  */
-import type { WrapperEvidence, WrapperIdentity } from '@camstack/types'
+import type { WrapperEvidence, WrapperIdentity } from '@dominevo/types'
 
 /**
  * What the impure probes returned. Injected into `RootUpdateService` so the

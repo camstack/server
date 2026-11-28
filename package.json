@@ -1,14 +1,14 @@
 {
-  "name": "camstack",
+  "name": "dominevo",
   "version": "0.1.0",
   "private": true,
   "repository": {
     "type": "git",
-    "url": "https://github.com/camstack/server.git"
+    "url": "https://github.com/dominevo/server.git"
   },
   "homepage": "https://camstack-docs.zentik.app",
   "bugs": {
-    "url": "https://github.com/camstack/server/issues"
+    "url": "https://github.com/dominevo/server/issues"
   },
   "workspaces": [
     "packages/*",
@@ -64,7 +64,7 @@
     "typecheck:pkg": "tsx scripts/typecheck-tsgo.ts",
     "test": "npx nx run-many -t test",
     "test:affected": "npx nx affected -t test",
-    "test:e2e": "npm test -w @camstack/e2e",
+    "test:e2e": "npm test -w @dominevo/e2e",
     "test:cluster": "npm run test:cluster -w packages/system -w server/backend",
     "test:watch": "vitest",
     "test:server": "npm run test -w server/backend",

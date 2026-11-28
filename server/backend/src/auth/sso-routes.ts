@@ -11,7 +11,7 @@
  *  - `GET /api/auth/browser-handoff?code=…` — a one-time code from
  *    `auth.createBrowserHandoff` opens the account page signed in (D801).
  */
-import { SSO_STATE_COOKIE } from '@camstack/types'
+import { SSO_STATE_COOKIE } from '@dominevo/types'
 import type { FastifyInstance } from 'fastify'
 import { parseForwardedPrefix } from '../api/static/spa-mount.js'
 import type { HandoffCodeService } from '../core/auth/handoff-code.service.js'

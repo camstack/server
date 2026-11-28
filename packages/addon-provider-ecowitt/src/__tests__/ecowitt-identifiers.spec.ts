@@ -12,7 +12,7 @@ import {
   mergeIdentifiers,
   normaliseIdentifiers,
   type SetIdentifiersInput,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { settingsToEcowittConfig } from '../config.js'
 import { ecowittGatewayIdentifiers } from '../ecowitt-identifiers.js'

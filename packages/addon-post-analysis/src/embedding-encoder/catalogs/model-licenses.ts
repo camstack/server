@@ -5,7 +5,7 @@
  * `scripts/check-catalog-licence.ts` fails when two records naming the same
  * upstream disagree on the weights licence or its URL.
  */
-import type { ModelLicense } from '@camstack/types'
+import type { ModelLicense } from '@dominevo/types'
 
 export const SIGLIP2_APACHE: ModelLicense = {
   weights: 'Apache-2.0',

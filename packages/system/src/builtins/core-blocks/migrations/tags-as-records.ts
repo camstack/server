@@ -25,7 +25,7 @@ import {
   type TagStyle,
   tagIdFromKey,
   tagKey,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { readAllRows } from '../../../records/read-all-rows.js'
 import type { TagStyleRowBody } from '../record-kinds.js'
 import type { TagIdsPorts } from './tag-ids.js'

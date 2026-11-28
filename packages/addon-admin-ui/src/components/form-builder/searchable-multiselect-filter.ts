@@ -1,4 +1,4 @@
-import type { ConfigOption } from '@camstack/types'
+import type { ConfigOption } from '@dominevo/types'
 
 /**
  * Pure filter/partition helpers for the searchable multi-select field.

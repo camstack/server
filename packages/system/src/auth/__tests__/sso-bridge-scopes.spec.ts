@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { AuthManager } from '../auth-manager.js'
 import { staticJwtSigningKey } from '../jwt-signing-key.js'
-import type { TokenScope } from '@camstack/types'
+import type { TokenScope } from '@dominevo/types'
 
 type ConfigStore = Record<string, unknown>
 function makeAuth(secret: string = 'unit-test-secret'): AuthManager {

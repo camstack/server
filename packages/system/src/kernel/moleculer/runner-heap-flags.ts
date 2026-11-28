@@ -1,6 +1,6 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
-import type { AddonHeapProfile } from '@camstack/types'
+import type { AddonHeapProfile } from '@dominevo/types'
 
 /** One addon hosted inside a runner subprocess. */
 export interface RunnerAddonSpec {

@@ -1,4 +1,4 @@
-import type { DeviceType } from '@camstack/types'
+import type { DeviceType } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { BoschHomeConnectProviderAddon } from '../home-connect/addon.js'
 import { BoschHomeComProviderAddon } from '../homecom/addon.js'

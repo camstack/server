@@ -20,7 +20,7 @@
  */
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
-import type { AudioResult, ScoredLabel } from '@camstack/types'
+import type { AudioResult, ScoredLabel } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { AUDIO_DEBUG_SOURCE, buildAudioRunInput, selectAudioDebug } from '../audio-payloads.js'
 

@@ -2,7 +2,7 @@
  * The admin UI's half of a location's icon: stored value → `lucide-react`
  * component.
  *
- * The icon is a key of the one icon catalog (`@camstack/types`, D854) and the
+ * The icon is a key of the one icon catalog (`@dominevo/types`, D854) and the
  * glyph comes from ui-library's catalog-wide table — there is no per-room table
  * here any more. The only thing this file still owns is the DEGRADATION RULE:
  * `useLocationIconComponent` never returns `undefined`. A value this build does
@@ -11,8 +11,8 @@
  * must degrade to a picture, never to a hole: an empty slot in a room tab strip
  * reads as a rendering bug, not as a missing choice.
  */
-import { resolveDisplayIcon, useIconGlyphsVersion } from '@camstack/ui-library'
-import { LOCATION_ICON_FALLBACK, resolveIconKey } from '@camstack/types'
+import { resolveDisplayIcon, useIconGlyphsVersion } from '@dominevo/ui-library'
+import { LOCATION_ICON_FALLBACK, resolveIconKey } from '@dominevo/types'
 import { type LucideIcon, MapPin } from 'lucide-react'
 
 /**

@@ -23,7 +23,7 @@
  * The location metadata (`listLocations`, redacted by the orchestrator) and
  * `getAvailableSpace` (a number) stay open.
  */
-import type { CapabilityDefinition } from '@camstack/types'
+import type { CapabilityDefinition } from '@dominevo/types'
 import {
   ACCESS_ROLES,
   buildRoleScopes,
@@ -32,7 +32,7 @@ import {
   resolveMethodAuth,
   storageCapability,
   type TokenScope,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { buildCapRouterForTest, invokeProcedure, makeCtx } from './harness.js'
 

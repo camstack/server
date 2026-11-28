@@ -13,7 +13,7 @@
  * guess a password against.
  */
 import { createHash, randomUUID } from 'node:crypto'
-import type { DurableState } from '@camstack/types'
+import type { DurableState } from '@dominevo/types'
 import { z } from 'zod'
 import type { VeSyncConnectionConfig } from './config.js'
 import type { VeSyncSession } from './vesync-client-contract.js'

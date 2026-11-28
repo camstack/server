@@ -1,4 +1,4 @@
-import type { AppleFmAvailability, LlmRuntimeAppleCompleteInput } from '@camstack/types'
+import type { AppleFmAvailability, LlmRuntimeAppleCompleteInput } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { createAppleFmBackend } from '../runtime/apple/afm-backend.js'
 import type { HelperOutcome, HelperRequestOptions } from '../runtime/apple/afm-helper.js'

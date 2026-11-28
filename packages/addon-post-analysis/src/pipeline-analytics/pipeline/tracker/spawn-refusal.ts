@@ -14,7 +14,7 @@
  * Sampled, like every refusal sink in this addon: the tracker runs at frame
  * rate, and a refused box is usually refused on every frame of a passage.
  */
-import type { BoundingBox } from '@camstack/types'
+import type { BoundingBox } from '@dominevo/types'
 
 /** Why a detection produced no track of its own. */
 export type SpawnRefusalReason =

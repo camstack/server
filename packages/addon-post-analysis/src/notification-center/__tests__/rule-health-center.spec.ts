@@ -3,8 +3,8 @@
  * work on the bus — once, however many ticks run — and an unanswered device
  * read announces nothing.
  */
-import type { InMemoryRecords, SystemEvent } from '@camstack/types'
-import { EventCategory, NcRuleInputSchema } from '@camstack/types'
+import type { InMemoryRecords, SystemEvent } from '@dominevo/types'
+import { EventCategory, NcRuleInputSchema } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { NcDeviceIdentity } from '../device-directory.js'
 import { NotificationCenter } from '../index.js'

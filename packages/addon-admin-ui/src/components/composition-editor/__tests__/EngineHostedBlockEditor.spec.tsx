@@ -15,8 +15,8 @@ const h = vi.hoisted(() => ({
   refetch: vi.fn(async () => ({})),
 }))
 
-vi.mock('@camstack/ui-library', async () => {
-  const actual = await vi.importActual<Record<string, unknown>>('@camstack/ui-library')
+vi.mock('@dominevo/ui-library', async () => {
+  const actual = await vi.importActual<Record<string, unknown>>('@dominevo/ui-library')
   return {
     ...actual,
     CameraGridLayoutEditor: ({ deviceId }: { readonly deviceId: number }) => (

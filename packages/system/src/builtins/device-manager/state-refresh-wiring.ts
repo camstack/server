@@ -8,7 +8,7 @@
  * the D1022 seams await. The calls reach the provider's process through the
  * `device-state-refresh` cap.
  */
-import type { IScopedLogger, StateRefreshReason } from '@camstack/types'
+import type { IScopedLogger, StateRefreshReason } from '@dominevo/types'
 import { getCommandFollowUpRegistry } from '../../kernel/command-follow-up.js'
 import { getStateRefreshPolicyRegistry } from '../../kernel/state-refresh-policies.js'
 import type { DeviceStateMirror } from './device-state-mirror.js'

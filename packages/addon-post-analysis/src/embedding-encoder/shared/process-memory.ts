@@ -2,10 +2,10 @@
  * Read a child process's memory footprint for the pool memory watchdog.
  *
  * Deliberate twin of `packages/addon-pipeline/src/shared/process-memory.ts`:
- * addons must not import each other, and `@camstack/server/system` stays EXTERNAL in
+ * addons must not import each other, and `@dominevo/server/system` stays EXTERNAL in
  * addon bundles (a symbol added there would be missing at runtime until the
  * next framework train). The pure parse (`parseProcStatus`) and the whole
- * watchdog policy live once in `@camstack/types` (inlined at build time);
+ * watchdog policy live once in `@dominevo/types` (inlined at build time);
  * only this thin `fs`/`ps` read is duplicated.
  *
  * Linux (the fleet): `/proc/<pid>/status` — RSS, VmSize, VmHWM (peak RSS ≈
@@ -15,7 +15,7 @@
  */
 import * as fs from 'node:fs'
 import { execFile } from 'node:child_process'
-import { parseProcStatus, type ProcMemory } from '@camstack/types'
+import { parseProcStatus, type ProcMemory } from '@dominevo/types'
 
 const IS_LINUX = process.platform === 'linux'
 

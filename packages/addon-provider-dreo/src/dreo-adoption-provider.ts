@@ -1,11 +1,11 @@
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IScopedLogger } from '@dominevo/types'
 import type {
   IDeviceAdoptionProvider,
   AdoptionStatus,
   AdoptionFilter,
   DiscoveredChildDevice,
   DeviceType,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { buildDreoCandidates, type DreoDiscoverable } from './dreo-discovery.js'
 
 /**
@@ -52,7 +52,7 @@ export interface DreoAdoptionProviderDeps {
 /** The single granularity this provider advertises: whole-device adoption. */
 const DEVICES_FILTER: AdoptionFilter = { id: 'devices', label: 'Devices', isDefault: true } as const
 
-/** Build a `dreoDeviceId → CamStack deviceId` map for a single integration. */
+/** Build a `dreoDeviceId → Dominevo deviceId` map for a single integration. */
 async function adoptedMapForIntegration(
   integrationId: string,
   listAdoptedDreo: DreoAdoptionProviderDeps['listAdoptedDreo'],

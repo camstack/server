@@ -4,14 +4,14 @@
  *
  * ## The failure this catches
  *
- * Eight addons are npm dependencies of `@camstack/server`, so every node has a
+ * Eight addons are npm dependencies of `@dominevo/server`, so every node has a
  * second copy of each inside the server closure. Nothing imports an addon from
  * there — `AddonLoader.loadFromDirectory` reads ONE directory with no fallback,
  * on the hub and on an agent alike — so those copies are inert, and the addon
  * root is the only place code actually runs from.
  *
  * "Inert" is the property the whole update story rests on, and it is invisible:
- * one `require.resolve('@camstack/addon-…')` added in good faith would give a
+ * one `require.resolve('@dominevo/addon-…')` added in good faith would give a
  * node two live copies whose winner depends on import order, and nothing in any
  * suite would notice. Measured 2026-09-17: the ONE consumer that did read an
  * addon out of the closure — the agent's static UI dist — served a build from a
@@ -38,7 +38,7 @@ const ROOTS = ['server/backend/src', 'packages/system/src', 'packages/node-root/
  * second live copy.
  */
 const BY_NAME =
-  /(?:require\.resolve|createRequire\([^)]*\)(?:\.resolve)?|await import|import\s*\()\s*[`'"]@camstack\/addon-[a-z-]+/g
+  /(?:require\.resolve|createRequire\([^)]*\)(?:\.resolve)?|await import|import\s*\()\s*[`'"]@dominevo\/addon-[a-z-]+/g
 
 /**
  * Reaching for a sibling `dist/` by path — how the agent's static UI ended up

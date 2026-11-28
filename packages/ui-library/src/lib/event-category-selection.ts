@@ -10,7 +10,7 @@ import {
   type EventCategory,
   type EventCategoryEntry,
   type EventCategoryGroup,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 const CATEGORY_PATTERN = /^[a-z0-9][a-z0-9_-]*(\.[a-z0-9_-]+)*(\.\*)?$/i
 

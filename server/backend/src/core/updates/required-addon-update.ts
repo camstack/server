@@ -13,8 +13,8 @@
  * keeps running below the minimum, with its unsupported-version alert. A package that
  * recovers (a later boot succeeds) resolves its alert.
  */
-import type { Alert, IScopedLogger } from '@camstack/types'
-import { compareVersions, errMsg, minimumOf } from '@camstack/types'
+import type { Alert, IScopedLogger } from '@dominevo/types'
+import { compareVersions, errMsg, minimumOf } from '@dominevo/types'
 
 export const REQUIRED_ADDON_UPDATE_CATEGORY = 'addon.required-update-failed'
 
@@ -176,7 +176,7 @@ export function heldInstallAlertId(packageName: string): string {
   return `install-held:${packageName}`
 }
 
-/** One install the boot installer refused (`HeldInstall` of `@camstack/server/system`). */
+/** One install the boot installer refused (`HeldInstall` of `@dominevo/server/system`). */
 export interface HeldInstallReport {
   readonly packageName: string
   readonly spec: string

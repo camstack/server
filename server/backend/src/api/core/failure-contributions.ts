@@ -24,8 +24,8 @@
  * consumer's job, on entries that carry `attempts` — a hub-side fleet total is
  * the number that answered nothing on 2026-08-28.
  */
-import type { IFailureContributionProvider, ReportedFailureContribution } from '@camstack/types'
-import { errMsg } from '@camstack/types'
+import type { IFailureContributionProvider, ReportedFailureContribution } from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
 
 /** What {@link buildFailureContributionPlane} needs off the registry, and no more. */
 export interface FailureContributionProviderSource {

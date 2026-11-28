@@ -10,7 +10,7 @@
  * last known model. The step KNOBS come from the owner's cluster scoped values.
  */
 import { describe, expect, it, vi } from 'vitest'
-import { type ClusterModelChoice, clusterStepSettingKey } from '@camstack/types'
+import { type ClusterModelChoice, clusterStepSettingKey } from '@dominevo/types'
 import {
   CLUSTER_MODEL_OWNER_ADDON_ID,
   ClusterModelSource,

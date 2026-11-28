@@ -65,7 +65,7 @@ interface LogMock {
 }
 
 interface PoolLike {
-  getHandle(modelIndex: number): import('@camstack/types').IInferenceEngine
+  getHandle(modelIndex: number): import('@dominevo/types').IInferenceEngine
 }
 
 /** A pool whose Python child never replies — the only way to reach the

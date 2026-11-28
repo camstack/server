@@ -14,7 +14,7 @@ interface LoggedLine {
   readonly tags: Record<string, unknown>
 }
 
-function recorder(): { lines: LoggedLine[]; logger: import('@camstack/types').IScopedLogger } {
+function recorder(): { lines: LoggedLine[]; logger: import('@dominevo/types').IScopedLogger } {
   const lines: LoggedLine[] = []
   const push =
     (level: LoggedLine['level']) =>
@@ -24,7 +24,7 @@ function recorder(): { lines: LoggedLine[]; logger: import('@camstack/types').IS
     ) => {
       lines.push({ level, message, meta: extras?.meta ?? {}, tags: extras?.tags ?? {} })
     }
-  const logger: import('@camstack/types').IScopedLogger = {
+  const logger: import('@dominevo/types').IScopedLogger = {
     debug: push('debug'),
     info: push('info'),
     warn: push('warn'),

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import type { SceneMonitor } from '@camstack/types'
+import type { SceneMonitor } from '@dominevo/types'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { SceneSettingsForm } from '../SceneSettingsForm'

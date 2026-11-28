@@ -1,4 +1,4 @@
-import type { AddonMigration, MigrationProcedureResult } from '@camstack/types'
+import type { AddonMigration, MigrationProcedureResult } from '@dominevo/types'
 import { type DropKeysPorts, planDropKeys } from './drop-keys.js'
 
 export const PROVIDER_ONVIF_ID = 'provider-onvif'

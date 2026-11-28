@@ -12,7 +12,7 @@
  * the FIRST frame came back off the worker. It reports them once per session,
  * and the runner turns them into the one operator-facing line.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import type { ForkedChildLike } from '../session-decode-coordinator.js'
 import { startSessionDecodePump, type FirstFrameTiming } from '../session-decode-pump.js'

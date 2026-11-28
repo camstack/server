@@ -34,7 +34,7 @@ is `migration-api.v2` beside v1, and v1 keeps answering.
 ## Consequences
 
 Every method needs a Zod pair, behaviour ids and a contract spec on real SQLite
-(`migration-api.contract.spec.ts`). A migration reads no `ctx`, imports `@camstack/types`, zod and
+(`migration-api.contract.spec.ts`). A migration reads no `ctx`, imports `@dominevo/types`, zod and
 local files only. A catalogue whose ports still need something outside V1 stays on the legacy
 `runMigrations(bound[])` form and is named in `scripts/migration-ports-surface-pending.json`; the
 list only shrinks. Each such catalogue says what V1 lacks (per-node settings projection, node

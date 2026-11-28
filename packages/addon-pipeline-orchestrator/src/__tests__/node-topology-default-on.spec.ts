@@ -4,7 +4,7 @@
  * stored settings) must enter balancing.
  */
 import { describe, it, expect } from 'vitest'
-import type { IEventBus, IScopedLogger, LogTags } from '@camstack/types'
+import type { IEventBus, IScopedLogger, LogTags } from '@dominevo/types'
 import { NodeTopologyService } from '../node-topology.js'
 import type { AgentSettingsMapBlob } from '../orchestrator-store-schemas.js'
 

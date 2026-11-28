@@ -6,7 +6,7 @@
  * Access / Recordings list chrome.
  */
 
-import { SECTION_BODY, SectionCard } from '@camstack/ui-library'
+import { SECTION_BODY, SectionCard } from '@dominevo/ui-library'
 import { ScanFace, UserRound } from 'lucide-react'
 import { PeopleList } from '../components/detection-intelligence/PeopleList'
 import { UnassignedFaces } from '../components/detection-intelligence/UnassignedFaces'

@@ -12,9 +12,9 @@
  * initial adopt AND after a simulated restore.
  */
 import { describe, it, expect, vi } from 'vitest'
-import { DeviceType, type IDeviceRuntimeState } from '@camstack/types'
+import { DeviceType, type IDeviceRuntimeState } from '@dominevo/types'
 import { HaContainerDevice } from '../devices/ha-container-device.js'
-import type { AccessoryChildSpec } from '@camstack/types'
+import type { AccessoryChildSpec } from '@dominevo/types'
 
 // ── Stub factory ─────────────────────────────────────────────────────────────
 
@@ -25,7 +25,7 @@ import type { AccessoryChildSpec } from '@camstack/types'
 function buildContainerCtx(
   persistedConfig: Record<string, unknown>,
   id = 1,
-): import('@camstack/types').DeviceContext {
+): import('@dominevo/types').DeviceContext {
   let runtimeStateRef: IDeviceRuntimeState | null = null
 
   return {
@@ -86,7 +86,7 @@ function buildContainerCtx(
       addContext: vi.fn(),
       with: vi.fn(),
     },
-  } as unknown as import('@camstack/types').DeviceContext
+  } as unknown as import('@dominevo/types').DeviceContext
 }
 
 /**
@@ -98,7 +98,7 @@ function buildChildCtx(
   spec: AccessoryChildSpec,
   childId: number,
 ): {
-  ctx: import('@camstack/types').DeviceContext
+  ctx: import('@dominevo/types').DeviceContext
   registeredCaps: string[]
   publishMutate: ReturnType<typeof vi.fn>
 } {
@@ -165,7 +165,7 @@ function buildChildCtx(
       addContext: vi.fn(),
       with: vi.fn(),
     },
-  } as unknown as import('@camstack/types').DeviceContext
+  } as unknown as import('@dominevo/types').DeviceContext
 
   return { ctx, registeredCaps, publishMutate }
 }
@@ -180,12 +180,12 @@ function buildChildCtx(
  *
  * Returns the per-child {registeredCaps, publishMutate, device} map keyed by entityId.
  */
-function spawn(containerCtx: import('@camstack/types').DeviceContext): Map<
+function spawn(containerCtx: import('@dominevo/types').DeviceContext): Map<
   string,
   {
     registeredCaps: string[]
     publishMutate: ReturnType<typeof vi.fn>
-    device: import('@camstack/types').IDevice
+    device: import('@dominevo/types').IDevice
   }
 > {
   const container = new HaContainerDevice(containerCtx)
@@ -196,7 +196,7 @@ function spawn(containerCtx: import('@camstack/types').DeviceContext): Map<
     {
       registeredCaps: string[]
       publishMutate: ReturnType<typeof vi.fn>
-      device: import('@camstack/types').IDevice
+      device: import('@dominevo/types').IDevice
     }
   >()
   let childId = 100

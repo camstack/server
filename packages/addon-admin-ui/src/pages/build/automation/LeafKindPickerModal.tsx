@@ -8,8 +8,8 @@ import type {
   AutomationLeafCategory,
   AutomationLeafContext,
   AutomationLeafKind,
-} from '@camstack/types'
-import { ConditionKindPicker, type KindDisabledReason, type KindTexts } from '@camstack/ui-library'
+} from '@dominevo/types'
+import { ConditionKindPicker, type KindDisabledReason, type KindTexts } from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 import { leafKindDescription, leafKindExample, leafKindLabel } from './recipe-parts'
 import { useInsideAutomation } from './trigger-rows-context'

@@ -6,7 +6,7 @@ export default buildLibPreset({
     addon: 'src/addon.ts',
   },
   // `@apocaliss92/nodepetkit` is a pure-TS cloud client (zero runtime deps) —
-  // it bundles inline so the addon ships self-contained (only @camstack/kernel
+  // it bundles inline so the addon ships self-contained (only @dominevo/kernel
   // + node builtins stay external). See tools/build/vite-lib.preset.ts.
   externals: 'self-contained',
 })

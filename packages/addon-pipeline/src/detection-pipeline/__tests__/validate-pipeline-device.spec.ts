@@ -6,7 +6,7 @@
  * wrong pool on any node with more than one accelerator, and the analysis
  * found the old replay preflight checking the hub's format for an agent's run.
  */
-import type { IScopedLogger, PipelineStepInput } from '@camstack/types'
+import type { IScopedLogger, PipelineStepInput } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { DetectionPipelineProvider } from '../provider.js'
 import { getStepDefinition } from '../registry/step-definitions.js'

@@ -12,7 +12,7 @@
  * that shape.
  */
 
-import type { SettingsStoreClient } from '@camstack/types'
+import type { SettingsStoreClient } from '@dominevo/types'
 import { SqliteSettingsBackend } from '../../sqlite-storage/sqlite-settings-backend.js'
 import { DEVICE_ROWS_COLUMNS, DEVICE_ROWS_INDEXES } from '../device-row-store.js'
 

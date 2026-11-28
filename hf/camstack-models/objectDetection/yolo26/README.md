@@ -10,8 +10,8 @@
 | Code licence | AGPL-3.0 |
 | **Weights licence** | **AGPL-3.0** ([`LICENSES/AGPL-3.0.txt`](../../LICENSES/AGPL-3.0.txt)) |
 | Training data | COCO 2017 (annotations CC BY 4.0, [`LICENSES/CC-BY-4.0.txt`](../../LICENSES/CC-BY-4.0.txt); images under their Flickr owners' terms) |
-| CamStack modifications | exported with Ultralytics to ONNX (dynamic batch), OpenVINO IR (FP32 and FP16) and CoreML FP16; `-320` and `-256` re-exported at that input size; `-int8` post-training quantised with OpenVINO NNCF |
+| Dominevo modifications | exported with Ultralytics to ONNX (dynamic batch), OpenVINO IR (FP32 and FP16) and CoreML FP16; `-320` and `-256` re-exported at that input size; `-int8` post-training quantised with OpenVINO NNCF |
 | Corresponding source | [Source offer for the AGPL-3.0 weights](../../THIRD_PARTY_MODELS.md#source-offer-for-the-agpl-30-weights) |
 | Commercial use | AGPL-3.0 obligations apply (source, licence text, notices) |
 
-CamStack redistributes the files in this folder; every change from the upstream is stated above. Converting a model does not change its licence. The collection statement is [`LICENSE`](../../LICENSE); every model's attribution is in [`THIRD_PARTY_MODELS.md`](../../THIRD_PARTY_MODELS.md).
+Dominevo redistributes the files in this folder; every change from the upstream is stated above. Converting a model does not change its licence. The collection statement is [`LICENSE`](../../LICENSE); every model's attribution is in [`THIRD_PARTY_MODELS.md`](../../THIRD_PARTY_MODELS.md).

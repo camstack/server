@@ -14,7 +14,7 @@ import {
   isSecretMarker,
   recordSecretRef,
   type AddonDeclaration,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { createUdsAddonContext } from '../../moleculer/addon-context-factory.js'
 import type { CapCallInput } from '../../transport/child-cap-protocol.js'
 import { createLocalTransport } from '../../transport/create-local-transport.js'

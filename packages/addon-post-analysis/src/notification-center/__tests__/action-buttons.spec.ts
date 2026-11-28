@@ -1,4 +1,4 @@
-import type { NcRuleActions } from '@camstack/types'
+import type { NcRuleActions } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { buildActionButtons, unresolvableButtons } from '../action-buttons.js'
 

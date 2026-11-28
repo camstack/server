@@ -1,4 +1,4 @@
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IScopedLogger } from '@dominevo/types'
 import { type RademacherConnectionConfig, sameRademacherConnection } from './config.js'
 import {
   type RademacherClientFactory,

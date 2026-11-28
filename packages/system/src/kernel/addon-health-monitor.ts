@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
-import type { IEventBus, IScopedLogger } from '@camstack/types'
-import { EventCategory, errMsg } from '@camstack/types'
+import type { IEventBus, IScopedLogger } from '@dominevo/types'
+import { EventCategory, errMsg } from '@dominevo/types'
 
 /**
  * Kernel-level addon health monitor.

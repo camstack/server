@@ -20,7 +20,7 @@
  *    read-modify-write.
  *  - Errors propagate. Nothing here swallows one.
  */
-import type { ISettingsStoreProvider } from '@camstack/types'
+import type { ISettingsStoreProvider } from '@dominevo/types'
 import { prefixRange } from '../builtins/sqlite-storage/prefix-range.js'
 import { loadPrefixed } from './prefix-walk.js'
 

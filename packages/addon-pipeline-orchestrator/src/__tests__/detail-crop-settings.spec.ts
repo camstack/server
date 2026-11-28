@@ -9,8 +9,8 @@
  * the SCOPE as hard as they pin the values.
  */
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_DETAIL_CROP_CONVENTION } from '@camstack/types'
-import type { ConfigField, ConfigSection } from '@camstack/types'
+import { DEFAULT_DETAIL_CROP_CONVENTION } from '@dominevo/types'
+import type { ConfigField, ConfigSection } from '@dominevo/types'
 import {
   buildGlobalSettingsSections,
   DETAIL_CROP_PADDING_KEY,

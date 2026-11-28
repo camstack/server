@@ -4,7 +4,7 @@
  *
  * D45 requires exactly ONE copy of every host-provided package per node, inside
  * the active server closure. The record exists because that was not true: one
- * agent held four copies of `@camstack/server` — 1.2.28 under the image seed,
+ * agent held four copies of `@dominevo/server` — 1.2.28 under the image seed,
  * 1.2.28 under a second seed tree, 1.2.0 in the legacy `/data/framework`, and
  * 1.2.30 in the closure — and each could be truthfully quoted as "the version".
  * Three consecutive diagnoses of which one actually ran were each disproved by
@@ -37,11 +37,11 @@ import { LEGACY_SYSTEM_PACKAGE_NAME } from './legacy-package-names.js'
  * a resolution race waiting for a boot order to change.
  */
 export const HOST_PROVIDED_PACKAGES: readonly string[] = [
-  '@camstack/server',
+  '@dominevo/server',
   // Pre-fold residue: a copy by the old name is never legitimate again.
   LEGACY_SYSTEM_PACKAGE_NAME,
-  '@camstack/types',
-  '@camstack/sdk',
+  '@dominevo/types',
+  '@dominevo/sdk',
 ]
 
 /** The filesystem operations the inventory needs, injected so it stays pure. */
@@ -120,13 +120,13 @@ export interface SearchRootsInput {
   /** The node's data dir (`CAMSTACK_DATA`). */
   readonly dataDir: string
   /**
-   * `@camstack/server/node_modules` — the NESTED tree that resolves that
+   * `@dominevo/server/node_modules` — the NESTED tree that resolves that
    * package's own dependencies. NOT where the framework packages live.
    */
   readonly serverNodeModules: string
   /**
    * The closure `node_modules` the launcher puts on NODE_PATH — where
-   * `@camstack/server`, `types` and `sdk` actually resolve from. Active, like
+   * `@dominevo/server`, `types` and `sdk` actually resolve from. Active, like
    * {@link SearchRootsInput.serverNodeModules}: leaving it out made the guard
    * call the copies that RUN "unexpected". Optional so a caller that has no
    * framework dir (a workspace run) behaves exactly as before.
@@ -144,7 +144,7 @@ export interface SearchRootsInput {
  * copy has actually turned up, each named in D45, and a bounded list keeps this
  * to a handful of stat calls at boot. `/data/addons` is a root in its own right
  * because the bootstrap-install layout puts the package DIRECTLY there
- * (`/data/addons/@camstack/server/system`), not under a `node_modules`.
+ * (`/data/addons/@dominevo/server/system`), not under a `node_modules`.
  *
  * A `NODE_PATH` entry is classified by WHICH directory it names, not by being
  * on `NODE_PATH`: the launcher puts the deposit and the seeds there itself, so
@@ -160,7 +160,7 @@ export function hostProvidedSearchRoots(input: SearchRootsInput): readonly Inven
   // BOTH deposit directories are active, and calling only one of them so is how
   // this guard spent every boot accusing the healthy layout.
   //
-  // `serverNodeModules` is `@camstack/server/node_modules` — the NESTED tree,
+  // `serverNodeModules` is `@dominevo/server/node_modules` — the NESTED tree,
   // which resolves that package's own dependencies. The framework packages
   // (`system`, `types`, `sdk`) do NOT live there: they resolve from the closure
   // directory one level up, which the launcher puts on NODE_PATH and logs as

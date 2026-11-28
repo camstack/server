@@ -6,7 +6,7 @@
  * tab opens on it. Every page but those two is stubbed — this pins the WIRING,
  * the pages have their own specs.
  */
-import type { NcRule } from '@camstack/types'
+import type { NcRule } from '@dominevo/types'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter, useSearchParams } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'

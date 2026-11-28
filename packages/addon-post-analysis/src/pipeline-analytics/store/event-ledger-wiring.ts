@@ -1,4 +1,4 @@
-import type { RecordsAccess } from '@camstack/types'
+import type { RecordsAccess } from '@dominevo/types'
 import { pipelineAnalyticsRecordKinds } from '../record-kinds.js'
 import { BIRTH_DECISION_LEDGER_COLLECTION } from './birth-decision-ledger-store.js'
 import { DEBUG_NOTE_ARCHIVE_COLLECTION } from './debug-note-archive-store.js'

@@ -11,7 +11,7 @@
  */
 import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { ConfigUISchemaWithValues } from '@camstack/types'
+import type { ConfigUISchemaWithValues } from '@dominevo/types'
 import { FormBuilder } from '../form-builder/FormBuilder'
 import { FormSaveBar } from '../form-builder/FormSaveBar'
 import { useBootstrapForm, useSaveBootstrapForm } from '../../hooks/use-bootstrap-form'

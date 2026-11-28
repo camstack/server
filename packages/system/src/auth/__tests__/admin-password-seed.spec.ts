@@ -1,7 +1,7 @@
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import type { IScopedLogger, SettingsStoreClient } from '@camstack/types'
+import type { IScopedLogger, SettingsStoreClient } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   ADMIN_PASSWORD_RESET_TRIGGER,

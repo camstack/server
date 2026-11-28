@@ -3,7 +3,7 @@ import type {
   NcSystemEventKind,
   NcTemplateVarContext,
   NcTemplateVarDescriptor,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   isHeldBackTemplateVar,
   NC_TEMPLATE_VARS,
@@ -13,7 +13,7 @@ import {
   NcTemplateFamilySchema,
   NcTemplateFieldSchema,
   templateVarsFor,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   groupTemplateVars,
   placeholderToken,

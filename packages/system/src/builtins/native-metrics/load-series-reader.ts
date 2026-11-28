@@ -31,7 +31,7 @@ import {
   resolveBucketMs,
   type LoadPoint,
   type LoadProcessRow,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { RetainedProcess, RetainedSample } from './load-series-types.js'
 
 /** One function's assembled series, before it is shaped for the wire. */

@@ -1,4 +1,4 @@
-"""CamStack detector evaluation harness (cloud-training P5).
+"""Dominevo detector evaluation harness (cloud-training P5).
 
 Pipeline-identical preprocess and decode for YOLO ONNX detectors, P/R/AP50 per
 macro class, camera, day/night and small subjects, a baseline vs candidate

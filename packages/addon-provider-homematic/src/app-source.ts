@@ -4,7 +4,7 @@
  * server side. The entry is the same addon page the standalone admin mounts at
  * `/addon/homematic-ccu`.
  */
-import type { AppDeclaration, IAppSourceProvider } from '@camstack/types'
+import type { AppDeclaration, IAppSourceProvider } from '@dominevo/types'
 
 export const HOMEMATIC_APP_ID = 'homematic-ccu'
 

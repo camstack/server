@@ -21,7 +21,7 @@
  * "a spawn failed transiently", and the only output is an integer read at the
  * top of each drain.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 /** Quiet time that buys back ONE lane. */
 export const PRESSURE_RECOVERY_MS = 30_000

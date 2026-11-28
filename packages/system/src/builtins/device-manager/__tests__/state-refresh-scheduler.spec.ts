@@ -12,7 +12,7 @@ import type {
   LogExtras,
   StateRefreshPolicy,
   StateRefreshReason,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   StateRefreshPolicyRegistry,

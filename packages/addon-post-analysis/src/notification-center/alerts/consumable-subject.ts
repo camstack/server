@@ -18,7 +18,7 @@ import {
   NC_CONSUMABLE_LOW_PERCENT_DEFAULT,
   NC_CONSUMABLE_SYSTEM_EVENT_KINDS,
   type NcRule,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** A consumable subject, read back into its parts. */
 export interface NcConsumableSubjectParts {

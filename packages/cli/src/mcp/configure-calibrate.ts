@@ -18,7 +18,7 @@
  * names them as advice, in text.
  */
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
-import { type DryRunOutcome, type GatedToolSpec, type HubClient } from '@camstack/develop'
+import { type DryRunOutcome, type GatedToolSpec, type HubClient } from '@dominevo/develop'
 import { text } from './tool-result.js'
 import { z } from 'zod'
 import { ConfirmTokenSchema, adminGated, type AdminGatedResult } from './configure-common.js'
@@ -551,7 +551,7 @@ export async function calibrateApply(
 }
 
 const GATE_HOW =
-  'Two steps: call without confirm_token for a preview (before/after per key) and a one-shot token, then call again with the SAME arguments and that token. Needs an admin `camstack login` session.'
+  'Two steps: call without confirm_token for a preview (before/after per key) and a one-shot token, then call again with the SAME arguments and that token. Needs an admin `dominevo login` session.'
 
 export function registerCalibrateTools(server: McpServer, ctx: McpContext): void {
   server.tool(

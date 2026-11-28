@@ -13,7 +13,7 @@ import type {
   StepOutput,
   PipelineSlot,
   PostprocessorType,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 let traceCounter = 0
 

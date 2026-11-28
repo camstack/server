@@ -6,7 +6,7 @@
  * patching the one column) loses them and the spec fails; an already-stamped device must keep
  * the integration it has.
  */
-import { claimDevicesToDefaultIntegration, type ClaimDevicesPorts } from '@camstack/types'
+import { claimDevicesToDefaultIntegration, type ClaimDevicesPorts } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { setup } from './device-manager-harness.js'
 import { readDeviceRow } from './settings-store-api.js'

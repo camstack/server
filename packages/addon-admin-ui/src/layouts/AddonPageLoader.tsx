@@ -17,14 +17,14 @@
 import { useState, useEffect, useMemo, type ComponentType } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { registerRemotes, loadRemote, getInstance } from '@module-federation/runtime'
-import type { AddonPageInfo as ServerAddonPageInfo } from '@camstack/types'
-import type { System } from '@camstack/sdk'
+import type { AddonPageInfo as ServerAddonPageInfo } from '@dominevo/types'
+import type { System } from '@dominevo/sdk'
 import {
   useAddonPagesListPages,
   useSystem,
   ensureMfHostInit,
   uiLibraryVersion,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { hubPath } from '../lib/mount'
 import { useTranslation } from 'react-i18next'
 import {

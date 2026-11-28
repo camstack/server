@@ -34,7 +34,7 @@ import {
   type NcAlarmSensors,
   type NcAlarmSettingsPatch,
   type NcSchedule,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   Card,
   ErrorBox,
@@ -43,7 +43,7 @@ import {
   TabsTrigger,
   useDeviceManagerListAll,
   useSystem,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Loader2, ShieldCheck } from 'lucide-react'
 import { useMemo, useRef, useState } from 'react'

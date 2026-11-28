@@ -6,7 +6,7 @@
  * redirect, and NOT public — the fetch must carry the account-link token of the
  * user the image was made for, who must still be allowed to see the camera.
  */
-import type { AddonContext, AddonHttpReply, AddonHttpRequest } from '@camstack/types'
+import type { AddonContext, AddonHttpReply, AddonHttpRequest } from '@dominevo/types'
 import sharp from 'sharp'
 import { describe, expect, it } from 'vitest'
 import { handleGetSnapshot } from '../handlers/snapshot-provider.js'

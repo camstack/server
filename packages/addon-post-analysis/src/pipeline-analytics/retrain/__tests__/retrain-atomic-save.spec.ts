@@ -7,7 +7,7 @@
  * rolled back with the rest. Blobs follow the order that never leaves a row
  * pointing at missing media (blob first on create, row first on delete).
  */
-import type { MediaFileRef, RecordKindHandle, RecordsAccess } from '@camstack/types'
+import type { MediaFileRef, RecordKindHandle, RecordsAccess } from '@dominevo/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { analyticsLedgers, makeAnalyticsRecords } from '../../__tests__/fake-records.js'
 import { makeSilentLogger } from '../../__tests__/test-helpers.js'

@@ -1,6 +1,6 @@
 ---
 name: architecture
-description: Architecture pointers for CamStack plugin authors — process model, capabilities, media, deploy.
+description: Architecture pointers for Dominevo plugin authors — process model, capabilities, media, deploy.
 ---
 
 # Architecture for plugin authors
@@ -49,11 +49,11 @@ generated `docs/reference/*` — do not copy them into skills.
 Editing source and rebuilding `dist/` does **nothing** on a live node until:
 
 ```bash
-camstack deploy packages/addon-<name>
+dominevo deploy packages/addon-<name>
 ```
 
 Framework packages (`types`, `system`, `sdk`, `ui-library`) travel inside
-`@camstack/server` — need a server update, not an addon deploy.
+`@dominevo/server` — need a server update, not an addon deploy.
 
 ## Suggested reading (server repo)
 
@@ -71,9 +71,9 @@ Framework packages (`types`, `system`, `sdk`, `ui-library`) travel inside
 ## Examples
 
 ```bash
-camstack develop find-example provider
-camstack develop find-example notifier
-camstack develop find-example osd
+dominevo develop find-example provider
+dominevo develop find-example notifier
+dominevo develop find-example osd
 ```
 
 See also public docs: Develop → Examples from core addons.

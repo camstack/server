@@ -9,7 +9,7 @@ import {
   type IIntegrationInstancesProvider,
   type IScopedLogger,
   seedInstanceOnce,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { makeRecordsWorld } from '../../sqlite-storage/__tests__/support/records-world.js'
 import { BLOCKS_INTEGRATION_NAME, reconcileBlocksIntegration } from '../blocks-integration.js'

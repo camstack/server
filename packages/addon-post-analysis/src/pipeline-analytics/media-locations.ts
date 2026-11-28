@@ -1,5 +1,5 @@
-import type { StorageLocationMode } from '@camstack/types'
-import { mayWriteToLocation } from '@camstack/types'
+import type { StorageLocationMode } from '@dominevo/types'
+import { mayWriteToLocation } from '@dominevo/types'
 /**
  * Which location `eventMedia` receives the NEXT blob on.
  *

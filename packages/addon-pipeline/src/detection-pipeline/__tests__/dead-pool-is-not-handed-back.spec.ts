@@ -18,7 +18,7 @@
  *     Python process per frame at 13 Hz);
  *  3. the terminal state is published on the health channel and can be cleared.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { EngineProvisioningState } from '../engine-provisioner.js'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 

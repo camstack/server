@@ -6,7 +6,7 @@ import {
   KeychainAuditEntrySchema,
   KeychainResetRecordSchema,
   type DefinedRecordKind,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import type { IsolatedRecordKinds } from '../records-isolated.js'
 

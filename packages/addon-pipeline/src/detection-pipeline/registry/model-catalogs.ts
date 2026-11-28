@@ -2,8 +2,8 @@
  * Consolidated model catalogs for the detection pipeline.
  * Each step references models from here — single source of truth.
  */
-import type { LabelDefinition, ModelCatalogEntry, ModelFormatEntry } from '@camstack/types'
-import { COCO_80_LABELS, hfModelUrl } from '@camstack/types'
+import type { LabelDefinition, ModelCatalogEntry, ModelFormatEntry } from '@dominevo/types'
+import { COCO_80_LABELS, hfModelUrl } from '@dominevo/types'
 import {
   AIY_BIRDS_APACHE,
   ANIMAL_CLASSIFIER_APACHE,
@@ -119,7 +119,7 @@ const YOLOV9_TIER_NAME: Record<string, string> = {
 
 /**
  * The Ultralytics YOLOv9 family (COCO-pretrained Ultralytics weights,
- * re-exported by CamStack — not trained by us) — the default NPU-detection line.
+ * re-exported by Dominevo — not trained by us) — the default NPU-detection line.
  * It runs on the Intel NPU ("AI Boost"), and its INT8 builds are as accurate
  * there as on the CPU. YOLO26 runs on the NPU too since OpenVINO 2025.4
  * (measured 2026-10-07): its base IRs match the CPU, its INT8 IRs lose recall
@@ -502,7 +502,7 @@ const OBJECT_DETECTION_MODEL_ENTRIES: readonly ModelCatalogEntry[] = [
       openvino: ovFormat(hf('objectDetection/yolo26/openvino/camstack-yolo26x.xml'), 213),
     },
   },
-  // ── Coral USB Edge TPU — CamStack's one offered SSD ──
+  // ── Coral USB Edge TPU — Dominevo's one offered SSD ──
   // EdgeTPU-compiled `.tflite` (runtime `edgetpu`, format `tflite`). Emits the
   // SSD `TFLite_Detection_PostProcess` 4-tensor layout → per-model
   // `postprocessor: 'ssd'` (step default is `yolo`). `ssd.py` owns the Coral
@@ -704,7 +704,7 @@ const OBJECT_DETECTION_MODEL_ENTRIES: readonly ModelCatalogEntry[] = [
     ovInt8: 26.31,
   }),
   // The Ultralytics YOLOv9 family (COCO-pretrained Ultralytics weights, re-exported
-  // by CamStack — not trained by us) — the default NPU-detection line.
+  // by Dominevo — not trained by us) — the default NPU-detection line.
   ...yolov9Reduced('t', 320, {
     onnx: 8,
     coreml: 4.3,

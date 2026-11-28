@@ -1,4 +1,4 @@
-import type { DetailResult } from '@camstack/types'
+import type { DetailResult } from '@dominevo/types'
 import { PHOTO_FACE_EMBEDDING_STEP_ID } from '../../pipeline-analytics/photo-enrollment.js'
 
 /** Minimal {@link DetailResult} for face-embedding step stubs in wiring specs. */

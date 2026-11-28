@@ -1,11 +1,11 @@
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IScopedLogger } from '@dominevo/types'
 import type {
   IDeviceAdoptionProvider,
   AdoptionStatus,
   AdoptionFilter,
   DiscoveredChildDevice,
   DeviceType,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { buildDreameCandidates, type DreameDiscoverable } from './dreame-discovery.js'
 
 /**
@@ -55,7 +55,7 @@ export interface DreameAdoptionProviderDeps {
 /** The single granularity this provider advertises: whole-device adoption. */
 const DEVICES_FILTER: AdoptionFilter = { id: 'devices', label: 'Devices', isDefault: true } as const
 
-/** Build a `dreameDeviceId → CamStack deviceId` map for a single integration. */
+/** Build a `dreameDeviceId → Dominevo deviceId` map for a single integration. */
 async function adoptedMapForIntegration(
   integrationId: string,
   listAdoptedDreame: DreameAdoptionProviderDeps['listAdoptedDreame'],

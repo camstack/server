@@ -1,19 +1,19 @@
 class Camstack < Formula
   desc "Self-hosted camera platform with distributed agent pipeline"
-  homepage "https://github.com/camstack/camstack-server"
+  homepage "https://github.com/dominevo/camstack-server"
   license "MIT"
   version "0.2.0"
 
   on_macos do
     on_arm do
-      url "https://github.com/camstack/camstack-server/releases/download/v#{version}/camstack-v#{version}-darwin-arm64.tar.gz"
+      url "https://github.com/dominevo/camstack-server/releases/download/v#{version}/camstack-v#{version}-darwin-arm64.tar.gz"
       sha256 "PLACEHOLDER"
     end
   end
 
   on_linux do
     on_intel do
-      url "https://github.com/camstack/camstack-server/releases/download/v#{version}/camstack-v#{version}-linux-x64.tar.gz"
+      url "https://github.com/dominevo/camstack-server/releases/download/v#{version}/camstack-v#{version}-linux-x64.tar.gz"
       sha256 "PLACEHOLDER"
     end
   end
@@ -28,13 +28,13 @@ class Camstack < Formula
       Quick start:
 
         # Start as hub (full server)
-        camstack serve
+        dominevo serve
 
         # Start as agent (worker node)
-        camstack agent --hub <HUB_IP> --token <TOKEN>
+        dominevo agent --hub <HUB_IP> --token <TOKEN>
 
         # Check dependencies
-        camstack setup
+        dominevo setup
 
       For ML detection, install Python 3.10+ with your preferred runtime.
       For video decode/transcode, install ffmpeg:
@@ -51,6 +51,6 @@ class Camstack < Formula
   end
 
   test do
-    assert_match version.to_s, shell_output("#{bin}/camstack --version")
+    assert_match version.to_s, shell_output("#{bin}/dominevo --version")
   end
 end

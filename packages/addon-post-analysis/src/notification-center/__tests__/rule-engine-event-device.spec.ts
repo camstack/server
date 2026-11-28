@@ -3,7 +3,7 @@
  * remote — and one of the events it declares (camstack/planning#503 phase 5).
  * No camera links the device: the fire is evaluated on the device alone.
  */
-import { NcRuleInputSchema, type SensorEvent } from '@camstack/types'
+import { NcRuleInputSchema, type SensorEvent } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { evaluateRule, subjectFromUnownedSensorEvent } from '../rule-engine.js'
 

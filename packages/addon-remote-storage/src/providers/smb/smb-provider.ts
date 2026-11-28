@@ -1,6 +1,6 @@
 /**
  * SMB / CIFS `storage-provider` cap implementation — the fourth entry in
- * `@camstack/addon-remote-storage`.
+ * `@dominevo/addon-remote-storage`.
  *
  * ── Scope, and why it is narrow ────────────────────────────────────────────
  * This provider serves `cap-mediated` storage kinds only, which today means
@@ -42,7 +42,7 @@ import * as fsp from 'node:fs/promises'
 import * as os from 'node:os'
 import * as path from 'node:path'
 import { randomUUID } from 'node:crypto'
-import type { IScopedLogger, IStorageProviderImpl, StorageLocation } from '@camstack/types'
+import type { IScopedLogger, IStorageProviderImpl, StorageLocation } from '@dominevo/types'
 import { rearmIdleAbort, scheduleIdleAbort } from '../../shared.js'
 import { SMB_CONFIG_SCHEMA, type SmbConfig } from './smb-config-schema.js'
 import {
@@ -227,7 +227,7 @@ export class SmbStorageProvider implements IStorageProviderImpl {
       // obtain statfs-backed capacity would be a lie that disables a safety
       // constraint, not a convenience.
       nodeLocal: false,
-      // The share's free space is not visible to CamStack: smbclient's `du`
+      // The share's free space is not visible to Dominevo: smbclient's `du`
       // output is not something to build a disk-pressure guard on. A provider
       // that promises a threshold it cannot measure is worse than one that
       // says it cannot — a full NAS surfaces as a write error, not as a

@@ -485,7 +485,7 @@ stage 3 (§10).
 
 ## 8 · Staged plan — cheapest first, each independently shippable and measurable
 
-All stages are recorder-local (`camstack deploy packages/addon-pipeline`),
+All stages are recorder-local (`dominevo deploy packages/addon-pipeline`),
 none changes a cap surface, and each is revertible alone. Baseline metrics
 before each stage: `cpuGcPercent`, `loopMax` p/max, `heapUsed` floor at
 boot+5 min, first-locate latency per device (`tags: { deviceId }`).

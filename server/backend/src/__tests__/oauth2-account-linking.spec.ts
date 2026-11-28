@@ -19,8 +19,8 @@ import type {
   IUserManagementProvider,
   LogExtras,
   TokenScope,
-} from '@camstack/types'
-import { OauthIntegrationDescriptorSchema } from '@camstack/types'
+} from '@dominevo/types'
+import { OauthIntegrationDescriptorSchema } from '@dominevo/types'
 import cookie from '@fastify/cookie'
 import Fastify from 'fastify'
 import { beforeEach, describe, expect, it } from 'vitest'
@@ -621,7 +621,7 @@ describe('OAuth2 account-linking flow', () => {
   // ── Case 7a ─────────────────────────────────────────────────────────────────
   //
   // The SAME refusal, asked by a BROWSER (it wants HTML): not a bare JSON body but
-  // the CamStack completion page with a reason code. The two audiences differ on
+  // the Dominevo completion page with a reason code. The two audiences differ on
   // purpose; the JSON contract in the cases around this one is the machine caller's.
   it('the same refusal for a BROWSER lands on the completion page with a reason code', async () => {
     const url = `/api/oauth2/authorize?response_type=code&integration=bogus&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&state=${STATE}`

@@ -18,7 +18,7 @@ import type {
   MotionEventDraft,
   ObjectEvent,
   ObjectEventDraft,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import {
   AUDIO_EVENTS_COLLECTION,

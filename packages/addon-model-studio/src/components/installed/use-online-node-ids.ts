@@ -4,7 +4,7 @@
  * replace the roster without a tRPC React provider.
  */
 import { useMemo } from 'react'
-import { useClusterNodes } from '@camstack/ui-library'
+import { useClusterNodes } from '@dominevo/ui-library'
 
 export function useOnlineNodeIds(): readonly string[] {
   const { nodes } = useClusterNodes()

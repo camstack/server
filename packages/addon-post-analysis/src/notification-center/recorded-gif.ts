@@ -17,7 +17,7 @@
  *
  * The recorded clip (`recorded-clip.ts`, one `recordingExport` render) is the
  * only cut. The gif is derived from ITS bytes with the SAME filter chain the
- * broker uses on a ring cut (`gifFromMp4Args` in `@camstack/types`), so a gif
+ * broker uses on a ring cut (`gifFromMp4Args` in `@dominevo/types`), so a gif
  * of an old moment and a gif of a live one look the same, and a rule that asks
  * for both a gif and a video gets two containers of ONE window — the guarantee
  * `NcEventMediaRequest` exists for.
@@ -33,7 +33,7 @@ import { randomUUID } from 'node:crypto'
 import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import { gifDeriveSpeed, gifFromMp4Args, type IScopedLogger } from '@camstack/types'
+import { gifDeriveSpeed, gifFromMp4Args, type IScopedLogger } from '@dominevo/types'
 import { NC_GIF_FPS, NC_GIF_MAX_WIDTH, NC_GIF_SPEED } from './event-media/event-media-service.js'
 
 /** Bound on one derive: a ~10 s window encodes in well under a second; a

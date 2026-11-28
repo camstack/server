@@ -9,8 +9,8 @@
  * Neither writes: every change joins the dialog's draft (`useInstanceLeadDraft`) and travels with
  * its "Save changes", together with what the operator typed in the form below.
  */
-import type { LlmModelInfo } from '@camstack/types'
-import { Button, ErrorBox, FormField, Select, useSystem } from '@camstack/ui-library'
+import type { LlmModelInfo } from '@dominevo/types'
+import { Button, ErrorBox, FormField, Select, useSystem } from '@dominevo/ui-library'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
 import { useMemo } from 'react'

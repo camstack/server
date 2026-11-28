@@ -1,13 +1,13 @@
 #!/usr/bin/env tsx
 /**
- * The old system package is gone: its source ships as `@camstack/server/system`.
+ * The old system package is gone: its source ships as `@dominevo/server/system`.
  *
- * The kernel and the builtins are a private workspace (`@camstack/server-framework`)
- * whose built output ships INSIDE the `@camstack/server` tarball, imported as
- * `@camstack/server/system` (D989). One published framework package means one version to
- * keep in step, and no `force_packages=@camstack/system` on a capability change.
+ * The kernel and the builtins are a private workspace (`@dominevo/server-framework`)
+ * whose built output ships INSIDE the `@dominevo/server` tarball, imported as
+ * `@dominevo/server/system` (D989). One published framework package means one version to
+ * keep in step, and no `force_packages=@dominevo/system` on a capability change.
  *
- * A source or config file that still names `@camstack/system` imports a package
+ * A source or config file that still names `@dominevo/system` imports a package
  * that is no longer published: it resolves from a stale copy under a node's
  * data dir, or not at all. There is no alias and no shim — the old name is a
  * bug, not a spelling.
@@ -25,14 +25,14 @@ import { fileURLToPath } from 'node:url'
 const ROOT = path.resolve(import.meta.dirname, '..')
 
 /** Not preceded by a path/name character and not followed by `-` or a word character. */
-const OLD_NAME = /(?<![\w/-])@camstack\/system(?![\w-])/
+const OLD_NAME = /(?<![\w/-])@dominevo\/system(?![\w-])/
 /**
- * The same name spelled as path segments (`path.join(root, '@camstack', 'system')`).
+ * The same name spelled as path segments (`path.join(root, '@dominevo', 'system')`).
  * A rename of the specifier misses it, and the launcher's framework check
  * then never matched a folded closure: the hub's CJS addon loads lost the
  * framework from NODE_PATH.
  */
-const OLD_NAME_SEGMENTS = /['"]@camstack['"]\s*,\s*['"]system['"]/
+const OLD_NAME_SEGMENTS = /['"]@dominevo['"]\s*,\s*['"]system['"]/
 
 export const ALLOWED: readonly RegExp[] = [
   /^docs\/decisions\//,
@@ -96,11 +96,11 @@ function main(): void {
   })
   const findings = findSystemPackageReferences(files)
   if (findings.length === 0) {
-    console.log(`check-no-system-package: ${files.length} files, no \`@camstack/system\` specifier`)
+    console.log(`check-no-system-package: ${files.length} files, no \`@dominevo/system\` specifier`)
     return
   }
   console.error(
-    'check-no-system-package: `@camstack/system` is no longer a published package — import `@camstack/server/system`:',
+    'check-no-system-package: `@dominevo/system` is no longer a published package — import `@dominevo/server/system`:',
   )
   for (const f of findings.slice(0, 60)) console.error(`  ${f.file}:${f.line}`)
   if (findings.length > 60) console.error(`  … and ${findings.length - 60} more`)

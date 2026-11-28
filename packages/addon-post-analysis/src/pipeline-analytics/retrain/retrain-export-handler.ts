@@ -25,7 +25,7 @@ import type {
   RetrainExportLayout,
   RetrainFrameWorkState,
   RetrainMacroClass,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   type RetrainCropCutter,
   type RetrainExportPlan,

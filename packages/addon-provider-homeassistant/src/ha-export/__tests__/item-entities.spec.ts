@@ -7,7 +7,7 @@
  * dishwasher's salt and rinse aid), waste (a dirty-water tank) — reaches Home
  * Assistant this way (D915 follow-up).
  */
-import type { ConsumablesStatus } from '@camstack/types'
+import type { ConsumablesStatus } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   applyCapCommand,

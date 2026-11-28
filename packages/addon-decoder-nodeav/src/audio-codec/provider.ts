@@ -8,8 +8,8 @@ import type {
   AudioPcmChunk,
   AudioEncodedChunk,
   PcmSampleFormat,
-} from '@camstack/types'
-import { errMsg } from '@camstack/types'
+} from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
 import {
   CODEC_CATALOG,
   catalogEntryFor,

@@ -1,4 +1,4 @@
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { alexaEchoSessions, type EchoSession } from '../alexa-echo-sessions.js'
 import { AlexaEchoDevice } from '../devices/alexa-echo-device.js'

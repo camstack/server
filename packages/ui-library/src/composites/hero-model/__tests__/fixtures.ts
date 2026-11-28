@@ -1,4 +1,4 @@
-import { buildHeroModel, DeviceFeature, type HeroModel } from '@camstack/types'
+import { buildHeroModel, DeviceFeature, type HeroModel } from '@dominevo/types'
 
 import type { HeroLabels } from '../hero-labels'
 

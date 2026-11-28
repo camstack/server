@@ -29,7 +29,7 @@ import type {
   IScopedLogger,
   ProviderRegistration,
   RecordsAccess,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** Routers the test supplies — `{ deviceManager: { getDevice: { query } } }`. */
 export type ApiStub = Readonly<Record<string, unknown>>

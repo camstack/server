@@ -1,4 +1,4 @@
-import { userError } from '@camstack/types'
+import { userError } from '@dominevo/types'
 /**
  * Gotify notifier adapter (plan task T8).
  *
@@ -33,7 +33,7 @@ import type {
   DiscoveredTarget,
   PreparedNotification,
   TargetKind,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { fetchWithTimeout } from '../http.js'
 import type { HttpNotifierAdapter, TargetConfig } from './adapter.js'
 

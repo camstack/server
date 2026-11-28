@@ -4,7 +4,7 @@ import { ChevronUp, ChevronDown, Square } from 'lucide-react'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
 import { useDeviceCommand } from '../../hooks/use-device-command'
 import { cn } from '../../lib/cn'
-import type { CoverStatus, CoverState } from '@camstack/types'
+import type { CoverStatus, CoverState } from '@dominevo/types'
 import type { DeviceControlProps } from './control-registry'
 
 /** Button highlight variant for cover state-aware colouring. */

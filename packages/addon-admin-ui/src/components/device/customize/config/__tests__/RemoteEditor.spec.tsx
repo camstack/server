@@ -3,7 +3,7 @@ import {
   DeviceType,
   EMPTY_REMOTE_CONFIG,
   type RemoteConfig,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useState } from 'react'
@@ -17,8 +17,8 @@ const setConfig = vi.fn(async (_input: { deviceId: number; config: RemoteConfig 
   status: 'saved' as const,
 }))
 
-vi.mock('@camstack/ui-library', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@camstack/ui-library')>()
+vi.mock('@dominevo/ui-library', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dominevo/ui-library')>()
   return {
     ...actual,
     trpc: { useUtils: () => ({}) },

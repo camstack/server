@@ -1,5 +1,5 @@
 ---
-description: Debug a live CamStack system — log tiers, hub.mjs and the tRPC API, topology, verifying where work ran, instrument before guessing
+description: Debug a live Dominevo system — log tiers, hub.mjs and the tRPC API, topology, verifying where work ran, instrument before guessing
 alwaysApply: false
 ---
 <!-- Written by `npx tsx scripts/skills/gen-skill-pointers.ts` — a pointer, not a copy. The procedure lives in the skill below. -->

@@ -6,7 +6,7 @@
  * Every dependency is read through the deps object — getters for what the
  * addon opens in `onInitialize`.
  */
-import { type AddonContext, type DetailResult, errMsg, type FrameHandle } from '@camstack/types'
+import { type AddonContext, type DetailResult, errMsg, type FrameHandle } from '@dominevo/types'
 import { ENRICHMENT_CAPTURE_STALE_MS } from '../media/capture-timing.js'
 import {
   type ApplyTrackLabelResult,

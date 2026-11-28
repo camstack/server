@@ -1,5 +1,5 @@
 /**
- * Detection classes — shared between CamStack app and proxy.
+ * Detection classes — shared between Dominevo app and proxy.
  * Aligned with the shared detection-class taxonomy.
  */
 

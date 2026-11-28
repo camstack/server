@@ -2,7 +2,7 @@
  * Running a rule's Actions (planning#473): the centre starts an Action by id through
  * `actions.run` and owns nothing of the run itself.
  */
-import type { ActionEntry, ActionRunResult } from '@camstack/types'
+import type { ActionEntry, ActionRunResult } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   NcActionCatalog,

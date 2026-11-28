@@ -5,7 +5,7 @@ import {
   deviceAdminLinkCapability,
   powerMeterCapability,
   workloadCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import type {
   UnraidContainerInfo,

@@ -3,7 +3,7 @@
  * default instance's name, the fixed setup code is released from the keychain, and the retired
  * global rows are deleted while the node rows (and a neighbour addon's rows) survive.
  */
-import { makeInMemoryRecords } from '@camstack/types'
+import { makeInMemoryRecords } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   type SettingsRows,
@@ -99,7 +99,7 @@ async function world(
 
 describe('bridge-name-to-instance (seq 6)', () => {
   it('renames the default record to the stored installation name, leaving the setup code', async () => {
-    const w = await world({ bridgeName: 'Casa' }, 'CamStack Bridge')
+    const w = await world({ bridgeName: 'Casa' }, 'Dominevo Bridge')
     const report = await w.fixture.boot()
     expect(report.failed).toEqual([])
     expect(report.applied).toContain(BRIDGE_NAME_TO_INSTANCE_ID)
@@ -126,7 +126,7 @@ describe('drop-global-knobs (seq 7 and 8)', () => {
         interfaceName: 'en0',
         'interfaceName@hub': 'en0',
       },
-      'CamStack Bridge',
+      'Dominevo Bridge',
       vault,
     )
     const report = await w.fixture.boot()
@@ -147,7 +147,7 @@ describe('drop-global-knobs (seq 7 and 8)', () => {
   })
 
   it('never deletes the cluster interfaceName when no node row carries the value', async () => {
-    const w = await world({ interfaceName: 'en0' }, 'CamStack Bridge')
+    const w = await world({ interfaceName: 'en0' }, 'Dominevo Bridge')
     await w.fixture.boot()
     // the per-node copy migration runs first and gives the hub its row, so the bare one may go
     expect(w.fixture.rows()['export-hap.interfaceName@hub']?.['value']).toBe('en0')
@@ -160,7 +160,7 @@ describe('drop-global-knobs (seq 7 and 8)', () => {
         fixedPin: { $secret: 'ref-1' },
         interfaceName: 'en0',
       },
-      'CamStack Bridge',
+      'Dominevo Bridge',
       new Map([['ref-1', '123-45-678']]),
     )
     await w.fixture.boot()

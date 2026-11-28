@@ -71,12 +71,12 @@ const RULES: ReadonlyArray<{
   {
     id: 'raw-equality',
     re: /(?:ctx\.id\s*(?:===|!==))|(?:(?:===|!==)\s*[A-Za-z_$][\w$.]*\bctx\.id)/,
-    fix: "use isSameAddonId(a, b) from '@camstack/types'",
+    fix: "use isSameAddonId(a, b) from '@dominevo/types'",
   },
   {
     id: 'hand-rolled-strip',
     re: /\.(?:replace|replaceAll)\(\s*['"`]addon:['"`]|\.slice\(\s*['"`]addon:['"`]\.length/,
-    fix: "use bareAddonId(id) from '@camstack/types'",
+    fix: "use bareAddonId(id) from '@dominevo/types'",
   },
   {
     id: 'prefixed-id-published',

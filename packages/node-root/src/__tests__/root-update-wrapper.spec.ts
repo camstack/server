@@ -60,13 +60,13 @@ beforeEach(() => {
   fs.mkdirSync(seedDir, { recursive: true })
   fs.writeFileSync(
     path.join(seedDir, 'package.json'),
-    JSON.stringify({ name: '@camstack/server', version: '1.1.74' }),
+    JSON.stringify({ name: '@dominevo/server', version: '1.1.74' }),
     'utf-8',
   )
   runningPkgPath = path.join(tmp, 'running-package.json')
   fs.writeFileSync(
     runningPkgPath,
-    JSON.stringify({ name: '@camstack/server', version: '1.2.32' }),
+    JSON.stringify({ name: '@dominevo/server', version: '1.2.32' }),
     'utf-8',
   )
 })

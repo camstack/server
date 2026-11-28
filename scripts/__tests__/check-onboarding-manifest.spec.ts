@@ -72,12 +72,12 @@ describe('check-onboarding-manifest', () => {
     const facts = agreeing()
     const moved = new Map([
       ...facts.addonPackages,
-      ['cloudflare-turn', '@camstack/addon-elsewhere'],
+      ['cloudflare-turn', '@dominevo/addon-elsewhere'],
     ])
     const gone = new Map([...facts.addonPackages].filter(([id]) => id !== 'cloudflare-turn'))
 
     expect(manifestProblems(MANIFEST, { ...facts, addonPackages: moved }).join('\n')).toContain(
-      'cloudflare-turn ships in @camstack/addon-elsewhere',
+      'cloudflare-turn ships in @dominevo/addon-elsewhere',
     )
     expect(manifestProblems(MANIFEST, { ...facts, addonPackages: gone }).join('\n')).toContain(
       'no addon has the id cloudflare-turn',

@@ -1,7 +1,7 @@
 /**
- * `camstack dev <addon>` — watch + auto rebuild + push.
+ * `dominevo dev <addon>` — watch + auto rebuild + push.
  *
- * The development loop runs `camstack push` once up-front, then watches
+ * The development loop runs `dominevo push` once up-front, then watches
  * source files for changes and re-pushes on every meaningful edit. The
  * server-side `AddonInstaller` already overwrites the existing install
  * + calls `reloadPackages()`, so a successful push is effectively a
@@ -31,7 +31,7 @@ import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { parseArgs } from 'node:util'
 import * as clack from '@clack/prompts'
-import { loadSession, resolveFreshCredentials, touchSession } from '@camstack/develop'
+import { loadSession, resolveFreshCredentials, touchSession } from '@dominevo/develop'
 import { cliHubTransport } from '../http/hub-transport.js'
 import { deployAddon, type DeployOptions } from './deploy.js'
 
@@ -95,15 +95,15 @@ async function pushOnce(
   label: string,
 ): Promise<void> {
   const start = Date.now()
-  console.log(`\n[camstack dev] → ${label}…`)
+  console.log(`\n[dominevo dev] → ${label}…`)
   try {
     await deployAddon(addonPath, await getOpts())
     const took = ((Date.now() - start) / 1000).toFixed(1)
-    console.log(`[camstack dev] ✓ Synced in ${took}s`)
+    console.log(`[dominevo dev] ✓ Synced in ${took}s`)
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
-    console.error(`[camstack dev] ✗ Push failed: ${msg}`)
-    console.error(`[camstack dev]   Waiting for next change…`)
+    console.error(`[dominevo dev] ✗ Push failed: ${msg}`)
+    console.error(`[dominevo dev]   Waiting for next change…`)
   }
 }
 
@@ -140,7 +140,7 @@ export async function runDev(args: readonly string[]): Promise<void> {
   const serverUrl = creds.server
   const token = creds.token
   if (!serverUrl) {
-    throw new Error('No hub server known. Pass --server, or run `camstack login` first.')
+    throw new Error('No hub server known. Pass --server, or run `dominevo login` first.')
   }
   const nodeId = typeof values.node === 'string' ? values.node : undefined
   const cluster = values.cluster === true
@@ -177,7 +177,7 @@ export async function runDev(args: readonly string[]): Promise<void> {
   const debounceMs =
     typeof values.debounce === 'string' ? parseInt(values.debounce, 10) : DEFAULT_DEBOUNCE_MS
 
-  clack.intro(`camstack dev — ${path.basename(addonDir)}`)
+  clack.intro(`dominevo dev — ${path.basename(addonDir)}`)
   clack.log.info(`Watch:  ${watchTarget}`)
   clack.log.info(
     `Target: ${serverUrl}${cluster ? ' (cluster)' : nodeId ? ` (node: ${nodeId})` : ' (hub)'}`,
@@ -189,7 +189,7 @@ export async function runDev(args: readonly string[]): Promise<void> {
   if (values['no-initial-push'] !== true) {
     await pushOnce(addonDir, freshOpts, 'Initial sync')
   } else {
-    console.log('[camstack dev] Skipping initial push (--no-initial-push). Waiting for changes…')
+    console.log('[dominevo dev] Skipping initial push (--no-initial-push). Waiting for changes…')
   }
 
   // The watch loop: debounced single-flight push. `pending` is the
@@ -229,7 +229,7 @@ export async function runDev(args: readonly string[]): Promise<void> {
 
   // Shutdown hooks.
   const shutdown = (): void => {
-    console.log('\n[camstack dev] Stopping watcher…')
+    console.log('\n[dominevo dev] Stopping watcher…')
     if (timer) clearTimeout(timer)
     close()
     process.exit(0)
@@ -237,7 +237,7 @@ export async function runDev(args: readonly string[]): Promise<void> {
   process.on('SIGINT', shutdown)
   process.on('SIGTERM', shutdown)
 
-  console.log('\n[camstack dev] Watching for changes. Ctrl-C to stop.')
+  console.log('\n[dominevo dev] Watching for changes. Ctrl-C to stop.')
   // Keep the process alive forever — fs.watch alone doesn't pin the
   // event loop reliably across platforms, and `await new Promise(() => {})`
   // is the canonical idiom for an intentional indefinite block.

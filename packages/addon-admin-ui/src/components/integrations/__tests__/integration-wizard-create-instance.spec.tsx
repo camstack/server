@@ -31,8 +31,8 @@ const calls = vi.hoisted(() => ({
   legacyCreate: [] as unknown[],
 }))
 
-vi.mock('@camstack/ui-library', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@camstack/ui-library')>()
+vi.mock('@dominevo/ui-library', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dominevo/ui-library')>()
   return {
     ...actual,
     useIntegrationInstancesInstanceFormSchema: () => ({ data: schema }),
@@ -71,7 +71,7 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
 // After a create the wizard resets to its picker, which reads installed addons over tRPC.
 vi.mock('../ProviderPicker', () => ({ ProviderPicker: () => null }))
 
-import { ConfirmDialogProvider } from '@camstack/ui-library'
+import { ConfirmDialogProvider } from '@dominevo/ui-library'
 import { IntegrationWizard } from '../IntegrationWizard'
 
 function renderWizard(): ReactElement {

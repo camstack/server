@@ -4,7 +4,7 @@
  * holds (before any release). Each is a `ConfirmedSeed`: an unread or a
  * first-empty answer waits, by name, for an agreeing read.
  */
-import { errMsg, type FieldClaim, type IScopedLogger } from '@camstack/types'
+import { errMsg, type FieldClaim, type IScopedLogger } from '@dominevo/types'
 import type { PersistedComposedRow } from './composition-declarations.js'
 import { ConfirmedSeed, type SeedRead } from './confirmed-seed.js'
 import type { ComposerClaimsApi } from './existing-target.js'

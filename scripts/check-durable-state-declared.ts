@@ -39,7 +39,7 @@
  * `durable-ledger.ts` and `lts-aggregator.ts` exist in both
  * `addon-post-analysis` and `addon-pipeline-orchestrator`, because addons never
  * import each other and a framework home rides a release train while these
- * ship with `camstack deploy`. A duplicate that drifts is worse than either
+ * ship with `dominevo deploy`. A duplicate that drifts is worse than either
  * copy: the two addons would disagree about what "durable" means while looking
  * identical. So the bytes are compared.
  *

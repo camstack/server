@@ -9,7 +9,7 @@
  * would most likely retune is `denseCadenceSec`, which is ABSENT on both live
  * rules and means "derive it".
  */
-import { ConfirmDialogProvider } from '@camstack/ui-library'
+import { ConfirmDialogProvider } from '@dominevo/ui-library'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { TemplateHubTrpc } from '../../../test-setup/device-template-hub'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
@@ -76,8 +76,8 @@ vi.mock('../use-notification-targets', () => ({
   }),
 }))
 
-vi.mock('@camstack/ui-library', async () => {
-  const real = await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+vi.mock('@dominevo/ui-library', async () => {
+  const real = await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return {
     ...real,
     // The real field reads the target-kind catalogue through a tRPC React

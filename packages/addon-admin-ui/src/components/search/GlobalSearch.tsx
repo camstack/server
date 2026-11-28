@@ -33,7 +33,7 @@ import {
   useSearchFieldHotkey,
   Button,
   Input,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Search, X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'

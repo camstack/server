@@ -1,4 +1,4 @@
-import { createRecordsAccess } from '@camstack/types'
+import { createRecordsAccess } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { makeRecordsWorld } from '../../sqlite-storage/__tests__/support/records-world.js'
 import { KeychainAddon } from '../keychain.addon.js'

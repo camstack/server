@@ -10,7 +10,7 @@
  * `unreadable` carries the LAST good text and is never written: an error
  * string must not reach a camera.
  */
-import type { OsdRenderResult, OsdSlotBinding } from '@camstack/types'
+import type { OsdRenderResult, OsdSlotBinding } from '@dominevo/types'
 import { limitText } from './format.js'
 import { evaluateGate, type OsdDeviceStateLookup } from './gate.js'
 import type { TemplateOutcome } from './template-context.js'

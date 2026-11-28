@@ -12,7 +12,7 @@ import {
   isReadingQuantity,
   type DisplayPreference,
   type ReadingQuantity,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { formatCursorTime, formatSpan, type StateSegment } from './chart-data'
 import { formatChartValue } from './chart-uplot'
 

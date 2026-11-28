@@ -2,7 +2,7 @@
  * Add or change one scalar override via the shared source selector (D944 §5).
  */
 import { liveWireableCatalog } from '../source-picker-model'
-import type { CompositionFieldsFeature, CompositionSourceRef, DeviceInfo } from '@camstack/types'
+import type { CompositionFieldsFeature, CompositionSourceRef, DeviceInfo } from '@dominevo/types'
 import {
   Button,
   Dialog,
@@ -15,7 +15,7 @@ import {
   useDeviceManagerGetWireableFields,
   useDeviceManagerListAll,
   useDeviceStateGetSnapshot,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { SourceSelector } from '../source-selector/SourceSelector'

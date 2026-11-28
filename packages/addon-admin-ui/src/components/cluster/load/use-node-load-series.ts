@@ -16,7 +16,7 @@
  * (`sinceMs`), so the wire cost of filling a hole is the hole.
  */
 import { useEffect, useRef, useState } from 'react'
-import { useEventStreamLatest, useMetricsProviderGetLoadSeries } from '@camstack/ui-library'
+import { useEventStreamLatest, useMetricsProviderGetLoadSeries } from '@dominevo/ui-library'
 import {
   appendSnapshot,
   hasSeriesGap,

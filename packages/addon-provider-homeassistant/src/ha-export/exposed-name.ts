@@ -7,7 +7,7 @@
  * (`dev.ids[0]`, `device_id` on the wire) is the numeric id's, so a rename updates the same
  * Home Assistant device and its entity ids stay.
  */
-import { type ExposedNameStore, freeTextNameValidator, readExposedName } from '@camstack/types'
+import { type ExposedNameStore, freeTextNameValidator, readExposedName } from '@dominevo/types'
 import type { HaDeviceBlock } from './types.js'
 
 /** Home Assistant takes free text for a device name; it is kept to a length its UI shows. */

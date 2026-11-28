@@ -8,7 +8,7 @@
  * into a notification the operator scoped away.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import { NcZoneOwnershipCache } from '../zone-owner-cache.js'

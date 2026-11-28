@@ -11,7 +11,7 @@ import {
   type DeviceContext,
   type InferNativeProvider,
   type StateRefreshPolicy,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** The cloud events API is read this often per camera. */
 export const WYZE_CLOUD_MOTION_REFRESH_MS = 15_000

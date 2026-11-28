@@ -13,7 +13,7 @@
  * Both layers are read THREE-way: a store that did not answer THROWS. Falling back to the schema
  * default on a failed read would show, and let a caller act on, a value nobody chose (D49).
  */
-import { resolveDeviceSettings, type ResolvedSettings } from '@camstack/types/addon'
+import { resolveDeviceSettings, type ResolvedSettings } from '@dominevo/types/addon'
 import { readUnscopedAddonSettings } from './addon-settings-store.js'
 import {
   createDeviceSettingsStore,

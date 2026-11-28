@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { computeAlertPanelStyle } from './alert-bell-placement'
-import type { Alert } from '@camstack/types'
+import type { Alert } from '@dominevo/types'
 import {
   ScrollText,
   Check,
@@ -26,7 +26,7 @@ import {
   useLiveEvent,
   Button,
   Checkbox,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 import i18n from '../../i18n/index'
 import { alertAction, isUnreadCriticalAlert } from './critical-alerts'

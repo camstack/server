@@ -1,8 +1,8 @@
 /**
  * `debug.tape.*` — the tracking-tape surface (D681, spec §3.3). Admin,
- * hub-local, shipped with one `camstack deploy`, like `debug.*`.
+ * hub-local, shipped with one `dominevo deploy`, like `debug.*`.
  */
-import { customAction, defineCustomActions } from '@camstack/types'
+import { customAction, defineCustomActions } from '@dominevo/types'
 import { z } from 'zod'
 import { decodesAsJson } from '../store/tracking-tape-index-store.js'
 

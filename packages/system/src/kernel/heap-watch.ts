@@ -934,7 +934,7 @@ export interface HeapReclaimOptions {
  * hub-main has no manifest, and its entrypoint is the LEAST deployable surface
  * in this system (the Dockerfile's own comment: a backend change is train-bound
  * by construction, and an image build does not ship it). Its budget therefore
- * lives in `@camstack/server`, which `applyServerUpdate` replaces the same day —
+ * lives in `@dominevo/server`, which `applyServerUpdate` replaces the same day —
  * see {@link HUB_MAIN_RSS_BUDGET_MB}.
  *
  * ## And a process with no declaration is UNWATCHED, out loud

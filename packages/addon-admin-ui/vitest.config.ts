@@ -17,39 +17,39 @@ export default defineConfig({
   resolve: {
     alias: [
       {
-        find: /^@camstack\/types\/device-template-catalogue$/,
+        find: /^@dominevo\/types\/device-template-catalogue$/,
         replacement: path.join(repoRoot, 'packages/types/src/device-template-catalogue.ts'),
       },
       {
-        find: '@camstack/types/client',
+        find: '@dominevo/types/client',
         replacement: path.join(repoRoot, 'packages/types/dist/client.mjs'),
       },
       {
-        find: '@camstack/types/node-color',
+        find: '@dominevo/types/node-color',
         replacement: path.join(repoRoot, 'packages/types/dist/node-color.mjs'),
       },
       {
-        find: '@camstack/types/enums',
+        find: '@dominevo/types/enums',
         replacement: path.join(repoRoot, 'packages/types/dist/enums.mjs'),
       },
       {
-        find: '@camstack/types/node',
+        find: '@dominevo/types/node',
         replacement: path.join(repoRoot, 'packages/types/dist/node.mjs'),
       },
       {
-        find: '@camstack/types/addon',
+        find: '@dominevo/types/addon',
         replacement: path.join(repoRoot, 'packages/types/dist/addon.mjs'),
       },
       {
-        find: '@camstack/types',
+        find: '@dominevo/types',
         replacement: path.join(repoRoot, 'packages/types/dist/index.mjs'),
       },
       {
-        find: '@camstack/ui-library/testing',
+        find: '@dominevo/ui-library/testing',
         replacement: path.join(repoRoot, 'packages/ui-library/src/testing/select-option.ts'),
       },
       {
-        find: '@camstack/ui-library',
+        find: '@dominevo/ui-library',
         replacement: path.join(repoRoot, 'packages/ui-library/src/index.ts'),
       },
     ],

@@ -27,7 +27,7 @@
  * below is preceded by a positive assertion that the panel it is about is on
  * screen.
  */
-import { selectOption } from '@camstack/ui-library/testing'
+import { selectOption } from '@dominevo/ui-library/testing'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
@@ -120,9 +120,9 @@ const setFlags = vi.fn(async (vars: SetFlagsVars) => ({
   retrainStatus: 'none' as const,
 }))
 
-vi.mock('@camstack/ui-library', async () => {
+vi.mock('@dominevo/ui-library', async () => {
   const actual =
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+    await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return {
     ...actual,
     useSystem: () => ({ trpcClient: { addons: { custom: { mutate: custom } } } }),

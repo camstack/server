@@ -23,7 +23,7 @@ every consumer its own threshold, its own flapping and its own failure mode.
 The `daylight-phase` capability (singleton, provided by core-blocks) is the one
 answer. Its source is the sun (the default, byte-identical to before) or a sensor
 reading with a dark threshold, a hysteresis band and a minimum dwell, judged by the
-pure `advanceSensorPhase` in `@camstack/types`. The pure evaluators never call it:
+pure `advanceSensorPhase` in `@dominevo/types`. The pure evaluators never call it:
 a site carries an optional `phase`, and only a `sensor` phase changes a verdict
 (`siteWithPhase`). A sensor that cannot be read is not a measurement: the sun
 answers and the reason is logged once, with the device. A time spec of kind

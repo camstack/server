@@ -10,10 +10,10 @@
 //   1. forced day-night mode (operator pinned the IR-cut) — honest, zero-cost.
 //   2. sun-times from the install coordinates — deterministic, tracks ambient
 //      lighting (the physical driver of the drift). The NOAA computation lives
-//      in `@camstack/types` (`time/solar.ts`), shared with the scheduler.
+//      in `@dominevo/types` (`time/solar.ts`), shared with the scheduler.
 //   3. coarse UTC clock split — last resort when no coordinates are configured.
 
-import { type SceneCondition, sunTimes } from '@camstack/types'
+import { type SceneCondition, sunTimes } from '@dominevo/types'
 
 export interface Coordinates {
   readonly lat: number

@@ -28,7 +28,7 @@
  * forever, and no shape assertion can see that.
  */
 
-import type { RecordKindHandle, RecordsAccess } from '@camstack/types'
+import type { RecordKindHandle, RecordsAccess } from '@dominevo/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { FaceGalleryProvider } from '../face-gallery-provider.js'
 import { pipelineAnalyticsRecordKinds } from '../record-kinds.js'

@@ -7,7 +7,7 @@ last-verified: 2026-10-21
 
 The viewer is the universal client (iOS, Android, web/PWA): Expo + React
 Native, in the `camstack/` submodule, which is its own repository
-(`github.com/camstack/viewer`). Its rules mirror the admin UI's, with a
+(`github.com/dominevo/viewer`). Its rules mirror the admin UI's, with a
 different kit. The workflow is the `camstack-ui-viewer` skill; the viewer
 repo's `AGENTS.md` points at the same skill and carries its own catalogue and
 `npm run ui:check`.
@@ -96,7 +96,7 @@ literal in JSX, is a bug. No decision ids (`D123`) in user-facing text.
 `camstack/embed/` is the browser player (live, grid, events, recordings,
 scrub) used by the native app as OTA HTML, by the web build and by iframe
 integrations. It is Vite + Tailwind and imports the SAME
-`camstack-theme.css` and `@camstack/ui-library` composites as the admin UI, so
+`camstack-theme.css` and `@dominevo/ui-library` composites as the admin UI, so
 the web rules apply there: tokens as utilities, library components, no palette
 classes. `npm run test:embed` runs its suite; `npm run sync:embed` builds the
 artefacts.

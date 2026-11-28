@@ -1,4 +1,4 @@
-import type { OauthLandingOutcome } from '@camstack/types'
+import type { OauthLandingOutcome } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { BROKER_OAUTH_MESSAGE } from '../broker-oauth-popup'
 import { deliverOauthOutcome, oauthReturnPath } from '../oauth-landing'

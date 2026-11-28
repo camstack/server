@@ -13,8 +13,8 @@ import type {
   FrameResult,
   ObjectDetection,
   PipelineStepInputOutput,
-} from '@camstack/types'
-import { DEFAULT_DETAIL_CROP_CONVENTION, deriveDetailCropRect } from '@camstack/types'
+} from '@dominevo/types'
+import { DEFAULT_DETAIL_CROP_CONVENTION, deriveDetailCropRect } from '@dominevo/types'
 import { assertDetailSubtreeResult } from '../../__tests__/support/detail-subtree-outcome.js'
 import {
   type CropSource,

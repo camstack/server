@@ -3,7 +3,7 @@
  * credentials it holds (a saved password stands in for its redacted view) and names the reason
  * when VeSync refuses: the password, the region, an unreachable cloud, else the library's words.
  */
-import { makeInMemoryRecords, REDACTED_SECRET } from '@camstack/types'
+import { makeInMemoryRecords, REDACTED_SECRET } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { VeSyncClientFactory } from '../vesync-client-contract.js'
 import {

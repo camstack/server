@@ -8,7 +8,7 @@
  * MODULE-SCOPE selector resolves the real hook or a disabled stub ONCE, so every
  * consumer always calls the same hook slot (rules-of-hooks safe).
  */
-import { usePipelineAnalyticsSetTrackFlags } from '@camstack/ui-library'
+import { usePipelineAnalyticsSetTrackFlags } from '@dominevo/ui-library'
 
 /** The partial patch: an omitted key is left untouched by the server. */
 export interface TrackFlagsPatchInput {

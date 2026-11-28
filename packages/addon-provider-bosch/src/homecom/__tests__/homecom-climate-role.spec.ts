@@ -8,7 +8,7 @@ import {
   DeviceRole,
   DeviceType,
   type IDeviceRuntimeState,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { HomeComClimateDevice } from '../devices/homecom-climate-device.js'
 

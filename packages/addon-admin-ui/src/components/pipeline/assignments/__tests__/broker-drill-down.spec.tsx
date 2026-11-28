@@ -7,7 +7,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 expect.extend(jestDomMatchers)
 
-vi.mock('@camstack/ui-library', async () => {
+vi.mock('@dominevo/ui-library', async () => {
   // Deep source imports use `.js` (TS ESM) — `.tsx` trips TS5097 under tsconfig.spec.
   const dialog = await import('../../../../../../ui-library/src/primitives/dialog.js')
   const { IconButton } = await import('../../../../../../ui-library/src/primitives/icon-button.js')

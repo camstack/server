@@ -3,7 +3,7 @@
  * `integrationIsHub` uses: an NVR / Home Hub integration (host, a hub candidate origin, or the
  * migrated-from-Hub marker) adopts its children; the default integration scans.
  */
-import { makeInMemoryRecords } from '@camstack/types'
+import { makeInMemoryRecords } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { MIGRATED_FROM_HUB_KEY } from '../hub-connection.js'
 import {

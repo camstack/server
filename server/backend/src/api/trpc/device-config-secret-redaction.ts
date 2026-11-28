@@ -42,7 +42,7 @@
 /** What a non-admin sees instead of the value. Matches the `***` convention
  *  `maskUrlCredentials` already uses for credentials in log output, so one
  *  redaction marker means one thing across the system. */
-import { maskUrlCredentials } from '@camstack/types'
+import { maskUrlCredentials } from '@dominevo/types'
 
 export const REDACTED_SECRET = '***'
 
@@ -54,7 +54,7 @@ export const REDACTED_SECRET = '***'
  * `packages/types/src/device/zod-to-config-ui.ts`). The two are pinned
  * together by an assertion in `device-config-secret-redaction.spec.ts`: a
  * keyword added to one and forgotten in the other fails the suite instead of
- * leaking. It is duplicated rather than imported because `@camstack/types` is
+ * leaking. It is duplicated rather than imported because `@dominevo/types` is
  * a framework package on the publish train, and a redaction fix must not have
  * to wait for one.
  */
@@ -82,7 +82,7 @@ function isRecord(x: unknown): x is Record<string, unknown> {
  * of this array" (`connection.password`, `rows[].pin`). The paths come from
  * the device's own Zod schema — `.meta({ secret: true })` — via
  * `registerDevice` (D783). They are DATA on the row, so this module needs no
- * import from `@camstack/types` to honour them.
+ * import from `@dominevo/types` to honour them.
  */
 type PathSegment = { readonly key: string; readonly each: boolean }
 

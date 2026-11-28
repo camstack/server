@@ -16,7 +16,7 @@ import {
   resolveDeviceLabel,
   useDeviceNameIndex,
   useDeviceNameNouns,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {

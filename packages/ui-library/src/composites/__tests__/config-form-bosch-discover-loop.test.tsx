@@ -8,7 +8,7 @@
  * Disarm: put `onAction` back in AddonActionSelectField's effect deps — this
  * throws "Maximum update depth exceeded".
  */
-import type { ConfigField } from '@camstack/types'
+import type { ConfigField } from '@dominevo/types'
 import { render, screen, waitFor } from '@testing-library/react'
 import { useState } from 'react'
 import { describe, expect, it } from 'vitest'

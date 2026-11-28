@@ -200,16 +200,16 @@ describe('DevicePicker<string> — the system family scope pickers (D637)', () =
       <DevicePicker<string>
         noun="package"
         devices={[
-          { id: '@camstack/server', name: '@camstack/server', type: 'server', location: null },
+          { id: '@dominevo/server', name: '@dominevo/server', type: 'server', location: null },
         ]}
         listState="answered"
-        value={['@camstack/addon-gone']}
+        value={['@dominevo/addon-gone']}
         onChange={vi.fn()}
         groupTitle={(group) => (group.type === 'server' ? 'Server' : 'Addons')}
       />,
     )
-    expect(screen.getByTestId('picker-chip-@camstack/addon-gone').textContent).toBe(
-      '@camstack/addon-gone — not installed',
+    expect(screen.getByTestId('picker-chip-@dominevo/addon-gone').textContent).toBe(
+      '@dominevo/addon-gone — not installed',
     )
     fireEvent.click(screen.getByRole('button', { name: 'Edit…' }))
     const header = screen.getByTestId('device-picker-group')

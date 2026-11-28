@@ -23,8 +23,8 @@ import {
   Checkbox,
   Input,
   Select,
-} from '@camstack/ui-library'
-import { DeviceType } from '@camstack/types'
+} from '@dominevo/ui-library'
+import { DeviceType } from '@dominevo/types'
 import { Film } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'

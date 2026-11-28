@@ -4,7 +4,7 @@
  * source frame so a future alignment can be re-derived exactly; reprojecting
  * the box but not the points would put the points on the crop's pixels.
  */
-import type { ObjectDetection } from '@camstack/types'
+import type { ObjectDetection } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { type CropSource, toDetailResult } from '../detail-subtree.js'
 

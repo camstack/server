@@ -16,7 +16,7 @@
  *
  * ## Why the container image is not special any more
  *
- * It was, for one day: the image installed ffmpeg, CamStack preferred it, and
+ * It was, for one day: the image installed ffmpeg, Dominevo preferred it, and
  * that made the answer depend on where a node ran — an image node got VAAPI, a
  * native one got a portable build with none. Now every node downloads the same
  * pinned build, so:

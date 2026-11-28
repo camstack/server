@@ -18,7 +18,7 @@ import {
   DialogTitle,
   trpc,
   useConfirm,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Loader2, LogOut, MonitorSmartphone } from 'lucide-react'
 
 import { useAuth } from '../../contexts/auth-context'

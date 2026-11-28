@@ -1,4 +1,4 @@
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IScopedLogger } from '@dominevo/types'
 import { connectionFromSettings, gatewayKeyOf, type EcowittConnectionRead } from './config.js'
 import type { EcowittConfig } from './config.js'
 import type { EcowittSettingsRead } from './ecowitt-instances.js'

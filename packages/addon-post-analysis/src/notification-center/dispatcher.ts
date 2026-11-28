@@ -41,7 +41,7 @@ import {
   type NotificationField,
   resolveDeliveryParams,
   type ViewerLinkBase,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { isStateSummaryData } from './state-summary/state-summary-delivery.js'
 import { deliverableNotification } from './deliverable-fields.js'
 
@@ -529,7 +529,7 @@ export interface NcDispatcherDeps {
   readonly texts?: NcTextCatalog
   /**
    * Class → palette hex for boxes on a notification picture. Absent: the
-   * bundled CamStack preset. The live painter says so when the cap is unknown.
+   * bundled Dominevo preset. The live painter says so when the cap is unknown.
    */
   readonly paintClass?: (kind: string) => string
   /** `notification-output.listTargets` (cluster catalog, concat-fanned). */
@@ -665,7 +665,7 @@ export interface NcDispatcherDeps {
   readonly publicUrlBase?: () => Promise<string | null>
   /**
    * The `notificationTaps` role (D709, D734; admin Network page,
-   * `local-network.getNotificationEndpoint`) as a link base: the CamStack app
+   * `local-network.getNotificationEndpoint`) as a link base: the Dominevo app
    * link with the `hub=` it carries, or the hub address flagged for taps. A
    * read that fails is logged and the camera tap opens the hub viewer on the
    * public endpoint, which still opens. Absent ⇒ the same.
@@ -935,7 +935,7 @@ const NC_CONFIRM_TILE_FLOOR_MS = 1_000
 /*
  * The clip window a rule that stores no roll gets is
  * `NC_CLIP_PRE_ROLL_DEFAULT_SEC` / `NC_CLIP_POST_ROLL_DEFAULT_SEC` in
- * `@camstack/types` (4 / 6) — ONE owner, read by every editor too (D654). It is
+ * `@dominevo/types` (4 / 6) — ONE owner, read by every editor too (D654). It is
  * passed to the broker explicitly even though the addon link fills declared
  * cap defaults: a product decision of the notification, not a coincidence of
  * the broker's own.

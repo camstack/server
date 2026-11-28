@@ -3,7 +3,7 @@
  * of `config-manager.ts` (D675) so that file stays one class; every name is
  * re-exported from there, so importers are unchanged.
  */
-import type { AddonStoreRead, ResolvedSettings, StoredKeyRead } from '@camstack/types'
+import type { AddonStoreRead, ResolvedSettings, StoredKeyRead } from '@dominevo/types'
 
 export interface AddonSettingsView {
   readAddonStore(): Promise<Record<string, unknown>>

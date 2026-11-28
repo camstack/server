@@ -14,7 +14,7 @@ import {
   SECTION_BODY,
   SectionCard,
   SettingRow,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Save, Settings } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import {

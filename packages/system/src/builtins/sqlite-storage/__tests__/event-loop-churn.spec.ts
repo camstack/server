@@ -23,7 +23,7 @@
  *
  * The control's window is longer than the disease's burst on purpose. The CI
  * runner is a container capped at ONE CFS core (`cpu.max 100000 100000`) on a
- * box whose other runner and CamStack agent share the same four; measured
+ * box whose other runner and Dominevo agent share the same four; measured
  * 2026-09-24 it had been throttled in 55 % of its 100 ms periods, and a
  * throttled cgroup freezes EVERY thread for the rest of the period. A 40 ms
  * control window read that freeze as a 26–31 ms pause and, once, as four pings

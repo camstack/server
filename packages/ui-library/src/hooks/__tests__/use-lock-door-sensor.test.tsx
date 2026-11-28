@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from 'vitest'
 import { renderHook, waitFor } from '@testing-library/react'
-import { CompositionSchema } from '@camstack/types'
+import { CompositionSchema } from '@dominevo/types'
 
 let mockContact: { entryOpen?: boolean } | undefined
 

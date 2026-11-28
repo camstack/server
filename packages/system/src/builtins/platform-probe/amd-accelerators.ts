@@ -1,4 +1,4 @@
-import type { GpuInfo } from '@camstack/types'
+import type { GpuInfo } from '@dominevo/types'
 
 /**
  * Filesystem seam for AMD iGPU detection — mirrors intel-accelerators.ts

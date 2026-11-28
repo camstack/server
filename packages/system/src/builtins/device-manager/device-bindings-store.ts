@@ -17,14 +17,14 @@ import type {
   DeviceBindingEntry,
   ICapabilityRegistry,
   IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   COMPOSER_ADDON_ID,
   EventCategory,
   capAdmitsDevice,
   capAppliesToDeviceKind,
   implementedMethodsOf,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { DeviceBindingsStore } from './device-meta-types.js'
 import type { DeviceRow, DeviceRowStore } from './device-row-store.js'
 import type { StaleWrapperActivations } from './stale-wrapper-activations.js'
@@ -548,7 +548,7 @@ async function resolveBindingsForDevice(
   //
   // A collection cap's providers are a SET, not a choice between providers,
   // and the set is DERIVED: *"tutti i providers funzionano sempre, non serve
-  // disattivarli/attivarli … loro vivono lì"* [all the providers always work, there is no need to deactivate/activate them … they live there] (operator, 2026-09-20). CamStack
+  // disattivarli/attivarli … loro vivono lì"* [all the providers always work, there is no need to deactivate/activate them … they live there] (operator, 2026-09-20). Dominevo
   // always, Reolink because it is that camera's provider, HKSV because the
   // camera is exported — none of those is an operator visiting a tick box, so
   // none of them is persisted and there is nothing to migrate onto 300

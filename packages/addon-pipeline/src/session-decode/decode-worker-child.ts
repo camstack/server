@@ -26,7 +26,7 @@
  * correct, sanctioned mechanism for this specific file only.
  */
 
-import type { HwAccelBackend } from '@camstack/types'
+import type { HwAccelBackend } from '@dominevo/types'
 import { hostExternalEntryUrls } from '../shared/host-external-import.js'
 import { getSharp, type SharpFactory } from '../shared/lazy-sharp.js'
 import {
@@ -241,7 +241,7 @@ const NATIVE_RING_CAP = (() => {
  *
  * Nothing here reads the environment for them any more. The child used to,
  * from `*_SETTING` vars the parent wrote at fork — which needed the Zod schemas
- * (the whole `@camstack/types` index) inside this bundle and cost every fork
+ * (the whole `@dominevo/types` index) inside this bundle and cost every fork
  * ~130 ms and ~140 MB, measured; and it bound a worker to the knobs it was
  * FORKED with, which a pre-forked worker (`decode-worker-pool.ts`) cannot be.
  * The values AND their sources are logged once per session at `start`.
@@ -271,7 +271,7 @@ const MB = 1024 * 1024
  * What a worker holds BEFORE a session claims it: nothing. Hold off (`budgetMb`
  * 0 routes to the GPU ring, whose cap is env-only), tiles off, scenes off, the
  * gate open only because there is nothing behind it to open. Not the shipped
- * defaults on purpose — those live in `@camstack/types`, which this bundle no
+ * defaults on purpose — those live in `@dominevo/types`, which this bundle no
  * longer carries, and a pre-forked worker that silently held the defaults would
  * be a worker with a configuration nobody handed it.
  */

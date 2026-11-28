@@ -48,7 +48,7 @@ carried whole to an admin so an untouched save writes the stored value back.
 - `ConfigIconField` is compile-time only on the wire (`z.custom<ConfigField>`).
   An admin-ui older than this renders the field through its default branch, so
   admin-ui ships with (or before) the addons that use it; the addons only call
-  `isDisplayIconKey`, which the published `@camstack/types` already has.
+  `isDisplayIconKey`, which the published `@dominevo/types` already has.
 - A new icon setting anywhere must use `type: 'icon'`; a free-text icon field
   is a regression of this record.
 

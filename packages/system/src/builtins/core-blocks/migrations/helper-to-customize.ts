@@ -47,7 +47,7 @@ import {
   HelperMemberSchema,
   type MigrationProcedureResult,
   type ScalarCompileInput,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import type { CoreBlockRowBody } from '../record-kinds.js'
 import type { CoreBlocksMigrationPorts, StoredBlockRow } from './pump-cycle-split.js'
@@ -56,7 +56,7 @@ export const HELPER_TO_CUSTOMIZE_ID = 'core-blocks/2026-11-03-helper-to-customiz
 
 /**
  * The documented read-only boundary (D1004 phase 5): the appliance and heater
- * helper templates are deleted from `@camstack/types`, but a stored block can
+ * helper templates are deleted from `@dominevo/types`, but a stored block can
  * still carry their `helper` spec until this migration has run. These two
  * schemas READ that old shape and nothing else; no live code builds it.
  */

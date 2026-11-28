@@ -4,7 +4,7 @@
  * agree on one spelling.
  */
 import { formatNumeric } from '../../lib/format-numeric'
-import { type ConfigField, isModelScopedStepSettingKey } from '@camstack/types'
+import { type ConfigField, isModelScopedStepSettingKey } from '@dominevo/types'
 
 /** A field that stores a value (not a separator, an info block or a group). */
 export type ValueField = Exclude<ConfigField, { readonly type: 'separator' | 'info' | 'group' }>

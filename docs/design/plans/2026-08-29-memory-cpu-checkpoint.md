@@ -101,7 +101,7 @@ floor did not move — `togliere-i-tetti` §1 ESITO).
 
 | # | Question | Sharpest statement | Next probe (named in the plan) |
 | --- | --- | --- | --- |
-| O1 | **What retains ~1.2–1.25 GB in the recorder** (≈ 450–530 MB LOS + ≈ 780–920 MB old space, ratio 1.75 constant → one producer) | Source audit finds no LOS allocation site in the recorder tree; priced allocators 3.6× short; wire input bounded ≤ 0.33 MB/s (E8); hunt starts **outside** the recorder tree (`@camstack/system`: runner shell, UDS transport, msgpack codec) or in decode amplification | Gated heap snapshot (now `CAMSTACK_RUNNER_HEAP_SNAPSHOT=on` + SIGUSR2), with `recorder-heap` §11.4's three attribution requirements — plan P3 |
+| O1 | **What retains ~1.2–1.25 GB in the recorder** (≈ 450–530 MB LOS + ≈ 780–920 MB old space, ratio 1.75 constant → one producer) | Source audit finds no LOS allocation site in the recorder tree; priced allocators 3.6× short; wire input bounded ≤ 0.33 MB/s (E8); hunt starts **outside** the recorder tree (`@dominevo/system`: runner shell, UDS transport, msgpack codec) or in decode amplification | Gated heap snapshot (now `CAMSTACK_RUNNER_HEAP_SNAPSHOT=on` + SIGUSR2), with `recorder-heap` §11.4's three attribution requirements — plan P3 |
 | O2 | **What the recorder's 2.0–2.6 s synchronous block is** | Recurs 1–3×/min; scaled with heap during the boot ramp (0 → 242 → 898 → 2 627 ms as heap went 115 → 1 403 MB) yet is not the collector — the shape of *something periodically touching a heap-sized structure*. Same hunt as O1: name the structure and the block likely names itself | P3; if the snapshot names the retainer and the block persists, a 60 s V8 CPU profile (operator-armed) — plan P3b |
 | O3 | **Which method carries the 236 kB responses to `pipeline-analytics`** | Leading hypothesis, unproven: native crop / keyFrame JPEG fetches by handle (`packages/addon-post-analysis/src/pipeline-analytics/runtime/native-frame-transport.ts:548` and siblings) at ~38/s — enrichment crops are native-strict by contract, and a native-tier crop is 100–400 kB | Per-method histogram on large res frames, or the existing request census — plan P1 |
 | O4 | **What produces hub-main's ~44 000 syscalls/s** | Now sharper (E9): ~95 % are not cap/event frames. Candidates unchanged from `event-bus-fanout-load` §7 — Moleculer per-runner broker heartbeat/discovery (fits the idle-`ml` 82 msg/s), log ingest, transport internals | Count first, instrument second: one `strace -c -p` sample or fd-class census on the host is read-only — plan P8 |
@@ -161,7 +161,7 @@ land before any per-device retention policy is set.** Plan P4.
 > `packages/addon-pipeline/src/recorder/addon/index.ts:897`, and the
 > coordinator in hub-main delegates to per-class movers and never carries
 > bytes, `packages/system/src/builtins/storage-orchestrator/storage-migration-coordinator.ts:188`);
-> and the hub restarted at **10:17:48Z** onto `@camstack/system` **1.2.159**
+> and the hub restarted at **10:17:48Z** onto `@dominevo/system` **1.2.159**
 > (it ran 1.2.157 from 08-29 22:47Z until then — so everything measured
 > 08:00–10:13Z today ran on 1.2.157, not 1.2.159). The restart reset hub-main's
 > allocator residue: rss 8 456 → 2 748 MB.

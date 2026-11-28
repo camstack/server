@@ -7,7 +7,7 @@
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
-import type { DeviceStepConfig, PipelineAddonSchema, RootStepSupply } from '@camstack/types'
+import type { DeviceStepConfig, PipelineAddonSchema, RootStepSupply } from '@dominevo/types'
 import { AgentStepEditor } from '../agent-step-editor'
 import type { RootModelInfo } from '../root-model-source'
 

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Button, Checkbox, Input, ItemFormDialog } from '@camstack/ui-library'
+import { Button, Checkbox, Input, ItemFormDialog } from '@dominevo/ui-library'
 import { DoorOpen } from 'lucide-react'
 import type { CcuRoom, LinkEndpoint } from '../ccu/ccu-schemas.js'
 import { useT } from '../i18n/index.js'

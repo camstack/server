@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import type { AddonApi } from '@camstack/types'
-import { readCommandOrigin } from '@camstack/types'
+import type { AddonApi } from '@dominevo/types'
+import { readCommandOrigin } from '@dominevo/types'
 import { invokeCapOver, sourcesOver } from '../actions-wiring.js'
 
 interface FakeOptions {
@@ -73,7 +73,11 @@ describe('invokeCapOver origin (D1022)', () => {
   function sirenApi(): { api: AddonApi; seen: Array<{ input: unknown; options: unknown }> } {
     const seen: Array<{ input: unknown; options: unknown }> = []
     const fake = {
-      siren: { on: { mutate: async (input: unknown, options?: unknown) => void seen.push({ input, options }) } },
+      siren: {
+        on: {
+          mutate: async (input: unknown, options?: unknown) => void seen.push({ input, options }),
+        },
+      },
     }
     return { api: Object.assign(Object.create(null), fake), seen }
   }

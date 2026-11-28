@@ -15,7 +15,7 @@
  *
  * After 8 no runtime code reads these keys from the addon settings.
  */
-import { type MigrationPlan, type MigrationProcedureResult, preconditionOf } from '@camstack/types'
+import { type MigrationPlan, type MigrationProcedureResult, preconditionOf } from '@dominevo/types'
 import {
   AccountVisibilityMapSchema,
   ALEXA_INSTANCE_ID,

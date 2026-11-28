@@ -1,4 +1,4 @@
-import type { CoverState, CoverStatus, FloodStatus } from '@camstack/types'
+import type { CoverState, CoverStatus, FloodStatus } from '@dominevo/types'
 import type { VeluxCoverClass } from './config.js'
 import type { VeluxNode } from './velux-client-contract.js'
 
@@ -40,7 +40,7 @@ export const ACTUATOR = {
 } as const
 
 /**
- * Wire position -> CamStack `cover` position (0 closed .. 100 open).
+ * Wire position -> Dominevo `cover` position (0 closed .. 100 open).
  *
  * On the KLF-200 a wire value of 0 is FULLY OPEN and 0xC800 is fully closed, for
  * every cover-like actuator: a window opener and a roller shutter alike. (The
@@ -54,7 +54,7 @@ export function rawToOpenPercent(raw: number): number | null {
   return Math.round(100 * (1 - raw / KLF_POSITION_MAX))
 }
 
-/** CamStack `cover` position (0 closed .. 100 open) -> wire position. */
+/** Dominevo `cover` position (0 closed .. 100 open) -> wire position. */
 export function openPercentToRaw(percent: number): number {
   const clamped = Math.min(100, Math.max(0, percent))
   return Math.round(KLF_POSITION_MAX * (1 - clamped / 100))

@@ -1,4 +1,4 @@
-import { SECRET_CLEAR } from '@camstack/types'
+import { SECRET_CLEAR } from '@dominevo/types'
 
 /** Account label written by sign-in. Older integrations have none until the next sign-in. */
 export function homeConnectSignedInAccount(settings: Record<string, unknown>): string {

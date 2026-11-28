@@ -1,5 +1,5 @@
 /**
- * `@camstack/types/testing` — test doubles for addon authors. Kept off the
+ * `@dominevo/types/testing` — test doubles for addon authors. Kept off the
  * root entry: it pulls the tRPC client, which no runtime consumer of the
  * package needs.
  */

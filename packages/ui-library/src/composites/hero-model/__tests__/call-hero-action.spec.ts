@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { heroArgsWithValue } from '@camstack/types'
+import { heroArgsWithValue } from '@dominevo/types'
 import { callHeroAction, capRouterName, heroCallInput } from '../call-hero-action'
 
 describe('callHeroAction', () => {

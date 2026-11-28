@@ -71,7 +71,7 @@ import {
   type TraceValue,
   type UnitResolver,
   type UnitWarning,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { readCurrentCommandOrigin } from '../../kernel/cap-call-scope.js'
 import type { ActionsStore } from './actions-store.js'
 import { type DeviceTemplateDoor, stepRenderer } from './device-template-door.js'

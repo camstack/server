@@ -27,8 +27,8 @@ import {
   MeshIdentityGate,
   registerEventBusService,
   type MeshCaSigner,
-} from '@camstack/server/system'
-import type { SystemEvent } from '@camstack/types'
+} from '@dominevo/server/system'
+import type { SystemEvent } from '@dominevo/types'
 import type { Middleware, ServiceBroker } from 'moleculer'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { createAgentMeshGate } from '../../agent-mesh-gate.js'

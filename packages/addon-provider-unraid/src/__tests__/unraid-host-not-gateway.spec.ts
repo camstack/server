@@ -11,8 +11,8 @@ import {
   type IScopedLogger,
   type SavedDevice,
   workloadCapability,
-} from '@camstack/types'
-import { fakeAddonContext } from '@camstack/types/testing'
+} from '@dominevo/types'
+import { fakeAddonContext } from '@dominevo/types/testing'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { UnraidProviderAddon } from '../addon.js'
 import { UNRAID_SYSTEM } from '../config.js'

@@ -863,7 +863,7 @@
           "type": "number",
           "key": "batteryRefreshMinutes",
           "label": "Refresh window (min)",
-          "description": "Once per window this camera refreshes everything CamStack knows about it — battery level and charging, signal, device info, every state panel and the cached snapshot. If the camera is awake at some point in the window (a motion event, a live view, anything that woke it) it is refreshed then and not woken again; if the whole window passes with the camera asleep, it is woken ONCE near the end of the window, refreshed, and left to go back to sleep. A camera that does not answer is retried at most twice per window. 15–240 minutes, default 60; 0 turns the scheduled refresh off (the battery level then ages until the camera next wakes by itself).",
+          "description": "Once per window this camera refreshes everything Dominevo knows about it — battery level and charging, signal, device info, every state panel and the cached snapshot. If the camera is awake at some point in the window (a motion event, a live view, anything that woke it) it is refreshed then and not woken again; if the whole window passes with the camera asleep, it is woken ONCE near the end of the window, refreshed, and left to go back to sleep. A camera that does not answer is retried at most twice per window. 15–240 minutes, default 60; 0 turns the scheduled refresh off (the battery level then ages until the camera next wakes by itself).",
           "default": 60,
           "min": 0,
           "max": 240,

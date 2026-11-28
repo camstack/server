@@ -8,7 +8,7 @@ import {
   type IntegrationInstanceStatus,
   RecordIntegrationInstances,
   type RecordsAccess,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { buildTargetForm } from './target-form.js'
 import {
   type ExportTargets,

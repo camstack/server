@@ -10,7 +10,7 @@
  * census costs one budget, not one per node, and a skipped node is reported at
  * WARN with the cost of every node.
  */
-import type { AddonApi, IScopedLogger, RunnerLocalLoad } from '@camstack/types'
+import type { AddonApi, IScopedLogger, RunnerLocalLoad } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AgentLoadService } from '../agent-load-service.js'
 import type { RunnerLoadAnswer } from '../camera-sensors/motion-slice-gate.js'

@@ -37,7 +37,7 @@ import {
   Input,
   Select,
   useSystem,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Languages, Loader2, RotateCcw, Search } from 'lucide-react'
 import { useMemo, useState } from 'react'

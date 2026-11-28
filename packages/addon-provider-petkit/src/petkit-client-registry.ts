@@ -13,7 +13,7 @@
  * that id. Structural twin of `DreameClientRegistry`.
  */
 
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IScopedLogger } from '@dominevo/types'
 import { sameConnection, type PetkitConfig } from './config.js'
 import { petkitConnections } from './petkit-gateway.js'
 import {

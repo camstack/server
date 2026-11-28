@@ -17,7 +17,7 @@
  */
 import { useMemo } from 'react'
 import { Network, Wifi, Boxes, Lock, Server, Check, AlertTriangle } from 'lucide-react'
-import type { LocalInterface } from '@camstack/types'
+import type { LocalInterface } from '@dominevo/types'
 import { useTranslation } from 'react-i18next'
 
 const KIND_ICON: Record<string, typeof Network> = {

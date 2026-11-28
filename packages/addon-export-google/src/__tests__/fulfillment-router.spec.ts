@@ -1,4 +1,4 @@
-import type { TokenScope } from '@camstack/types'
+import type { TokenScope } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 
 import {

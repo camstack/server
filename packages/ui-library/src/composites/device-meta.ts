@@ -6,7 +6,7 @@ import {
   DeviceType,
   deviceIconKey,
   type IconKey,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { LucideIcon } from 'lucide-react'
 import {
   Activity,
@@ -94,12 +94,12 @@ import type { MultiSelectOption } from './device-list/multi-select'
  * How the admin renders a device TYPE or ROLE: its icon + label.
  *
  * The ICON is not chosen here: it is `DEVICE_TYPE_ICON` / `DEVICE_ROLE_ICON`
- * from `@camstack/types` (the one resolver the viewer uses too), drawn through
+ * from `@dominevo/types` (the one resolver the viewer uses too), drawn through
  * `FAST_ICON_GLYPHS`. The LABEL tables are `Record<DeviceType | DeviceRole, …>`,
  * so a new enum member fails the build until it has a label here and an icon
  * there.
  *
- * Lives in `@camstack/ui-library` because the glyphs are `lucide-react`
+ * Lives in `@dominevo/ui-library` because the glyphs are `lucide-react`
  * components; the labels are the user-facing defaults (wire i18n at the call
  * site if a translation is needed).
  */
@@ -130,7 +130,7 @@ function resolveMeta(entry: DeviceMetaEntry, t: UiTextFn): DeviceTypeMeta {
 /**
  * The glyphs the admin draws on FIRST PAINT, synchronously — every icon the
  * shared device resolver (`DEVICE_TYPE_ICON` / `DEVICE_ROLE_ICON` in
- * `@camstack/types`) can return, which the type makes exhaustive. Everything else in
+ * `@dominevo/types`) can return, which the type makes exhaustive. Everything else in
  * the icon catalog is drawn from the lazily loaded full table
  * (`icon-glyphs.ts`), so the initial chunk carries ~60 lucide icons instead of
  * one static import per catalog key (D854).
@@ -749,7 +749,7 @@ const FALLBACK_DEVICE_ROLE_META = DEVICE_ROLE_META[DeviceRole.GenericSensor]
  * instead of throwing.
  *
  * This also guards mixed-version module-federation loads where the host
- * `@camstack/types` enum has a new member before the loaded ui-library bundle
+ * `@dominevo/types` enum has a new member before the loaded ui-library bundle
  * has the matching `DEVICE_TYPE_META` entry.
  */
 export function deviceTypeMetaOf(type: string, t: UiTextFn = defaultUiText): DeviceTypeMeta {

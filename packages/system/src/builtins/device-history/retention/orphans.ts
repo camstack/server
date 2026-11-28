@@ -20,8 +20,8 @@ import type {
   DeviceHistoryOrphanSeries,
   DeviceHistoryTierRows,
   IScopedLogger,
-} from '@camstack/types'
-import { DEVICE_HISTORY_ORPHAN_LIST_MAX } from '@camstack/types'
+} from '@dominevo/types'
+import { DEVICE_HISTORY_ORPHAN_LIST_MAX } from '@dominevo/types'
 import { CAP_KEY_PREFIX } from '../capture/capture-engine.js'
 import type { HistoryStore, SeriesRecord } from '../store/history-store.js'
 import type { SeriesRegistry } from '../store/series-registry.js'

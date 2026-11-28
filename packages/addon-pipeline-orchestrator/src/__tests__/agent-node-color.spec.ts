@@ -1,5 +1,5 @@
 import { describe, expect, it, afterEach } from 'vitest'
-import { assignNodeColorId } from '@camstack/types'
+import { assignNodeColorId } from '@dominevo/types'
 import PipelineOrchestratorAddon from '../index.js'
 import { makeFakeContext, makeFakeBroker, enabledNodesFromBroker } from './e2e-helpers.js'
 

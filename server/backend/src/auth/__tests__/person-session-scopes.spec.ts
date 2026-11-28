@@ -1,4 +1,4 @@
-import { ADMIN_SCOPE, DEFAULT_VIEWER_SCOPE, type CredentialScope } from '@camstack/types'
+import { ADMIN_SCOPE, DEFAULT_VIEWER_SCOPE, type CredentialScope } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { personSessionScopes } from '../person-session-scopes.js'
 

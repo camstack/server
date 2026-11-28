@@ -1,5 +1,5 @@
-import type { ProviderRegistration } from '@camstack/types'
-import { BaseAddon, storageProviderCapability } from '@camstack/types'
+import type { ProviderRegistration } from '@dominevo/types'
+import { BaseAddon, storageProviderCapability } from '@dominevo/types'
 import { S3StorageProvider } from './providers/s3/s3-provider.js'
 
 /**

@@ -13,8 +13,8 @@ import { AppLayout } from '../AppLayout'
 
 const viewport = vi.hoisted(() => ({ mobile: false }))
 
-vi.mock('@camstack/ui-library', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@camstack/ui-library')>()
+vi.mock('@dominevo/ui-library', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dominevo/ui-library')>()
   return {
     ...actual,
     useAddonPagesListPages: () => ({ data: [] }),

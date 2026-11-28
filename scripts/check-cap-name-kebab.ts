@@ -12,7 +12,7 @@
  * trpc-links.ts`) by `toKebab(namespace)`. `toKebab` is the inverse of
  * `kebabToCamel` **only for kebab-case input**, and it cannot be replaced by a
  * real name↔key map: `trpc-links.ts` is in the addon-runner's transitive
- * closure, where a value import of the `@camstack/types` barrel is forbidden
+ * closure, where a value import of the `@dominevo/types` barrel is forbidden
  * (D28, `check-runner-barrel-free.ts`) — it costs ~66MB RSS per runner.
  *
  * `recordingExport` shipped camelCase. `kebabToCamel` left it alone, so the

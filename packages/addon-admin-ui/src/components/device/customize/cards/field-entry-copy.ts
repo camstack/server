@@ -5,7 +5,7 @@ import {
   compositionSourceKey,
   type CompositionExpressionSource,
   type FieldAggregateKind,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { vocabularyFieldLabel } from '../vocabulary-field-label'
 
 export type AggregateMessageKey =

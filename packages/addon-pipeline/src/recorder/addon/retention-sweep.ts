@@ -16,8 +16,8 @@
  * `prune`. Every pass is best-effort: a per-device prune failure is logged and
  * never aborts the rest, and the sweep never throws.
  */
-import { errMsg } from '@camstack/types'
-import type { RecordingConfig, IScopedLogger } from '@camstack/types'
+import { errMsg } from '@dominevo/types'
+import type { RecordingConfig, IScopedLogger } from '@dominevo/types'
 import type { HeapDeltaTracker } from './heap-delta.js'
 
 /** The subset of `pruneFootage`'s result the sweep summary accumulates. */

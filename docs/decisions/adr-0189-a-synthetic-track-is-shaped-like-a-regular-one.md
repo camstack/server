@@ -113,7 +113,7 @@ becomes, a class.
   embed's `audioKindId` had no idempotency guard, so under this contract it
   produced `audio-audio` — an id the taxonomy does not know, shadowing both
   `EVENT_KIND_ICONS.audio` and the 25 curated `audio-*` glyphs. It now matches
-  its server-side twin in `@camstack/types` and is a no-op on a correct row.
+  its server-side twin in `@dominevo/types` and is a no-op on a correct row.
 
 ## Enforcement
 

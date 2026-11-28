@@ -5,7 +5,7 @@ export default buildLibPreset({
     index: 'src/index.ts',
     addon: 'src/addon.ts',
   },
-  // Ships self-contained (only @camstack/kernel + node builtins stay
+  // Ships self-contained (only @dominevo/kernel + node builtins stay
   // external); the tsvesync client library bundles inline.
   externals: 'self-contained',
 })

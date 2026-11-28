@@ -6,7 +6,7 @@
  * new authority), one per seed id, written AFTER the seeded row landed. A read that fails THROWS: "could not read the
  * marker" must never look like "never seeded".
  */
-import type { RecordKindHandle } from '@camstack/types'
+import type { RecordKindHandle } from '@dominevo/types'
 import { backupOrchestratorRecordKinds, type BackupSeedMarkerBody } from './record-kinds.js'
 
 /** The slice of the marker store a seed needs. */

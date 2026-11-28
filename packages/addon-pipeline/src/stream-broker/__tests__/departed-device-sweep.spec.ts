@@ -12,7 +12,7 @@
  * consecutive successful reads agree (D49): never on a failed read, never on
  * an empty one, and a reappearance cancels the pending sweep.
  */
-import type { AddonApi, IScopedLogger } from '@camstack/types'
+import type { AddonApi, IScopedLogger } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { StreamBrokerManager } from '../stream-broker/stream-broker-manager.js'
 

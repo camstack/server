@@ -14,7 +14,7 @@ import {
   type WorkloadResources,
   type WorkloadSections,
   type WorkloadState,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { UiTextFn } from '../../../../contexts/ui-text'
 import { MIN_PLAUSIBLE_TIMESTAMP_MS } from '../../../../lib/format-last-seen'
 import { formatBytes } from '../../../cap-settings/recording-spans'

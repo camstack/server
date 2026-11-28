@@ -15,7 +15,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { ConfigUISchemaWithValues } from '@camstack/types'
+import type { ConfigUISchemaWithValues } from '@dominevo/types'
 
 const PER_NODE_LABEL = 'btm binary path'
 const CLUSTER_LABEL = 'Loki URL'
@@ -62,9 +62,9 @@ const getScopedSettings = vi.fn(async (input: { scope: string }) =>
   input.scope === 'node' ? NODE_FORM : CLUSTER_FORM,
 )
 
-vi.mock('@camstack/ui-library', async () => {
+vi.mock('@dominevo/ui-library', async () => {
   const actual =
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+    await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   const noopMutation = () => ({ mutateAsync: vi.fn(), mutate: vi.fn(), isPending: false })
   return {
     ...actual,

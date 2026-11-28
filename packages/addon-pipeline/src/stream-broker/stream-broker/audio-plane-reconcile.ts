@@ -12,7 +12,7 @@
  *
  * - a lost or never-delivered `StreamParamsChanged` (a provider restarting at
  *   exactly the wrong moment, a subscriber not yet attached), and
- * - an audio change made **outside CamStack** — an operator on the camera's
+ * - an audio change made **outside Dominevo** — an operator on the camera's
  *   own web UI nudges nothing at all.
  *
  * Either way the broker settles on a video-only session against a camera that

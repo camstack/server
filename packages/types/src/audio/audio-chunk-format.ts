@@ -22,9 +22,9 @@
  * `AudioChunkPlane` expands per subscription) and
  * `addon-pipeline-orchestrator`'s `AudioWindowAccumulator` (which flushes an
  * f32le window to the analyzer cap, whose `AudioChunkInput` contract is
- * unchanged and stays f32le). Both bundle the bare `@camstack/types` entry
+ * unchanged and stays f32le). Both bundle the bare `@dominevo/types` entry
  * into their own dist (`self-contained` externals), so this travels with a
- * `camstack deploy` and needs no published server.
+ * `dominevo deploy` and needs no published server.
  *
  * A second μ-law table anywhere else is the defect this module exists to
  * prevent. (`stream-broker.ts`'s `mulawToPcm` / `alawToPcm` are the ENCODE

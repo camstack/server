@@ -9,7 +9,7 @@ import type {
   PipelineStepInputOutput,
   RunnerInferenceDevice,
   StepDefinition,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   buildSubtreeCanRun,
   placeDetailStep,

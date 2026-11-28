@@ -8,7 +8,7 @@
  *     lose the dispatch that waited on it: the start is retried for the new
  *     default and the dispatch is served by it.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { EngineFactory } from '../engine/engine-factory.js'
 import { deviceKeyOf, resolveDeviceEngine } from '../engine/resolve-device-engine.js'

@@ -10,7 +10,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ExternalLink, Loader2, LogIn, RefreshCw } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { Button, CopyButton, ErrorBox } from '@camstack/ui-library'
+import { Button, CopyButton, ErrorBox } from '@dominevo/ui-library'
 import {
   cancelBrokerSignIn,
   commitBrokerSignIn,

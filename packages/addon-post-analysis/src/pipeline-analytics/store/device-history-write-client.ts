@@ -1,4 +1,4 @@
-import type { AddonApi } from '@camstack/types'
+import type { AddonApi } from '@dominevo/types'
 import type { DeviceHistoryWriteClient } from './analytics-history-producer.js'
 
 /** Adapt tRPC-shaped `ctx.api.deviceHistory` to the producer's plain async surface. */

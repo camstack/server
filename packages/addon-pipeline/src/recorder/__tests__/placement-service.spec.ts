@@ -12,7 +12,7 @@
  * the eviction rows that share it.
  */
 
-import { createDurableState, type IScopedLogger } from '@camstack/types'
+import { createDurableState, type IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import type { RecordingOpsLogAppendInput, RecordingOpsLogSink } from '../addon/ops-log-store.js'
 import { PlacementService } from '../addon/placement-service.js'

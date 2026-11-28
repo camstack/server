@@ -8,7 +8,7 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useState } from 'react'
 import { useT } from './i18n/index.js'
 import { NodeBenchmarkSection } from './node-benchmark/NodeBenchmarkSection'

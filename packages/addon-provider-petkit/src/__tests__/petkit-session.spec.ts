@@ -9,7 +9,7 @@ import {
   IntegrationSessionReporter,
   type IScopedLogger,
   type SessionHealthAlertsPort,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { classifyPetkitSessionError } from '../petkit-session.js'
 

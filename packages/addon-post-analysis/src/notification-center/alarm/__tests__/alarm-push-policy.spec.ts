@@ -2,7 +2,7 @@
  * D706, the pieces: the pure policy, the REAL panel's classification of a match, the
  * "watched again" switch and its duplicate check, the stock 30 s re-arm, and the words.
  */
-import { NC_ALARM_DEFAULT_TRIGGERED_DURATION_SEC } from '@camstack/types'
+import { NC_ALARM_DEFAULT_TRIGGERED_DURATION_SEC } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { makeSilentLogger } from '../../../pipeline-analytics/__tests__/test-helpers.js'
 import { NcDispatcher, type NcSendInput } from '../../dispatcher.js'

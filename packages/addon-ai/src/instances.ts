@@ -33,7 +33,7 @@ import {
   type RecordRow,
   type RecordsAccess,
   secretViewsOf,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { AI_KIND_DESCRIPTORS, descriptorOf, type KindDescriptor } from './kinds/descriptors.js'
 import { secretFieldOf, validateProviderConfig } from './kinds/provider-config.js'
 import { type AppleNodeView, withAppleVision } from './apple-profile.js'

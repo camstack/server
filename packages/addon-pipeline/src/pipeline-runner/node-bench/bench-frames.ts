@@ -15,7 +15,7 @@ import { createHash } from 'node:crypto'
 import { spawn } from 'node:child_process'
 import { createReadStream, promises as fs } from 'node:fs'
 import path from 'node:path'
-import type { NodeBenchClip } from '@camstack/types'
+import type { NodeBenchClip } from '@dominevo/types'
 import type { BenchFrame } from './node-bench-driver.js'
 
 /**

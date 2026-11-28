@@ -4,14 +4,14 @@
  * names the real motion — the camera's own, or an attached sensor by id and
  * name — instead of the `analyzer` it used to claim on onboard-only cameras.
  */
-import { CAMERA_TRIGGER } from '@camstack/types'
+import { CAMERA_TRIGGER } from '@dominevo/types'
 import type {
   CameraDetectionConfig,
   DetectionSources,
   IScopedLogger,
   RunnerCameraConfig,
   RunnerLocalLoad,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 
 import {

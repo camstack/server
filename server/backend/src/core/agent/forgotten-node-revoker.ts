@@ -15,8 +15,8 @@ import {
   type MeshCertificateRegistry,
   type MeshCrl,
   type MeshPeers,
-} from '@camstack/server/system'
-import type { IScopedLogger } from '@camstack/types'
+} from '@dominevo/server/system'
+import type { IScopedLogger } from '@dominevo/types'
 import type { NodeCertificateRevoker } from './agent-registry.service'
 
 export interface ForgottenNodeRevokerDeps {

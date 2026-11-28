@@ -1,4 +1,4 @@
-import { type AddonApi, EMPTY_REMOTE_CONFIG, type MediaPlayerStatus } from '@camstack/types'
+import { type AddonApi, EMPTY_REMOTE_CONFIG, type MediaPlayerStatus } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { remoteSliceWriterOver } from '../remote-wiring.js'
 

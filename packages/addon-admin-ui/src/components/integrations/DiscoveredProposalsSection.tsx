@@ -18,8 +18,8 @@ import {
   useDeviceManagerAdoptDevice,
   useDeviceManagerDismissDiscoveryProposal,
   useDeviceManagerListDiscoveryProposals,
-} from '@camstack/ui-library'
-import type { DiscoveryProposal } from '@camstack/types'
+} from '@dominevo/ui-library'
+import type { DiscoveryProposal } from '@dominevo/types'
 import { Check, Loader2 } from 'lucide-react'
 import { type ReactElement, useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'

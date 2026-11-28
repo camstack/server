@@ -10,7 +10,7 @@
  *  - Device settings routing with deviceId
  */
 import { describe, it, expect, vi } from 'vitest'
-import type { IAddonSettingsProvider } from '@camstack/types'
+import type { IAddonSettingsProvider } from '@dominevo/types'
 import { makeCtx, invokeProcedure, checkAuthMatrix, buildCapRouterForTest } from './harness.js'
 
 function makeMockProvider(): IAddonSettingsProvider {

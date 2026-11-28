@@ -30,7 +30,7 @@ import type {
   ModelCatalogEntry,
   ModelExtraFile,
   ModelLicense,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   LLAMA_32_COMMUNITY,
   QWEN36_APACHE,
@@ -216,7 +216,7 @@ const QWEN3VL8B_URL = `${QWEN3VL8B_BASE}/Qwen3-VL-8B-Instruct-Q4_K_M.gguf`
  * calling out over HTTP to a process nobody here supervises.
  *
  * ~6.2 GB resident is a real bite on a 16 GB machine shared with the rest of
- * CamStack — that is what `minRamBytes` is for, and it is why the 4B above
+ * Dominevo — that is what `minRamBytes` is for, and it is why the 4B above
  * exists rather than this being the only new rung.
  */
 const QWEN3VL_8B: LlmManagedModel = {

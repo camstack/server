@@ -22,9 +22,9 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { z } from 'zod'
 import { TRPCError } from '@trpc/server'
-import { customAction, defineCustomActions } from '@camstack/types'
-import type { CustomActionCaller } from '@camstack/types'
-import { CustomActionRegistry } from '@camstack/server/system'
+import { customAction, defineCustomActions } from '@dominevo/types'
+import type { CustomActionCaller } from '@dominevo/types'
+import { CustomActionRegistry } from '@dominevo/server/system'
 import { dispatchCustomAction } from '../cap-providers.js'
 import { makeCtx } from '../../../__tests__/cap-routers/harness.js'
 
@@ -175,7 +175,7 @@ describe('dispatchCustomAction (api.addons.custom live path)', () => {
   // ── The addonId is the MANIFEST id, never the npm package name ────────
   //
   // `addons.custom` keys on `camstack.addons[].id`. A caller who reaches for
-  // the package name (`@camstack/addon-post-analysis` instead of
+  // the package name (`@dominevo/addon-post-analysis` instead of
   // `pipeline-analytics`) gets a NOT_FOUND that is indistinguishable from "the
   // addon is broken / the action never registered" — that exact ambiguity cost
   // a session on 2026-08-08, spent hunting a require-cache fix that was
@@ -184,7 +184,7 @@ describe('dispatchCustomAction (api.addons.custom live path)', () => {
   it('names the addons that DO have custom actions when the addonId is unknown', async () => {
     try {
       await dispatchCustomAction(registry, makeCtx('admin'), {
-        addonId: '@camstack/addon-benchmark',
+        addonId: '@dominevo/addon-benchmark',
         action: 'ping',
         input: undefined,
       })
@@ -192,7 +192,7 @@ describe('dispatchCustomAction (api.addons.custom live path)', () => {
     } catch (err) {
       expect(err).toBeInstanceOf(TRPCError)
       const message = (err as TRPCError).message
-      expect(message).toMatch(/no addon '@camstack\/addon-benchmark'/)
+      expect(message).toMatch(/no addon '@dominevo\/addon-benchmark'/)
       expect(message).toMatch(/benchmark/)
       expect(message).toMatch(/manifest addon id, not the npm package name/)
     }

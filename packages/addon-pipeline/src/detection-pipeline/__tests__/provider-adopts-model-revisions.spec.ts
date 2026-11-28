@@ -4,7 +4,7 @@
  * synchronous, never hashes) reports it downloaded instead of every hosted
  * model reading "not downloaded" after the release that gave them revisions.
  */
-import type { IScopedLogger, ModelCatalogEntry } from '@camstack/types'
+import type { IScopedLogger, ModelCatalogEntry } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 
 const adopt = vi.hoisted(() =>
@@ -13,7 +13,7 @@ const adopt = vi.hoisted(() =>
     stale: [],
   })),
 )
-vi.mock('@camstack/server/system/addon-utils', async (importOriginal) => ({
+vi.mock('@dominevo/server/system/addon-utils', async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   adoptModelRevisions: adopt,
 }))

@@ -4,7 +4,7 @@
  * see `new=1` (written with history.replaceState), so the dialog closed in
  * the same turn.
  */
-import { compileHelper, type CompositionView, type CoreBlock, DeviceType } from '@camstack/types'
+import { compileHelper, type CompositionView, type CoreBlock, DeviceType } from '@dominevo/types'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen } from '@testing-library/react'
 import type { ReactElement, ReactNode } from 'react'
@@ -33,8 +33,8 @@ vi.mock('../../components/device/customize/assignments/use-cap-index', () => ({
   useCapIndex: () => ({ kind: 'pending' as const }),
 }))
 
-vi.mock('@camstack/ui-library', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@camstack/ui-library')>()
+vi.mock('@dominevo/ui-library', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dominevo/ui-library')>()
   return {
     ...actual,
     useSystem: () => ({
@@ -83,7 +83,7 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
   }
 })
 
-import { ConfirmDialogProvider } from '@camstack/ui-library'
+import { ConfirmDialogProvider } from '@dominevo/ui-library'
 import { DeviceSearchTrpc, SEARCH_HUB_FLEET } from '../../test-setup/device-search-hub'
 import { BuildPage } from '../Build'
 import { CompositionEditorPage } from '../CompositionEditorPage'

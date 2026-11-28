@@ -83,7 +83,7 @@ base64 cost that is the entire point of removing.
   and is invisible; this cost an hour of chasing a "stale dist" that was not
   stale. Both must be edited until one of them is deleted.
 - This is a cap-shape change: it reaches a node only inside a published
-  `@camstack/server` (D16).
+  `@dominevo/server` (D16).
 
 ## Enforcement
 

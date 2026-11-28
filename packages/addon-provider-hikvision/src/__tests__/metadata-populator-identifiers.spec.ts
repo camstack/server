@@ -10,7 +10,7 @@ import {
   type DeviceIdentifiers,
   type IScopedLogger,
   type SetIdentifiersInput,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   HikvisionIsapiClient,

@@ -4,7 +4,7 @@ Cloudflare bundle — Tunnel (network-access) + TURN relay (turn-provider). Mult
 
 <!-- readme:generated:start (derived from the manifest; edit outside this block) -->
 
-Package `@camstack/addon-cloudflare` on npm.
+Package `@dominevo/addon-cloudflare` on npm.
 
 ## What it provides
 
@@ -27,11 +27,11 @@ Edit these from System, Addons, this addon, Settings (a device's own settings ar
 ## Requirements
 
 - Placement: hub-only (runner group `net-access`).
-- A CamStack hub. An agent is used only where the placement above allows it.
+- A Dominevo hub. An agent is used only where the placement above allows it.
 
 ## Documentation
 
-- [docs/architecture/network.md](https://github.com/camstack/server/blob/main/docs/architecture/network.md)
+- [docs/architecture/network.md](https://github.com/dominevo/server/blob/main/docs/architecture/network.md)
 
 See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
 

@@ -16,23 +16,23 @@ applies-to:
 
 ## Context
 
-`@camstack/system` and `@camstack/server` were published separately and had to be
-moved together. Every capability change needed `force_packages=@camstack/system`
+`@dominevo/system` and `@dominevo/server` were published separately and had to be
+moved together. Every capability change needed `force_packages=@dominevo/system`
 (nx-affected does not see it), a node could hold a system copy that disagreed with
 its server, and an addon built against a newer framework could be installed on an
 older server with nothing refusing it. Version skew was found by a running node.
 
 ## Decision
 
-There is ONE published framework package. `@camstack/system` is no longer
+There is ONE published framework package. `@dominevo/system` is no longer
 published: its source stays in `packages/system` as the private workspace
-`@camstack/server-framework`, and its built dist ships inside the
-`@camstack/server` tarball as `@camstack/server/system`. Every import is
-`@camstack/server/system*`; there is no shim and no alias. D15 is amended: the
+`@dominevo/server-framework`, and its built dist ships inside the
+`@dominevo/server` tarball as `@dominevo/server/system`. Every import is
+`@dominevo/server/system*`; there is no shim and no alias. D15 is amended: the
 host-provided set is the server closure, not a separate system package.
 
 Every package installed apart from the server declares the minimum it needs in
-`camstack.requires` (schema in `@camstack/types`, `PackageRequiresSchema`): an
+`camstack.requires` (schema in `@dominevo/types`, `PackageRequiresSchema`): an
 addon `server`, the server `addons` and `wrapper`, a wrapper (desktop, node-root)
 `server`. The publish workflow STAMPS these after the version bump. Every
 delivery path (`updatePackage`, the sweeps, auto-update, `reconcileAgentAddons`,

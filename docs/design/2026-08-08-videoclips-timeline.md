@@ -260,9 +260,9 @@ before step 3 is worth doing.
 **`hksv` — not a provider.** HKSV is real and recent
 (`packages/addon-export-hap/src/hksv/`), but it is a **sink, not a source**:
 `HksvRecordingDelegate` streams fragments out over HDS and iOS/iCloud keeps the
-clip. There is no CamStack-side record, id, or catalog to list. HKSV is a
+clip. There is no Dominevo-side record, id, or catalog to list. HKSV is a
 candidate *consumer* of this contract — `fmp4-fragment-child.ts` already names
-"a future CamStack clip source" beside `HksvFragmentSource` — not a candidate
+"a future Dominevo clip source" beside `HksvFragmentSource` — not a candidate
 provider. **The operator's "even the HomeKit clips" is not reachable without
 Apple returning them, which HKSV does not do.** This is worth saying plainly
 before anyone estimates it.
@@ -367,7 +367,7 @@ Two things the viewer proved that this proposal depends on:
 
 The blocker "there is nothing to select between" has an answer the morning
 draft could not see, because HKSV recording was not yet live: **the fragments
-CamStack streams to a HomeKit controller pass through our own fMP4 plane** —
+Dominevo streams to a HomeKit controller pass through our own fMP4 plane** —
 iCloud keeps its copy, but nothing stops us from persisting the same bytes.
 
 **The tee provider**: when the HKSV delegate serves a recording stream

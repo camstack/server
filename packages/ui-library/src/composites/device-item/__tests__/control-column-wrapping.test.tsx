@@ -34,7 +34,7 @@ import { render } from '@testing-library/react'
 import { describe, it, expect, beforeAll, vi } from 'vitest'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 
 // SensorValueAtom (rendered by DeviceItemActions for sensor/presence rows) now
 // resolves per-role display defaults via the singleton `useDeviceManagerGet-

@@ -39,7 +39,7 @@ Key files: `packages/types/src/device/base-device.ts`,
 `linked-device-resolve.ts` sits beside them and is a different concern: the
 PURE rules for which devices a camera's linked set resolves to — same-location
 membership, and a container standing in for its primary child. It lives in
-`@camstack/types` rather than in the device-manager builtin because two
+`@dominevo/types` rather than in the device-manager builtin because two
 writers need the same answer (the hub's boot backfill and the admin UI's
 per-room rebuild), and a second copy would be a second definition of what a
 room contains.
@@ -111,7 +111,7 @@ When a capability declares `runtimeState`, the provider is a thin trampoline ove
 it — not a set of methods that hit the device on every call:
 
 ```ts
-import { createRuntimeStateBridge } from '@camstack/types'
+import { createRuntimeStateBridge } from '@dominevo/types'
 
 private registerMyCap(): void {
   const refreshFromCamera = async (): Promise<void> => {
@@ -626,7 +626,7 @@ closed vocabularies the UI draws (D973). The editor's "Add component" palette
 is the `remote-layout-components` collection cap: core-blocks provides the
 built-in `core:*` entries, an addon adds `<addonId>:<name>` as pure data, and
 the reader dedupes by id with built-ins first. `insertComponent` / `moveGroup`
-/ `removeGroup` / `ungroup` (`@camstack/types`) are the one set of edits.
+/ `removeGroup` / `ungroup` (`@dominevo/types`) are the one set of edits.
 
 ### Automation templates: the same store, kind `automation` (#527)
 
@@ -1150,7 +1150,7 @@ Never pick by the order a provider's response listed the children in: that order
 
 ## How a device is named
 
-A device has one stored name. What a screen paints is a different string, from one function (`formatDeviceName` in `@camstack/ui-library`, mirrored in the viewer at `camstack/src/data/device-name.ts`).
+A device has one stored name. What a screen paints is a different string, from one function (`formatDeviceName` in `@dominevo/ui-library`, mirrored in the viewer at `camstack/src/data/device-name.ts`).
 
 A child under a container is named from its role or type, in the active locale's short form (Motion / Movimento, Battery / Batteria, Camera / Telecamera). A stored name that is only that stock word is replaced by the short noun. A name the operator wrote (`display.label`, or a remainder that is not a stock word) is kept. The compact form is the container's name alone when this child is the container's only meaningful child, or when the child's own name is the container's name. Otherwise it is `container · noun`. The full form is `container · noun` unless the noun is the container's name. Nested, under the parent row, is the noun alone. A room is appended only by the `with-location` form, and only when that room is not already one of the segments.
 

@@ -4,7 +4,7 @@
  * (D49). Returns `true` when the refusal was handled here, `false` for an error the generic
  * delete failure toast must report.
  */
-import { useAddonsCustom, useConfirm } from '@camstack/ui-library'
+import { useAddonsCustom, useConfirm } from '@dominevo/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'

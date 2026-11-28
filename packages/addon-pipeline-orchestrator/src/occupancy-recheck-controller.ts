@@ -51,8 +51,8 @@ import type {
   OccupancyBurstRefusal,
   OccupancyLookRefusal,
   RunnerCameraConfig,
-} from '@camstack/types'
-import { errMsg } from '@camstack/types'
+} from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
 
 /**
  * How long a recheck registration lives once the burst was accepted. The

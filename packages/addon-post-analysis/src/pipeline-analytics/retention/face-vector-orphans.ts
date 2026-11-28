@@ -34,7 +34,7 @@
  * maintenance window deleted in raw SQL. Both are reachable only by walking the
  * index, which is what this does.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { FaceStore } from '../store/face-store.js'
 import type { EmbeddingOrphanScanDeps } from './embedding-orphan-scan.js'
 

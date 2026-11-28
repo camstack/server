@@ -5,7 +5,7 @@
  * tile coming back into the same chain).
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 
 import { createReplayLane, type ReplayLease } from '../replay-lane.js'

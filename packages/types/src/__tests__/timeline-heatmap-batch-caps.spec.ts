@@ -124,7 +124,7 @@ describe('the recording batches are OURS, and the singular read names its source
   it("the batch inputs carry no provider — they are the archive's, ours only (D625)", () => {
     // A `deviceIds` array cannot be routed by a device-scoped mount, so the
     // batches stayed on the singleton. The consequence is stated rather than
-    // hidden: they answer for CamStack's archive and never for a camera's card.
+    // hidden: they answer for Dominevo's archive and never for a camera's card.
     for (const name of ['getAvailabilityBatch', 'getDaysWithRecordingsBatch'] as const) {
       const parsed = recordingArchiveCapability.methods[name].input.safeParse({
         deviceIds: [101],

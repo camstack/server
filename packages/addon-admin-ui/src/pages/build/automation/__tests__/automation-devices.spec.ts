@@ -49,7 +49,7 @@ const listAllHook = vi.fn(
 /** Named so the spec can assert the RAW client is never reached. */
 const mockListAllRaw = vi.fn(() => Promise.resolve([]))
 
-vi.mock('@camstack/ui-library', () => ({
+vi.mock('@dominevo/ui-library', () => ({
   useDeviceManagerListAll: (input?: FleetListInput, options?: FleetListOptions) =>
     listAllHook(input, options),
   useSystem: () => ({

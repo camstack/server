@@ -139,10 +139,10 @@ threshold only.
   both.
 - The mower's hard-coded `replace` at 10 % still reads as low at every
   threshold. Removing it is the Dreame addon's part (Workstream A).
-- **Release order: `@camstack/server` first, and a wrong order is SILENT, not a
+- **Release order: `@dominevo/server` first, and a wrong order is SILENT, not a
   crash** (corrected in review I2). The notification centre and the admin are
   self-contained bundles (`externals: 'self-contained'`, which inlines
-  `@camstack/types`), so they load and look current on an older closure. The
+  `@dominevo/types`), so they load and look current on an older closure. The
   failure is in the hub's generated router, which validates rule input with the
   closure's schemas: it STRIPS `consumableLowPercent`, so a rule saves "fine"
   and judges at 15 %, and it REFUSES the tank kinds. `durability: 'restored'`

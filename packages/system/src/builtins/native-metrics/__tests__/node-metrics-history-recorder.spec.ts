@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import {
   NODE_CONTAINER_CURRENT_KEY,
   NODE_CPU_KEY,
@@ -18,7 +18,7 @@ import {
   type NodeMetricsHistoryClient,
   assembleRunnerSamples,
 } from '../node-metrics-history-recorder.js'
-import type { SystemResourceSnapshot } from '@camstack/types'
+import type { SystemResourceSnapshot } from '@dominevo/types'
 import type { RetainedProcess } from '../load-series-types.js'
 
 function silentLogger(): IScopedLogger {

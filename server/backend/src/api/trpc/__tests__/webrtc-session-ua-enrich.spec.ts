@@ -8,8 +8,8 @@
  */
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import type { IncomingMessage } from 'node:http'
-import type { InferProvider, BrokerConsumerAttribution } from '@camstack/types'
-import { webrtcSessionCapability } from '@camstack/types'
+import type { InferProvider, BrokerConsumerAttribution } from '@dominevo/types'
+import { webrtcSessionCapability } from '@dominevo/types'
 import {
   enrichHintsWithClientClass,
   enrichInputWithUserAgent,

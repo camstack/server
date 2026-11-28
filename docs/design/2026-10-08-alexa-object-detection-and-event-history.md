@@ -66,7 +66,7 @@ The EU-reachable substitutes ship instead:
    `pipelineAnalytics` tracks (by identifier, by time range, 10 per page,
    paginated), image URIs re-minted on every read so Amazon never holds a
    long-lived link. `DeleteData` hides the event from Alexa only; deleting
-   footage in CamStack from a voice assistant is not something this skill
+   footage in Dominevo from a voice assistant is not something this skill
    should be able to do.
 6. **Privacy**: every event carries still images of the home and its people to
    Amazon. The privacy policy, the console's "collects personal information"

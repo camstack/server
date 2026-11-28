@@ -13,7 +13,7 @@ import {
   type DeviceContext,
   type InferNativeProvider,
   type StateRefreshPolicy,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { unraidInstances } from '../unraid-node-resolver.js'
 
 /** The fastest an Unraid server is read: the connection form's lower bound. */

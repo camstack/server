@@ -4,7 +4,7 @@
  * `'ffmpeg'` — the host's binary. Without the pinned build it refuses, named
  * per camera, before a playlist is staged or a child spawned.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { RecordingIndex } from '../../recording-index.js'
 import type { SegmentStore } from '../../segment-store.js'

@@ -26,7 +26,7 @@
  * successful refresh by a clock field advancing — suppress that and a refresh
  * looks like a failure). These predicates decide only whether to WRITE.
  */
-import type { RuntimeStatePolicy } from '@camstack/types'
+import type { RuntimeStatePolicy } from '@dominevo/types'
 import { isPlainRecord, OWNED_FIELDS_KEY } from './field-ownership.js'
 
 /** Resolves the declared policy for a cap name. */

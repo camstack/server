@@ -7,8 +7,8 @@
  */
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import type { RecordingOnboardStatus, RecordWindow } from '@camstack/types'
-import { describeOnboardRefusal } from '@camstack/types'
+import type { RecordingOnboardStatus, RecordWindow } from '@dominevo/types'
+import { describeOnboardRefusal } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { AmcrestCgiClient } from '../amcrest-cgi-client.js'
 import {
@@ -452,7 +452,7 @@ describe('buildOnboardOptions — what THIS camera accepts', () => {
     expect(options.schedule.support).toEqual({ readable: true, writable: true })
   })
 
-  it('a camera CamStack has not read yet is neither readable nor writable, and says so (D315)', () => {
+  it('a camera Dominevo has not read yet is neither readable nor writable, and says so (D315)', () => {
     const options = buildOnboardOptions({
       status: null,
       limits: liveLimits(),

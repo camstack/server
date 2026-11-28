@@ -13,7 +13,7 @@
  * that genuinely wants the bytes in hand and for a provider not yet
  * redeployed. The two are pinned against each other at the bottom of this
  * file, in `packages/types`, where the import IS the source — a gate written
- * in an addon package would resolve `@camstack/types` to the BUILT package and
+ * in an addon package would resolve `@dominevo/types` to the BUILT package and
  * stay green while the source drifted.
  */
 import { describe, expect, it } from 'vitest'

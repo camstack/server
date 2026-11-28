@@ -4,7 +4,7 @@ import {
   EventCategory,
   type DeviceContext,
   type IDeviceRuntimeState,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { MqttHaDevice } from '../devices/mqtt-ha-device.js'
 import { groupEntitiesByDevice } from '../mqtt-ha-device-grouping.js'
 import { planMqttHaDevice } from '../mqtt-ha-domain-mapping.js'

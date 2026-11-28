@@ -3,7 +3,7 @@
  * placement where each is the effective root detector. Pure over already-fetched
  * node snapshots — the caller loads devices + schema per online node.
  */
-import type { TrainingBaseModel } from '@camstack/types'
+import type { TrainingBaseModel } from '@dominevo/types'
 import {
   clusterRootModelIds,
   mapRootDetectorPlacements,
@@ -12,7 +12,7 @@ import {
   type RootDetectorNodeInput,
   type StepModelCatalog,
   type TrainingBaseModelRow,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 
 /** Structural slice of `pipelineExecutor.getSchema` this mapper reads. */
 export interface SchemaSlotsLike {

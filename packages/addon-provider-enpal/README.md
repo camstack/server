@@ -1,6 +1,6 @@
-# @camstack/addon-provider-enpal
+# @dominevo/addon-provider-enpal
 
-Enpal solar box provider for CamStack: the box is an integration, and it offers three pieces to adopt: the box itself (a Gateway), the System (photovoltaic, battery, grid, house) and the heat pump (both Containers), with history.
+Enpal solar box provider for Dominevo: the box is an integration, and it offers three pieces to adopt: the box itself (a Gateway), the System (photovoltaic, battery, grid, house) and the heat pump (both Containers), with history.
 
 ## What it does
 
@@ -38,11 +38,11 @@ Firmware 8.51 and later render the device rows of the device page only through a
 
 ## Requirements
 
-- A CamStack hub on the same network as the box.
+- A Dominevo hub on the same network as the box.
 
 <!-- readme:generated:start (derived from the manifest; edit outside this block) -->
 
-Package `@camstack/addon-provider-enpal` on npm.
+Package `@dominevo/addon-provider-enpal` on npm.
 
 ## What it provides
 
@@ -63,11 +63,11 @@ Edit these from System, Addons, this addon, Settings (a device's own settings ar
 
 - Placement: hub-only.
 - Python: Enpal installs `python/requirements.txt` into its own environment.
-- A CamStack hub. An agent is used only where the placement above allows it.
+- A Dominevo hub. An agent is used only where the placement above allows it.
 
 ## Documentation
 
-- [docs/architecture/device-model.md](https://github.com/camstack/server/blob/main/docs/architecture/device-model.md)
+- [docs/architecture/device-model.md](https://github.com/dominevo/server/blob/main/docs/architecture/device-model.md)
 
 See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
 

@@ -9,7 +9,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const installSpy =
   vi.fn<(input: unknown) => Promise<{ accepted: boolean; reason: string | null }>>()
 
-vi.mock('@camstack/ui-library', () => ({
+vi.mock('@dominevo/ui-library', () => ({
   Button: (props: { children?: unknown; onClick?: () => void }) => (
     <button type="button" onClick={props.onClick}>
       {props.children as never}

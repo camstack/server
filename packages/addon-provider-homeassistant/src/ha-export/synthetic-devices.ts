@@ -283,7 +283,7 @@ function plan(syntheticId: string, name: string, specs: readonly SyntheticSpec[]
     dev: {
       ids: [syntheticDeviceKeyFor(syntheticId)],
       name,
-      mf: 'CamStack',
+      mf: 'Dominevo',
       mdl: 'Synthetic',
     },
     cmps: buildComponents(syntheticId, specs),
@@ -635,7 +635,7 @@ function serverSpecs(input: SyntheticInput): readonly SyntheticSpec[] {
 export function syntheticPlans(input: SyntheticInput): readonly HaDevicePlan[] {
   return [
     plan(NOTIFICATION_CENTER_STABLE_ID, 'Notification Center', notificationCenterSpecs(input)),
-    plan(SERVER_STABLE_ID, 'CamStack Server', serverSpecs(input)),
+    plan(SERVER_STABLE_ID, 'Dominevo Server', serverSpecs(input)),
   ]
 }
 

@@ -14,7 +14,7 @@ import {
   DEFAULT_DETAIL_CROP_CONVENTION,
   DETAIL_CROP_PADDING_KEY,
   DETAIL_CROP_SQUARE_KEY,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   CropConventionSource,
   CROP_CONVENTION_OWNER_ADDON_ID,

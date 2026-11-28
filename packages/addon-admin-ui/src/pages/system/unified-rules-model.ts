@@ -3,8 +3,8 @@
  * Timelapses and Calendar-events — so All and the strip tabs share one table.
  */
 
-import type { NcRule } from '@camstack/types'
-import { ruleKindOf, type NcRuleKind } from '@camstack/types'
+import type { NcRule } from '@dominevo/types'
+import { ruleKindOf, type NcRuleKind } from '@dominevo/types'
 import type { RulesAreaKey } from './notification-rules-area'
 import { isProducerAreaKey, isRuleSectionArea } from './notification-rules-area'
 import type { SummaryRuleView } from './notification-summaries.helpers'

@@ -1,7 +1,7 @@
 import * as fs from 'node:fs'
 import type { JobJournal } from './job-journal.js'
 import type { StagingArea } from './staging-area.js'
-import type { LifecycleJob, LifecycleTask, TaskLogEntry, TaskPhase } from '@camstack/types'
+import type { LifecycleJob, LifecycleTask, TaskLogEntry, TaskPhase } from '@dominevo/types'
 
 export type ApplyAddonUpdateFn = (input: {
   name: string
@@ -75,7 +75,7 @@ export class LifecycleJobEngine {
    * and dropping that answer sent the string `'latest'` onward as if it were a
    * version. It became the manifest's recorded version, the version the Addons
    * page displayed, and the `toVersion` on the `addon.updated` event, which an
-   * operator read on his phone as "@camstack/addon-terminal 0.0.0 → latest"
+   * operator read on his phone as "@dominevo/addon-terminal 0.0.0 → latest"
    * (2026-08-30). Everything downstream of the apply reads a version; none of
    * it can resolve a tag, and none of it could tell that it had been handed
    * one.
@@ -151,13 +151,13 @@ export class LifecycleJobEngine {
   /**
    * Mark a framework task `skipped`.
    *
-   * Framework packages (`@camstack/server/system` + its lockstep companions) are NO
+   * Framework packages (`@dominevo/server/system` + its lockstep companions) are NO
    * LONGER updated through this engine. The legacy `/data/framework` per-package
    * swap was removed in the single-copy framework collapse (2026-07-18) — the
    * running framework is loaded from the active server-root single copy, and
    * framework/cap updates now ship EXCLUSIVELY via `applyServerUpdate` (the
    * node-root ServerUpdateService). Any framework task that still reaches this
-   * engine (e.g. an "Update all" bulk job that swept `@camstack/server/system`) is
+   * engine (e.g. an "Update all" bulk job that swept `@dominevo/server/system`) is
    * skipped, never applied — applying it would swap a dead dir.
    */
   private skipFrameworkTask(job: LifecycleJob, task: LifecycleTask): void {

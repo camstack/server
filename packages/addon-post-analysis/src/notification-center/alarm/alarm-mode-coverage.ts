@@ -20,7 +20,7 @@ import type {
   NcAlarmSkippedDevice,
   NcAlarmSkipReason,
   NcConditions,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /**
  * The two fields of a rule this derivation reads.

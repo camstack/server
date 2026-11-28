@@ -4,7 +4,7 @@
  * re-serving a child's refusal), so the hub's error formatter can translate it.
  */
 import { Socket } from 'node:net'
-import { readErrorI18n, userError } from '@camstack/types'
+import { readErrorI18n, userError } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { PeerAnsweredError } from '../../transport/peer-answered-error.js'
 import { SocketChannel } from '../../transport/socket-channel.js'

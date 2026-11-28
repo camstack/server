@@ -18,7 +18,7 @@
  * until a camera is moved.
  */
 
-import type { ObjectDetection } from '@camstack/types'
+import type { ObjectDetection } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   applyCropClassFloors,

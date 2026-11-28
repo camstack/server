@@ -13,8 +13,8 @@
  *
  * Two `addons.custom` actions on the `pipeline-analytics` addon — NOT capability
  * methods. The tab is a hub-local diagnostic over a store the hub already owns,
- * so it needs no codegen, no `@camstack/server/system` publish and no release train: it
- * ships with one `camstack deploy` of the addon and one of this bundle. That
+ * so it needs no codegen, no `@dominevo/server/system` publish and no release train: it
+ * ships with one `dominevo deploy` of the addon and one of this bundle. That
  * property survived the 2026-08-28 rework: everything new here — the tile
  * provenance, the miss reason, the subject fields the shared card needs — rides
  * the SAME two actions, and the bulk actions write the `setTrackFlags` cap
@@ -85,7 +85,7 @@ import {
   Select,
   useDeviceManagerListAll,
   useSystem,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useQuery } from '@tanstack/react-query'
 import { Bug, Check, Download, Loader2, RefreshCw, Star, Undo2, X } from 'lucide-react'
 import { type JSX, useMemo, useState } from 'react'

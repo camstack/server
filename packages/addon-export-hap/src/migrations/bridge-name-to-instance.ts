@@ -9,7 +9,7 @@
  * the name is `already-done`. The setting itself is deleted by a later migration, once this one
  * has read it.
  */
-import type { MigrationProcedureResult } from '@camstack/types'
+import type { MigrationProcedureResult } from '@dominevo/types'
 import type { HapBridgeBody } from '../hap-instance-kinds.js'
 
 export interface BridgeNameToInstancePorts {

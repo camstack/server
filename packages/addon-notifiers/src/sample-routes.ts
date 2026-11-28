@@ -35,7 +35,7 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { type IAddonHttpRoute } from '@camstack/types'
+import { type IAddonHttpRoute } from '@dominevo/types'
 
 /** The addon id — also the `/addon/<id>/…` route prefix. Mirrors `NOTIFIERS_ADDON_ID`. */
 const NOTIFIERS_ROUTE_ID = 'notifiers'

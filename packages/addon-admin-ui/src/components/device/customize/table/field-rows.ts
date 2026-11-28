@@ -10,13 +10,13 @@ import {
   type CompositionFieldsCard,
   type CompositionFieldsFeature,
   compositionSourceKey,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { unfilledRequiredFields } from '../../../composition-editor/build-skeleton'
 import { entryReads } from './extra-rows'
 
 /** A field whose name ends in `At` is a clock the integration keeps, not something to bind. */
 export function isClockField(path: string): boolean {
-  return /At$/.test(path)
+  return path.endsWith('At')
 }
 
 /** A companion clock, or a formula that reads no device: a constant, nothing to bind. */

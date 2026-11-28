@@ -1,6 +1,6 @@
 import { EventEmitter } from 'node:events'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { triggerMessage, type DiscoveryMessage } from './fixtures/z2m-discovery.js'
 
 class FakeClient extends EventEmitter {

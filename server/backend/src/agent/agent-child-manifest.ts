@@ -2,7 +2,7 @@ import type {
   ChildCapDescriptor,
   RegisteredAddonManifest,
   RegisterNodeParams,
-} from '@camstack/server/system'
+} from '@dominevo/server/system'
 
 /**
  * Adapt a child's UDS `ChildCapDescriptor[]` into a `RegisterNodeParams` for the agent's subtree

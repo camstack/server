@@ -24,7 +24,7 @@ import {
   type UseQueryOptions,
   type UseQueryResult,
 } from '@tanstack/react-query'
-import type { System } from '@camstack/sdk'
+import type { System } from '@dominevo/sdk'
 import { useSystem } from '../contexts/system-context.js'
 
 /**

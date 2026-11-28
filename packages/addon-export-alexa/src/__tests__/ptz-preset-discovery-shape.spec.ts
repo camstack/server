@@ -8,7 +8,7 @@
  *     match required Schema";
  *   - two presets with the same name produce two identical mode values and
  *     friendly names — "Invalid capability received." (cameras whose presets
- *     read `Stanza`, `Stanza` or `CamStack Home` ×3).
+ *     read `Stanza`, `Stanza` or `Dominevo Home` ×3).
  *
  * Names are de-duplicated (first wins, case-insensitively — the SetMode
  * handler resolves a value to the FIRST preset of that name), and with fewer
@@ -56,7 +56,7 @@ describe('ptz.preset ModeController shape', () => {
   })
 
   it('declares nothing when duplicates leave fewer than two names', () => {
-    expect(presetModes(['CamStack Home', 'CamStack Home'])).toBeUndefined()
+    expect(presetModes(['Dominevo Home', 'Dominevo Home'])).toBeUndefined()
   })
 
   it('every declared ModeController has at least two unique modes', () => {

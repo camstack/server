@@ -70,7 +70,7 @@ offered.
   pending departure strikes, the evidence candidates with their ratio and span,
   and the live track→candidate bindings. A custom action rather than a cap
   method for the reason the rest of `debug.*` is one: no codegen, no publish
-  train, one `camstack deploy`. It performs pure reads off two RAM mirrors, so
+  train, one `dominevo deploy`. It performs pure reads off two RAM mirrors, so
   it is safe to ask while a camera is flooding.
 
 ## Enforcement

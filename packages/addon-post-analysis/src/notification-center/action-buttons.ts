@@ -19,8 +19,8 @@
  * the token's job and the operator's decision — see `action-token.ts`.
  */
 
-import type { AlarmArmMode, NcRule, NcRuleActions, NotificationAction } from '@camstack/types'
-import { NC_DEFAULT_SNOOZE_MINUTES, NC_SNOOZE_MAX_MINUTES } from '@camstack/types'
+import type { AlarmArmMode, NcRule, NcRuleActions, NotificationAction } from '@dominevo/types'
+import { NC_DEFAULT_SNOOZE_MINUTES, NC_SNOOZE_MAX_MINUTES } from '@dominevo/types'
 import { isSnoozeExempt, type ActionStepsOf } from './snooze-exempt.js'
 
 /** Mint one callback URL for a button, and register what it may run. */
@@ -295,7 +295,7 @@ export interface NcAlarmButtonLabels {
  * the lock screen alone. Opening a browser to arm or disarm costs more
  * attention than the notification did.
  *
- * `panel.availableModes` ARE the enabled modes: CamStack has no per-mode
+ * `panel.availableModes` ARE the enabled modes: Dominevo has no per-mode
  * disable setting, so the Arm buttons offer exactly what the panel declares.
  */
 export function buildAlarmButtons(input: BuildAlarmButtonsInput): readonly NotificationAction[] {

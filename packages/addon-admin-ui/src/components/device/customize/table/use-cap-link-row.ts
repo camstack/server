@@ -4,8 +4,8 @@
  * source cap (the picker's candidates and the name of the linked one). Asked
  * once per cell; react-query serves the same answer to all of them.
  */
-import { DeviceType, type DeviceInfo } from '@camstack/types'
-import { type CapLinkCellState, useCoreBlocksGetCapLinks } from '@camstack/ui-library'
+import { DeviceType, type DeviceInfo } from '@dominevo/types'
+import { type CapLinkCellState, useCoreBlocksGetCapLinks } from '@dominevo/ui-library'
 import { useMemo } from 'react'
 import type { AssignmentCandidate, CandidateDevice } from '../assignments/assignment-candidates'
 import { candidateDetail } from '../assignments/assignment-candidates'

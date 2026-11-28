@@ -2,7 +2,7 @@
  * The group rail colours: a nested block never takes its parent's colour, and
  * sibling blocks all differ until the palette runs out.
  */
-import type { AutomationWhen } from '@camstack/types'
+import type { AutomationWhen } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { childRail, childRails, GROUP_RAIL_CLASSES, railClass, ROOT_RAIL } from '../group-rail'
 

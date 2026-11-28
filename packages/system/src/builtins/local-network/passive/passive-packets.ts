@@ -2,7 +2,7 @@
  * Turn one multicast datagram into what the proposal stream understands.
  * Pure: a malformed or irrelevant packet yields nothing.
  */
-import type { DiscoveryObservation } from '@camstack/types'
+import type { DiscoveryObservation } from '@dominevo/types'
 import { parseMdnsMessage } from '../scan/dns-wire.js'
 
 const MAX_HEADERS = 32

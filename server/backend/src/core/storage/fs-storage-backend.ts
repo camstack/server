@@ -1,3 +1,3 @@
-// Re-export from @camstack/server/system
-export { FsStorageBackend } from '@camstack/server/system'
-export type { IStorageBackend } from '@camstack/server/system'
+// Re-export from @dominevo/server/system
+export { FsStorageBackend } from '@dominevo/server/system'
+export type { IStorageBackend } from '@dominevo/server/system'

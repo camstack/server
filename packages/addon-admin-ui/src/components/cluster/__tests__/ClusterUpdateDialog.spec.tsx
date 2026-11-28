@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen } from '@testing-library/react'
-import type { ClusterUpdateJob, ClusterUpdatePlan, ClusterUpdateStep } from '@camstack/types'
+import type { ClusterUpdateJob, ClusterUpdatePlan, ClusterUpdateStep } from '@dominevo/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ClusterUpdateSession } from '../ClusterUpdateDialog'
 import type { ClusterUpdateClient, ClusterUpdateClock } from '../cluster-update-client'

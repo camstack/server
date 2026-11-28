@@ -57,7 +57,7 @@ model downloaded second would have tokenised with the other's vocabulary.
 ## Decision
 
 **A CLIP model is a catalog entry with a `clip` block** (`ClipModelMetaSchema`
-in `@camstack/types`): its text model, dimension, vector index, tokenizer file,
+in `@dominevo/types`): its text model, dimension, vector index, tokenizer file,
 token window, pad id and search floor. A model without one is not a CLIP model
 to any consumer, and there is no fallback: an unknown id resolves to `null` and
 every caller refuses by name. The encoder and pipeline analytics read the block
@@ -140,7 +140,7 @@ costs one download attempt per cooldown, not one per request. **A
 requirement that can NEVER be met** — an id the catalog does not know, a
 catalog entry with no onnx build (read from the entry's STRUCTURE before any
 download, never from the downloader's "has no onnx format" wording), a model
-URL answering 404/410 (typed `ModelDownloadHttpError` in `@camstack/system`,
+URL answering 404/410 (typed `ModelDownloadHttpError` in `@dominevo/system`,
 classified by STATUS, never by wording), a declared sibling that is not there
 — is marked `PermanentRequirementsFailure` by the one place that can tell, and
 after 3 such PERMANENT attempts (D6's bound, which round 4 had removed for this
@@ -157,7 +157,7 @@ global collection with one provider per node and a call that names no node is
 the HUB's answer (no global collection fans out across nodes), so a fleet view
 is one `getInfo({ nodeId })` per node, and a node the reader could not ask is
 UNKNOWN (D315) — as is `failedModels === undefined`, which only a pre-budget
-encoder answers. Every refusal is ONE of three shared codes (`@camstack/types`,
+encoder answers. Every refusal is ONE of three shared codes (`@dominevo/types`,
 the `VECTOR_INDEX_DIM_CONFLICT` pattern), carrying code, model, tower and node
 in its token; the post-analysis embedding dispatcher classifies on the token
 (`embeddingRefusalOf`) and counts refusals per (camera, code, model), one line
@@ -195,7 +195,7 @@ memory as before.
 THREE packages, in this order, each **with, or right after**, the one before —
 never long apart, never skipped:
 
-1. the `@camstack/server` closure that carries these types;
+1. the `@dominevo/server` closure that carries these types;
 2. `addon-post-analysis` (the encoder, the store, the search floor);
 3. `addon-pipeline`, which carries the runner's `CLIP_EMBEDDING_MODELS` entry
    for SigLIP2 — the runner is what embeds tracks (`runDetailSubtree`).
@@ -230,7 +230,7 @@ Why:
 
 ## Consequences
 
-- A `@camstack/server` release is required (`ModelCatalogEntry.clip`, the
+- A `@dominevo/server` release is required (`ModelCatalogEntry.clip`, the
   cluster option, the optional `minScore`, `strictness`/`modelId` on
   `searchObjectEvents`, `modelId` on `encodeText`, the rebuild refusal fields).
 - After a flip, live search reads only the new index: until a rebuild fills it,
@@ -290,7 +290,7 @@ Why:
   `initialize()` fails, `MAX_CRASHES` times within `CRASH_WINDOW_MS` goes
   terminally `failed` (`crash-budget.ts`): refused before anything is spawned
   by the ONE code `EMBEDDING_MODEL_FAILED` (`embedding-model-failed.spec.ts`
-  in `@camstack/types`: built and read through the helpers, a transport
+  in `@dominevo/types`: built and read through the helpers, a transport
   re-wrap survives, prose about a failed model is not the refusal), ONE error
   logged, listed in `embeddingEncoder.getInfo().failedModels` with its node,
   cleared only by `embeddingEncoder.resetFailedModels`, by the cluster row

@@ -9,7 +9,7 @@
  * Derived from annotations the page already loaded — no server method.
  */
 
-import type { RetrainMacroClass } from '@camstack/types'
+import type { RetrainMacroClass } from '@dominevo/types'
 
 export interface LabelledAnnotation {
   readonly macroClass: RetrainMacroClass

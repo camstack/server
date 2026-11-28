@@ -1,4 +1,4 @@
-import type { FrameHandle, IScopedLogger } from '@camstack/types'
+import type { FrameHandle, IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import type { TryNativeCropFn } from '../capture-crop.js'
 import { captureCropFrameRect, createCaptureCrop } from '../capture-crop.js'

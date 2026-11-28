@@ -1,8 +1,8 @@
 /**
  * Alert persistence over the `alerts` record kind (phase 4) or legacy collection.
  */
-import type { Alert, RecordKindHandle, RecordsAccess, SettingsStoreClient } from '@camstack/types'
-import { AlertSchema } from '@camstack/types'
+import type { Alert, RecordKindHandle, RecordsAccess, SettingsStoreClient } from '@dominevo/types'
+import { AlertSchema } from '@dominevo/types'
 import { readAllRows } from '../../records/read-all-rows.js'
 import { alertsRecordKind, ALERTS_COLLECTION, type AlertBody } from './record-kinds.js'
 

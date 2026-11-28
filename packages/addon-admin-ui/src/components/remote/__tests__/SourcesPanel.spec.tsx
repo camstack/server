@@ -1,13 +1,13 @@
-import { selectOption, selectOptionValues } from '@camstack/ui-library/testing'
-import { EMPTY_REMOTE_CONFIG, type RemoteConfig } from '@camstack/types'
+import { selectOption, selectOptionValues } from '@dominevo/ui-library/testing'
+import { EMPTY_REMOTE_CONFIG, type RemoteConfig } from '@dominevo/types'
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import '../../../i18n'
 import { SourcesPanel } from '../SourcesPanel'
 
-vi.mock('@camstack/ui-library', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@camstack/ui-library')>()
+vi.mock('@dominevo/ui-library', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dominevo/ui-library')>()
   return {
     ...actual,
     useIrTransmitterGetInfo: () => ({ data: { learn: false } }),

@@ -28,8 +28,8 @@ describe('bootstrapSchema — dead yaml keys are ignored (#342)', () => {
       tls: { enabled: false },
       server: { port: 5555 },
       bootstrap: {
-        settingsStoreAddon: '@camstack/addon-postgres-storage',
-        forceDisable: ['@camstack/addon-broken'],
+        settingsStoreAddon: '@dominevo/addon-postgres-storage',
+        forceDisable: ['@dominevo/addon-broken'],
         installSource: 'local',
         requiredAddons: ['@x/y'],
       },

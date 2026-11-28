@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { MutationGate, type ConnectOutcome, type HubClient } from '@camstack/develop'
+import { MutationGate, type ConnectOutcome, type HubClient } from '@dominevo/develop'
 import type { McpContext } from '../mcp/context.js'
 import { probeVersions } from '../mcp/version-probe.js'
 
@@ -23,7 +23,7 @@ function connected(client: HubClient): ConnectOutcome {
       tls: {},
       client,
       adminHint: null,
-      loginCommand: 'camstack login',
+      loginCommand: 'dominevo login',
     },
   }
 }

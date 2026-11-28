@@ -7,7 +7,7 @@
  */
 import type { ReactNode } from 'react'
 import { Field } from './Form.js'
-import { Select } from '@camstack/ui-library'
+import { Select } from '@dominevo/ui-library'
 
 export const REGISTER_SELECT_CLASS =
   'w-full px-3 py-1.5 text-xs rounded-md border border-border bg-surface text-foreground focus:outline-none focus:border-primary/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary motion-reduce:transition-none disabled:opacity-50'

@@ -1,7 +1,7 @@
 {
-  "name": "@camstack/addon-provider-vesync",
-  "version": "0.2.172",
-  "description": "VeSync cloud-account device-provider addon for CamStack — Levoit / Cosori air purifiers as Fan devices (power, speed, preset, child-lock, display, air-quality + filter-life sensors)",
+  "name": "@dominevo/addon-provider-vesync",
+  "version": "0.1.0",
+  "description": "VeSync cloud-account device-provider addon for Dominevo — Levoit / Cosori air purifiers as Fan devices (power, speed, preset, child-lock, display, air-quality + filter-life sensors)",
   "keywords": [
     "camstack",
     "addon",
@@ -16,12 +16,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/camstack/server.git",
+    "url": "https://github.com/dominevo/server.git",
     "directory": "packages/addon-provider-vesync"
   },
   "homepage": "https://camstack-docs.zentik.app",
   "bugs": {
-    "url": "https://github.com/camstack/server/issues"
+    "url": "https://github.com/dominevo/server/issues"
   },
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -64,7 +64,7 @@
       }
     ],
     "requires": {
-      "server": ">=1.2.968"
+      "server": ">=0.1.0"
     }
   },
   "files": [
@@ -82,7 +82,7 @@
     "publish:npm": "npm publish --access public"
   },
   "devDependencies": {
-    "@camstack/types": "*",
+    "@dominevo/types": "0.1.0",
     "tsvesync": "^1.7.2",
     "typescript": "~6.0.3",
     "vite": "^8.0.11",

@@ -26,7 +26,7 @@
  * `subscribeConnectionEvents` so the subscription effect re-runs
  * against the freshly-rebuilt tRPC client.
  *
- * Lives in `@camstack/ui-library` (not in admin-ui's hooks folder)
+ * Lives in `@dominevo/ui-library` (not in admin-ui's hooks folder)
  * because addon widget bundles reach for it through the shared library
  * — the original admin-ui copy stayed put for backward compatibility
  * but new consumers should import from here.

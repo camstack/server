@@ -1,6 +1,6 @@
 /**
- * `camstack host-check` — run it on the machine where CamStack WILL run, before
- * installing: which accelerators it has, which ones CamStack uses, the image tag
+ * `dominevo host-check` — run it on the machine where Dominevo WILL run, before
+ * installing: which accelerators it has, which ones Dominevo uses, the image tag
  * and the device flags to paste. Needs no hub, no login and no root; read-only.
  */
 import { parseArgs } from 'node:util'
@@ -19,11 +19,11 @@ import { hardwareReportLink } from '../onboarding/hardware-report.js'
 import { createManifestProvider, type ManifestProvider } from '../onboarding/manifest.js'
 
 export const HOST_CHECK_HELP = [
-  'Usage: camstack host-check [--json] [--cameras <n> [sizing options]]',
+  'Usage: dominevo host-check [--json] [--cameras <n> [sizing options]]',
   '',
-  'Run on the machine where CamStack will run (also works as `npx camstack host-check`).',
+  'Run on the machine where Dominevo will run (also works as `npx dominevo host-check`).',
   'Reads /sys, /dev and /etc only: no hub, no login, no root, nothing sent anywhere.',
-  'Prints the accelerators found, which ones CamStack uses, the image tag, and the',
+  'Prints the accelerators found, which ones Dominevo uses, the image tag, and the',
   'passthrough for docker run, Compose, the Unraid template and a Proxmox LXC.',
   '',
   'Options:',

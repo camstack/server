@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { DeviceType, type IDeviceRuntimeState } from '@camstack/types'
+import { DeviceType, type IDeviceRuntimeState } from '@dominevo/types'
 import { HaControlDevice } from '../devices/ha-control-device.js'
 import type { HaEntityState } from '../ha-types.js'
 
@@ -72,7 +72,7 @@ function makeChildWithCachedState(cached: HaEntityState | null): HaControlDevice
       child: vi.fn(),
       withTags: vi.fn(),
     },
-  } as unknown as import('@camstack/types').DeviceContext
+  } as unknown as import('@dominevo/types').DeviceContext
 
   return new HaControlDevice(ctx)
 }

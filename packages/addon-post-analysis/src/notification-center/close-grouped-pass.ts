@@ -38,7 +38,7 @@ import { cooldownKey } from './rule-engine.js'
 import { NcRuleStore } from './rule-store.js'
 import type { NcSnoozeVerdict, NcSnoozeVerdictSuppressed } from './snooze-verdict.js'
 import { snoozeCoverage } from './snooze-verdict.js'
-import type { IScopedLogger, NcRule, NcRuleTarget, NcSnooze } from '@camstack/types'
+import type { IScopedLogger, NcRule, NcRuleTarget, NcSnooze } from '@dominevo/types'
 
 /** The snoozes that cover one target of a grouped close, every member class (C4). */
 export interface NcGroupedSnoozeCover {

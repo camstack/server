@@ -1,5 +1,5 @@
-import type { NodeColorId } from '@camstack/types'
-import { RoleNodePill, type PipelineRoleId } from '@camstack/ui-library'
+import type { NodeColorId } from '@dominevo/types'
+import { RoleNodePill, type PipelineRoleId } from '@dominevo/ui-library'
 import type { RoleState } from './assignment-rows'
 import { colorIdForNode } from './node-color-map'
 

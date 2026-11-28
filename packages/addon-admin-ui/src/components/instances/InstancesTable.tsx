@@ -28,7 +28,7 @@ import {
   useSystem,
   type DataColumn,
   type DataTableRowApi,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { Link2, Link2Off, Loader2, Pencil, Play, Plus, Trash2, type LucideIcon } from 'lucide-react'
 import {

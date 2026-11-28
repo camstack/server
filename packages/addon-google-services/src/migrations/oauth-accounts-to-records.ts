@@ -25,7 +25,7 @@
  *
  * No message here carries a token: an entry is named by its id, a failure by its reason.
  */
-import { type MigrationPlan, type MigrationProcedureResult, preconditionOf } from '@camstack/types'
+import { type MigrationPlan, type MigrationProcedureResult, preconditionOf } from '@dominevo/types'
 import type { GoogleSession } from '../google-types.js'
 import type { StoredGoogleSession } from '../google-broker-store.js'
 import {

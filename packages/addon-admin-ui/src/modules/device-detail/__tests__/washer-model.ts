@@ -1,4 +1,4 @@
-import { buildHeroModel, type HeroModel } from '@camstack/types'
+import { buildHeroModel, type HeroModel } from '@dominevo/types'
 
 const NOW = 1_700_000_000_000
 

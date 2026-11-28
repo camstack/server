@@ -6,7 +6,7 @@
  * the visibility of the entry point changed. Every dependency is read through
  * the deps object — getters for what the addon opens in `onInitialize`.
  */
-import { type AddonContext, type DetailResult, errMsg } from '@camstack/types'
+import { type AddonContext, type DetailResult, errMsg } from '@dominevo/types'
 import { routeClipDetailToStore } from '../clip-detail-route.js'
 import type { TrackDetailFrame } from '../detail-dispatcher.js'
 import type { FaceRecognizer } from '../face-recognizer.js'

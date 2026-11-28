@@ -1,4 +1,4 @@
-import type { RunDetailSubtreeResult } from '@camstack/types'
+import type { RunDetailSubtreeResult } from '@dominevo/types'
 import type { DetailSubtreeOutcome } from '../../pipeline-runner/detail-subtree.js'
 
 /** Narrow a {@link DetailSubtreeOutcome} to a successful subtree result. */

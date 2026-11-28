@@ -8,7 +8,7 @@
  * only which of those updates is worth a SQLite commit.
  */
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
-import { DeviceRuntimeState, runtimeStatePolicyFor } from '@camstack/types'
+import { DeviceRuntimeState, runtimeStatePolicyFor } from '@dominevo/types'
 import type { DeviceManagerSettings } from '../device-meta-store.js'
 import { RuntimeStateDrainError } from '../mirror-row-writer.js'
 import { MigrationRefusedError } from '../migration-refused.js'

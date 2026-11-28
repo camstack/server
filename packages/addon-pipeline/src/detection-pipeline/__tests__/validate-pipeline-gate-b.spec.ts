@@ -15,7 +15,7 @@
  * tests exercise the pure compute path without the network-touching
  * provisioner / engine-selection machinery — irrelevant to Gate B.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { DetectionPipelineProvider } from '../provider.js'
 import { getDefaultModelForFormat, getStepDefinition } from '../registry/step-definitions.js'

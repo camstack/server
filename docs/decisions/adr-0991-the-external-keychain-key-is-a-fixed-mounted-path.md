@@ -32,7 +32,7 @@ The external key is a file at a FIXED path, no config, no env var:
 
 - `/run/secrets/camstack-master-key` is the primary source when the file
   EXISTS at boot (the Docker / Compose secrets convention; Unraid and Proxmox
-  bind-mount a file there). CamStack only reads it: never writes, never
+  bind-mount a file there). Dominevo only reads it: never writes, never
   creates it.
 - `/run/secrets/camstack-master-key.previous` is unlock-only, to rotate from
   one external key to another.

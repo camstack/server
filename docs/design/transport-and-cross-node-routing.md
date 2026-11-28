@@ -1,7 +1,7 @@
 # Transport & Cross-Node Capability Routing
 
 > **Why this doc exists.** The two-tier transport and the *cross-node* capability
-> path are the single most subtle part of CamStack, and the area where wrong
+> path are the single most subtle part of Dominevo, and the area where wrong
 > assumptions cost the most. This is the canonical reference: read it before
 > touching anything in `packages/system/src/kernel/transport/`,
 > `packages/system/src/kernel/moleculer/`, `server/backend/src/agent/`, or
@@ -166,7 +166,7 @@ surfaces — are routed by a separate, single chokepoint:
 - **`AddonCallGateway`** (`server/backend/src/core/addon/addon-call-gateway.ts`).
   `classify(addonId, nodeId?)` → `in-process | hub-local-child | remote-agent`.
   Hub-local forked addons go over UDS (`callAddonOnChild`); the in-process branch
-  is only the `@camstack/system` builtins.
+  is only the `@dominevo/system` builtins.
 
 > **DEAD PATH WARNING.** `AddonCallGateway.callRemoteAgent` maps a remote-agent
 > settings call to `broker.call('${addonId}.settings.${method}', …)`. **That
@@ -264,7 +264,7 @@ devices reflect ITS hardware (e.g. an N100 has no NPU) instead of the hub's.
   the real `@trpc/client` v11). It is the correct channel for per-call metadata
   that must NOT pollute validated args.
 - **The hub is a `br0` container** (`<hub-ip>`), not host-published. Probe it
-  from the Mac → `.9`, or `docker exec CamStack curl 127.0.0.1:4443`; host
+  from the Mac → `.9`, or `docker exec Dominevo curl 127.0.0.1:4443`; host
   loopback never reaches it.
 - **Login for live tRPC:** `POST /trpc/auth.login {username,password}` (the admin
   JWT secret rotates on greenfield, so a stale `.env` token may 401 — log in
@@ -276,7 +276,7 @@ devices reflect ITS hardware (e.g. an N100 has no NPU) instead of the hub's.
   kebab-case names, which is why cap names must be kebab
   ([D114](../decisions/adr-0114.md), `scripts/check-cap-name-kebab.ts`). It
   cannot be replaced by the generated key→name map: `trpc-links.ts` is inside the
-  addon-runner closure, where a `@camstack/types` barrel value-import is refused
+  addon-runner closure, where a `@dominevo/types` barrel value-import is refused
   ([D28](../decisions/adr-0028.md)). Consequence to remember when reading a
   resolver miss: **if the cap in the error message is not spelled the same as the
   cap in the "Provider registered" line, it is this, not a boot-window race.**

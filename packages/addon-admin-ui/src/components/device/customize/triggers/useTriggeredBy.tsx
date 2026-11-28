@@ -18,7 +18,7 @@ import {
   ON_FOR_MAX_SECONDS,
   switchRunLimitOf,
   type TemplateInstance,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   deviceTypeMetaOf,
   resolveDeviceLabel,
@@ -30,7 +30,7 @@ import {
   useDeviceNameIndex,
   useDeviceNameNouns,
   useUiText,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { type ReactNode, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { EVENT_EMITTER_CAP } from '../../../../pages/build/automation/fired-model'

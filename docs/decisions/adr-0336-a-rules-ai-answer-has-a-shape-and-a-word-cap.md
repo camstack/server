@@ -33,8 +33,8 @@ movement-state transition or a zone crossing) with whatever frame is in band at
 that instant — "this instant", never "the first frame". Three questions, and one
 prompt re-parameterised into three answers all three of them badly.
 
-**Wrong about where the section lives.** `NcRule` is in `@camstack/types`, which
-the addon resolves at runtime from the `@camstack/server` closure. A new key on
+**Wrong about where the section lives.** `NcRule` is in `@dominevo/types`, which
+the addon resolves at runtime from the `@dominevo/server` closure. A new key on
 `NcRuleInputSchema` is SILENTLY STRIPPED at save until a framework train lands
 and is installed — the failure `summary/summary-rule.ts` documents and the
 timelapse rule paid for with three cascaded bugs in one day.

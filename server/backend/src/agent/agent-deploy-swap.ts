@@ -1,7 +1,7 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { randomBytes } from 'node:crypto'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 /**
  * Inputs for {@link applyDeployedBundle}.
@@ -72,7 +72,7 @@ export async function applyDeployedBundle(
   const liveDir = path.join(addonsDir, addonId)
   // Place the temp + backup dirs as SIBLINGS of the live dir (same parent →
   // same filesystem → atomic rename). Deriving them from the live dir's parent
-  // and basename keeps a scoped `addonId` like "@camstack/addon-pipeline" — whose
+  // and basename keeps a scoped `addonId` like "@dominevo/addon-pipeline" — whose
   // slash would otherwise turn `.<addonId>.next` into a nested path — correct.
   const liveParent = path.dirname(liveDir)
   const liveBase = path.basename(liveDir)

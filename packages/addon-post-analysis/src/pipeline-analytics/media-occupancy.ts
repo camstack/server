@@ -15,7 +15,7 @@
  * candidates, or dropping them onto the first one, would put a number on a
  * screen that no disk agrees with.
  */
-import type { StorageOccupancyReport } from '@camstack/types'
+import type { StorageOccupancyReport } from '@dominevo/types'
 
 /** The bare type ref legacy NULL-stamped media rows belong to. */
 const LEGACY_MEDIA_TYPE = 'eventMedia'

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { defined } from '../../../__tests__/support/vitest-mock.js'
-import type { FrameHandle, IScopedLogger } from '@camstack/types'
+import type { FrameHandle, IScopedLogger } from '@dominevo/types'
 import { createDisplayCrop } from '../display-crop.js'
 import type {
   FetchNativeRoiJpegFn,

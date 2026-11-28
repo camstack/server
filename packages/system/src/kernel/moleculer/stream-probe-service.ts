@@ -18,7 +18,7 @@
  * addon / capability graph (same convention as `$hub`, `$readiness`).
  */
 import type { ServiceSchema, Context } from 'moleculer'
-import type { StreamMetadata, FieldProbeResult, IKernelStreamProbe } from '@camstack/types'
+import type { StreamMetadata, FieldProbeResult, IKernelStreamProbe } from '@dominevo/types'
 
 /**
  * Hub-side dependencies for the `$stream-probe` broker service.

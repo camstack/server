@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { makeSourceBrokerId, type BrokerStats } from '@camstack/types'
+import { makeSourceBrokerId, type BrokerStats } from '@dominevo/types'
 import { makeScopedLogger } from '../../__tests__/support/scoped-logger.js'
 import { StreamBrokerManager } from '../stream-broker/stream-broker-manager.js'
 import { ProbedSnapshotMapSchema } from '../stream-broker/probed-summary.js'

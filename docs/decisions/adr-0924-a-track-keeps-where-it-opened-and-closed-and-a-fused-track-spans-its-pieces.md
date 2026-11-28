@@ -42,7 +42,7 @@ an onboard detector (no device, no model) — and nothing renders it as a node.
 - Two nullable JSON columns on `pipeline-analytics:tracks` (an existing table,
   D901 untouched), no index: nothing queries by placement.
 - The cap `Track` carries both fields, so the read is stripped until a
-  `@camstack/server` containing this `@camstack/types` is installed; the row is
+  `@dominevo/server` containing this `@dominevo/types` is installed; the row is
   written as soon as the addons are deployed.
 - A runner older than `rootDeviceKey` produces a placement with no device.
 

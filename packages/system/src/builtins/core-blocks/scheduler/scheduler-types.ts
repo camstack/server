@@ -1,5 +1,5 @@
 /** The seams the scheduler engine is built over, so a spec swaps the clock and the hub. */
-import type { CapCall, DaylightPhaseReading, SiteReading } from '@camstack/types'
+import type { CapCall, DaylightPhaseReading, SiteReading } from '@dominevo/types'
 
 export interface SchedulerClock {
   now(): number

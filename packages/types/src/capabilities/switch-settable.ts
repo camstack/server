@@ -1,6 +1,6 @@
 /**
  * Whether a switch can be set (D1058), schema-free so the addon runner can import it from
- * `@camstack/types/addon` without loading the capability schema graph (D28).
+ * `@dominevo/types/addon` without loading the capability schema graph (D28).
  */
 /** The read that decides whether a switch is offered on/off (`offeredWhen` of its actions). */
 export const SWITCH_SETTABLE_GATE = { method: 'getOptions', field: 'supportsSetState' } as const

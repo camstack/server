@@ -13,13 +13,13 @@ import type {
   IIntegrationInstancesProvider,
   IScopedLogger,
   TargetKind,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   buildUserScopedNotificationTargetInstances,
   integrationInstancesCapability,
   makeInMemoryRecords,
   notificationTargetKinds,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import {
   buildOneCapRouter,

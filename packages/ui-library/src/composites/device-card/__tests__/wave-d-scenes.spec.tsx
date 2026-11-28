@@ -5,7 +5,7 @@
  * which card a device type resolves to, the two-step confirmations, the code
  * pad, and every mockup fixture rendering through the shell.
  */
-import { DeviceRole, DeviceType } from '@camstack/types'
+import { DeviceRole, DeviceType } from '@dominevo/types'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, type Mock, vi } from 'vitest'
 import { UnitPreferencesProvider } from '../../../contexts/unit-preferences'

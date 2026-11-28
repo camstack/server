@@ -10,7 +10,7 @@
  *  2. `planDropClientsAclKeys` (plan): the two keys are deleted from the canonical
  *     `addon-settings` rows, only while every legacy entry has its record.
  */
-import { type MigrationPlan, type MigrationProcedureResult, preconditionOf } from '@camstack/types'
+import { type MigrationPlan, type MigrationProcedureResult, preconditionOf } from '@dominevo/types'
 import { z } from 'zod'
 import { MQTT_BROKER_ADDON_ID, ADDON_SETTINGS_TABLE } from './brokers-to-records.js'
 import type { EmbeddedMigrationPorts } from './embedded-to-onboard.js'

@@ -1,5 +1,5 @@
 /**
- * `camstack login --admin` / `--admin-days` were removed (D895): there is one
+ * `dominevo login --admin` / `--admin-days` were removed (D895): there is one
  * login and one token, and the permissions follow the account. Old scripts still
  * pass them, so they stay parseable — a strict parse would abort the login — and
  * each one present earns a one-line warning instead of being ignored in silence.

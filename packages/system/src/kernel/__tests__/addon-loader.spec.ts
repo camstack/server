@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import type { StorageLocationDeclaration } from '@camstack/types'
+import type { StorageLocationDeclaration } from '@dominevo/types'
 import {
   AddonLoader,
   extractStorageLocationDeclarations,
@@ -25,7 +25,7 @@ function makeRegistered(
       slot: 'detector',
       ...(storageLocations !== undefined ? { storageLocations } : {}),
     },
-    packageName: `@camstack/${id}`,
+    packageName: `@dominevo/${id}`,
     packageVersion: '1.0.0',
     addonClass: class {
       async initialize(): Promise<void> {}
@@ -76,17 +76,17 @@ describe('AddonLoader.listStorageLocationDeclarations', () => {
       cardinality: 'multi',
     }
 
-    await loader.loadFromPath('recorder', FIXTURE_MODULE, '@camstack/recorder', {
+    await loader.loadFromPath('recorder', FIXTURE_MODULE, '@dominevo/recorder', {
       storageLocations: [recordings],
     })
-    await loader.loadFromPath('no-storage', FIXTURE_MODULE, '@camstack/no-storage')
+    await loader.loadFromPath('no-storage', FIXTURE_MODULE, '@dominevo/no-storage')
 
     expect(loader.listStorageLocationDeclarations()).toEqual([[recordings]])
   })
 
   it('returns an empty array when no registered addon declares any', async () => {
     const loader = new AddonLoader()
-    await loader.loadFromPath('plain', FIXTURE_MODULE, '@camstack/plain')
+    await loader.loadFromPath('plain', FIXTURE_MODULE, '@dominevo/plain')
     expect(loader.listStorageLocationDeclarations()).toEqual([])
   })
 })
@@ -116,13 +116,13 @@ describe('AddonLoader.loadFromDirectory', () => {
     const path = await import('node:path')
     const root = await fs.mkdtemp(path.join(os.tmpdir(), 'camstack-addons-'))
     for (const dirName of dirNames) {
-      const dir = path.join(root, '@camstack', dirName)
+      const dir = path.join(root, '@dominevo', dirName)
       await fs.mkdir(path.join(dir, 'dist'), { recursive: true })
       const addonId = dirName.replace(/^\.quarantine-/, '').replace(/-\d+$/, '')
       await fs.writeFile(
         path.join(dir, 'package.json'),
         JSON.stringify({
-          name: `@camstack/${addonId}`,
+          name: `@dominevo/${addonId}`,
           version: '1.0.0',
           camstack: { addons: [{ id: addonId, entry: './dist/index.mjs' }] },
         }),
@@ -165,12 +165,12 @@ describe('AddonLoader.loadFromDirectory', () => {
 
 describe('AddonLoader.listStorageLocationDeclarers', () => {
   function installAddon(root: string, name: string, entry: string | null): string {
-    const dir = path.join(root, '@camstack', name)
+    const dir = path.join(root, '@dominevo', name)
     fs.mkdirSync(path.join(dir, 'dist'), { recursive: true })
     fs.writeFileSync(
       path.join(dir, 'package.json'),
       JSON.stringify({
-        name: `@camstack/${name}`,
+        name: `@dominevo/${name}`,
         version: '1.0.0',
         camstack: {
           addons: [
@@ -207,7 +207,7 @@ describe('AddonLoader.listStorageLocationDeclarers', () => {
 
   it('marks an unreadable package as unknown (addonId null)', async () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'declarers-'))
-    const dir = path.join(root, '@camstack', 'garbled')
+    const dir = path.join(root, '@dominevo', 'garbled')
     fs.mkdirSync(dir, { recursive: true })
     fs.writeFileSync(path.join(dir, 'package.json'), '{ not json')
     const loader = new AddonLoader()

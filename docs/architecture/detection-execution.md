@@ -230,7 +230,7 @@ older orchestrator), `notForwarded` (`onboard-not-listed | no-active-detection`)
 when the bridge would drop every rise, `notEnforced`, and `cameraLevel` (the
 camera's own RAW level, which the slice no longer carries; the Motion card shows
 it live) — the camera card warns on `notForwarded` and `notEnforced`. Those fields reach the admin UI and `hub.mjs` only
-through a `@camstack/server` whose bundled `@camstack/types` has them: the
+through a `@dominevo/server` whose bundled `@dominevo/types` has them: the
 server's cap routers validate the output and strip unknown keys. The release
 order of the whole motion path is in
 [update-and-release.md](update-and-release.md#release-order-for-a-cameras-motion-path-d673-d696).
@@ -959,7 +959,7 @@ separately). It is attached to the `FrameResult` the SAME callback the root
 step already feeds, so it travels with the boxes with no second round-trip.
 
 It costs nothing when the tracker's `appearanceResolvesAmbiguity` default is
-off (`APPEARANCE_RESOLVES_AMBIGUITY_DEFAULT`, `@camstack/types` — the ONE
+off (`APPEARANCE_RESOLVES_AMBIGUITY_DEFAULT`, `@dominevo/types` — the ONE
 authority both the runner's attach gate and the tracker's own default read,
 never two copies of the decision): no crop, no resample, no descriptor. When
 on, only CANDIDATE boxes pay for it by default (`APPEARANCE_SCOPE =
@@ -1192,7 +1192,7 @@ The load-bearing rules, each of which replaced a silent failure:
   it cannot run there. A step can run on a format when the model it names ships
   that build, or a NON-legacy model does. A legacy stub counts only when
   explicitly pinned. That rule is ONE function, `stepModelRunsOnFormat` in
-  `@camstack/types`, and every placement reads it: the runner's jump (each
+  `@dominevo/types`, and every placement reads it: the runner's jump (each
   candidate judged with its own roster provisioning), the executor's dispatch
   gates (`collectZeroBuildIssues`) and the orchestrator's provisioning gate
   and root guard (`addonHasCompatibleModel`).
@@ -1213,7 +1213,7 @@ The load-bearing rules, each of which replaced a silent failure:
   The orchestrator's `removed-model-pin-reset.ts` drops every per-(node,
   device) and cluster-row `modelId` listed in `REMOVED_MODEL_IDS` (a camera
   carries no model, D927)
-  (`@camstack/types`) unless a registered custom model owns it. It runs at boot
+  (`@dominevo/types`) unless a registered custom model owns it. It runs at boot
   and after each pin write, and each reset is one WARN `model pin reset: removed
   model → step default`. The resolver itself still passes an unknown id through
   as a custom model, and a bulk pass still refuses one (D54).
@@ -1242,7 +1242,7 @@ The load-bearing rules, each of which replaced a silent failure:
   (`resolveModelForFormat`). Before, the elected device's values followed the
   step across, and the target's pin was never read. A roster without `steps`
   (an orchestrator, or a runner NODE whose closure predates D650 — the attach
-  is parsed in the runner's process with its own `@camstack/types`) leaves the
+  is parsed in the runner's process with its own `@dominevo/types`) leaves the
   step as sent, with the elected device's provisioning. The jump is logged
   once per (camera, step, target): `enrichment step runs on another device of
   this node`, with `provisioned: true|false`. A MANUAL `jumpDeviceKey` takes

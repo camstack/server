@@ -4,7 +4,7 @@
  * testable without booting `RecorderV2Addon`'s full `onInitialize`.
  */
 import { describe, expect, it } from 'vitest'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { handleStoreCensusAction, MAX_CENSUS_SITES } from '../debug-actions.js'
 import { StoreReadCensus } from '../store/read-census.js'
 

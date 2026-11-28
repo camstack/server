@@ -1,5 +1,5 @@
 /**
- * Latency Probe — connects to the running CamStack server and measures
+ * Latency Probe — connects to the running Dominevo server and measures
  * end-to-end detection latency breakdown for a specific device.
  *
  * Subscribes to detection.result events and logs per-phase timing.
@@ -10,7 +10,7 @@ import superjson from 'superjson'
 import WebSocket from 'ws'
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
-// The `camstack login` session is the only credential (D1101): `camstack login <host>` once.
+// The `dominevo login` session is the only credential (D1101): `dominevo login <host>` once.
 const hubAuth = await resolveHubAuth(
   process.env['CAMSTACK_SERVER'] ? { server: process.env['CAMSTACK_SERVER'] } : {},
 )

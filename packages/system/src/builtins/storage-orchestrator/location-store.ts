@@ -7,12 +7,8 @@
  * tests pass a fake (in-memory `Map`-backed) implementation. Same
  * pattern as `IntegrationRegistry` in `sqlite-storage/`.
  */
-import type {
-  RecordKindHandle,
-  RecordsAccess,
-  StorageLocation,
-} from '@camstack/types'
-import { REDACTED_SECRET } from '@camstack/types'
+import type { RecordKindHandle, RecordsAccess, StorageLocation } from '@dominevo/types'
+import { REDACTED_SECRET } from '@dominevo/types'
 import { isOwnLocationMarker, locationSecretMarker } from './location-secret-refs.js'
 import { readAllRows } from '../../records/read-all-rows.js'
 import {
@@ -20,7 +16,7 @@ import {
   type StorageLocationBody,
   type StorageSeedMarkerBody,
 } from './record-kinds.js'
-import { StorageLocationTypeSchema } from '@camstack/types'
+import { StorageLocationTypeSchema } from '@dominevo/types'
 
 /**
  * Abstract storage interface for `StorageLocation` records. Methods are

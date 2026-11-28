@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { LockPanel } from '../lock-panel'
-import { DeviceFeature } from '@camstack/types'
+import { DeviceFeature } from '@dominevo/types'
 
 const lock = vi.fn(() => Promise.resolve(undefined))
 const unlock = vi.fn(() => Promise.resolve(undefined))

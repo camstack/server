@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { OsdSlotBinding } from '@camstack/types'
+import type { OsdSlotBinding } from '@dominevo/types'
 import { dirtySlotBindings, emptyBindingDraft } from '../osd-page-model.js'
 
 describe('dirtySlotBindings', () => {

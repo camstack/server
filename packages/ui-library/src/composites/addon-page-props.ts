@@ -5,8 +5,8 @@
  * Use this type for your page's default export:
  *
  * ```tsx
- * import type { AddonPageProps } from '@camstack/ui'
- * import { trpc } from '@camstack/ui-library'
+ * import type { AddonPageProps } from '@dominevo/ui'
+ * import { trpc } from '@dominevo/ui-library'
  *
  * export default function MyAddonPage({ theme }: AddonPageProps) {
  *   // Typed React-Query hooks via the shared proxy.
@@ -18,12 +18,12 @@
  * The `trpc` prop is the vanilla SDK client (BackendClient.trpc) and
  * remains available for non-React contexts. Inside React components
  * prefer the typed `trpc.X.useQuery / useMutation / useSubscription`
- * hooks imported from `@camstack/ui-library` — they share the same
+ * hooks imported from `@dominevo/ui-library` — they share the same
  * QueryClient + WS client as the host admin-ui and therefore play nice
  * with cache invalidation, suspense, and the rest of React Query.
  */
 import type { TRPCClient } from '@trpc/client'
-import type { AppRouter } from '@camstack/types'
+import type { AppRouter } from '@dominevo/types'
 
 export interface AddonPageProps {
   /**

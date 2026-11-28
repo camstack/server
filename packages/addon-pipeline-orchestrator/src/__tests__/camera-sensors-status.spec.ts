@@ -13,8 +13,8 @@ import type {
   IScopedLogger,
   PipelineAssignment,
   RunnerCameraConfig,
-} from '@camstack/types'
-import { CAMERA_SENSORS_NOT_LOADED } from '@camstack/types'
+} from '@dominevo/types'
+import { CAMERA_SENSORS_NOT_LOADED } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import { CameraStatusService } from '../camera-status-service.js'
 import PipelineOrchestratorAddon from '../index.js'

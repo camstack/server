@@ -1,4 +1,4 @@
-// Browser stand-in for node:crypto (a @camstack/types module hashes at load time).
+// Browser stand-in for node:crypto (a @dominevo/types module hashes at load time).
 let n = 0
 export function createHash() {
   let acc = ''

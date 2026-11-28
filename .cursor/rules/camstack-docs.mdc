@@ -1,5 +1,5 @@
 ---
-description: CamStack documentation — generated vs hand-written docs, ADRs, applies-to, docs:check, the public docs site
+description: Dominevo documentation — generated vs hand-written docs, ADRs, applies-to, docs:check, the public docs site
 globs: docs/**, .claude/skills/**, **/AGENTS.md
 alwaysApply: false
 ---

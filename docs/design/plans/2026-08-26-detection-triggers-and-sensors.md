@@ -38,7 +38,7 @@ The rules of `CLAUDE.md` apply. In addition, verbatim:
 - **A branch that silently throws work away logs it.** It holds for every verdict
   `qualified: false` and for every `edge: 'none'`.
 - **Addons do not import each other.** `ctx.api` is the only layer. Framework
-  packages (`@camstack/types`, `@camstack/system`) are **not**
+  packages (`@dominevo/types`, `@dominevo/system`) are **not**
   addons: `addon-pipeline` already depends on both
   (`packages/addon-pipeline/package.json:252` and `:258`).
 - **`npm run codegen` after every touch to a `*.cap.ts`.** `RecordingConfigSchema`
@@ -377,7 +377,7 @@ without a line.
 ```ts
 import { describe, it, expect } from 'vitest'
 import { eventsBandCanEverDemand, UNFED_TRIGGER_KEYS } from '../band-decision.js'
-import type { RecordingBand } from '@camstack/types'
+import type { RecordingBand } from '@dominevo/types'
 
 const band = (triggers: RecordingBand['triggers']): RecordingBand => ({
   days: [], start: '00:00', end: '23:59', mode: 'events', triggers,
@@ -481,7 +481,7 @@ export function bandTriggerSources(band: RecordingBand): readonly TriggerSource[
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import path from 'node:path'
-import { RecordingTriggersSchema } from '@camstack/types'
+import { RecordingTriggersSchema } from '@dominevo/types'
 import {
   TRIGGER_KEY_TO_SOURCE_KIND,
   UNFED_TRIGGER_KEYS,
@@ -1130,7 +1130,7 @@ describe('qualifyObjectTrigger', () => {
  * is the band's (`bandTriggerSources`); here we decide only whether
  * the event is a usable detection and of which macro class it is.
  */
-import { isFirstLevelMacroClass, type FirstLevelMacroClass } from '@camstack/types'
+import { isFirstLevelMacroClass, type FirstLevelMacroClass } from '@dominevo/types'
 
 /** The flat shape that `PipelineAnalyticsDetectionEvent` carries
  *  (`pipeline-analytics/index.ts:6544-6552`). */
@@ -1479,7 +1479,7 @@ export function evaluateSensorEdge(input: SensorEdgeInput): SensorEdgeVerdict {
 ```
 
   Then in `trigger-engine.ts`: delete the two tables and the two predicates,
-  re-export the public names from `@camstack/types`, and rewrite `onStateSlice`
+  re-export the public names from `@dominevo/types`, and rewrite `onStateSlice`
   as an adapter over `evaluateSensorEdge` that maps the verdict onto its
   `DoorbellIgnoreReason`s and keeps `lastValues` / `matchAndDebounce`.
 
@@ -1655,7 +1655,7 @@ describe('SensorTriggerRouter', () => {
  * Two responsibilities, both in RAM and none durable:
  *  - the edge MEMORY, per `(deviceId, capName)`, which makes `false→true`
  *    distinguishable from a re-emission. The predicate is
- *    `evaluateSensorEdge` (`@camstack/types`) — the same
+ *    `evaluateSensorEdge` (`@dominevo/types`) — the same
  *    `SOURCE_CAP_ACTIVE_FIELD` table as the virtual-doorbell, not a copy;
  *  - the source→cameras REVERSE INDEX, a mirrored state updated OFF the
  *    event path (D49): `setBindings` is called at boot by
@@ -1668,8 +1668,8 @@ describe('SensorTriggerRouter', () => {
  * connectivity). The reverse index is a `Map.get` without allocations and goes
  * first; `isSourceCap` is a second lookup; the edge comes after.
  */
-import { evaluateSensorEdge, DEFAULT_FIRST_SIGHTING_FRESHNESS_MS } from '@camstack/types'
-import type { SensorEdgeIgnoreReason } from '@camstack/types'
+import { evaluateSensorEdge, DEFAULT_FIRST_SIGHTING_FRESHNESS_MS } from '@dominevo/types'
+import type { SensorEdgeIgnoreReason } from '@dominevo/types'
 
 /** Why a slice turned no camera on. */
 export type SensorRouteSkipReason = SensorEdgeIgnoreReason | 'not-listened'
@@ -1983,7 +1983,7 @@ it('carries objectClasses and sensorDeviceIds from the events band to the form a
          (`device-manager.cap.ts:~770`, the docblock measures why batch and not
          N calls);
       3. keep the devices whose `entries[].capName` intersect `SOURCE_CAPS`
-         (`@camstack/types`). **Never `getAllBindings`, never a global list of
+         (`@dominevo/types`). **Never `getAllBindings`, never a global list of
          caps — D12.**
 - [ ] **Step 3 — test:** a linked device WITHOUT a cap in `SOURCE_CAPS` does not
       appear in the offer; a device with `presence` does not appear (it has no

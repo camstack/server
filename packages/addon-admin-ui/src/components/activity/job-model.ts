@@ -5,7 +5,7 @@
  *
  * A job whose progress or total is unknown is INDETERMINATE, never 0 (D393).
  */
-import type { Job, JobCancelReason, JobState } from '@camstack/types'
+import type { Job, JobCancelReason, JobState } from '@dominevo/types'
 
 export type JobTone = 'info' | 'success' | 'warning' | 'danger' | 'neutral'
 

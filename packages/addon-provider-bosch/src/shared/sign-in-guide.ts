@@ -1,4 +1,4 @@
-import type { ConfigInfoField } from '@camstack/types'
+import type { ConfigInfoField } from '@dominevo/types'
 
 /**
  * SingleKey ID signs in on its own page, which only works under SingleKey's own domains (its
@@ -26,7 +26,7 @@ export const SIGN_IN_GUIDE_STEPS: readonly SignInGuideStep[] = [
   {
     id: 'open',
     text: (g) =>
-      `1. Click “Sign in with ${g.providerName}”. The sign-in page opens in a new tab of your own browser (it cannot be shown inside CamStack).`,
+      `1. Click “Sign in with ${g.providerName}”. The sign-in page opens in a new tab of your own browser (it cannot be shown inside Dominevo).`,
   },
   {
     id: 'login',
@@ -36,7 +36,7 @@ export const SIGN_IN_GUIDE_STEPS: readonly SignInGuideStep[] = [
   {
     id: 'redirect',
     text: (g) =>
-      `3. When you finish, the browser tries to open the Bosch app and fails or shows an empty page. That is expected: the address it tried to open is what CamStack needs. It starts with ${g.redirectStart}`,
+      `3. When you finish, the browser tries to open the Bosch app and fails or shows an empty page. That is expected: the address it tried to open is what Dominevo needs. It starts with ${g.redirectStart}`,
   },
   {
     id: 'chrome',

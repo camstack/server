@@ -15,7 +15,7 @@ import {
   type ReadingQuantity,
   pressureSensorCapability,
   temperatureSensorCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { ecowittFacades } from '../ecowitt-gateway.js'
 import {
@@ -52,7 +52,7 @@ const SUPPORTED_CAPS: ReadonlySet<EcowittSensorCap> = new Set([
 ])
 
 /**
- * One Ecowitt sensor as a CamStack `Sensor`-type accessory child. Registers ONE
+ * One Ecowitt sensor as a Dominevo `Sensor`-type accessory child. Registers ONE
  * typed sensor cap (chosen from the sensor's quantity) and — when the sensor
  * reports a battery — an additional `battery` cap. The slice is fed from the
  * live facade reading on each `sensorChanged` push (and seeded on activate).

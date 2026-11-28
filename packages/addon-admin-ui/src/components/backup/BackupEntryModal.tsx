@@ -18,11 +18,11 @@ import {
   useBackupListDestinations,
   useBackupUpsertSchedule,
   Checkbox,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { CalendarClock, Loader2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
-import type { DataStoreDatabase } from '@camstack/types'
+import type { DataStoreDatabase } from '@dominevo/types'
 import { BackupDatabasePicker } from './BackupDatabasePicker'
 import { databasesPayload, DEFAULT_DATABASE_SELECTION, selectionOfRow } from './backup-databases'
 import type { EntryRow } from './BackupEntriesTable'

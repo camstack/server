@@ -4,7 +4,7 @@ import {
   type InferNativeProvider,
   switchCapability,
   type SwitchStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { booleanDpPatch, readBooleanDp } from '../tuya-dp-mapping.js'
 import { TuyaBaseDevice } from './tuya-base-device.js'
 

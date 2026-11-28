@@ -8,7 +8,7 @@
  * exactly as `resolveDeviceFactory` builds it, and the answer carries
  * `numWorkers` — the knob that actually lifts a saturated pool.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { DetectionPipelineProvider } from '../provider.js'
 

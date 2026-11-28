@@ -50,7 +50,7 @@
  * shape a backoff exists to prevent, and this one is not covered by the
  * lane's.
  */
-import type { ClipStillDisposition, ClipStillRefusalCode } from '@camstack/types'
+import type { ClipStillDisposition, ClipStillRefusalCode } from '@dominevo/types'
 import type { ClipRefreshMode } from './clip-refresh.js'
 
 /**

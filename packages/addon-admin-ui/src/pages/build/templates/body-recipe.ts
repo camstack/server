@@ -9,7 +9,7 @@
  * `kind`); `AutomationRecipeSchema` judges the finished expansion, never the
  * body. A body that is not even that shape is shown as JSON instead.
  */
-import type { AutomationRecipe } from '@camstack/types'
+import type { AutomationRecipe } from '@dominevo/types'
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)

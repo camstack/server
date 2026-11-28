@@ -1,4 +1,4 @@
-import { DEVICE_HISTORY_ENERGY_KEY, type DeviceHistoryQueryPoint } from '@camstack/types'
+import { DEVICE_HISTORY_ENERGY_KEY, type DeviceHistoryQueryPoint } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { energyKwhFromHistory, type EnergyHistoryQuery } from '../energy-from-history.js'
 

@@ -4,7 +4,7 @@ import {
   type BoundingBox,
   type SpatialDetection,
   type TrackedDetection,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { SpawnRefusalFacts } from '../tracker/spawn-refusal.js'
 
 export type TrackletMode = 'active' | 'coasting'
@@ -52,7 +52,7 @@ export interface TrackerV2Config {
    * link, and be the only evidence for a contested piece. OFF until the
    * descriptor is calibrated on tapes that carry it (Task 23, review M9);
    * scenes that test the mechanism turn it on explicitly. The DEFAULT below
-   * is `@camstack/types` `APPEARANCE_RESOLVES_AMBIGUITY_DEFAULT` — the same
+   * is `@dominevo/types` `APPEARANCE_RESOLVES_AMBIGUITY_DEFAULT` — the same
    * authority the runner's cost gate reads (fix round 1, D62): neither addon
    * holds its own copy of this decision.
    */

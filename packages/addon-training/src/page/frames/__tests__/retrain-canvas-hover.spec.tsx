@@ -5,7 +5,7 @@
  * thickens and the others dim; the stroke is the review diff; a removed
  * proposal is a ghost, switchable; every box is a labelled, focusable button.
  */
-import type { RetrainAnnotation, RetrainOrigin } from '@camstack/types'
+import type { RetrainAnnotation, RetrainOrigin } from '@dominevo/types'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { type ComponentProps, useState, type JSX } from 'react'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'

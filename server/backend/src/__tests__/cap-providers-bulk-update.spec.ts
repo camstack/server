@@ -18,7 +18,7 @@
  * Plan: docs/superpowers/plans/2026-10-11-admin-ui-backlog.md  (Task 7)
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import type { IAddonsProvider } from '@camstack/types'
+import type { IAddonsProvider } from '@dominevo/types'
 import { SYSTEM_PACKAGE } from '../core/addon/addon-package.service.js'
 
 // ── Imports ───────────────────────────────────────────────────────────────────
@@ -166,7 +166,7 @@ describe('buildAddonsProvider — listUpdates isSystem field', () => {
   it('adds isSystem: false for non-framework packages', async () => {
     env.psMock['checkUpdates']!.mockResolvedValue([
       {
-        name: '@camstack/addon-stream-broker',
+        name: '@dominevo/addon-stream-broker',
         currentVersion: '1.0.0',
         latestVersion: '1.0.1',
         category: 'addon',
@@ -190,7 +190,7 @@ describe('buildAddonsProvider — listUpdates isSystem field', () => {
         requiresRestart: true,
       },
       {
-        name: '@camstack/addon-foo',
+        name: '@dominevo/addon-foo',
         currentVersion: '1.0.0',
         latestVersion: '1.0.1',
         category: 'addon',
@@ -202,7 +202,7 @@ describe('buildAddonsProvider — listUpdates isSystem field', () => {
 
     expect(result).toHaveLength(2)
     const systemRow = result.find((r) => r.name === SYSTEM_PACKAGE)
-    const fooRow = result.find((r) => r.name === '@camstack/addon-foo')
+    const fooRow = result.find((r) => r.name === '@dominevo/addon-foo')
     expect(systemRow?.isSystem).toBe(true)
     expect(fooRow?.isSystem).toBe(false)
   })
@@ -232,9 +232,9 @@ describe('buildAddonsProvider — searchAvailable', () => {
     vi.clearAllMocks()
     const env = createProviderEnv()
     env.psMock['searchNpm']!.mockResolvedValue([
-      { name: '@camstack/addon-tailscale', capabilities: ['network-access'], installed: false },
+      { name: '@dominevo/addon-tailscale', capabilities: ['network-access'], installed: false },
     ])
-    env.psMock['listInstalled']!.mockReturnValue([{ name: '@camstack/addon-tailscale' }])
+    env.psMock['listInstalled']!.mockReturnValue([{ name: '@dominevo/addon-tailscale' }])
 
     const result = await env.provider.searchAvailable({ capability: 'network-access' })
 
@@ -248,7 +248,7 @@ describe('buildAddonsProvider — list accepts optional nodeId', () => {
 
   const HUB_VERSION = '1.0.0'
   const AGENT_VERSION = '2.3.4'
-  const PKG = '@camstack/addon-stream-broker'
+  const PKG = '@dominevo/addon-stream-broker'
 
   function hubAddonRow(version: string) {
     return {

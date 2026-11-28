@@ -3,7 +3,7 @@
  * UI's top banner.
  *
  * Why this exists: the SDK's tRPC WS keepalive (`ping` every 10s,
- * `pongTimeoutMs` 6s — see `@camstack/sdk` `system.ts`) closes the
+ * `pongTimeoutMs` 6s — see `@dominevo/sdk` `system.ts`) closes the
  * socket whenever a pong misses the window. That also happens when the
  * hub is merely SLOW because cluster-wide calls are timing out against
  * a frozen agent node (proven live: `addon-widgets-source provider

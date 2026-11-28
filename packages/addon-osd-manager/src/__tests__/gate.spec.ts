@@ -1,4 +1,4 @@
-import { NC_CONDITION_CATALOG } from '@camstack/types'
+import { NC_CONDITION_CATALOG } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   assertSupportedConditions,

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // ONE-OFF, OPERATOR-RUN: copy Bosch integration credentials from the live
 // Home Assistant VM (Unraid + qemu-guest-agent + docker exec) into
-// scratchpad/bosch-ha-import/ for CamStack import. Never prints secret values.
+// scratchpad/bosch-ha-import/ for Dominevo import. Never prints secret values.
 //
 // Read-only on HA (except writing local scratchpad). Does not commit secrets.
 //
@@ -24,7 +24,7 @@
 // Extract writes:
 //   ha-bosch-config-entries.json   filtered HA config entries (secrets inside)
 //   pem/<basename>                 copied PEM material (mode 0600)
-//   camstack-import.json           CamStack-oriented plan (paths, not inline PEM)
+//   camstack-import.json           Dominevo-oriented plan (paths, not inline PEM)
 //
 // Apply-hub (when camstack-import.json marks readyToApply):
 //   integrationInstances.createInstance (values on the create) via scripts/hub/hub.mjs
@@ -44,7 +44,7 @@ const WORKSPACE_ROOT = fileURLToPath(new URL('../../', import.meta.url))
 /** HA config entry domains we import. */
 export const BOSCH_HA_DOMAINS = Object.freeze(['bosch_shc', 'homeconnect_ws', 'bosch_homecom'])
 
-/** CamStack addon ids (provider-bosch manifest). */
+/** Dominevo addon ids (provider-bosch manifest). */
 export const HA_DOMAIN_TO_CAMSTACK_ADDON = Object.freeze({
   bosch_shc: 'bosch-shc',
   homeconnect_ws: 'bosch-home-connect',

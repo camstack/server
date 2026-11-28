@@ -39,7 +39,7 @@ import type {
   StorageLocation,
   StorageLocationDeclarer,
   StorageLocationsChangedReason,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   BaseAddon,
   defineAddonMigrations,
@@ -58,7 +58,7 @@ import {
   storageCapability,
   storageMigrationCapability,
   nodeRemovalHookCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { buildStorageLocationRegistry } from '../../kernel/storage-location-registry.js'
 import {
@@ -159,7 +159,7 @@ export class StorageOrchestratorAddon extends BaseAddon<StorageOrchestratorConfi
   /** Drain progress/completion cadence (#538) — a named constant, no operator knob. */
   private readonly drainEventMonitor = new StorageDrainEventMonitor()
   /**
-   * How much of each location CamStack itself holds (D388).
+   * How much of each location Dominevo itself holds (D388).
    *
    * Built on first use rather than in a field initializer: `this.ctx` does not
    * exist until `initialize()` runs, and a field initializer touching it throws

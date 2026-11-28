@@ -4,7 +4,7 @@
  * The body is FLAT (planning#408 P3): the form the instances page edits is the stored shape,
  * with the two tokens at the top level where the records door keeps them in the keychain.
  */
-import { declareLinkKind, defineEntryKind, entryBody } from '@camstack/types'
+import { declareLinkKind, defineEntryKind, entryBody } from '@dominevo/types'
 import { z } from 'zod'
 import { HaBrokerEntrySchema } from './ha-broker-registry.js'
 

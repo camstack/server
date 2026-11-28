@@ -5,8 +5,8 @@
  * IDENTICAL across nodes; only the root package's name and its loadable entry
  * differ.
  *
- * Post-consolidation there is a SINGLE root package — `@camstack/server` —
- * for every node role. An agent node boots the same `@camstack/server`
+ * Post-consolidation there is a SINGLE root package — `@dominevo/server` —
+ * for every node role. An agent node boots the same `@dominevo/server`
  * closure via `CAMSTACK_ROLE=agent`; the launcher branches into the agent
  * runtime at boot. The spec is kept as a parameter (clean DI: the machinery
  * never hard-codes a package name) even though only one spec exists today.
@@ -29,6 +29,6 @@ export interface RootPackageSpec {
  * launcher, which branches on `CAMSTACK_ROLE` into the hub or agent runtime.
  */
 export const HUB_ROOT_SPEC: RootPackageSpec = {
-  packageName: '@camstack/server',
+  packageName: '@dominevo/server',
   entryRelPath: ['dist', 'launcher.js'],
 }

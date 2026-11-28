@@ -6,8 +6,8 @@
  * is `null`, which the common DataTable always sorts last — so "never used"
  * and "never expires" sink to the bottom whichever way the column points.
  */
-import type { DataColumn } from '@camstack/ui-library'
-import { Badge, Button } from '@camstack/ui-library'
+import type { DataColumn } from '@dominevo/ui-library'
+import { Badge, Button } from '@dominevo/ui-library'
 import type { LucideIcon } from 'lucide-react'
 import { Loader2 } from 'lucide-react'
 import type { ReactNode } from 'react'

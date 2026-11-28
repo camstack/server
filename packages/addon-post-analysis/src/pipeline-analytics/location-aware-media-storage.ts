@@ -11,7 +11,7 @@
  */
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
-import { writeFileAtomic } from '@camstack/types/node'
+import { writeFileAtomic } from '@dominevo/types/node'
 
 /** The subset of the storage surface MediaStore actually uses. */
 export interface MediaBlobStorage {

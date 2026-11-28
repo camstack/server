@@ -10,7 +10,7 @@
  * watchdog stalls it, burns its recovery budget, and then re-attempts recovery
  * on the slow cadence forever. Both gates below exist because that happened.
  */
-import type { RunnerCameraConfig } from '@camstack/types'
+import type { RunnerCameraConfig } from '@dominevo/types'
 import type { WatchdogCamera, WatchdogStage } from './pipeline-watchdog.js'
 
 /**

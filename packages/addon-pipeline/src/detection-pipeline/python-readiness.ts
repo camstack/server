@@ -1,4 +1,4 @@
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 export interface PythonDepsLike {
   readonly ensurePython: () => Promise<string | null>

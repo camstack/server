@@ -19,7 +19,7 @@
  * the device is perfectly alive. An OPTED-OUT device keeps its history until
  * retention ages it out: stopping capture is the switch; deleting history is not.
  */
-import type { DeviceHistoryKind, IScopedLogger } from '@camstack/types'
+import type { DeviceHistoryKind, IScopedLogger } from '@dominevo/types'
 import type { DepartureTracker } from './departure-tracker.js'
 import { DEPARTED_ABSENCE_MS } from './departure-tracker.js'
 import type { HistoryCounters } from '../status/counters.js'

@@ -3,7 +3,7 @@
  * `(scope, cap, …)`; a forked one is routed through the gateway's `settings` target with the
  * same arguments.
  */
-import type { ICamstackAddon } from '@camstack/types'
+import type { ICamstackAddon } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import type { AddonCallGateway } from '../addon-call-gateway.js'
 import { createAddonSettingsProvider } from '../addon-settings-provider.js'

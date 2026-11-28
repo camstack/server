@@ -8,7 +8,7 @@
  * pool. The old card claimed "running on CPU" for yolo26n and hid its Remove.
  */
 import { describe, expect, it } from 'vitest'
-import type { NodeInferenceDevice } from '@camstack/types'
+import type { NodeInferenceDevice } from '@dominevo/types'
 import {
   buildClusterPlacement,
   buildInstalledInventory,

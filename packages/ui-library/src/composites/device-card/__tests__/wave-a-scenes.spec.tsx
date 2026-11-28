@@ -5,7 +5,7 @@ import {
   FanControlStatusSchema,
   FanOscillationAxisSchema,
   type FanPresetApplyResult,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { offline } from '../__fixtures__/common'

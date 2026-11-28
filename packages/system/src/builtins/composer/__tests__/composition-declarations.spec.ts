@@ -1,4 +1,4 @@
-import { binaryCapability, DeviceType, temperatureSensorCapability } from '@camstack/types'
+import { binaryCapability, DeviceType, temperatureSensorCapability } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { declarationFor, shapeOf, WithdrawalGate } from '../composition-declarations.js'
 import { recordingLogger } from './fixtures.js'

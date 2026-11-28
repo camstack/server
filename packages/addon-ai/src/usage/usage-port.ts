@@ -3,7 +3,7 @@
  * faked in the provider suite. Every generate/generateVision call — success OR
  * failure — writes exactly one row. Token counts only (no costUsd in v1).
  */
-import type { LlmErrorCode, LlmGenerateErr, LlmProfileKind, LlmUsageRollup } from '@camstack/types'
+import type { LlmErrorCode, LlmGenerateErr, LlmProfileKind, LlmUsageRollup } from '@dominevo/types'
 
 export interface UsageRowInput {
   readonly ts: number

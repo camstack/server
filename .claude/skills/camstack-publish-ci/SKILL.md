@@ -1,6 +1,6 @@
 ---
 name: camstack-publish-ci
-description: Release CamStack through GitHub Actions — publish packages to npm (`Publish Packages`), then cut a release that builds the Docker image and the desktop app (`Release — CamStack (Docker + Electron)`). ALWAYS through CI, never a local publish. Covers the push-first and lockfile preflights, the workflow inputs (`include_dependents`, `force_packages` for a capability change, `publish_release`), npm registry lag, checking what a server closure pins, and the CI rules (never dispatch Checks). Use when shipping a batch to npm, cutting a product release from main, or a publish/release run failed.
+description: Release Dominevo through GitHub Actions — publish packages to npm (`Publish Packages`), then cut a release that builds the Docker image and the desktop app (`Release — Dominevo (Docker + Electron)`). ALWAYS through CI, never a local publish. Covers the push-first and lockfile preflights, the workflow inputs (`include_dependents`, `force_packages` for a capability change, `publish_release`), npm registry lag, checking what a server closure pins, and the CI rules (never dispatch Checks). Use when shipping a batch to npm, cutting a product release from main, or a publish/release run failed.
 ---
 
 # Publishing and releasing through CI
@@ -15,13 +15,13 @@ evidence behind each trap: `docs/architecture/update-and-release.md`
 Two surfaces, in this ORDER:
 
 1. **Packages → npm** — workflow `Publish Packages` (`.github/workflows/publish-packages.yml`).
-2. **Release** — workflow `Release — CamStack (Docker + Electron)`
+2. **Release** — workflow `Release — Dominevo (Docker + Electron)`
    (`.github/workflows/release.yml`): ONE Docker image
    `ghcr.io/<owner>/camstack:intel-X.Y.Z` (role chosen at runtime by
-   `CAMSTACK_ROLE`) and ONE desktop app (`packages/desktop`, `CamStack-X.Y.Z-<arch>.*`).
+   `CAMSTACK_ROLE`) and ONE desktop app (`packages/desktop`, `Dominevo-X.Y.Z-<arch>.*`).
 
-The release installs from npm (the image `@camstack/server@latest`, the
-desktop `@camstack/server@X.Y.Z`), so step 1 must have LANDED first.
+The release installs from npm (the image `@dominevo/server@latest`, the
+desktop `@dominevo/server@X.Y.Z`), so step 1 must have LANDED first.
 
 Getting the published closure onto running nodes is not this skill: it is
 `applyServerUpdate` per node — `camstack-server-change` §3.
@@ -103,7 +103,7 @@ gh run watch <run-id>
 
 **A package the bundle cascade adds is published only when its built output
 changes.** Own files, `force_packages` and `include_dependents` still publish
-unconditionally, and `@camstack/server` still publishes when a closure member
+unconditionally, and `@dominevo/server` still publishes when a closure member
 does. A bundler selected only because it inlines something (admin pages
 inlining `ui-library`, `system` inlining `types`) is hashed against the
 registry tarball after the build. The same bytes → dropped, and the server
@@ -111,9 +111,9 @@ keeps the pin it already has. `dry_run=true` prints one line per package
 (`bundle unchanged` or `dist differs: N files`) and stops before the bump.
 
 **A capability or framework change** (`*.cap.ts`, `packages/system`) selects
-`@camstack/server`: the framework is the private `@camstack/server-framework`
-workspace, built into the server tarball as `@camstack/server/system` (D989). There
-is no separate system publish and no `force_packages` for it; `force_packages=@camstack/server`
+`@dominevo/server`: the framework is the private `@dominevo/server-framework`
+workspace, built into the server tarball as `@dominevo/server/system` (D989). There
+is no separate system publish and no `force_packages` for it; `force_packages=@dominevo/server`
 still publishes the server even when the built output matches. After the bump the
 workflow stamps `camstack.requires` (`scripts/ci/stamp-requires.mjs`).
 
@@ -131,34 +131,34 @@ to publish again**. Read what the run published from its `Bump package
 versions` log, then wait for the artefact:
 
 ```bash
-curl -sI https://registry.npmjs.org/@camstack/server/-/server-<VER>.tgz | head -1   # 200 = installable
-npm view @camstack/server@<VER> version                                            # exact version, not `version`
+curl -sI https://registry.npmjs.org/@dominevo/server/-/server-<VER>.tgz | head -1   # 200 = installable
+npm view @dominevo/server@<VER> version                                            # exact version, not `version`
 ```
 
 ### Is the framework fix IN the server you will install?
 
-A `types` / `system` fix is live only when a `@camstack/server` whose closure
+A `types` / `system` fix is live only when a `@dominevo/server` whose closure
 PINS that version is installed. A server published in an earlier run
 legitimately pins the older one:
 
 ```bash
-npm view @camstack/server@<VER> dependencies
+npm view @dominevo/server@<VER> dependencies
 ```
 
-If the pin is behind, publish `force_packages=@camstack/server` once and
+If the pin is behind, publish `force_packages=@dominevo/server` once and
 install that.
 
 ### Verify the CONTENT, not the version
 
 ```bash
-cd "$(mktemp -d)" && npm pack @camstack/<pkg>@<VER> && tar -xzf *.tgz
+cd "$(mktemp -d)" && npm pack @dominevo/<pkg>@<VER> && tar -xzf *.tgz
 find package/dist \( -name '*.js' -o -name '*.mjs' \) -exec grep -l '<string from the change body>' {} \;
 ```
 
 Pick a literal from the BODY of the change (a message, an enum member) — a
 minifier renames symbols — and check runtime `.js`, not only `.d.ts`.
 
-## 2. Cut a release — `Release — CamStack (Docker + Electron)`
+## 2. Cut a release — `Release — Dominevo (Docker + Electron)`
 
 `workflow_dispatch` from `main` only. The first job refuses any other ref.
 `publish_release=true` is the release: image, desktop installers and a GitHub
@@ -168,26 +168,26 @@ runs only; a publish ignores it), `multi_arch`, `skip_docker`,
 `electron_platforms` (artifact runs only), `dry_run`.
 
 `vX.Y.Z` is the **product** version (image, desktop app, GitHub release),
-starting at 0.1.0 beta (D943). It is not `@camstack/server`. Commit the same
+starting at 0.1.0 beta (D943). It is not `@dominevo/server`. Commit the same
 number in `product-version.json` and `packages/desktop/package.json` on
 `main`. The workflow creates `v<version>` on the dispatched commit and refuses
 when that tag already exists. npm packages stay on 1.2.x. The viewer app stays
 on 1.0.x.
 
 ```bash
-gh workflow run "Release — CamStack (Docker + Electron)" --ref main -f publish_release=true
-gh run list --workflow="Release — CamStack (Docker + Electron)" --limit 2
+gh workflow run "Release — Dominevo (Docker + Electron)" --ref main -f publish_release=true
+gh run list --workflow="Release — Dominevo (Docker + Electron)" --limit 2
 ```
 
 Dry run — derive only, nothing published:
 
 ```bash
-gh workflow run "Release — CamStack (Docker + Electron)" --ref main \
+gh workflow run "Release — Dominevo (Docker + Electron)" --ref main \
   -f dry_run=true -f version_type=patch
 ```
 
 **The product version does not have to exist on npm.** `derive-version`
-resolves `@camstack/server` dist-tag `latest` and records that closure
+resolves `@dominevo/server` dist-tag `latest` and records that closure
 (`scripts/ci/verify-release-npm.mjs`). It fails when `latest` cannot be
 resolved, not when `latest` differs from the product version. The image and
 the desktop app both install `@latest`. A 1.2.x desktop install will not
@@ -210,9 +210,9 @@ old (`422`). Unpublish only versions under 72 h, and `npm deprecate <pkg>
 
 | Want to ship… | Do | Then |
 | --- | --- | --- |
-| changed packages | `Publish Packages`, `include_dependents=false` | `applyServerUpdate` per node (framework) / `camstack deploy` (addon) |
-| a capability change | the same + `force_packages=@camstack/server` | `applyServerUpdate` per node, then deploy the providing addon |
-| a release (image + desktop app) | publish → wait for npm → commit the product version on `main` → `gh workflow run "Release — CamStack (Docker + Electron)" --ref main -f publish_release=true` | the workflow creates `vX.Y.Z`; nodes still need `applyServerUpdate`; an image only changes on a container recreate |
+| changed packages | `Publish Packages`, `include_dependents=false` | `applyServerUpdate` per node (framework) / `dominevo deploy` (addon) |
+| a capability change | the same + `force_packages=@dominevo/server` | `applyServerUpdate` per node, then deploy the providing addon |
+| a release (image + desktop app) | publish → wait for npm → commit the product version on `main` → `gh workflow run "Release — Dominevo (Docker + Electron)" --ref main -f publish_release=true` | the workflow creates `vX.Y.Z`; nodes still need `applyServerUpdate`; an image only changes on a container recreate |
 
 ## Done-gate — paste it before "done"
 
@@ -221,7 +221,7 @@ PUBLISH DONE — <what>
 preflight:  origin/main..HEAD empty; lockfile in sync
 publish:    run <id> — published <pkg → version, from the run log>
 registry:   <tarball 200 for the versions that matter>
-pins:       @camstack/server@<VER> pins system/types <versions>
+pins:       @dominevo/server@<VER> pins system/types <versions>
 release:    <publish_release dispatch — run <id>, tag vX.Y.Z on <sha> | not released>
-next:       <applyServerUpdate / camstack deploy still to do, or done — camstack-server-change gate>
+next:       <applyServerUpdate / dominevo deploy still to do, or done — camstack-server-change gate>
 ```

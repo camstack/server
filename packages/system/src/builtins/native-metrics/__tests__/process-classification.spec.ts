@@ -67,7 +67,7 @@ const HUB_ROOT = psRow({ pid: SELF_PID, ppid: 1, pgid: SELF_PID })
 const RUNNER = psRow({
   pid: 8801,
   ppid: SELF_PID,
-  command: '/usr/local/bin/node /opt/camstack-hub/addons/@camstack/addon-pipeline/dist/runner.js',
+  command: '/usr/local/bin/node /opt/camstack-hub/addons/@dominevo/addon-pipeline/dist/runner.js',
 })
 
 const MANAGED: ReadonlyMap<number, ManagedProcessEntry> = new Map([

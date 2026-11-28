@@ -10,13 +10,13 @@
  * beside the widget; the store holds a value here precisely so the section
  * WOULD appear if its contribution came back.
  */
-import { CapabilityRegistry, DeviceRegistry } from '@camstack/server/system'
+import { CapabilityRegistry, DeviceRegistry } from '@dominevo/server/system'
 import {
   type AddonContext,
   deviceExtensionCapability,
   deviceManagerCapability,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { makeRecordsAccessForOwner } from '../../sqlite-storage/__tests__/support/records-world.js'
 import { DeviceManagerAddon } from '../device-manager.addon.js'

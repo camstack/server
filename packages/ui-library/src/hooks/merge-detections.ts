@@ -4,7 +4,7 @@
  * (post-analysis) frame contributes only EXTRAS — detail children (face,
  * plate…) and identity labels — attached to the matching raw root.
  */
-import type { ObjectDetection } from '@camstack/types'
+import type { ObjectDetection } from '@dominevo/types'
 
 /** Minimum IoU between an enriched root and a raw root to call them one subject
  *  when no trackId pairs them. */

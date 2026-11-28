@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { DeviceType, type IDeviceRuntimeState } from '@camstack/types'
+import { DeviceType, type IDeviceRuntimeState } from '@dominevo/types'
 import { HaEnumSensorDevice } from '../ha-enum-sensor-device.js'
 import type { HaEntityState } from '../../ha-types.js'
 
@@ -10,7 +10,7 @@ interface EnumSliceShape {
 }
 
 function buildEnumSensorCtx(persistedExtra: Record<string, unknown>): {
-  ctx: import('@camstack/types').DeviceContext
+  ctx: import('@dominevo/types').DeviceContext
   setCapStateCalls: EnumSliceShape[]
 } {
   let runtimeStateRef: IDeviceRuntimeState | null = null
@@ -99,7 +99,7 @@ function buildEnumSensorCtx(persistedExtra: Record<string, unknown>): {
       addContext: vi.fn(),
       with: vi.fn(),
     },
-  } as unknown as import('@camstack/types').DeviceContext
+  } as unknown as import('@dominevo/types').DeviceContext
 
   return { ctx, setCapStateCalls }
 }

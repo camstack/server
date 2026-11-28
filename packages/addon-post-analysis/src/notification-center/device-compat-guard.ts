@@ -9,7 +9,7 @@
  * cap-provider route (`notificationRules.createRule/updateRule`, index.ts)
  * and the rule bridge (`nc.createRule/updateRule`, nc-actions.ts) both call
  * `guardRuleDeviceCompat` / `guardPatchDeviceCompat`. Which devices a kind
- * may scope is `ruleDeviceCompatCapQueries` (`@camstack/types`) — the SAME
+ * may scope is `ruleDeviceCompatCapQueries` (`@dominevo/types`) — the SAME
  * table the admin's Devices tab narrows by, so a save can never refuse a
  * device its own picker just offered. A `sensor` rule's set includes every
  * camera: a camera-scoped sensor rule is legitimate (D630 §6).
@@ -41,7 +41,7 @@
  * operator excluding an incompatible device from an "all except" rule is not
  * the mistake this exists to catch.
  */
-import { type IScopedLogger, ruleDeviceCompatCapQueries, ruleKindOf } from '@camstack/types'
+import { type IScopedLogger, ruleDeviceCompatCapQueries, ruleKindOf } from '@dominevo/types'
 import {
   mergedFamilySubject,
   type NcRuleFamilyGuardContext,

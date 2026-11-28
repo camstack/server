@@ -1,4 +1,4 @@
-import type { EffectiveShares, SuggestSharesResult } from '@camstack/types'
+import type { EffectiveShares, SuggestSharesResult } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   benchmarkFallbackNote,

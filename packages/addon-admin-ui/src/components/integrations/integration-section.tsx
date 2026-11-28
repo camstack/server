@@ -5,7 +5,7 @@
  */
 import { type ReactElement, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { TEXT_SECTION_LABEL } from '@camstack/ui-library'
+import { TEXT_SECTION_LABEL } from '@dominevo/ui-library'
 
 export type IntegrationSectionKind = 'providers' | 'system'
 

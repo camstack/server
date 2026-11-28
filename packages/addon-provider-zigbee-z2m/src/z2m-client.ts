@@ -6,7 +6,7 @@
  * rides in the URL's query string, as the server demands, and is therefore never logged: a log line
  * names `host:port`, never the URL.
  */
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IScopedLogger } from '@dominevo/types'
 import {
   parseEnvelope,
   Z2M_CLOSE_UNAUTHORIZED,

@@ -15,7 +15,7 @@ import {
   type AlertStatus,
   alertEpisodeRank,
   isAlertEpisodeOpen,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** What the policy needs of a stored alert. */
 export interface EpisodeView {

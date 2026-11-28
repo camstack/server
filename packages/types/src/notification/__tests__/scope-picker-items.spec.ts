@@ -21,18 +21,18 @@ describe('scope picker items', () => {
 
   it('lists installed packages sorted, always offers the server package once, version as detail', () => {
     const items = packagePickerItems([
-      { name: '@camstack/addon-recorder', version: '1.2.0' },
-      { name: '@camstack/addon-pipeline', version: '1.0.0' },
+      { name: '@dominevo/addon-recorder', version: '1.2.0' },
+      { name: '@dominevo/addon-pipeline', version: '1.0.0' },
     ])
     expect(items.map((i) => i.id)).toEqual([
       NC_SERVER_PACKAGE_NAME,
       ...NC_UPDATE_EVENT_PACKAGE_NAMES.filter((name) => name !== NC_SERVER_PACKAGE_NAME),
-      '@camstack/addon-pipeline',
-      '@camstack/addon-recorder',
+      '@dominevo/addon-pipeline',
+      '@dominevo/addon-recorder',
     ])
     expect(items[NC_UPDATE_EVENT_PACKAGE_NAMES.length]).toEqual({
-      id: '@camstack/addon-pipeline',
-      name: '@camstack/addon-pipeline',
+      id: '@dominevo/addon-pipeline',
+      name: '@dominevo/addon-pipeline',
       type: 'addon',
       location: null,
       detail: '1.0.0',
@@ -46,23 +46,23 @@ describe('scope picker items', () => {
 
   it('offers every package an update EVENT carries, even when listPackages omits it', () => {
     expect(packagePickerItems([])).toEqual([
-      { id: '@camstack/server', name: '@camstack/server', type: 'server', location: null },
+      { id: '@dominevo/server', name: '@dominevo/server', type: 'server', location: null },
       { id: 'camstack-wrapper', name: 'camstack-wrapper', type: 'wrapper', location: null },
     ])
   })
 
   it('offers no framework package no update event carries', () => {
     const ids = packagePickerItems([]).map((i) => i.id)
-    expect(ids).not.toContain('@camstack/types')
-    expect(ids).not.toContain('@camstack/sdk')
+    expect(ids).not.toContain('@dominevo/types')
+    expect(ids).not.toContain('@dominevo/sdk')
   })
 
   it('an installed update-event package is offered once, with its version', () => {
-    const items = packagePickerItems([{ name: '@camstack/server', version: '2.0.0' }])
-    expect(items.filter((i) => i.id === '@camstack/server')).toEqual([
+    const items = packagePickerItems([{ name: '@dominevo/server', version: '2.0.0' }])
+    expect(items.filter((i) => i.id === '@dominevo/server')).toEqual([
       {
-        id: '@camstack/server',
-        name: '@camstack/server',
+        id: '@dominevo/server',
+        name: '@dominevo/server',
         type: 'server',
         location: null,
         detail: '2.0.0',
@@ -74,7 +74,7 @@ describe('scope picker items', () => {
   // `server/backend/src/core/updates/__tests__/update-event-package-names.spec.ts`
   // pins each literal below to its producer constant.
   it('the literals are the ones the update producers stamp', () => {
-    expect(NC_SERVER_PACKAGE_NAME).toBe('@camstack/server')
-    expect(NC_UPDATE_EVENT_PACKAGE_NAMES).toEqual(['@camstack/server', 'camstack-wrapper'])
+    expect(NC_SERVER_PACKAGE_NAME).toBe('@dominevo/server')
+    expect(NC_UPDATE_EVENT_PACKAGE_NAMES).toEqual(['@dominevo/server', 'camstack-wrapper'])
   })
 })

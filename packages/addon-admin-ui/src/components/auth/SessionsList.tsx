@@ -9,7 +9,7 @@
 import { Loader2, LogOut, Monitor } from 'lucide-react'
 import { describeClient, describeMethod, formatDateTime } from './session-client'
 import { useTranslation } from 'react-i18next'
-import { Button } from '@camstack/ui-library'
+import { Button } from '@dominevo/ui-library'
 
 export interface SessionRow {
   readonly id: string

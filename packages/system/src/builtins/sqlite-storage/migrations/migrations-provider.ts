@@ -14,7 +14,7 @@ import {
   type MigrationOwnerStep,
   type MigrationPendingEntry,
   type MigrationStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   clearLegacyIntegrationRows,
   deleteLegacyIntegrationRowKeys,

@@ -11,7 +11,7 @@ import {
   type MigrationMeta,
   type MigrationOwnerResult,
   runAddonMigrations,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import {
@@ -77,7 +77,8 @@ async function setup(input: {
     resolveTrackAlias: async (id) => input.aliases?.[id] ?? null,
     listStagedTracks: async () => staged.map((t) => ({ ...t })),
     copyBestFrame: async ({ trackId }) => {
-      if (input.gone?.includes(trackId) === true) return { ok: false as const, reason: 'no-candidate-frame' }
+      if (input.gone?.includes(trackId) === true)
+        return { ok: false as const, reason: 'no-candidate-frame' }
       copies.push(trackId)
       const row = staged.find((t) => t.trackId === trackId)
       if (row !== undefined) row.frameCount = 1

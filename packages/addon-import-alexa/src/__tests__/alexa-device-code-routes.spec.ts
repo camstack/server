@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import type { AddonHttpReply, AddonHttpRequest, IScopedLogger } from '@camstack/types'
+import type { AddonHttpReply, AddonHttpRequest, IScopedLogger } from '@dominevo/types'
 import { abortableSleep } from '../alexa-device-code-login.js'
 import { AlexaDeviceCodeManager } from '../alexa-device-code-manager.js'
 import { buildAlexaLoginRoutes } from '../alexa-login-routes.js'

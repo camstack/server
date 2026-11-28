@@ -1,4 +1,4 @@
-import type { RunnerLocalLoad } from '@camstack/types'
+import type { RunnerLocalLoad } from '@dominevo/types'
 
 /**
  * Input to the load balancer: one entry per online runner node.

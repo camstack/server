@@ -1,9 +1,9 @@
 ---
 name: camstack-workflow
-description: Load FIRST for ANY change to CamStack — implement, fix, add, change, refactor or build a feature, bug fix, UI, server, addon or capability; invocable as /camstack-workflow. The single entry point and definition of done — the phases (understand, design, plan, build with TDD, verify, document, ship, report), the gate each one must pass and the evidence it must show, which domain skill supplies the details, and how it composes with the superpowers process skills (brainstorming, writing-plans, test-driven-development, verification-before-completion). Load again at plan, verify and done.
+description: Load FIRST for ANY change to Dominevo — implement, fix, add, change, refactor or build a feature, bug fix, UI, server, addon or capability; invocable as /camstack-workflow. The single entry point and definition of done — the phases (understand, design, plan, build with TDD, verify, document, ship, report), the gate each one must pass and the evidence it must show, which domain skill supplies the details, and how it composes with the superpowers process skills (brainstorming, writing-plans, test-driven-development, verification-before-completion). Load again at plan, verify and done.
 ---
 
-# CamStack workflow — from request to done
+# Dominevo workflow — from request to done
 
 This skill sets **what** a change in this repository must show before it is
 done: the gates, the commands, the evidence. The domain skills hold the
@@ -173,7 +173,7 @@ superpowers, write them at the top of your plan:
 - **Docs and ADR** — which pages change; ADR only if a real alternative was
   rejected (`camstack-docs` §3).
 - **Ship** — what must be published (which packages) and deployed (addon
-  `camstack deploy`, server closure `applyServerUpdate`), or "nothing ships".
+  `dominevo deploy`, server closure `applyServerUpdate`), or "nothing ships".
 
 ## 4. Build with TDD
 
@@ -219,7 +219,7 @@ here:
 
 - **Right after `LAND`, before merge: docs and MCP alignment** (operator
   2026-11-25). Every reviewed change is checked, in the same piece of work,
-  for: the PUBLIC docs (`camstack/docs`, operator-facing, no D-numbers) when
+  for: the PUBLIC docs (`dominevo/docs`, operator-facing, no D-numbers) when
   the operator sees a difference; the internal docs (`camstack-docs`, §6);
   and the MCP tools (`camstack-dev` / `camstack-ops`, `packages/develop`,
   `../planning/tools/mcp-dev`) when the change adds or alters something a
@@ -302,7 +302,7 @@ The index is `../planning/sessions/sessions.md`; do not append to it.
   **Order and fail-fast:** cheap and decisive stages first, the long test stage
   last, and the run STOPS at the first red stage with one line naming it:
   changelog, test-load guards, barrel guards (source), build, tsgo, footprint,
-  barrel guards (dist), repo script tests, the canary (the `@camstack/types`
+  barrel guards (dist), repo script tests, the canary (the `@dominevo/types`
   project and the admin-ui `api-method-groups` specs, where a capability change
   is first seen red), then the affected test lanes. `VERIFY_FULL=1` keeps the
   run-everything behaviour for one complete verdict (a red build or changelog
@@ -337,7 +337,7 @@ The index is `../planning/sessions/sessions.md`; do not append to it.
   `camstack-test-fixer`, never rerun until green.
 - **Publish and deploy** through the skills, and say exactly what shipped:
   npm packages through CI → `camstack-publish-ci`; a server closure to nodes
-  → `camstack-hub-image-deploy`; an addon → `camstack deploy`
+  → `camstack-hub-image-deploy`; an addon → `dominevo deploy`
   (`camstack-addon`). `publish ≠ deployed ≠ live`.
 - **Never dispatch the Checks workflow** — only the operator does. Run the
   guards you touched locally (`npx tsx scripts/check-<name>.ts`).

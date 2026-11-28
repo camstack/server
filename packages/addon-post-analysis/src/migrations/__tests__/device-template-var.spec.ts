@@ -14,7 +14,7 @@ import {
   runAddonMigrations,
   type TimelapseRuleInput,
   TimelapseRuleInputSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { RuleBodySchema } from '../../notification-center/record-kinds.js'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'

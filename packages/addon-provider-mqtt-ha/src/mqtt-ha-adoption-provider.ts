@@ -1,5 +1,5 @@
-import { errMsg, type IDeviceAdoptionProvider, type IScopedLogger } from '@camstack/types'
-import type { AdoptionFilter, AdoptionStatus } from '@camstack/types'
+import { errMsg, type IDeviceAdoptionProvider, type IScopedLogger } from '@dominevo/types'
+import type { AdoptionFilter, AdoptionStatus } from '@dominevo/types'
 import type { MqttHaDiscoveryStore } from './mqtt-ha-discovery-store.js'
 import {
   adoptableMqttHaDevices,

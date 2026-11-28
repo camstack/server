@@ -19,7 +19,7 @@ interface MockButtonProps {
   readonly title?: string
 }
 
-vi.mock('@camstack/ui-library', () => ({
+vi.mock('@dominevo/ui-library', () => ({
   Button: ({ children, onClick, title }: MockButtonProps) => (
     <button type="button" onClick={onClick} title={title}>
       {children}
@@ -42,7 +42,7 @@ describe('VersionPicker same-version reinstall', () => {
     const onInstall = vi.fn()
     render(
       <VersionPicker
-        packageName="@camstack/addon-a"
+        packageName="@dominevo/addon-a"
         currentVersion="1.0.0"
         installSource="npm"
         onInstall={onInstall}
@@ -60,7 +60,7 @@ describe('VersionPicker same-version reinstall', () => {
     const onInstall = vi.fn()
     render(
       <VersionPicker
-        packageName="@camstack/addon-a"
+        packageName="@dominevo/addon-a"
         currentVersion="1.0.0"
         onInstall={onInstall}
         onClose={vi.fn()}
@@ -83,7 +83,7 @@ describe('VersionPicker same-version reinstall', () => {
     ]
     render(
       <VersionPicker
-        packageName="@camstack/addon-a"
+        packageName="@dominevo/addon-a"
         currentVersion="2.0.0"
         onInstall={vi.fn()}
         onClose={vi.fn()}

@@ -33,8 +33,8 @@ import { rowDisplayLabel, trackSelectionKey } from './key-events-merge.js'
 import { type MediaProvenance, provenanceBadge } from './media-provenance.js'
 import type { TrackSubject } from './track-subject.js'
 import { useTranslation } from 'react-i18next'
-import { Button } from '@camstack/ui-library'
-import { formatNumeric } from '@camstack/ui-library'
+import { Button } from '@dominevo/ui-library'
+import { formatNumeric } from '@dominevo/ui-library'
 
 /** windowMs → compact "3.2s" / "1m 05s" duration label; '' when unknown. */
 function formatDuration(windowMs: number | undefined): string {

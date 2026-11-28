@@ -46,7 +46,7 @@
  * viewer will read.
  */
 
-import { eventKindLabel, type EventKindLabelLocale, type IScopedLogger } from '@camstack/types'
+import { eventKindLabel, type EventKindLabelLocale, type IScopedLogger } from '@dominevo/types'
 import sharp from 'sharp'
 
 /** Widest mosaic produced. 1920 keeps a 3×3 grid at 640 px a tile — readable

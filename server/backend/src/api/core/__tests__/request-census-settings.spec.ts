@@ -16,7 +16,7 @@
  *    every boot forever re-arms a window from months ago.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { HttpRequestCensus } from '../../trpc/http-request-census.js'
 import { REQUEST_CENSUS_KEY, RequestCensusService, toRecord } from '../request-census-settings.js'

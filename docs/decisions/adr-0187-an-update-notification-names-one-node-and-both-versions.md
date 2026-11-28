@@ -17,14 +17,14 @@ Both update notifications an operator receives were reported useless on
 2026-08-19, from a phone, and the hub's own logs carried the evidence for each.
 
 **"Server aggiornato" named no version.** The line was
-`Restart completed {kind=framework-update nodeId=hub packageName=@camstack/server
-toVersion=1.2.138 requestedBy="server-update: @camstack/server@1.2.138"}` — the
+`Restart completed {kind=framework-update nodeId=hub packageName=@dominevo/server
+toVersion=1.2.138 requestedBy="server-update: @dominevo/server@1.2.138"}` — the
 `.restart-pending` marker had the version the hub went TO and nothing about the
 one it left, because the reason STRING was the only channel between
 `RootUpdateService.applyServerUpdate` and the restart seam, and a string spells
 one version. The Notification Center then required BOTH versions for its
 sentence and fell back to `system.server-updated.body.plain`, so it printed
-neither: _"@camstack/server sul nodo hub è stato aggiornato"_. The version it
+neither: _"@dominevo/server sul nodo hub è stato aggiornato"_. The version it
 had was thrown away on the way out.
 
 The fact cannot be recovered later: the starter swaps the single `current/`

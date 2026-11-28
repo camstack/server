@@ -1,4 +1,4 @@
-import type { ErrorI18nPayload } from '@camstack/types'
+import type { ErrorI18nPayload } from '@dominevo/types'
 import type { CapActionChannelObserver } from './cap-action-census.js'
 import type { SocketTrafficSample } from './socket-traffic.js'
 

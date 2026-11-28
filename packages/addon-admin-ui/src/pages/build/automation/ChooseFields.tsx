@@ -4,8 +4,8 @@
  * may hold depends on how deep the choose sits (`bodyKindsAt`): block steps
  * one level down, plain steps only below that.
  */
-import type { AutomationChooseStep, AutomationRecipe } from '@camstack/types'
-import { Button, type DeviceListState, ErrorBox, Switch } from '@camstack/ui-library'
+import type { AutomationChooseStep, AutomationRecipe } from '@dominevo/types'
+import { Button, type DeviceListState, ErrorBox, Switch } from '@dominevo/ui-library'
 import { Plus, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { ScopeVariable } from '../flow/ArgField'

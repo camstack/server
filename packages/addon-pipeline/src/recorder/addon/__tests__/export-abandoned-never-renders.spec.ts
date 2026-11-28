@@ -11,7 +11,7 @@
  * Driven through the REAL provider and the REAL engine sharing one store — a
  * fake `deleteExport` is what let the original test pass.
  */
-import type { ExportOptions, ExportRecord, IScopedLogger } from '@camstack/types'
+import type { ExportOptions, ExportRecord, IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { EXPORT_MAX_CONCURRENT, ExportEngine } from '../export-engine.js'
 import { getExportRecord, patchExport } from '../export-store.js'

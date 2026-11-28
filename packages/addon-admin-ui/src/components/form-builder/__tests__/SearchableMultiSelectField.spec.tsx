@@ -3,7 +3,7 @@
 import * as jestDomMatchers from '@testing-library/jest-dom/matchers'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
-import type { ConfigMultiSelectField } from '@camstack/types'
+import type { ConfigMultiSelectField } from '@dominevo/types'
 
 expect.extend(jestDomMatchers)
 

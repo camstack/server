@@ -9,7 +9,7 @@
  * command origin: the specs that use it are about the auto-trigger path, which
  * reaches the panel without an Action run.
  */
-import { findVocabAction, type ActionEntry, type ActionStep } from '@camstack/types'
+import { findVocabAction, type ActionEntry, type ActionStep } from '@dominevo/types'
 import type { NcActionsPort } from '../rule-actions.js'
 
 export interface FakeActuation {

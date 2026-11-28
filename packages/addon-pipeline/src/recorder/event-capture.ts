@@ -23,7 +23,7 @@
  * What remains is the only thing anyone really read: the rising edge of
  * the motion that opens a window of the `events` band (B3).
  */
-import { EventCategory } from '@camstack/types'
+import { EventCategory } from '@dominevo/types'
 
 interface MotionData {
   readonly deviceId: number

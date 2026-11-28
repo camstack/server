@@ -8,7 +8,7 @@
  *  - Namespace passthrough (optional namespace field)
  */
 import { describe, it, expect, beforeEach } from 'vitest'
-import type { ISettingsStoreProvider } from '@camstack/types'
+import type { ISettingsStoreProvider } from '@dominevo/types'
 import { makeCtx, invokeProcedure, buildCapRouterForTest } from './harness.js'
 
 interface MockRecord {

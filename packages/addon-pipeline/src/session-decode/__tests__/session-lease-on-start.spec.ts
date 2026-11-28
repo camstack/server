@@ -4,7 +4,7 @@
  * This is the carrier the `*_SETTING` env vars used to be. It matters more than
  * a plumbing test usually does, because BOTH halves of D453 depend on it:
  *
- * - the child bundle can only stay free of `@camstack/types` (and of the
+ * - the child bundle can only stay free of `@dominevo/types` (and of the
  *   ~170 ms / ~100 MB every fork paid for it) if nothing in the child resolves
  *   a knob;
  * - a worker can only be forked BEFORE its camera is known if nothing is
@@ -15,7 +15,7 @@
  * child actually receives.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import type { WorkerLeaseKnobs } from '../native-lease-knobs.js'
 import type { ForkedChildLike } from '../session-decode-coordinator.js'

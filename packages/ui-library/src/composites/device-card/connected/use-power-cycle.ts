@@ -6,7 +6,7 @@
  * and a failed read all draw nothing — the button appears once the device has
  * said it can.
  */
-import type { SwitchOptions } from '@camstack/types'
+import type { SwitchOptions } from '@dominevo/types'
 import { useSwitchGetOptions, useSwitchPowerCycle } from '../../../generated/system-hooks'
 import type { CardCommonResult } from './use-card-common'
 

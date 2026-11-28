@@ -19,7 +19,7 @@ import {
   TooltipTrigger,
   useTerminalSessionClose,
   useTerminalSessionListSessions,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { X } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'

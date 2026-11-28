@@ -4,7 +4,7 @@
  * (D871). A failing collection does not stop the others and is rethrown so the
  * hook's retry finishes the job.
  */
-import type { InMemoryRecords } from '@camstack/types'
+import type { InMemoryRecords } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import { NC_DEVICE_ROW_KINDS, removeNcDeviceRows } from '../device-removal.js'

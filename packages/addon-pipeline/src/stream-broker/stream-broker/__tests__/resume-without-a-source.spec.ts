@@ -26,7 +26,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { StreamBroker } from '../stream-broker.js'
 import { RtspSession } from '../../rtsp/rtsp-session.js'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 const BROKER_ID = '592/native:slot-3'
 

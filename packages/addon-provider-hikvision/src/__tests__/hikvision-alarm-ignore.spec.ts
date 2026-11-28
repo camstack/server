@@ -1,4 +1,4 @@
-import type { IScopedLogger, LogExtras } from '@camstack/types'
+import type { IScopedLogger, LogExtras } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { hikvisionIgnoredAlarmReason } from '../hikvision-alarm-ignore.js'
 import { createAlarmTypeTally } from '../hikvision-alarm-tally.js'

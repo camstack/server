@@ -20,7 +20,7 @@
  * motion gate stopped the frames, D438): no frame is needed for a coasting
  * tracklet to end.
  */
-import type { BoundingBox, SpatialDetection } from '@camstack/types'
+import type { BoundingBox, SpatialDetection } from '@dominevo/types'
 import type { TrackIdMinter } from '../track-id.js'
 import type { SpawnRefusalReason } from '../tracker/spawn-refusal.js'
 import {

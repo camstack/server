@@ -14,7 +14,7 @@
  */
 import { randomUUID } from 'node:crypto'
 
-import type { DetailStepAnnounce, FrameHandle, Track } from '@camstack/types'
+import type { DetailStepAnnounce, FrameHandle, Track } from '@dominevo/types'
 
 import type { AudioConfirmState } from '../audio-confirm-window.js'
 import type { AudioEpisodeState } from '../audio-episode-hysteresis.js'

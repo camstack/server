@@ -16,7 +16,7 @@ import {
   type NcAlarmModeDelays,
   type NcAlarmPostTriggeredAction,
   type NcSchedule,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** One persisted entry as the loose panel schema hands it over. */
 export interface NcPersistedModeDelays {

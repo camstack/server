@@ -211,17 +211,17 @@ recorded.** As rules:
 - **Unchanged here, re-decided in D673:** lazy audio reacts to every source;
   `onboardMotionDrivesAnalyzer` also opens the frame-diff side-channel on a
   sensor-triggered onboard event (the runner's gate stays `source === 'onboard'`).
-- **Rollout needs a `@camstack/server` release, and it goes first.** No cap
+- **Rollout needs a `@dominevo/server` release, and it goes first.** No cap
   method was added and the behaviour lives in the addons — the event bus does
   not validate payloads and `applyDeviceSettingsPatch` takes a loose input — but
   everything the operator READS passes the server's generated cap routers,
   which validate `getCameraStatus` / `getCameraStatuses` / `getMotionEvents`
-  output with the `@camstack/types` bundled in the installed server and strip
+  output with the `@dominevo/types` bundled in the installed server and strip
   unknown keys. On an older server `CameraStatus.cameraSensors` and
   `MotionEvent.triggeredBy` never reach the admin UI or `hub.mjs`: the card
   reads "status unavailable from this node" and the rows show no trigger, while
   the bridge, the session and the row write all work. So: publish `types` and a
-  `@camstack/server` containing it, apply it (agents, then hub), THEN deploy
+  `@dominevo/server` containing it, apply it (agents, then hub), THEN deploy
   `addon-pipeline-orchestrator`, `addon-post-analysis` and `addon-admin-ui`. The
   optional fields keep every mixed-version pair at "not recorded" / "status
   unavailable", never a wrong claim. The motion-source label change is a

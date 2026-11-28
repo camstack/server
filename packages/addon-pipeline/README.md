@@ -4,7 +4,7 @@ Pipeline bundle — runner, detection, motion, audio + stream broker. Multi-entr
 
 <!-- readme:generated:start (derived from the manifest; edit outside this block) -->
 
-Package `@camstack/addon-pipeline` on npm.
+Package `@dominevo/addon-pipeline` on npm.
 
 ## What it provides
 
@@ -39,15 +39,15 @@ Edit these from System, Addons, this addon, Settings (a device's own settings ar
 - Recorder: any-node.
 - Runtime dependencies installed with the addon: `werift`.
 - Python: Detection Pipeline installs `python/requirements.txt` into its own environment.
-- A CamStack hub. An agent is used only where the placement above allows it.
+- A Dominevo hub. An agent is used only where the placement above allows it.
 
 ## Documentation
 
-- [docs/architecture/data-planes.md](https://github.com/camstack/server/blob/main/docs/architecture/data-planes.md)
-- [docs/architecture/detection-execution.md](https://github.com/camstack/server/blob/main/docs/architecture/detection-execution.md)
-- [docs/architecture/notifications.md](https://github.com/camstack/server/blob/main/docs/architecture/notifications.md)
-- [docs/architecture/load-ledger.md](https://github.com/camstack/server/blob/main/docs/architecture/load-ledger.md)
-- [packages/addon-pipeline/AGENTS.md](https://github.com/camstack/server/blob/main/packages/addon-pipeline/AGENTS.md)
+- [docs/architecture/data-planes.md](https://github.com/dominevo/server/blob/main/docs/architecture/data-planes.md)
+- [docs/architecture/detection-execution.md](https://github.com/dominevo/server/blob/main/docs/architecture/detection-execution.md)
+- [docs/architecture/notifications.md](https://github.com/dominevo/server/blob/main/docs/architecture/notifications.md)
+- [docs/architecture/load-ledger.md](https://github.com/dominevo/server/blob/main/docs/architecture/load-ledger.md)
+- [packages/addon-pipeline/AGENTS.md](https://github.com/dominevo/server/blob/main/packages/addon-pipeline/AGENTS.md)
 
 See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
 

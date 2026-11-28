@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import type { ConfigUISchema } from '@camstack/types'
+import type { ConfigUISchema } from '@dominevo/types'
 
 /** Operator settings for one SHC integration (local mTLS + optional token). */
 export const shcConfigSchema = z.object({

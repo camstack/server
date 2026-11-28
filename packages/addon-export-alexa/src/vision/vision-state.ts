@@ -9,7 +9,7 @@
  *    derived from the track (`vision-ids.ts`), so the index only has to answer
  *    the reverse direction; bounded to the newest {@link MAX_INDEX} entries.
  *  - `hidden` — events `DeleteData` removed. Hidden from Alexa ONLY: deleting
- *    CamStack footage is not something a voice assistant may do. Bounded.
+ *    Dominevo footage is not something a voice assistant may do. Bounded.
  *
  * Reads are cached per camera; writes are serialized per camera (one
  * read-modify-write at a time), the same shape as `DetectionClassSource`.

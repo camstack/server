@@ -23,7 +23,7 @@ import { useTranslation } from 'react-i18next'
  */
 import type { ReactNode } from 'react'
 import { Video, Activity, Brain, LineChart, Bell, AudioLines, Music } from 'lucide-react'
-import { Button } from '@camstack/ui-library'
+import { Button } from '@dominevo/ui-library'
 
 export interface FlowStep {
   readonly capName: string
@@ -81,14 +81,14 @@ export const KNOWN_FLOW_CAPS = [
   },
 ] as const
 
-// Re-export the canonical capability rosters from `@camstack/types`
+// Re-export the canonical capability rosters from `@dominevo/types`
 // (single source of truth shared between backend + admin-ui). The list
 // `KNOWN_FLOW_CAPS` above is the UI-only augmentation that attaches a
 // label + icon to each flow cap; the raw name lists come from types.
 export {
   PIPELINE_FLOW_CAPABILITY_NAMES as PIPELINE_CAPABILITY_NAMES,
   PIPELINE_OWNER_CAPABILITY_NAMES,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 interface FlowStripProps {
   readonly steps: readonly FlowStep[]

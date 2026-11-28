@@ -5,7 +5,7 @@
  * by field, so a fake that echoes its input would supply the claim production
  * forgot to carry.
  */
-import type { TokenScope } from '@camstack/types'
+import type { TokenScope } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { AuthManager } from '../../../auth/auth-manager.js'
 import { staticJwtSigningKey } from '../../../auth/jwt-signing-key.js'

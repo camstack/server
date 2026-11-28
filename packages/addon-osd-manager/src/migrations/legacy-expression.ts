@@ -6,7 +6,7 @@
  * Frozen on purpose: a migration states the shape it READS, so these schemas
  * never follow the live ones.
  */
-import { normalizeUnit, runtimeFieldUnit, templateCapKey } from '@camstack/types'
+import { normalizeUnit, runtimeFieldUnit, templateCapKey } from '@dominevo/types'
 import { z } from 'zod'
 
 export const LegacySourceSchema = z.object({ kind: z.string() }).passthrough()

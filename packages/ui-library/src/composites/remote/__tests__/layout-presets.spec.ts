@@ -1,4 +1,4 @@
-import { RemoteLayoutPayloadSchema } from '@camstack/types'
+import { RemoteLayoutPayloadSchema } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { copyOfPreset, REMOTE_LAYOUT_PRESETS } from '../layout-presets'
 import { resolveAppBrand } from '../app-brand-icons'

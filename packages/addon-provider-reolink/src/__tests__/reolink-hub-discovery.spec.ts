@@ -2,7 +2,7 @@
  * D985 — a scan offers an NVR / Home Hub as an INTEGRATION to set up, with a stableId the boot
  * migration derives too (so `originStableId` hides the candidate), never as a camera to add.
  */
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   looksLikeReolinkHub,

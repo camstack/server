@@ -1,10 +1,10 @@
 /**
- * How an MCP server reaches a hub: the `camstack login` session, renewed
+ * How an MCP server reaches a hub: the `dominevo login` session, renewed
  * automatically, and nothing else (D1101). No token flag, no token file, no
  * credential in the environment. TLS is pinned or the system store, never
  * switched off.
  *
- * Shared by `camstack mcp` and the private operator MCP so there is one chain.
+ * Shared by `dominevo mcp` and the private operator MCP so there is one chain.
  */
 import { adminCredentialHint, sessionLoginCommand } from '../hub/login-hints.js'
 import {
@@ -27,7 +27,7 @@ export interface HubConnectOptions {
   /** The session cache directory (tests); defaults to `~/.camstack`. */
   readonly sessionDir?: string
   readonly transport?: HubTransport
-  /** The exact `camstack login` command to show (tests); default: derived from PATH. */
+  /** The exact `dominevo login` command to show (tests); default: derived from PATH. */
   readonly loginCommand?: string
 }
 
@@ -94,7 +94,7 @@ export async function connectHub(options: HubConnectOptions): Promise<HubConnect
   })
   if (!hub) {
     throw new Error(
-      'no hub address: pass --server, set CAMSTACK_HUB_URL, write <checkout>/scratchpad/.hub-url, or run `camstack login`',
+      'no hub address: pass --server, set CAMSTACK_HUB_URL, write <checkout>/scratchpad/.hub-url, or run `dominevo login`',
     )
   }
   const loginCommand = options.loginCommand ?? sessionLoginCommand()

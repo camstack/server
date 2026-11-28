@@ -4,7 +4,7 @@ import {
   type DiscoveryCandidate,
   type DiscoveryHit,
   type DiscoveryMode,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { slugifyHost } from './config.js'
 
 /** The gateway's `CMD_BROADCAST` probe: header, command 0x12, size 3, checksum. */

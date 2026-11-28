@@ -9,8 +9,8 @@
  * by hand, and an empty answer offers the free entry — none of them reads as
  * "this device has no faults" (D315). No code means any fault.
  */
-import type { DeviceFaultIsLeaf, DeviceFaultRaisedLeaf } from '@camstack/types'
-import { DeviceValuePicker } from '@camstack/ui-library'
+import type { DeviceFaultIsLeaf, DeviceFaultRaisedLeaf } from '@dominevo/types'
+import { DeviceValuePicker } from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 import { OptionListField } from '../../system/notification-rule-pickers'
 import { useFaultTypeOptions } from '../../system/useFaultTypeOptions'

@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { FileUp } from 'lucide-react'
-import { Button, FileInput, Textarea } from '@camstack/ui-library'
+import { Button, FileInput, Textarea } from '@dominevo/ui-library'
 import { checkPem, PEM_ACCEPT, type PemKind, readPemFile } from './pem-file'
 import { useTranslation } from 'react-i18next'
 

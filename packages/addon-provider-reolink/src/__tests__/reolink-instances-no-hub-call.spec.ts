@@ -3,7 +3,7 @@
  * so `listInstances` asking the hub for evidence is an unbounded call cycle. The request path
  * reads the addon's cache only.
  */
-import { makeInMemoryRecords } from '@camstack/types'
+import { makeInMemoryRecords } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   buildReolinkInstances,

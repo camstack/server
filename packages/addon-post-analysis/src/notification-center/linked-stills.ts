@@ -23,7 +23,7 @@
  * camera.
  */
 import { randomUUID } from 'node:crypto'
-import type { IScopedLogger, MediaFileBytes } from '@camstack/types'
+import type { IScopedLogger, MediaFileBytes } from '@dominevo/types'
 import sharp from 'sharp'
 import {
   downscaleFullFrameJpeg,

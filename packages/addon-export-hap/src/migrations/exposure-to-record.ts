@@ -13,7 +13,7 @@
  * An entry the schema does not know (a mapper kind the addon no longer serves) is dropped on the
  * way, which is what the boot sweep did to it anyway.
  */
-import { type MigrationPlan, type MigrationProcedureResult, preconditionOf } from '@camstack/types'
+import { type MigrationPlan, type MigrationProcedureResult, preconditionOf } from '@dominevo/types'
 import {
   ActionExportEntrySchema,
   ExposedConfigEntrySchema,

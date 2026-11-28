@@ -5,7 +5,7 @@
  * caller supplies what the body and the footer say.
  */
 import { type ReactElement, type ReactNode } from 'react'
-import { Button } from '@camstack/ui-library'
+import { Button } from '@dominevo/ui-library'
 import { ProviderIcon } from '../shared/ProviderIcon'
 
 /** 1 column on a phone, 2 in between, 3 on wide screens. */

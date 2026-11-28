@@ -1,6 +1,6 @@
 /**
  * The React-free slice of the theme: the token values and their plain-CSS
- * form. A separate entry (`@camstack/ui-library/theme/tokens`) so a Node
+ * form. A separate entry (`@dominevo/ui-library/theme/tokens`) so a Node
  * process can read the tokens without loading React.
  */
 export type { CamStackColorTokens, CamStackTheme } from './types'

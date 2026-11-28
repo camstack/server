@@ -4,7 +4,7 @@
  * Two responsibilities, both in RAM and neither durable:
  *  - the edge MEMORY, per `(deviceId, capName)`, which makes `false→true`
  *    distinguishable from a re-emission. The predicate is `evaluateSensorEdge`
- *    (`@camstack/types`) — the same `SOURCE_CAP_ACTIVE_FIELD` table as the
+ *    (`@dominevo/types`) — the same `SOURCE_CAP_ACTIVE_FIELD` table as the
  *    composite doorbell and the camera-sensors bridge, not a copy;
  *  - the INVERSE INDEX source→cameras, a mirrored state refreshed OFF
  *    the event path (D49): `setBindings` is called at boot from the
@@ -23,8 +23,8 @@
  * Pure with respect to the world: no bus, no logger, no clock of its own.
  * The caller logs the verdict — a branch that lights nothing SAYS so.
  */
-import { evaluateSensorEdge, DEFAULT_FIRST_SIGHTING_FRESHNESS_MS } from '@camstack/types'
-import type { RecordingConfig, SensorEdgeIgnoreReason } from '@camstack/types'
+import { evaluateSensorEdge, DEFAULT_FIRST_SIGHTING_FRESHNESS_MS } from '@dominevo/types'
+import type { RecordingConfig, SensorEdgeIgnoreReason } from '@dominevo/types'
 
 /**
  * The `DeviceStateChanged` payload this router consumes. Only what it reads is

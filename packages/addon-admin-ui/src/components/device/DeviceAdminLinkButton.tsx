@@ -19,7 +19,7 @@
  * to a device that is offline. Never a disabled button: none of those four is
  * "broken" (D62).
  */
-import { useDeviceAdminLink, useSystem } from '@camstack/ui-library'
+import { useDeviceAdminLink, useSystem } from '@dominevo/ui-library'
 import { ExternalLink } from 'lucide-react'
 import type { ReactNode } from 'react'
 

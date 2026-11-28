@@ -3,8 +3,8 @@
  * bus changes the persisted features, a driver re-registering does not undo
  * what the kernel derived, and an unbound cap takes its feature away.
  */
-import type { IEventBus, SystemEvent } from '@camstack/types'
-import { DeviceFeature, EventCategory } from '@camstack/types'
+import type { IEventBus, SystemEvent } from '@dominevo/types'
+import { DeviceFeature, EventCategory } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { setup, registerCamera } from './device-manager-harness.js'
 import { readDeviceRow } from './settings-store-api.js'

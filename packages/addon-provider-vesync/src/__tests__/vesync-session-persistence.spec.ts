@@ -4,7 +4,7 @@
  * it — and then persists the new one. Signing in on every restart is what VeSync answered with
  * "auth code expired".
  */
-import { createDurableState, type IScopedLogger } from '@camstack/types'
+import { createDurableState, type IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { vesyncConnectionSchema, type VeSyncConnectionConfig } from '../config.js'
 import {

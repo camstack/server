@@ -7,7 +7,7 @@
  * server given explicitly never reaches this module. Prompts are injected so
  * the flow is tested without a terminal.
  */
-import { normalizeHubAddress } from '@camstack/develop'
+import { normalizeHubAddress } from '@dominevo/develop'
 import { describeHub, type HubCandidate, validateManualHubUrl } from './hub-finder.js'
 
 export const MANUAL_ENTRY_VALUE = '__manual__'

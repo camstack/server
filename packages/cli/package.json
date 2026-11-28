@@ -1,7 +1,7 @@
 {
-  "name": "camstack",
-  "version": "1.2.244",
-  "description": "CLI tool for managing and running CamStack server",
+  "name": "dominevo",
+  "version": "0.1.0",
+  "description": "CLI tool for managing and running Dominevo server",
   "keywords": [
     "camstack",
     "cli",
@@ -12,16 +12,16 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/camstack/server.git",
+    "url": "https://github.com/dominevo/server.git",
     "directory": "packages/cli"
   },
   "homepage": "https://camstack-docs.zentik.app",
   "bugs": {
-    "url": "https://github.com/camstack/server/issues"
+    "url": "https://github.com/dominevo/server/issues"
   },
   "type": "module",
   "bin": {
-    "camstack": "dist/cli.js"
+    "dominevo": "dist/cli.js"
   },
   "preferGlobal": true,
   "engines": {
@@ -39,19 +39,19 @@
     "publish:npm": "npm publish"
   },
   "optionalDependencies": {
-    "@camstack/server": "*"
+    "@dominevo/server": "0.1.0"
   },
   "devDependencies": {
-    "@camstack/server": "*",
-    "@camstack/types": "*",
+    "@dominevo/server": "0.1.0",
+    "@dominevo/types": "0.1.0",
     "@types/node": "^24",
     "tsup": "^8.5.1",
     "typescript": "~6.0.3",
     "vitest": "^3.0.0"
   },
   "dependencies": {
-    "@camstack/develop": "*",
-    "@camstack/mcp-develop": "*",
+    "@dominevo/develop": "0.1.0",
+    "@dominevo/mcp-develop": "0.1.0",
     "@clack/prompts": "^1.3.0",
     "@modelcontextprotocol/sdk": "^1.32.0",
     "zod": "^4.3.6"

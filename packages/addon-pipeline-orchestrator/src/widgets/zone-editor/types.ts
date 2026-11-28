@@ -3,7 +3,7 @@
  *
  * The orchestrator speaks in `Zone`s (`polygon` | `tripwire`, normalized
  * 0..1 points). The on-frame editor is the shared `MaskShapeCanvas` from
- * `@camstack/ui-library`, which speaks `MaskShape` / `MaskShapeItem`. This
+ * `@dominevo/ui-library`, which speaks `MaskShape` / `MaskShapeItem`. This
  * module owns BOTH the domain types (so `ZoneList` / `ZoneForm` / `ZonesTab`
  * keep their model after the bespoke `ZoneCanvas` was removed) and the
  * loss-less `Zone ⇄ MaskShapeItem` translation:
@@ -14,9 +14,9 @@
  * Every `Zone.points` entry is already a `{ x, y }` normalized point, which is
  * structurally a `MaskPoint`, so the round-trip never reshapes coordinates.
  */
-import type { MaskShapeKind } from '@camstack/types'
-import type { CanvasZone as Zone, CanvasZoneKind as ZoneKind } from '@camstack/ui-library'
-import { zoneToItem } from '@camstack/ui-library'
+import type { MaskShapeKind } from '@dominevo/types'
+import type { CanvasZone as Zone, CanvasZoneKind as ZoneKind } from '@dominevo/ui-library'
+import { zoneToItem } from '@dominevo/ui-library'
 
 // The model and the Zone -> item mapping live in ui-library, shared with the
 // read-only zones layer; re-exported so the editor keeps its imports.

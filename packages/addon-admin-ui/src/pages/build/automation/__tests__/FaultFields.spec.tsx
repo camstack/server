@@ -3,7 +3,7 @@
  * the catalog does not list survives, and a catalog that could not be read says
  * so and leaves the code to be typed (D315).
  */
-import type { DeviceFaultRaisedLeaf } from '@camstack/types'
+import type { DeviceFaultRaisedLeaf } from '@dominevo/types'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -19,9 +19,9 @@ vi.mock('../../../system/useFaultTypeOptions', () => ({
   useFaultTypeOptions: () => catalog.current,
 }))
 
-vi.mock('@camstack/ui-library', async () => {
+vi.mock('@dominevo/ui-library', async () => {
   const actual =
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+    await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return { ...actual, DeviceValuePicker: () => null }
 })
 

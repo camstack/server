@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return -- AddonContext stub crosses typed boundaries. */
-import type { AddonContext, IScopedLogger } from '@camstack/types'
+import type { AddonContext, IScopedLogger } from '@dominevo/types'
 import {
   clearInstanceSwitches,
   integrationInstancesCapability,
   makeInMemoryRecords,
   recordInstanceSwitch,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { REGISTRY_TOGGLE_TO_RECORD_ID } from '../migrations/index.js'
 import { LokiLoggingAddon } from '../loki-logging.addon.js'

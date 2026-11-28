@@ -9,7 +9,7 @@
  * Two or more: a legend is always present and every entry carries its value.
  */
 import { type JSX, type ReactNode } from 'react'
-import { unitDimension } from '@camstack/types'
+import { unitDimension } from '@dominevo/types'
 import { cn } from '../../lib/cn'
 import { swatchFillClass, swatchLineClass, type ChartSwatchToken } from './chart-palette'
 

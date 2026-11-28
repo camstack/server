@@ -38,8 +38,8 @@
  *  - draining, estimated → bytes remaining AND a date;
  *  - draining, no estimate yet → bytes remaining, and the absence stated.
  */
-import type { StorageLocation, StorageLocationStateSource } from '@camstack/types'
-import { resolveLocationMode } from '@camstack/types'
+import type { StorageLocation, StorageLocationStateSource } from '@dominevo/types'
+import { resolveLocationMode } from '@dominevo/types'
 
 /** One row of `storage.listDrainProgress`, after narrowing. */
 export interface DrainProgressRow {

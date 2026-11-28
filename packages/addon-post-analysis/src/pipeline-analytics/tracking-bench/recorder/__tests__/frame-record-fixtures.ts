@@ -5,7 +5,7 @@
  * asserts these fixtures populate every key the tables name, so a field added
  * to the type reaches this fixture before the guard can pass again.
  */
-import { APPEARANCE_BIN_COUNT, type FrameResult, type ObjectDetection } from '@camstack/types'
+import { APPEARANCE_BIN_COUNT, type FrameResult, type ObjectDetection } from '@dominevo/types'
 import type { FrameObservation } from '../../../pipeline/frame-observation.js'
 import { hubFacePseudonymizer } from '../frame-record.js'
 

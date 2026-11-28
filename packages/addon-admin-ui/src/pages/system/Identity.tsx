@@ -5,7 +5,7 @@
  * Tabs. Retired `?tab=api-keys|linked-sessions` redirect into Tokens & sessions.
  * Create for Tokens lives on the page header (Notifications pattern).
  */
-import { Button } from '@camstack/ui-library'
+import { Button } from '@dominevo/ui-library'
 import { Lock, Smartphone } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'

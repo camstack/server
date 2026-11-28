@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { startGuardedSessionDecode } from '../guarded-session-decode.js'
 
 function makeLogger(): IScopedLogger {

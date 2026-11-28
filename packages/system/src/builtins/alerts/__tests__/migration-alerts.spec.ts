@@ -1,4 +1,4 @@
-import type { Alert, MigrationLedgerEntry, MigrationMeta } from '@camstack/types'
+import type { Alert, MigrationLedgerEntry, MigrationMeta } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { MIGRATION_ALERT_PREFIX, planMigrationAlerts } from '../migration-alerts.js'
 

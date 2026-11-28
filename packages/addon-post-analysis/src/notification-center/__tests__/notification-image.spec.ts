@@ -6,7 +6,7 @@
  * fails here. The stage half pins the memo (N targets, one render), the
  * fallback reasons, and that a box is read at the SOURCE frame's instant.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import sharp from 'sharp'
 import { describe, expect, it } from 'vitest'
 import {

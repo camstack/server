@@ -1,4 +1,4 @@
-import type { EncodedPacket } from '@camstack/types'
+import type { EncodedPacket } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   clipFfmpegArgs,

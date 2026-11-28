@@ -1,4 +1,4 @@
-import type { ConfigUISchema } from '@camstack/types'
+import type { ConfigUISchema } from '@dominevo/types'
 
 /**
  * SFTP `storage-provider` config schema — drives the "Add location" wizard

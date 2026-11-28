@@ -5,7 +5,7 @@
  * a JSON blob (string keys); the reconciler keys on numeric device ids. Arrays
  * are copied so neither side aliases the other's storage.
  */
-import type { ExportTargetEntry } from '@camstack/types/node'
+import type { ExportTargetEntry } from '@dominevo/types/node'
 import type { ExportTargetEntryJson } from '../hap-export.addon.js'
 
 export type ExportSyncStateJson = Readonly<Record<string, ExportTargetEntryJson>>

@@ -7,7 +7,7 @@
  * exactly why the admin UI uses it as its 4s hub-liveness probe (#26).
  */
 
-import type { NodeLiveness } from '@camstack/types'
+import type { NodeLiveness } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   buildHubHealth,

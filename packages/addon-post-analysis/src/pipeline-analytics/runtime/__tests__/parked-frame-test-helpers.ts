@@ -3,7 +3,7 @@
  * `parked-frame-client.spec.ts` (D683 Task 17) so the adopt spec can build the
  * same fake api + orders without duplicating them.
  */
-import type { FrameHandle, ParkedFrameKind, ParkTrackFrameResult } from '@camstack/types'
+import type { FrameHandle, ParkedFrameKind, ParkTrackFrameResult } from '@dominevo/types'
 import { vi } from 'vitest'
 import { makeLogRecorder } from '../../__tests__/test-helpers.js'
 import { buildParkOrders } from '../../pipeline/track-park.js'

@@ -7,7 +7,7 @@
  * Moved verbatim from `getOrCreateProcessor` (origin/main of 2026-09-29); the spec
  * next door pins it key by key.
  */
-import type { DetectionSource } from '@camstack/types'
+import type { DetectionSource } from '@dominevo/types'
 import type { DetectionSensitivitySettings } from '../detection-sensitivity-settings.js'
 import type { TrackingSettings } from '../tracking-settings.js'
 import type { EventEmitterConfig } from './events/event-filter.js'

@@ -76,7 +76,7 @@ own heat pump branch (D315, D224: the two meters are never summed).
 ## Consequences
 
 `CUSTOMIZE_CARDINALITIES` gains `'link'`, so admin-ui needs a renderer. A cap
-change: force-publish `@camstack/server`. `sourceGroups` is gone (phase 4); the `power-meter`
+change: force-publish `@dominevo/server`. `sourceGroups` is gone (phase 4); the `power-meter`
 scalar targets are removed in a later step, after the dry run shows no mixed
 group on any hub.
 

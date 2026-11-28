@@ -14,7 +14,7 @@
  * What THIS one prevents is the other half of the same decision. `/data/framework`
  * used to be re-seeded whenever it was missing, so the post-boot single-copy
  * sweep could delete 509 MB and the next restart would put it straight back —
- * a second `@camstack/server/system` on `NODE_PATH`, for ever. The recreation is now
+ * a second `@dominevo/server/system` on `NODE_PATH`, for ever. The recreation is now
  * the explicit fallback for a closure that cannot boot, and it says so out loud.
  */
 import { execFileSync } from 'node:child_process'
@@ -54,7 +54,7 @@ describe('entrypoint — the image no longer carries a bootstrap addon seed', ()
     // copied into `$FRAMEWORK_DIR` on the fallback boot. Measured 2026-08-25 it
     // was 510 MB duplicating what the first already held — `/opt/camstack-hub`
     // hoists `better-sqlite3`, `node-av`, `sharp` and `zod` at its root and
-    // carries `@camstack/{sdk,system,types}` as dependencies of the server — and
+    // carries `@dominevo/{sdk,system,types}` as dependencies of the server — and
     // it was the THIRD copy of every framework package, which is what made the
     // D45 inventory report three where the design allows two.
     expect(source).toContain('COPY --from=fetch /opt/camstack-hub /opt/camstack-hub')
@@ -78,14 +78,14 @@ describe('entrypoint framework fallback', () => {
       'server-root',
       'current',
       'node_modules',
-      '@camstack',
+      '@dominevo',
       'server',
       'system',
     )
     fs.mkdirSync(dir, { recursive: true })
     fs.writeFileSync(
       path.join(dir, 'package.json'),
-      JSON.stringify({ name: '@camstack/server', version: '1.2.84' }),
+      JSON.stringify({ name: '@dominevo/server', version: '1.2.84' }),
     )
   }
 
@@ -113,8 +113,8 @@ describe('entrypoint framework fallback', () => {
    * A seed tree shaped like the real one: all THREE framework packages, plus a
    * package the fallback must NOT carry over.
    *
-   * The single baked tree is `@camstack/server`'s own install, so it also holds
-   * every baked addon besides. The fallback narrows the `@camstack` scope
+   * The single baked tree is `@dominevo/server`'s own install, so it also holds
+   * every baked addon besides. The fallback narrows the `@dominevo` scope
    * to server/types/sdk on purpose — copying it wholesale would plant every baked
    * addon such as `shm-ring` inside the framework dir, which is the
    * very shadowing D45 forbids and D184 removed.
@@ -126,19 +126,19 @@ describe('entrypoint framework fallback', () => {
       ['sdk', '1.2.78'],
       ['server', '1.2.78'],
     ] as const) {
-      const dir = path.join(seed, 'node_modules', '@camstack', name)
+      const dir = path.join(seed, 'node_modules', '@dominevo', name)
       fs.mkdirSync(dir, { recursive: true })
       fs.writeFileSync(
         path.join(dir, 'package.json'),
-        JSON.stringify({ name: `@camstack/${name}`, version }),
+        JSON.stringify({ name: `@dominevo/${name}`, version }),
       )
     }
-    // The server carries the kernel and builtins itself, as `@camstack/server/system` (D989).
-    const folded = path.join(seed, 'node_modules', '@camstack', 'server', 'system')
+    // The server carries the kernel and builtins itself, as `@dominevo/server/system` (D989).
+    const folded = path.join(seed, 'node_modules', '@dominevo', 'server', 'system')
     fs.mkdirSync(folded, { recursive: true })
     fs.writeFileSync(
       path.join(folded, 'package.json'),
-      JSON.stringify({ name: '@camstack/server-framework', version: '1.2.78' }),
+      JSON.stringify({ name: '@dominevo/server-framework', version: '1.2.78' }),
     )
     return seed
   }
@@ -155,13 +155,13 @@ describe('entrypoint framework fallback', () => {
     expect(out).toContain('OBSERVED_NODE_PATH=<>')
   })
 
-  it('seeds the framework, loudly, when the active closure has no @camstack/server/system', () => {
+  it('seeds the framework, loudly, when the active closure has no @dominevo/server/system', () => {
     const dataDir = path.join(root, 'data')
     fs.mkdirSync(dataDir, { recursive: true })
 
     const out = runFallback(dataDir, seedTree())
 
-    const seeded = path.join(dataDir, 'framework', 'node_modules', '@camstack', 'server', 'system')
+    const seeded = path.join(dataDir, 'framework', 'node_modules', '@dominevo', 'server', 'system')
     expect(fs.existsSync(path.join(seeded, 'package.json'))).toBe(true)
     expect(out).toContain('FALLBACK')
     expect(out).toContain('so this node can boot')
@@ -175,7 +175,7 @@ describe('entrypoint framework fallback', () => {
 
     runFallback(dataDir, seedTree())
 
-    const scope = path.join(dataDir, 'framework', 'node_modules', '@camstack')
+    const scope = path.join(dataDir, 'framework', 'node_modules', '@dominevo')
     expect(fs.readdirSync(scope).toSorted()).toEqual(['sdk', 'server', 'types'])
   })
 
@@ -186,11 +186,11 @@ describe('entrypoint framework fallback', () => {
     // module resolution with an error that names nothing.
     const crippled = path.join(root, 'crippled')
     for (const name of ['server', 'sdk']) {
-      const dir = path.join(crippled, 'node_modules', '@camstack', name)
+      const dir = path.join(crippled, 'node_modules', '@dominevo', name)
       fs.mkdirSync(dir, { recursive: true })
       fs.writeFileSync(
         path.join(dir, 'package.json'),
-        JSON.stringify({ name: `@camstack/${name}` }),
+        JSON.stringify({ name: `@dominevo/${name}` }),
       )
     }
 
@@ -241,7 +241,7 @@ describe('entrypoint ownership repair', () => {
  * The capability line. It exists because its ABSENCE cost a diagnosis: on
  * 2026-08-13 the agent was recreated on an image built from the commit that
  * carries the post-boot sweep, the sweep never ran, and no log said why — the
- * image installs `@camstack/server@latest` from npm, and the published 1.2.101
+ * image installs `@dominevo/server@latest` from npm, and the published 1.2.101
  * it got predates that commit. A backend change is train-bound by construction;
  * the entrypoint now says so out loud, before Node starts.
  */
@@ -269,7 +269,7 @@ describe('entrypoint — which backend is about to run', () => {
     fs.mkdirSync(path.join(dir, 'dist'), { recursive: true })
     fs.writeFileSync(
       path.join(dir, 'package.json'),
-      JSON.stringify({ name: '@camstack/server', version }),
+      JSON.stringify({ name: '@dominevo/server', version }),
     )
     if (withSweep) fs.writeFileSync(path.join(dir, 'dist', 'single-copy-cleanup.js'), '// sweep')
   }
@@ -284,26 +284,26 @@ describe('entrypoint — which backend is about to run', () => {
   it('names the closure version and reports the sweep PRESENT when it ships it', () => {
     const dataDir = path.join(root, 'data')
     writeServer(
-      path.join(dataDir, 'server-root', 'current', 'node_modules', '@camstack', 'server'),
+      path.join(dataDir, 'server-root', 'current', 'node_modules', '@dominevo', 'server'),
       '1.2.102',
       true,
     )
     const out = run(dataDir, path.join(root, 'seed-server'))
 
-    expect(out).toContain('@camstack/server@1.2.102')
+    expect(out).toContain('@dominevo/server@1.2.102')
     expect(out).toContain('sweep PRESENT')
   })
 
   it('says the copies WILL REMAIN when the running backend predates the sweep', () => {
     const dataDir = path.join(root, 'data')
     writeServer(
-      path.join(dataDir, 'server-root', 'current', 'node_modules', '@camstack', 'server'),
+      path.join(dataDir, 'server-root', 'current', 'node_modules', '@dominevo', 'server'),
       '1.2.101',
       false,
     )
     const out = run(dataDir, path.join(root, 'seed-server'))
 
-    expect(out).toContain('@camstack/server@1.2.101')
+    expect(out).toContain('@dominevo/server@1.2.101')
     expect(out).toContain('sweep ABSENT')
     expect(out).toContain('WILL REMAIN')
   })
@@ -313,7 +313,7 @@ describe('entrypoint — which backend is about to run', () => {
     writeServer(seedServer, '1.3.0', true)
     const out = run(path.join(root, 'data'), seedServer)
 
-    expect(out).toContain('@camstack/server@1.3.0')
+    expect(out).toContain('@dominevo/server@1.3.0')
     expect(out).toContain(seedServer)
   })
 })

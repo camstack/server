@@ -35,7 +35,7 @@
  * discipline `resolveExportFingerprint` already applies to a not-yet-probed
  * device.
  */
-import type { RtspEntryLike } from '@camstack/types'
+import type { RtspEntryLike } from '@dominevo/types'
 
 import type { RecordingSourceOptions } from './recording-source.js'
 import { pickRecordingSource } from './recording-source.js'

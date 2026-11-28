@@ -35,7 +35,7 @@ import {
   parseSecretRef,
   RECORD_SECRET_COLLECTION_PREFIX,
   type SystemHeldSecretName,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   defaultKeyFilePath,
   type KeySourceCandidate,

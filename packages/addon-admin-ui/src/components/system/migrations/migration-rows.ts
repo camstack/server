@@ -8,7 +8,7 @@ import type {
   MigrationMeta,
   MigrationPendingEntry,
   MigrationStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export type MigrationRowStatus = MigrationStatus | 'pending'
 

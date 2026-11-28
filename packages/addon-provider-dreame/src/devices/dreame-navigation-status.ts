@@ -17,8 +17,8 @@
  * or of another key decodes to NOTHING (an empty patch), never to a default —
  * the previous slice keeps its value.
  */
-import type { NavigationStatus } from '@camstack/types'
-import { NAVIGATION_LIGHT_LEVEL_MAX, NAVIGATION_LIGHT_LEVEL_MIN } from '@camstack/types'
+import type { NavigationStatus } from '@dominevo/types'
+import { NAVIGATION_LIGHT_LEVEL_MAX, NAVIGATION_LIGHT_LEVEL_MIN } from '@dominevo/types'
 
 /** The fill-light on/off packed property. */
 export const FILL_LIGHT_SIID = 4

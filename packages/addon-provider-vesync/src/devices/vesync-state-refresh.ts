@@ -16,7 +16,7 @@ import {
   deviceStateRefreshCapability,
   type DeviceContext,
   type InferNativeProvider,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { vesyncRefreshPolicy } from '../config.js'
 import { vesyncAccounts } from '../vesync-account-resolver.js'
 import type { VeSyncRefreshTarget } from '../vesync-integration-manager.js'

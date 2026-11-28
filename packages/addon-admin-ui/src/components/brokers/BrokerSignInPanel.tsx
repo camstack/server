@@ -9,7 +9,7 @@
  */
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Tabs, TabsList, TabsTrigger } from '@camstack/ui-library'
+import { Tabs, TabsList, TabsTrigger } from '@dominevo/ui-library'
 import type { BrokerSignInMethod } from '../../lib/broker-sign-in'
 import { BrokerDeviceCodeSignIn } from './BrokerDeviceCodeSignIn'
 import { BrokerProxySignIn } from './BrokerProxySignIn'

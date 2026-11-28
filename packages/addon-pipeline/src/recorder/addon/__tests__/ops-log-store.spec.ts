@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import type { IScopedLogger, OpsLogEntry } from '@camstack/types'
+import type { IScopedLogger, OpsLogEntry } from '@dominevo/types'
 import {
   type RecordingOpsLogState,
   appendOpsLog,

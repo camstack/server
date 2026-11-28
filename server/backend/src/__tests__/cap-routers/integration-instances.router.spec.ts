@@ -3,7 +3,7 @@
  * router's input and output validation, and createInstance accepts a call without an id.
  */
 import { describe, it, expect, vi } from 'vitest'
-import type { IIntegrationInstancesProvider } from '@camstack/types'
+import type { IIntegrationInstancesProvider } from '@dominevo/types'
 import { makeCtx, invokeProcedure, buildCapRouterForTest } from './harness.js'
 
 function makeProvider(): IIntegrationInstancesProvider {

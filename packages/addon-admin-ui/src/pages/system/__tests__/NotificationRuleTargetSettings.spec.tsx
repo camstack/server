@@ -9,8 +9,8 @@ import type {
   NotificationFieldSupport,
   Target,
   TargetKindCaps,
-} from '@camstack/types'
-import { selectOption, selectOptionValues, selectRows } from '@camstack/ui-library/testing'
+} from '@dominevo/types'
+import { selectOption, selectOptionValues, selectRows } from '@dominevo/ui-library/testing'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { renderWithTemplateHub } from '../../../test-setup/device-template-hub'

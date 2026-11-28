@@ -47,7 +47,7 @@
  * `vehicle`, and an identity gallery image is not this track's training data.
  */
 
-import type { Track } from '@camstack/types'
+import type { Track } from '@dominevo/types'
 import { displayLabel } from '../pipeline/label-tier.js'
 import { type MediaKind, SINGLE_INSTANCE_KINDS } from '../store/media-store.js'
 

@@ -34,7 +34,7 @@ import {
   useBackupListSchedules,
   useConfirm,
   useItemFormUrl,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Loader2, Play, Plus, RotateCw } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { AdminPage } from '../../components/AdminPage'

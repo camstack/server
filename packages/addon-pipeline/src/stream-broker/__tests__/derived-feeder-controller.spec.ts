@@ -7,7 +7,7 @@
  * DerivedStreamFeeder so no ffmpeg is launched) and a synchronous fake
  * scheduler so restart timing is deterministic.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   type ActiveDerivedFeeder,

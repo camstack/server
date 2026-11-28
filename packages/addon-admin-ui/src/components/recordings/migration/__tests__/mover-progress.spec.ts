@@ -5,7 +5,7 @@
  * as 0 %, a rate divided by a zero-length window, and an ETA extrapolated from
  * a mover that has moved nothing.
  */
-import type { StorageMigrationMoveProgress } from '@camstack/types'
+import type { StorageMigrationMoveProgress } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { describeProgress, formatDuration, progressSummary } from '../mover-progress'
 

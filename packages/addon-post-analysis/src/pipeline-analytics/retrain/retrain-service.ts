@@ -44,7 +44,7 @@ import {
   type RetrainAnnotationDraft as WireDraft,
   type RetrainFrame as WireFrame,
   type RetrainMacroClass,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { displayLabel } from '../pipeline/label-tier.js'
 import {
   type RetrainAnnotation,

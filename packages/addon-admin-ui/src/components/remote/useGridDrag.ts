@@ -5,7 +5,7 @@
  * move, and the release asks the layout to make the move. A press that never
  * moves stays a click, and the click that follows a drag is swallowed.
  */
-import type { RemoteLayoutPayload } from '@camstack/types'
+import type { RemoteLayoutPayload } from '@dominevo/types'
 import { type PointerEvent, type RefObject, useCallback, useEffect, useRef, useState } from 'react'
 import {
   type Cell,
@@ -17,7 +17,7 @@ import {
   moveItem,
   previewMove,
 } from './layout-drag'
-import { type LayoutResult, rowWeightsOf } from '@camstack/ui-library'
+import { type LayoutResult, rowWeightsOf } from '@dominevo/ui-library'
 
 /** Pixels the pointer must travel before a press is a drag. */
 const DRAG_THRESHOLD_PX = 4

@@ -1,7 +1,7 @@
 /**
  * `check-runner-dist-barrel-free` — the BUILT-output guard. Fixtures stand in
  * for a dist directory: a runner entry requiring chunks, one of them carrying
- * the schema graph the way the inlined `@camstack/types` barrel does.
+ * the schema graph the way the inlined `@dominevo/types` barrel does.
  */
 import * as fs from 'node:fs'
 import * as os from 'node:os'

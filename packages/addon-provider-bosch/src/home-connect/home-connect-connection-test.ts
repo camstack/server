@@ -1,4 +1,4 @@
-import { errMsg, type IConnectionProbe, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IConnectionProbe, type IScopedLogger } from '@dominevo/types'
 import { connectionFromSettings } from './config.js'
 import { fetchHomeConnectAccount, type LoginFetch } from './home-connect-login.js'
 

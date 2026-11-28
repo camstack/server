@@ -1,4 +1,4 @@
-import type { WidgetMetadata } from '@camstack/types'
+import type { WidgetMetadata } from '@dominevo/types'
 
 /**
  * The addon's widgets for `addon-widgets-source.listWidgets`. The bundle is

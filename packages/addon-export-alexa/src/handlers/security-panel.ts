@@ -48,8 +48,8 @@
  * be worse than the omission. A panel cap that grows one should fill it here.
  */
 
-import type { AddonApi, AddonContext, IScopedLogger } from '@camstack/types'
-import { AlarmPanelStatusSchema } from '@camstack/types'
+import type { AddonApi, AddonContext, IScopedLogger } from '@dominevo/types'
+import { AlarmPanelStatusSchema } from '@dominevo/types'
 import { z } from 'zod'
 
 import type { VerifiedDirectiveIdentity } from '../directive-router.js'

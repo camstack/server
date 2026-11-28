@@ -35,7 +35,7 @@
  * instead of inheriting the arrival order of a query.
  */
 
-import type { FaceSortDirection, FaceSortField } from '@camstack/types'
+import type { FaceSortDirection, FaceSortField } from '@dominevo/types'
 
 /** The minimum a row must carry to be ordered. Structural on purpose: the
  *  comparator is a property of the ORDER, not of `Face`. */

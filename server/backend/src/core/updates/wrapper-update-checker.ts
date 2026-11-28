@@ -34,7 +34,7 @@
  * A node that cannot answer at all REJECTS, so `UpdateCheckScheduler.attempt`
  * records it as a failed check. A failed check is an error, never "no update".
  */
-import type { IScopedLogger, ServerPackageStatus } from '@camstack/types'
+import type { IScopedLogger, ServerPackageStatus } from '@dominevo/types'
 import type {
   UpdateAvailabilityEmitter,
   UpdateAvailablePayload,
@@ -72,7 +72,7 @@ export class WrapperUpdateChecker {
     const wrapper = status.wrapper
     const contract = status.imageContract
     if (wrapper === undefined || contract === undefined) {
-      // Version skew: this node's `@camstack/server` predates the wrapper
+      // Version skew: this node's `@dominevo/server` predates the wrapper
       // field. Unanswerable, so it is an ERROR — reporting it as "no wrapper
       // update" would be a claim nothing checked.
       throw new Error(

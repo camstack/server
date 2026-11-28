@@ -1,18 +1,18 @@
 /**
  * AgentUpdateService — agent-side adapter over the SHARED `RootUpdateService`
- * (`@camstack/node-root`, bundled into the `@camstack/server` dist by tsup).
- * Post-consolidation the agent boots the SAME `@camstack/server` closure as
+ * (`@dominevo/node-root`, bundled into the `@dominevo/server` dist by tsup).
+ * Post-consolidation the agent boots the SAME `@dominevo/server` closure as
  * the hub (via `CAMSTACK_ROLE=agent`), so this service stages/applies
- * `@camstack/server` closures in `<agentDataDir>/server-root/`, applied on
+ * `@dominevo/server` closures in `<agentDataDir>/server-root/`, applied on
  * restart by the shared STARTER (single-copy in-place swap — no probation,
  * no auto-rollback).
  *
  * The engine lives in the shared core; this module binds the agent's
  * parameters, which differ from the hub only in the RESTART seam:
- *   - spec `@camstack/server` + `dist/launcher.js` (the single root spec)
+ *   - spec `@dominevo/server` + `dist/launcher.js` (the single root spec)
  *   - env markers `CAMSTACK_SERVER_{BOOT_MODE,ACTIVE_VERSION}` +
  *     `CAMSTACK_SEED_SERVER_DIR` (written by the shared starter / image) —
- *     identical to the hub, because the on-disk root is `@camstack/server`
+ *     identical to the hub, because the on-disk root is `@dominevo/server`
  *   - restart = graceful self-SIGTERM → the supervisor (docker restart
  *     policy / Electron main) relaunches → the shared starter swaps the copy
  *   - confirmBootHealthy = the agent's `$hub.registerNode` reaching its
@@ -24,15 +24,15 @@ import { randomUUID } from 'node:crypto'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { readInstalledAddonVersions } from '../core/addon/installed-addon-versions.js'
-import type { RegisteredAddonManifest } from '@camstack/server/system'
-import { readPendingRestart, writePendingRestart } from '@camstack/server/system'
+import type { RegisteredAddonManifest } from '@dominevo/server/system'
+import { readPendingRestart, writePendingRestart } from '@dominevo/server/system'
 import type {
   IEventBus,
   IScopedLogger,
   PendingRestartMarkerPayload,
   RunnerBootCheck,
-} from '@camstack/types'
-import { EventCategory } from '@camstack/types'
+} from '@dominevo/types'
+import { EventCategory } from '@dominevo/types'
 import {
   buildSystemEnsureNativePrebuilds,
   type EnsureNativePrebuildsFn,
@@ -84,8 +84,8 @@ export function isRunningInContainer(existsSyncFn: (p: string) => boolean): bool
 }
 
 /**
- * Resolve the RUNNING root (`@camstack/server`) package.json. The agent boots
- * the same `@camstack/server` closure as the hub, whose dist lives at
+ * Resolve the RUNNING root (`@dominevo/server`) package.json. The agent boots
+ * the same `@dominevo/server` closure as the hub, whose dist lives at
  * `<pkg>/dist/*.js`, so `../package.json` is the normal hit; the second
  * candidate covers a nested layout.
  */
@@ -262,7 +262,7 @@ export class AgentUpdateService extends RootUpdateService {
     super({
       spec: HUB_ROOT_SPEC,
       nodeId,
-      // The agent's on-disk root IS `@camstack/server` (booted via
+      // The agent's on-disk root IS `@dominevo/server` (booted via
       // CAMSTACK_ROLE=agent by the shared starter), so it reads the SAME
       // `CAMSTACK_SERVER_*` boot markers the starter writes.
       envNames: {

@@ -12,8 +12,8 @@
  * verbatim; a JSON number or boolean raises inside its state callback,
  * which it swallows — so the entity silently never updates again.
  */
-import { COCO_TO_MACRO } from '@camstack/types'
-import { CAP_STATE_FIELD_PRESENCE } from '@camstack/types/addon'
+import { COCO_TO_MACRO } from '@dominevo/types'
+import { CAP_STATE_FIELD_PRESENCE } from '@dominevo/types/addon'
 import {
   CAP_ENTITY_MAP,
   capEntities,

@@ -19,7 +19,7 @@
  * not be lost here is the reclaim. It is cheap — one call per held handle per
  * sweep, and the map is empty for all but the seconds an Echo is watching.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 export interface HeldEgressHandle {
   readonly deviceId: number

@@ -5,8 +5,8 @@
  * sensor's own `contact` slice, never inferred from the lock state.
  */
 import { useEffect, useState } from 'react'
-import type { CompositionCustomizationRead, DeviceInfo } from '@camstack/types'
-import { coreBlockComposition, lockDoorLinkOfComposition } from '@camstack/types'
+import type { CompositionCustomizationRead, DeviceInfo } from '@dominevo/types'
+import { coreBlockComposition, lockDoorLinkOfComposition } from '@dominevo/types'
 import { useDeviceState, type UseDeviceProxyTrpc } from './use-device-proxy'
 
 interface QueryFn<I, O> {

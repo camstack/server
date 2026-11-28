@@ -2,7 +2,7 @@ import {
   BUILTIN_REMOTE_COMPONENTS,
   RemoteLayoutComponentSchema,
   remoteLayoutComponentsCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { RemoteComponentsService } from '../remote-components-service.js'
 

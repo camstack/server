@@ -13,7 +13,7 @@ import {
   type DeviceContext,
   type InferNativeProvider,
   type StateRefreshPolicy,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { effectivePollIntervalMs } from '../enpal-blazor.js'
 import { enpalConnections } from '../enpal-resolver.js'
 

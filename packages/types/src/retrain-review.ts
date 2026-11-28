@@ -11,7 +11,7 @@
  * tools and the viewer all read the same classification.
  *
  * Pure, and free of runtime imports from the capability file (type imports are
- * erased), so the viewer can take it from `@camstack/types/client`.
+ * erased), so the viewer can take it from `@dominevo/types/client`.
  *
  * ## Statuses
  *

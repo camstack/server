@@ -38,7 +38,7 @@
  *    reads (C1).
  */
 
-import { NC_GROUPING_MAX_SEC, NC_GROUPING_MIN_SEC } from '@camstack/types'
+import { NC_GROUPING_MAX_SEC, NC_GROUPING_MIN_SEC } from '@dominevo/types'
 import type { NcEventOrigin } from '../event-intake.js'
 import type { NcRuleSubject } from '../rule-engine.js'
 

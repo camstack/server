@@ -10,7 +10,7 @@ import {
   composedDeviceRef,
   compositionSourceKey,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { ComposedDeviceHandle } from './composed-device.js'
 import type { PlannedBlock } from './composer-plan.js'
 import {

@@ -20,7 +20,7 @@ import type {
   PreparedNotification,
   TargetKind,
   TargetKindCaps,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { HttpRequestPlan, HttpNotifierAdapter, TargetConfig } from './adapter.js'
 
 /** The `kind` discriminator for the generic webhook. */

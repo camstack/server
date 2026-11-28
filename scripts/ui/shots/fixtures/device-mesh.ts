@@ -1,7 +1,7 @@
 /**
  * The Network page's Device networks section (`/system/network?tab=device-mesh`):
  * one invented Thread mesh (a border router, three routers, a sleepy sensor and
- * two end devices, one peer CamStack did not commission) read through the
+ * two end devices, one peer Dominevo did not commission) read through the
  * `device-mesh` capability, with the per-node report of the focused node.
  */
 import { defineFixtures } from './_define'
@@ -133,7 +133,7 @@ export default defineFixtures({
       rebootCount: 2,
       bootReason: null,
       networkFaults: [],
-      fabrics: [{ fabricIndex: 1, label: 'CamStack', vendorId: 4939 }],
+      fabrics: [{ fabricIndex: 1, label: 'Dominevo', vendorId: 4939 }],
       thread: {
         role: 'router',
         rloc16: 0x4400,

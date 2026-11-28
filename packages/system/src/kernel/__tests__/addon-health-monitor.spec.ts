@@ -1,4 +1,4 @@
-import { EventCategory, type IEventBus, type IScopedLogger } from '@camstack/types'
+import { EventCategory, type IEventBus, type IScopedLogger } from '@dominevo/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   AddonHealthMonitor,
@@ -61,7 +61,7 @@ describe('AddonHealthMonitor', () => {
       })
 
       // Failure during grace → no AddonLoadFailed
-      m.recordFailure('@camstack/addon-foo', new Error('boom'))
+      m.recordFailure('@dominevo/addon-foo', new Error('boom'))
       const failedDuringGrace = events.filter((e) => e.category === EventCategory.AddonLoadFailed)
       expect(failedDuringGrace).toEqual([])
 
@@ -70,7 +70,7 @@ describe('AddonHealthMonitor', () => {
       await m.tick()
       const failedAfterGrace = events.filter((e) => e.category === EventCategory.AddonLoadFailed)
       expect(failedAfterGrace).toHaveLength(1)
-      expect(failedAfterGrace[0]!.data['packageName']).toBe('@camstack/addon-foo')
+      expect(failedAfterGrace[0]!.data['packageName']).toBe('@dominevo/addon-foo')
     })
 
     it('emits AddonLoadFailed immediately when failure happens after grace', () => {
@@ -84,7 +84,7 @@ describe('AddonHealthMonitor', () => {
       })
 
       now += 70_000 // past grace
-      m.recordFailure('@camstack/addon-foo', new Error('boom'))
+      m.recordFailure('@dominevo/addon-foo', new Error('boom'))
       const failed = events.filter((e) => e.category === EventCategory.AddonLoadFailed)
       expect(failed).toHaveLength(1)
     })
@@ -100,9 +100,9 @@ describe('AddonHealthMonitor', () => {
       })
 
       now += 70_000
-      m.recordFailure('@camstack/addon-foo', new Error('first'))
-      m.recordFailure('@camstack/addon-foo', new Error('second'))
-      m.recordFailure('@camstack/addon-foo', new Error('third'))
+      m.recordFailure('@dominevo/addon-foo', new Error('first'))
+      m.recordFailure('@dominevo/addon-foo', new Error('second'))
+      m.recordFailure('@dominevo/addon-foo', new Error('third'))
 
       const failed = events.filter((e) => e.category === EventCategory.AddonLoadFailed)
       expect(failed).toHaveLength(1)
@@ -163,14 +163,14 @@ describe('AddonHealthMonitor', () => {
 
       // Fail post-grace → emits AddonLoadFailed
       now += 70_000
-      m.recordFailure('@camstack/addon-foo', new Error('boom'))
+      m.recordFailure('@dominevo/addon-foo', new Error('boom'))
       expect(events.filter((e) => e.category === EventCategory.AddonLoadFailed)).toHaveLength(1)
 
       // Recover → emits AddonLoadRecovered
-      m.recordSuccess('@camstack/addon-foo')
+      m.recordSuccess('@dominevo/addon-foo')
       const recovered = events.filter((e) => e.category === EventCategory.AddonLoadRecovered)
       expect(recovered).toHaveLength(1)
-      expect(m.getHealth('@camstack/addon-foo')!.phase).toBe('healthy')
+      expect(m.getHealth('@dominevo/addon-foo')!.phase).toBe('healthy')
     })
 
     it('does NOT emit AddonLoadRecovered when never alerted', () => {
@@ -184,8 +184,8 @@ describe('AddonHealthMonitor', () => {
       })
 
       // Fail during grace (no alert), then recover
-      m.recordFailure('@camstack/addon-foo', new Error('boom'))
-      m.recordSuccess('@camstack/addon-foo')
+      m.recordFailure('@dominevo/addon-foo', new Error('boom'))
+      m.recordSuccess('@dominevo/addon-foo')
       expect(events.filter((e) => e.category === EventCategory.AddonLoadRecovered)).toEqual([])
     })
   })
@@ -202,17 +202,17 @@ describe('AddonHealthMonitor', () => {
         now: clock,
       })
 
-      m.recordFailure('@camstack/addon-foo', new Error('boom'))
+      m.recordFailure('@dominevo/addon-foo', new Error('boom'))
       expect(retryFn).not.toHaveBeenCalled()
 
       // Advance past nextRetryAt and tick.
       now += HEALTH_MONITOR_RETRY_INTERVALS_MS[0]! + 1
       await m.tick()
 
-      expect(retryFn).toHaveBeenCalledWith('@camstack/addon-foo')
+      expect(retryFn).toHaveBeenCalledWith('@dominevo/addon-foo')
       // retryFn resolved without throwing → monitor should have marked
       // the addon healthy (auto-resolve fallback in attemptRetry).
-      expect(m.getHealth('@camstack/addon-foo')!.phase).toBe('healthy')
+      expect(m.getHealth('@dominevo/addon-foo')!.phase).toBe('healthy')
     })
 
     it('rebumps nextRetryAt when retryFn throws', async () => {

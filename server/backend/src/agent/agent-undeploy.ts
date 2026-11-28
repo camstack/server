@@ -1,6 +1,6 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { readPackageManifestAddons } from './agent-group-runner.js'
 import type { LoadedAddonEntry } from './agent-service.js'
 
@@ -13,7 +13,7 @@ import type { LoadedAddonEntry } from './agent-service.js'
  * is in-process — every deployable addon runs in a GROUP RUNNER spawned through
  * `$process.spawnRunner` — so for the addons that actually exist the first two
  * steps were no-ops and the third deleted the code from under a process that
- * kept running. 2026-10-08: `@camstack/addon-decoder-ffmpeg` was uninstalled on
+ * kept running. 2026-10-08: `@dominevo/addon-decoder-ffmpeg` was uninstalled on
  * the hub and its runner stayed up on both agents, still advertising `decoder`.
  *
  * What a real removal does, in order:

@@ -1,4 +1,4 @@
-import { HubRpcError } from '@camstack/develop'
+import { HubRpcError } from '@dominevo/develop'
 import { describe, expect, it } from 'vitest'
 import { applyPlan, ApplyPlanSchema, type ApplyPlan } from '../apply.js'
 import { annotation, FakeHub, frameFor } from './fixtures.js'

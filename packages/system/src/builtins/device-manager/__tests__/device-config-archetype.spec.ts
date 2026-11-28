@@ -11,7 +11,7 @@ import type {
   ImageSettingsStatus,
   StreamParamsOptions,
   StreamParamsStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 const options: StreamParamsOptions = {
   main: {

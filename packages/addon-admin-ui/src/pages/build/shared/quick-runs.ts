@@ -4,7 +4,7 @@
  * Runs panel keeps for a selected run, so the modal and the editor never tell
  * two stories about the same run.
  */
-import type { AutomationRunOutcome, AutomationRunTrace, SchedulerOutcome } from '@camstack/types'
+import type { AutomationRunOutcome, AutomationRunTrace, SchedulerOutcome } from '@dominevo/types'
 import { runSummary } from '../flow/trace-view'
 
 /** How many runs the modal keeps: a glance, not the history (the editor holds that). */

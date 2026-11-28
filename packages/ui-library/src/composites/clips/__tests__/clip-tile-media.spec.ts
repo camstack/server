@@ -10,7 +10,7 @@
  * not look" ambiguity the vouching rule exists to remove.
  */
 import { describe, expect, it } from 'vitest'
-import type { Clip } from '@camstack/types'
+import type { Clip } from '@dominevo/types'
 import { describeRefusal, resolveTileMedia } from '../clip-tile-media.js'
 
 const BASE: Clip = {

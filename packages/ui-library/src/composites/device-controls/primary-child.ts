@@ -5,7 +5,7 @@
  * The list and the resolution used to live here, in a COPY that carried a
  * comment asking the Home Assistant adoption mapping and the viewer's panel to
  * stay in sync with it. Three lists and three comments is not one rule, it is
- * three chances to drift. Both now come from `@camstack/types`, which all of
+ * three chances to drift. Both now come from `@dominevo/types`, which all of
  * them already depend on; what remains here is the adapter for this module's
  * historical `ChildRef` shape.
  */
@@ -14,7 +14,7 @@ import {
   CONTAINER_CHILD_PRIORITY,
   resolveContainerPrimaryChild,
   type ContainerPrimaryChildPreference,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** The shared precedence, under this module's historical name. */
 export const PRIORITY: readonly string[] = CONTAINER_CHILD_PRIORITY

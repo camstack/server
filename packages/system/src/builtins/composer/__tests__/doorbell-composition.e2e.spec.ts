@@ -1,4 +1,4 @@
-import { EventCategory } from '@camstack/types'
+import { EventCategory } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import {
   CAMERA_101,

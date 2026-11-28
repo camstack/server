@@ -27,7 +27,7 @@ import {
   type MigrationProcedureResult,
   moveCalendarIdsToRecords,
   type StoredKeyRead,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { parseStampedCalendarId } from '../google-broker-registry.js'
 import type { CalendarIdsPorts } from './calendar-ids-to-brokers.js'
 

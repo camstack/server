@@ -4,7 +4,7 @@
  * cadence. The runner never keeps a warm copy (D224): every refresh past the
  * TTL asks the hub; a failed read keeps the last known value and says so.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { NodeDecodeLimitsOverride } from '../session-decode/node-decode-budget.js'
 
 export const NODE_DECODE_LIMITS_TTL_MS = 30_000

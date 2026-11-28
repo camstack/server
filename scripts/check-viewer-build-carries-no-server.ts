@@ -5,7 +5,7 @@
  * ── What this prevents ─────────────────────────────────────────────────────
  * The desktop shell builds TWO products from one source tree (D402). The fat
  * one stages, into `Resources/`, a full Node 24 binary and the entire
- * `@camstack/server` closure — system/types/sdk/ui-library, every
+ * `@dominevo/server` closure — system/types/sdk/ui-library, every
  * `addon-*`, fastify/moleculer/zod/winston, and native prebuilds for
  * better-sqlite3, node-av and sharp. The viewer product runs NONE of it: its
  * role spawns no node process. That is the whole reason it exists.
@@ -17,9 +17,9 @@
  * megabytes bigger than the thing it replaced.
  *
  * The second half is a scar, not a hypothetical. The release workflow matches
- * build outputs by GLOB. Two matrix legs once shared `CamStack-*`, and one
+ * build outputs by GLOB. Two matrix legs once shared `Dominevo-*`, and one
  * architecture's DMG overwrote the other's on the v1.2.3 release. A viewer
- * artifact named `CamStack-…` would do it again, to a different pair.
+ * artifact named `Dominevo-…` would do it again, to a different pair.
  *
  * ── The rule ───────────────────────────────────────────────────────────────
  *  1. the viewer config declares `extraResources: []` — present and empty,
@@ -27,7 +27,7 @@
  *     and this file is where the intent is recorded);
  *  2. it does not `extends` another config, which is how the closure would
  *     come back without appearing in the diff;
- *  3. its `artifactName` does not start with `CamStack-`;
+ *  3. its `artifactName` does not start with `Dominevo-`;
  *  4. its `appId` differs from the fat product's, so both install side by side;
  *  5. the `dist:viewer:*` scripts do not run `stage-deps` — the step that
  *     downloads the runtime and installs the closure in the first place.
@@ -91,9 +91,9 @@ function main(): void {
   const artifactName = viewer.artifactName
   if (typeof artifactName !== 'string' || artifactName.length === 0) {
     violations.push('`artifactName` is missing — the release workflow matches artifacts by glob')
-  } else if (artifactName.startsWith('CamStack-')) {
+  } else if (artifactName.startsWith('Dominevo-')) {
     violations.push(
-      `\`artifactName\` is "${artifactName}" — it collides with the fat product's CamStack-* glob (the v1.2.3 overwrite)`,
+      `\`artifactName\` is "${artifactName}" — it collides with the fat product's Dominevo-* glob (the v1.2.3 overwrite)`,
     )
   }
 
@@ -108,7 +108,7 @@ function main(): void {
 
   // The closure has TWO ways in. `extraResources` is the loud one; this is the
   // quiet one, and it is the one that actually bit: `packages/desktop`
-  // declares `@camstack/server` as a runtime DEPENDENCY, and electron-builder
+  // declares `@dominevo/server` as a runtime DEPENDENCY, and electron-builder
   // bundles production dependencies into `app.asar` whether or not anything
   // imports them. Measured 2026-09-09 on the first viewer build: a 246 MB DMG
   // whose asar held node-av (60 MB), @seydx (59 MB), sharp (17 MB) and
@@ -117,20 +117,20 @@ function main(): void {
     ?.dependencies
   if (overriddenDeps === undefined || overriddenDeps === null) {
     violations.push(
-      '`extraMetadata.dependencies` is missing — without it the product inherits `@camstack/server` and bundles the whole closure into app.asar',
+      '`extraMetadata.dependencies` is missing — without it the product inherits `@dominevo/server` and bundles the whole closure into app.asar',
     )
   } else if (typeof overriddenDeps !== 'object') {
     violations.push('`extraMetadata.dependencies` is not an object')
-  } else if ('@camstack/server' in (overriddenDeps as Record<string, unknown>)) {
+  } else if ('@dominevo/server' in (overriddenDeps as Record<string, unknown>)) {
     violations.push(
-      '`extraMetadata.dependencies` still lists `@camstack/server` — that is the closure, bundled by npm rather than staged',
+      '`extraMetadata.dependencies` still lists `@dominevo/server` — that is the closure, bundled by npm rather than staged',
     )
   }
 
   // Both products, not just the viewer. The FAT build stages the closure into
   // `Resources/node_modules` on purpose (the starter loads it from there) — and
   // was ALSO bundling it into `app.asar`, for the same reason the viewer was:
-  // `@camstack/server` is a declared dependency and electron-builder packs
+  // `@dominevo/server` is a declared dependency and electron-builder packs
   // production dependencies whether or not anything imports them. Measured
   // 2026-09-09: the hub product's asar was 362 MB and became 3.6 MB once its
   // `files` denied node_modules. Nothing in `dist/` requires anything from

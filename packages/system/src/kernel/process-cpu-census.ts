@@ -4,7 +4,7 @@
  *
  * ## Why this exists
  *
- * `docker stats` reports the CGROUP. On the CamStack hub that is hub-main plus
+ * `docker stats` reports the CGROUP. On the Dominevo hub that is hub-main plus
  * 39 forked runners plus every ffmpeg and python child they spawn, summed into
  * one number — and for months that number was read as if it described hub-main.
  * On 2026-09-12 the container sat at 265–273 % and hub-main was **33 %** of it;

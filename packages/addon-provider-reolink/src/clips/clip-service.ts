@@ -34,8 +34,8 @@ import type {
   ClipWake,
   IScopedLogger,
   PinnedFfmpegResolver,
-} from '@camstack/types'
-import { NO_PINNED_FFMPEG_DETAIL, resolvePinnedFfmpegSpawner } from '@camstack/types/node'
+} from '@dominevo/types'
+import { NO_PINNED_FFMPEG_DETAIL, resolvePinnedFfmpegSpawner } from '@dominevo/types/node'
 import { REOLINK_ADDON_ID } from '../schema.js'
 import { UID_MISSING_REASON, uidIsMissing } from './clip-addressing.js'
 import {

@@ -3,8 +3,8 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import type { IScopedLogger } from '@camstack/types'
-import { CLIP_STILL_REASON_HEADER } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
+import { CLIP_STILL_REASON_HEADER } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { ClipArtifactStore } from '../clip-artifact-store.js'
 import {

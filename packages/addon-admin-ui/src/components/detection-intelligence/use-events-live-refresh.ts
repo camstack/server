@@ -32,8 +32,8 @@
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { useLiveEvent } from '@camstack/ui-library'
-import { EventCategory } from '@camstack/types'
+import { useLiveEvent } from '@dominevo/ui-library'
+import { EventCategory } from '@dominevo/types'
 import { createDebouncedInvalidate, type DebouncedInvalidate } from './debounced-invalidate.js'
 
 const EVENTS_FEED_KEY = ['events-feed']

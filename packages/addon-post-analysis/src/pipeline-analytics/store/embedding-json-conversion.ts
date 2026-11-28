@@ -37,7 +37,7 @@
  * a table nothing bounds is how every one of these loops got expensive.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { EmbeddingVectorIndex, EmbeddingVectorWrite } from './embedding-vector-index.js'
 
 /** Rows read per page. Wide enough to finish in one pass, small enough to yield. */
@@ -158,7 +158,7 @@ export async function convertJsonEmbeddings(
       //
       // This is a version-skew guard as much as a D58 one. The addon and the
       // `vector-store` provider ship in DIFFERENT artefacts — the provider is a
-      // builtin inside `@camstack/server`, the addon is deployed on its own — so
+      // builtin inside `@dominevo/server`, the addon is deployed on its own — so
       // an addon can land on a hub whose provider predates `fetchByIds`. Upserts
       // would succeed, read-backs would fail, and a conversion that blanked on
       // the upsert alone would drain the gallery into an index it cannot read

@@ -1,5 +1,5 @@
 import type { Sensor } from '@apocaliss92/nodewitt'
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IScopedLogger } from '@dominevo/types'
 import { sameConnection, sameDial, type EcowittConfig } from './config.js'
 import { ecowittFacades } from './ecowitt-gateway.js'
 import { EcowittIntegrationManager } from './ecowitt-integration-manager.js'

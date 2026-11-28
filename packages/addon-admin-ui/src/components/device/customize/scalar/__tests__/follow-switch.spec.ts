@@ -1,4 +1,4 @@
-import { type Composition, DeviceType, runningOptOutFeature } from '@camstack/types'
+import { type Composition, DeviceType, runningOptOutFeature } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   followSwitchRowListed,

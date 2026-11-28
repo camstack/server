@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 /**
- * `@camstack/server`'s `postinstall` — apply the `closure-postinstall` patches
+ * `@dominevo/server`'s `postinstall` — apply the `closure-postinstall` patches
  * to the framework closure this package was just installed into. (D478)
  *
  * ## Why a lifecycle script and not a bundler
  *
  * A patch under `patches/` reaches production only if the patched package is
- * BUNDLED at build time. `moleculer` is (into `@camstack/server/system/dist`), so its
+ * BUNDLED at build time. `moleculer` is (into `@dominevo/server/system/dist`), so its
  * patch travels inside a published tarball and needs nothing here. `werift` is
  * not, on purpose: three addons resolve it at runtime from the closure so the
  * installer's dedupe (D343) links them all at ONE 5.3 MB copy, and that copy
@@ -38,7 +38,7 @@
  * applier directly, and the idempotence below is what makes running twice
  * harmless rather than a double patch.
  *
- * The FAIL-CLOSED half lives elsewhere, in `@camstack/node-root`'s
+ * The FAIL-CLOSED half lives elsewhere, in `@dominevo/node-root`'s
  * `findUnappliedClosurePatches`, which refuses to swap into a closure whose
  * markers are absent. Silence here is therefore never silence overall: either
  * the patch landed, or the update visibly does not apply. A best-effort applier
@@ -78,7 +78,7 @@ function findPayloadDir() {
 
 /**
  * The `node_modules` the closure hoisted `werift` into. This script runs from
- * `<closure>/node_modules/@camstack/server/scripts`, so the closure's own
+ * `<closure>/node_modules/@dominevo/server/scripts`, so the closure's own
  * `node_modules` is three levels up — and a nested one (npm chose not to hoist)
  * is checked first, because that is the copy this package would resolve.
  */
@@ -86,7 +86,7 @@ function moduleRootsFor(pkg) {
   const own = path.resolve(HERE, '..', 'node_modules')
   const closure = path.resolve(HERE, '..', '..', '..')
   // `closure` is only a module root in the PUBLISHED layout
-  // (`<closure>/node_modules/@camstack/server/scripts` → `<closure>/node_modules`).
+  // (`<closure>/node_modules/@dominevo/server/scripts` → `<closure>/node_modules`).
   // From a workspace checkout the same walk lands on the repo root, which is
   // not one — the basename check is what keeps this script inert in the dev
   // tree instead of hunting for `<repo>/werift`.

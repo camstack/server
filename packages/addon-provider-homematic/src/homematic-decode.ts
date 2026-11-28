@@ -4,12 +4,12 @@ import type {
   CoverStatus,
   HvacMode,
   LockControlStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { HmValue } from 'nodehomematic'
 
 /**
  * Pure decoders translating a single Homematic datapoint (parameter +
- * value) into an immutable patch for the owning CamStack cap slice.
+ * value) into an immutable patch for the owning Dominevo cap slice.
  * Kept free of any `BaseDevice` / facade dependency so they are unit-
  * testable in isolation and the device class stays a thin wiring layer.
  *
@@ -71,7 +71,7 @@ const HM_SET_POINT_MODE_BY_NAME: Readonly<Record<string, HmClimateMode>> = {
   PARTY: 'auto',
 }
 
-/** Map a CamStack `HvacMode` to the library's narrower climate mode. */
+/** Map a Dominevo `HvacMode` to the library's narrower climate mode. */
 export function toHmClimateMode(mode: HvacMode): HmClimateMode {
   switch (mode) {
     case 'off':
@@ -86,7 +86,7 @@ export function toHmClimateMode(mode: HvacMode): HmClimateMode {
 }
 
 /**
- * Map a Homematic `SET_POINT_MODE` value to the CamStack `HvacMode`.
+ * Map a Homematic `SET_POINT_MODE` value to the Dominevo `HvacMode`.
  *
  * The live CCU sends the integer index (see {@link HM_SET_POINT_MODE_BY_INDEX}).
  * A string is accepted only when one arrives (`AUTO` / `AUTO-MODE`,
@@ -123,7 +123,7 @@ export function readHmSetPointMode(value: HmValue): HmSetPointModeReading | null
   return { mode, party }
 }
 
-/** Convert a 0..1 HmIP LEVEL into a 0..100 CamStack position (rounded). */
+/** Convert a 0..1 HmIP LEVEL into a 0..100 Dominevo position (rounded). */
 export function levelToPercent(level: number): number {
   return Math.round(Math.max(0, Math.min(1, level)) * 100)
 }

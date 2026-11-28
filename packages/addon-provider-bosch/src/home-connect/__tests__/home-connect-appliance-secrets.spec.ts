@@ -1,4 +1,4 @@
-import { collectKeychainStoredKeys, makeSecretMarker } from '@camstack/types'
+import { collectKeychainStoredKeys, makeSecretMarker } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   APPLIANCE_SECRETS_KEY,

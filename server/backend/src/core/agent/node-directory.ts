@@ -1,4 +1,4 @@
-import type { NodeDirectory, NodeDirectoryEntry, NodeLiveness } from '@camstack/types'
+import type { NodeDirectory, NodeDirectoryEntry, NodeLiveness } from '@dominevo/types'
 import type { PersistedClusterNode } from './cluster-node-history-store'
 
 /**

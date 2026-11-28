@@ -12,7 +12,7 @@
  * on the live hub — which is exactly what it did (HTTP 500, 2026-09-17).
  */
 import { describe, expect, it } from 'vitest'
-import type { GridLayoutPatch, GridLayoutView } from '@camstack/types'
+import type { GridLayoutPatch, GridLayoutView } from '@dominevo/types'
 import { buildGridLayoutNativeProvider } from '../grid-layout-native-provider.js'
 import { GRID_LAYOUT_WIDGET_ID } from '../grid-device-settings.js'
 

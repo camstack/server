@@ -9,7 +9,7 @@
  * Pure, so the rules can be tested without mounting a page.
  */
 
-import type { CoreBlock } from '@camstack/types'
+import type { CoreBlock } from '@dominevo/types'
 import i18n from '../../i18n/index'
 
 export type BlockTone = 'ok' | 'pending' | 'error' | 'idle'

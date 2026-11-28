@@ -1,6 +1,6 @@
 import { Readable } from 'node:stream'
-import type { PeerBytesOpenResult } from '@camstack/types'
-import { EMAIL_IMAGE_SLOT } from '@camstack/types'
+import type { PeerBytesOpenResult } from '@dominevo/types'
+import { EMAIL_IMAGE_SLOT } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   buildRawMime,

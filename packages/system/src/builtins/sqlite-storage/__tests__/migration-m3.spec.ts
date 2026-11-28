@@ -18,7 +18,7 @@ import {
   type MigrationPlan,
   preconditionOf,
   runAddonMigrations,
-} from '@camstack/types'
+} from '@dominevo/types'
 import Database from 'better-sqlite3'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { runnerResolverFor } from '../migrations/installed-runner-resolver.js'
@@ -814,7 +814,7 @@ describe('review fixes: owner identity, finish re-checks, declare failure, preco
             JSON.stringify({ camstack: { addons } }),
           )
         }
-        writeManifest('@camstack/provider-ha', [
+        writeManifest('@dominevo/provider-ha', [
           { id: OWNER, execution: { placement: 'hub-only', group: 'integrations' } },
           { id: 'ungrouped', execution: { placement: 'hub-only' } },
         ])

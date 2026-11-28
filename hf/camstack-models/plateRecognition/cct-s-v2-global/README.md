@@ -10,7 +10,7 @@
 | Code licence | MIT |
 | **Weights licence** | MIT, Copyright (c) 2024 ankandrew ([`LICENSES/MIT-fast-plate-ocr.txt`](../../LICENSES/MIT-fast-plate-ocr.txt)) |
 | Training data | private, not released upstream |
-| CamStack modifications | input head removed (recorded in the ONNX `doc_string`); converted to OpenVINO IR and CoreML |
+| Dominevo modifications | input head removed (recorded in the ONNX `doc_string`); converted to OpenVINO IR and CoreML |
 | Commercial use | permitted by MIT (keep the copyright notice) |
 
-CamStack redistributes the files in this folder; every change from the upstream is stated above. Converting a model does not change its licence. The collection statement is [`LICENSE`](../../LICENSE); every model's attribution is in [`THIRD_PARTY_MODELS.md`](../../THIRD_PARTY_MODELS.md).
+Dominevo redistributes the files in this folder; every change from the upstream is stated above. Converting a model does not change its licence. The collection statement is [`LICENSE`](../../LICENSE); every model's attribution is in [`THIRD_PARTY_MODELS.md`](../../THIRD_PARTY_MODELS.md).

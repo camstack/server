@@ -3,7 +3,7 @@
  * source's capture time, and the operator's completeness is set through the
  * service, scoped to the track the frame belongs to.
  */
-import type { MediaFileRef } from '@camstack/types'
+import type { MediaFileRef } from '@dominevo/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { makeAnalyticsWorld } from '../../__tests__/fake-records.js'
 import { makeSilentLogger } from '../../__tests__/test-helpers.js'

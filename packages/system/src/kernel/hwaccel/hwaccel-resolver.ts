@@ -23,7 +23,7 @@ import type {
   HwAccelResolution,
   IKernelHwAccel,
   IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   classifyCoralAccelerator,
   nodeCoralFs,

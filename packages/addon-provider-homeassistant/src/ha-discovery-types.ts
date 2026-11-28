@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { DeviceType, DeviceRole, EnumSensorDateTimeFormatSchema } from '@camstack/types'
+import { DeviceType, DeviceRole, EnumSensorDateTimeFormatSchema } from '@dominevo/types'
 
 /**
  * HA-specific discovery data types — addon-internal.
@@ -34,9 +34,9 @@ export type HaEntityCategory = 'config' | 'diagnostic'
 
 const HaEntityMappingSchema = z
   .object({
-    /** CamStack DeviceType for the accessory child. */
+    /** Dominevo DeviceType for the accessory child. */
     deviceType: z.enum(DeviceType),
-    /** Optional CamStack DeviceRole sub-role (e.g. `ContactSensor` for
+    /** Optional Dominevo DeviceRole sub-role (e.g. `ContactSensor` for
      *  a binary_sensor with `device_class: door`). */
     role: z.enum(DeviceRole).nullable(),
     /** Capability names the accessory child will register
@@ -83,11 +83,11 @@ export const HaDiscoveredEntitySchema = z.object({
    *  Drives the accordion section the adopted child renders in. Null/absent for
    *  the common control case. */
   entityCategory: z.enum(['config', 'diagnostic']).nullable().default(null),
-  /** Pre-computed CamStack mapping. `null` when the entity's domain
+  /** Pre-computed Dominevo mapping. `null` when the entity's domain
    *  has no supported mapping (the operator may still adopt the
    *  parent — the entity will be skipped or surfaced as a fallback). */
   mappedTo: HaEntityMappingSchema,
-  /** When `true`, the entity was already materialised as a CamStack
+  /** When `true`, the entity was already materialised as a Dominevo
    *  accessory child under a prior adoption — surfaced so the UI can
    *  highlight existing wiring. */
   alreadyAdopted: z.boolean(),
@@ -119,7 +119,7 @@ export const HaDiscoveredDeviceSchema = z.object({
    *  list survives row collapse — full devices are returned so
    *  accordion expansion is a no-roundtrip render. */
   entities: z.array(HaDiscoveredEntitySchema).readonly(),
-  /** Whether this HA device has an active CamStack adoption. */
+  /** Whether this HA device has an active Dominevo adoption. */
   alreadyAdopted: z.boolean(),
   /** When `alreadyAdopted === true`, the kernel-assigned parent id. */
   adoptedCamDeviceId: z.number().int().nonnegative().nullable(),
@@ -131,7 +131,7 @@ export const HaDiscoveryStatusSchema = z.object({
   lastDiscoveryAt: z.number().int().nonnegative().nullable(),
   /** Count of HA devices in the discovery cache (across all brokers). */
   deviceCount: z.number().int().nonnegative(),
-  /** Count of HA devices currently materialised as CamStack parent
+  /** Count of HA devices currently materialised as Dominevo parent
    *  devices. */
   adoptedCount: z.number().int().nonnegative(),
   /** Last error message from a refresh attempt. */

@@ -20,12 +20,12 @@ const RULES = [
   'A step answered unknown was not read: say why, do not treat it as missing.',
 ].join('\n')
 
-export const SERVER_INSTRUCTIONS = `CamStack setup and operations.\n${RULES}`
+export const SERVER_INSTRUCTIONS = `Dominevo setup and operations.\n${RULES}`
 
 export function registerGetStartedPrompt(server: McpServer, ctx: McpContext): void {
   server.prompt(
     GET_STARTED_PROMPT,
-    'Set up CamStack from wherever this install stands: check the machine, install, sign in, storage, core addons, cameras, detection, remote access, notifications, backups.',
+    'Set up Dominevo from wherever this install stands: check the machine, install, sign in, storage, core addons, cameras, detection, remote access, notifications, backups.',
     async () => {
       const { manifest } = await manifestOf(ctx)()
       const steps = manifest.steps.map((s, i) => `${i + 1}. ${s.title} — ${s.summary}`).join('\n')
@@ -35,7 +35,7 @@ export function registerGetStartedPrompt(server: McpServer, ctx: McpContext): vo
             role: 'user',
             content: {
               type: 'text',
-              text: `Help me set up CamStack.\n\n${RULES}\n\nThe steps, as the guide at ${manifest.docsBaseUrl}/docs/get-started has them:\n${steps}\n\nStart now: call ${WIZARD_TOOL}.`,
+              text: `Help me set up Dominevo.\n\n${RULES}\n\nThe steps, as the guide at ${manifest.docsBaseUrl}/docs/get-started has them:\n${steps}\n\nStart now: call ${WIZARD_TOOL}.`,
             },
           },
         ],

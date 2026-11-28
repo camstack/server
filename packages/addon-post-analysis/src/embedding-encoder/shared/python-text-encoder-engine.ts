@@ -1,4 +1,4 @@
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { FramedPythonProcess } from './framed-python-process.js'
 import { createNoopLogger } from './noop-logger.js'
 

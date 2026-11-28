@@ -25,8 +25,8 @@
  * production really records.
  */
 
-import type { RecordingConfig } from '@camstack/types'
-import type { IScopedLogger } from '@camstack/types'
+import type { RecordingConfig } from '@dominevo/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest'
 import { specRoot } from './spec-root.js'
 import { RecordingController, type RecordingControllerDeps } from '../recording-controller'

@@ -11,7 +11,7 @@ import {
   type RecordIntegrationInstances,
   type RecordsAccess,
   type ResolvedInstance,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { randomBytes } from 'node:crypto'
 import { type GoogleCalendarBody, googleCalendarsEntryKind } from './broker-record-kinds.js'
 import { stampCalendarId } from './google-broker-registry.js'

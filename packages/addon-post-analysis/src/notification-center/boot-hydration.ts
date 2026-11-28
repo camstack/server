@@ -34,7 +34,7 @@ import type {
 import { NcStateSummaryService } from './state-summary/state-summary-service.js'
 import { NcTextCatalogStore } from './text-catalog-store.js'
 import { NcTextCatalog, ncTextSnapshotsEqual } from './text-catalog.js'
-import type { IScopedLogger, NcConditions, NcRule, NcRuleTarget } from '@camstack/types'
+import type { IScopedLogger, NcConditions, NcRule, NcRuleTarget } from '@dominevo/types'
 
 export interface BootHydrationHost {
   readonly alarmPanel: NcAlarmPanelPort | null

@@ -18,7 +18,7 @@ import {
   type RecordsAccess,
   recordSecretRef,
   type SecretsAccess,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { isSecretArg } from './waste-secrets.js'
 import { plainWasteSourceKind, WASTE_COLLECTIONS_OWNER } from './waste-source-record-kinds.js'
 

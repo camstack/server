@@ -3,7 +3,7 @@
  * once, under a bound; and a resolved path reaches the brokers that ALREADY
  * exist, because each one reads the manager's live config per dial.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { FfmpegReresolver, wireBrokerFfmpeg } from '../ffmpeg-reresolve.js'
 import { StreamBroker } from '../stream-broker.js'

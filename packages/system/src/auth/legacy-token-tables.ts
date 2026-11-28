@@ -6,7 +6,7 @@
  * `'*'`. The table stays declared so the storage layout is unchanged; its rows
  * stay on disk until the operator drops them by hand.
  */
-import type { CollectionColumn } from '@camstack/types'
+import type { CollectionColumn } from '@dominevo/types'
 
 /**
  * @durable class=config owner=local-auth

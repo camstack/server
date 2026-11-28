@@ -1,6 +1,6 @@
 /**
  * Detection-pool glue for the shared {@link PoolMemoryWatchdog}
- * (`@camstack/types`): enumerates the provider's live inference pools
+ * (`@dominevo/types`): enumerates the provider's live inference pools
  * (node-default + per-device), samples each worker's RSS from
  * `/proc/<pid>/status`, attaches the cheap internals (backlog, shed,
  * dropped, Python-side mem_stats) and hands the policy verdicts back to
@@ -14,12 +14,12 @@
  * process; these Python children were previously supervised by nobody but
  * the kernel OOM killer.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import {
   PoolMemoryWatchdog,
   resolvePoolMemoryPolicy,
   type PoolMemoryTelemetry,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { readProcessMemory } from '../../shared/process-memory.js'
 import type { EngineFactory } from './engine-factory.js'
 

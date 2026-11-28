@@ -54,7 +54,7 @@
  *     the whole pass (`rebuild-step-dispatch.ts` is the same shape),
  *   - `store` ← `IdentityStore` sample update, reporting whether it landed.
  */
-import { FULL_IMAGE_BBOX } from '@camstack/types'
+import { FULL_IMAGE_BBOX } from '@dominevo/types'
 
 /** One enrolled sample, as the pass needs to see it. */
 export interface FaceReembedSample {

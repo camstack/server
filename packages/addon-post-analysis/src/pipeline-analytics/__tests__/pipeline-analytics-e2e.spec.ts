@@ -32,8 +32,8 @@ import type {
   IEventBus,
   MediaFile,
   MotionTriggeredBy,
-} from '@camstack/types'
-import { EventCategory, createEvent } from '@camstack/types'
+} from '@dominevo/types'
+import { EventCategory, createEvent } from '@dominevo/types'
 import { makeTestSystemEvent } from '../../__tests__/support/events.js'
 import { FrameState } from '../frame/frame-state.js'
 import PipelineAnalyticsAddon from '../index.js'

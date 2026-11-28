@@ -28,7 +28,7 @@
  *   backstop. Duplicating `battery-wake-on-play.ts`'s settle loop here would be
  *   a second implementation of a convergence this addon already owns.
  */
-import { deriveBatteryPresence } from '@camstack/types'
+import { deriveBatteryPresence } from '@dominevo/types'
 
 /**
  * Bound on the wake itself, matched to the live path's

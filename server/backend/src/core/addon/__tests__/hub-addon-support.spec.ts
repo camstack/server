@@ -1,5 +1,5 @@
-import { EventCategory } from '@camstack/types'
-import { UnsupportedAddonTracker } from '@camstack/server/system'
+import { EventCategory } from '@dominevo/types'
+import { UnsupportedAddonTracker } from '@dominevo/server/system'
 import { describe, expect, it } from 'vitest'
 import type { GroupCandidate } from '../../../agent/agent-group-runner.js'
 import type { StaleGateContext } from '../../../agent/stale-addon-gate.js'
@@ -18,11 +18,11 @@ function candidate(addonId: string, packageName: string, packageVersion: string)
 }
 
 const byId: Record<string, GroupCandidate> = {
-  ml: candidate('ml', '@camstack/addon-ml', '1.0.0'),
-  ok: candidate('ok', '@camstack/addon-ok', '3.0.0'),
-  newer: candidate('newer', '@camstack/addon-newer', '1.0.0'),
+  ml: candidate('ml', '@dominevo/addon-ml', '1.0.0'),
+  ok: candidate('ok', '@dominevo/addon-ok', '3.0.0'),
+  newer: candidate('newer', '@dominevo/addon-newer', '1.0.0'),
   store: {
-    ...candidate('store', '@camstack/addon-store', '1.0.0'),
+    ...candidate('store', '@dominevo/addon-store', '1.0.0'),
     capabilities: [{ name: 'data-store-provider' }],
   },
 }
@@ -30,7 +30,7 @@ const byId: Record<string, GroupCandidate> = {
 function contextOf(installed: Record<string, string>): StaleGateContext {
   return {
     serverVersion: '1.2.721',
-    serverRequiresAddons: { '@camstack/addon-ml': '>=2.0.0', '@camstack/addon-store': '>=2.0.0' },
+    serverRequiresAddons: { '@dominevo/addon-ml': '>=2.0.0', '@dominevo/addon-store': '>=2.0.0' },
     installedVersions: installed,
     requiresOfDir: (dir) => (dir.endsWith('addon-newer') ? { server: '>=9.0.0' } : undefined),
   }
@@ -56,9 +56,9 @@ function harness() {
 }
 
 const INSTALLED = {
-  '@camstack/addon-ml': '1.0.0',
-  '@camstack/addon-ok': '3.0.0',
-  '@camstack/addon-store': '1.0.0',
+  '@dominevo/addon-ml': '1.0.0',
+  '@dominevo/addon-ok': '3.0.0',
+  '@dominevo/addon-store': '1.0.0',
 }
 
 describe('reportHubAddonSupport (D1017)', () => {
@@ -87,7 +87,7 @@ describe('reportHubAddonSupport (D1017)', () => {
   it('emits the recovery when the package is updated to a supported version', () => {
     const { events, run } = harness()
     run(INSTALLED, ['ml'])
-    run({ ...INSTALLED, '@camstack/addon-ml': '2.0.0' }, ['ml'])
+    run({ ...INSTALLED, '@dominevo/addon-ml': '2.0.0' }, ['ml'])
     expect(events.map((e) => e.category)).toEqual([
       EventCategory.AddonUnsupportedVersion,
       EventCategory.AddonUnsupportedResolved,

@@ -4,7 +4,7 @@ Binds camera on-screen-display slots to live state and recognitions.
 
 <!-- readme:generated:start (derived from the manifest; edit outside this block) -->
 
-Package `@camstack/addon-osd-manager` on npm.
+Package `@dominevo/addon-osd-manager` on npm.
 
 ## What it provides
 
@@ -14,12 +14,12 @@ Package `@camstack/addon-osd-manager` on npm.
 ## Requirements
 
 - Placement: hub-only (runner group `integrations`).
-- A CamStack hub. An agent is used only where the placement above allows it.
+- A Dominevo hub. An agent is used only where the placement above allows it.
 
 ## Documentation
 
-- [docs/architecture/osd-manager.md](https://github.com/camstack/server/blob/main/docs/architecture/osd-manager.md)
-- [packages/addon-osd-manager/AGENTS.md](https://github.com/camstack/server/blob/main/packages/addon-osd-manager/AGENTS.md)
+- [docs/architecture/osd-manager.md](https://github.com/dominevo/server/blob/main/docs/architecture/osd-manager.md)
+- [packages/addon-osd-manager/AGENTS.md](https://github.com/dominevo/server/blob/main/packages/addon-osd-manager/AGENTS.md)
 
 See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
 

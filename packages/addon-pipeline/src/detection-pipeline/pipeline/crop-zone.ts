@@ -13,7 +13,7 @@
  * Pure + zero I/O — the caller supplies the zones + rules (read off the
  * device-state mirror) and the frame dimensions.
  */
-import type { Zone, ZoneRule } from '@camstack/types'
+import type { Zone, ZoneRule } from '@dominevo/types'
 import { type AbsoluteBbox, isBboxDegenerate } from './crop-utils.js'
 
 /**

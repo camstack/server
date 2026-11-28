@@ -4,9 +4,9 @@
  *
  * TWO BYTE-IDENTICAL COPIES: the admin keeps this at `pages/system/`, the
  * VIEWER at `src/components/notifications/`, because the viewer resolves
- * `@camstack/types` from a published release. `scripts/check-device-selection-in-sync.ts`
+ * `@dominevo/types` from a published release. `scripts/check-device-selection-in-sync.ts`
  * holds them equal (modulo the viewer's `.js` import specifier). Imports only
- * `@camstack/types` and `./device-picker-model`; no `toSorted`.
+ * `@dominevo/types` and `./device-picker-model`; no `toSorted`.
  *
  *  - D315: only an ANSWER says closed. Pending, failed, an id the answer lacks and
  *    an `unknown` reading each have their own cell; none of them looks like a
@@ -32,7 +32,7 @@ import {
   alarmDeviceBlocksArming,
   alarmDeviceSecureOnArm,
   alarmPatchLanded,
-} from '@camstack/types/client'
+} from '@dominevo/types/client'
 import type {
   AlarmArmMode,
   NcAlarmModeCoverage,
@@ -40,7 +40,7 @@ import type {
   NcAlarmSettings,
   NcAlarmSettingsPatch,
   NcAlarmSkipReason,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { PickerDevice } from './device-picker-model.js'
 
 export type AlarmSensorsRead =

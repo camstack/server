@@ -18,7 +18,7 @@
 import type { HeldEgressHandle } from '../egress/egress-handle-reaper.js'
 import type { AlexaEgressPrewarmPort } from '../egress/alexa-egress-prewarm.js'
 import { resolveAlexaSourceProfile } from '../egress/alexa-source-profile.js'
-import type { AddonApi, AddonContext, IScopedLogger, WebrtcStreamTarget } from '@camstack/types'
+import type { AddonApi, AddonContext, IScopedLogger, WebrtcStreamTarget } from '@dominevo/types'
 import { z } from 'zod'
 import type { VerifiedDirectiveIdentity } from '../directive-router.js'
 import { acquireAlexaEgress, releaseAlexaEgress } from '../egress/alexa-rtc-egress.js'

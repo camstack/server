@@ -34,7 +34,7 @@ import type {
   ProviderRegistration,
   StorageLocation,
   StorageOccupancyReport,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   BaseAddon,
   backupCapability,
@@ -43,7 +43,7 @@ import {
   nodePin,
   storageOccupancyCapability,
   toNodeId,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** The `storage-occupancy` request shape, derived from the cap's provider
  *  interface — never an inline object type on a signature. */

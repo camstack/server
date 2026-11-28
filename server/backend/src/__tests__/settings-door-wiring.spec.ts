@@ -5,8 +5,8 @@
  * won then, because the preference was unknown) ends active on the stored
  * choice. Remove the replay from the wiring and this goes red.
  */
-import { CapabilityRegistry, SqliteSettingsBackend } from '@camstack/server/system'
-import type { IScopedLogger, ISettingsStoreProvider } from '@camstack/types'
+import { CapabilityRegistry, SqliteSettingsBackend } from '@dominevo/server/system'
+import type { IScopedLogger, ISettingsStoreProvider } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ConfigService } from '../core/config/config.service.js'
 import { wireSettingsDoor } from '../core/addon/settings-door-wiring.js'

@@ -6,7 +6,7 @@
 
 **Architecture:** Mirror existing `pipeline-analytics` patterns exactly. Settings cascade mirrors `tracking-settings.ts`/`audio-detection-settings.ts` (zod schema + per-field `.catch(default)`). The matcher is a pure module like `label-utils.ts`. `MediaStore` gains a `'face'` ownerKind and a generic `deleteForOwner`. `EventStore`/`TrackStore` gain label-update methods using the existing `settingsStore` `update`/`set` mutations.
 
-**Tech Stack:** TypeScript 5.9 (strict, ESM NodeNext, `.js` import extensions), vitest, zod, `@camstack/types` (`cosineSimilarity`).
+**Tech Stack:** TypeScript 5.9 (strict, ESM NodeNext, `.js` import extensions), vitest, zod, `@dominevo/types` (`cosineSimilarity`).
 
 ## Global Constraints
 
@@ -14,7 +14,7 @@
 - **Settings defaults (verbatim, from spec §9):** `enabled` default **false**; `similarityThreshold` (τ) **0.45**; `margin` **0.05**; `minFaceConfidence` **0.5**; `confirmFrames` (K) **2**; `bufferRetentionDays` **3**; `bufferMaxPerDevice` **50**. τ and margin are cosine on L2-normalized arcface vectors.
 - **Cascade shape:** mirror `resolveAudioDetectionSettings` (concise `pick` helper, per-field `safeParse` → default). `FACE_DEFAULTS = FaceSettingsSchema.parse({})`.
 - **Model-version safety:** the matcher only compares samples whose `modelId` equals the probe's `modelId` AND whose embedding length equals the probe's (mismatched samples are skipped, never compared).
-- **`cosineSimilarity` signature:** `cosineSimilarity(a: Float32Array, b: Float32Array): number` from `@camstack/types`. Convert `readonly number[]` → `new Float32Array(arr)` at the call site.
+- **`cosineSimilarity` signature:** `cosineSimilarity(a: Float32Array, b: Float32Array): number` from `@dominevo/types`. Convert `readonly number[]` → `new Float32Array(arr)` at the call site.
 - **Backward compatibility:** `MediaStore.deleteForEvents(ids)` MUST keep working (existing retention caller depends on it) — implement it as a thin wrapper over the new `deleteForOwner('event', ids)`.
 - **ESM `.js` import extensions; strict TS.**
 - **Type gate:** `cd packages/addon-post-analysis && npx tsc --noEmit` clean.
@@ -178,7 +178,7 @@ git commit --no-verify -m "feat(post-analysis): per-device face-recognition sett
 - Test: `packages/addon-post-analysis/src/pipeline-analytics/__tests__/face-matcher.spec.ts`
 
 **Interfaces:**
-- Consumes: `cosineSimilarity` from `@camstack/types`.
+- Consumes: `cosineSimilarity` from `@dominevo/types`.
 - Produces: `GallerySample`, `FaceMatch`, `MatchOpts`, `matchEmbedding`.
 
 - [ ] **Step 1: Write the failing test**
@@ -246,7 +246,7 @@ Expected: FAIL — module `../pipeline/face-matcher.js` not found.
 Create `face-matcher.ts`:
 
 ```typescript
-import { cosineSimilarity } from '@camstack/types'
+import { cosineSimilarity } from '@dominevo/types'
 
 /** One enrolled face sample in the in-memory gallery. */
 export interface GallerySample {

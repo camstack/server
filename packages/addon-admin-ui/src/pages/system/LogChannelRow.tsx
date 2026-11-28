@@ -15,13 +15,13 @@
 import { useState, type ReactElement } from 'react'
 import { Camera, Square, TimerReset } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { Button, DeviceValuePicker, deviceIdsOf, pickedFromDeviceIds } from '@camstack/ui-library'
+import { Button, DeviceValuePicker, deviceIdsOf, pickedFromDeviceIds } from '@dominevo/ui-library'
 import {
   DeviceType,
   type DebugWatchState,
   type LogChannelDescriptor,
   type LogChannelWindowState,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { formatRemaining, watchCountdown } from './log-watch.helpers'
 
 /** Offered arm windows. The server clamps; these are the useful shapes. */

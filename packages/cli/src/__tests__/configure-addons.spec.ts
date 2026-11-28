@@ -7,10 +7,10 @@ import {
 } from '../mcp/configure-addons.js'
 import { asProtectedTier, dryRunOf, gatedHub, writes } from './configure-fixtures.js'
 
-const PKG = '@camstack/addon-provider-amcrest'
+const PKG = '@dominevo/addon-provider-amcrest'
 
 const packument = {
-  peerDependencies: { '@camstack/types': '*' },
+  peerDependencies: { '@dominevo/types': '*' },
   engines: { node: '>=24' },
   camstack: { addons: [{ execution: { placement: 'hub-only' } }] },
 }
@@ -26,7 +26,7 @@ const answers = (extra: { [path: string]: unknown } = {}): { [path: string]: unk
       capabilities: ['device-provider'],
     },
     {
-      name: '@camstack/addon-provider-reolink',
+      name: '@dominevo/addon-provider-reolink',
       version: '1.2.213',
       description: 'Reolink',
       keywords: [],
@@ -38,7 +38,7 @@ const answers = (extra: { [path: string]: unknown } = {}): { [path: string]: unk
     {
       manifest: {
         id: 'provider-reolink',
-        packageName: '@camstack/addon-provider-reolink',
+        packageName: '@dominevo/addon-provider-reolink',
         packageVersion: '1.2.200',
         // The live hub answers null, not absent, for an unflagged manifest.
         protected: null,
@@ -48,7 +48,7 @@ const answers = (extra: { [path: string]: unknown } = {}): { [path: string]: unk
     {
       manifest: {
         id: 'keychain',
-        packageName: '@camstack/server',
+        packageName: '@dominevo/server',
         packageVersion: '1.2.523',
         protected: true,
         removable: false,
@@ -57,7 +57,7 @@ const answers = (extra: { [path: string]: unknown } = {}): { [path: string]: unk
   ],
   'addons.listUpdates': [
     {
-      name: '@camstack/addon-provider-reolink',
+      name: '@dominevo/addon-provider-reolink',
       currentVersion: '1.2.200',
       latestVersion: '1.2.213',
       category: 'addon',
@@ -65,7 +65,7 @@ const answers = (extra: { [path: string]: unknown } = {}): { [path: string]: unk
       isSystem: false,
     },
     {
-      name: '@camstack/server',
+      name: '@dominevo/server',
       currentVersion: '1.2.523',
       latestVersion: '1.2.600',
       category: 'core',
@@ -85,7 +85,7 @@ describe('configure_addons_search', () => {
       capability: 'device-provider',
     })
     if (out.status !== 'ok') throw new Error('expected ok')
-    const reolink = out.items?.find((i) => i.name === '@camstack/addon-provider-reolink')
+    const reolink = out.items?.find((i) => i.name === '@dominevo/addon-provider-reolink')
     expect(reolink).toMatchObject({
       installed: true,
       installedVersion: '1.2.200',
@@ -162,7 +162,7 @@ describe('configure_addon_install', () => {
   it('refuses a package outside the catalog and one already on the hub', async () => {
     const hub = gatedHub(answers(), packument)
     expect(
-      JSON.stringify(await installAddon(hub.ctx, { packageName: '@camstack/nope' }, undefined)),
+      JSON.stringify(await installAddon(hub.ctx, { packageName: '@dominevo/nope' }, undefined)),
     ).toContain('not in the addon catalog')
     const already = gatedHub(
       answers({
@@ -199,7 +199,7 @@ describe('configure_addon_install', () => {
 describe('configure_addon_update', () => {
   it('updates an addon with an available update; refuses protected, core and up-to-date ones', async () => {
     const hub = gatedHub(answers({ 'addons.updatePackage': { ok: true } }), packument)
-    const reolink = '@camstack/addon-provider-reolink'
+    const reolink = '@dominevo/addon-provider-reolink'
     const dry = dryRunOf(await updateAddon(hub.ctx, { packageName: reolink }, undefined))
     expect(JSON.stringify(dry.describe)).toContain('1.2.213')
     await updateAddon(hub.ctx, { packageName: reolink }, dry.token)
@@ -208,7 +208,7 @@ describe('configure_addon_update', () => {
       input: { name: reolink },
     })
     expect(
-      JSON.stringify(await updateAddon(hub.ctx, { packageName: '@camstack/server' }, undefined)),
+      JSON.stringify(await updateAddon(hub.ctx, { packageName: '@dominevo/server' }, undefined)),
     ).toContain('protected package')
     expect(JSON.stringify(await updateAddon(hub.ctx, { packageName: PKG }, undefined))).toContain(
       'no update available',
@@ -228,7 +228,7 @@ describe('configure_addon_uninstall', () => {
       }),
       packument,
     )
-    const out = await uninstallAddon(hub.ctx, { packageName: '@camstack/server' }, undefined)
+    const out = await uninstallAddon(hub.ctx, { packageName: '@dominevo/server' }, undefined)
     expect(JSON.stringify(out)).toContain('protected / removable:false')
     expect(dryRunOf(out).token).toBeUndefined()
     expect(writes(hub.calls)).toHaveLength(0)
@@ -236,7 +236,7 @@ describe('configure_addon_uninstall', () => {
 
   it('refuses when the protection flags cannot be read (fail closed), and never writes', async () => {
     const hub = gatedHub(answers({ 'addons.list': new Error('hub down') }), packument)
-    const out = await uninstallAddon(hub.ctx, { packageName: '@camstack/server' }, undefined)
+    const out = await uninstallAddon(hub.ctx, { packageName: '@dominevo/server' }, undefined)
     expect(JSON.stringify(out)).toContain('could not read whether')
     expect(dryRunOf(out).token).toBeUndefined()
     expect(writes(hub.calls)).toHaveLength(0)
@@ -259,7 +259,7 @@ describe('configure_addon_uninstall', () => {
         },
         'addons.uninstallPackage': {
           success: true,
-          packageName: '@camstack/addon-provider-reolink',
+          packageName: '@dominevo/addon-provider-reolink',
           results: [
             {
               nodeId: 'hub',
@@ -273,7 +273,7 @@ describe('configure_addon_uninstall', () => {
       }),
       packument,
     )
-    const args = { packageName: '@camstack/addon-provider-reolink' }
+    const args = { packageName: '@dominevo/addon-provider-reolink' }
     const dry = dryRunOf(await uninstallAddon(hub.ctx, args, undefined))
     const done = await uninstallAddon(hub.ctx, args, dry.token)
     expect(done).toMatchObject({

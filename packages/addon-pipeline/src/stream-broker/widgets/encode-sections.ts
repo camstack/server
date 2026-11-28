@@ -27,7 +27,7 @@ import {
   type EncodeProfile,
   type VideoEncode,
   VideoEncodeSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export type SectionId = 'resize' | 'codec' | 'audio' | 'fps'
 

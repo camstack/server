@@ -25,8 +25,8 @@
  * storage backing (`this.<field>` → `this.deps.<accessor>`) and the
  * `_loadMgmt_firstSeen_*` representation differ.
  */
-import type { AddonApi, CameraMetrics, RunnerCameraConfig } from '@camstack/types'
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import type { AddonApi, CameraMetrics, RunnerCameraConfig } from '@dominevo/types'
+import { errMsg, type IScopedLogger } from '@dominevo/types'
 import type { AgentLoadService } from './agent-load-service.js'
 import { balance } from './load-balancer.js'
 import type { NodeTopologyService } from './node-topology.js'

@@ -13,7 +13,7 @@ import {
   type InferProvider,
   type ProfileSlot,
   type RtspRestreamEntry,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { SnapshotAddon, fetchSnapshotBrokerEntries } from '../snapshot.addon.js'
 import { freshSnapshotDataDir } from './scratch-data-dir.js'
 

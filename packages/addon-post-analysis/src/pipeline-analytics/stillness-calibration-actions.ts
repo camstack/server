@@ -4,10 +4,10 @@
  * ## Why an `addons.custom` action and not a cap method
  *
  * Same reason as `face.rescoreTrack` beside it: a cap method's wire schema
- * lives in `@camstack/types`, which travels inside the `@camstack/server`
+ * lives in `@dominevo/types`, which travels inside the `@dominevo/server`
  * closure, so a new one is not callable until a server train ships. Here the
  * schema lives in this addon's own dist and the hub forwards an opaque
- * envelope, so `camstack deploy` is the whole delivery.
+ * envelope, so `dominevo deploy` is the whole delivery.
  *
  * ## Why `apply` is explicit and not a fallback
  *
@@ -19,7 +19,7 @@
  * whatever `apply` says; it writes only the note, so the refusal and its reason
  * are visible in the form instead of being a toast that scrolls away.
  */
-import { customAction, defineCustomActions } from '@camstack/types'
+import { customAction, defineCustomActions } from '@dominevo/types'
 import { z } from 'zod'
 
 /** Mirrors `StillnessCalibrationRefusal` — kept literal so the wire schema is

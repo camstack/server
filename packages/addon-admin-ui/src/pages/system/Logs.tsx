@@ -4,7 +4,7 @@
  * Shell is library `SectionedPage` (OSD template).
  */
 
-import { LogStream } from '@camstack/ui-library'
+import { LogStream } from '@dominevo/ui-library'
 import { ScrollText } from 'lucide-react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'

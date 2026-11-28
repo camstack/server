@@ -16,14 +16,14 @@ import {
   useUrlQueryParam,
   type AddonPageProps,
   Button,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import type {
   ClusterStepModels,
   CustomModelDescriptor,
   ModelFormat,
   NodeInferenceDevice,
-} from '@camstack/types'
-import { MODEL_FORMATS } from '@camstack/types'
+} from '@dominevo/types'
+import { MODEL_FORMATS } from '@dominevo/types'
 import {
   deletePipelineModel,
   listAvailability,

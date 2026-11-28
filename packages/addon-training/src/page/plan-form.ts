@@ -13,7 +13,7 @@ import type {
   TrainingJobRequest,
   TrainingPreset,
   TrainingProviderDescriptor,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export type CorpusWorkState = TrainingCorpusSelection['workState']
 

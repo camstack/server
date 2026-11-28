@@ -1,7 +1,7 @@
 /**
  * A new scalar draft takes its numbers from the catalog declaration (D944).
  */
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   defaultScalarTransform,

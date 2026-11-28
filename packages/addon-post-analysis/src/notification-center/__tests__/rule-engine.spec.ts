@@ -5,8 +5,8 @@
  * crossing, invert), cooldown helpers and the attachment preference.
  */
 
-import type { NcRule, ObjectEvent, SensorEvent, Track } from '@camstack/types'
-import { NC_CONDITION_CATALOG, NcRuleInputSchema, NcRuleSchema } from '@camstack/types'
+import type { NcRule, ObjectEvent, SensorEvent, Track } from '@dominevo/types'
+import { NC_CONDITION_CATALOG, NcRuleInputSchema, NcRuleSchema } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { makeTestNcSystemEventSubject } from './support/nc-test-deps.js'
 import {

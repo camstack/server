@@ -11,7 +11,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { EncodedRingBuffer } from '../stream-broker/encoded-ring-buffer.js'
-import type { EncodedPacket } from '@camstack/types'
+import type { EncodedPacket } from '@dominevo/types'
 
 function packet(pts: number, bytes: number, keyframe = false): EncodedPacket {
   return {

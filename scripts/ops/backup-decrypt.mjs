@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// OFFLINE, OPERATOR-RUN: decrypt an encrypted CamStack system backup without a
+// OFFLINE, OPERATOR-RUN: decrypt an encrypted Dominevo system backup without a
 // hub — the disaster-recovery path when there is no running hub to restore
-// through (a dead machine, a fresh host before CamStack is installed).
+// through (a dead machine, a fresh host before Dominevo is installed).
 //
 //   node scripts/ops/backup-decrypt.mjs <archive.tar.gz.csbk> <out.tar.gz> --key-file <file>
 //   node scripts/ops/backup-decrypt.mjs <archive.tar.gz.csbk> <out.tar.gz> < keyfile
@@ -104,7 +104,7 @@ function decryptStream(recipient) {
     const header = pending.subarray(0, HEADER_BYTES)
     pending = pending.subarray(HEADER_BYTES)
     if (!header.subarray(0, 8).equals(MAGIC))
-      throw new Error('this is not an encrypted CamStack backup')
+      throw new Error('this is not an encrypted Dominevo backup')
     if (header[8] !== 1) throw new Error(`format version ${header[8]} is not supported`)
     const chunkBytes = header.readUInt32BE(9)
     const keyId = header.subarray(13, 21).toString('hex')

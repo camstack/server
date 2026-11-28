@@ -15,7 +15,7 @@
  * for "not mine" and for "don't know yet" (a sleeping Reolink battery camera,
  * a rebooting Hikvision). It neither marks nor clears.
  */
-import type { AddonApi, CamStreamDescriptor, IScopedLogger } from '@camstack/types'
+import type { AddonApi, CamStreamDescriptor, IScopedLogger } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { StreamBrokerManager } from '../stream-broker/stream-broker-manager.js'
 

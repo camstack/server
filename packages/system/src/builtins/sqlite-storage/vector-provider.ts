@@ -1,5 +1,5 @@
 import { createRequire } from 'node:module'
-import type { IScopedLogger, IVectorStoreProvider } from '@camstack/types'
+import type { IScopedLogger, IVectorStoreProvider } from '@dominevo/types'
 import type { OwnedSqliteFile } from './owned-sqlite-file.js'
 import type { VectorInput, VectorOp, VectorOutput } from './file-host-protocol.js'
 import type { SqliteSettingsBackend } from './sqlite-settings-backend.js'

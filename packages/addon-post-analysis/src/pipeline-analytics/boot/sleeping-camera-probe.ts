@@ -1,4 +1,4 @@
-import { deviceSleeps } from '@camstack/types'
+import { deviceSleeps } from '@dominevo/types'
 
 /** The part of a registry device the probe reads. */
 export interface SleepingCameraFacts {

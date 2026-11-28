@@ -12,7 +12,7 @@ import {
   notificationTargetKinds,
   type RecordsAccess,
   type Target,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { type AlexaEchoTarget, alexaEchoTargetSchema, readEchoTargets } from '../config.js'
 import type { EchoRecordPorts, EchoSettingPorts } from '../migrations/echo-targets-to-records.js'
 import type { EchoDndRecordPorts } from '../migrations/strip-echo-target-respect-dnd.js'

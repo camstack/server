@@ -1,7 +1,7 @@
 /**
  * System → Data → Records (`/system/data?tab=records`); the unified Records section also lists entry kinds.
  */
-import { REDACTED_SECRET } from '@camstack/types'
+import { REDACTED_SECRET } from '@dominevo/types'
 import { defineFixtures } from './_define'
 import { NOW } from './_time'
 

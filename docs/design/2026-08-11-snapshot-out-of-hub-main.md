@@ -14,7 +14,7 @@ covers:
 >
 > **BUILT.** `packages/system/package.json` declares `execution.isolate: true`
 > on the `snapshot` entry, and `AddonRegistryService`'s blanket
-> `packageName === '@camstack/system'` skip is gone, replaced by the
+> `packageName === '@dominevo/system'` skip is gone, replaced by the
 > `runsInOwnRunner` predicate that the in-process boot filter and
 > `isForkedAddonEntry` also read. The wrapper — capture ladder, sharp resize,
 > courtesy frame, both byte caches and BOTH HTTP planes — runs in its own
@@ -37,7 +37,7 @@ dai builtin in un addon separato ma nello stesso bundle system."* [Let us also d
 
 ## Why
 
-The snapshot wrapper is a `@camstack/system` builtin, so it loads in the hub's
+The snapshot wrapper is a `@dominevo/system` builtin, so it loads in the hub's
 ROOT process — the same process and the same event loop that serve the tRPC API,
 the WebSocket and the Admin UI.
 
@@ -64,12 +64,12 @@ camera does not belong on the process that answers the API.
 plan by package name:
 
 ```ts
-if (entry.packageName === '@camstack/system') continue
+if (entry.packageName === '@dominevo/system') continue
 ```
 
 with this rationale in the doc comment above it:
 
-> `@camstack/system` builtins are dropped too — they stay in-process on the hub
+> `@dominevo/system` builtins are dropped too — they stay in-process on the hub
 > (…) moving them into a sibling subprocess would isolate them on a separate
 > Moleculer node that child brokers cannot reach.
 

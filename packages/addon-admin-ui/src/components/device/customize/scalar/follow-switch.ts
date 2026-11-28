@@ -11,7 +11,7 @@ import {
   type Composition,
   isRunningOptOut,
   runningOptOutFeature,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { featureOf, withoutFeature } from '../customization-save'
 
 const RUNNING_CAP = 'running-state'

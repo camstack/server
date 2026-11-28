@@ -9,7 +9,7 @@
  * future code path, and for a provider that changes its own `nodeLocal`
  * answer after a location was made.
  */
-import type { StorageLocation } from '@camstack/types'
+import type { StorageLocation } from '@dominevo/types'
 
 /** What a provider answered about itself; `undefined` = not yet classified. */
 export type ProviderLocality = boolean | undefined

@@ -1,4 +1,4 @@
-import type { MeshNetworkInfo, MeshRole, MeshTransport } from '@camstack/types'
+import type { MeshNetworkInfo, MeshRole, MeshTransport } from '@dominevo/types'
 import { useUiText } from '../../contexts/ui-text'
 
 /** Role words of a mesh node; one place so the table, the map and the widget agree. */

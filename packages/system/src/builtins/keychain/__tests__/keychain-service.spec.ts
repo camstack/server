@@ -12,7 +12,7 @@ import { createKeychainUsageCheck } from '../keychain-usage.js'
 import { clearPlatformKeychainKey, setPlatformKeychainKey } from '../platform-key-source.js'
 import { MemoryDoor } from './memory-door.js'
 import { JWT_SIGNING_KEY_REF } from '../../../auth/jwt-signing-key.js'
-import { buildSecretRef, recordSecretRef } from '@camstack/types'
+import { buildSecretRef, recordSecretRef } from '@dominevo/types'
 
 // A cluster secret an older hub left in the keychain (D857 removed the feature): the code no
 // longer knows it, so it is an ordinary system-owned value the operator deletes by hand.

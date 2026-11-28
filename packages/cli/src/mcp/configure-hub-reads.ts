@@ -4,8 +4,8 @@
  * device, the notification targets. Each is a validated GET that answers with a
  * reason when it fails — an interview never treats "could not read" as "none".
  */
-import type { HubClient } from '@camstack/develop'
-import { notificationTargetKindOf } from '@camstack/types'
+import type { HubClient } from '@dominevo/develop'
+import { notificationTargetKindOf } from '@dominevo/types'
 import { z } from 'zod'
 import { readQuery, type Read } from './ops-hub.js'
 

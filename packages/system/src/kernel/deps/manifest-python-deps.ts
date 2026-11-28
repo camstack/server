@@ -1,5 +1,5 @@
 import { join, isAbsolute } from 'node:path'
-import type { AddonDeclaration, IAddonDepsManager, IScopedLogger } from '@camstack/types'
+import type { AddonDeclaration, IAddonDepsManager, IScopedLogger } from '@dominevo/types'
 
 /**
  * Auto-install the pip requirements file declared in an addon's manifest

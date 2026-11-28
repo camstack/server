@@ -1,4 +1,4 @@
-import type { ConfigSelectField } from '@camstack/types'
+import type { ConfigSelectField } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { selectOffersPlaceholder } from '../config-form-field'
 

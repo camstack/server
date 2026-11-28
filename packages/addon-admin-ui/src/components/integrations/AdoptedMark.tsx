@@ -2,7 +2,7 @@
  * The mark of a device the hub already holds, in every row of the Add device list: an "Adopted" badge
  * and, when the hub device is known, a link to it. An adopted row has no add action.
  */
-import { Badge } from '@camstack/ui-library'
+import { Badge } from '@dominevo/ui-library'
 import { Check } from 'lucide-react'
 import type { ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'

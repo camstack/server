@@ -8,8 +8,8 @@ interface FakeQuery {
 }
 const answers = vi.hoisted(() => ({ current: [] as readonly FakeQuery[] }))
 const seenOptions = vi.hoisted(() => ({ current: [] as unknown[] }))
-vi.mock('@camstack/ui-library', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@camstack/ui-library')>()
+vi.mock('@dominevo/ui-library', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dominevo/ui-library')>()
   const t = {
     deviceManager: {
       listDeviceIdsByCaps: (input: unknown, options: unknown) => {

@@ -11,13 +11,13 @@
  *    never holds a long-lived link (they live ten minutes and are fetched with
  *    the account-link token, `snapshots/snapshot-route.ts`).
  *  - `Alexa.DataController/DeleteData` — hides events from Alexa ONLY. Deleting
- *    CamStack footage is not something a voice assistant may do.
+ *    Dominevo footage is not something a voice assistant may do.
  *
  * Amazon lists both interfaces for en-US only; this is the experiment that
  * finds out what an it-IT account does with them.
  */
 import { randomUUID } from 'node:crypto'
-import type { AddonContext, IScopedLogger } from '@camstack/types'
+import type { AddonContext, IScopedLogger } from '@dominevo/types'
 import { z } from 'zod'
 import { readConnectivity } from '../connectivity.js'
 import type { VerifiedDirectiveIdentity } from '../directive-router.js'
@@ -347,7 +347,7 @@ export async function handleDeleteData(
     ids = rows.map((r) => entryOf(ctx, p, r)?.e).filter((e): e is string => e !== undefined)
   }
   await ctx.vision.hide(deviceId, ids)
-  ctx.logger.info('alexa data controller: events hidden from Alexa (CamStack keeps them)', {
+  ctx.logger.info('alexa data controller: events hidden from Alexa (Dominevo keeps them)', {
     tags: { deviceId },
     meta: {
       userId: caller.userId,

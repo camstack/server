@@ -13,7 +13,7 @@ import {
   coreBlockAddonId,
   type IScopedLogger,
   type OnForHold,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { automationOwner, type RunsLedger } from './runs-ledger.js'
 
 export interface ReportAutomationRunInput {

@@ -4,7 +4,7 @@
  *
  * Nothing here touches the network. The generated block injects `connect`
  * (`node:net`) and `fetch`, so a spec runs the whole loop on fakes and this
- * file stays loadable in the browser bundle of `@camstack/types`.
+ * file stays loadable in the browser bundle of `@dominevo/types`.
  *
  * A measurement that FAILED is `null`, never `0` (D393): an unreachable host
  * has `rttMs: null`, a request that never got an answer has `status: null`.

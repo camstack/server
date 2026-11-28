@@ -15,7 +15,7 @@
  * All three are `tolerate`: the addon is the tunnel, and a blocked owner is a dead tunnel. While
  * the record does not exist the addon keeps reading the legacy keys.
  */
-import { type MigrationPlan, type MigrationProcedureResult, preconditionOf } from '@camstack/types'
+import { type MigrationPlan, type MigrationProcedureResult, preconditionOf } from '@dominevo/types'
 import {
   CLOUDFLARE_TUNNEL_DEFAULT_BODY,
   type CloudflareTunnelBody,

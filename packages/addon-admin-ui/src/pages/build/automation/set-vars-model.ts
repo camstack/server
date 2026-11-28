@@ -4,7 +4,7 @@
  * share a name: a rename onto a taken name is refused, and only one blank row
  * exists at a time.
  */
-import type { AutomationSetStep } from '@camstack/types'
+import type { AutomationSetStep } from '@dominevo/types'
 
 export type SetVars = AutomationSetStep['vars']
 export type SetVarValue = SetVars[string]

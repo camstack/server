@@ -1,4 +1,4 @@
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { Homematic } from 'nodehomematic'
 import type { CcuFault, CcuListItem } from './ccu-schemas.js'
 
@@ -60,11 +60,11 @@ export interface CcuActionDeps {
   readonly integrations: () => readonly CcuListItem[]
   readonly logger: IScopedLogger
   /**
-   * CCU device address → CamStack device id for containers adopted from this
+   * CCU device address → Dominevo device id for containers adopted from this
    * integration. A missing address is not adopted.
    */
   readonly adoptedAddresses: (integrationId: string) => Promise<ReadonlyMap<string, number>>
-  /** CCU address → CamStack device name, for the same containers as `adoptedAddresses`. */
+  /** CCU address → Dominevo device name, for the same containers as `adoptedAddresses`. */
   readonly adoptedNames: (integrationId: string) => Promise<ReadonlyMap<string, string>>
   /**
    * A CCU write landed: the adopted devices of this integration re-read what

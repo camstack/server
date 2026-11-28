@@ -28,9 +28,9 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (_key: string, fallback: string) => fallback }),
 }))
 
-vi.mock('@camstack/types', async () => {
-  const nodeColor = await vi.importActual<typeof import('@camstack/types/node-color')>(
-    '@camstack/types/node-color',
+vi.mock('@dominevo/types', async () => {
+  const nodeColor = await vi.importActual<typeof import('@dominevo/types/node-color')>(
+    '@dominevo/types/node-color',
   )
   return nodeColor
 })
@@ -56,7 +56,7 @@ vi.mock('@tanstack/react-query', async () => {
   }
 })
 
-vi.mock('@camstack/ui-library', () => ({
+vi.mock('@dominevo/ui-library', () => ({
   NODE_COLOR_IDS: ['node-a', 'node-b', 'node-c', 'node-d', 'node-e', 'node-f', 'node-g', 'node-h'],
   assignNodeColorId: () => 'node-a',
   nodeColorClass: (id: string) => `bg-${id}`,

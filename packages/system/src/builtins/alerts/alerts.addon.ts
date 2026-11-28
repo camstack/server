@@ -1,4 +1,4 @@
-import type { Alert, AlertSeverity, AlertStatus, ConfigUISchema } from '@camstack/types'
+import type { Alert, AlertSeverity, AlertStatus, ConfigUISchema } from '@dominevo/types'
 import {
   AlertSchema,
   alertEpisodeId,
@@ -14,7 +14,7 @@ import {
   type KnownEventCategory,
   type ProviderRegistration,
   type SystemEvent,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { episodeEdge, nextEpisodeId, type EpisodeView } from './alert-episode-policy.js'
 import { episodeKeyFromMetadata, mergeEmitAlert } from './emit-alert-policy.js'
 import { deviceLabelFromEventData } from './device-label.js'

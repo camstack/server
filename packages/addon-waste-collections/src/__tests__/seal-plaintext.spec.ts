@@ -2,7 +2,7 @@
  * A credential an older version stored as plain text is moved into the keychain BEFORE the secret
  * kind is declared; a failure keeps the plain declaration and the next boot tries again.
  */
-import { makeInMemoryRecords, REDACTED_SECRET, type SecretsAccess } from '@camstack/types'
+import { makeInMemoryRecords, REDACTED_SECRET, type SecretsAccess } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { type SealLog, sealPlaintextCredentials } from '../seal-plaintext.js'
 import { plainWasteSourceKind, wasteSourceEntryKind } from '../waste-source-record-kinds.js'

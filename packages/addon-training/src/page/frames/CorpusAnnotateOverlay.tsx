@@ -10,8 +10,8 @@
  * operator is asked first. The native `cancel` of the `<dialog>` is intercepted
  * for that — letting it through would close the element behind the guard's back.
  */
-import type { RetrainFrame } from '@camstack/types'
-import { Dialog, DialogBody, DialogContent, DialogHeader, DialogTitle } from '@camstack/ui-library'
+import type { RetrainFrame } from '@dominevo/types'
+import { Dialog, DialogBody, DialogContent, DialogHeader, DialogTitle } from '@dominevo/ui-library'
 import { useCallback, useEffect, useRef, useState, type JSX } from 'react'
 import { useT } from '../../i18n/index.js'
 import { RetrainWorkbench } from './RetrainWorkbench.js'

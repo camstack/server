@@ -81,7 +81,7 @@ import type {
   RunStatelessStepInput,
   RunStatelessStepResult,
   StepDefinition,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   APPEARANCE_RESOLVES_AMBIGUITY_DEFAULT,
   BackgroundRunRegistry,
@@ -96,8 +96,8 @@ import {
   loadContributionCapability,
   nodePin,
   pipelineRunnerCapability,
-} from '@camstack/types'
-import { ChildCostRegistry } from '@camstack/types/node'
+} from '@dominevo/types'
+import { ChildCostRegistry } from '@dominevo/types/node'
 import sharp from 'sharp'
 // Same-package catalog lookup (NOT a cross-addon RPC bypass): pipeline-runner
 // and detection-pipeline are two addon manifests bundled in this ONE npm
@@ -410,7 +410,7 @@ export interface RunnerAddonConfig {
   /**
    * SPAWN-CONCURRENCY GATE cap (P5 first pass).
    * Session-decode is now the ONLY decode path (the legacy shared shm
-   * frame-handle poller was removed with @camstack/shm-ring on 2026-07-16), so
+   * frame-handle poller was removed with @dominevo/shm-ring on 2026-07-16), so
    * a synchronized multi-camera motion burst would otherwise fork N disposable
    * decode workers at once and stampede the shared iGPU. This is the MIN floor
    * of decode-worker forks allowed to spin up CONCURRENTLY on this node; forks
@@ -631,7 +631,7 @@ interface AttachedCamera {
  * So the park cost about what running costs, and it bought a re-fork back in
  * 12% of cases: on this fleet, 272 of 440 park windows expired having adopted
  * nothing, while the two decode-worker children stood at 319% of the 522% of
- * CPU CamStack drew on the host. D282 put the arithmetic at ~25x net-negative
+ * CPU Dominevo drew on the host. D282 put the arithmetic at ~25x net-negative
  * against the forks it avoided, and D453 made the fork itself ~150 ms and
  * ~100 MB cheaper, which only widens it.
  *
@@ -686,7 +686,7 @@ export function shouldStartOnboardAnalyzer(config: RunnerCameraConfig): boolean 
  * camera the analyzer's `MotionOnMotionChanged` transitions never reach
  * `reportMotion`: "the pipeline must never overwrite what the sensors do". A
  * camera with `motionSources: ['analyzer']` only is unaffected. The rule lives
- * in `@camstack/types`, once, because the orchestrator's camera motion slice
+ * in `@dominevo/types`, once, because the orchestrator's camera motion slice
  * (D696) applies the same rule to decide which motion events it counts.
  */
 export { cameraOwnsMotionViaSensor }
@@ -3502,7 +3502,7 @@ export default class PipelineRunnerAddon
    * is unproven cost until Task 23 calibrates it, so a disabled camera must
    * add NOTHING to the frame path — no crop, no resample, no descriptor.
    * `APPEARANCE_RESOLVES_AMBIGUITY_DEFAULT` is the SAME authority the v2
-   * tracker's own default reads (`@camstack/types`, never a second flag that
+   * tracker's own default reads (`@dominevo/types`, never a second flag that
    * could disagree with it — CLAUDE.md D62). Checked here, before any
    * per-camera bookkeeping, AND inside {@link attachAppearanceIfEnabled} —
    * one symbol, checked defensively in two frames, not two settings.
@@ -3896,7 +3896,7 @@ export default class PipelineRunnerAddon
     // The not-attached refusal crosses the wire as a MARKER ERROR, not a result
     // field: the cap output schema (`z.object({ details }).nullable()`) is
     // parsed on the hub route and Zod strips unknown keys, so a new field
-    // cannot survive without a `@camstack/types` + codegen + server-train
+    // cannot survive without a `@dominevo/types` + codegen + server-train
     // change. The dispatcher recognises the marker and stops its crop ladder
     // instead of burning the two doomed fallback RPCs. See detail-park.ts.
     if (outcome !== null && isDetailNotAttachedRefusal(outcome)) {
@@ -5725,7 +5725,7 @@ export default class PipelineRunnerAddon
     }
 
     // Session-decode is the ONLY decode path (the shared shm frame-handle
-    // poller was removed with @camstack/shm-ring on 2026-07-16): every attached
+    // poller was removed with @dominevo/shm-ring on 2026-07-16): every attached
     // camera decodes in a per-session worker. P4: when motion is co-active with
     // detection on the main stream (`sharedWithDetection`), RIDE the detection
     // worker and derive gray — no second fork. Otherwise (persistent analyzer,
@@ -5834,7 +5834,7 @@ export default class PipelineRunnerAddon
     }
 
     // Session-decode is the ONLY decode path (the shared shm frame-handle
-    // poller was removed with @camstack/shm-ring on 2026-07-16): every attached
+    // poller was removed with @dominevo/shm-ring on 2026-07-16): every attached
     // camera decodes rgb in a per-session forked worker over the broker's copy
     // restream — no shm ring, no poller.
     return this.startDetectionSessionDecode(config, api)
@@ -6972,7 +6972,7 @@ export default class PipelineRunnerAddon
 
     // Dial the burst through a disposable per-session decode worker over the
     // broker copy restream (the shared shm frame-handle poller was removed with
-    // @camstack/shm-ring on 2026-07-16). `startGuardedSessionDecode` returns the
+    // @dominevo/shm-ring on 2026-07-16). `startGuardedSessionDecode` returns the
     // teardown SYNCHRONOUSLY and releases the restream immediately if the burst
     // settles before the acquire completes — no orphan worker, no leaked
     // refcount. Decoded rgb frames are retained in the node RAM store so the

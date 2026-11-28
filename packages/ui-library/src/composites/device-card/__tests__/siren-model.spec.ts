@@ -2,7 +2,7 @@
  * The siren's pure model: what the device declares adjustable (and nothing
  * else), the countdown arithmetic, and a run whose duration is unknown.
  */
-import type { SirenOptions } from '@camstack/types'
+import type { SirenOptions } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   type SirenRun,

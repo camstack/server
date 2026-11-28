@@ -27,7 +27,7 @@
  * the camera's words; re-writing it here would lose the only detail that tells
  * an operator whether to look at the card, the network or the firmware.
  */
-import type { ClipSource } from '@camstack/types'
+import type { ClipSource } from '@dominevo/types'
 import { defaultUiText, type UiTextFn } from '../../contexts/ui-text.js'
 
 /** How loudly a source's state should read. Never the whole message. */

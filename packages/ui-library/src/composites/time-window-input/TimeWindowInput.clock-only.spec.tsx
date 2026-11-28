@@ -2,7 +2,7 @@
  * `clockOnly`: the input offers what a stored clock range can hold (two clock
  * times and the weekdays) and nothing else.
  */
-import type { TimeWindow } from '@camstack/types'
+import type { TimeWindow } from '@dominevo/types'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { TimeWindowInput } from './TimeWindowInput'

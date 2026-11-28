@@ -50,7 +50,7 @@ and brokers meet.
   loginUrl }`, `GET status` → `{ phase, loginUrl, error }`, `POST commit`
   (`{ sessionId, name, brokerId? }`) → `{ brokerId }`, `POST cancel`. The
   account's email, password and one-time code are typed on the provider's own
-  page behind `loginUrl`, never in CamStack. `BrokerSignInPanel` drives the
+  page behind `loginUrl`, never in Dominevo. `BrokerSignInPanel` drives the
   contract; Alexa's existing proxy-login routes are its first implementation.
 - **The form is laid out from the schema, by one rule**
   (`arrangeBrokerSchema`): fields the operator must supply come first; a field
@@ -86,7 +86,7 @@ Rejected:
 list lives once, in the addon (`AMAZON_DOMAINS`), which also serves it as the
 region select. A new kind with an interactive sign-in declares `signIn` and
 implements four routes; it needs no admin-ui change. `signIn` is an additive
-field on `listProviders` (a framework change: `@camstack/types` must reach the
+field on `listProviders` (a framework change: `@dominevo/types` must reach the
 hub with the addon). A re-link of an existing broker uses the same panel with
 `brokerId`. "Restore under its original id" is not offered for a kind that
 signs in, since the sign-in mints the broker's id.

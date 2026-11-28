@@ -61,7 +61,7 @@ async function clientOf(hub: ReturnType<typeof fakeHub>) {
   return outcome.connection.client
 }
 
-describe('camstack cluster-update', () => {
+describe('dominevo cluster-update', () => {
   it('starts the hub job with the options and exits 0 when it succeeds', async () => {
     const { hub, lines, deps } = harness([
       job('running', [

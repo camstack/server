@@ -24,7 +24,7 @@
  * has any spare capacity to harvest.
  *
  * Env:
- *   CAMSTACK_SERVER  hub address (default: the `camstack login` session's hub)
+ *   CAMSTACK_SERVER  hub address (default: the `dominevo login` session's hub)
  *   AGENT_NODE_ID    hub  (cluster node to target)
  *   FIXTURE_PATH     test-output/bench/sample-1080p.jpg
  *
@@ -38,15 +38,15 @@ import { performance } from 'node:perf_hooks'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import sharpMod from 'sharp'
-import type { AppRouter } from '@camstack/types'
+import type { AppRouter } from '@dominevo/types'
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
 
 const ITERATIONS = Number.parseInt(process.argv[2] ?? '200', 10)
 const PARALLEL = Number.parseInt(process.argv[3] ?? '4', 10)
 const SWEEP = process.argv[4] === '1' || process.argv[4] === 'sweep'
-// The `camstack login` session is the only credential (D1101): log in once with
-// `camstack login <host>`; nothing here asks for a password.
+// The `dominevo login` session is the only credential (D1101): log in once with
+// `dominevo login <host>`; nothing here asks for a password.
 const hubAuth = await resolveHubAuth(
   process.env['CAMSTACK_SERVER'] ? { server: process.env['CAMSTACK_SERVER'] } : {},
 )

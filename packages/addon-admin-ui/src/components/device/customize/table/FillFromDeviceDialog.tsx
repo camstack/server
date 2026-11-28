@@ -5,7 +5,7 @@
  * proposals instead of a value list.
  */
 import { liveWireableCatalog } from '../source-picker-model'
-import type { DeviceInfo } from '@camstack/types'
+import type { DeviceInfo } from '@dominevo/types'
 import {
   Button,
   DeviceValueField,
@@ -20,7 +20,7 @@ import {
   useDeviceManagerListAll,
   useDeviceStateGetSnapshot,
   useDeviceValueSource,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { currentComposition } from '../customization-read'

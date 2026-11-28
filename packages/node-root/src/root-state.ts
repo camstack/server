@@ -2,7 +2,7 @@
  * Data-dir server-root layout + state file — ZERO-DEP (node:fs/node:path only).
  *
  * Loaded by each node's baked STARTER before any node_modules resolution is
- * trusted, so this module must never import from `@camstack/*` (runtime) or
+ * trusted, so this module must never import from `@dominevo/*` (runtime) or
  * any npm package. The hub's `ServerUpdateService` and the agent's update
  * service consume the same module — one source of truth for the layout and
  * the state shape. The layout is IDENTICAL on both node types (the dir is

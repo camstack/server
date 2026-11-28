@@ -17,7 +17,7 @@
  */
 import * as fs from 'node:fs'
 import * as fsp from 'node:fs/promises'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { ChunkedDownloadApi } from './manifest-store.js'
 
 export interface DownloadArchiveInput {

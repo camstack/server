@@ -11,19 +11,19 @@
       "DOM.Iterable"
     ],
     "paths": {
-      "@camstack/types": [
+      "@dominevo/types": [
         "../types/src/index.ts"
       ],
-      "@camstack/sdk": [
+      "@dominevo/sdk": [
         "../sdk/src/index.ts"
       ],
-      "@camstack/ui": [
+      "@dominevo/ui": [
         "../ui-library/src/index.ts"
       ],
-      "@camstack/ui-library/testing": [
+      "@dominevo/ui-library/testing": [
         "../ui-library/src/testing/select-option.ts"
       ],
-      "@camstack/ui-library": [
+      "@dominevo/ui-library": [
         "../ui-library/src/index.ts"
       ]
     },

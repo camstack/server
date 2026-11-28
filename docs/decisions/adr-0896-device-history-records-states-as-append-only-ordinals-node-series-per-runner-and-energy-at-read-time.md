@@ -46,7 +46,7 @@ sent to that agent and failed "device-history not available on node".
   function key — the runner's addon id, `__root__`, `__unattributed__` — so the
   cold tier folds like the hot ring and a runner keeps one series for life. Node
   totals (CPU %, memory %, CPU and GPU temperature, GPU %) and per-location
-  storage occupancy (volume used %, free bytes, bytes CamStack holds) are
+  storage occupancy (volume used %, free bytes, bytes Dominevo holds) are
   recorded too, each from the authority that already serves it, and a reading
   that was not taken is no point (D393). The PID-scoped keys are no longer
   written; their rows age out (no migration).
@@ -72,7 +72,7 @@ sent to that agent and failed "device-history not available on node".
   energy series was rejected because it would be a second copy of the meter
   that can disagree with it, and would start empty.
 - A query caller that sent `nodeId` to `listNodeSeries` / `queryNode` must send
-  `forNodeId`. The cap change needs `@camstack/system` and `@camstack/server`
+  `forNodeId`. The cap change needs `@dominevo/system` and `@dominevo/server`
   force-published.
 - The metrics table was being written under an engine-minted random key (the
   key is the PRIMARY KEY and the store did not pass it as `id`), so every boot

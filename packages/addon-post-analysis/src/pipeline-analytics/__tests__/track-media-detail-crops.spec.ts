@@ -25,7 +25,7 @@
  * end and not restated by a fake.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { AnalyticsQueryFacade } from '../analytics-query-facade.js'
 import { MediaStore } from '../store/media-store.js'

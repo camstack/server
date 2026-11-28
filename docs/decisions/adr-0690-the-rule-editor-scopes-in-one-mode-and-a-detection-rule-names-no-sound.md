@@ -79,7 +79,7 @@ one thing, or a way to break the rule it was editing.
    device, always open, never paged. The viewer-drawn custom zones are not
    offered by the admin editor.
 5. **One dictionary of state words.** `STATE_LABELS` / `stateLabel` in
-   `@camstack/types` (en + it) labels every state word a device-state or scene
+   `@dominevo/types` (en + it) labels every state word a device-state or scene
    gate offers; both editors render through it and fall back to the raw word
    for a vocabulary it does not know.
 

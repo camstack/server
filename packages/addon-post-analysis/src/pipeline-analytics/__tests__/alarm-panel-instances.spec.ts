@@ -4,14 +4,14 @@
  * a later pass never overwrites it, and it carries no switch (the registry flag is the one store
  * of a fixed builtin).
  */
-import { RecordsEngine } from '@camstack/server/system'
+import { RecordsEngine } from '@dominevo/server/system'
 import {
   type AddonContext,
   createRecordsAccess,
   type IIntegrationInstancesProvider,
   type RecordsAccess,
   type RecordsTransport,
-} from '@camstack/types'
+} from '@dominevo/types'
 import Database from 'better-sqlite3'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { NC_INTEGRATION_NAME } from '../../notification-center/alarm/alarm-panel-declaration.js'

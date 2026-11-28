@@ -17,8 +17,8 @@ import type {
   KnownEventCategory,
   SettingsRecord,
   QueryFilter,
-} from '@camstack/types'
-import { createRecordsAccess } from '@camstack/types'
+} from '@dominevo/types'
+import { createRecordsAccess } from '@dominevo/types'
 import { makeRecordsWorld } from '../../sqlite-storage/__tests__/support/records-world.js'
 import { AlertCenterAddon } from '../alerts.addon.js'
 
@@ -757,20 +757,20 @@ describe('AlertCenterAddon', () => {
       eventBus._fire(
         'addon.unsupported-version',
         makeSystemEvent('addon.unsupported-version', {
-          packageName: '@camstack/addon-net-access',
+          packageName: '@dominevo/addon-net-access',
           addonId: 'net-access',
           nodeId: 'hub',
           installedVersion: '1.0.0',
           requiredMinimum: '2.0.0',
           serverVersion: '1.2.721',
-          unmet: ['requires @camstack/addon-net-access >= 2.0.0, installed 1.0.0'],
+          unmet: ['requires @dominevo/addon-net-access >= 2.0.0, installed 1.0.0'],
         }),
       )
       await vi.waitFor(async () => {
         expect(await addon.listAlerts()).toHaveLength(1)
       })
       const [card] = await addon.listAlerts()
-      expect(card?.id).toBe('addon-unsupported:hub:@camstack/addon-net-access')
+      expect(card?.id).toBe('addon-unsupported:hub:@dominevo/addon-net-access')
       expect(card?.severity).toBe('warning')
       expect(card?.message).toContain('1.0.0')
       expect(card?.message).toContain('2.0.0')
@@ -779,7 +779,7 @@ describe('AlertCenterAddon', () => {
       eventBus._fire(
         'addon.unsupported-resolved',
         makeSystemEvent('addon.unsupported-resolved', {
-          packageName: '@camstack/addon-net-access',
+          packageName: '@dominevo/addon-net-access',
           addonId: 'net-access',
           nodeId: 'hub',
         }),

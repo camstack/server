@@ -11,7 +11,7 @@
  *  - a dropped face moves no byte, every close releases the parcel, and the
  *    per-camera stats count parks, reuses, stores and drops.
  */
-import type { FrameHandle } from '@camstack/types'
+import type { FrameHandle } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { FaceRecognizer, type FaceStoreInsertInput } from '../face-recognizer.js'
 import { FACE_DEFAULTS, FACE_SOURCE_PARK_MIN_INTERVAL_MS } from '../face-settings.js'

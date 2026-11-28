@@ -1,14 +1,14 @@
 /**
  * `HksvClipWriter` — the TEE. One `Fmp4FragmentPlane` subscription beside the
  * delegate's own, writing `init + fragments` to a file so a clip HomeKit kept
- * is also a clip CamStack kept.
+ * is also a clip Dominevo kept.
  *
  * ## Why a tee and not a fetch
  *
  * HomeKit Secure Video is a sink. HDS `dataSend` is push-only and
  * `CameraRecordingDelegate` has no read-back — a clip iOS stored is never
  * readable by the accessory again, from HomeKit or from iCloud. So the only
- * copy CamStack can ever have of a HomeKit clip is the one it kept of what it
+ * copy Dominevo can ever have of a HomeKit clip is the one it kept of what it
  * SENT, at the moment it sent it. A stream you did not tee is gone; that is why
  * this is not waiting for the provider slices that will list it.
  *
@@ -46,8 +46,8 @@
  * open — and that is not a window we choose, so it is the one thing here that
  * has no natural ceiling. This is the ceiling.
  */
-import type { IScopedLogger } from '@camstack/types'
-import type { Fmp4Subscription } from '@camstack/types/node'
+import type { IScopedLogger } from '@dominevo/types'
+import type { Fmp4Subscription } from '@dominevo/types/node'
 
 import type { HksvClipTruncation } from './clip-record.js'
 

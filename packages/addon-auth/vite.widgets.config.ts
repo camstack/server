@@ -10,14 +10,14 @@ import { federation } from '@module-federation/vite'
  * the pre-auth login page's `loadRemoteBundle`) consume.
  *
  * Output lands in `dist/webauthn/` — NOT the package `dist/` root —
- * because `@camstack/addon-auth` is a multi-entry bundle: the static
+ * because `@dominevo/addon-auth` is a multi-entry bundle: the static
  * route resolves the `auth-webauthn` addon's dist dir via the manifest
  * `entry` (`./dist/webauthn/auth-webauthn.addon.js`), so the widget
  * bundle MUST sit alongside it at `dist/webauthn/`.
  *
  * `@simplewebauthn/browser` is DELIBERATELY bundled (not shared) — the
  * whole point of this rework is that the WebAuthn library ships inside
- * the addon bundle, never in the host or `@camstack/ui-library`. Only the
+ * the addon bundle, never in the host or `@dominevo/ui-library`. Only the
  * framework singletons below are shared with the host so React context /
  * the tRPC client / the SDK resolve to the host's single instance.
  *
@@ -32,7 +32,7 @@ export default defineConfig({
       name: 'addon_auth_webauthn_widgets',
       filename: 'remoteEntry.js',
       // Disable MF DTS generation — it walks the exposed modules' imports
-      // through the `@camstack/*` → src aliases and leaks `.d.ts` next to
+      // through the `@dominevo/*` → src aliases and leaks `.d.ts` next to
       // framework sources (Bug-1, guarded by scripts/check-no-dts-in-src.sh).
       dts: false,
       exposes: {
@@ -46,9 +46,9 @@ export default defineConfig({
         '@tanstack/react-query': { singleton: true, requiredVersion: false, import: false },
         '@trpc/client': { singleton: true, requiredVersion: false, import: false },
         '@trpc/react-query': { singleton: true, requiredVersion: false, import: false },
-        '@camstack/ui-library': { singleton: true, requiredVersion: false, import: false },
-        '@camstack/sdk': { singleton: true, requiredVersion: false, import: false },
-        '@camstack/types': { singleton: true, requiredVersion: false, import: false },
+        '@dominevo/ui-library': { singleton: true, requiredVersion: false, import: false },
+        '@dominevo/sdk': { singleton: true, requiredVersion: false, import: false },
+        '@dominevo/types': { singleton: true, requiredVersion: false, import: false },
       },
     }),
   ],

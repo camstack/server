@@ -45,7 +45,7 @@ describe('gen-model-licenses', () => {
     for (const r of rows.filter((x) => x.nonCommercial)) expect(section).toContain(`\`${r.id}\``)
   })
 
-  it('the HF table lists only CamStack-hosted rows', () => {
+  it('the HF table lists only Dominevo-hosted rows', () => {
     const table = renderHfTable(rows)
     expect(table).toContain('yolo26n')
     expect(table).not.toContain('ssd-mobilenet-v2-coco-edgetpu')

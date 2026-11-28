@@ -20,7 +20,7 @@
  */
 import { describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen } from '@testing-library/react'
-import { DeviceType, type DeviceSelector } from '@camstack/types'
+import { DeviceType, type DeviceSelector } from '@dominevo/types'
 
 interface FakeDevice {
   readonly id: number

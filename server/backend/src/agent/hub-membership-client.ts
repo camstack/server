@@ -16,7 +16,7 @@ import {
   signMembershipProof,
   verifyMembershipAnswer,
   type MembershipAnswer,
-} from '@camstack/server/system'
+} from '@dominevo/server/system'
 import { Agent, fetch as undiciFetch } from 'undici'
 
 export interface HubMembershipQuery {

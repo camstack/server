@@ -12,7 +12,7 @@ import {
   type InferNativeProvider,
   type LockControlStatus,
   type SwitchStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { HmChannel, HmValue, ValueChangedEvent } from 'nodehomematic'
 import { HmChildDevice, hmChildSchema } from './hm-child-device.js'
 import {

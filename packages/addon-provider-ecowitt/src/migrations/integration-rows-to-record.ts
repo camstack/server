@@ -14,7 +14,7 @@ import {
   moveIntegrationRowsToRecords,
   type RowsIntegration,
   type RowsMigrationLog,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { type EcowittConnectionBody, ecowittConnectionsEntryKind } from '../ecowitt-instances.js'
 
 export const ECOWITT_ROWS_TO_RECORD_ID = 'provider-ecowitt/2026-11-05-integration-rows-to-record'

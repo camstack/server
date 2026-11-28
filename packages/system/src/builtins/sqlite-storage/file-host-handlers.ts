@@ -4,7 +4,7 @@
  * serves `events.db` / `history.db`), so the two cannot disagree about what an
  * op means.
  */
-import type { IVectorStoreProvider } from '@camstack/types'
+import type { IVectorStoreProvider } from '@dominevo/types'
 import {
   type ControlOp,
   type ControlOps,

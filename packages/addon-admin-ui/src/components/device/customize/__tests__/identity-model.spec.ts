@@ -1,4 +1,4 @@
-import { DeviceRole, DeviceType } from '@camstack/types'
+import { DeviceRole, DeviceType } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { displayWithHidden, roleOptions, rolesForDeviceType } from '../identity-model'
 

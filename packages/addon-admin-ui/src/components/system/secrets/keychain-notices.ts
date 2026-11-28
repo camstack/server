@@ -11,7 +11,7 @@
  *
  * Pure: the component decides how each line's action looks.
  */
-import type { KeychainResetRecord, KeychainStatus } from '@camstack/types'
+import type { KeychainResetRecord, KeychainStatus } from '@dominevo/types'
 import i18n from '../../../i18n/index'
 
 export type KeychainNoticeId =

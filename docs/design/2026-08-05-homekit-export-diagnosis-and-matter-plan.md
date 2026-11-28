@@ -327,7 +327,7 @@ and publish bumps. The deployed code is behaviourally current.
 >
 > **2026-08-07 — the operator asked why the Home app offers no recording, and
 > the question was answered properly.** The blocker is not the delegate: it is
-> that no CamStack surface can produce a LIVE fMP4 fragment sequence. The
+> that no Dominevo surface can produce a LIVE fMP4 fragment sequence. The
 > recorder writes real fMP4 but is ~13 s behind live and encodes audio as
 > `libopus` (HKSV requires AAC); the clip ring returns one base64 blob; and the
 > ffmpeg primitive's `FfmpegSink` union has no `mp4` container at all. Full
@@ -814,9 +814,9 @@ unproven.**
 
 Verification is a deploy plus one observation, and it is cheap:
 
-1. `camstack deploy packages/addon-export-hap`, then open the camera in Home.
+1. `dominevo deploy packages/addon-export-hap`, then open the camera in Home.
 2. On the hub, watch the controller's video port for inbound RTCP —
-   `docker exec CamStack sh -c "tcpdump -n -i any udp and host <controller-ip>"`
+   `docker exec Dominevo sh -c "tcpdump -n -i any udp and host <controller-ip>"`
    — and confirm SRs now leave on the video leg as well as the audio leg.
 3. Re-run the §1.2 session-duration query. The pass condition is a single
    session exceeding 31 s.

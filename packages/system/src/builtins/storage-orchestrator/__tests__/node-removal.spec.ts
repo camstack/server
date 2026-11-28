@@ -3,7 +3,7 @@
  * locations that live on it — never removes them. The bytes and the index stay;
  * the operator deletes the rows by hand later.
  */
-import { resolveLocationMode, type IScopedLogger, type StorageLocation } from '@camstack/types'
+import { resolveLocationMode, type IScopedLogger, type StorageLocation } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import type { ILocationStore } from '../location-store.js'
 import { createNodeRemovalHook } from '../node-removal.js'

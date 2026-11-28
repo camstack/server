@@ -11,7 +11,7 @@
  * A failed read changes nothing (D49): {@link importBoardKeys} never writes
  * without a key it actually read, so the existing key stays.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { EspFailureReason } from './esphome-link.js'
 import {
   importBoardKeys,
@@ -53,10 +53,13 @@ export class EspKeyRotation {
     if (reason !== 'encryption-key-invalid') return null
     const tags = this.tagsFor(boardId)
     if (this.spent.has(boardId)) {
-      this.deps.logger.info('key rotation: key rejected again, already fetched since last connect', {
-        ...tags,
-        meta: { boardId },
-      })
+      this.deps.logger.info(
+        'key rotation: key rejected again, already fetched since last connect',
+        {
+          ...tags,
+          meta: { boardId },
+        },
+      )
       return null
     }
     this.spent.add(boardId)

@@ -22,7 +22,7 @@ interface Rule {
 
 /** Order matters: Edge and Opera also say "Chrome", Chrome also says "Safari". */
 const BROWSERS: readonly Rule[] = [
-  { test: /Electron\//, name: 'CamStack desktop' },
+  { test: /Electron\//, name: 'Dominevo desktop' },
   { test: /Edg(e|A|iOS)?\//, name: 'Edge' },
   { test: /OPR\/|Opera/, name: 'Opera' },
   { test: /Firefox\/|FxiOS\//, name: 'Firefox' },
@@ -42,8 +42,8 @@ const SYSTEMS: readonly Rule[] = [
 
 /** Non-browser clients: the native apps and scripts. */
 const OTHER_CLIENTS: readonly Rule[] = [
-  { test: /CFNetwork\/.*Darwin\//, name: 'CamStack app on iOS' },
-  { test: /^okhttp\//i, name: 'CamStack app on Android' },
+  { test: /CFNetwork\/.*Darwin\//, name: 'Dominevo app on iOS' },
+  { test: /^okhttp\//i, name: 'Dominevo app on Android' },
   { test: /^(node|undici)\b/i, name: 'Script (Node.js)' },
   { test: /^curl\//i, name: 'curl' },
 ]

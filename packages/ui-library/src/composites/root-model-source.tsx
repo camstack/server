@@ -17,7 +17,7 @@ import {
   type RootStepSupply,
   type RootSupplyState,
   USE_ROOT_MODEL_SETTING_KEY,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** The root model the edited column runs, and what it can supply. */
 export interface RootModelInfo {

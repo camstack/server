@@ -3,7 +3,7 @@ import {
   type DeviceContext,
   EventCategory,
   type InferNativeProvider,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export interface AccessoriesCapHandle {
   setChildren(ids: readonly number[]): void

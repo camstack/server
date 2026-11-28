@@ -2,7 +2,7 @@ import {
   PET_FEEDER_MANUAL_FEED_MAX,
   PET_FEEDER_MANUAL_FEED_MIN,
   type PetFeederStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { ReactElement } from 'react'
 import { useTrpcClient } from '../../../contexts/system-context'
 import { type UiTextFn, useUiText } from '../../../contexts/ui-text'

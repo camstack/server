@@ -5,7 +5,7 @@ import {
   TuyaCloud,
   TuyaCloudError,
 } from '@apocaliss92/nodetuya'
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IScopedLogger } from '@dominevo/types'
 import { settingsToTuyaConfig, toTuyaCloudOptions, type TuyaConfig } from './config.js'
 import { type TuyaCatalogEntry, type TuyaConnectionResolver } from './tuya-gateway.js'
 

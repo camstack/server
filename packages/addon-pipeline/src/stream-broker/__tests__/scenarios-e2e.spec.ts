@@ -13,10 +13,10 @@
  * resolution path.
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { EventCategory } from '@camstack/types'
+import { EventCategory } from '@dominevo/types'
 import { StreamBrokerManager } from '../stream-broker/stream-broker-manager'
 import { WebrtcSessionProvider, CameraStreamsProvider } from '../device-scoped-providers'
-import type { IScopedLogger, IEventBus, EventFilter, SystemEvent } from '@camstack/types'
+import type { IScopedLogger, IEventBus, EventFilter, SystemEvent } from '@dominevo/types'
 
 // ── Fakes ────────────────────────────────────────────────────────────
 

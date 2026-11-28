@@ -19,8 +19,8 @@ import {
   type NcRuleInput,
   type NcSchedule,
   type NcSystemEventKind,
-} from '@camstack/types'
-import type { DryRunOutcome, GatedToolSpec, HubClient } from '@camstack/develop'
+} from '@dominevo/types'
+import type { DryRunOutcome, GatedToolSpec, HubClient } from '@dominevo/develop'
 import { z } from 'zod'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { text } from './tool-result.js'
@@ -602,7 +602,7 @@ export async function saveRule(
 }
 
 const GATE_HOW =
-  'Two steps: call without confirm_token for a preview and a one-shot token, then call again with the SAME arguments and that token. Needs an admin `camstack login` session.'
+  'Two steps: call without confirm_token for a preview and a one-shot token, then call again with the SAME arguments and that token. Needs an admin `dominevo login` session.'
 
 export function registerNcRuleTools(server: McpServer, ctx: McpContext): void {
   server.tool(

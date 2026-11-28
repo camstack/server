@@ -7,7 +7,7 @@ import {
   buildLinkedInstances,
   type RecordIntegrationInstances,
   type RecordsAccess,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { type MatterConnectionBody, matterConnectionsEntryKind } from './broker-record-kinds.js'
 
 export const MATTER_BROKER_KIND = 'matter'

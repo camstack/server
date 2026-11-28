@@ -24,7 +24,7 @@
  * Kept out of `index.ts` on purpose: the addon supplies stores and one
  * analyze function, and nothing here reaches back into it.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { isV2Aligned } from './face-alignment-version.js'
 import { type PruneResult, pruneV1DetectedSamples } from './face-gallery-prune.js'
 import {

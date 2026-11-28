@@ -7,7 +7,7 @@ import { pageRemoteConfigProblems } from '../check-page-remote-no-ui-library-ali
 const ROOT = path.resolve(import.meta.dirname, '..', '..')
 
 const GOOD = `
-  federation({ shared: { '@camstack/ui-library': { singleton: true, requiredVersion: \`>=\${v}\`, import: false } } })
+  federation({ shared: { '@dominevo/ui-library': { singleton: true, requiredVersion: \`>=\${v}\`, import: false } } })
   export default { resolve: { alias: { other: 'x' } } }
 `
 
@@ -17,15 +17,15 @@ describe('page remote shared-library guard', () => {
   })
 
   it('refuses an alias of ui-library to source', () => {
-    const bad = `${GOOD}\n resolve: { alias: { '@camstack/ui-library': path.resolve(__dirname, '../ui-library/src') } }`
-    expect(pageRemoteConfigProblems(bad).join()).toContain('@camstack/ui-library')
+    const bad = `${GOOD}\n resolve: { alias: { '@dominevo/ui-library': path.resolve(__dirname, '../ui-library/src') } }`
+    expect(pageRemoteConfigProblems(bad).join()).toContain('@dominevo/ui-library')
   })
 
   it('refuses an alias of ui to source, and of types', () => {
-    const ui = `${GOOD}\n alias: { '@camstack/ui': path.resolve(a, 'b') }`
-    expect(pageRemoteConfigProblems(ui).join()).toContain('@camstack/ui')
-    const types = `${GOOD}\n alias: { '@camstack/types': './types/src' }`
-    expect(pageRemoteConfigProblems(types).join()).toContain('@camstack/types')
+    const ui = `${GOOD}\n alias: { '@dominevo/ui': path.resolve(a, 'b') }`
+    expect(pageRemoteConfigProblems(ui).join()).toContain('@dominevo/ui')
+    const types = `${GOOD}\n alias: { '@dominevo/types': './types/src' }`
+    expect(pageRemoteConfigProblems(types).join()).toContain('@dominevo/types')
   })
 
   it('refuses a ui-library share with no stated minimum', () => {
@@ -34,7 +34,7 @@ describe('page remote shared-library guard', () => {
   })
 
   it('ignores a config that is not a federation remote', () => {
-    expect(pageRemoteConfigProblems("alias: { '@camstack/ui-library': 'x' }")).toEqual([])
+    expect(pageRemoteConfigProblems("alias: { '@dominevo/ui-library': 'x' }")).toEqual([])
   })
 
   it('holds for every page package in the tree', () => {

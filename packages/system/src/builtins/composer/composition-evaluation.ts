@@ -28,7 +28,7 @@ import {
   type IScopedLogger,
   type SourceReader,
   type SystemEvent,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { CompositionEventEmitter } from './composition-target.js'
 import {
   currentOutput,

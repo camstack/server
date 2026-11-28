@@ -4,7 +4,7 @@
  * Bindings written before the pair existed carry no `addonId`; they resolve by
  * the stable id alone and only while it is unambiguous.
  */
-import type { ExpressionBindingSource } from '@camstack/types'
+import type { ExpressionBindingSource } from '@dominevo/types'
 import type { AutomationDevice } from './automation-data'
 
 export type GlobalBinding = Extract<ExpressionBindingSource, { kind: 'global' }>

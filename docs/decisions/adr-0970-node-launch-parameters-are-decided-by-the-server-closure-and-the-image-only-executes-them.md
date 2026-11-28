@@ -23,7 +23,7 @@ comment nobody rebuilds to read.
 ## Decision
 
 What a node's `node` process is launched with is decided by ONE module in the
-closure, `@camstack/server/dist/launch-args.js`
+closure, `@dominevo/server/dist/launch-args.js`
 (`node launch-args.js --role hub|agent [--allocator-env]`). It prints
 `arg` / `env` / `source` / `warn` records; every launcher is a thin executor that
 runs it, validates what came back, and applies it. A launcher carries no formula.

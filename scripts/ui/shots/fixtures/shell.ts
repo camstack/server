@@ -78,7 +78,7 @@ const node = (id: string, isHub: boolean, ip: string, platform: string, cpuModel
   addons: [],
   processes: [],
   categories: [],
-  rootPackage: { name: '@camstack/server', version: SERVER_VERSION },
+  rootPackage: { name: '@dominevo/server', version: SERVER_VERSION },
 })
 
 export default defineFixtures({
@@ -135,7 +135,7 @@ export default defineFixtures({
       node('garage-nuc', false, '192.0.2.21', 'linux', 'Intel(R) N100'),
     ],
     'serverManagement.getServerPackageStatus': {
-      packageName: '@camstack/server',
+      packageName: '@dominevo/server',
       runningVersion: SERVER_VERSION,
       nodeRuntimeVersion: '24.21.0',
       activeVersion: SERVER_VERSION,

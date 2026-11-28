@@ -31,7 +31,7 @@ import {
   type DeviceHistorySubject,
   type ReadingQuantity,
   historyUnitFor,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { RawPoint, RollupRow } from '../rollup/rollup-math.js'
 import { type RetentionPolicy } from '../retention/retention.js'
 import type { HistoryStore, SeriesRecord } from '../store/history-store.js'

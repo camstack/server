@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return -- test file: fake broker + wire-boundary casts */
-import type { SystemEvent } from '@camstack/types'
+import type { SystemEvent } from '@dominevo/types'
 import type { ServiceBroker } from 'moleculer'
 import { afterEach, describe, expect, it } from 'vitest'
 import { crossNodeAcceptsCategory } from '../../moleculer/event-bus-core.js'
@@ -15,7 +15,7 @@ import { createLocalTransport } from '../../transport/create-local-transport.js'
 import { LocalChildRegistry } from '../../transport/local-child-registry.js'
 import type { LocalChannel, LocalTransportClient } from '../../transport/local-transport.js'
 import type { ParentEventMessage } from '../../transport/child-cap-protocol.js'
-import { EventCategory } from '@camstack/types'
+import { EventCategory } from '@dominevo/types'
 
 const EVENT_TOPIC_WILDCARD = `${EVENT_TOPIC_PREFIX}**`
 

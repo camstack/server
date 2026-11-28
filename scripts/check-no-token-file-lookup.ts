@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 /**
- * No tool looks for a specific token file: the `camstack login` session is the credential.
+ * No tool looks for a specific token file: the `dominevo login` session is the credential.
  *
  * ONE token format exists; only the set of permissions differs (admin =
  * everything). Tools that went hunting for `scratchpad/.tok`, a
@@ -82,7 +82,7 @@ function main(): number {
   for (const f of findings) console.error(`${f.file}:${f.line}: ${f.text}`)
   console.error(
     'check-no-token-file-lookup: ask the shared resolver (resolveFreshCredentials / ' +
-      'scripts/hub/credentials.mjs); the `camstack login` session is the credential, ' +
+      'scripts/hub/credentials.mjs); the `dominevo login` session is the credential, ' +
       'there is no token-file override (D1101)',
   )
   return 1

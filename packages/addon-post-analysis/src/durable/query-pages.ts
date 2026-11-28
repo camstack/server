@@ -5,7 +5,7 @@
  * owner that wants "every row since T" walks the keyset cursor. The bound is the
  * caller's: a read that reaches it says so through `truncated`.
  */
-import { RECORD_QUERY_MAX, type RecordKindHandle, type RecordRow } from '@camstack/types'
+import { RECORD_QUERY_MAX, type RecordKindHandle, type RecordRow } from '@dominevo/types'
 
 /**
  * The lower bound of an open range. A records `where` orders by its range field,

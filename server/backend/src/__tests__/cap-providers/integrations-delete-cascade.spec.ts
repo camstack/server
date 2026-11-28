@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { buildIntegrationsProvider } from '../../api/core/cap-providers'
-import type { CapabilityRegistry } from '@camstack/server/system'
-import type { Integration } from '@camstack/types'
+import type { CapabilityRegistry } from '@dominevo/server/system'
+import type { Integration } from '@dominevo/types'
 
 // ── Minimal stubs ────────────────────────────────────────────────────────────
 

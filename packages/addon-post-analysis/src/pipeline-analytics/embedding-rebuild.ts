@@ -54,7 +54,7 @@
  * A track with no key frame is skipped and counted, never silently dropped.
  */
 
-import type { TrackSource } from '@camstack/types'
+import type { TrackSource } from '@dominevo/types'
 import type { EmbeddingWriteOutcome } from './store/object-embedding-store.js'
 
 /**

@@ -15,8 +15,8 @@ import {
   useDeviceMeshReadNow,
   useUiText,
   type DataColumn,
-} from '@camstack/ui-library'
-import type { MeshNode, MeshThreadNeighbor, MeshThreadRoute } from '@camstack/types'
+} from '@dominevo/ui-library'
+import type { MeshNode, MeshThreadNeighbor, MeshThreadRoute } from '@dominevo/types'
 import { RefreshCw } from 'lucide-react'
 
 const UNKNOWN = '—'
@@ -38,7 +38,7 @@ function PeerOnlyDetail({ node }: { readonly node: MeshNode }) {
       <p className="p-3 text-sm text-foreground-muted">
         {t(
           'uiLibrary.deviceMesh.peerOnly',
-          'This node is on the mesh but was not added by CamStack, so only its links are known.',
+          'This node is on the mesh but was not added by Dominevo, so only its links are known.',
         )}
       </p>
     </SectionCard>

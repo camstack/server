@@ -10,7 +10,7 @@ import {
   type DeviceNameFields,
   type DeviceNameNouns,
   type PickerItem,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import type { SourceCandidateDevice } from './source-selector-model'
 
 export interface DeviceNameSource {

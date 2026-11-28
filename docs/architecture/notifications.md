@@ -636,7 +636,7 @@ an operator the condition by opening the rule.
 Two things about that descriptor are worth keeping in mind:
 
 - **It reaches a hub only with the next TRAIN.** It is data in
-  `@camstack/types`, not an addon asset, so a hub running an older server serves
+  `@dominevo/types`, not an addon asset, so a hub running an older server serves
   a catalog without it. The admin UI therefore merges a local descriptor list
   over the served catalog (`withLocalConditionDescriptors`) — without it,
   `buildConditions` prunes to the SERVED catalog and an open-and-save would
@@ -911,7 +911,7 @@ What both editors must keep true (operator review, 2026-10-01):
   carrying them keeps them on every admin save, but only the viewer displays
   them.
 - **State words through ONE dictionary** — `stateLabel` / `STATE_LABELS` in
-  `@camstack/types` (en + it): alarm, cover, lock, switch/contact, presence and
+  `@dominevo/types` (en + it): alarm, cover, lock, switch/contact, presence and
   the scene gate's verdicts and read modes. An unknown word renders as itself.
 - **The list** (admin): sorted by name; the whole row opens the rule; a Snooze
   column with a switch (on while a rule-scoped window is live; an empty cell on
@@ -957,7 +957,7 @@ satisfy. That table is ONE module — `packages/types/src/notification/rule-kind
 — and both editors import it. The admin UI's local copy was DELETED on
 2026-08-19: the Module-Federation singleton constraint it was justified by was
 never true for the admin UI, which is the federation HOST and bundles
-`@camstack/types` from the workspace at build time (the lag is real only for
+`@dominevo/types` from the workspace at build time (the lag is real only for
 addon widget remotes, which declare `import: false`). Its spec
 (`packages/types/src/notification/__tests__/rule-kinds.spec.ts`) checks BOTH
 directions against the real `NC_CONDITION_CATALOG` — including that a condition
@@ -1030,7 +1030,7 @@ unavailable"). Built directly against the camstack-server workspace SOURCE,
 ahead of a publish (same pattern as the D690 `stateLabel` dictionary): a
 plain `npm run ts-check` is red on exactly one line,
 `rule-device-source.ts` importing `ruleDeviceCompatCapNames`, until
-`@camstack/types` publishes it and the viewer's pin is bumped.
+`@dominevo/types` publishes it and the viewer's pin is bumped.
 
 **Fix round 1 (2026-10-01, review of the above).** Four corrections to the
 guard, each pinned by a test that goes red without it:
@@ -1124,7 +1124,7 @@ Since [D637](../decisions/adr-0637-a-system-rule-answers-one-family.md) split
 the one editor into three family editors, the viewer's LIVE path is
 `familyFilterVisibility` (`camstack/src/components/notifications/system-event-family.ts`):
 the family's allowed set (`NC_SYSTEM_EVENT_FAMILY_FILTERS`) intersected with
-`systemEventFilterAppliesToAnyKind` from `@camstack/types` — no hand-rolled
+`systemEventFilterAppliesToAnyKind` from `@dominevo/types` — no hand-rolled
 predicate. The admin's twin is `systemEventFilterVisibilityFor` in
 `notification-system-events.ts`.
 
@@ -1343,11 +1343,11 @@ access. `previewTemplate` is a MUTATION on both, for transport only — a long
 draft does not belong in a GET URL; it sends nothing.
 
 `packages/addon-post-analysis` builds self-contained and INLINES
-`@camstack/types`, so the addon never lacks a schema it was built with and the
+`@dominevo/types`, so the addon never lacks a schema it was built with and the
 `nc.*` mirrors work on the addon deploy alone. The coupling is the hub's
-cap-router INPUT validation, which uses the copy of `@camstack/types` that
-`@camstack/server/system` inlines (`bundleTypesMainEntry`): install the
-`@camstack/server` release that carries the new shapes before a caller sends
+cap-router INPUT validation, which uses the copy of `@dominevo/types` that
+`@dominevo/server/system` inlines (`bundleTypesMainEntry`): install the
+`@dominevo/server` release that carries the new shapes before a caller sends
 them through `notificationRules.*` — the same coupling as D628.
 
 **Adding a variable costs three things in one change**: a descriptor in
@@ -1494,7 +1494,7 @@ remove, on purpose: an OLDER addon understands `null`, while Zod silently
 strips a `clear` it does not know.
 
 The lists are ADDON-LOCAL — neither family rides a cap method — so they cost
-no `@camstack/types` release, and the viewer mirrors them by hand
+no `@dominevo/types` release, and the viewer mirrors them by hand
 (`NcTimelapseRuleClearableKeySchema`, `NcSummaryRuleClearableKeySchema` in
 `camstack/src/data/notification-center.ts`). The consequence is a deploy
 order: `addon-post-analysis` must be live before a viewer that sends
@@ -2295,7 +2295,7 @@ that: it opened at 25 and has nothing left to raise.
 - **The admin restores the held-back kinds from its own build**
   (`restoreHeldBackKinds`), so its picker offers `{{tank}}` and `{{deviceName}}`
   on a tank rule.
-- **Release order is `@camstack/server` first, and a wrong order is silent.**
+- **Release order is `@dominevo/server` first, and a wrong order is silent.**
   The bundles load on an older closure, but that closure's router strips the
   threshold and refuses the tank kinds. The admin's device-events editor probes
   the router (`hub-rule-schema-probe.ts`: `previewTemplate` with a tank kind)
@@ -2838,7 +2838,7 @@ are what a phone notification should be.
 | `showTriggerZone` | outline the zone that FIRED the rule on a scene picture; refused on a rule whose trigger is not a zone |
 | `showSubjectPath` | draw the subject's path on the picture, every mode a crop included ([D903](../decisions/adr-0903-the-subject-path-is-one-geometry-in-camstack-types.md)); refused on a rule whose subject is not a tracked object (a sound); dropped with `image: 'none'`; absent = off |
 | `gif` / `clip` | also attach a GIF / MP4 around the event |
-| `clipPreRollSec` / `clipPostRollSec` | the window; absent = **4 s / 6 s**, `NC_CLIP_PRE_ROLL_DEFAULT_SEC` / `NC_CLIP_POST_ROLL_DEFAULT_SEC` in `@camstack/types` — ONE owner, resolved by the NC at dispatch and by the clip-ring retention ask (D654); the viewer editor still keeps its own 3 / 7 until its follow-up imports these. The schema declares NO Zod default, so a rule that never chose follows the hub's |
+| `clipPreRollSec` / `clipPostRollSec` | the window; absent = **4 s / 6 s**, `NC_CLIP_PRE_ROLL_DEFAULT_SEC` / `NC_CLIP_POST_ROLL_DEFAULT_SEC` in `@dominevo/types` — ONE owner, resolved by the NC at dispatch and by the clip-ring retention ask (D654); the viewer editor still keeps its own 3 / 7 until its follow-up imports these. The schema declares NO Zod default, so a rule that never chose follows the hub's |
 | `profile` | stream profile the footage is cut from; absent = the cheapest |
 
 ### One picture, one stage, rendered from the clean frame (D897, 2026-10-21)
@@ -2923,8 +2923,8 @@ source frame's instant, and draws a polyline in the subject colour
 drawable points, draws nothing and the picture still ships (a `debug` line
 `subject path not drawn — fewer than two trail points`, `tags: { deviceId }`).
 The point list, the placeholder/dwell rules and the clip are
-`buildSubjectPath` / `projectSubjectPath` in `@camstack/types`
-(`geometry/subject-path.ts`), re-exported by `@camstack/ui-library` and used by
+`buildSubjectPath` / `projectSubjectPath` in `@dominevo/types`
+(`geometry/subject-path.ts`), re-exported by `@dominevo/ui-library` and used by
 the admin event detail's trajectory too, so the notification and the debug view
 draw the same line. A linked camera's extra still draws no path (no subject of
 its own there).
@@ -3021,9 +3021,9 @@ aged out with the track like every other track media.
 Both writers replace a file WHOLE (temp beside the target, then `rename`), so a
 still read while the next roll overwrites `lastSceneFrame` or `lastFrame` is the
 old complete JPEG or the new one, never a torn prefix. The addon bundles every
-`@camstack/types/*` subpath, so routed locations and a `CAMSTACK_MEDIA_ROOT`
+`@dominevo/types/*` subpath, so routed locations and a `CAMSTACK_MEDIA_ROOT`
 provider are atomic on addon deploy; only the `ctx.kernel.storage` default
-(the runner-built provider) waits for a `@camstack/server` release.
+(the runner-built provider) waits for a `@dominevo/server` release.
 
 The source ladder (`rule-engine.ts#cleanSourcePreference`, D897) is
 `keyFrame` → `keyFrameSmall` → `sceneFrame` → `lastSceneFrame` → `fullFrame` →
@@ -3232,7 +3232,7 @@ conclude `ring` for a window the ring has already dropped.
   ntfy, WhatsApp) keeps the still and drops the recorded gif.
 - **A `clip`, a `gif`, or both — from ONE cut** (D682). The gif is derived
   from the recorded cut's own bytes (`recorded-gif.ts`, `deriveGifFromClip`)
-  with the broker's filter chain, which lives in `@camstack/types`
+  with the broker's filter chain, which lives in `@dominevo/types`
   (`ffmpeg/gif-derive.ts`) so the two addons cannot drift; it runs on the
   pinned ffmpeg (D540), bounded at 20 s and not started once the 30 s wait has
   passed. The message carries gif first, video second. Until D682 a gif-only
@@ -3404,7 +3404,7 @@ target's params always wins over it.
 
 | subject | lands on |
 | --- | --- |
-| a detection | the VIEWER camera at that instant (2026-08-18, D1 of the click-actions design): by default the CamStack app link `https://camstack.zentik.app/camera/<id>?at=<ts>&hub=<hub origin>`, or `<base>/viewer/camstack/camera/<id>?at=<ts>` when a hub address is flagged (see below, [D709](../decisions/adr-0709-a-notification-tap-opens-the-address-flagged-on-the-network-page-and-the-default-is-the-camstack-app-link.md)) |
+| a detection | the VIEWER camera at that instant (2026-08-18, D1 of the click-actions design): by default the Dominevo app link `https://camstack.zentik.app/camera/<id>?at=<ts>&hub=<hub origin>`, or `<base>/viewer/camstack/camera/<id>?at=<ts>` when a hub address is flagged (see below, [D709](../decisions/adr-0709-a-notification-tap-opens-the-address-flagged-on-the-network-page-and-the-default-is-the-camstack-app-link.md)) |
 | `addon-update-available` | `<base>/system/addons?node=<nodeId>` |
 | `server-update-available` | `<base>/system/cluster?node=<nodeId>` |
 | `stream-offline`, `device-offline` on a camera (and legacy `camera-offline`) | `<base>/devices/<deviceId>?tab=stream-broker` |
@@ -3440,7 +3440,7 @@ honest, where naming one of the nodes would not be.
 
 A notification points at the hub through TWO roles of the Network page's
 **Addresses** table: **Notification taps** (where a tap opens; automatic is the
-CamStack app link) and **Public endpoint** (action buttons, attachment / media
+Dominevo app link) and **Public endpoint** (action buttons, attachment / media
 links, admin links). The roles, their automatic picks and why they are separate
 are in [network](network.md#3-the-four-roles). `link-endpoints.ts` builds the
 button and media ladder on the public endpoint and never reads the taps role;
@@ -3449,7 +3449,7 @@ WARN line says so).
 
 The **Notification taps** flag is `local-network`'s notification endpoint
 (`getNotificationEndpoint`), and there is no second setting. The endpoint table lists the hub's own addresses (LAN,
-tunnel, Tailscale) plus one generic entry, the **CamStack app link**
+tunnel, Tailscale) plus one generic entry, the **Dominevo app link**
 (`https://camstack.zentik.app`, `kind: 'app-link'`). **The app link is the
 default.** AUTO resolves to it. Before D709, AUTO resolved to the tunnel, then
 the mesh.
@@ -3464,7 +3464,7 @@ the mesh.
   (`pickAppLinkHub`): the tunnel first, then Tailscale MagicDNS. When the hub
   advertises neither, the link has no `hub=`, and the central page asks for
   the hub once.
-- One builder, `buildViewerLink` (`@camstack/types` `viewer-link-url.ts`),
+- One builder, `buildViewerLink` (`@dominevo/types` `viewer-link-url.ts`),
   assembles every viewer link, through the `viewerLinkBaseOf` reading of the
   endpoint. Guard: `scripts/check-viewer-link-builder-is-the-only-source.ts`.
 - On the Network page the role is a column of the one **Addresses** table
@@ -3537,7 +3537,7 @@ want (an app-created window keeps the default ON).
 
 Alarm buttons are decided by the transition the ROW reports, not the panel's
 state now (`buildAlarmButtons` in `action-buttons.ts`): `alarm-disarmed` carries
-one **Arma** per `availableModes()` (max three — CamStack has no per-mode enable,
+one **Arma** per `availableModes()` (max three — Dominevo has no per-mode enable,
 so the available modes ARE the enabled ones); `alarm-arm-refused` carries one
 destructive **Arm anyway** bound to the row's frozen `refusalId` (no id, no
 button, one debug line; TTL `ARM_ANYWAY_TTL_MS`, 5 min — see the alarm section
@@ -3815,7 +3815,7 @@ A summary rule is N cameras, one window, ONE artefact: a clean mosaic of the
 best shot of every track the window held, delivered through the ordinary outbox
 as `recordKind: 'ai-summary'`. Its schema lives INSIDE the addon
 (`summary/summary-rule.ts`), not in `packages/types`, so a field added to it is
-live on the next `camstack deploy` rather than the next framework train — and it
+live on the next `dominevo deploy` rather than the next framework train — and it
 reaches the outside world through the `nc.*SummaryRule*` bridge actions, not a
 cap method.
 
@@ -4028,8 +4028,8 @@ one notification.
 
 The block is **addon-owned** (`rule-ai.ts`) in its own durable side table keyed
 by rule id, reached through `nc.getRuleAi` / `nc.setRuleAi`. Not a field on
-`NcRule`: that schema is in `@camstack/types`, which the addon resolves at
-runtime from the `@camstack/server` closure, so a new key on it is *silently
+`NcRule`: that schema is in `@dominevo/types`, which the addon resolves at
+runtime from the `@dominevo/server` closure, so a new key on it is *silently
 stripped at save* until a train lands and is installed. The row's lifetime is
 the rule's — `nc.deleteRule` clears it.
 
@@ -4400,8 +4400,8 @@ over the panel's state (D62). What DOES refuse an arm is an opening that is open
 when the mode is armed — see the next section (D630, which replaced the D137
 second-press bypass).
 
-**Train constraint.** `NcSystemEventKindSchema` lives in `@camstack/types`, so a
-RULE cannot be authored on `alarm-arming` until a `@camstack/server` closure
+**Train constraint.** `NcSystemEventKindSchema` lives in `@dominevo/types`, so a
+RULE cannot be authored on `alarm-arming` until a `@dominevo/server` closure
 carrying the member is installed — the hub's generated router validates
 `createRule`/`updateRule` input against the HOST enum and rejects it. The addon
 bundles its own copy (self-contained externals) and therefore CAN emit the kind
@@ -4409,7 +4409,7 @@ today, which reaches the operator through the panel's own `announceTargets`
 announcement. A `historySystemEventKind()` downgrade used to project the new
 alarm kinds onto older members in the cap-facing history view, so a durable row
 could not fail the host's enum; it was deleted (D630, alarm revamp Task 8) once
-`@camstack/server` 1.2.379 — `@camstack/types` 1.2.249, which carries every
+`@dominevo/server` 1.2.379 — `@dominevo/types` 1.2.249, which carries every
 alarm kind — was installed on every node.
 
 ### An arm is refused by openings, and armed around only by name ([D630](../decisions/adr-0630-an-arm-is-refused-by-openings-armed-around-only-by-name.md), 2026-09-24)
@@ -4741,7 +4741,7 @@ state-word transition.
 
 - **A new cap field is validated by the SERVER closure, not the addon.** A new
   `media.*` field is silently STRIPPED on save — the write succeeds and the
-  field vanishes — until a `camstack deploy-server` ships the framework.
+  field vanishes — until a `dominevo deploy-server` ships the framework.
   Deploying only the addon proves nothing.
 - **Zod defaults do not run on the addon→addon cap path.** Pass window and
   geometry explicitly; a schema `.default()` is not a value a caller may rely

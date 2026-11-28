@@ -18,7 +18,7 @@ import {
   zoneOnlySite,
   type DaylightPhaseReading,
   siteWithPhase,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** `localDate` moved by `days`. */
 export function addLocalDays(localDate: string, days: number): string {

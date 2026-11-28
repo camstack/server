@@ -28,7 +28,7 @@ import {
   Skeleton,
   useSystem,
   useThemeMode,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { type ReactNode, useCallback, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'

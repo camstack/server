@@ -3,7 +3,7 @@
  * built once from the executor's schema and shared by the step inspector's
  * list and its Compare matrix.
  */
-import type { PipelineSchema, PipelineSlot } from '@camstack/types'
+import type { PipelineSchema, PipelineSlot } from '@dominevo/types'
 
 export interface StepTreeNode {
   readonly addonId: string

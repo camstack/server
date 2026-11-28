@@ -15,7 +15,7 @@ import type { IncomingHttpHeaders } from 'node:http'
 import * as http from 'node:http'
 import * as https from 'node:https'
 import { Buffer } from 'node:buffer'
-import { createHubAgent, explainTlsFailure, resolveHubTls } from '@camstack/develop'
+import { createHubAgent, explainTlsFailure, resolveHubTls } from '@dominevo/develop'
 
 const DEFAULT_TIMEOUT_MS = 30_000
 

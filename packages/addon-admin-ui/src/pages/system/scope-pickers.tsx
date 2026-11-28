@@ -9,7 +9,7 @@
  * (D49). A node directory that is not `complete` says so under the picker,
  * because it may lack offline nodes the hub does know.
  */
-import { useSystem } from '@camstack/ui-library'
+import { useSystem } from '@dominevo/ui-library'
 import { useQuery } from '@tanstack/react-query'
 import { DevicePicker } from './DevicePicker'
 import type { PickerGroup } from './device-picker-model'

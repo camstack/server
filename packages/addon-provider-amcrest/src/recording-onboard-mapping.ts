@@ -46,8 +46,8 @@ import type {
   RecordingOnboardStatus,
   RecordTrigger,
   RecordWindow,
-} from '@camstack/types'
-import { DAY_NAMES, MINUTES_PER_DAY } from '@camstack/types'
+} from '@dominevo/types'
+import { DAY_NAMES, MINUTES_PER_DAY } from '@dominevo/types'
 
 /** A flat Dahua table, as `AmcrestCgiClient.parseTable` produces it. */
 export type DahuaTable = ReadonlyMap<string, string>
@@ -294,7 +294,7 @@ function statusOf(
 export interface ParsedAmcrestSchedule {
   readonly windows: readonly RecordWindow[]
   /**
-   * How many pieces of schedule the camera holds that CamStack could not
+   * How many pieces of schedule the camera holds that Dominevo could not
    * express: a trigger bit with no name, a holiday row, an unparseable
    * slot, a clock with seconds the cap's minutes cannot carry.
    */
@@ -431,7 +431,7 @@ export function parseSchedule(table: DahuaTable, channel: number): ParsedAmcrest
  * `eventManager.cgi?action=getCaps` state.
  *
  * Every member is nullable and null means the camera did not say. A limit
- * CamStack failed to read is NOT a limit of none — it closes the control
+ * Dominevo failed to read is NOT a limit of none — it closes the control
  * (D610), because this firmware was measured storing values outside its
  * own stated caps without complaint.
  */
@@ -495,7 +495,7 @@ export function findLocalStorageGroup(table: DahuaTable): number | null {
  * So the read is the two authorities' AGREEMENT: equal → that value;
  * different → null, which the status renders as "the camera did not say"
  * rather than picking a winner. The WRITE sets both (one request per
- * table), so a value CamStack wrote can never be the disagreeing case.
+ * table), so a value Dominevo wrote can never be the disagreeing case.
  */
 export function readOverwriteWhenFull(input: {
   readonly mediaGlobal: DahuaTable | null
@@ -623,8 +623,8 @@ export function buildOnboardStatus(input: {
 
 // ── Options ──────────────────────────────────────────────────────────
 
-/** Why nothing can be written before CamStack has read the camera. */
-export const AMCREST_NOT_READ_REASON = 'CamStack has not read this camera yet'
+/** Why nothing can be written before Dominevo has read the camera. */
+export const AMCREST_NOT_READ_REASON = 'Dominevo has not read this camera yet'
 
 /** Why a field is closed when the camera never stated its limits. */
 export const AMCREST_NO_LIMITS_REASON =
@@ -632,7 +632,7 @@ export const AMCREST_NO_LIMITS_REASON =
 
 /** Why the schedule is closed when part of it could not be read. */
 export const AMCREST_PARTIAL_SCHEDULE_REASON =
-  'CamStack could not read every recording window this camera holds — it records on triggers this version cannot name — so replacing them would delete the ones it could not show'
+  'Dominevo could not read every recording window this camera holds — it records on triggers this version cannot name — so replacing them would delete the ones it could not show'
 
 /** Why post-record is closed when the handlers disagree. */
 export const AMCREST_POST_RECORD_SPLIT_REASON =
@@ -674,7 +674,7 @@ export function buildOnboardOptions(input: {
 
   return {
     enabled: gate(true, AMCREST_NOT_READ_REASON),
-    // Written to BOTH authorities, so a value CamStack set can never be
+    // Written to BOTH authorities, so a value Dominevo set can never be
     // the disagreeing case the read reports as null.
     overwriteWhenFull: gate(true, AMCREST_NOT_READ_REASON),
     preRecordSec: gate(preOk, AMCREST_NO_LIMITS_REASON),

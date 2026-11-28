@@ -7,8 +7,8 @@
  * two axes that carry policy — the kind match (`system` on the wire covers
  * every system rule kind, D637) and the event-kind/family narrowing — are the
  * SHARED predicates, not a restatement. Importing them at runtime is safe: the
- * admin UI is the Module-Federation HOST and bundles `@camstack/types` from the
- * workspace (`vite.config.ts`, `shared['@camstack/types'].import: typesEsm`),
+ * admin UI is the Module-Federation HOST and bundles `@dominevo/types` from the
+ * workspace (`vite.config.ts`, `shared['@dominevo/types'].import: typesEsm`),
  * exactly as `notification-rules.helpers.ts` already does. The parity spec
  * pins the two answers together.
  */
@@ -22,7 +22,7 @@ import {
   templateVarDeliveryApplies,
   templateVarKindApplies,
   templateVarSystemEventApplies,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export interface PlaceholderToken {
   readonly text: string

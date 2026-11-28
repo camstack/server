@@ -22,7 +22,7 @@ import { Checkbox } from '../../primitives/checkbox'
 import { useState, type JSX, useRef } from 'react'
 import { useSearchFieldHotkey } from '../../hotkeys/use-search-field-hotkey'
 import { Plus, X } from 'lucide-react'
-import { EXTENSION_SLOTS, type ExtensionSlotSource, type ExtensionSlotState } from '@camstack/types'
+import { EXTENSION_SLOTS, type ExtensionSlotSource, type ExtensionSlotState } from '@dominevo/types'
 import {
   useDeviceExtensionListCandidates,
   useDeviceExtensionSetSlot,

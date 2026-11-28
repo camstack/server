@@ -13,7 +13,7 @@ applies-to:
 
 ## Context
 
-2026-10-13, device 106 ("Baby monitor", standalone battery Reolink): CamStack
+2026-10-13, device 106 ("Baby monitor", standalone battery Reolink): Dominevo
 reported 80 % until the camera died, then 11 %. Nothing in the provider read the
 battery on a schedule while the camera slept. The only timer that existed
 (`runBatteryUpdate`, hourly) returned at its first line when the sleep mirror

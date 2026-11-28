@@ -7,7 +7,7 @@
  * The synthetic row is built at an untyped boundary (JSON.parse) — the typed
  * union cannot spell a slot the table does not declare.
  */
-import type { ExtensionSlotRow } from '@camstack/types'
+import type { ExtensionSlotRow } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { resolveExtensionsView } from '../extensions-view-state.js'
 

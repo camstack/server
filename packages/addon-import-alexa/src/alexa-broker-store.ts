@@ -2,7 +2,7 @@ import {
   type RecordKindHandle,
   type RecordsAccess,
   RecordSecretUnavailableError,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { AlexaBrokerEntrySchema, type AlexaBrokerEntry } from './config.js'
 import { alexaBrokersEntryKind, type AlexaBrokerBody } from './broker-record-kinds.js'
 

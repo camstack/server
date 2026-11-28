@@ -1,4 +1,4 @@
-import { type DisplayPreference, formatReading, type ReadingQuantity } from '@camstack/types'
+import { type DisplayPreference, formatReading, type ReadingQuantity } from '@dominevo/types'
 import { formatChartNumber } from '../../charts/chart-uplot'
 import type { SparklinePoint } from '../../charts/Sparkline'
 

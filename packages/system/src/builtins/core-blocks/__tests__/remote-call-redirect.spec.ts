@@ -4,7 +4,7 @@ import {
   type MediaPlayerStatus,
   type RemoteAssumedState,
   type RemoteConfig,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { remoteCallRedirect } from '../remote-call-redirect.js'
 import { RemoteService } from '../remote-service.js'

@@ -8,7 +8,7 @@
  * palette stays open after a pick, so several components go on in one visit;
  * a line under the search says what was just added.
  */
-import type { RemoteLayoutComponent, RemoteLayoutPayload } from '@camstack/types'
+import type { RemoteLayoutComponent, RemoteLayoutPayload } from '@dominevo/types'
 import {
   Checkbox,
   Dialog,
@@ -21,7 +21,7 @@ import {
   Input,
   Skeleton,
   useRemoteLayoutComponentsListComponents,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Search, Shapes } from 'lucide-react'
 import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -32,7 +32,7 @@ import {
   filterComponents,
   mergeComponents,
 } from './layout-components'
-import { RemoteGrid } from '@camstack/ui-library'
+import { RemoteGrid } from '@dominevo/ui-library'
 
 export interface ComponentPaletteProps {
   readonly open: boolean

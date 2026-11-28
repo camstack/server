@@ -23,7 +23,7 @@ import type {
   IScopedLogger,
   PipelineAssignment,
   RunnerCameraConfig,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { CameraStatusServiceDeps } from '../camera-status-service.js'
 import { CameraStatusService } from '../camera-status-service.js'

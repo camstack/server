@@ -9,7 +9,7 @@ import { ServiceBroker } from 'moleculer'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import type { AddonDeclaration } from '@camstack/types'
+import type { AddonDeclaration } from '@dominevo/types'
 import {
   createAddonContext,
   registerEventBusService,
@@ -124,7 +124,7 @@ describe('ctx.kernel.readinessRegistry singleton', () => {
 
     // The registry listens to its own event bus; use the emitReadiness
     // helper on that same bus to stay transport-independent.
-    const { emitReadiness } = await import('@camstack/types')
+    const { emitReadiness } = await import('@dominevo/types')
     emitReadiness(ctxConsumer.eventBus, {
       capName: 'fake-cap',
       scope: { type: 'node', nodeId: 'hub' },

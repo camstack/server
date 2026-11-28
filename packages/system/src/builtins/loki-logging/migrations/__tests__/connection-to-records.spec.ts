@@ -8,7 +8,7 @@ import {
   makeInMemoryRecords,
   type MigrationOwnerResult,
   preconditionOf,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { lokiDestinationsKind } from '../../loki-record-kinds.js'
 import { ADDON_MIGRATIONS, CONNECTION_TO_RECORDS_ID, type LokiCataloguePorts } from '../index.js'

@@ -1,6 +1,6 @@
 import { describe, it, expect, afterEach } from 'vitest'
 import { ServiceBroker } from 'moleculer'
-import { motionZonesCapability } from '@camstack/types'
+import { motionZonesCapability } from '@dominevo/types'
 import { mountNativeCapService } from '../../moleculer/device-cap-proxy.js'
 
 /**

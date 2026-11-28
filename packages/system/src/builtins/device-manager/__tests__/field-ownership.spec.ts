@@ -3,7 +3,7 @@
  * cap merge into what a consumer sees, and how the two travel in one row.
  */
 import { describe, expect, it } from 'vitest'
-import { BatteryStatusSchema } from '@camstack/types'
+import { BatteryStatusSchema } from '@dominevo/types'
 import {
   joinRuntimeBlob,
   mergeOwned,

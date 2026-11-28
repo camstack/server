@@ -2,11 +2,11 @@
  * day-night — server-side `ConfigUISchema` builder + form-patch parser.
  *
  * Sibling of `stream-params-config-schema.ts` (which lives in
- * `@camstack/types` because both vendor providers call it directly from
+ * `@dominevo/types` because both vendor providers call it directly from
  * their `getConfigSchema` cap method). `day-night` has no such method —
  * it follows the plain D14 `derived-form` archetype (`getOptions` +
  * `getStatus` + one `setSettings` mutation, no per-vendor schema code) —
- * so this builder lives here in `@camstack/server/system`, registered against
+ * so this builder lives here in `@dominevo/server/system`, registered against
  * the `day-night` builderId in `device-config-contribution.ts`.
  *
  * Field keys use the `dayNight_<prop>` prefix so a flat form patch can be
@@ -20,7 +20,7 @@ import type {
   DayNightOptions,
   DayNightSettingsPatch,
   DayNightStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 const MODE_LABELS: Readonly<Record<DayNightMode, string>> = {
   auto: 'Auto',

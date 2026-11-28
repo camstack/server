@@ -1,4 +1,4 @@
-# CamStack model training — consolidated analysis
+# Dominevo model training — consolidated analysis
 
 Date: 2026-10-08. Repo: `camstack-server` as of `main` on 2026-10-08 (viewer submodule `ef5e057a`).
 Analysis only. No code, docs, hub state or workflows were touched. Paths are relative to `camstack-server/`.
@@ -35,7 +35,7 @@ Later decisions that change the plans:
 
 | Decision | Effect on training plans |
 |---|---|
-| D661/D703 | AGPL Ultralytics weights are kept (free/OSS premise). No AGPL library runs in CamStack (compliance spec :49). An in-product Ultralytics trainer would break this, so training stays external |
+| D661/D703 | AGPL Ultralytics weights are kept (free/OSS premise). No AGPL library runs in Dominevo (compliance spec :49). An in-product Ultralytics trainer would break this, so training stays external |
 | D715/D730/D736/D741 | On YOLOv9 roots the species comes from the root (ROOT_SUPPLIED_LABEL_FLOORS, model-catalogs.ts:757-766), so dog-vs-cat is a root fine-tune problem |
 | D738/D739 | Per-model class floors (model-catalogs.ts:708-735, from model-floors.json). A fine-tuned model needs its own row, carried by `ModelCatalogEntry.defaultClassFloors` (types/src/types/models.ts:342) |
 | D745 | Auto-tune considers only catalog yolov9* (recommend.ts:44,115) and rewrites the node pin, so it would clobber a custom pin |
@@ -54,7 +54,7 @@ Later decisions that change the plans:
 | AI pre-annotation | partial | Re-runs the **production** model at the production floor, or rfdetr-package @0.35 on the zone. No teacher model. The benchmark teachers (YOLO26-X@1280 + RT-DETR-X) live in a scratchpad |
 | Export | partial | A tar with annotations.json (canonical + derived geometries) and JPEGs. No YOLO/COCO/RF-DETR format. Wrong classifier padding. No per-step or per-collection filter |
 | Versioning / split | missing | No dataset version, split or holdout |
-| Train | missing | No training code in the repo. The animal classifier recipe is absent (model-licenses.ts:163-175 says "fine-tuned by CamStack") |
+| Train | missing | No training code in the repo. The animal classifier recipe is absent (model-licenses.ts:163-175 says "fine-tuned by Dominevo") |
 | Convert to ONNX | works | scripts/build-camstack-models.py (Ultralytics recipes). `--model` takes an Ultralytics id and appends .pt (:306-307), so a local checkpoint needs a hack |
 | Convert to OpenVINO fp16/int8 | works | Script + Model Studio convert.py:28-46. INT8 is calibrated on COCO val2017. Model Studio `calibrationRef` is never populated |
 | Convert to CoreML | works | FP16 (D743), Mac only |
@@ -110,7 +110,7 @@ Conversion stays where it already works: OpenVINO/INT8 on x86, CoreML on the Mac
 
 | Base | Licence | Fine-tuned weights | In-product trainer |
 |---|---|---|---|
-| Ultralytics YOLOv9/YOLO26 (fleet) | AGPL weights and library; YOLOv9 architecture GPL-3.0 | AGPL derivative. Private use carries no obligation. Publishing means AGPL + corresponding source (as D661 does today) | Breaks "no AGPL library in CamStack". Commercial use needs an Enterprise licence. Keep it external |
+| Ultralytics YOLOv9/YOLO26 (fleet) | AGPL weights and library; YOLOv9 architecture GPL-3.0 | AGPL derivative. Private use carries no obligation. Publishing means AGPL + corresponding source (as D661 does today) | Breaks "no AGPL library in Dominevo". Commercial use needs an Enterprise licence. Keep it external |
 | WongKinYiu YOLOv9 | GPL-3.0 | GPL | Same conclusion |
 | MultimediaTechLab/YOLO | MIT code; weight provenance unverified | possibly clean | Candidate. Verify |
 | RF-DETR | Apache-2.0 | Apache | Clean; already the package model; slow on Mac; not Coral-friendly |

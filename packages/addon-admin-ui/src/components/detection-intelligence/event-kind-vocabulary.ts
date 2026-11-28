@@ -12,7 +12,7 @@
  * the dictionary. When the API answers nothing the menu is empty, because an
  * empty menu is a visible failure and a full one is an invisible lie.
  */
-import type { EventKindDescriptor, EventKindsForDevice } from '@camstack/types'
+import type { EventKindDescriptor, EventKindsForDevice } from '@dominevo/types'
 
 /** A macro lane plus the sub kinds the scoped cameras advertise under it. */
 export interface KindGroup {

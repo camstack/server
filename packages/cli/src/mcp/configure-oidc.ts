@@ -12,7 +12,7 @@
  * route the result names. A public client (PKCE) needs none.
  */
 
-import { type DryRunOutcome, type GatedToolSpec, type HubClient } from '@camstack/develop'
+import { type DryRunOutcome, type GatedToolSpec, type HubClient } from '@dominevo/develop'
 import { text } from './tool-result.js'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
@@ -175,7 +175,7 @@ export async function checkDiscovery(
   const post = doc.token_endpoint_auth_methods_supported?.includes('client_secret_post') === true
   if (clientType === 'confidential' && !post) {
     warnings.push(
-      'token_endpoint_auth_methods_supported does not include client_secret_post, which CamStack uses for a confidential client',
+      'token_endpoint_auth_methods_supported does not include client_secret_post, which Dominevo uses for a confidential client',
     )
   }
   return {
@@ -400,7 +400,7 @@ export const OIDC_TOOL_SHAPE = {
 export function registerOidcTools(server: McpServer, ctx: McpContext): void {
   server.tool(
     OIDC_TOOL,
-    'Connect an OpenID Connect identity provider (authentik, pocket-id, authelia, keycloak, zitadel, kanidm, google, microsoft-entra, auth0, okta, generic). Call with only `provider` for the questions, the provider-side setup steps and the redirect URI to paste into the provider. With the answers it previews the connection and checks the provider discovery document (warnings, never a crash); call again with the SAME arguments and the confirm_token to create or update it. A client secret is NEVER an argument or output: a confidential client is finished by typing the secret in the admin UI (the route is given); a public PKCE client needs none. Needs an admin `camstack login` session for the write.',
+    'Connect an OpenID Connect identity provider (authentik, pocket-id, authelia, keycloak, zitadel, kanidm, google, microsoft-entra, auth0, okta, generic). Call with only `provider` for the questions, the provider-side setup steps and the redirect URI to paste into the provider. With the answers it previews the connection and checks the provider discovery document (warnings, never a crash); call again with the SAME arguments and the confirm_token to create or update it. A client secret is NEVER an argument or output: a confidential client is finished by typing the secret in the admin UI (the route is given); a public PKCE client needs none. Needs an admin `dominevo login` session for the write.',
     OIDC_TOOL_SHAPE,
     async ({ confirm_token, ...args }): Promise<ToolTextResult> =>
       text(await configureOidc(ctx, args, confirm_token)),

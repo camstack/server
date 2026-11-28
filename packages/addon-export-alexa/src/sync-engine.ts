@@ -9,7 +9,7 @@
  * so a later DeleteReport can always clean Alexa up — even after the device is
  * gone from the registry.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { endpointsSignature, signatureLoss } from './endpoint-signature.js'
 import type { AlexaEndpoint } from './endpoints/types.js'
 import { withholdInvalidEndpoints } from './endpoints/validate-endpoint.js'

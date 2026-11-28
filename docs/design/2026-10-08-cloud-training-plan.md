@@ -1,4 +1,4 @@
-# Cloud training for CamStack: provider choice, capability design and plan
+# Cloud training for Dominevo: provider choice, capability design and plan
 
 > **Status (2026-10-08):** implemented as described in [`docs/architecture/cloud-training.md`](../architecture/cloud-training.md) (D805–D808). Where the build differs from this plan — no GHCR image (Modal builds from the trainer's Dockerfile), the trainer in its own Hugging Face repo, dataset versions routed rather than moved, the detector as the first target — the decisions record why.
 
@@ -19,7 +19,7 @@ Research only. No code, docs, hub state or workflows were touched. Repo state is
    - **`training`** is a hub-only singleton orchestrator. It owns dataset versions, job records, reconcile-on-boot, cost guards and the return flow to Model Studio.
    - **`training-provider`** is an `internal` collection cap that only talks to one cloud. Calls route to one provider by `addonId`, the same way the `llm` and `notification-output` caps do.
    - One new package, `addon-training`, with two manifest entries: `training` and `training-modal`. Later providers become new entries or packages.
-4. **One trainer image**, `ghcr.io/camstack/trainer`. Its source is public and the AGPL Ultralytics code stays inside it.
+4. **One trainer image**, `ghcr.io/dominevo/trainer`. Its source is public and the AGPL Ultralytics code stays inside it.
    - It takes our retrain tar plus a versioned `job.json`.
    - It trains a YOLOv9 detector or a timm classifier, evaluates on a split held out by camera and by day, and derives D739 floors against the current model.
    - It exports ONNX, OpenVINO fp16/int8 (int8 calibrated on the user's frames) and CoreML fp16. Edge TPU is an optional second image tag.
@@ -65,7 +65,7 @@ Figures are from the research pass on 2026-10-08, with sources at modal.com/pric
    - YOLOv9-m fine-tune on 2–3k frames: 1–3 L4-hours, roughly $0.80–2.40.
 
    So $30 a month is a real sandbox for every user, not a one-off trial.
-2. **No Python on the user's side and no cloud-side code.** The hub creates a Sandbox from `ghcr.io/camstack/trainer:<digest>` with `gpu: 'L4'`, `timeoutMs`, an optional region, and a per-job Volume mounted.
+2. **No Python on the user's side and no cloud-side code.** The hub creates a Sandbox from `ghcr.io/dominevo/trainer:<digest>` with `gpu: 'L4'`, `timeoutMs`, an optional region, and a per-job Volume mounted.
 3. **Privacy story.**
    - Data lives only in the user's workspace.
    - The dataset sits on a per-job Volume for the duration of the job and is deleted afterwards.
@@ -233,7 +233,7 @@ any → failed{reason, stage}   any → cancelling → cancelled   lost (provide
 **Repository.** A public repo `camstack/trainer`, AGPL-3.0, separate from camstack-server so the AGPL scope is visibly bounded.
 
 - It **vendors** `convert_lib.py` and the recipe logic from `scripts/build-camstack-models.py` via a git subtree or a copy pinned by sha, plus `edgetpu_toolchain.py`.
-- It is built and pushed by GitHub Actions to `ghcr.io/camstack/trainer:<semver>`.
+- It is built and pushed by GitHub Actions to `ghcr.io/dominevo/trainer:<semver>`.
 - The hub always submits it **by digest**, which is recorded in the job record and in `result.json`.
 
 **Layout.**
@@ -288,7 +288,7 @@ any → failed{reason, stage}   any → cancelling → cancelled   lost (provide
 
 - Ultralytics (AGPL) is imported only inside this image.
 - The image's source is public, with the Dockerfile, so every published image ships its Corresponding Source. This is the same posture as D661 for the hosted weights.
-- The hub talks to the image only through files and a process boundary: `job.json` in, files out. It never imports the trainer, so the "no AGPL library runs in CamStack" rule (D661/D703) holds.
+- The hub talks to the image only through files and a process boundary: `job.json` in, files out. It never imports the trainer, so the "no AGPL library runs in Dominevo" rule (D661/D703) holds.
 - Fine-tuned detector weights are an AGPL derivative. Private use carries no obligation. The catalog entry carries the licence string, so the generated licence surfaces (D661) label it correctly.
 - Classifier jobs never import Ultralytics. They could later move to an Apache-only image if the operator wants a clean classifier path.
 
@@ -410,7 +410,7 @@ This is a Module Federation page of `addon-training`, mounted at `/addon/trainin
 | P5 | Evaluation harness checked in (`camstack_train/evaluate.py` + `floors.py`, mirrored as `scripts/eval/` for local use); the 409-frame harness moved out of the scratchpad | Floors and the comparison come from it | 2–3 d |
 | P6 | `build-camstack-models.py --checkpoint <path>`: the ad-hoc recipe takes a local `.pt` instead of appending `.pt` to an id (`:306-307`), plus `--calib-dir` pointing at the user's frames | The container's export path, and the local path for hand training | 0.5–1 d |
 | P7 | Auto-tune skips custom pins (§4.6) | A canary would be overwritten | 1 d |
-| P8 | A shared `secret-codec` (promote `addon-mqtt-broker/src/secret-codec.ts` AES-GCM `enc:v1` into `@camstack/core` or a kernel helper) so provider keys are encrypted at rest | Today password fields are stored in plaintext in the settings store | 1 d |
+| P8 | A shared `secret-codec` (promote `addon-mqtt-broker/src/secret-codec.ts` AES-GCM `enc:v1` into `@dominevo/core` or a kernel helper) so provider keys are encrypted at rest | Today password fields are stored in plaintext in the settings store | 1 d |
 | P9 | Q0 census (read-only) | Decides whether Phase A uses user crops or a smoke dataset | 0.25 d |
 
 ### 7. Phased plan
@@ -432,9 +432,9 @@ This is a Module Federation page of `addon-training`, mounted at `/addon/trainin
 
 **Shipping Phase A** is a framework change:
 
-- publish `@camstack/types` and force-publish `@camstack/system`, `@camstack/server` ([[project_cap_change_needs_system_force_publish]]);
+- publish `@dominevo/types` and force-publish `@dominevo/system`, `@dominevo/server` ([[project_cap_change_needs_system_force_publish]]);
 - then `applyServerUpdate`;
-- then `camstack deploy` for `addon-training`, `addon-model-studio` and `addon-post-analysis`;
+- then `dominevo deploy` for `addon-training`, `addon-model-studio` and `addon-post-analysis`;
 - then verify with `listCapabilities` ([[project_deploy_capability_reregistration]]).
 
 **Phase B: root detector fine-tune.** About 10–12 days, plus 2–3 days of training and evaluation iterations.
@@ -477,7 +477,7 @@ This is a Module Federation page of `addon-training`, mounted at `/addon/trainin
 - **Container smoke test in the trainer CI on a CPU runner:**
   - 1 epoch, a 40-image fixture, `yolov9t` at imgsz 160 and Lite0 at 96;
   - export ONNX, OV fp16 and int8 (8 calibration images) and CoreML;
-  - validate `result.json` with the same zod schema the hub uses (exported to JSON Schema from `@camstack/types`).
+  - validate `result.json` with the same zod schema the hub uses (exported to JSON Schema from `@dominevo/types`).
 - **Round trip:** a hub-side spec feeds the smoke output into `importModelBundle`, then runs `listModels` and checks that format revisions are set.
 - **Export spec:** padding 0.15, `capturedAt` and `complete` present, the version filter, and the crops layout.
 - **Auto-tune spec:** a node with a custom pin is excluded from Apply.
@@ -497,7 +497,7 @@ This is a Module Federation page of `addon-training`, mounted at `/addon/trainin
 | Plaintext secrets at rest | P8 secret-codec |
 | AGPL perception | Separate public trainer repo; a process/file boundary; the licence carried in the catalog entry |
 | Large image → slow first start | amd64 only, multi-stage build, Edge TPU split out, Modal image cache |
-| Framework publish traps for new caps | Follow the force-publish of `@camstack/system` and verify with `listCapabilities` |
+| Framework publish traps for new caps | Follow the force-publish of `@dominevo/system` and verify with `listCapabilities` |
 | Auto-tune clobbering a canary | P7 lands before Phase B |
 
 ### 10. Open questions for the operator
@@ -518,8 +518,8 @@ This is a Module Federation page of `addon-training`, mounted at `/addon/trainin
 1. **Provider:** Modal first.
 2. **Region, GPU, cost cap, retention, …:** they depend on the user's provider account. Every one of these is a **per-provider setting** in the provider addon's settings schema (defaults sensible, all overridable), not a hard-coded choice.
 3. **Trainer source:** host it on Hugging Face (e.g. under a `source/` folder of the camstack HF org/repo) rather than a separate GitHub repo. The image still needs a registry Modal can pull from (GHCR), or Modal builds it from that source — decide in the A0 spike.
-4. **First target:** the **YOLOv9 root detector** (Phase B becomes the first real target). The classifier-first Phase A is dropped. The vehicle classifier stays `vehicle-type-v1` (NC is acceptable: CamStack is free forever); no replacement, no zero-shot for now.
+4. **First target:** the **YOLOv9 root detector** (Phase B becomes the first real target). The classifier-first Phase A is dropped. The vehicle classifier stays `vehicle-type-v1` (NC is acceptable: Dominevo is free forever); no replacement, no zero-shot for now.
 5. **Edge TPU:** later.
 6. **Retention:** cloud dataset deleted right after a successful fetch (24 h after a failure); hub artefacts kept 14 days after registration.
-7. **Secrets (P8 replaced):** design a **CamStack-managed keychain** for passwords/secrets, with migration of existing secrets on the operator's hub, and the ability for a config schema field to send its value straight to the keychain instead of the settings DB.
+7. **Secrets (P8 replaced):** design a **Dominevo-managed keychain** for passwords/secrets, with migration of existing secrets on the operator's hub, and the ability for a config schema field to send its value straight to the keychain instead of the settings DB.
 8. **Registration:** never automatic.

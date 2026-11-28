@@ -13,7 +13,7 @@ applies-to:
 
 ## Context
 
-A clip's `labels` (person, vehicle, …) came from CamStack's object events only
+A clip's `labels` (person, vehicle, …) came from Dominevo's object events only
 on the recorder's own visits: `visitsToClips` attaches every event whose
 padded window crosses the visit and ranks the classes. A clip the CAMERA
 recorded — Hikvision, Reolink or Amcrest onboard storage, listed by the device
@@ -41,7 +41,7 @@ native providers and the recorder attaching by four slightly different rules.
 
 ## Decision
 
-**The overlap rule and the label ranking live once, in `@camstack/types`**
+**The overlap rule and the label ranking live once, in `@dominevo/types`**
 (`eventOverlapsClipWindow`, `dominantClipLabels`), and the recorder's visits
 use them. **A native clip provider registers its `videoclips` provider through
 `withClipEventLabels(provider, clipEventLabelDepsFromApi(ctx.api, ctx.logger))`**:
@@ -61,7 +61,7 @@ tagged with `deviceId`, says so.
 - HKSV clips (`addon-export-hap`) are not wrapped: they are recordings of OUR
   stream made by HomeKit, and joining them is a separate question.
 - Each native provider addon must be redeployed for its clips to carry labels;
-  the helper travels inside the addon bundle (bare `@camstack/types`, D15).
+  the helper travels inside the addon bundle (bare `@dominevo/types`, D15).
 
 ## Enforcement
 

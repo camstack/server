@@ -9,7 +9,7 @@
  * field with `writerCapName` + `writerAddonId` for round-trip mutations.
  */
 
-import { CapabilityRegistry, DeviceRegistry } from '@camstack/server/system'
+import { CapabilityRegistry, DeviceRegistry } from '@dominevo/server/system'
 import type {
   AddonContext,
   ConfigUISchemaWithValues,
@@ -17,12 +17,12 @@ import type {
   IEventBus,
   IScopedLogger,
   ProviderRegistration,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   deviceExportCapability,
   motionDetectionCapability,
   streamBrokerCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { makeRecordsAccessForOwner } from '../../sqlite-storage/__tests__/support/records-world.js'
 import { DeviceManagerAddon, mergeAggregates } from '../device-manager.addon.js'

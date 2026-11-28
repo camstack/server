@@ -4,8 +4,8 @@
  * path is `/battery-details-preview`. The panel is rendered open and static
  * (the popover only opens on click), framed like the popover content.
  */
-import * as library from '@camstack/ui-library'
-import { BatteryBadge, ThemeProvider } from '@camstack/ui-library'
+import * as library from '@dominevo/ui-library'
+import { BatteryBadge, ThemeProvider } from '@dominevo/ui-library'
 import type { ReactElement } from 'react'
 
 const NOW = Date.now()

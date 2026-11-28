@@ -1,9 +1,9 @@
 ---
 name: camstack-diagnose
-description: Debug a RUNNING CamStack system (hub and agents) — something does not happen, happens on the wrong node, a notification never arrives, a cap answers "provider not available" or 404, a camera stalls, an update "did not take". Covers calling the hub's tRPC API (scripts/hub/hub.mjs, curl), the three log tiers and how long each remembers, enumerating nodes and providers, verifying WHERE work actually ran, the known error signatures, and the instrument-before-guessing discipline. Use before proposing any fix to live behaviour.
+description: Debug a RUNNING Dominevo system (hub and agents) — something does not happen, happens on the wrong node, a notification never arrives, a cap answers "provider not available" or 404, a camera stalls, an update "did not take". Covers calling the hub's tRPC API (scripts/hub/hub.mjs, curl), the three log tiers and how long each remembers, enumerating nodes and providers, verifying WHERE work actually ran, the known error signatures, and the instrument-before-guessing discipline. Use before proposing any fix to live behaviour.
 ---
 
-# Diagnosing a live CamStack system
+# Diagnosing a live Dominevo system
 
 The order matters: observe what is actually running, read the right log tier,
 prove where the work ran, and only then form ONE hypothesis. Tracing the code
@@ -35,12 +35,12 @@ usually a self-signed certificate. Paths and shapes for every method:
 ```bash
 node scripts/hub/hub.mjs GET  capabilities.getCapability '{"name":"recording"}'
 node scripts/hub/hub.mjs POST addons.restartAddon '{"addonId":"<id>"}'
-node scripts/hub/hub.mjs GET  nodes.topology                 # all three: the `camstack login` session
+node scripts/hub/hub.mjs GET  nodes.topology                 # all three: the `dominevo login` session
 ```
 
 `scripts/hub/hub.mjs` uses the SAME credential chain as the CLI and the
 `camstack-ops` MCP (`packages/develop/src/hub`, D835): one token format, only the
-permissions differ (admin = everything). **Run `camstack login <host>` once; every
+permissions differ (admin = everything). **Run `dominevo login <host>` once; every
 tool uses that session** (`~/.camstack/<host>.json`, refreshed automatically, a 401
 refreshes once and retries). There is no token flag, file or variable (D1101); see
 the `hub-access` skill. It never logs in with a password and never turns TLS
@@ -63,7 +63,7 @@ curl -sk -X POST -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application
   session and never proxies around the hub's origin check.** Use the token the
   operator provided; without one, ask. Read-only calls first.
 - **Never open the live SQLite file** (sqlite3, `fs`, a backup tool) while
-  CamStack runs — not even read-only; it has corrupted a production database.
+  Dominevo runs — not even read-only; it has corrupted a production database.
   Ask through the API, or work on a snapshot (D328, D679).
 - A patch-style mutation may REPLACE nested objects rather than merge them:
   read the object, send it back whole, check the response echoes it.

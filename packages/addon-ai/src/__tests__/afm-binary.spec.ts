@@ -16,7 +16,7 @@ import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import * as path from 'node:path'
-import { AppleFmAvailabilitySchema } from '@camstack/types'
+import { AppleFmAvailabilitySchema } from '@dominevo/types'
 import { afterAll, describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import { AppleFmHelper } from '../runtime/apple/afm-helper.js'
@@ -53,7 +53,7 @@ describe('camstack-afm packaging', () => {
   })
 
   it('the PACKED tarball carries the binary, executable', () => {
-    // What `camstack deploy` and `npm publish` actually ship — `files` in
+    // What `dominevo deploy` and `npm publish` actually ship — `files` in
     // package.json is only the intent. `--ignore-scripts` keeps it a read.
     const out = execFileSync('npm', ['pack', '--dry-run', '--json', '--ignore-scripts'], {
       cwd: PACKAGE_ROOT,

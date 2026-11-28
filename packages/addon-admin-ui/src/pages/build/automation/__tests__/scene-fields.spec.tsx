@@ -2,7 +2,7 @@
  * The scene blocks and the run mode: what the editor builds is exactly what the
  * recipe schema accepts, and survives the save → generated code → reopen trip.
  */
-import { selectOption } from '@camstack/ui-library/testing'
+import { selectOption } from '@dominevo/ui-library/testing'
 import {
   type AutomationLeaf,
   type AutomationRecipe,
@@ -10,7 +10,7 @@ import {
   type DetectionLeaf,
   DeviceType,
   generateAutomationBlock,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { useState } from 'react'
@@ -26,9 +26,9 @@ vi.mock('../../../../../../ui-library/src/contexts/system-context.js', () => ({
   }),
 }))
 
-vi.mock('@camstack/ui-library', async () => {
+vi.mock('@dominevo/ui-library', async () => {
   const actual =
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+    await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return {
     ...actual,
     useZonesListZones: ({ deviceId }: { deviceId: number }) => ({

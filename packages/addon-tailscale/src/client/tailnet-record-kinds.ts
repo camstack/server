@@ -3,7 +3,7 @@
  * by `tailscale-client` and named after it. The pre-auth key is a keychain marker bound to the row.
  * What belongs to ONE host (accept routes, tags, ssh, the daemon source) stays in the node settings.
  */
-import { type DefinedRecordKind, defineEntryKind } from '@camstack/types'
+import { type DefinedRecordKind, defineEntryKind } from '@dominevo/types'
 import { z } from 'zod'
 
 /** A single-instance addon keeps its record under its own addon id. */

@@ -31,7 +31,7 @@ applies-to:
 ## Context
 
 D661 moved model licences into the catalogs and made every licence surface
-generated from them. It left the non-commercial models that CamStack could not
+generated from them. It left the non-commercial models that Dominevo could not
 yet replace in the catalog, each with a line in `NON_COMMERCIAL_ACCEPTED`
 ("until X is retired"). D643 handled the models that DID have a replacement by
 adding `RETIRED_MODEL_IDS`: a removed id stayed listed, a pin to it silently
@@ -72,7 +72,7 @@ the catalog is deleted, not retired.
   `ModelServability` kind. A deleted id resolves like any unknown id: it passes
   through as a custom model, and a step that cannot serve it says so under the
   ordinary "cannot serve this model" refusal.
-- The CamStack Coral OD survivor is `ssd-mobilenet-v2-coco-edgetpu` (selectable,
+- The Dominevo Coral OD survivor is `ssd-mobilenet-v2-coco-edgetpu` (selectable,
   not legacy) and `defaultModelIdByFormat.tflite` names it. Sibling Coral SSDs
   (`efficientdet-lite0-edgetpu`, `ssdlite-mobiledet-coco-edgetpu`) are deleted —
   plus catalog still offers MobileDet via its own catalog import; a deleted pin is a
@@ -112,7 +112,7 @@ MobileCLIP is retired" entries are resolved by this record.
   declared licence, and on a non-commercial entry missing from
   `NON_COMMERCIAL_ACCEPTED` (now one line). `MIN_ENTRIES` is a floor on the
   catalog walk.
-- `scripts/check-cluster-model-scope.ts` keeps `@camstack/types` and the step
+- `scripts/check-cluster-model-scope.ts` keeps `@dominevo/types` and the step
   registry agreeing on the cluster-scoped survivors.
 - `removed-model-ids.spec.ts` (addon-pipeline) pins that every deleted id is
   absent from every catalog and resolves as a custom model;

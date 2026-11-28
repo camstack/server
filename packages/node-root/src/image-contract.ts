@@ -6,7 +6,7 @@
  * ## The failure this exists for (2026-08-02)
  *
  * `scripts/check-deployment-templates.ts` proved every template declared
- * `ghcr.io/camstack/camstack:intel-latest` — and passed daily while the hub
+ * `ghcr.io/dominevo/dominevo:intel-latest` — and passed daily while the hub
  * actually ran `camstack-server:intel-1.1.74`, a 13-day-old image from a
  * repository that had been RENAMED and received no builds. A `docker pull`
  * could never have fixed it. The agent was on the right repository, pinned to
@@ -20,7 +20,7 @@
  *
  * There is no docker socket inside the node, so the image reference itself
  * (`repo:tag`) is invisible. What IS visible is `seedVersion` — the version of
- * the baked `@camstack/server` closure, i.e. what `@latest` resolved to when
+ * the baked `@dominevo/server` closure, i.e. what `@latest` resolved to when
  * the image was built (Dockerfile stage 1). That is the image's fingerprint,
  * and the release workflow guarantees (scripts/ci/verify-release-npm.mjs)
  * that the contract image `intel-X.Y.Z` carries seed `X.Y.Z`. So:
@@ -35,9 +35,9 @@
  * exactly the fake-green this module exists to kill.
  *
  * Zero-dep (bundled next to the starter); the shape it returns is
- * `ImageContractSchema` in `@camstack/types` (type-only import).
+ * `ImageContractSchema` in `@dominevo/types` (type-only import).
  */
-import type { ImageContract } from '@camstack/types'
+import type { ImageContract } from '@dominevo/types'
 import { compareSemver } from './semver-compare.js'
 
 export interface ImageContractInputs {
@@ -66,7 +66,7 @@ function sameSeries(a: string, b: string): boolean {
 
 function behindMessage(seed: string, contract: string, series: boolean): string {
   const base =
-    `This node is running an image whose baked seed is @camstack/server@${seed}; ` +
+    `This node is running an image whose baked seed is @dominevo/server@${seed}; ` +
     `the deployment contract currently delivers ${contract}. applyServerUpdate ` +
     'keeps the code current but NEVER updates the image — the starter, the ' +
     'entrypoint and the boot fallback are still the old copies.'
@@ -110,7 +110,7 @@ export function assessImageContract(inputs: ImageContractInputs): ImageContract 
       contractVersion: null,
       contractSource: null,
       message:
-        `This node is running an image whose baked seed is @camstack/server@${seedVersion}; ` +
+        `This node is running an image whose baked seed is @dominevo/server@${seedVersion}; ` +
         'no registry check has run yet, so the release the contract image delivers is ' +
         'unknown. Run a server-update check to verify the image against the contract.',
     }
@@ -125,7 +125,7 @@ export function assessImageContract(inputs: ImageContractInputs): ImageContract 
       contractVersion,
       contractSource,
       message:
-        `Image seed @camstack/server@${seedVersion} matches the current release — ` +
+        `Image seed @dominevo/server@${seedVersion} matches the current release — ` +
         'this node is running the image the deployment contract names.',
     }
   }
@@ -136,7 +136,7 @@ export function assessImageContract(inputs: ImageContractInputs): ImageContract 
       contractVersion,
       contractSource,
       message:
-        `Image seed @camstack/server@${seedVersion} is NEWER than the best-known ` +
+        `Image seed @dominevo/server@${seedVersion} is NEWER than the best-known ` +
         `release ${contractVersion} — the registry check is stale or the registry ` +
         'was unreachable. Re-run a server-update check.',
     }

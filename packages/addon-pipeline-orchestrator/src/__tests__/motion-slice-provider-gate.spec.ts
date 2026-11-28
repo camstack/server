@@ -9,7 +9,7 @@
  */
 import { readdirSync, readFileSync } from 'node:fs'
 import * as path from 'node:path'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   type CameraOwner,

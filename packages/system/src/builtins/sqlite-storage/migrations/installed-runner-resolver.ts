@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import path from 'node:path'
-import { resolveRunnerId } from '@camstack/types'
+import { resolveRunnerId } from '@dominevo/types'
 import { z } from 'zod'
 
 /**

@@ -10,8 +10,8 @@ import {
   type AutomationAction,
   type AutomationRecipe,
   type AutomationWhen,
-} from '@camstack/types'
-import { ErrorBox, Switch, type DeviceListState } from '@camstack/ui-library'
+} from '@dominevo/types'
+import { ErrorBox, Switch, type DeviceListState } from '@dominevo/ui-library'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { ScopeVariable } from '../flow/ArgField'

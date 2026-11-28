@@ -1,5 +1,5 @@
 /**
- * Every Customize surface declared in `@camstack/types` has a renderer in the
+ * Every Customize surface declared in `@dominevo/types` has a renderer in the
  * admin UI (or ui-library for a hero line). Types cover what they can
  * (`Record<CustomizeCardinality, …>`, `Record<ExtensionSlotId, …>`); this reads
  * what they cannot: a catalog cap with no title, a slot or an event shape whose
@@ -38,7 +38,7 @@ export const AUTHORITY_SOURCES = [
 
 /** Where each stored link is drawn, and a token that proves that file reads it. */
 export interface LinkRenderer {
-  /** The `@camstack/types` module that reads this link from the stored composition. */
+  /** The `@dominevo/types` module that reads this link from the stored composition. */
   readonly source: string
   readonly file: string
   readonly marker: string

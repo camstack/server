@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Button, Checkbox, FormField, Input, ItemFormDialog, Select } from '@camstack/ui-library'
+import { Button, Checkbox, FormField, Input, ItemFormDialog, Select } from '@dominevo/ui-library'
 import { Flame } from 'lucide-react'
 import { HEATING_GROUP_TYPES, type GroupCandidate, type HeatingGroup } from '../ccu/ccu-schemas.js'
 import { useT } from '../i18n/index.js'

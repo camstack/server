@@ -23,7 +23,7 @@
  * neither.
  */
 import { describe, expect, it } from 'vitest'
-import type { ObjectDetection } from '@camstack/types'
+import type { ObjectDetection } from '@dominevo/types'
 import { type CropSource, toDetailResult } from '../detail-subtree.js'
 
 const CROP: Pick<CropSource, 'width' | 'height' | 'frameSpace'> = {

@@ -9,8 +9,8 @@
  * dispatcher for media it just produced. See `artifact-url.ts`.
  */
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import type { IScopedLogger } from '@camstack/types'
-import { isAppLinkBase } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
+import { isAppLinkBase } from '@dominevo/types'
 import type { NcArtifactIndex, NcArtifactPublishMeta } from './artifact-index.js'
 import type { NcArtifactStore } from './artifact-store.js'
 import {

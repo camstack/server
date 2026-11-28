@@ -38,7 +38,7 @@ import {
   CLIP_STREAM_TRANSPORT_HEADER,
   clipReasonHeaderValue,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 import { type MintRefusal, type MintResult, refuseStill } from './clip-still-refusal.js'
 import type { ClipStreamAudioAsk } from './clip-stream.js'

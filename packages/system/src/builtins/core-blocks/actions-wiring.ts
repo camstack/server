@@ -24,7 +24,7 @@ import {
   commandOrigin,
   kebabToCamel,
   type RecordsAccess,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { ActionsService, type ActionSources } from './actions-service.js'
 import { ActionsStore } from './actions-store.js'
 import { tcpConnect } from './tcp-connect.js'

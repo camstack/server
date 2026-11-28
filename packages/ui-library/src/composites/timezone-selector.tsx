@@ -1,11 +1,11 @@
 import { Select } from '../primitives/select'
-import { TIMEZONES, findTimezone } from '@camstack/types'
-import type { Timezone, TimezoneDstRule, Weekday } from '@camstack/types'
+import { TIMEZONES, findTimezone } from '@dominevo/types'
+import type { Timezone, TimezoneDstRule, Weekday } from '@dominevo/types'
 import { type JSX } from 'react'
 import { useUiText } from '../contexts/ui-text'
 
 // Re-export the catalogue + helper + types so consumers can pull the
-// whole timezone toolkit from `@camstack/ui-library` in one import.
+// whole timezone toolkit from `@dominevo/ui-library` in one import.
 export { TIMEZONES, findTimezone }
 export type { Timezone, TimezoneDstRule, Weekday }
 

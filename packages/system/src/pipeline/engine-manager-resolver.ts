@@ -5,7 +5,7 @@ import type {
   InferenceOutput,
   FrameInput,
   CropInput,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /**
  * Adapter that wraps an IEngineManager + addonConfigs as an IAddonResolver.

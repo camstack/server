@@ -4,7 +4,7 @@ import * as jestDomMatchers from '@testing-library/jest-dom/matchers'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { NodeInferenceDevice } from '@camstack/types'
+import type { NodeInferenceDevice } from '@dominevo/types'
 import { rootModelIdForDevice } from '../root-model-note.js'
 
 expect.extend(jestDomMatchers)
@@ -16,8 +16,8 @@ vi.mock('@tanstack/react-query', async () => ({
   useQueryClient: () => ({ invalidateQueries: vi.fn() }),
 }))
 
-vi.mock('@camstack/ui-library', async () => ({
-  ...(await vi.importActual<Record<string, unknown>>('@camstack/ui-library')),
+vi.mock('@dominevo/ui-library', async () => ({
+  ...(await vi.importActual<Record<string, unknown>>('@dominevo/ui-library')),
   usePipelineOrchestratorGetNodeInferenceDevices: () => mockGetNodeInferenceDevices(),
   usePipelineOrchestratorSetAgentInferenceDevices: () => ({
     mutate: vi.fn(),

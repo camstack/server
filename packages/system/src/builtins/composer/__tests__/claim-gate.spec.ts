@@ -4,7 +4,7 @@
  * confirm is retried on every later apply until it lands — never on a timer,
  * never given up.
  */
-import type { FieldClaim } from '@camstack/types'
+import type { FieldClaim } from '@dominevo/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { ClaimGate, type ClaimKey, claimKey } from '../claim-gate.js'
 import { type RecordingLogger, recordingLogger } from './fixtures.js'

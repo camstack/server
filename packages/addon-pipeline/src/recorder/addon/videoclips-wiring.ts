@@ -32,7 +32,7 @@ import {
   type MediaPresenceOwnerKind,
   RECORDING_SOURCE_CAMSTACK_ADDON,
   type RecordingPlayback,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { createVideoclipsProvider } from './videoclips-provider.js'
 import type { EventBuckets, FootageRange, MediaOwnersQuery } from './videoclips-shared.js'
 import { toEventLike } from './videoclips-shared.js'

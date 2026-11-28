@@ -23,7 +23,7 @@ HomeCom and Home Connect do not use the hub login proxy. The form shows a guide 
 sign-in page in your own browser, sign in, copy the address the browser stops on, per browser) and
 the paste box; `beginSignIn` only publishes the authorize URL and `finishSignIn` exchanges the
 pasted address. The `claimSignIn` action and the field's `claimAction` are gone. The
-`VendorLoginProxy` stays in `@camstack/types` for the Alexa sign-in, which has no captcha bound to a
+`VendorLoginProxy` stays in `@dominevo/types` for the Alexa sign-in, which has no captcha bound to a
 vendor domain. D955 stays for that use only.
 
 ## Consequences

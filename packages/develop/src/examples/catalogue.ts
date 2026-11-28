@@ -109,7 +109,7 @@ export const CORE_EXAMPLES: readonly ExampleEntry[] = [
   {
     id: 'integration-device-example',
     packageDir: 'packages/example-device-integration',
-    repository: 'camstack/addon-examples',
+    repository: 'dominevo/addon-examples',
     kind: 'device-integration',
     demonstrates:
       'Public minimal device integration: typed instance record, test, adoption, Gateway sibling, device-removal-hook.',
@@ -133,7 +133,7 @@ export const CORE_EXAMPLES: readonly ExampleEntry[] = [
   {
     id: 'integration-service-example',
     packageDir: 'packages/example-service-integration',
-    repository: 'camstack/addon-examples',
+    repository: 'dominevo/addon-examples',
     kind: 'service-integration',
     demonstrates:
       'Public minimal service integration: typed connection, password secret, test, no devices.',
@@ -165,7 +165,7 @@ export const CORE_EXAMPLES: readonly ExampleEntry[] = [
   {
     id: 'exporter-example',
     packageDir: 'packages/example-exporter',
-    repository: 'camstack/addon-examples',
+    repository: 'dominevo/addon-examples',
     kind: 'exporter',
     demonstrates:
       'Public minimal exporter: device-export + integration-instances, minted ids, action button in the instance form.',

@@ -18,7 +18,7 @@
  * error leaves whatever the previous probe wrote in place.
  */
 
-import { declareDeviceIdentifiers, type DeviceContext } from '@camstack/types'
+import { declareDeviceIdentifiers, type DeviceContext } from '@dominevo/types'
 import type { HikvisionIsapiClient } from './hikvision-isapi-client.js'
 
 export interface HikvisionMetadataPopulatorTarget {

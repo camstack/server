@@ -39,7 +39,7 @@
  * (`AudioChunkPlane`'s idle lease), not here, because a process that has died
  * cannot clean up after itself.
  */
-import { errMsg } from '@camstack/types'
+import { errMsg } from '@dominevo/types'
 import type {
   AddonApi,
   AudioAnalysisSettings,
@@ -47,7 +47,7 @@ import type {
   AudioChunkInput,
   AudioResult,
   IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 import {
   LOCAL_POLL_INTERVAL_MS,

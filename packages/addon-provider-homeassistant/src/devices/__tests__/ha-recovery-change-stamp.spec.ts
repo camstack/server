@@ -17,7 +17,7 @@ import {
   DEFAULT_FIRST_SIGHTING_FRESHNESS_MS,
   evaluateSensorEdge,
   type SensorEdgeVerdict,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { HA_SEEDED_CHANGED_AT, haChangeStamp } from '../../ha-change-stamp.js'
 import { makeBinarySensor } from './ha-binary-sensor-harness.js'

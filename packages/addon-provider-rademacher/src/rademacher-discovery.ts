@@ -4,7 +4,7 @@ import {
   type DiscoveredChildDevice,
   deviceAdminLinkCapability,
   gatewayDeviceName,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 const GATEWAY_SUFFIX = ':gateway'
 const COVER_INFIX = ':cover:'
@@ -62,7 +62,7 @@ export interface BuildRademacherCandidatesInput {
   /** The hub's own model (`HomePilot` / `Start2Smart`) when it reported one. */
   readonly hubModel: string | null
   readonly covers: readonly AdoptableCover[]
-  /** Native id → adopted CamStack device id, for the devices already adopted. */
+  /** Native id → adopted Dominevo device id, for the devices already adopted. */
   readonly adopted: ReadonlyMap<string, number>
 }
 

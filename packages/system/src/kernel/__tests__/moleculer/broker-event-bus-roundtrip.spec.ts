@@ -28,8 +28,8 @@ import {
   registerEventBusService,
 } from '../../moleculer/addon-context-factory.js'
 import { createHubService } from '../../moleculer/hub-service.js'
-import { EventCategory } from '@camstack/types'
-import type { AddonDeclaration, SystemEvent } from '@camstack/types'
+import { EventCategory } from '@dominevo/types'
+import type { AddonDeclaration, SystemEvent } from '@dominevo/types'
 
 function decl(id: string): AddonDeclaration {
   return { id, entry: './index.js' }

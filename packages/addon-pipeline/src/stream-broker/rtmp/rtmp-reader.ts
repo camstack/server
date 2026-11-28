@@ -15,7 +15,7 @@
  * `onError`. The broker re-instantiates a fresh reader on reconnect.
  */
 
-import type { EncodedPacket, IScopedLogger, PushAudioInfo } from '@camstack/types'
+import type { EncodedPacket, IScopedLogger, PushAudioInfo } from '@dominevo/types'
 import {
   AudioSoundFormat,
   aacSamplingIndexToHz,

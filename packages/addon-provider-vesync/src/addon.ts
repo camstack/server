@@ -15,7 +15,7 @@ import {
   integrationRowsPortsOver,
   type RecordIntegrationInstances,
   type SystemEvent,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { VESYNC_SYSTEM, type VeSyncConnectionConfig } from './config.js'
 import { VeSyncHumidifierDevice } from './devices/vesync-humidifier-device.js'
 import { VeSyncPurifierDevice } from './devices/vesync-purifier-device.js'

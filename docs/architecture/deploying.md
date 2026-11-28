@@ -12,13 +12,13 @@ the Unraid template — and one image behind both.
 
 !!! note "The image is public; this repository is not"
 
-    `ghcr.io/camstack/camstack` is a **public** package as of 2026-07-26 —
+    `ghcr.io/dominevo/dominevo` is a **public** package as of 2026-07-26 —
     an anonymous pull works, re-verified 2026-08-14 against the registry's own
     token endpoint: an anonymous token resolves both the tag list and the
     `intel-latest` manifest.
-    `github.com/camstack/server` stays **private**, which is why the Unraid
+    `github.com/dominevo/server` stays **private**, which is why the Unraid
     templates are distributed from a separate public repository
-    ([camstack/unraid-templates](https://github.com/camstack/unraid-templates))
+    ([camstack/unraid-templates](https://github.com/dominevo/unraid-templates))
     rather than from here: a template's `<Icon>` and `<TemplateURL>` are fetched
     anonymously by Unraid, so pointing them into this repo returns 404 to
     everyone outside the org — and looks fine to anyone whose browser is already
@@ -71,7 +71,7 @@ wheel whose CUDA provider does not link the CUDA major the image ships.
 
 ## Docker Compose
 
-The Compose example lives in the public docs (`camstack/docs`), not in this
+The Compose example lives in the public docs (`dominevo/docs`), not in this
 repo. It carries both services: `camstack` starts by
 default, `camstack-agent` sits behind the `agent` profile because a hub and an
 agent on one host under host networking would collide on every port.
@@ -104,7 +104,7 @@ are the same in both routes and are tabulated once, in
 [unraid.md](unraid.md#what-must-be-true-and-why).
 
 `--shm-size=2g` used to head that list, and it is gone since 2026-09-19: it
-existed for the decoder frame rings, which left with `@camstack/shm-ring` on
+existed for the decoder frame rings, which left with `@dominevo/shm-ring` on
 2026-07-16, so for two months every deployment reserved a 2 GB tmpfs for a
 subsystem that constructs nothing. `--pids-limit=8192` took its place, and it is
 a real setting rather than a rounder default: a container cgroup counts
@@ -156,7 +156,7 @@ never picks up an upstream change.
 
 ## Where the deployment files live
 
-The Unraid templates live in `camstack/unraid-templates` and the Compose example
+The Unraid templates live in `dominevo/unraid-templates` and the Compose example
 in the public docs. Both are maintained by hand, and nothing in this repo checks
 them ([D717](../decisions/adr-0717-the-unraid-templates-and-the-compose-example-are-maintained-outside-this-repo.md)).
 A change to the container contract updates both in the same piece of work.
@@ -246,8 +246,8 @@ full picture; the part that matters when deploying:
 
 | Layer | Reaches a node via | You need a new image? |
 | --- | --- | --- |
-| Framework (`types`, `system`, `sdk`, …) | the `@camstack/server` closure an update installs | no |
-| Addons | `camstack deploy`, or the Admin UI | no |
+| Framework (`types`, `system`, `sdk`, …) | the `@dominevo/server` closure an update installs | no |
+| Addons | `dominevo deploy`, or the Admin UI | no |
 | Node runtime, GPU/NPU drivers, entrypoint | the image itself | yes |
 | ffmpeg | a per-node download, pinned by a framework constant | no |
 

@@ -44,8 +44,8 @@ vi.mock('../load/use-camera-load-series', () => ({
   useCameraLoadSeries: () => seriesState.current,
 }))
 
-vi.mock('@camstack/ui-library', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@camstack/ui-library')>()),
+vi.mock('@dominevo/ui-library', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@dominevo/ui-library')>()),
   useDeviceManagerListAll: () => ({ data: fleet.devices }),
 }))
 

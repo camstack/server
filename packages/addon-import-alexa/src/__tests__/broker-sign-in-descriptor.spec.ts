@@ -3,7 +3,7 @@
  * country, the credentials the sign-in fills flagged `filledBySignIn`.
  */
 import { describe, expect, it } from 'vitest'
-import type { ConfigField } from '@camstack/types'
+import type { ConfigField } from '@dominevo/types'
 import { AMAZON_DOMAINS, buildConnectionFormSchema } from '../config.js'
 
 function fields(): readonly ConfigField[] {

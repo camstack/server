@@ -33,7 +33,7 @@
  * tiles latch exactly as they used to, instead of gaining a retry loop nobody
  * tested against that build.
  */
-import type { Clip } from '@camstack/types'
+import type { Clip } from '@dominevo/types'
 import { defaultUiText, type UiTextFn } from '../../contexts/ui-text.js'
 
 /** The five things a tile can be. */

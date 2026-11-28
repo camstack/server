@@ -9,7 +9,7 @@ import {
   type InferNativeProvider,
   type EventEmitterStatus,
   type EventFire,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /**
  * Persisted config for the per-broker HA bus-event aggregator. It is NOT

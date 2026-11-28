@@ -7,21 +7,21 @@ import type {
   ModelCatalogEntry,
   PoolMemoryTelemetry,
   ProviderRegistration,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   BaseAddon,
   PoolMemoryWatchdog,
   embeddingEncoderCapability,
   normalizeNodeId,
   resolvePoolMemoryPolicy,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { readProcessMemory } from '../shared/process-memory.js'
 
 type EmbeddingEncodeOutput = Awaited<ReturnType<IEmbeddingEncoderProvider['encode']>>
 type EmbeddingInfoOutput = Awaited<ReturnType<IEmbeddingEncoderProvider['getInfo']>>
 
 // eslint-disable-next-line no-restricted-imports -- ModelDownloadService is a build-time dep, not a runtime addon coupling
-import { ModelDownloadService } from '@camstack/server/system/addon-utils'
+import { ModelDownloadService } from '@dominevo/server/system/addon-utils'
 import {
   CLIP_EMBEDDING_STEP_ID,
   resolveClusterModelPin,
@@ -196,7 +196,7 @@ export default class EmbeddingEncoderAddon
    * RSS bound + periodic memory telemetry for the two Python engines
    * (`raw_tensor_inference.py` — one of the four leaking pools in the
    * 2026-08-18 OOM audit — and `text_encoder_inference.py`). Shared
-   * watchdog from `@camstack/types`; a restart here is dispose + null, and
+   * watchdog from `@dominevo/types`; a restart here is dispose + null, and
    * the next encode lazily re-resolves the engine (the exact recovery an
    * operator model change already uses). Started in `onInitialize`,
    * stopped in `onShutdown`.
@@ -525,7 +525,7 @@ export default class EmbeddingEncoderAddon
 function resolveEmbeddingPythonDir(): string {
   const candidates: string[] = []
   try {
-    const pkgPath = require.resolve('@camstack/addon-post-analysis/package.json')
+    const pkgPath = require.resolve('@dominevo/addon-post-analysis/package.json')
     candidates.push(path.join(path.dirname(pkgPath), 'python'))
   } catch {
     // not resolvable in-tree before npm install
@@ -547,7 +547,7 @@ function resolveEmbeddingPythonDir(): string {
 /**
  * HTTP status of a model-download failure, recognised by SHAPE (`name` +
  * numeric `status`), never by `instanceof` or a framework import.
- * `@camstack/server/system` is host-resolved (not bundled), so importing a guard it
+ * `@dominevo/server/system` is host-resolved (not bundled), so importing a guard it
  * only exports from a newer server would stop this whole entry from linking
  * on a node still running the older server — a deploy-order hazard for a
  * one-line classification. `null` = not an HTTP answer (unreachable, other).

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { AgentStepEditor } from '@camstack/ui-library'
+import { AgentStepEditor } from '@dominevo/ui-library'
 
 const Frame = ({ children }: { children: ReactNode }) => (
   <div className="dark bg-background text-foreground p-5 rounded-lg" style={{ width: 460 }}>

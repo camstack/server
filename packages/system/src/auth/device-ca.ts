@@ -31,7 +31,7 @@ import {
   DEVICE_CERT_VALIDITY_DAYS,
   DEVICE_SAN_CREDENTIAL_PREFIX,
   DEVICE_SAN_USER_PREFIX,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 cryptoProvider.set(webcrypto)
 

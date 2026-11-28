@@ -7,7 +7,7 @@
  */
 import { describe, expect, it } from 'vitest'
 
-import { occupancyScope, parseOccupancyScope } from '@camstack/types'
+import { occupancyScope, parseOccupancyScope } from '@dominevo/types'
 
 describe('the occupancy scope grammar is shared, not re-spelled', () => {
   it('round-trips every shape', () => {
@@ -32,7 +32,7 @@ describe('the occupancy scope grammar is shared, not re-spelled', () => {
 
   // The writer in this package and the reader in the viewer must import the
   // SAME function. This test exists to fail if someone re-declares it locally.
-  it('is re-exported from the history producer from @camstack/types', async () => {
+  it('is re-exported from the history producer from @dominevo/types', async () => {
     const store = await import('../store/analytics-history-producer.js')
     expect(store.occupancyScope).toBe(occupancyScope)
     expect(store.parseOccupancyScope).toBe(parseOccupancyScope)

@@ -8,7 +8,7 @@
  * different NUMBERS — a pair of zeroes proves nothing.
  */
 import { describe, expect, it } from 'vitest'
-import { decodeVectorBase64, encodeVectorBase64 } from '@camstack/types'
+import { decodeVectorBase64, encodeVectorBase64 } from '@dominevo/types'
 import {
   makeFakeEmbeddingIndex,
   makeFakeVectorStore,

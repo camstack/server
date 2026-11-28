@@ -16,7 +16,7 @@ import {
   CLUSTER_STEP_SETTING_FIELDS,
   clusterStepSettingKey,
   DEFAULT_CLUSTER_STEP_MODELS,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { buildGlobalSettingsSections, CLUSTER_MODEL_SECTION_ID } from '../settings-ui-schemas.js'
 
 const sections = () => buildGlobalSettingsSections({ fpsMinThresholdDefault: 0 })

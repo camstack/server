@@ -5,7 +5,7 @@
  * migrations that move those values into the instance record (and the migration engine binding in
  * `addon.ts`) use them; nothing at runtime reads or writes these fields.
  */
-import type { RecordKindHandle } from '@camstack/types'
+import type { RecordKindHandle } from '@dominevo/types'
 
 /** A broker record as stored: the migrations see fields the current schema no longer names. */
 export type RawHaBrokerBody = Record<string, unknown>

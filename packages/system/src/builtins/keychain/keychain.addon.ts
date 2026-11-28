@@ -31,7 +31,7 @@ import {
   keychainAdminCapability,
   keychainCapability,
   type ProviderRegistration,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { buildKeySourceCandidates } from './key-sources.js'
 import { applyKeychainResetTrigger } from './keychain-reset-trigger.js'
 import { type KeychainLogger, KeychainService } from './keychain-service.js'

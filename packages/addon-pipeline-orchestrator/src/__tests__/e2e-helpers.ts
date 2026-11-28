@@ -58,14 +58,14 @@ import type {
   HeatmapData,
   HeatmapOptions,
   TimeRangeOptions,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   AudioAnalysisSettingsSchema,
   DeviceType,
   EventCategory,
   createEvent,
   readNodePin,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { makeFakeSettingsStore } from './fake-settings-store.js'
 import { makeFakeRecords } from './fake-records.js'
 import { CameraSensorsController } from '../camera-sensors/controller.js'
@@ -1535,10 +1535,10 @@ export function makeFakeContext(opts: FakeContextOptions = {}): {
     // caller's usage site in the test body. Callers that consume these
     // retain their strict types via the cap def; the harness itself cannot
     // realise the generic.
-    getNativeProvider: <TCap extends import('@camstack/types').CapabilityDefinition>(
+    getNativeProvider: <TCap extends import('@dominevo/types').CapabilityDefinition>(
       cap: TCap,
       deviceId: number,
-    ): import('@camstack/types').InferProvider<TCap> => {
+    ): import('@dominevo/types').InferProvider<TCap> => {
       const provider = opts.nativeProviders?.get(`${cap.name}:${deviceId}`)
       if (provider == null) {
         throw new Error(
@@ -1546,7 +1546,7 @@ export function makeFakeContext(opts: FakeContextOptions = {}): {
             `pass FakeContextOptions.nativeProviders with the '${cap.name}:${deviceId}' key`,
         )
       }
-      return provider as import('@camstack/types').InferProvider<TCap>
+      return provider as import('@dominevo/types').InferProvider<TCap>
     },
     fetchDevice: async (deviceId) => {
       const device = opts.devices?.get(deviceId)
@@ -1556,22 +1556,22 @@ export function makeFakeContext(opts: FakeContextOptions = {}): {
             `pass FakeContextOptions.devices with the '${deviceId}' key`,
         )
       }
-      return device as import('@camstack/types').DeviceProxy
+      return device as import('@dominevo/types').DeviceProxy
     },
     // Capability acquisition surface — stubbed. Tests that depend on
     // cap readiness should seed providers via the cap-registry helpers
     // instead of relying on these in-process handles. Kept present so
     // the `AddonContext` shape checks out.
-    useCapability: <T = unknown>(): import('@camstack/types').ICapabilityHandle<T> =>
+    useCapability: <T = unknown>(): import('@dominevo/types').ICapabilityHandle<T> =>
       ({
         isReady: () => true,
         call: async <R>(fn: () => R | Promise<R>) => fn(),
         invalidate: () => {
           /* no-op */
         },
-      }) as unknown as import('@camstack/types').ICapabilityHandle<T>,
+      }) as unknown as import('@dominevo/types').ICapabilityHandle<T>,
     acquireCapability: async <T = unknown>(): Promise<
-      import('@camstack/types').ICapabilityHandle<T>
+      import('@dominevo/types').ICapabilityHandle<T>
     > =>
       ({
         isReady: () => true,
@@ -1579,7 +1579,7 @@ export function makeFakeContext(opts: FakeContextOptions = {}): {
         invalidate: () => {
           /* no-op */
         },
-      }) as unknown as import('@camstack/types').ICapabilityHandle<T>,
+      }) as unknown as import('@dominevo/types').ICapabilityHandle<T>,
     onCapabilityStateChange: () => () => {
       /* no-op */
     },
@@ -1944,7 +1944,7 @@ export function makeFakeStreamBroker(deviceId: string): FakeStreamBroker {
 
 // ── Fake stream-broker capability surface (what the orchestrator reads) ──
 
-/** Simplified ProfileSlot — mirrors the shape from `@camstack/types`. */
+/** Simplified ProfileSlot — mirrors the shape from `@dominevo/types`. */
 interface FakeProfileSlot {
   readonly deviceId: number
   readonly profile: 'high' | 'mid' | 'low'

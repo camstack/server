@@ -7,7 +7,7 @@ import {
   DeviceType,
   type IDeviceRuntimeState,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { UnifiFeatureDevice } from '../devices/unifi-feature-device.js'
 

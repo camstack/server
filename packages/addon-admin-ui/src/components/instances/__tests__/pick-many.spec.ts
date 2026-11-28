@@ -2,7 +2,7 @@
  * A create form whose discovered picker declares `pickManyOnCreate` ticks several values and makes
  * one record per value; a form without one is left as it is.
  */
-import type { ConfigUISchema } from '@camstack/types'
+import type { ConfigUISchema } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { manyCreateItems, pickManyField, withMultiplePick } from '../pick-many'
 

@@ -24,7 +24,7 @@ runtime `dependency`: `monaco-editor` (99 MB / 1 909 files, pulled in via
 `@monaco-editor/react`'s required peer), `lucide-react` twice (88 MB / 7 276
 files — `ui-library` pinned `^0.576`, `addon-admin-ui` pinned `^0.511`, so npm
 could not dedupe), `hls.js` (32 MB), `@xyflow/react`, `react-dom`, `konva`,
-`@xterm/*`, and `@types/qrcode`. `@camstack/server` depends on all eight addon
+`@xterm/*`, and `@types/qrcode`. `@dominevo/server` depends on all eight addon
 packages unconditionally, so an agent that never renders the admin UI installs
 its whole toolchain on every update — and on a healthy `agent-a` (D477's
 own before/after), the top three `reifyNode` timers were the two
@@ -37,14 +37,14 @@ so its own claims got the same treatment before anything was moved:
 
 - `addon-admin-ui`'s only server-side runtime entry is
   `dist/server/addon.js` (`src/server/addon.ts` — 31 lines: `node:path`,
-  `node:url`, and `@camstack/types`, already a `peerDependency`). Grepping the
+  `node:url`, and `@dominevo/types`, already a `peerDependency`). Grepping the
   built file for every bare `require`/`import`/dynamic `import()` finds
   **zero** of its 22 `dependencies` entries — not `@monaco-editor/react`, not
-  `@camstack/sdk`, not `@camstack/ui-library`, not `react`. The 7.1 MB SPA
+  `@dominevo/sdk`, not `@dominevo/ui-library`, not `react`. The 7.1 MB SPA
   bundle (`dist/assets/Build-*.js`) inlines all of it; the server half only
   serves those files as static assets.
 - `ui-library`'s `dist/index.cjs` bare-requires exactly ten specifiers:
-  `@camstack/sdk`, `@camstack/types`, `@tanstack/react-query`, `@trpc/client`,
+  `@dominevo/sdk`, `@dominevo/types`, `@tanstack/react-query`, `@trpc/client`,
   `@trpc/react-query`, `react`, `react-dom`, `react-dom/client`,
   `react/jsx-runtime`, and `zod` — all already `peerDependencies` except
   `zod`, which genuinely needs to stay a `dependency` (it is the one entry in
@@ -69,12 +69,12 @@ so its own claims got the same treatment before anything was moved:
   root, `0.576.0` nested under `ui-library`, `0.483.0` nested under
   `addon-agent-ui` — one more copy than D477's own table counted.
 - `addon-agent-ui`'s server entry (`dist/addon.js`) bare-requires nothing
-  from `@camstack/ui-library` either, and inlines `@camstack/types` the same
+  from `@dominevo/ui-library` either, and inlines `@dominevo/types` the same
   way `addon-admin-ui` does — the identical pattern, one addon over.
 
 **What did NOT move, and why.** `ui-library`'s `zod` (bare-required, proven
-above). `addon-pipeline`'s `@camstack/system`, `mp4box`, `node-av`,
-`opus-decoder`, `sharp`, `zod` and `addon-post-analysis`'s `@camstack/system`,
+above). `addon-pipeline`'s `@dominevo/system`, `mp4box`, `node-av`,
+`opus-decoder`, `sharp`, `zod` and `addon-post-analysis`'s `@dominevo/system`,
 `sharp` were left alone without individually re-proving each — they were not
 part of this record's target list and touching a media-decode addon's
 dependency graph on unverified grounds is exactly the kind of change CLAUDE.md
@@ -86,9 +86,9 @@ self-contained-mode addons (`addon-ai`, `addon-cloudflare`,
 `addon-decoder-ffmpeg`, `addon-decoder-nodeav`, `addon-export-alexa`,
 `addon-export-google`, `addon-export-hap`, `addon-pipeline`,
 `addon-post-analysis`, `addon-provider-onvif`, `addon-smtp-nodemailer`) and
-twelve entries in `@camstack/system` itself (`moleculer`, `tar`, `js-yaml`,
+twelve entries in `@dominevo/system` itself (`moleculer`, `tar`, `js-yaml`,
 `jsonwebtoken`, `bcryptjs`, `croner`, `otplib`, `sqlite-vec`,
-`systeminformation`, `@msgpack/msgpack`, `superjson`, `@camstack/sdk`). This
+`systeminformation`, `@msgpack/msgpack`, `superjson`, `@dominevo/sdk`). This
 is very likely the same pattern repeating — `vite-lib.preset.ts`'s
 `SELF_CONTAINED_EXTERNALS` does not externalise `zod`, so a self-contained
 addon bundles its own copy by design (documented there: independence from the
@@ -116,14 +116,14 @@ most one copy instead of two or three.
 ## Consequences
 
 - Measured end-to-end: packed the eight changed packages as real tarballs and
-  ran `npm install --omit=dev` of `@camstack/server@1.2.276` twice from the
+  ran `npm install --omit=dev` of `@dominevo/server@1.2.276` twice from the
   real npm registry — once unmodified, once with `overrides` substituting
   the eight local tarballs at the same version — into empty scratch
   directories. **Before: 726 MB / 29 525 files. After: 476 MB / 16 789
   files.** A 250 MB, 12 736-file reduction — larger than D477's ~240 MB / ~11
-  000 estimate because this also removed `@camstack/sdk` and
-  `@camstack/ui-library` from `addon-admin-ui` and `addon-agent-ui` (both
-  already shipped as direct dependencies of `@camstack/server` itself, so
+  000 estimate because this also removed `@dominevo/sdk` and
+  `@dominevo/ui-library` from `addon-admin-ui` and `addon-agent-ui` (both
+  already shipped as direct dependencies of `@dominevo/server` itself, so
   removing them from the addons is a pure closure-size win with no
   behavioural change) and closed the third `lucide-react` copy D477's table
   had not counted. `monaco-editor`, both `lucide-react` copies, `hls.js`, and
@@ -143,7 +143,7 @@ most one copy instead of two or three.
 - Moving a dependency to `devDependencies` moves the burden onto the build,
   same as D477 already flagged: a package published without its `dist` built
   now fails at a consumer's `import`, not at install. `scripts/publish.sh`
-  always runs `nx run-many -t build --exclude=@camstack/server` before
+  always runs `nx run-many -t build --exclude=@dominevo/server` before
   `npm publish` for every package, so this is already covered — no
   `prepublishOnly` hook was added.
 - **Enforcement.** `scripts/check-runtime-deps-reachable-from-dist.ts` scans
@@ -165,13 +165,13 @@ most one copy instead of two or three.
   "ignored": a ratchet, same shape as `check-closure-shipped-deps.ts`'s
   `closure-deps-baseline.json` — a new entry needs a reviewed reason, a stale
   one fails the build until removed.
-- `@camstack/server` still depends unconditionally on `addon-admin-ui` and
+- `@dominevo/server` still depends unconditionally on `addon-admin-ui` and
   every other addon package (D477 already named this; unchanged here) — an
   agent still installs addons it will never run. Making the closure
   role-aware remains a separate, larger piece of work.
 - The `zod`-in-self-contained-addons pattern flagged above is the most likely
   next instance of this exact defect, at a scale (eleven addons plus
-  `@camstack/system`) that deserves its own dedicated, package-by-package
+  `@dominevo/system`) that deserves its own dedicated, package-by-package
   pass rather than a batch move made on this record's evidence.
 
 ## Enforcement

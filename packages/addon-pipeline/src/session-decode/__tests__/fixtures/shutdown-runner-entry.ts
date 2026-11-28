@@ -12,7 +12,7 @@
  *   as `addon-runner.ts` turns into `process.exit(1)` — `onShutdown` never runs.
  */
 import { fileURLToPath } from 'node:url'
-import { ChildCostRegistry } from '@camstack/types/node'
+import { ChildCostRegistry } from '@dominevo/types/node'
 import { forkDecodeWorkerAt } from '../../fork-decode-worker.js'
 import { RunnerDecodeWorkers } from '../../live-decode-workers.js'
 

@@ -26,7 +26,7 @@ import {
   type IScopedLogger,
   pruneDeletedEntities,
   runExportedAction,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 import type {
   ExecuteCommandResult,
@@ -65,7 +65,7 @@ export function buildActionSceneDevice(entry: ActionSceneEntry): SyncDevice {
     name: { name: entry.displayName },
     willReportState: false,
     attributes: { sceneReversible: false },
-    deviceInfo: { manufacturer: 'CamStack', model: 'action' },
+    deviceInfo: { manufacturer: 'Dominevo', model: 'action' },
   }
 }
 

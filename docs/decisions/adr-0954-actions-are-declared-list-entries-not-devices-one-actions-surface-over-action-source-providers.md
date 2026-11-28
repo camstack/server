@@ -32,7 +32,7 @@ the same code.
    typed variables) in the `core-blocks` builtin. One singleton cap, `actions`,
    is the only surface the UI and automations use. It keeps NO catalog of its own
    (D3): every `list` asks the sources live and overlays run status.
-2. **One step runner.** `runSteps` / `buildActionSteps` in `@camstack/types` run
+2. **One step runner.** `runSteps` / `buildActionSteps` in `@dominevo/types` run
    the steps of an automation's THEN half and of an internal action alike, and
    produce the same `AutomationStepTrace` (`actions.N` / `steps.N`). An
    automation gains an `{ kind: 'action' }` step that awaits `actions.run` and
@@ -62,7 +62,7 @@ the same code.
 
 - No action ever appears in the device registry; there is nothing to
   garbage-collect when a source addon is removed.
-- `@camstack/types` and `@camstack/system` change together (new caps,
+- `@dominevo/types` and `@dominevo/system` change together (new caps,
   `core-blocks` added to the caller-stamped list): a publish must force both,
   and the generated automation block now needs the new `core-blocks` methods, so
   a block compiled before this change reads and writes its old `ctx.storage`

@@ -2,7 +2,7 @@
  * A camera-own event still is a LIVE picture (D1070): an awake camera gets one
  * forced capture; the wrapper's cached frame is never the primary picture.
  */
-import type { IScopedLogger, LogExtras } from '@camstack/types'
+import type { IScopedLogger, LogExtras } from '@dominevo/types'
 import sharp from 'sharp'
 import { describe, expect, it } from 'vitest'
 import { NcStillShelf, type NcStillShelfDeps } from '../still-shelf.js'

@@ -1,5 +1,5 @@
 /** Device ↔ composition source ref, from ONE `listAll` read (D676). */
-import { type CompositionSourceRef, compositionSourceKey } from '@camstack/types'
+import { type CompositionSourceRef, compositionSourceKey } from '@dominevo/types'
 import type { PickerDevice } from './source-picker-model'
 
 function refOf(device: PickerDevice): CompositionSourceRef {

@@ -3,7 +3,7 @@ import {
   type IDeviceRegistry,
   type DeviceManagerApi,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { readHaSource } from './ha-device-source.js'
 
 /**

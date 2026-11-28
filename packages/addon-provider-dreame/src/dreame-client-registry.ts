@@ -17,7 +17,7 @@
  */
 
 import { Nodreame } from '@apocaliss92/nodedreame'
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IScopedLogger } from '@dominevo/types'
 import { toNodreameOptions, type DreameConfig } from './config.js'
 import {
   DreameIntegrationManager,

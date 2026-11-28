@@ -15,36 +15,36 @@ import * as fs from 'node:fs'
 import * as path from 'node:path'
 import type { WorkspacePackage } from './workspace-packages'
 
-export const GENERATED_START = '<!-- readme:generated:start (derived from the manifest; edit outside this block) -->'
+export const GENERATED_START =
+  '<!-- readme:generated:start (derived from the manifest; edit outside this block) -->'
 export const GENERATED_END = '<!-- readme:generated:end -->'
 
-const REPO_BLOB = 'https://github.com/camstack/server/blob/main'
+const REPO_BLOB = 'https://github.com/dominevo/server/blob/main'
 
 /** Friendly names for packages that are not addons (no manifest display name). */
 const FRAMEWORK_NAMES: Readonly<Record<string, string>> = {
-  'packages/cli': 'CamStack CLI',
-  'packages/desktop': 'CamStack Desktop',
-  'packages/develop': 'CamStack Develop',
-  'packages/mcp-dev': 'CamStack Dev MCP',
-  'packages/mcp-develop': 'CamStack Develop MCP',
+  'packages/cli': 'Dominevo CLI',
+  'packages/desktop': 'Dominevo Desktop',
+  'packages/develop': 'Dominevo Develop',
+  'packages/mcp-dev': 'Dominevo Dev MCP',
+  'packages/mcp-develop': 'Dominevo Develop MCP',
   'packages/node-root': 'Node Root',
-  'packages/nx-plugin': 'CamStack Nx Plugin',
-  'packages/sdk': 'CamStack SDK',
-  'packages/system': 'CamStack System',
-  'packages/types': 'CamStack Types',
-  'packages/ui-library': 'CamStack UI Library',
+  'packages/nx-plugin': 'Dominevo Nx Plugin',
+  'packages/sdk': 'Dominevo SDK',
+  'packages/system': 'Dominevo System',
+  'packages/types': 'Dominevo Types',
+  'packages/ui-library': 'Dominevo UI Library',
   'packages/werift-turn-fix': 'werift TURN Fix',
-  'server/backend': 'CamStack Server',
+  'server/backend': 'Dominevo Server',
 }
 
 /** The first sentence for a package whose package.json has no description. */
 const SEED_PROSE: Readonly<Record<string, string>> = {
   'packages/ui-library':
-    'The shared React component library and Tailwind theme the CamStack admin UI, addon pages and widgets are built from.',
-  'packages/sdk':
-    'The client SDK for talking to a CamStack hub from your own code.',
+    'The shared React component library and Tailwind theme the Dominevo admin UI, addon pages and widgets are built from.',
+  'packages/sdk': 'The client SDK for talking to a Dominevo hub from your own code.',
   'server/backend':
-    'The CamStack server: the hub and agent entry points and the closure of framework packages every node installs.',
+    'The Dominevo server: the hub and agent entry points and the closure of framework packages every node installs.',
 }
 
 interface ManifestAddon {
@@ -68,7 +68,9 @@ function str(value: unknown): string {
 }
 
 function strings(value: unknown): readonly string[] {
-  return Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === 'string') : []
+  return Array.isArray(value)
+    ? value.filter((entry): entry is string => typeof entry === 'string')
+    : []
 }
 
 function readAddons(pkg: WorkspacePackage): readonly ManifestAddon[] {
@@ -120,11 +122,17 @@ export function seedProse(pkg: WorkspacePackage): string {
 }
 
 function humanize(slug: string): string {
-  const spaced = slug.replace(/^s_/, '').replace(/[-_]+/g, ' ').replace(/([a-z])([A-Z])/g, '$1 $2')
+  const spaced = slug
+    .replace(/^s_/, '')
+    .replace(/[-_]+/g, ' ')
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
   return spaced.charAt(0).toUpperCase() + spaced.slice(1)
 }
 
-const SETTINGS_FAMILIES: ReadonlyArray<{ readonly title: string; readonly match: (family: string) => boolean }> = [
+const SETTINGS_FAMILIES: ReadonlyArray<{
+  readonly title: string
+  readonly match: (family: string) => boolean
+}> = [
   {
     title: 'Addon settings',
     match: (family) =>
@@ -148,7 +156,9 @@ interface SettingsGroup {
 }
 
 /** Section → field labels, per family, read from the package's English labels. */
-export function settingsFromLabels(labels: Readonly<Record<string, unknown>>): readonly SettingsGroup[] {
+export function settingsFromLabels(
+  labels: Readonly<Record<string, unknown>>,
+): readonly SettingsGroup[] {
   const groups: SettingsGroup[] = []
   for (const { title, match } of SETTINGS_FAMILIES) {
     const sectionTitles = new Map<string, string>()
@@ -240,7 +250,12 @@ function readDocClaims(root: string): readonly DocClaim[] {
 
 function globToRegExp(glob: string): RegExp {
   const escaped = glob.replace(/[.+^${}()|[\]\\]/g, '\\$&')
-  return new RegExp(`^${escaped.replace(/\*\*/g, '\u0000').replace(/\*/g, '[^/]*').replace(/\u0000/g, '.*')}`)
+  return new RegExp(
+    `^${escaped
+      .replace(/\*\*/g, '\uE000')
+      .replace(/\*/g, '[^/]*')
+      .replace(/\uE000/g, '.*')}`,
+  )
 }
 
 /** Docs whose `covers:` / `applies-to:` name files of this package, most claims first. */
@@ -258,7 +273,10 @@ export function docsFor(claims: readonly DocClaim[], pkg: WorkspacePackage): rea
   return scored.slice(0, 4).map((entry) => entry.file)
 }
 
-function renderRequirements(pkg: WorkspacePackage, addons: readonly ManifestAddon[]): readonly string[] {
+function renderRequirements(
+  pkg: WorkspacePackage,
+  addons: readonly ManifestAddon[],
+): readonly string[] {
   const lines: string[] = []
   const camstack = asRecord(pkg.manifest['camstack'])
   if (addons.length > 0) {
@@ -275,21 +293,30 @@ function renderRequirements(pkg: WorkspacePackage, addons: readonly ManifestAddo
     }
   }
   const runtime = strings(camstack['runtimeDependencies'])
-  if (runtime.length > 0) lines.push(`- Runtime dependencies installed with the addon: ${runtime.map((d) => `\`${d}\``).join(', ')}.`)
+  if (runtime.length > 0)
+    lines.push(
+      `- Runtime dependencies installed with the addon: ${runtime.map((d) => `\`${d}\``).join(', ')}.`,
+    )
   const native = asRecord(camstack['nativeDependencies'])
   const nativeNames = Object.keys(native)
-  if (nativeNames.length > 0) lines.push(`- Native dependencies: ${nativeNames.map((d) => `\`${d}\``).join(', ')}.`)
+  if (nativeNames.length > 0)
+    lines.push(`- Native dependencies: ${nativeNames.map((d) => `\`${d}\``).join(', ')}.`)
   for (const addon of addons) {
     if (addon.pythonRequirements.length > 0) {
-      lines.push(`- Python: ${addon.name} installs \`${addon.pythonRequirements.replace(/^\.\//, '')}\` into its own environment.`)
+      lines.push(
+        `- Python: ${addon.name} installs \`${addon.pythonRequirements.replace(/^\.\//, '')}\` into its own environment.`,
+      )
     }
     if (addon.systemDependencies.length > 0) {
-      lines.push(`- System packages for ${addon.name}: ${addon.systemDependencies.map((d) => `\`${d}\``).join(', ')}.`)
+      lines.push(
+        `- System packages for ${addon.name}: ${addon.systemDependencies.map((d) => `\`${d}\``).join(', ')}.`,
+      )
     }
   }
   const engines = str(asRecord(pkg.manifest['engines'])['node'])
   if (engines.length > 0) lines.push(`- Node.js ${engines}.`)
-  if (addons.length > 0) lines.push('- A CamStack hub. An agent is used only where the placement above allows it.')
+  if (addons.length > 0)
+    lines.push('- A Dominevo hub. An agent is used only where the placement above allows it.')
   return lines
 }
 
@@ -308,7 +335,10 @@ export function renderGenerated(root: string, pkg: WorkspacePackage): string {
     lines.push('## What it provides', '')
     for (const addon of addons) {
       const caps = addon.capabilities.map((cap) => `\`${cap}\``).join(', ')
-      const detail = [addon.description.length > 0 ? sentence(addon.description) : '', addon.category.length > 0 ? `Category: ${addon.category}.` : '']
+      const detail = [
+        addon.description.length > 0 ? sentence(addon.description) : '',
+        addon.category.length > 0 ? `Category: ${addon.category}.` : '',
+      ]
         .filter(Boolean)
         .join(' ')
       lines.push(`- **${addon.name}** (\`${addon.id}\`)${detail.length > 0 ? `: ${detail}` : ''}`)
@@ -319,7 +349,13 @@ export function renderGenerated(root: string, pkg: WorkspacePackage): string {
 
   const settings = renderSettings(settingsFromLabels(readLabels(root, pkg)))
   if (settings.length > 0) {
-    lines.push('## Configuration', '', 'Edit these from System, Addons, this addon, Settings (a device\'s own settings are on its device page). A password field is stored in the keychain.', '', ...settings)
+    lines.push(
+      '## Configuration',
+      '',
+      "Edit these from System, Addons, this addon, Settings (a device's own settings are on its device page). A password field is stored in the keychain.",
+      '',
+      ...settings,
+    )
   }
 
   const requirements = renderRequirements(pkg, addons)
@@ -333,14 +369,22 @@ export function renderGenerated(root: string, pkg: WorkspacePackage): string {
     for (const file of all) lines.push(`- [${file}](${REPO_BLOB}/${file})`)
     lines.push('')
   }
-  lines.push('See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.', '', GENERATED_END)
+  lines.push(
+    'See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.',
+    '',
+    GENERATED_END,
+  )
   return lines.join('\n')
 }
 
 const STUB_MARKER = 'Settings this addon exposes are edited from'
 
 /** Insert or refresh the derived block in a README's text (null = no file). */
-export function applyGenerated(existing: string | null, pkg: WorkspacePackage, block: string): string {
+export function applyGenerated(
+  existing: string | null,
+  pkg: WorkspacePackage,
+  block: string,
+): string {
   if (existing !== null) {
     const start = existing.indexOf('<!-- readme:generated:start')
     const end = existing.indexOf(GENERATED_END)

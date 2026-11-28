@@ -5,11 +5,11 @@
  *
  * These were extracted from the former `remote-source-plane.ts` when the
  * shared shm frame-handle poller (and its `RemoteSourcePlane` satellite) were
- * removed with `@camstack/shm-ring` on 2026-07-16. The class is gone; only the
+ * removed with `@dominevo/shm-ring` on 2026-07-16. The class is gone; only the
  * two pure decision functions survive because the KEPT cross-node
  * session-decode acquire still needs them.
  */
-import type { CamProfile, ProfileSlot, RunnerFrameSource } from '@camstack/types'
+import type { CamProfile, ProfileSlot, RunnerFrameSource } from '@dominevo/types'
 
 /** The remote-restream variant of the attach payload's frame source. */
 export type RemoteRestreamFrameSource = Extract<RunnerFrameSource, { kind: 'remote-restream' }>

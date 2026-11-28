@@ -38,7 +38,7 @@ import {
   type StorageLocationMode,
   switchStateOfMode,
   toSecretFieldView,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { StorageProviderListEntry } from './provider-discovery.js'
 
 export const STORAGE_INSTANCE_KIND = 'storage-location'

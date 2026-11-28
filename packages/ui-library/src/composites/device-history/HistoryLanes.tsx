@@ -5,7 +5,7 @@
  * synced cursor (`syncKey`).
  */
 import { useMemo, type JSX } from 'react'
-import type { DeviceHistoryQueryManyEntry } from '@camstack/types'
+import type { DeviceHistoryQueryManyEntry } from '@dominevo/types'
 import { useUiText } from '../../contexts/ui-text'
 import { StateTimeline, type StateRowDef } from '../charts/StateTimeline'
 import { booleanLabels, HistoryChart, type HistoryChartProps } from './HistoryChart'

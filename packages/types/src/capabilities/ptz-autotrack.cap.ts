@@ -118,7 +118,7 @@ export const ptzAutotrackCapability = {
    *  - **Native**: the camera's own firmware autotrack, registered per device by
    *    the driver when the probe says it exists (Reolink: yes; Hikvision:
    *    model-dependent).
-   *  - **Wrapper**: the emulated implementation (`@camstack/server/system`'s `autotrack` builtin),
+   *  - **Wrapper**: the emulated implementation (`@dominevo/server/system`'s `autotrack` builtin),
    *    which follows a subject with `ptz.move` pulses driven by the detection
    *    pipeline. `defaultActive: false` — the operator binds it per camera in
    *    the bindings UI.

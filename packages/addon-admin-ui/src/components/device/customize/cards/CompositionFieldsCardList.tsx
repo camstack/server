@@ -1,11 +1,11 @@
 /**
  * Renders composition features decoded as generic fields cards (temperature, binary, …).
  */
-import { compositionSourceKey, decodeCompositionToCards, type DeviceInfo } from '@camstack/types'
+import { compositionSourceKey, decodeCompositionToCards, type DeviceInfo } from '@dominevo/types'
 import { Boxes } from 'lucide-react'
 import { type ReactNode, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useDeviceLabel } from '@camstack/ui-library'
+import { useDeviceLabel } from '@dominevo/ui-library'
 import { CustomizeCard } from '../CustomizeCard'
 import { useCandidateDevices } from '../assignments/use-source-candidates'
 import { currentComposition } from '../customization-read'

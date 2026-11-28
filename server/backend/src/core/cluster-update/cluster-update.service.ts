@@ -20,7 +20,7 @@ import type {
   ClusterUpdatePlan,
   ClusterUpdateStep,
   StartClusterUpdateResult,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { readClusterUpdatePlan } from './cluster-update-plan.js'
 import { errText, type ClusterUpdateSeams } from './cluster-update-seams.js'
 import {

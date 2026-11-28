@@ -75,7 +75,7 @@ Two rules, one per side of the wire:
    (`detail-park.ts`). It crosses the wire as an ERROR because it cannot cross
    as a field: the cap output schema (`z.object({ details }).nullable()`) is
    Zod-parsed on the hub route and unknown keys are stripped — a result field
-   would need a `@camstack/types` + codegen + server-train change. The
+   would need a `@dominevo/types` + codegen + server-train change. The
    dispatcher (`detail-refusal.ts`, twin marker constant — addons never import
    each other) recognises the marker in any rung's catch, skips the remaining
    rungs, and feeds exactly ONE `onFrameMiss`, so the bounded give-up

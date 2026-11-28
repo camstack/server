@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { decodePowerSourceKind } from '../matter-attr-decode.js'
 import { MatterClusterId } from '../matter-cluster-mapping.js'
 import type { MatterAttributeReport, MatterNodeSnapshot } from '../matter-controller.js'

@@ -3,7 +3,7 @@
  * never a zone's or rule's NAME (a name is operator prose about a house) and
  * never a colour. Field by field, like every tape record.
  */
-import type { Zone, ZoneRule } from '@camstack/types'
+import type { Zone, ZoneRule } from '@dominevo/types'
 import type { TapeScene, TapeZone, TapeZoneRule } from '../tape-schema.js'
 
 function tapeZone(z: Zone): TapeZone {

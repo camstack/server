@@ -10,7 +10,7 @@ import {
   useDataTableFilter,
   type DataColumn,
   type DataTableFilterConfig,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useMemo, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { MIGRATION_STATUS_LABEL, MigrationStatusBadge } from './MigrationStatusBadge'

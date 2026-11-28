@@ -28,7 +28,7 @@ import {
   MAX_WHEN_DEPTH,
   MAX_WHEN_LEAVES,
   whenDepth,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { type LeafKind, moveItem, newLeaf } from './recipe-parts'
 
 export type WhenPath = readonly number[]

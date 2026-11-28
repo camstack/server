@@ -14,9 +14,9 @@
  *   - `shared-root`   error: two writable locations share one disk (config).
  *   - `writer-restart` warning: a planned move waits for a camera to re-attach.
  */
-import type { Alert, AlertSeverity, IScopedLogger, LogExtras } from '@camstack/types'
+import type { Alert, AlertSeverity, IScopedLogger, LogExtras } from '@dominevo/types'
 import type { PendingWriterMove } from './pending-writer-moves.js'
-import { errMsg } from '@camstack/types'
+import { errMsg } from '@dominevo/types'
 
 export type PlacementAlertReason = 'unusable' | 'shared-root' | 'writer-restart'
 

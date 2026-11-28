@@ -3,8 +3,8 @@
  * The job detail draws what the record says: a failure by its reason and stage,
  * the cost as an estimate against the cap, the log tail. Cancel is on the table row.
  */
-import type { TrainingJob } from '@camstack/types'
-import { ConfirmDialogProvider, type AddonPageProps } from '@camstack/ui-library'
+import type { TrainingJob } from '@dominevo/types'
+import { ConfirmDialogProvider, type AddonPageProps } from '@dominevo/ui-library'
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { JobDetail } from '../JobDetail.js'

@@ -22,7 +22,7 @@ import {
   type HardwareInfo,
   type NodeInferenceDevices,
   recommendDetectionDefaults,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** A 4K stream is 2160 lines high; a decode cell of any other profile says nothing about 4K. */
 const DECODE_4K_MIN_HEIGHT = 2160

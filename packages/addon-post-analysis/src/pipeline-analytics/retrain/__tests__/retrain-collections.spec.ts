@@ -9,7 +9,7 @@
  */
 
 import { beforeEach, describe, expect, it } from 'vitest'
-import type { RecordKindHandle, RecordsAccess } from '@camstack/types'
+import type { RecordKindHandle, RecordsAccess } from '@dominevo/types'
 import { analyticsLedgers, makeAnalyticsRecords } from '../../__tests__/fake-records.js'
 import { makeSilentLogger } from '../../__tests__/test-helpers.js'
 import { RetrainCollectionStore } from '../retrain-collection-store.js'

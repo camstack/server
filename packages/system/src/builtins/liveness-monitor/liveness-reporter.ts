@@ -9,7 +9,7 @@
  * just evaluated: a storage check that found nothing must not "recover" a
  * device finding it never looked at.
  */
-import { createEvent, EventCategory, type IScopedLogger, type SystemEvent } from '@camstack/types'
+import { createEvent, EventCategory, type IScopedLogger, type SystemEvent } from '@dominevo/types'
 import type { LivenessFinding } from './liveness-checks.js'
 
 /** Event source stamped on every emission — the addon that observed it. */

@@ -2,7 +2,7 @@
  * A child the catalog stopped declaring is pruned by the kernel only on a second agreeing
  * read of a later probe, so the box devices re-probe once the box has answered.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { armRetireReprobe } from '../devices/enpal-retire-reprobe.js'
 

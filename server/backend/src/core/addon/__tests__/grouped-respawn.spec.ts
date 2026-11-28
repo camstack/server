@@ -8,7 +8,7 @@
  * A respawn satisfies a request only when it starts after that request (the
  * swap is already on disk). An in-flight fork does not.
  */
-import type { AddonDeclaration, IScopedLogger, LogExtras } from '@camstack/types'
+import type { AddonDeclaration, IScopedLogger, LogExtras } from '@dominevo/types'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
@@ -128,8 +128,8 @@ function harness(): {
   const addonsRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'grouped-respawn-'))
   process.env.CAMSTACK_ADDONS_DIR = addonsRoot
   for (const [id, pkg, version] of [
-    [HA, '@camstack/addon-provider-homeassistant', disk[HA]],
-    [GOOGLE, '@camstack/addon-export-google', disk[GOOGLE]],
+    [HA, '@dominevo/addon-provider-homeassistant', disk[HA]],
+    [GOOGLE, '@dominevo/addon-export-google', disk[GOOGLE]],
   ] as const) {
     const addonDir = path.join(addonsRoot, pkg)
     fs.mkdirSync(addonDir, { recursive: true })

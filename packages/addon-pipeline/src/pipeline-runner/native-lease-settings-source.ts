@@ -34,7 +34,7 @@ import {
   type NativeLeaseKnob,
   type NativeLeaseSettingsOverride,
   readNativeLeaseOverride,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /**
  * The addon whose cluster-scoped settings own the knobs. `pipeline-orchestrator` is

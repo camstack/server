@@ -45,7 +45,7 @@
  */
 import { connect, type Socket } from 'node:net'
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 import { buildAuthHeader, type DigestState, parseChallenge } from '../../digest-auth.js'
 import {
@@ -400,7 +400,7 @@ export async function openRtspReplay(
         url,
         cseq,
         headers: {
-          'User-Agent': 'CamStack',
+          'User-Agent': 'Dominevo',
           ...(authorization !== null ? { Authorization: authorization } : {}),
           ...(rtspSession !== null ? { Session: rtspSession } : {}),
           ...headers,

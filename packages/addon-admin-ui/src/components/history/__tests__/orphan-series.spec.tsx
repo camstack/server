@@ -13,7 +13,7 @@ import type {
   DeviceHistoryOrphanDeleteEntry,
   DeviceHistoryOrphanList,
   DeviceHistoryOrphanSeries,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 interface ListState {
   status: 'pending' | 'error' | 'success'
@@ -26,9 +26,9 @@ const refetch = vi.fn()
 const deleteMutate = vi.fn()
 const confirmSpy = vi.fn()
 
-vi.mock('@camstack/ui-library', async () => {
+vi.mock('@dominevo/ui-library', async () => {
   const actual =
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+    await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   const Pass = ({ children }: { children?: ReactNode }) => <div>{children}</div>
   return {
     ...actual,

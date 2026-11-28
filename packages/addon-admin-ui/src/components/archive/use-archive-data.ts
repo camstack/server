@@ -11,14 +11,14 @@ import type {
   EventStoreFootprint,
   HealthFinding,
   RecordingStorageUsage,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   useDeviceManagerListAll,
   usePipelineAnalyticsGetEventStoreFootprint,
   usePipelineOrchestratorGetCameraStatuses,
   usePipelineOrchestratorGetHealthDigest,
   useRecordingArchiveGetStorageUsage,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useMemo } from 'react'
 import {
   type CameraRef,

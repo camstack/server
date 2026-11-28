@@ -24,7 +24,7 @@ import * as os from 'node:os'
 import * as path from 'node:path'
 import { Readable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import {
   parseCloudflaredVersion,
   versionAtLeast,

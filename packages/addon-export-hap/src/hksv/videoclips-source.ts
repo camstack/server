@@ -70,8 +70,8 @@ import type {
   ClipSourceAvailability,
   IScopedLogger,
   IVideoclipsProvider,
-} from '@camstack/types'
-import { VIDEOCLIPS_MAX_READ_BYTES } from '@camstack/types'
+} from '@dominevo/types'
+import { VIDEOCLIPS_MAX_READ_BYTES } from '@dominevo/types'
 
 import type { HksvBuildOutcome } from './build-outcome.js'
 import type { ClipLocationRefusal } from './clip-location.js'

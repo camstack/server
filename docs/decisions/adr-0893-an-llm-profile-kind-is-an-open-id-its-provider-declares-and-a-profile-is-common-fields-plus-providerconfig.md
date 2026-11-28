@@ -18,7 +18,7 @@ openai-compatible, anthropic, google, managed-local, apple-foundation), and the
 profile row flattened every provider's fields beside the common ones
 (`baseUrl`, `apiKey`, `extraHeaders`, `runtime`, `appleFoundation`). A new
 provider therefore needed a framework change (a cap edit, codegen, a
-`@camstack/system` + `@camstack/server` publish and an update of every node)
+`@dominevo/system` + `@dominevo/server` publish and an update of every node)
 before it could ship one row; and the admin editor carried a hand-written
 branch per kind (`kind === 'managed-local'`, `kind === 'apple-foundation'`), a
 kind-keyed icon table and a hard-coded top-k list. `llm.listModels` took a

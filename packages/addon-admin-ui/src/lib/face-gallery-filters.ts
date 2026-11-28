@@ -4,7 +4,7 @@
  * The `face-gallery.listRecentFaces` cap only accepts `limit` + a coarse
  * assigned/recognized `filter`. Date-range and per-camera narrowing are done
  * HERE, in the component, over the already-fetched window — no cap parameters
- * added (keeps this an addon-only change that ships via `camstack deploy`).
+ * added (keeps this an addon-only change that ships via `dominevo deploy`).
  *
  * Everything in this module is pure + framework-free so it is unit-testable.
  */

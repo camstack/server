@@ -16,7 +16,7 @@
  *   reconcileBlockDevices,
  *   exposeBlockDevices,
  *   type AddonContext,
- * } from '@camstack/types'
+ * } from '@dominevo/types'
  *
  * class WanAlertSensor extends BaseDevice {}
  *

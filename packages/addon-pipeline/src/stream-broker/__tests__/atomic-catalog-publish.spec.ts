@@ -34,8 +34,8 @@ import type {
   IScopedLogger,
   ProfileSlot,
   SystemEvent,
-} from '@camstack/types'
-import { ProfileSlotSchema } from '@camstack/types'
+} from '@dominevo/types'
+import { ProfileSlotSchema } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
 import { StreamBrokerManager } from '../stream-broker/stream-broker-manager.js'

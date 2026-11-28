@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 import { vitestWorkers } from '../../vitest.workers'
 
 /**
- * Vitest config for `@camstack/addon-provider-homematic`.
+ * Vitest config for `@dominevo/addon-provider-homematic`.
  *
  * The package's `vite.config.ts` is the shared Node-side lib preset
  * (`buildLibPreset`) with no `test` block, so a plain `vitest run` would

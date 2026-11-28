@@ -15,8 +15,8 @@
  * `DeviceStateChanged` handler stays cheap at bus rate.
  */
 import { randomUUID } from 'node:crypto'
-import type { EventKindDescriptor, EventKindsForDevice, SensorEvent } from '@camstack/types'
-import { buildEventKindDescriptor, EVENT_KIND_BY_CAP, subKindsOf } from '@camstack/types'
+import type { EventKindDescriptor, EventKindsForDevice, SensorEvent } from '@dominevo/types'
+import { buildEventKindDescriptor, EVENT_KIND_BY_CAP, subKindsOf } from '@dominevo/types'
 
 // ── Thin client surfaces (subset of ctx.api the module consumes; tests mock these) ──
 
@@ -238,7 +238,7 @@ export interface LinkedCamerasCacheDeps {
   /**
    * Preferred rebuild path — see {@link LinkedCamerasCache.rebuild}. Optional
    * because this addon deploys on its own and can be running against a hub
-   * whose `@camstack/server` closure predates `getLinkedDevicesBatch`; absent
+   * whose `@dominevo/server` closure predates `getLinkedDevicesBatch`; absent
    * or rejecting, the per-camera loop still answers.
    */
   readonly linkedDevicesBatch?: LinkedDevicesBatchClient

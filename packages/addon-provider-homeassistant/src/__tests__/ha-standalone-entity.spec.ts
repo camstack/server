@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { DeviceType, type DeviceContext, type IDeviceRuntimeState } from '@camstack/types'
+import { DeviceType, type DeviceContext, type IDeviceRuntimeState } from '@dominevo/types'
 import {
   buildStandaloneEntityCandidates,
   buildStandaloneEntityConfig,
@@ -170,7 +170,7 @@ describe('buildStandaloneEntityCandidates', () => {
       expect((c as Record<string, unknown>)['children']).toBeUndefined()
     }
   })
-  it('skips entities with no CamStack mapping', () => {
+  it('skips entities with no Dominevo mapping', () => {
     const haDevices = [
       { entities: [switchEntity(), switchEntity({ entityId: 'switch.unmapped', mappedTo: null })] },
     ]

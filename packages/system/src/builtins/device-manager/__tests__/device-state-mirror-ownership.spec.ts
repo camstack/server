@@ -8,7 +8,7 @@
  * a device with NO claims must behave exactly as before this module existed.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { EventCategory, runtimeStatePolicyFor } from '@camstack/types'
+import { EventCategory, runtimeStatePolicyFor } from '@dominevo/types'
 import { loadRuntimeState } from '../device-meta-actions.js'
 import type { ProviderContext } from '../device-provider-context.js'
 import { OWNED_FIELDS_KEY } from '../field-ownership.js'

@@ -24,15 +24,15 @@
  * below can never be consulted for it.
  */
 
-import type { CapabilityDefinition } from '@camstack/types'
-import { intercomCapability, resolveMethodAuth } from '@camstack/types'
+import type { CapabilityDefinition } from '@dominevo/types'
+import { intercomCapability, resolveMethodAuth } from '@dominevo/types'
 import type {
   CapabilityMethodSchema,
   DeviceSelector,
   MethodAccess,
   TokenScope,
-} from '@camstack/types'
-import { DeviceType } from '@camstack/types'
+} from '@dominevo/types'
+import { DeviceType } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { checkScopeAccess, type DeviceScopeLookup } from '../scope-access.js'
 

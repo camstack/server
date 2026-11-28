@@ -84,14 +84,14 @@ It is never shipped silently as "full frame".
   has its own write-and-rename). On Windows a rename over an open file is
   retried and then falls back to a copy.
 - When it is live: the addon's preset (`self-contained+ui`) bundles EVERY
-  `@camstack/types/*` subpath (`SELF_CONTAINED_EXTERNALS` omits
+  `@dominevo/types/*` subpath (`SELF_CONTAINED_EXTERNALS` omits
   `BARE_TYPES_EXTERNAL`), so the addon imports `writeFileAtomic` from
-  `@camstack/types/node` and inlines it. Routed-location writes and the
+  `@dominevo/types/node` and inlines it. Routed-location writes and the
   `CAMSTACK_MEDIA_ROOT` provider (constructed in the addon from the bundled
   `FilesystemStorageProvider`) are atomic on addon deploy. Only the
   `ctx.kernel.storage` default — the provider the RUNNER builds
-  (`addon-runner.ts:284`) — waits for a `@camstack/server` release carrying
-  this `@camstack/types`.
+  (`addon-runner.ts:284`) — waits for a `@dominevo/server` release carrying
+  this `@dominevo/types`.
 - Clients that list track media see `sceneFrame` / `lastSceneFrame` rows. The
   admin labels them and draws the trail on them; the viewer's detail gallery
   shows an unknown kind as its own tile until it gives the kind a rule.
@@ -100,8 +100,8 @@ It is never shipped silently as "full frame".
   unannotated.
 - Ship order: `addon-post-analysis` alone carries the fix. Its vite preset is
   `self-contained+ui`, whose externals are the runtime set plus
-  `@camstack/system` and `ui-library` — bare `@camstack/types` is BUNDLED into
-  the addon dist (its entries import no `@camstack/types`), so the new kind and
+  `@dominevo/system` and `ui-library` — bare `@dominevo/types` is BUNDLED into
+  the addon dist (its entries import no `@dominevo/types`), so the new kind and
   the clip-default constants are live on deploy without a server release.
 - Tracks written before this lands hold no twin: their `full` deliveries take
   the reported fallback until retention ages them out.

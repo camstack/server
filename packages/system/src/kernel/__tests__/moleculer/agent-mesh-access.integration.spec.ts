@@ -12,7 +12,7 @@
  */
 import { afterEach, describe, expect, it } from 'vitest'
 import { ServiceBroker } from 'moleculer'
-import type { AddonDeclaration, ICamstackAddon } from '@camstack/types'
+import type { AddonDeclaration, ICamstackAddon } from '@dominevo/types'
 import { createAddonService } from '../../moleculer/addon-service-factory.js'
 import { createMeshAccessMiddleware } from '../../moleculer/mesh-access-middleware.js'
 import {

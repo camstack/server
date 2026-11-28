@@ -3,7 +3,7 @@
  * "Laundry — Laundry lock unlocked", so the match freezes the sensor's kind, the word
  * it moved to and its name — read off the same slice the edge is.
  */
-import { NcRuleSchema, type SensorEvent } from '@camstack/types'
+import { NcRuleSchema, type SensorEvent } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { fireRefFor } from '../rule-action-dispatch.js'
 import { subjectFromSensorEvent } from '../rule-engine.js'

@@ -1,6 +1,6 @@
 ---
 name: camstack-capability
-description: Add or change a CamStack capability (`*.cap.ts`) end to end — decide whether one is needed at all, pick its cardinality (singleton, collection, device-native, wrapper, internal, node-hosted), codegen and the two hand-edits it cannot do, registerProvider and the manifest, provider selection through bindings, CAP_INPUT_DEFAULTS, a capability-driven UI, typed routing errors, and what must be published for it to reach a running hub. Use for "new cap", "add a method", "add a field to a cap", "two addons implement the same cap", "No procedure found on path", "provider not available".
+description: Add or change a Dominevo capability (`*.cap.ts`) end to end — decide whether one is needed at all, pick its cardinality (singleton, collection, device-native, wrapper, internal, node-hosted), codegen and the two hand-edits it cannot do, registerProvider and the manifest, provider selection through bindings, CAP_INPUT_DEFAULTS, a capability-driven UI, typed routing errors, and what must be published for it to reach a running hub. Use for "new cap", "add a method", "add a field to a cap", "two addons implement the same cap", "No procedure found on path", "provider not available".
 ---
 
 # Adding or changing a capability
@@ -18,9 +18,9 @@ before you design anything.
 ## Tooling
 
 ```bash
-camstack develop scaffold cap <name> [--scope system|device] [--mode singleton|collection]
-camstack develop list-caps
-camstack develop who-provides <cap-name>
+dominevo develop scaffold cap <name> [--scope system|device] [--mode singleton|collection]
+dominevo develop list-caps
+dominevo develop who-provides <cap-name>
 ```
 
 The scaffold writes a stub only. You still hand-edit the index + run codegen.
@@ -197,18 +197,18 @@ Spec in `server/backend/src/__tests__/cap-routers/` — the router builder does
 not re-validate OUTPUT, so the test pins the shape.
 
 **What must be published.** The hub reads `ALL_CAPABILITY_DEFINITIONS` from
-**`@camstack/server/system`**, which bundles the cap definitions — and nx-affected
-does NOT mark `@camstack/server` changed for an edit under `packages/types`.
+**`@dominevo/server/system`**, which bundles the cap definitions — and nx-affected
+does NOT mark `@dominevo/server` changed for an edit under `packages/types`.
 So a cap change always force-publishes it with the server:
 
 ```bash
 gh workflow run "Publish Packages" --ref main -f bump=patch -f scope=affected \
-  -f include_dependents=false -f force_packages=@camstack/server/system,@camstack/server
+  -f include_dependents=false -f force_packages=@dominevo/server/system,@dominevo/server
 ```
 
 Then the server-side chain — publish → `applyServerUpdate` on the hub AND every
 agent → one more restart for builtins → verify — is the `camstack-server-change`
-skill; CI mechanics are `camstack-publish-ci`. Then `camstack deploy` the
+skill; CI mechanics are `camstack-publish-ci`. Then `dominevo deploy` the
 providing addon (its provider must have the method).
 
 Two 404s, two causes:

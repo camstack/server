@@ -28,7 +28,7 @@ import {
   EventCategory,
   type IScopedLogger,
   type RecordKindHandle,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { SnapshotMap } from '../capture/capture-engine.js'
 import { isSlice, numberField, type Slice, stringField, booleanField } from './slice-readers.js'
 import { MIN_HISTORY_WINDOW_MS } from './energy-from-history.js'

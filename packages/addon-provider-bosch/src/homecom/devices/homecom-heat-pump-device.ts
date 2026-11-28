@@ -8,7 +8,7 @@ import {
   type HeatPumpCounterSample,
   type HeatPumpStatus,
   type InferNativeProvider,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { homeComFaultReading } from '../homecom-faults.js'
 import { homeComConnections } from '../homecom-gateway.js'
 import { registerHomeComStateRefresh } from './homecom-state-refresh.js'

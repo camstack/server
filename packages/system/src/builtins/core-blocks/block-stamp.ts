@@ -4,7 +4,7 @@
  * other editor's change. A caller that sends no stamp (a script, an internal re-expansion) is not
  * checked, and a block that is gone falls through to the store, whose own refusal names it.
  */
-import { type CoreBlock, StaleStampError } from '@camstack/types'
+import { type CoreBlock, StaleStampError } from '@dominevo/types'
 
 export function staleBlockRefusal(
   stored: Pick<CoreBlock, 'name' | 'updatedAt'> | null,

@@ -4,7 +4,7 @@
  * paired nothing yet) and `unavailable` means the keychain could not answer —
  * the reason is shown, never an empty card.
  */
-import { Badge, SettingRow, trpc } from '@camstack/ui-library'
+import { Badge, SettingRow, trpc } from '@dominevo/ui-library'
 import { ShieldCheck } from 'lucide-react'
 import type { ReactNode } from 'react'
 

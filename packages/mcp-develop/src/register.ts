@@ -1,6 +1,6 @@
 /**
  * The `develop` toolset: workspace tools plus `track_review_*`. Registered
- * both by the `camstack-mcp-develop` bin and by `camstack mcp --toolsets develop`.
+ * both by the `camstack-mcp-develop` bin and by `dominevo mcp --toolsets develop`.
  */
 import type { McpServer, ToolCallback } from '@modelcontextprotocol/sdk/server/mcp.js'
 import type { ZodRawShapeCompat } from '@modelcontextprotocol/sdk/server/zod-compat.js'
@@ -22,7 +22,7 @@ import {
   SCAFFOLD_KINDS,
   validateAddon,
   whoProvides,
-} from '@camstack/develop'
+} from '@dominevo/develop'
 import { createReviewHubProvider } from './track-review/config.js'
 import { registerTrackReviewTools } from './track-review/register.js'
 
@@ -44,7 +44,7 @@ function workspaceRootFromEnv(): string {
 }
 
 /**
- * How a host registers the develop tools. The `camstack mcp` toolset passes
+ * How a host registers the develop tools. The `dominevo mcp` toolset passes
  * nothing and gets all of them. A host that already owns some names (the
  * private operator MCP keeps its own capability and skill tools) passes
  * `only` and takes the rest from here instead of copying them.

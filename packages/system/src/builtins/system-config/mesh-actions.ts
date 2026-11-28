@@ -2,7 +2,7 @@
  * System → Cluster — agent-ui unlock tickets (D821).
  */
 import { z } from 'zod'
-import { customAction, defineCustomActions, type CustomActionsSpec } from '@camstack/types'
+import { customAction, defineCustomActions, type CustomActionsSpec } from '@dominevo/types'
 
 const mintAgentUiUnlockInputSchema: z.ZodTypeAny = z.object({
   nodeId: z.string().min(1),

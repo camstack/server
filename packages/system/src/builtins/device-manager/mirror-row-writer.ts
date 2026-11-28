@@ -24,7 +24,7 @@
  * boot race that did exactly that was silent since at least 09-18 (159 shrinks, 15
  * cameras, 65 of 82 hub restarts).
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { DeviceManagerSettings } from './device-meta-store.js'
 import { OWNED_FIELDS_KEY } from './field-ownership.js'
 import { MigrationRefusedError } from './migration-refused.js'

@@ -2,7 +2,7 @@
  * A gateway name is chosen when the device is created. An id the integration
  * already adopted is reported as that device; nothing writes a new name over it.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { buildVeluxAdoptionProvider } from '../velux-adoption-provider.js'
 import { gatewayNativeId } from '../velux-discovery.js'

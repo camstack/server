@@ -6,7 +6,7 @@
  * `<dataDir>/alexa/`; that layer is gone — the typed config blob is the
  * persistence surface now.
  */
-import type { CamProfile } from '@camstack/types'
+import type { CamProfile } from '@dominevo/types'
 
 /**
  * Per-device export settings — operator-edited preferences attached to

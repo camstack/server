@@ -20,7 +20,7 @@ import {
   SECTION_BODY,
   SectionCard,
   StatusBadge,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Package, RefreshCw } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { UnauthorizedError, fetchJson, postJson } from './api-client'

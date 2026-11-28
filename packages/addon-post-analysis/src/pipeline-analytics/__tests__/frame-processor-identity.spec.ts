@@ -22,7 +22,7 @@
  *    NC1): both tests fail — Bob's stale tracklet takes the newcomer at
  *    +11.2 s, and the first piece re-binds the return at +8 s.
  */
-import type { FrameResult, ObjectDetection } from '@camstack/types'
+import type { FrameResult, ObjectDetection } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { FrameProcessor, type FrameProcessorResult } from '../pipeline/frame-processor.js'
 import { sequentialTrackIdMinter } from '../pipeline/track-id.js'

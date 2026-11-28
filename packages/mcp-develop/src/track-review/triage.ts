@@ -7,7 +7,7 @@
  * also returns a random control sample of non-suspects: the reviewer looks at
  * those too, and the share that turns out wrong is the miss rate of the signals.
  */
-import { COCO_TO_MACRO } from '@camstack/types'
+import { COCO_TO_MACRO } from '@dominevo/types'
 import type { TriageTrack } from './hub-api.js'
 import { inTrainingOf, type InTraining, type TrainingMembership } from './training.js'
 

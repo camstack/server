@@ -35,7 +35,7 @@ function keys(device: CatalogDevice): readonly string[] {
 
 describe('the taxonomy guard', () => {
   it('accounts for every macro in the taxonomy registry', async () => {
-    const { EVENT_TAXONOMY } = await import('@camstack/types')
+    const { EVENT_TAXONOMY } = await import('@dominevo/types')
     const macros = Object.values(EVENT_TAXONOMY)
       .filter((entry) => entry.level === 'macro')
       .map((entry) => entry.kind)

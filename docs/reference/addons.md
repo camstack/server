@@ -10,7 +10,7 @@ One addon = one `addon-runner` process by default. A shared `execution.group`
 collapses its members into ONE process so their cap calls resolve in-process
 — that is the only reason to use it.
 
-`Process` says WHERE the addon actually runs. `@camstack/server` builtins are
+`Process` says WHERE the addon actually runs. `@dominevo/server` builtins are
 resident in hub-main — they hold the storage/settings/logging every runner
 depends on — unless the manifest declares `execution.isolate`, which forks the
 builtin like any other addon. Reading "system package" as "in hub-main" is what
@@ -18,104 +18,104 @@ this column exists to stop.
 
 | Addon id | Package | Category | Process | Placement | Group | Instances | Capabilities |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `addon-pages-aggregator` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `addon-pages` |
-| `addon-widgets-aggregator` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `addon-widgets` |
-| `admin-ui` | `@camstack/addon-admin-ui` | system | own runner | `hub-only` | — | — | `admin-ui` `app-source` |
-| `agent-ui` | `@camstack/addon-agent-ui` | system | own runner | `agent-only` | — | — | `admin-ui` |
-| `ai` | `@camstack/addon-ai` | analytics | own runner | `any-node` | `ml` | — | `integration-instances` `llm` `llm-runtime` `node-removal-hook` |
-| `alert-center` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `alerts` `jobs` `retention-source` |
-| `apps-aggregator` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `apps` |
-| `audio-analyzer` | `@camstack/addon-pipeline` | pipeline | own runner | `any-node` | — | — | `audio-analysis` `audio-analyzer` |
-| `auth-oidc` | `@camstack/addon-auth` | system | own runner | `hub-only` | `auth` | — | `addon-routes` `auth-provider` `integration-instances` `login-method` |
-| `auth-webauthn` | `@camstack/addon-auth` | system | own runner | `hub-only` | `auth` | — | `addon-widgets-source` `login-method` `user-passkeys` |
-| `autotrack` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `ptz-autotrack` |
-| `backup-orchestrator` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `backup` |
-| `benchmark` | `@camstack/addon-benchmark` | system | own runner | `hub-only` | `ml` | — | `addon-pages-source` `app-source` |
-| `bosch-home-connect` | `@camstack/addon-provider-bosch` | providers | own runner | `hub-only` | — | multiple | `consumables` `device-adoption` `device-provider` `dishwasher` `integration-instances` `running-state` |
-| `bosch-homecom` | `@camstack/addon-provider-bosch` | providers | own runner | `hub-only` | — | multiple | `climate-control` `device-adoption` `device-provider` `heat-pump-control` `heat-pump-status` `integration-instances` `water-heater` |
-| `bosch-shc` | `@camstack/addon-provider-bosch` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `integration-instances` |
-| `calendars` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `calendars` |
-| `camera-grid` | `@camstack/server-framework` | system | own runner | `any-node` | — | unique | `camera-grid-layout` `motion` |
-| `cloudflare-tunnel` | `@camstack/addon-cloudflare` | networking | own runner | `hub-only` | `net-access` | — | `integration-instances` `network-access` |
-| `cloudflare-turn` | `@camstack/addon-cloudflare` | networking | own runner | `hub-only` | `net-access` | — | `integration-instances` `turn-provider` |
-| `composer` | `@camstack/server-framework` | system | own runner | `hub-only` | `composer` | — | `composer` |
-| `console-logging` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `log-destination` |
-| `core-blocks` | `@camstack/server-framework` | system | own runner | `hub-only` | — | — | `action-source` `actions` `core-blocks` `daylight-phase` `device-removal-hook` `fan-presets` `hero-layout` `integration-instances` `power-source` `remote` `remote-layout-components` `schedulers` `tags` `template` `timed-run` |
-| `core-notifier` | `@camstack/server-framework` | system | own runner | `hub-only` | — | — | `integration-instances` `notification-output` |
-| `decoder-nodeav` | `@camstack/addon-decoder-nodeav` | pipeline | own runner | `any-node` | — | — | `audio-codec` `decoder` |
-| `detection-pipeline` | `@camstack/addon-pipeline` | pipeline | own runner | `any-node` | `detection` | — | `detection-pipeline` `load-contribution` `pipeline-executor` |
-| `device-history` | `@camstack/server-framework` | system | own runner | `hub-only` | — | — | `device-history` `device-removal-hook` `device-runs` `device-transitions` `retention-source` |
-| `device-manager` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `device-extension` `device-manager` `device-state` `job-source` |
-| `embedding-encoder` | `@camstack/addon-post-analysis` | analytics | own runner | `any-node` | — | — | `embedding-encoder` |
-| `export-alexa` | `@camstack/addon-export-alexa` | exports | own runner | `hub-only` | — | — | `addon-routes` `device-export` `integration-instances` `oauth-integration` |
-| `export-google` | `@camstack/addon-export-google` | exports | own runner | `hub-only` | `integrations` | — | `addon-routes` `device-export` `integration-instances` `oauth-integration` |
-| `export-hap` | `@camstack/addon-export-hap` | exports | own runner | `hub-only` | — | — | `device-export` `integration-instances` `videoclips` |
-| `filesystem-storage` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `filesystem-browse` `storage-provider` |
-| `google-services` | `@camstack/addon-google-services` | messaging | own runner | `hub-only` | — | — | `addon-routes` `broker` `calendar-source` `integration-instances` `smtp-provider` |
-| `homeassistant-export` | `@camstack/addon-provider-homeassistant` | exports | own runner | `hub-only` | `integrations` | — | `addon-routes` `device-export` `integration-instances` `oauth-integration` |
-| `hub-forwarder` | `@camstack/server-framework` | system | own runner | `agent-only` | — | — | `log-destination` |
-| `import-alexa` | `@camstack/addon-import-alexa` | providers | own runner | `any-node` | — | multiple | `addon-routes` `broker` `device-adoption` `device-provider` `integration-instances` `notification-output` |
-| `keychain` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `keychain` `keychain-admin` |
-| `liveness-monitor` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | — |
-| `local-auth` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `auth-provider` `device-credentials` `user-management` |
-| `local-network` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `local-network` |
-| `loki-logging` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `integration-instances` `log-destination` |
-| `matter-broker` | `@camstack/addon-matter-broker` | providers | own runner | `hub-only` | — | multiple | `broker` `device-adoption` `device-provider` `integration-instances` |
-| `metrics-native` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `metrics-provider` |
-| `model-studio` | `@camstack/addon-model-studio` | system | own runner | `any-node` | `ml` | — | `addon-pages-source` `app-source` `custom-model-registry` `model-convert` `node-removal-hook` |
-| `motion-wasm` | `@camstack/addon-pipeline` | pipeline | own runner | `any-node` | `detection` | — | `motion-detection` |
-| `mqtt-broker` | `@camstack/addon-mqtt-broker` | messaging | own runner | `hub-only` | — | — | `broker` `integration-instances` `mqtt-broker` |
-| `notifiers` | `@camstack/addon-notifiers` | messaging | own runner | `hub-only` | `notifiers` | — | `addon-routes` `integration-instances` `notification-output` |
-| `osd-manager` | `@camstack/addon-osd-manager` | system | own runner | `hub-only` | `integrations` | unique | `addon-pages-source` `osd-manager` |
-| `pipeline-analytics` | `@camstack/addon-post-analysis` | analytics | own runner | `any-node` | — | — | `addon-widgets-source` `audio-metrics` `device-removal-hook` `face-gallery` `failure-contribution` `integration-instances` `notification-rules` `pipeline-analytics` `plate-gallery` `scene-monitor` `storage-occupancy` `zone-analytics` |
-| `pipeline-orchestrator` | `@camstack/addon-pipeline-orchestrator` | pipeline | own runner | `hub-only` | — | — | `addon-widgets-source` `app-source` `camera-pipeline-config` `display-palette` `node-removal-hook` `pipeline-orchestrator` `viewer-ui` `zone-rules` `zones` |
-| `pipeline-runner` | `@camstack/addon-pipeline` | pipeline | own runner | `any-node` | `detection` | — | `failure-contribution` `load-contribution` `pipeline-runner` |
-| `platform-probe` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `platform-probe` |
-| `provider-amcrest` | `@camstack/addon-provider-amcrest` | providers | own runner | `hub-only` | — | unique | `day-night` `device-provider` `image-settings` `integration-instances` `motion-zones` `privacy-mask` `recording-onboard` `stream-params` `videoclips` |
-| `provider-dreame` | `@camstack/addon-provider-dreame` | providers | own runner | `hub-only` | — | multiple | `consumables` `device-adoption` `device-provider` `error` `integration-instances` `navigation` `recording-signal` `running-state` |
-| `provider-dreo` | `@camstack/addon-provider-dreo` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `integration-instances` |
-| `provider-ecowitt` | `@camstack/addon-provider-ecowitt` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `integration-instances` `weather-station` |
-| `provider-enpal` | `@camstack/addon-provider-enpal` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `integration-instances` |
-| `provider-esphome` | `@camstack/addon-provider-esphome` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `integration-instances` |
-| `provider-gree` | `@camstack/addon-provider-gree` | providers | own runner | `hub-only` | — | multiple | `device-provider` `integration-instances` |
-| `provider-hikvision` | `@camstack/addon-provider-hikvision` | providers | own runner | `hub-only` | — | unique | `day-night` `device-provider` `failure-contribution` `image-settings` `integration-instances` `motion-zones` `privacy-mask` `recording-onboard` `stream-params` `videoclips` |
-| `provider-homeassistant` | `@camstack/addon-provider-homeassistant` | messaging | own runner | `hub-only` | — | multiple | `addon-routes` `board-key-source` `broker` `calendar-source` `device-adoption` `humidifier` `image` `integration-instances` `lawn-mower-control` `notification-output` `running-state` `update` `vacuum-control` `valve` `water-heater` `weather` |
-| `provider-homematic` | `@camstack/addon-provider-homematic` | providers | own runner | `hub-only` | — | multiple | `addon-pages-source` `addon-widgets-source` `app-source` `device-adoption` `device-provider` `integration-instances` |
-| `provider-kia` | `@camstack/addon-provider-kia` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `integration-instances` |
-| `provider-mqtt-ha` | `@camstack/addon-provider-mqtt-ha` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `integration-instances` |
-| `provider-onvif` | `@camstack/addon-provider-onvif` | providers | own runner | `hub-only` | — | unique | `device-provider` `integration-instances` |
-| `provider-petkit` | `@camstack/addon-provider-petkit` | providers | own runner | `hub-only` | — | multiple | `consumables` `device-adoption` `device-provider` `integration-instances` `pet-feeder` |
-| `provider-rademacher` | `@camstack/addon-provider-rademacher` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `integration-instances` |
-| `provider-reolink` | `@camstack/addon-provider-reolink` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `device-removal-hook` `failure-contribution` `integration-instances` `log-channels` `motion-zones` `privacy-mask` `recording-onboard` `stream-params` `stream-signals` `videoclips` |
-| `provider-rtsp` | `@camstack/addon-provider-rtsp` | providers | own runner | `hub-only` | — | unique | `device-provider` `integration-instances` |
-| `provider-tuya` | `@camstack/addon-provider-tuya` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `integration-instances` |
-| `provider-unifi` | `@camstack/addon-provider-unifi` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `integration-instances` |
-| `provider-unraid` | `@camstack/addon-provider-unraid` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `integration-instances` |
-| `provider-velux` | `@camstack/addon-provider-velux` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `integration-instances` |
-| `provider-vesync` | `@camstack/addon-provider-vesync` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `integration-instances` |
-| `provider-wyze` | `@camstack/addon-provider-wyze` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `integration-instances` `stream-params` |
-| `provider-zigbee-z2m` | `@camstack/addon-provider-zigbee-z2m` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `device-removal-hook` `integration-instances` |
-| `record-entries` | `@camstack/server-framework` | system | own runner | `hub-only` | — | — | `record-entries` |
-| `recorder` | `@camstack/addon-pipeline` | pipeline | own runner | `any-node` | — | — | `device-removal-hook` `load-contribution` `recording` `recording-archive` `recording-export` `storage-evictable` `storage-occupancy` `videoclips` |
-| `remote-access-orchestrator` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `remote-access` |
-| `s3-storage` | `@camstack/addon-remote-storage` | system | own runner | `any-node` | `remote-storage` | unique | `storage-provider` |
-| `sftp-storage` | `@camstack/addon-remote-storage` | system | own runner | `any-node` | `remote-storage` | unique | `storage-provider` |
-| `smb-storage` | `@camstack/addon-remote-storage` | system | own runner | `any-node` | `remote-storage` | unique | `storage-provider` |
-| `smtp-nodemailer` | `@camstack/addon-smtp-nodemailer` | messaging | own runner | `hub-only` | — | — | `broker` `integration-instances` `smtp-provider` |
-| `snapshot` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `snapshot` |
-| `sqlite-settings` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `data-store-provider` `database-snapshot` `migrations` `records` `storage-admin` `vector-store` |
-| `static-turn` | `@camstack/addon-static-turn` | networking | own runner | `hub-only` | `net-access` | — | `integration-instances` `turn-provider` |
-| `storage-orchestrator` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `integration-instances` `node-removal-hook` `settings-store` `storage` `storage-migration` |
-| `stream-broker` | `@camstack/addon-pipeline` | pipeline | own runner | `any-node` | — | — | `addon-widgets-source` `camera-streams` `device-removal-hook` `load-contribution` `log-channels` `stream-broker` `webrtc-session` |
-| `system-config` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | — |
-| `tailscale-client` | `@camstack/addon-tailscale` | networking | own runner | `hub-only` | `net-access` | — | `integration-instances` `mesh-network` `network-access` |
-| `tailscale-ingress` | `@camstack/addon-tailscale` | networking | own runner | `hub-only` | `net-access` | — | `network-access` |
-| `terminal` | `@camstack/addon-terminal` | system | own runner | `any-node` | — | unique | `integration-instances` `terminal-session` |
-| `training` | `@camstack/addon-training` | system | own runner | `hub-only` | — | — | `addon-pages-source` `training` |
-| `training-modal` | `@camstack/addon-training` | system | own runner | `hub-only` | — | — | `integration-instances` `training-provider` |
-| `waste-collections` | `@camstack/addon-waste-collections` | messaging | own runner | `hub-only` | `integrations` | — | `calendar-source` `integration-instances` |
-| `webdav-storage` | `@camstack/addon-remote-storage` | system | own runner | `any-node` | `remote-storage` | unique | `storage-provider` |
-| `winston-logging` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `log-destination` |
+| `addon-pages-aggregator` | `@dominevo/server-framework` | system | own runner | `any-node` | — | — | `addon-pages` |
+| `addon-widgets-aggregator` | `@dominevo/server-framework` | system | own runner | `any-node` | — | — | `addon-widgets` |
+| `admin-ui` | `@dominevo/addon-admin-ui` | system | own runner | `hub-only` | — | — | `admin-ui` `app-source` |
+| `agent-ui` | `@dominevo/addon-agent-ui` | system | own runner | `agent-only` | — | — | `admin-ui` |
+| `ai` | `@dominevo/addon-ai` | analytics | own runner | `any-node` | `ml` | — | `integration-instances` `llm` `llm-runtime` `node-removal-hook` |
+| `alert-center` | `@dominevo/server-framework` | system | own runner | `any-node` | — | — | `alerts` `jobs` `retention-source` |
+| `apps-aggregator` | `@dominevo/server-framework` | system | own runner | `any-node` | — | — | `apps` |
+| `audio-analyzer` | `@dominevo/addon-pipeline` | pipeline | own runner | `any-node` | — | — | `audio-analysis` `audio-analyzer` |
+| `auth-oidc` | `@dominevo/addon-auth` | system | own runner | `hub-only` | `auth` | — | `addon-routes` `auth-provider` `integration-instances` `login-method` |
+| `auth-webauthn` | `@dominevo/addon-auth` | system | own runner | `hub-only` | `auth` | — | `addon-widgets-source` `login-method` `user-passkeys` |
+| `autotrack` | `@dominevo/server-framework` | system | own runner | `any-node` | — | — | `ptz-autotrack` |
+| `backup-orchestrator` | `@dominevo/server-framework` | system | own runner | `any-node` | — | — | `backup` |
+| `benchmark` | `@dominevo/addon-benchmark` | system | own runner | `hub-only` | `ml` | — | `addon-pages-source` `app-source` |
+| `bosch-home-connect` | `@dominevo/addon-provider-bosch` | providers | own runner | `hub-only` | — | multiple | `consumables` `device-adoption` `device-provider` `dishwasher` `integration-instances` `running-state` |
+| `bosch-homecom` | `@dominevo/addon-provider-bosch` | providers | own runner | `hub-only` | — | multiple | `climate-control` `device-adoption` `device-provider` `heat-pump-control` `heat-pump-status` `integration-instances` `water-heater` |
+| `bosch-shc` | `@dominevo/addon-provider-bosch` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `integration-instances` |
+| `calendars` | `@dominevo/server-framework` | system | own runner | `any-node` | — | — | `calendars` |
+| `camera-grid` | `@dominevo/server-framework` | system | own runner | `any-node` | — | unique | `camera-grid-layout` `motion` |
+| `cloudflare-tunnel` | `@dominevo/addon-cloudflare` | networking | own runner | `hub-only` | `net-access` | — | `integration-instances` `network-access` |
+| `cloudflare-turn` | `@dominevo/addon-cloudflare` | networking | own runner | `hub-only` | `net-access` | — | `integration-instances` `turn-provider` |
+| `composer` | `@dominevo/server-framework` | system | own runner | `hub-only` | `composer` | — | `composer` |
+| `console-logging` | `@dominevo/server-framework` | system | own runner | `any-node` | — | — | `log-destination` |
+| `core-blocks` | `@dominevo/server-framework` | system | own runner | `hub-only` | — | — | `action-source` `actions` `core-blocks` `daylight-phase` `device-removal-hook` `fan-presets` `hero-layout` `integration-instances` `power-source` `remote` `remote-layout-components` `schedulers` `tags` `template` `timed-run` |
+| `core-notifier` | `@dominevo/server-framework` | system | own runner | `hub-only` | — | — | `integration-instances` `notification-output` |
+| `decoder-nodeav` | `@dominevo/addon-decoder-nodeav` | pipeline | own runner | `any-node` | — | — | `audio-codec` `decoder` |
+| `detection-pipeline` | `@dominevo/addon-pipeline` | pipeline | own runner | `any-node` | `detection` | — | `detection-pipeline` `load-contribution` `pipeline-executor` |
+| `device-history` | `@dominevo/server-framework` | system | own runner | `hub-only` | — | — | `device-history` `device-removal-hook` `device-runs` `device-transitions` `retention-source` |
+| `device-manager` | `@dominevo/server-framework` | system | own runner | `any-node` | — | — | `device-extension` `device-manager` `device-state` `job-source` |
+| `embedding-encoder` | `@dominevo/addon-post-analysis` | analytics | own runner | `any-node` | — | — | `embedding-encoder` |
+| `export-alexa` | `@dominevo/addon-export-alexa` | exports | own runner | `hub-only` | — | — | `addon-routes` `device-export` `integration-instances` `oauth-integration` |
+| `export-google` | `@dominevo/addon-export-google` | exports | own runner | `hub-only` | `integrations` | — | `addon-routes` `device-export` `integration-instances` `oauth-integration` |
+| `export-hap` | `@dominevo/addon-export-hap` | exports | own runner | `hub-only` | — | — | `device-export` `integration-instances` `videoclips` |
+| `filesystem-storage` | `@dominevo/server-framework` | system | own runner | `any-node` | — | — | `filesystem-browse` `storage-provider` |
+| `google-services` | `@dominevo/addon-google-services` | messaging | own runner | `hub-only` | — | — | `addon-routes` `broker` `calendar-source` `integration-instances` `smtp-provider` |
+| `homeassistant-export` | `@dominevo/addon-provider-homeassistant` | exports | own runner | `hub-only` | `integrations` | — | `addon-routes` `device-export` `integration-instances` `oauth-integration` |
+| `hub-forwarder` | `@dominevo/server-framework` | system | own runner | `agent-only` | — | — | `log-destination` |
+| `import-alexa` | `@dominevo/addon-import-alexa` | providers | own runner | `any-node` | — | multiple | `addon-routes` `broker` `device-adoption` `device-provider` `integration-instances` `notification-output` |
+| `keychain` | `@dominevo/server-framework` | system | own runner | `any-node` | — | — | `keychain` `keychain-admin` |
+| `liveness-monitor` | `@dominevo/server-framework` | system | own runner | `any-node` | — | — | — |
+| `local-auth` | `@dominevo/server-framework` | system | own runner | `any-node` | — | — | `auth-provider` `device-credentials` `user-management` |
+| `local-network` | `@dominevo/server-framework` | system | own runner | `any-node` | — | — | `local-network` |
+| `loki-logging` | `@dominevo/server-framework` | system | own runner | `any-node` | — | — | `integration-instances` `log-destination` |
+| `matter-broker` | `@dominevo/addon-matter-broker` | providers | own runner | `hub-only` | — | multiple | `broker` `device-adoption` `device-provider` `integration-instances` |
+| `metrics-native` | `@dominevo/server-framework` | system | own runner | `any-node` | — | — | `metrics-provider` |
+| `model-studio` | `@dominevo/addon-model-studio` | system | own runner | `any-node` | `ml` | — | `addon-pages-source` `app-source` `custom-model-registry` `model-convert` `node-removal-hook` |
+| `motion-wasm` | `@dominevo/addon-pipeline` | pipeline | own runner | `any-node` | `detection` | — | `motion-detection` |
+| `mqtt-broker` | `@dominevo/addon-mqtt-broker` | messaging | own runner | `hub-only` | — | — | `broker` `integration-instances` `mqtt-broker` |
+| `notifiers` | `@dominevo/addon-notifiers` | messaging | own runner | `hub-only` | `notifiers` | — | `addon-routes` `integration-instances` `notification-output` |
+| `osd-manager` | `@dominevo/addon-osd-manager` | system | own runner | `hub-only` | `integrations` | unique | `addon-pages-source` `osd-manager` |
+| `pipeline-analytics` | `@dominevo/addon-post-analysis` | analytics | own runner | `any-node` | — | — | `addon-widgets-source` `audio-metrics` `device-removal-hook` `face-gallery` `failure-contribution` `integration-instances` `notification-rules` `pipeline-analytics` `plate-gallery` `scene-monitor` `storage-occupancy` `zone-analytics` |
+| `pipeline-orchestrator` | `@dominevo/addon-pipeline-orchestrator` | pipeline | own runner | `hub-only` | — | — | `addon-widgets-source` `app-source` `camera-pipeline-config` `display-palette` `node-removal-hook` `pipeline-orchestrator` `viewer-ui` `zone-rules` `zones` |
+| `pipeline-runner` | `@dominevo/addon-pipeline` | pipeline | own runner | `any-node` | `detection` | — | `failure-contribution` `load-contribution` `pipeline-runner` |
+| `platform-probe` | `@dominevo/server-framework` | system | own runner | `any-node` | — | — | `platform-probe` |
+| `provider-amcrest` | `@dominevo/addon-provider-amcrest` | providers | own runner | `hub-only` | — | unique | `day-night` `device-provider` `image-settings` `integration-instances` `motion-zones` `privacy-mask` `recording-onboard` `stream-params` `videoclips` |
+| `provider-dreame` | `@dominevo/addon-provider-dreame` | providers | own runner | `hub-only` | — | multiple | `consumables` `device-adoption` `device-provider` `error` `integration-instances` `navigation` `recording-signal` `running-state` |
+| `provider-dreo` | `@dominevo/addon-provider-dreo` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `integration-instances` |
+| `provider-ecowitt` | `@dominevo/addon-provider-ecowitt` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `integration-instances` `weather-station` |
+| `provider-enpal` | `@dominevo/addon-provider-enpal` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `integration-instances` |
+| `provider-esphome` | `@dominevo/addon-provider-esphome` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `integration-instances` |
+| `provider-gree` | `@dominevo/addon-provider-gree` | providers | own runner | `hub-only` | — | multiple | `device-provider` `integration-instances` |
+| `provider-hikvision` | `@dominevo/addon-provider-hikvision` | providers | own runner | `hub-only` | — | unique | `day-night` `device-provider` `failure-contribution` `image-settings` `integration-instances` `motion-zones` `privacy-mask` `recording-onboard` `stream-params` `videoclips` |
+| `provider-homeassistant` | `@dominevo/addon-provider-homeassistant` | messaging | own runner | `hub-only` | — | multiple | `addon-routes` `board-key-source` `broker` `calendar-source` `device-adoption` `humidifier` `image` `integration-instances` `lawn-mower-control` `notification-output` `running-state` `update` `vacuum-control` `valve` `water-heater` `weather` |
+| `provider-homematic` | `@dominevo/addon-provider-homematic` | providers | own runner | `hub-only` | — | multiple | `addon-pages-source` `addon-widgets-source` `app-source` `device-adoption` `device-provider` `integration-instances` |
+| `provider-kia` | `@dominevo/addon-provider-kia` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `integration-instances` |
+| `provider-mqtt-ha` | `@dominevo/addon-provider-mqtt-ha` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `integration-instances` |
+| `provider-onvif` | `@dominevo/addon-provider-onvif` | providers | own runner | `hub-only` | — | unique | `device-provider` `integration-instances` |
+| `provider-petkit` | `@dominevo/addon-provider-petkit` | providers | own runner | `hub-only` | — | multiple | `consumables` `device-adoption` `device-provider` `integration-instances` `pet-feeder` |
+| `provider-rademacher` | `@dominevo/addon-provider-rademacher` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `integration-instances` |
+| `provider-reolink` | `@dominevo/addon-provider-reolink` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `device-removal-hook` `failure-contribution` `integration-instances` `log-channels` `motion-zones` `privacy-mask` `recording-onboard` `stream-params` `stream-signals` `videoclips` |
+| `provider-rtsp` | `@dominevo/addon-provider-rtsp` | providers | own runner | `hub-only` | — | unique | `device-provider` `integration-instances` |
+| `provider-tuya` | `@dominevo/addon-provider-tuya` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `integration-instances` |
+| `provider-unifi` | `@dominevo/addon-provider-unifi` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `integration-instances` |
+| `provider-unraid` | `@dominevo/addon-provider-unraid` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `integration-instances` |
+| `provider-velux` | `@dominevo/addon-provider-velux` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `integration-instances` |
+| `provider-vesync` | `@dominevo/addon-provider-vesync` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `integration-instances` |
+| `provider-wyze` | `@dominevo/addon-provider-wyze` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `integration-instances` `stream-params` |
+| `provider-zigbee-z2m` | `@dominevo/addon-provider-zigbee-z2m` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `device-removal-hook` `integration-instances` |
+| `record-entries` | `@dominevo/server-framework` | system | own runner | `hub-only` | — | — | `record-entries` |
+| `recorder` | `@dominevo/addon-pipeline` | pipeline | own runner | `any-node` | — | — | `device-removal-hook` `load-contribution` `recording` `recording-archive` `recording-export` `storage-evictable` `storage-occupancy` `videoclips` |
+| `remote-access-orchestrator` | `@dominevo/server-framework` | system | own runner | `any-node` | — | — | `remote-access` |
+| `s3-storage` | `@dominevo/addon-remote-storage` | system | own runner | `any-node` | `remote-storage` | unique | `storage-provider` |
+| `sftp-storage` | `@dominevo/addon-remote-storage` | system | own runner | `any-node` | `remote-storage` | unique | `storage-provider` |
+| `smb-storage` | `@dominevo/addon-remote-storage` | system | own runner | `any-node` | `remote-storage` | unique | `storage-provider` |
+| `smtp-nodemailer` | `@dominevo/addon-smtp-nodemailer` | messaging | own runner | `hub-only` | — | — | `broker` `integration-instances` `smtp-provider` |
+| `snapshot` | `@dominevo/server-framework` | system | own runner | `any-node` | — | — | `snapshot` |
+| `sqlite-settings` | `@dominevo/server-framework` | system | own runner | `any-node` | — | — | `data-store-provider` `database-snapshot` `migrations` `records` `storage-admin` `vector-store` |
+| `static-turn` | `@dominevo/addon-static-turn` | networking | own runner | `hub-only` | `net-access` | — | `integration-instances` `turn-provider` |
+| `storage-orchestrator` | `@dominevo/server-framework` | system | own runner | `any-node` | — | — | `integration-instances` `node-removal-hook` `settings-store` `storage` `storage-migration` |
+| `stream-broker` | `@dominevo/addon-pipeline` | pipeline | own runner | `any-node` | — | — | `addon-widgets-source` `camera-streams` `device-removal-hook` `load-contribution` `log-channels` `stream-broker` `webrtc-session` |
+| `system-config` | `@dominevo/server-framework` | system | own runner | `any-node` | — | — | — |
+| `tailscale-client` | `@dominevo/addon-tailscale` | networking | own runner | `hub-only` | `net-access` | — | `integration-instances` `mesh-network` `network-access` |
+| `tailscale-ingress` | `@dominevo/addon-tailscale` | networking | own runner | `hub-only` | `net-access` | — | `network-access` |
+| `terminal` | `@dominevo/addon-terminal` | system | own runner | `any-node` | — | unique | `integration-instances` `terminal-session` |
+| `training` | `@dominevo/addon-training` | system | own runner | `hub-only` | — | — | `addon-pages-source` `training` |
+| `training-modal` | `@dominevo/addon-training` | system | own runner | `hub-only` | — | — | `integration-instances` `training-provider` |
+| `waste-collections` | `@dominevo/addon-waste-collections` | messaging | own runner | `hub-only` | `integrations` | — | `calendar-source` `integration-instances` |
+| `webdav-storage` | `@dominevo/addon-remote-storage` | system | own runner | `any-node` | `remote-storage` | unique | `storage-provider` |
+| `winston-logging` | `@dominevo/server-framework` | system | own runner | `any-node` | — | — | `log-destination` |
 
 ## Categories
 

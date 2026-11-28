@@ -16,7 +16,7 @@
  *
  * `tolerate`: a node that was never copied must still boot.
  */
-import type { MigrationMeta } from '@camstack/types'
+import type { MigrationMeta } from '@dominevo/types'
 import type {
   HubSqlMigration,
   MigrationDatabase,

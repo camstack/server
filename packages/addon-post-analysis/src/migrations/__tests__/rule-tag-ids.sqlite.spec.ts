@@ -9,7 +9,7 @@ import {
   type MigrationPlan,
   tagIdFromKey,
   TimelapseRuleInputSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { migrateTargetOf } from '../../../../system/src/builtins/sqlite-storage/migrations/migration-pass.js'
 import { NcCalendarEventsRuleInputSchema } from '../../notification-center/calendar-events/calendar-events-rule.js'

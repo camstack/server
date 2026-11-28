@@ -1,5 +1,5 @@
-import type { ConfigUISchema, ProviderRegistration } from '@camstack/types'
-import { BaseAddon, logDestinationCapability } from '@camstack/types'
+import type { ConfigUISchema, ProviderRegistration } from '@dominevo/types'
+import { BaseAddon, logDestinationCapability } from '@dominevo/types'
 import { ConsoleDestination } from './console-destination.js'
 
 interface ConsoleConfig {

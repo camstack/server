@@ -3,7 +3,7 @@
  * Windows, where 0600 is a no-op) because it holds the mesh private key.
  */
 import * as fs from 'node:fs'
-import { writeOwnerOnlyFileSync } from '@camstack/types/node'
+import { writeOwnerOnlyFileSync } from '@dominevo/types/node'
 
 export function readJsonFile(file: string): Record<string, unknown> {
   if (!fs.existsSync(file)) return {}

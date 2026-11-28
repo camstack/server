@@ -9,7 +9,7 @@
  * shipped a remux that was green in every test and refused by ffmpeg on every
  * live clip, because the fake accepted what the binary would not (D578).
  */
-import type { FfmpegVideoEncodePlan } from '@camstack/types'
+import type { FfmpegVideoEncodePlan } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 
 import { buildRecordingInvocation, recordingOutput } from '../recording-invocation.js'

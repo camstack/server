@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import type { ConfigUISchema } from '@camstack/types'
+import type { ConfigUISchema } from '@dominevo/types'
 
 /**
  * Matter broker connection settings for ONE fabric/controller (one broker entry).
@@ -90,7 +90,7 @@ export function buildConnectionFormSchema(): ConfigUISchema {
         title: 'Matter fabric',
         titleKey: 'matter-broker:connection.s_matter-fabric.title',
         description:
-          'CamStack owns a Matter fabric on this hub. Add wireless onboarding credentials only if you will commission Thread or BLE-Wi-Fi devices. On-network (Ethernet/Wi-Fi) Matter devices need none of these.',
+          'Dominevo owns a Matter fabric on this hub. Add wireless onboarding credentials only if you will commission Thread or BLE-Wi-Fi devices. On-network (Ethernet/Wi-Fi) Matter devices need none of these.',
         descriptionKey: 'matter-broker:connection.s_matter-fabric.description',
         columns: 1,
         fields: [

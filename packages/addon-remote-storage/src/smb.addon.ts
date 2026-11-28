@@ -1,10 +1,10 @@
-import type { ProviderRegistration } from '@camstack/types'
-import { BaseAddon, storageProviderCapability } from '@camstack/types'
+import type { ProviderRegistration } from '@dominevo/types'
+import { BaseAddon, storageProviderCapability } from '@dominevo/types'
 import { SmbStorageProvider } from './providers/smb/smb-provider.js'
 
 /**
  * SMB / CIFS storage-provider addon — the fourth manifest entry in
- * `@camstack/addon-remote-storage`.
+ * `@dominevo/addon-remote-storage`.
  *
  * Each cap-collection registrant needs a distinct addonId: `CapabilityRegistry`
  * keys collection providers by `Map<addonId, …>`, so registering a second

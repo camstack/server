@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 /**
- * Catalog-licence guard — a model CamStack can download declares, in the
+ * Catalog-licence guard — a model Dominevo can download declares, in the
  * catalog, what it is and on what terms (D661).
  *
  * ## The failure this catches
@@ -13,7 +13,7 @@
  * ## What it checks (built-in catalogs only; custom models are the operator's)
  *
  * 1. Every entry has `license.weights`, `.upstream`, `.url`, `.hosting`.
- * 2. An entry CamStack hosts (`camstack-hf`) states `modifications` — Apache
+ * 2. An entry Dominevo hosts (`camstack-hf`) states `modifications` — Apache
  *    §4(b), GPL/AGPL §5(a) and the Apple AMLR all require the notice.
  * (Model Studio's curated plugin catalog and plus catalog catalogs are walked too.)
  * 3. A `nonCommercial` entry is listed in NON_COMMERCIAL_ACCEPTED with the
@@ -21,7 +21,7 @@
  *    line whose entry is gone must be deleted.
  * 4. One upstream name ⇒ one weights licence and one licence URL across every
  *    catalog (the records are duplicated per addon; they may not drift).
- * 5. Every CamStack-mirror folder a catalog downloads from has a model card:
+ * 5. Every Dominevo-mirror folder a catalog downloads from has a model card:
  *    `hf/camstack-models/<category>/<model>/README.md`, or — for the folders
  *    whose card is written by their build script and uploaded with the
  *    weights — a `MODEL_CARD` in that script (CARDS_IN_BUILD_SCRIPTS).
@@ -34,7 +34,7 @@ import { builtInCatalogEntries, hostedFolders } from './lib/model-catalogs.js'
 
 const ROOT = path.resolve(import.meta.dirname, '..')
 
-/** Non-commercial weights CamStack still ships, and why. Removing a model removes its line. */
+/** Non-commercial weights Dominevo still ships, and why. Removing a model removes its line. */
 export const NON_COMMERCIAL_ACCEPTED: Readonly<Record<string, string>> = {
   'vehicle-type-v1':
     'operator 2026-09-26: kept with the CC BY-NC attribution of its training data (D661)',
@@ -94,7 +94,7 @@ function main(): void {
     if (l.hosting === 'camstack-hf' && !l.modifications) {
       problems.push({
         id: e.id,
-        what: 'hosted by CamStack but states no modifications',
+        what: 'hosted by Dominevo but states no modifications',
       })
     }
     if (l.nonCommercial === true && NON_COMMERCIAL_ACCEPTED[e.id] === undefined) {

@@ -3,7 +3,7 @@
  * from the text catalog, duration and energy as separate, omit-when-unknown
  * parts read through ONE port (`NcResolveApplianceCycleFacts`).
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   makeSilentLogger,

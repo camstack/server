@@ -12,10 +12,10 @@ import {
   type AddonDeclaration,
   type CapabilityDeclaration,
   type IScopedLogger,
-} from '@camstack/types'
-import { EventCategory } from '@camstack/types'
+} from '@dominevo/types'
+import { EventCategory } from '@dominevo/types'
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
-import { UNSUPPORTED_ADDON_SETTLE_MS } from '@camstack/server/system'
+import { UNSUPPORTED_ADDON_SETTLE_MS } from '@dominevo/server/system'
 import {
   evaluateRunnerBootCheck,
   isRunnerBootCheckDegraded,
@@ -53,28 +53,28 @@ interface Fixture {
 const FIXTURES: readonly Fixture[] = [
   {
     id: 'old',
-    pkg: '@camstack/addon-old',
+    pkg: '@dominevo/addon-old',
     version: '1.0.0',
     packageJson: { camstack: { requires: { server: FAR_FUTURE_SERVER } } },
     capabilities: [],
   },
   {
     id: 'fresh',
-    pkg: '@camstack/addon-fresh',
+    pkg: '@dominevo/addon-fresh',
     version: '3.0.0',
     packageJson: {},
     capabilities: [],
   },
   {
     id: 'broken',
-    pkg: '@camstack/addon-broken',
+    pkg: '@dominevo/addon-broken',
     version: '1.0.0',
     packageJson: '{ not json',
     capabilities: [],
   },
   {
     id: 'store',
-    pkg: '@camstack/addon-store',
+    pkg: '@dominevo/addon-store',
     version: '1.0.0',
     packageJson: { camstack: { requires: { server: FAR_FUTURE_SERVER } } },
     capabilities: [{ name: 'data-store-provider' }],
@@ -197,7 +197,7 @@ describe('the hub spawns every addon and alerts for the unsupported ones', () =>
     expect(raised.map((e) => e.data['addonId']).sort()).toEqual(['old', 'store'])
     const old = raised.find((e) => e.data['addonId'] === 'old')
     expect(old?.data).toMatchObject({
-      packageName: '@camstack/addon-old',
+      packageName: '@dominevo/addon-old',
       installedVersion: '1.0.0',
       nodeId: 'hub',
     })
@@ -208,10 +208,10 @@ describe('the hub spawns every addon and alerts for the unsupported ones', () =>
     const { registry, emitted } = build()
     registry.buildSpawnPlan(['old'])
     vi.advanceTimersByTime(UNSUPPORTED_ADDON_SETTLE_MS)
-    const file = path.join(addonsRoot, '@camstack/addon-old', 'package.json')
+    const file = path.join(addonsRoot, '@dominevo/addon-old', 'package.json')
     const before = fs.readFileSync(file, 'utf-8')
     try {
-      fs.writeFileSync(file, JSON.stringify({ name: '@camstack/addon-old', version: '2.0.0' }))
+      fs.writeFileSync(file, JSON.stringify({ name: '@dominevo/addon-old', version: '2.0.0' }))
       registry.buildSpawnPlan(['old'])
       registry.buildSpawnPlan(['old'])
     } finally {
@@ -222,7 +222,7 @@ describe('the hub spawns every addon and alerts for the unsupported ones', () =>
       EventCategory.AddonUnsupportedVersion,
       EventCategory.AddonUnsupportedResolved,
     ])
-    expect(alerts[1]?.data).toMatchObject({ packageName: '@camstack/addon-old', nodeId: 'hub' })
+    expect(alerts[1]?.data).toMatchObject({ packageName: '@dominevo/addon-old', nodeId: 'hub' })
   })
 
   it('a runner that hosts an unsupported addon counts as running in the boot check, not as failed', () => {

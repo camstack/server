@@ -1,6 +1,6 @@
 /**
  * Per-node server-management section — the runtime-updatable root package
- * (`@camstack/server` for every node; hub vs agent is the CAMSTACK_ROLE, not a
+ * (`@dominevo/server` for every node; hub vs agent is the CAMSTACK_ROLE, not a
  * different package) status + lifecycle actions (check / update / restart) for
  * a SINGLE node.
  *
@@ -21,7 +21,7 @@
  * the unpinned default provider (`routingInput = undefined`), agents are
  * `nodeId`-pinned. The status query is gated on `node.isOnline`.
  */
-import type { ServerUpdateActionResult } from '@camstack/types'
+import type { ServerUpdateActionResult } from '@dominevo/types'
 import { useQueryClient } from '@tanstack/react-query'
 import { ArrowDownToLine, HardDriveDownload, Loader2, RefreshCw, RotateCw } from 'lucide-react'
 import { useCallback, useState } from 'react'
@@ -33,7 +33,7 @@ import {
   useServerManagementGetServerPackageStatus,
   useServerManagementRestartServer,
   Button,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 
 import { NodeDesktopAppRow } from './NodeDesktopAppRow'
 
@@ -320,7 +320,7 @@ export function NodeServerManagementSection({ node }: NodeServerManagementSectio
   const canRestart =
     node.isOnline && status != null && status.updateState === 'idle' && !restartMutation.isPending
   const stateBadge = node.isOnline ? updateStateBadge() : null
-  const packageName = status?.packageName ?? node.rootPackage?.name ?? '@camstack/server'
+  const packageName = status?.packageName ?? node.rootPackage?.name ?? '@dominevo/server'
 
   return (
     <div className="space-y-4 py-2">

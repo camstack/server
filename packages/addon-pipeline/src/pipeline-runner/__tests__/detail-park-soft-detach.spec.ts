@@ -20,7 +20,7 @@
  * error (`runDetailSubtree-refused:not-attached`) so the dispatcher stops
  * burning the two doomed follow-up RPCs.
  */
-import type { FrameHandle, RunnerCameraConfig } from '@camstack/types'
+import type { FrameHandle, RunnerCameraConfig } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { makeRunnerCameraConfig } from '../../__tests__/support/runner-camera-config.js'
 import PipelineRunnerAddon from '../index.js'

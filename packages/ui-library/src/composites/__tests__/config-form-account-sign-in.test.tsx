@@ -4,7 +4,7 @@
  * `ConfigFormBuilder` must pass it (and write the field's result back into the values); a form
  * mounted without a handler shows the buttons disabled with a reason, never dead.
  */
-import { SECRET_CLEAR, type ConfigUISchema, type SecretFieldView } from '@camstack/types'
+import { SECRET_CLEAR, type ConfigUISchema, type SecretFieldView } from '@dominevo/types'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { useState } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'

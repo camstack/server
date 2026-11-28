@@ -7,7 +7,7 @@ import {
   gatewayDeviceName,
   type IDeviceAdoptionProvider,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { buildEnpalCandidates, ENPAL_BOX_ID } from './enpal-discovery.js'
 import { ENPAL_SYSTEM } from './config.js'
 import {

@@ -35,7 +35,7 @@ import {
   useDeviceNameNouns,
   type DataColumn,
   type DataTableFilterConfig,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'

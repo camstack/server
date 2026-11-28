@@ -11,7 +11,7 @@
  * Forty-two packages carried exactly that. It is the source of this repo's
  * long-running "flaky 403" folklore and of the elaborate compensation built
  * around it: a 180-second registry poll per failure that still called live
- * packages FAILED, and, on 2026-09-14, a `@camstack/server` published against a
+ * packages FAILED, and, on 2026-09-14, a `@dominevo/server` published against a
  * dependency the same run had reported as failed — every node then refused to
  * stage with ETARGET.
  *

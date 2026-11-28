@@ -27,7 +27,7 @@
  *
  * ## The retention: one preference, three rails
  *
- * HomeKit's own retention is unreadable — HAP has no read-back, so CamStack can
+ * HomeKit's own retention is unreadable — HAP has no read-back, so Dominevo can
  * never ask "does iOS still have this one?" and reconcile. The store therefore
  * cannot mirror HomeKit's lifetime and does not pretend to: it keeps a bounded
  * recent window and says, per clip, exactly when it started.
@@ -78,7 +78,7 @@ import { createWriteStream } from 'node:fs'
 import { mkdir, readdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
-import type { CamProfile, IScopedLogger } from '@camstack/types'
+import type { CamProfile, IScopedLogger } from '@dominevo/types'
 
 import type {
   HksvClipFileNames,

@@ -5,5 +5,5 @@
 // Scope (biome.json overrides): packages/*/src + server/backend/src.
 `$obj.emit($arg)` where {
   $arg <: contains `category: $cat` where { $cat <: string() },
-  register_diagnostic(span=$cat, message="Use the EventCategory enum instead of a string literal for the eventBus.emit() category (import EventCategory from @camstack/types).")
+  register_diagnostic(span=$cat, message="Use the EventCategory enum instead of a string literal for the eventBus.emit() category (import EventCategory from @dominevo/types).")
 }

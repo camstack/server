@@ -1,5 +1,5 @@
 /**
- * LoginPage native-handoff regression suite (viewer "Sign in with CamStack").
+ * LoginPage native-handoff regression suite (viewer "Sign in with Dominevo").
  *
  * The killer race this pins down: after an INTERACTIVE login (password /
  * TOTP / passkey) the submit handler AND the already-authenticated
@@ -94,9 +94,9 @@ vi.mock('react-i18next', async (importOriginal) => {
   }
 })
 
-vi.mock('@camstack/ui-library', async () => {
+vi.mock('@dominevo/ui-library', async () => {
   const actual =
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+    await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return {
     Button: actual.Button,
     Input: actual.Input,
@@ -232,7 +232,7 @@ describe('LoginPage native handoff', () => {
     // The handoff interstitial replaces the page, with the tap-to-return
     // anchor carrying the minted one-time code.
     await waitFor(() => {
-      expect(screen.getByText('Open CamStack').getAttribute('href')).toBe(
+      expect(screen.getByText('Open Dominevo').getAttribute('href')).toBe(
         `${CALLBACK}?code=chc_test&state=st-1`,
       )
     })
@@ -248,7 +248,7 @@ describe('LoginPage native handoff', () => {
     })
     // Single-flight: no dashboard/restore navigation, interstitial intact.
     expect(navigateMock).not.toHaveBeenCalled()
-    expect(screen.getByText('Open CamStack')).toBeTruthy()
+    expect(screen.getByText('Open Dominevo')).toBeTruthy()
   })
 
   it('an already-authenticated mount with a redirect auto-forwards into the handoff (post-remount retry path)', async () => {
@@ -257,7 +257,7 @@ describe('LoginPage native handoff', () => {
     render(<LoginPage />)
 
     await waitFor(() => {
-      expect(screen.getByText('Open CamStack').getAttribute('href')).toBe(
+      expect(screen.getByText('Open Dominevo').getAttribute('href')).toBe(
         `${CALLBACK}?code=chc_test&state=st-1`,
       )
     })
@@ -325,7 +325,7 @@ describe('LoginPage native handoff', () => {
 
     await submitCredentials()
     await waitFor(() => {
-      expect(screen.getByText('Open CamStack')).toBeTruthy()
+      expect(screen.getByText('Open Dominevo')).toBeTruthy()
     })
     expect(mintMock).toHaveBeenCalledTimes(2)
     expect(mintMock).toHaveBeenLastCalledWith({
@@ -445,7 +445,7 @@ describe('LoginPage — returning from /api/auth/sso/finish without a session (D
     )
     render(<LoginPage />)
     expect((await screen.findByTestId('login-error')).textContent).toBe(
-      'This Authentik account is not linked to a CamStack user. Sign in normally and link it from your profile.',
+      'This Authentik account is not linked to a Dominevo user. Sign in normally and link it from your profile.',
     )
     expect(window.location.hash).toBe('')
   })

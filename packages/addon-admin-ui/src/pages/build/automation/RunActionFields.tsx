@@ -4,8 +4,8 @@
  * own default — the recipe stores only what the operator typed.
  */
 
-import type { ActionEntry, ActionVariable, AutomationAction } from '@camstack/types'
-import { Input, Select, Skeleton, useActionsList } from '@camstack/ui-library'
+import type { ActionEntry, ActionVariable, AutomationAction } from '@dominevo/types'
+import { Input, Select, Skeleton, useActionsList } from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 import { DraftNumberInput } from '../flow/DraftNumberInput'
 import { FixedSelect } from '../flow/FixedSelect'

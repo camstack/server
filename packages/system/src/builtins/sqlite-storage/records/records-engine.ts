@@ -33,7 +33,7 @@ import {
   UnknownRecordKindError,
   DeclarationRefusedError,
   assertTransactScope,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { declareKind, ensureRecordsSchema, type KindRow, loadKinds } from './records-catalog.js'
 import type { MigrationRecordWriter } from '../migrations/migration-types.js'
 import type {

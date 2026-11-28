@@ -2,7 +2,7 @@
  * Pure grouping helper for a container's `childLayout`.
  *
  * A CONTAINER device may carry a `childLayout` directive (see
- * `ChildLayoutEntry` in `@camstack/types`) that assigns specific accessory
+ * `ChildLayoutEntry` in `@dominevo/types`) that assigns specific accessory
  * children to named accordion SECTIONS. This module partitions a parent's
  * children into the provider-declared sections plus the remaining
  * (ungrouped) children, which keep their current plain rendering.
@@ -15,7 +15,7 @@
  * DevicesList table-row expansion consume this single helper so the two
  * surfaces share the exact same grouping semantics.
  */
-import type { ChildLayout } from '@camstack/types'
+import type { ChildLayout } from '@dominevo/types'
 import type { DeviceItemDevice } from './helpers'
 
 export interface ChildLayoutSection {
@@ -34,7 +34,7 @@ export interface GroupedChildren {
   readonly sections: readonly ChildLayoutSection[]
   /** Children not referenced by any layout entry — render plainly, as today. */
   readonly ungrouped: readonly DeviceItemDevice[]
-  /** Trailing synthetic section gathering every child whose CamStack-side
+  /** Trailing synthetic section gathering every child whose Dominevo-side
    *  `disabled` flag is set. Kept SEPARATE from `sections`/`ungrouped` so
    *  consumers render it LAST (after provider sections + ungrouped) and
    *  muted. Undefined when no child is disabled. Generic — driven purely by

@@ -1,4 +1,4 @@
-import { BaseDevice, type DeviceContext, DeviceType } from '@camstack/types'
+import { BaseDevice, type DeviceContext, DeviceType } from '@dominevo/types'
 import { shcConnections } from '../shc-gateway.js'
 import { shcDeviceSchema } from './shc-device-base.js'
 

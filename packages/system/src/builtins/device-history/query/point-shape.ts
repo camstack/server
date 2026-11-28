@@ -16,7 +16,7 @@ import {
   wattMillisecondsToKwh,
   type DeviceHistoryKind,
   type DeviceHistoryQueryPoint,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { RawPoint, RollupRow } from '../rollup/rollup-math.js'
 
 export interface SeriesMeaning {

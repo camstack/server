@@ -5,7 +5,7 @@
  */
 import { X509Certificate } from 'node:crypto'
 import * as fs from 'node:fs'
-import { agentHttpsPaths, isAnnouncedHubId, type InstalledPairing } from '@camstack/server/system'
+import { agentHttpsPaths, isAnnouncedHubId, type InstalledPairing } from '@dominevo/server/system'
 import { readJsonFile, writeJsonFile0600 } from './agent-json-file.js'
 
 /** Keys that exist only while this agent is paired. */

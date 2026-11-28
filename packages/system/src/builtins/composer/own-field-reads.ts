@@ -9,7 +9,7 @@
  * count(lastPressedAt)` was one of them, and nothing served its doorbell for
  * 12 h.
  */
-import type { SourceReading } from '@camstack/types'
+import type { SourceReading } from '@dominevo/types'
 import { type FieldRecord, writable } from './field-record.js'
 
 /** Derived fields before accumulators: a count reads the value its own pass just computed. */

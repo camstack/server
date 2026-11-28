@@ -1,4 +1,4 @@
-import { groupTemplate, sourcePickForTemplate } from '@camstack/types'
+import { groupTemplate, sourcePickForTemplate } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   applyMemberSelection,

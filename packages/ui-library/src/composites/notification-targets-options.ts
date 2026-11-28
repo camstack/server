@@ -2,7 +2,7 @@
  * Pure mapping helpers for notification-target OptionSelect options.
  */
 
-import { notificationTargetKindOf } from '@camstack/types'
+import { notificationTargetKindOf } from '@dominevo/types'
 import type { LinkableInstance } from '../hooks/use-instances-of-cap'
 import type { OptionSelectOption } from './option-select/option-select-model'
 

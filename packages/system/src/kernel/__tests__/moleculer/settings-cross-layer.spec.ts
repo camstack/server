@@ -14,7 +14,7 @@
 import { describe, it, expect, afterEach, vi } from 'vitest'
 import { ServiceBroker } from 'moleculer'
 import { createAddonService } from '../../moleculer/addon-service-factory.js'
-import type { ICamstackAddon, AddonDeclaration, ConfigUISchemaWithValues } from '@camstack/types'
+import type { ICamstackAddon, AddonDeclaration, ConfigUISchemaWithValues } from '@dominevo/types'
 
 // ── Test addon factory ──────────────────────────────────────────────
 

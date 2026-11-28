@@ -42,7 +42,7 @@ import {
   type PrepareStreamRequest,
   type StreamingRequest,
 } from '@homebridge/hap-nodejs'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 import type { StreamNegotiator } from '../mappers/builders/camera-streams.js'
 import {

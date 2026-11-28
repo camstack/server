@@ -11,7 +11,7 @@
  * Disarm: make `FrameIdMap.ordinal` return its input — the no-epoch test and
  * the ordinal test must fail.
  */
-import type { FrameResult, ObjectDetection } from '@camstack/types'
+import type { FrameResult, ObjectDetection } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { FrameObservation } from '../../../pipeline/frame-observation.js'
 import { TapeFrameSchema } from '../../tape-schema.js'

@@ -14,8 +14,8 @@ import {
   getUserManagementInternal,
   type LoginSessionsInternal,
   type UserManagementInternal,
-} from '@camstack/server/system'
-import type { TokenPayload } from '@camstack/types'
+} from '@dominevo/server/system'
+import type { TokenPayload } from '@dominevo/types'
 import type { SessionLifetimes } from './session-lifetimes.js'
 import type { SessionBacking } from './session-mint.js'
 

@@ -1,9 +1,9 @@
-import { DETECTOR_PERF } from '@camstack/types'
+import { DETECTOR_PERF } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { OBJECT_DETECTION_MODELS } from '../registry/model-catalogs.js'
 
 // D745 — the Auto tune recommender picks from `DETECTOR_PERF` (a measured
-// table in @camstack/types) and writes the pick as a node model pin. Every id
+// table in @dominevo/types) and writes the pick as a node model pin. Every id
 // it can pick must be a real catalog entry with a build for the accelerator the
 // table measured it on, or the pin names a model the node cannot load.
 const FORMAT_OF_ACCELERATOR: Readonly<Record<string, string>> = {

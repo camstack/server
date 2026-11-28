@@ -28,8 +28,8 @@ import type {
   SystemEvent,
   TimelapseRule,
   Track,
-} from '@camstack/types'
-import { DETECTION_MACRO_CLASSES, ruleGroupingApplies } from '@camstack/types'
+} from '@dominevo/types'
+import { DETECTION_MACRO_CLASSES, ruleGroupingApplies } from '@dominevo/types'
 import {
   actionTtlMs,
   type NcActionGrant,
@@ -443,7 +443,7 @@ const NC_DEPARTED_ALIAS_FAILURE_MEMO_MAX = 256
  * the failure mode this whole family exists to end — and the recovery defaults
  * ON because that is what the operator chose.
  *
- * The values are restated rather than imported: `@camstack/types` is external
+ * The values are restated rather than imported: `@dominevo/types` is external
  * to this addon and the settings schema lives in `pipeline-analytics`, so an
  * import here would tie the centre to its host addon's settings module. The
  * numbers are pinned against that schema by

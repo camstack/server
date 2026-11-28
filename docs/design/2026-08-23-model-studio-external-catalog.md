@@ -20,11 +20,11 @@ The reference NVR's YOLO detectors in the catalog use the three macro classes di
 
 The taxonomy is confirmed by the CoreML/ONNX `names` metadata, by the reference OpenVINO implementation, by the labels file used by the TFLite runtime and by the CoreML benchmark output `[1, 7, 2100]` (4 coordinates + 3 classes).
 
-Each manifest entry therefore declares these labels and an identity class map towards the CamStack macros.
+Each manifest entry therefore declares these labels and an identity class map towards the Dominevo macros.
 
 ### The reference detector today
 
-The public catalog of the reference detector declares its COCO-91 labelmap. The CamStack SSD postprocessor uses the COCO-90 aligned to the model's indices and produces the raw classes; the step's `COCO_TO_MACRO` keeps person, vehicles, animals and the proxy packages, discarding the rest.
+The public catalog of the reference detector declares its COCO-91 labelmap. The Dominevo SSD postprocessor uses the COCO-90 aligned to the model's indices and produces the raw classes; the step's `COCO_TO_MACRO` keeps person, vehicles, animals and the proxy packages, discarding the rest.
 
 The reference detector+ instead imports the ordered labelmap returned by the API. The classes that match the `COCO_TO_MACRO` keys work; any unmapped custom classes are today discarded with a warning. There is no operator-configurable end-to-end custom mapping.
 
@@ -48,7 +48,7 @@ The local manifest represents the axes observed in the HF tree:
 
 - family/size: `yolov9t`, `yolov9s`, `yolov9m`, `yolov9c`;
 - variant: `relu` and `relu_test`;
-- supported CamStack format:
+- supported Dominevo format:
   - CoreML `.mlpackage`: `c`, `m`, `s`, `t`, normal and test;
   - ONNX: `c`, `m`, `s`, `t`, normal and test;
   - OpenVINO FP32: `c`, `m`, `s`, `t`, normal;
@@ -56,7 +56,7 @@ The local manifest represents the axes observed in the HF tree:
   - TFLite 320: only `yolov9s_relu_sep_320`, with float16, float32, int8,
     integer quant, **full_integer_quant** (real artifact on the pin) and EdgeTPU.
 
-The NCNN artifacts present on HF do not enter the manifest because CamStack's `ModelFormat` does not support NCNN. The excluded directories are not returned to the client.
+The NCNN artifacts present on HF do not enter the manifest because Dominevo's `ModelFormat` does not support NCNN. The excluded directories are not returned to the client.
 
 ## Architecture
 
@@ -64,14 +64,14 @@ The NCNN artifacts present on HF do not enter the manifest because CamStack's `M
 
 A `reference-nvr/` module contains declarative, immutable entries. Each entry includes:
 
-- stable CamStack ID and label;
+- stable Dominevo ID and label;
 - family/size, test/non-test variant, format and precision;
 - relative HF path, declared size and multi-file payload;
 - input size verified **320×320** on all 34 entries of the pin
   (OpenVINO XML 12/12, CoreML 8/8, ONNX 8/8, TFLite 6/6);
 - preprocess **`resize` (stretch)**: the reference NVR's default is an RGB resize to the
-  square. `settings.pad` is opt-in and is **not** equivalent to the CamStack
-  letterbox; fill/pad stay out of scope. CamStack must use `resize`
+  square. `settings.pad` is opt-in and is **not** equivalent to the Dominevo
+  letterbox; fill/pad stay out of scope. Dominevo must use `resize`
   for equivalence;
 - verified output `[1, 7, 2100]`, labels `person/vehicle/animal`,
   cxcywh parse;
@@ -159,5 +159,5 @@ TDD with RED tests before the implementation:
 - auto-inference of labels/preprocess/postprocessor from unknown artifacts
   (the 320×320 / `resize` metadata of this catalog are verified on the pin,
   not inferred);
-- the reference NVR's fill/pad (`settings.pad`) as an equivalent of the CamStack letterbox;
+- the reference NVR's fill/pad (`settings.pad`) as an equivalent of the Dominevo letterbox;
 - changing the detector defaults or the pipeline during this follow-up.

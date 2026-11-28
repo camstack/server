@@ -9,7 +9,7 @@
  * snapshot at all (the controller's last read failed, or it no longer lists the
  * device) declares nothing.
  */
-import type { DeviceIdentifierKey, RawDeviceIdentifiers } from '@camstack/types'
+import type { DeviceIdentifierKey, RawDeviceIdentifiers } from '@dominevo/types'
 import type { UnifiInfraSnapshot } from './unifi-client-contract.js'
 
 export interface UnifiIdentifierDeclaration {

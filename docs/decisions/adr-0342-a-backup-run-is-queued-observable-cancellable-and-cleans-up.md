@@ -77,7 +77,7 @@ reclaimed by the existing D338 boot sweep, which removes everything in
 - `backup.trigger` now returns `{ runId, queued, joined, cancelled,
   entries }` instead of a bare entry array, and the cap gains `listRuns` +
   `cancel` — a framework change: `packages/types` + codegen + a published
-  `@camstack/server` before any node sees it (D16).
+  `@dominevo/server` before any node sees it (D16).
 - A cancelled run is an outcome, not an error: `BackupCancelledError` is
   how layers signal it, and a run that stops early with partial fan-out
   reports `cancelled`, never a clean success.

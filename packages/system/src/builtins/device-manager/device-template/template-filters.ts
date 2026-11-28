@@ -7,7 +7,7 @@
  * not a number, or a pair the table cannot convert, passes through (identity
  * plus the symbol for the latter) — never a wrong number.
  */
-import { tryConvertUnit } from '@camstack/types/units-lean'
+import { tryConvertUnit } from '@dominevo/types/units-lean'
 
 /** A number with a unit symbol: what `unit()` returns and `round`/`format`/`default` accept. */
 export class Quantity {

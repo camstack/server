@@ -7,7 +7,7 @@ import {
   type RecordKindHandle,
   type SecretsAccess,
   type SettingsStoreClient,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { readAllRows } from '../records/read-all-rows.js'
 import type { UserTotpBody } from '../builtins/local-auth/record-kinds.js'
 import { localAuthRecordKinds } from '../builtins/local-auth/record-kinds.js'
@@ -47,7 +47,7 @@ import { localAuthRecordKinds } from '../builtins/local-auth/record-kinds.js'
  */
 
 const TOTP_COLLECTION = 'user_totp'
-const ISSUER = 'CamStack'
+const ISSUER = 'Dominevo'
 /** RFC 6238 default time step. otplib v13 measures `epochTolerance` in
  *  seconds, so a `window` of N steps maps to `N * TOTP_PERIOD_SECONDS`. */
 const TOTP_PERIOD_SECONDS = 30
@@ -192,7 +192,7 @@ export class TotpManager {
    *
    * The user identity (`label`) is what an authenticator displays as
    * the account name; we use the supplied `username` for human-readable
-   * recognition. `ISSUER` is the CamStack brand.
+   * recognition. `ISSUER` is the Dominevo brand.
    */
   setup(userId: string, username: string): Promise<TotpSetupResult> {
     return this.serialize(userId, () => this.setupLocked(userId, username))

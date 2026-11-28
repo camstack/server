@@ -81,13 +81,13 @@ export default defineConfig({
         '@tanstack/react-query': { singleton: true, requiredVersion: false, import: false },
         '@trpc/client': { singleton: true, requiredVersion: false, import: false },
         '@trpc/react-query': { singleton: true, requiredVersion: false, import: false },
-        '@camstack/ui-library': {
+        '@dominevo/ui-library': {
           singleton: true,
           requiredVersion: `>=${uiLibraryVersion}`,
           import: false,
         },
-        '@camstack/sdk': { singleton: true, requiredVersion: false, import: false },
-        '@camstack/types': { singleton: true, requiredVersion: false, import: false },
+        '@dominevo/sdk': { singleton: true, requiredVersion: false, import: false },
+        '@dominevo/types': { singleton: true, requiredVersion: false, import: false },
       },
     }),
   ],

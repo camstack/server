@@ -12,7 +12,7 @@
  * arrive shares the same child because the sharing key is the request, which is
  * built from the same slot (`resolveAlexaSourceProfile`).
  */
-import type { AddonApi, IScopedLogger } from '@camstack/types'
+import type { AddonApi, IScopedLogger } from '@dominevo/types'
 import type { ExposedDeviceEntry } from '../types.js'
 import { acquireAlexaEgress, releaseAlexaEgress } from './alexa-rtc-egress.js'
 import { resolveAlexaSourceProfile } from './alexa-source-profile.js'

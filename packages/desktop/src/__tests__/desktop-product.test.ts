@@ -8,7 +8,7 @@ import {
 } from '../product/desktop-product'
 
 function env(overrides: Partial<ProductEnvironment> = {}): ProductEnvironment {
-  return { appName: '@camstack/desktop', isPackaged: true, override: undefined, ...overrides }
+  return { appName: '@dominevo/desktop', isPackaged: true, override: undefined, ...overrides }
 }
 
 describe('resolveDesktopProduct', () => {
@@ -22,13 +22,13 @@ describe('resolveDesktopProduct', () => {
 
   it('is the node product for every other packaged name', () => {
     expect(resolveDesktopProduct(env({ appName: 'camstack' }))).toBe('node')
-    expect(resolveDesktopProduct(env({ appName: 'CamStack' }))).toBe('node')
-    expect(resolveDesktopProduct(env({ appName: '@camstack/desktop' }))).toBe('node')
+    expect(resolveDesktopProduct(env({ appName: 'Dominevo' }))).toBe('node')
+    expect(resolveDesktopProduct(env({ appName: '@dominevo/desktop' }))).toBe('node')
     expect(resolveDesktopProduct(env({ appName: '' }))).toBe('node')
   })
 
   it('is the node product for an unpackaged run', () => {
-    expect(resolveDesktopProduct(env({ isPackaged: false, appName: '@camstack/desktop' }))).toBe(
+    expect(resolveDesktopProduct(env({ isPackaged: false, appName: '@dominevo/desktop' }))).toBe(
       'node',
     )
   })

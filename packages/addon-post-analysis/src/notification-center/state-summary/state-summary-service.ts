@@ -4,9 +4,9 @@
  * notification centre only wires closures and the whole feature is testable
  * without it.
  */
-import type { IScopedLogger, NcRule, NcRuleInput, NcStateSummaryPreview } from '@camstack/types'
+import type { IScopedLogger, NcRule, NcRuleInput, NcStateSummaryPreview } from '@dominevo/types'
 import type { DurableKindDeps } from '../../durable/durable-wiring.js'
-import { systemEventSummarySplitOf } from '@camstack/types'
+import { systemEventSummarySplitOf } from '@dominevo/types'
 import type { NcOpenAlert } from '../alerts/open-alert.js'
 import type { NcDeviceIdentity, NcDeviceNameResolver } from '../device-directory.js'
 import { updatePackages } from '../event-intake.js'

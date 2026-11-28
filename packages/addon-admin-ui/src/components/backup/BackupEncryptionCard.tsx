@@ -21,7 +21,7 @@ import {
   useBackupSetupEncryption,
   useConfirm,
   Checkbox,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { AlertTriangle, Copy, Download, Lock, LockOpen } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -78,7 +78,7 @@ function SecretKeyDialog({
             <span>
               {t(
                 'backup.backupEncryptionCard.thisKeyIsShownOnly',
-                'This key is shown only once. CamStack does not keep it — not the hub, not its database, not its backups. Without it, an encrypted backup cannot be restored by anyone, including you. Store it in a password manager or print it, away from this server.',
+                'This key is shown only once. Dominevo does not keep it — not the hub, not its database, not its backups. Without it, an encrypted backup cannot be restored by anyone, including you. Store it in a password manager or print it, away from this server.',
               )}
             </span>
           </p>

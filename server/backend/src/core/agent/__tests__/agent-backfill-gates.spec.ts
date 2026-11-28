@@ -13,7 +13,7 @@ import type { ClusterNodeHistoryStore } from '../cluster-node-history-store'
  * caused.
  *
  * Evidence these exist for (2026-08-07, live hub): every
- * `camstack deploy <pkg> -n agent-a` landed the correct bytes and ~1.5s
+ * `dominevo deploy <pkg> -n agent-a` landed the correct bytes and ~1.5s
  * later the node held a different build under the same version. `$agent.deploy`
  * evicts the package's declaration ids, `$agent.reload` re-registers the node,
  * the reconcile reads the emptied roster and "repairs" the node over the bytes
@@ -37,7 +37,7 @@ const HUB_ROWS: readonly HubAddonRow[] = [
   {
     manifest: {
       id: 'recorder',
-      packageName: '@camstack/addon-pipeline',
+      packageName: '@dominevo/addon-pipeline',
       packageVersion: '1.2.43',
     },
     declaration: { id: 'recorder', execution: { placement: 'any-node' } },
@@ -45,7 +45,7 @@ const HUB_ROWS: readonly HubAddonRow[] = [
   {
     manifest: {
       id: 'llm',
-      packageName: '@camstack/addon-ai',
+      packageName: '@dominevo/addon-ai',
       packageVersion: '1.2.43',
     },
     declaration: { id: 'llm', execution: { placement: 'any-node' } },
@@ -53,20 +53,20 @@ const HUB_ROWS: readonly HubAddonRow[] = [
 ]
 
 const RECORDED: readonly NodePackageEntry[] = [
-  { name: '@camstack/addon-pipeline', version: '1.2.43' },
-  { name: '@camstack/addon-ai', version: '1.2.43' },
+  { name: '@dominevo/addon-pipeline', version: '1.2.43' },
+  { name: '@dominevo/addon-ai', version: '1.2.43' },
 ]
 
-/** The node reports @camstack/addon-ai and NOT @camstack/addon-pipeline. */
+/** The node reports @dominevo/addon-ai and NOT @dominevo/addon-pipeline. */
 const ROSTER_MISSING_PIPELINE = [
-  { id: 'llm', packageName: '@camstack/addon-ai', version: '1.2.43' },
+  { id: 'llm', packageName: '@dominevo/addon-ai', version: '1.2.43' },
 ]
 /** The node reports both — nothing is missing. */
 const ROSTER_COMPLETE = [
-  { id: 'llm', packageName: '@camstack/addon-ai', version: '1.2.43' },
+  { id: 'llm', packageName: '@dominevo/addon-ai', version: '1.2.43' },
   {
     id: 'recorder',
-    packageName: '@camstack/addon-pipeline',
+    packageName: '@dominevo/addon-pipeline',
     version: '1.2.43',
   },
 ]
@@ -145,7 +145,7 @@ describe('back-fill gate — delivery window', () => {
     const h = makeHarness({ statusReads: [ROSTER_MISSING_PIPELINE] })
 
     // A deploy is running: the window is open and never closed.
-    h.service.deliveryLedger.begin('agent-a', '@camstack/addon-pipeline')
+    h.service.deliveryLedger.begin('agent-a', '@dominevo/addon-pipeline')
 
     await h.service.reconcileAgentAddons('agent-a', 'node-registration')
 
@@ -157,7 +157,7 @@ describe('back-fill gate — delivery window', () => {
 
     // The reload's re-registrations land AFTER $agent.reload returns — this is
     // the window the storm arrives in.
-    const close = h.service.deliveryLedger.begin('agent-a', '@camstack/addon-pipeline')
+    const close = h.service.deliveryLedger.begin('agent-a', '@dominevo/addon-pipeline')
     close()
 
     await h.service.reconcileAgentAddons('agent-a', 'node-registration')
@@ -170,11 +170,11 @@ describe('back-fill gate — delivery window', () => {
 
     // A delivery that finished well over a grace period ago.
     const longAgo = Date.now() - DELIVERY_GRACE_MS * 2
-    h.service.deliveryLedger.begin('agent-a', '@camstack/addon-pipeline', () => longAgo)()
+    h.service.deliveryLedger.begin('agent-a', '@dominevo/addon-pipeline', () => longAgo)()
 
     await h.service.reconcileAgentAddons('agent-a', 'node-registration')
 
-    expect(h.deployed).toEqual(['@camstack/addon-pipeline'])
+    expect(h.deployed).toEqual(['@dominevo/addon-pipeline'])
   })
 })
 
@@ -200,7 +200,7 @@ describe('back-fill gate — confirmation read (D49)', () => {
 
     await h.service.reconcileAgentAddons('agent-a', 'node-registration')
 
-    expect(h.deployed).toEqual(['@camstack/addon-pipeline'])
+    expect(h.deployed).toEqual(['@dominevo/addon-pipeline'])
   })
 
   it('fails CLOSED when the confirmation read cannot be taken', async () => {
@@ -233,6 +233,6 @@ describe('back-fill gate — trigger allowlist', () => {
 
     await h.service.repairNodeAddons('agent-a')
 
-    expect(h.deployed).toEqual(['@camstack/addon-pipeline'])
+    expect(h.deployed).toEqual(['@dominevo/addon-pipeline'])
   })
 })

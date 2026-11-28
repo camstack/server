@@ -3,7 +3,7 @@
  * operator's deletion re-checking its verdict. Ports are faked; the engine and
  * BaseAddon halves have their own specs.
  */
-import { makeSecretMarker, type StorageKind } from '@camstack/types'
+import { makeSecretMarker, type StorageKind } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { declaration } from '../../__tests__/support/records-harness.js'
 import {

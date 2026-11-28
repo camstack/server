@@ -3,7 +3,7 @@
  * from a 500.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 
 import { createReplayLane, REPLAY_LANE_WAIT_MS } from '../replay-lane.js'

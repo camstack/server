@@ -1,4 +1,4 @@
-import type { DiscoveryHit } from '@camstack/types'
+import type { DiscoveryHit } from '@dominevo/types'
 import type { OnboardedAmcrestCamera } from '../amcrest-discovery.js'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
@@ -94,7 +94,11 @@ describe('already-onboarded marking (#541)', () => {
   })
 
   it('leaves a genuinely new host unmarked', () => {
-    const [candidate] = mapAmcrestDiscoveryToCandidates([{ host: '192.0.2.77', port: 80 }], {}, onboarded)
+    const [candidate] = mapAmcrestDiscoveryToCandidates(
+      [{ host: '192.0.2.77', port: 80 }],
+      {},
+      onboarded,
+    )
     expect(candidate?.alreadyOnboarded).toBeUndefined()
   })
 })

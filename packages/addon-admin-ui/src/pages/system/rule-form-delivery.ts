@@ -5,7 +5,7 @@
  * as that target's `params[key]`, edited in the target's own panel (#487,
  * `NotificationRuleTargetSettings`).
  */
-import type { DeliveryParam, Target, TargetKind } from '@camstack/types'
+import type { DeliveryParam, Target, TargetKind } from '@dominevo/types'
 
 /**
  * The slice of a kind descriptor this editor reads. `caps` is the field

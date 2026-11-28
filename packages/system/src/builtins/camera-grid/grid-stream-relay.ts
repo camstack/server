@@ -13,7 +13,7 @@
  * grid is not something to expose on a LAN interface by accident.
  */
 import { createServer, type Server, type ServerResponse } from 'node:http'
-import { errMsg, type CamProfile } from '@camstack/types'
+import { errMsg, type CamProfile } from '@dominevo/types'
 import { GRID_PROFILES } from './grid-profiles.js'
 import type { GridStreamLogger, GridStreamSession } from './grid-stream-session.js'
 

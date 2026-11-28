@@ -60,7 +60,7 @@
  *   npx tsx scripts/motion-region-area-eval.mts report <out.jsonl> [more.jsonl ...]
  *   npx tsx scripts/motion-region-area-eval.mts gt <ground-truth.json> <recall.jsonl ...>
  *
- * Hub access: the `camstack login` session through the shared resolver
+ * Hub access: the `dominevo login` session through the shared resolver
  * (scripts/hub/credentials.mjs). Environment: `MRA_HUB` is an
  * explicit hub address, `MRA_PROFILE` (default `high`), `MRA_FPS`
  * (default 4 — the `motionFps` schema default).

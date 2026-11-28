@@ -7,7 +7,7 @@ import {
   type IEventBus,
   type IScopedLogger,
   type SystemEvent,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { StreamBroker } from '../stream-broker/stream-broker.js'
 import { StreamBrokerManager } from '../stream-broker/stream-broker-manager.js'

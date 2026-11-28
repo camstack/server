@@ -9,7 +9,7 @@ import {
   type KeyedArrayLiteral,
   type KeyedSourceValueKind,
   compileKeyedArrayOverride,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { ScalarTransformDraft } from '../scalar/scalar-form'
 import { defaultScalarTransform } from '../scalar/scalar-form'
 import { keyedEnumOutputs, keyedTargetFields, type KeyedFit } from './keyed-fit'

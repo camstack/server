@@ -1,7 +1,7 @@
 /**
  * `findUnappliedClosurePatches` — the fail-closed half of D478.
  *
- * The defect it exists for: `@camstack/server`'s `postinstall` applies the
+ * The defect it exists for: `@dominevo/server`'s `postinstall` applies the
  * patches that cannot be bundled, and it is best-effort, so a skipped patch
  * used to be indistinguishable from an applied one. Production ran `werift`
  * unpatched on three nodes for eight weeks that way. These cases pin the ONE
@@ -31,7 +31,7 @@ function makeClosure(opts: {
 }): Closure {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'closure-patch-'))
   made.push(dir)
-  const payload = path.join(dir, 'node_modules', '@camstack', 'server', 'dist', 'closure-patches')
+  const payload = path.join(dir, 'node_modules', '@dominevo', 'server', 'dist', 'closure-patches')
   if (opts.manifest !== undefined) {
     fs.mkdirSync(payload, { recursive: true })
     fs.writeFileSync(path.join(payload, 'patch-reach.json'), JSON.stringify(opts.manifest))
@@ -109,7 +109,7 @@ describe('findUnappliedClosurePatches', () => {
     const payload = path.join(
       closure.dir,
       'node_modules',
-      '@camstack',
+      '@dominevo',
       'server',
       'dist',
       'closure-patches',

@@ -6,7 +6,7 @@ import {
   type DeviceContext,
   type IDeviceRuntimeState,
   type PetFeederStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { petkitConnections } from '../petkit-gateway.js'
 import { PetkitFeederDevice } from '../devices/petkit-feeder-device.js'
 

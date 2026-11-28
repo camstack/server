@@ -7,7 +7,7 @@
  * - resolves python path by locating an interpreter only (no `import X` probe)
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import type { IScopedLogger, HardwareInfo } from '@camstack/types'
+import type { IScopedLogger, HardwareInfo } from '@dominevo/types'
 import { PlatformScorer } from '../platform-scorer.js'
 
 function fakeLogger(): IScopedLogger {

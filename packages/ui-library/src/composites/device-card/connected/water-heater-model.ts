@@ -1,5 +1,5 @@
 /** `water-heater` → the water-heater card. Pure. */
-import type { WaterHeaterStatus } from '@camstack/types'
+import type { WaterHeaterStatus } from '@dominevo/types'
 import type { UiTextFn } from '../../../contexts/ui-text'
 import type { WaterHeaterActivity, WaterHeaterModeOption } from '../scenes/water-heater/model'
 

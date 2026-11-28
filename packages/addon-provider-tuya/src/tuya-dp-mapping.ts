@@ -1,7 +1,7 @@
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 
 /**
- * Pure DP (data-point) ⇄ CamStack-cap mapping for Tuya devices. NO I/O, NO
+ * Pure DP (data-point) ⇄ Dominevo-cap mapping for Tuya devices. NO I/O, NO
  * side-effects — every function takes a plain DP map (as reported by
  * `TuyaDevice.get()` / a `dps` push) and returns a value, or produces the DP
  * patch to write for a control. Unit-tested in isolation with fake DP maps.
@@ -15,7 +15,7 @@ import { DeviceType } from '@camstack/types'
  */
 
 // ---------------------------------------------------------------------------
-// Category classification (which CamStack DeviceType a cloud device becomes)
+// Category classification (which Dominevo DeviceType a cloud device becomes)
 // ---------------------------------------------------------------------------
 
 /** The device kinds this addon maps in v1. */
@@ -41,7 +41,7 @@ export function classifyTuyaCategory(category: string | undefined): TuyaDeviceKi
   return 'switch'
 }
 
-/** The top-level CamStack DeviceType a device kind adopts as. */
+/** The top-level Dominevo DeviceType a device kind adopts as. */
 export function deviceTypeForKind(kind: TuyaDeviceKind): DeviceType {
   return kind === 'kettle' ? DeviceType.Container : DeviceType.Switch
 }

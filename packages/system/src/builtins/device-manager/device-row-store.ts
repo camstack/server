@@ -55,7 +55,7 @@ import {
   canonicalStoredDeviceType,
   DeviceIdentifierKeySchema,
   DeviceIdentifiersSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type {
   ChildLayout,
   CollectionColumn,
@@ -68,7 +68,7 @@ import type {
   QueryFilter,
   SettingsRecord,
   SettingsStoreClient,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { RetiredRowStore } from '../sqlite-storage/retired-settings-keys.js'
 import type { PersistedDeviceMeta } from './device-meta-types.js'
 import type { DeviceRowObserver } from './device-identity-index.js'

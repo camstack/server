@@ -14,7 +14,7 @@ import { describe, it, expect, afterEach } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
-import type { AddonContext, IScopedLogger } from '@camstack/types'
+import type { AddonContext, IScopedLogger } from '@dominevo/types'
 import PipelineAnalyticsAddon from '../index.js'
 import {
   makeFakeSettingsStore,

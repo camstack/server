@@ -2,11 +2,11 @@
  * The Reolink provider answers with the shared envelope, never one of its own
  * (D612). The envelope's own invariants are pinned in
  * `packages/types/src/__tests__/clip-playback-options.spec.ts`, where they run
- * against the SOURCE — this suite resolves `@camstack/types` to the built
+ * against the SOURCE — this suite resolves `@dominevo/types` to the built
  * package, so a gate placed here would pass under its own revert until a
  * rebuild.
  */
-import { CLIP_PLAYBACK_OPTIONS } from '@camstack/types'
+import { CLIP_PLAYBACK_OPTIONS } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 
 describe('the Reolink provider answers with the envelope, never one of its own', () => {

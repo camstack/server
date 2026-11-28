@@ -1,4 +1,4 @@
-import { declareLinkKind, defineEntryKind, entryBody } from '@camstack/types'
+import { declareLinkKind, defineEntryKind, entryBody } from '@dominevo/types'
 import { z } from 'zod'
 import { GOOGLE_BROKER_KIND, GoogleBrokerEntrySchema, GoogleSessionSchema } from './google-types.js'
 

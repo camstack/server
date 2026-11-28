@@ -3,7 +3,7 @@
  * signs in with the API key the form holds (a saved secret stands in for its redacted view), and every
  * failure names a reason the operator can act on — on the test verdict and on the status.
  */
-import { makeInMemoryRecords, REDACTED_SECRET, type IScopedLogger } from '@camstack/types'
+import { makeInMemoryRecords, REDACTED_SECRET, type IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { settingsToConnection } from '../config.js'
 import type {

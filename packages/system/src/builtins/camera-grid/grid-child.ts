@@ -1,7 +1,7 @@
 /**
  * Spawning the composition, through the ONE primitive.
  *
- * `FfmpegProcess` (`@camstack/types`) owns spawn, the first-data deadline, the
+ * `FfmpegProcess` (`@dominevo/types`) owns spawn, the first-data deadline, the
  * hardware→software retry, exit classification and the bounded restart. This
  * file owns only the PLUMBING — which bytes go where — because that is the one
  * thing the primitive deliberately does not own.
@@ -11,8 +11,8 @@
  * starts a cold one with freshly acquired sources. A restart inside the process
  * would reuse broker handles that may already have been released.
  */
-import { buildFfmpegArgs, type IScopedLogger } from '@camstack/types'
-import { FfmpegProcess } from '@camstack/types/node'
+import { buildFfmpegArgs, type IScopedLogger } from '@dominevo/types'
+import { FfmpegProcess } from '@dominevo/types/node'
 import { gridStreamInvocation } from './grid-stream-invocation.js'
 import type { GridSourceHandle, GridStreamChild, GridStreamPlan } from './grid-stream-session.js'
 

@@ -38,8 +38,8 @@
 import { useEffect, useId, useMemo, useState } from 'react'
 import { Layers } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
-import type { HistoryPoint } from '@camstack/types'
-import { occupancyScope } from '@camstack/types'
+import type { HistoryPoint } from '@dominevo/types'
+import { occupancyScope } from '@dominevo/types'
 import {
   SectionCard,
   Select,
@@ -49,7 +49,7 @@ import {
   useDeviceStateSlice,
   useSystem,
   type TimeSeriesDef,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useT } from '../../i18n/index.js'
 
 type WindowPreset = '1h' | '6h' | '24h' | '7d'

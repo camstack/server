@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { DeviceType, type IDeviceRuntimeState } from '@camstack/types'
+import { DeviceType, type IDeviceRuntimeState } from '@dominevo/types'
 import { HaValveDevice } from '../ha-valve-device.js'
 import type { HaEntityState } from '../../ha-types.js'
 
@@ -7,7 +7,7 @@ function buildValveCtx(
   entityId: string,
   publishMutate = vi.fn(async () => null),
 ): {
-  ctx: import('@camstack/types').DeviceContext
+  ctx: import('@dominevo/types').DeviceContext
   setCapStateCalls: Array<Record<string, unknown>>
 } {
   let runtimeStateRef: IDeviceRuntimeState | null = null
@@ -95,12 +95,12 @@ function buildValveCtx(
       addContext: vi.fn(),
       with: vi.fn(),
     },
-  } as unknown as import('@camstack/types').DeviceContext
+  } as unknown as import('@dominevo/types').DeviceContext
 
   return { ctx, setCapStateCalls }
 }
 
-function getValveProvider(ctx: import('@camstack/types').DeviceContext): {
+function getValveProvider(ctx: import('@dominevo/types').DeviceContext): {
   open: (i: { deviceId: number }) => Promise<void>
   close: (i: { deviceId: number }) => Promise<void>
   stop: (i: { deviceId: number }) => Promise<void>

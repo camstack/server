@@ -20,7 +20,7 @@ import { RECORDING_PRE_ROLL_REQUEST_MS } from '../../../stream-broker/rtsp/restr
 import { promises as fs } from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import type { RecordingConfig } from '@camstack/types'
+import type { RecordingConfig } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { RecordingController, type RecordingControllerDeps } from '../recording-controller'
 import { recordingsLocationOfMode } from '../roots.js'

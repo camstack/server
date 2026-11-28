@@ -1,5 +1,5 @@
-import type { ClipModelMeta, ModelCatalogEntry, ModelFormatEntry } from '@camstack/types'
-import { hfModelUrl } from '@camstack/types'
+import type { ClipModelMeta, ModelCatalogEntry, ModelFormatEntry } from '@dominevo/types'
+import { hfModelUrl } from '@dominevo/types'
 import { SIGLIP2_APACHE, SIGLIP2_TEXT_APACHE } from './model-licenses.js'
 
 const HF_REPO = 'camstack/camstack-models'

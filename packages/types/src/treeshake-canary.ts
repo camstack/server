@@ -3,7 +3,7 @@ import { z } from 'zod'
 /**
  * Tree-shaking canary (D1074). Nothing reads it. It holds a literal that
  * `scripts/check-addon-dist-footprint.ts` searches for in every BUILT addon dist: an addon
- * bundle inlines `@camstack/types`, so when the literal shows up there a top-level
+ * bundle inlines `@dominevo/types`, so when the literal shows up there a top-level
  * initializer of the types package is being kept although no addon code reaches it, and
  * every other unreachable schema is kept with it. It catches the package going back to
  * one pre-bundled, side-effectful file; the finer regression (an initializer kept inside a

@@ -1,4 +1,4 @@
-import type { DiscoveryMode } from '@camstack/types'
+import type { DiscoveryMode } from '@dominevo/types'
 import type { ReolinkDiscoveredHost } from './reolink-discovery-map.js'
 
 /**

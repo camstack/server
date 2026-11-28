@@ -3,7 +3,7 @@
  * Active uses the Pipeline matrix effective chain (not pin-only).
  */
 import { describe, expect, it } from 'vitest'
-import type { NodeInferenceDevice } from '@camstack/types'
+import type { NodeInferenceDevice } from '@dominevo/types'
 import {
   acceleratorsRunningModel,
   applyStepSettingsOnDevice,

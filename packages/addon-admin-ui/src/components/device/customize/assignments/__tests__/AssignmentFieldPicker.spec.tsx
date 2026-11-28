@@ -1,5 +1,5 @@
-import type { System } from '@camstack/sdk'
-import { SystemProvider } from '@camstack/ui-library'
+import type { System } from '@dominevo/sdk'
+import { SystemProvider } from '@dominevo/ui-library'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen } from '@testing-library/react'
 import type { ReactElement, ReactNode } from 'react'
@@ -23,8 +23,8 @@ const FEEDER = {
   config: {},
 }
 const fleetReads = vi.hoisted(() => ({ count: 0 }))
-vi.mock('@camstack/ui-library', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@camstack/ui-library')>()
+vi.mock('@dominevo/ui-library', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dominevo/ui-library')>()
   return {
     ...actual,
     useDeviceManagerListAll: () => {

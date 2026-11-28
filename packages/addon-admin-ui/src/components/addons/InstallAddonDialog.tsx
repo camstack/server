@@ -17,7 +17,7 @@ import {
   TabsTrigger,
   useAddonsGetPackageDocs,
   useAddonsGetVersions,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { AddonMarkdown } from './render-addon-markdown'
 import {
   hiddenOlderVersionCount,
@@ -47,7 +47,7 @@ interface InstallAddonDialogProps {
 }
 
 function friendlyName(packageName: string): string {
-  return packageName.replace(/^@camstack\/(addon-)?/, '')
+  return packageName.replace(/^@dominevo\/(addon-)?/, '')
 }
 
 function optionRows(

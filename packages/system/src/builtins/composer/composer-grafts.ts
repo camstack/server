@@ -23,7 +23,7 @@ import {
   type CompositionSourceRef,
   errMsg,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { addedCapsOf, type ComposerGraftPorts, type DescribeTarget } from './existing-target.js'
 
 /** A foreign native now serves the grafted cap: the claim stays (Task 10 rule 2). */

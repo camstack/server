@@ -1,9 +1,9 @@
-/** Re-export — shared with `@camstack/ui-library`. */
-export type { PickerNoun, PickerNounPlural } from '@camstack/ui-library'
+/** Re-export — shared with `@dominevo/ui-library`. */
+export type { PickerNoun, PickerNounPlural } from '@dominevo/ui-library'
 export {
   PICKER_NOUN_PLURAL,
   orphanDeviceLabel,
   DevicesWidenWarning,
   DevicesLoadingLine,
   DevicesFailedLine,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'

@@ -364,7 +364,7 @@ inevitably from the paragraph above. But:
 So the preflight would fail, the POST would never be sent, and **the failure is
 invisible**: no signalling request, no addon log line, no SDP — exactly the
 silhouette the repo's logging rule exists to prevent. The fix is a member on a
-closed enum in `@camstack/types`, which means it **rides the framework publish
+closed enum in `@dominevo/types`, which means it **rides the framework publish
 train, not an addon deploy** — the same train as `BrokerConsumerKindSchema` in
 §4.3, and worth batching with it. The handler shape already has a precedent in
 this repo, including the reason preflight must run before auth:
@@ -581,7 +581,7 @@ place, and it is Alexa-specific**
 non-broker caller of `acquireEgressTranscode`. HomeKit duplicates the concept
 with its own ffmpeg.
 
-A third exporter must either copy that file or lift it into `@camstack/types`
+A third exporter must either copy that file or lift it into `@dominevo/types`
 (addons may not import each other). **Copying it a second time is the moment to
 lift it** — the repo already has a guard, `scripts/check-export-coverage.ts`,
 that exists because three hand-copied mapping tables drifted.
@@ -635,7 +635,7 @@ precedent for that ordering).
 **This cannot be written as an addon change.** `OPTIONS` is not a member of the
 route method union (`packages/types/src/interfaces/addon-routes.ts:47`,
 `packages/types/src/capabilities/addon-routes.cap.ts:5`) and the registry
-dispatches on method. Widening that enum is a `@camstack/types` change on the
+dispatches on method. Widening that enum is a `@dominevo/types` change on the
 framework publish train — batch it with the `BrokerConsumerKindSchema` member in
 §4.3, because shipping one without the other means two publish cycles.
 
@@ -710,9 +710,9 @@ Also required in the same package:
   mechanism and `end` the opportunistic one — not the reverse.
 - **`BrokerConsumerKindSchema`
   (`packages/types/src/capabilities/stream-broker.cap.ts:158`) needs a `google`
-  member.** It is a closed enum in `@camstack/types` — so this is **not an addon
+  member.** It is a closed enum in `@dominevo/types` — so this is **not an addon
   deploy**. It rides the framework publish train and is not live until a
-  `@camstack/server` containing it is installed. Skipping it means Google
+  `@dominevo/server` containing it is installed. Skipping it means Google
   sessions show as `unknown` in the broker panel, which is the diagnostic
   surface you will want first.
 
@@ -742,7 +742,7 @@ attention; the rest is transcription.
 
 **Two of these are not addon deploys.** The `OPTIONS` method (§4.1) and the
 `google` consumer kind (§4.3) are both members of closed enums in
-`@camstack/types`, so neither is live until a `@camstack/server` containing them
+`@dominevo/types`, so neither is live until a `@dominevo/server` containing them
 is installed. Plan them as one framework change, up front — discovering the
 preflight blocker after the addon is written costs a publish cycle for a
 one-line enum.

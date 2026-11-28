@@ -171,7 +171,7 @@ rate over frames already here.
   changed. A backward seek that slips through is refused server-side and the
   head is re-sent.
 
-- **`CLIP_STREAM_TRANSPORT_HEADER` moved to `@camstack/types`**, because two
+- **`CLIP_STREAM_TRANSPORT_HEADER` moved to `@dominevo/types`**, because two
   addons now spell it and a consumer that stops checking it would play a
   progressive file through a forward-only feeder.
 
@@ -189,8 +189,8 @@ exact shape that OOM'd (D9).
 
 **A framework facility (`ctx.dataPlane.dial(addonId, prefix)`) handing the
 consumer the producer's `{baseUrl, secret}`.** Cleaner and general, and the
-right long-term home — but a `@camstack/types`/`@camstack/system` change ships
-only inside a published `@camstack/server` (D16), cannot be measured live from
+right long-term home — but a `@dominevo/types`/`@dominevo/system` change ships
+only inside a published `@dominevo/server` (D16), cannot be measured live from
 here, and the restream precedent already exists at addon level. Named as the
 open question for the operator.
 

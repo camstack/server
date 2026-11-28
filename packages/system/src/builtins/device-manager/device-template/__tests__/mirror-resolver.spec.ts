@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ConditionMirror } from '@camstack/types'
+import { ConditionMirror } from '@dominevo/types'
 import { mirrorTemplateResolver, templateMirrorSources } from '../mirror-resolver.js'
 
 const devices = [

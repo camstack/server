@@ -33,7 +33,7 @@
  * {@link ClipQualityChoice.upgraded} is what the provider logs, per camera,
  * so a `low` ask that cost 4K bytes is a line and not a surprise.
  */
-import type { CamProfile } from '@camstack/types'
+import type { CamProfile } from '@dominevo/types'
 
 /**
  * Which archived copy a call means. One member, because the camera archives

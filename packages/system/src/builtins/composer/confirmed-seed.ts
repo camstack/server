@@ -10,7 +10,7 @@
  * the next apply's read agrees, and a failed read in between breaks the
  * agreement. Warned once per run of refused applies, not once per apply.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 export interface SeedItems<T> {
   readonly kind: 'items'

@@ -1,8 +1,8 @@
 /**
- * `camstack mcp` — the public MCP server (stdio), shipped inside the CLI.
+ * `dominevo mcp` — the public MCP server (stdio), shipped inside the CLI.
  *
- *   npm i -g camstack
- *   claude mcp add camstack -- camstack mcp
+ *   npm i -g dominevo
+ *   claude mcp add camstack -- dominevo mcp
  */
 import { assertNoRemovedTokenFlags, REMOVED_TOKEN_FLAG_OPTIONS } from './/removed-token-flags.js'
 import { parseArgs } from 'node:util'
@@ -10,13 +10,13 @@ import { DEFAULT_TOOLSETS, parseToolsets, TOOLSET_NAMES } from '../mcp/toolsets.
 
 export function mcpHelp(): string {
   return [
-    'Usage: camstack mcp [options]',
-    '       camstack mcp doctor [--json]',
-    '       camstack mcp update <version> | --latest',
-    '       camstack mcp rollback',
+    'Usage: dominevo mcp [options]',
+    '       dominevo mcp doctor [--json]',
+    '       dominevo mcp update <version> | --latest',
+    '       dominevo mcp rollback',
     '',
-    'Runs the CamStack MCP server on stdio. Register it with your assistant:',
-    '  claude mcp add camstack -- camstack mcp',
+    'Runs the Dominevo MCP server on stdio. Register it with your assistant:',
+    '  claude mcp add camstack -- dominevo mcp',
     '',
     'Options:',
     `  --toolsets <list>     Comma list of: ${TOOLSET_NAMES.join(', ')}`,
@@ -25,16 +25,16 @@ export function mcpHelp(): string {
     '      --no-docs-fetch   Use the setup steps bundled in this CLI; never read them',
     '                        from the docs site (an offline or filtered network)',
     '',
-    'Diagnose: `camstack mcp doctor` checks, read-only, Node >= 24, the hub, its pinned CA,',
+    'Diagnose: `dominevo mcp doctor` checks, read-only, Node >= 24, the hub, its pinned CA,',
     'the session, the token scope (admin or not) and the CLI version, each',
     'ok / fail / unknown with a fix hint. It never prints a token.',
-    'No TTY (CI, a service): log in once, interactively (`camstack login <host>`); the session then refreshes unattended.',
-    'Update: `camstack mcp update <version>|--latest` (installer layout only) stages the version, runs',
-    '`mcp doctor --json` on it, then switches the active one atomically; `camstack mcp rollback` undoes it.',
+    'No TTY (CI, a service): log in once, interactively (`dominevo login <host>`); the session then refreshes unattended.',
+    'Update: `dominevo mcp update <version>|--latest` (installer layout only) stages the version, runs',
+    '`mcp doctor --json` on it, then switches the active one atomically; `dominevo mcp rollback` undoes it.',
     'Your login sessions in ~/.camstack are never touched. Other installs get instructions.',
-    'MCP clients such as OpenCode keep the old process: restart them after `camstack mcp` updates.',
+    'MCP clients such as OpenCode keep the old process: restart them after `dominevo mcp` updates.',
     '',
-    "Auth is the CLI's own: run `camstack login <host>` once in a terminal.",
+    "Auth is the CLI's own: run `dominevo login <host>` once in a terminal.",
     'The MCP never asks for or accepts a password. Every write is two-step:',
     'a preview with a one-shot token, then the same call with that token.',
   ].join('\n')
@@ -64,7 +64,7 @@ export async function runMcp(args: readonly string[], cliVersion: string): Promi
   assertNoRemovedTokenFlags(parsed.values)
   const selection = parseToolsets(parsed.values.toolsets)
   if (!selection.ok) {
-    process.stderr.write(`camstack mcp: ${selection.error}\n`)
+    process.stderr.write(`dominevo mcp: ${selection.error}\n`)
     process.exitCode = 1
     return
   }

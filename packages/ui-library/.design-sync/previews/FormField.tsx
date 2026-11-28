@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
-import { FormField, Input, Switch } from '@camstack/ui-library'
+import { FormField, Input, Switch } from '@dominevo/ui-library'
 
-// CamStack is dark-first — render every story on the DS dark canvas.
+// Dominevo is dark-first — render every story on the DS dark canvas.
 const Frame = ({ children }: { children: ReactNode }) => (
   <div className="dark bg-background text-foreground p-5 rounded-lg">{children}</div>
 )

@@ -7,7 +7,7 @@
  * writes nothing and reports `already-done`.
  */
 
-import type { MigrationProcedureResult } from '@camstack/types'
+import type { MigrationProcedureResult } from '@dominevo/types'
 
 export interface EchoTargetMigrationPorts {
   /** The stored `echoTargets` value as written, one entry per row, unparsed. */

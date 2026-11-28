@@ -1,5 +1,5 @@
 import net from 'node:net'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 /**
  * A lightweight TCP server that broadcasts raw encoded video bytes

@@ -1,5 +1,5 @@
 import type { ServiceBroker } from 'moleculer'
-import type { IAddonProcessManager } from '@camstack/types'
+import type { IAddonProcessManager } from '@dominevo/types'
 
 function createScopedProcessManager(broker: ServiceBroker, addonId: string): IAddonProcessManager {
   return {

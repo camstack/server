@@ -11,7 +11,7 @@
  * "Offline or off" for both edges, so a recovery takes `group.window.device-online`.
  */
 
-import { NC_SYSTEM_EVENT_CLASS_SPECS, type NcRule, type NcSystemEventKind } from '@camstack/types'
+import { NC_SYSTEM_EVENT_CLASS_SPECS, type NcRule, type NcSystemEventKind } from '@dominevo/types'
 import { frozenDeviceLabel, type NcDeviceNameResolver } from './device-directory.js'
 import type { NcOutboxEntry } from './outbox.js'
 import {

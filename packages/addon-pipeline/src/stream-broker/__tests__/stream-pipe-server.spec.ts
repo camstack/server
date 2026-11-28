@@ -1,7 +1,7 @@
 import { describe, it, expect, afterEach, vi } from 'vitest'
 import net from 'node:net'
 import { StreamPipeServer } from '../stream-broker/stream-pipe-server'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 function createMockLogger(): IScopedLogger {
   return {

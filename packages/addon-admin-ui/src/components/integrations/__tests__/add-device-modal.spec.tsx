@@ -5,7 +5,7 @@
  * source saw it, and a candidate that needs parameters asks for them before it
  * is adopted.
  */
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
@@ -51,8 +51,8 @@ const hit = (stableId: string, host: string, extra: Record<string, unknown> = {}
   ...extra,
 })
 
-vi.mock('@camstack/ui-library', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@camstack/ui-library')>()
+vi.mock('@dominevo/ui-library', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dominevo/ui-library')>()
   return {
     ...actual,
     useDeviceManagerProviderCreationType: (input: { addonId: string; integrationId?: string }) => (

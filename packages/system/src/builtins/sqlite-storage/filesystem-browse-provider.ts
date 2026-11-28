@@ -10,7 +10,7 @@
  */
 import { mkdir, readdir, realpath, statfs } from 'node:fs/promises'
 import { basename, dirname, join } from 'node:path'
-import type { IFilesystemBrowseProvider } from '@camstack/types'
+import type { IFilesystemBrowseProvider } from '@dominevo/types'
 import { assertBrowsablePath, assertWithinAllowedRoots } from './path-guard.js'
 
 export class FilesystemBrowseProvider implements IFilesystemBrowseProvider {

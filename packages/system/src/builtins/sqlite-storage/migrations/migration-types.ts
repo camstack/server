@@ -10,7 +10,7 @@ import type {
   MigrationPlan,
   MigrationStatus,
   RecordInput,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** The one prepared-statement surface a migration body may use. */
 export interface MigrationStatement {

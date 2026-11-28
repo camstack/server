@@ -7,7 +7,7 @@
  * the hub's **Public endpoint** role (`local-network.getAddresses().roles
  * .publicEndpoint`). The **Notification taps** role
  * (`getNotificationEndpoint`) is deliberately not read here: it decides only
- * where a tap opens, and its default — the CamStack app link — is no hub
+ * where a tap opens, and its default — the Dominevo app link — is no hub
  * address a signed link could resolve on. Before D734 these links followed the
  * notifications address first, so flagging a LAN address for taps quietly
  * moved every button and attachment onto the LAN.
@@ -15,7 +15,7 @@
  * When `local-network` cannot answer, the ladder falls back to the connected
  * ingress and the LAN (`collectArtifactEndpoints`), and says so.
  */
-import type { ConnectionEndpoint, IScopedLogger } from '@camstack/types'
+import type { ConnectionEndpoint, IScopedLogger } from '@dominevo/types'
 import { collectArtifactEndpoints } from './artifact-plane.js'
 import type { ArtifactEndpoint } from './artifact-url.js'
 

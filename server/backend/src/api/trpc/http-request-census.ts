@@ -112,7 +112,7 @@ import type {
   RequestCensusSnapshot,
   TransportPlane,
   TransportPlaneCounts,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** Route prefix the tRPC plugin is registered under (`main.ts`). */
 export const TRPC_URL_PREFIX = '/trpc/'

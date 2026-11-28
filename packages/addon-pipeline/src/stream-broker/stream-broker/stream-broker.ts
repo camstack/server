@@ -10,7 +10,7 @@ import type {
   StreamSource,
   StreamSourceType,
   Unsubscribe,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 interface EncodedSubscriberEntry {
   readonly id: string
@@ -23,19 +23,19 @@ interface EncodedSubscriberEntry {
 const UNKNOWN_ATTRIBUTION: BrokerConsumerAttribution = { kind: 'unknown' }
 
 import { absorbSignal, holdIsLive, NO_HOLD, type WakeHold } from './wake-hold.js'
-import type { AudioSubscribeOptions, SubscribeAudioChunksResult } from '@camstack/types'
+import type { AudioSubscribeOptions, SubscribeAudioChunksResult } from '@dominevo/types'
 import {
   createDebugEmitter,
   errMsg,
   G711_SCALE_CORRECTION_DB,
   maskUrlCredentials,
   type DebugEmitter,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   type ChildCostClaimHandle,
   type ChildCostRegistry,
   NO_COST_CLAIM,
-} from '@camstack/types/node'
+} from '@dominevo/types/node'
 import { CH_RTP } from '../log-channels.js'
 import { capPreRollRequestMs, type PrebufferConfig, prebufferRetentionMs } from '../prebuffer.js'
 import {
@@ -2246,7 +2246,7 @@ export class StreamBroker implements IStreamBroker {
    *
    * Pass `null` to retract — broker tears down the audio decode session.
    */
-  pushAudioInfo(info: import('@camstack/types').PushAudioInfo | null): void {
+  pushAudioInfo(info: import('@dominevo/types').PushAudioInfo | null): void {
     if (this.stopping) return
 
     if (info === null) {
@@ -5089,7 +5089,7 @@ export class StreamBroker implements IStreamBroker {
    * `pushAudioInfo` path.
    */
   private buildAudioCodecEmitCallback(): (
-    chunk: import('@camstack/types').DecodedAudioChunk,
+    chunk: import('@dominevo/types').DecodedAudioChunk,
   ) => void {
     return (chunk) => {
       // The analyzer pipeline relies on the AudioCodecSession's ~500ms
@@ -5168,7 +5168,7 @@ export class StreamBroker implements IStreamBroker {
    * `processPacket`.
    */
   private buildAudioCodecSessionConfigFromPush(
-    info: import('@camstack/types').PushAudioInfo,
+    info: import('@dominevo/types').PushAudioInfo,
   ): import('./audio-codec-session.js').AudioCodecSessionConfig | null {
     const codec = info.codec.toLowerCase()
     const tag = `broker:${this.deviceId}`

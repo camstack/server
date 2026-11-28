@@ -11,7 +11,7 @@
  * An incomplete or unreadable legacy identity is `already-done` or throws, and never mints a new
  * one (a new identity unpairs every controller).
  */
-import { isSecretMarker, type MigrationProcedureResult } from '@camstack/types'
+import { isSecretMarker, type MigrationProcedureResult } from '@dominevo/types'
 import {
   type HapBridgeBody,
   type HapBridgeIdentity,
@@ -38,7 +38,7 @@ export async function moveIdentityToDefaultInstance(
   if (legacy === null) return { outcome: 'already-done', summary: { moved: false } }
   const name = (await ports.readBridgeName()).trim()
   const body: HapBridgeBody = {
-    name: name.length > 0 ? name : 'CamStack Bridge',
+    name: name.length > 0 ? name : 'Dominevo Bridge',
     username: legacy.username,
     uuid: legacy.uuid,
     pincode: legacy.pincode,

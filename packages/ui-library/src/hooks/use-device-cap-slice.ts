@@ -19,7 +19,7 @@
  * doesn't rebuild the subscription cache on every render.
  */
 import { useRef } from 'react'
-import { createLazyTrpcSource, createSliceHandle, type SliceHandleApi } from '@camstack/types'
+import { createLazyTrpcSource, createSliceHandle, type SliceHandleApi } from '@dominevo/types'
 import { useDeviceStateSlice } from './use-device-proxy.js'
 
 /**

@@ -11,7 +11,7 @@
  * chevron `CollapsibleCard` draws, and the `div` header had no button
  * semantics (`aria-expanded`, keyboard).
  *
- * The marker is `DisclosureChevron` (`@camstack/ui-library`), and a header
+ * The marker is `DisclosureChevron` (`@dominevo/ui-library`), and a header
  * that toggles is a `<button type="button" aria-expanded>`.
  *
  * ## Scope
@@ -100,7 +100,7 @@ function main(): void {
   }
   console.error('\n\x1b[31m✘ a text-glyph chevron is drawn in UI source:\x1b[0m')
   console.error(
-    '  Use `DisclosureChevron` from @camstack/ui-library, and make a toggling header a\n' +
+    '  Use `DisclosureChevron` from @dominevo/ui-library, and make a toggling header a\n' +
       '  `<button type="button" aria-expanded>`.\n',
   )
   for (const v of violations) {

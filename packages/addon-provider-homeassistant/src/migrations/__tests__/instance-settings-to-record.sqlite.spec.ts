@@ -13,7 +13,7 @@ import {
   flattenPortsOver,
   type MigrationOwnerResult,
   type RecordKindHandle,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import {
   makeFakeKeychain,

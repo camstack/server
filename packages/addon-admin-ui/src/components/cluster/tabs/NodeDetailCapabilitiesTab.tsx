@@ -26,7 +26,7 @@ import {
   usePipelineOrchestratorSetCapabilityBinding,
   type DataColumn,
   Select,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 
 /** One row: a capability declared on this node, and every addon that provides it. */

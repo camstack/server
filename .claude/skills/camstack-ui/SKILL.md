@@ -1,11 +1,11 @@
 ---
 name: camstack-ui
-description: Load FIRST for any CamStack UI work — a new or changed admin-ui page, a ui-library component, an addon page (Model Studio, Benchmark, OSD, Training), a widget, a viewer screen or the embed player; also "redesign", "restyle", "make it look better", "fix the layout", "add a table/dialog/form/tab", colours, spacing, dark/light theme. Sets the workflow and the done-gate, owns the shared components and the web ↔ viewer token map, and routes to camstack-ui-admin or camstack-ui-viewer.
+description: Load FIRST for any Dominevo UI work — a new or changed admin-ui page, a ui-library component, an addon page (Model Studio, Benchmark, OSD, Training), a widget, a viewer screen or the embed player; also "redesign", "restyle", "make it look better", "fix the layout", "add a table/dialog/form/tab", colours, spacing, dark/light theme. Sets the workflow and the done-gate, owns the shared components and the web ↔ viewer token map, and routes to camstack-ui-admin or camstack-ui-viewer.
 ---
 
-# CamStack UI — the umbrella
+# Dominevo UI — the umbrella
 
-CamStack has a CLOSED design system. The job is consistency with it, not a
+Dominevo has a CLOSED design system. The job is consistency with it, not a
 distinctive look: a new surface should be indistinguishable in style from its
 neighbours. A new visual language arrives only as an operator-approved change
 to the library, never from one page.

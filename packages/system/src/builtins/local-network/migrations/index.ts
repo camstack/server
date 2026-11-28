@@ -1,4 +1,4 @@
-import type { AddonMigration } from '@camstack/types'
+import type { AddonMigration } from '@dominevo/types'
 import { type HubNodeFieldsPorts, planHubNodeFields } from './hub-node-fields.js'
 
 export const LOCAL_NETWORK_ID = 'local-network'

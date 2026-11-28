@@ -2,7 +2,7 @@
  * Auto tune (D745, D755): gather the inputs, compute the plan, and apply
  * exactly the plan the operator confirmed.
  *
- * The plan is the recommender (`@camstack/types` auto-tune) over every
+ * The plan is the recommender (`@dominevo/types` auto-tune) over every
  * runner node — sized by a capacity floor (`minSessionsPerDevice` parallel
  * sessions per device at the camera rate), never by observed or estimated
  * load — plus the diff of the writes (`plan-diff.ts`). Every model and
@@ -50,7 +50,7 @@ import {
   type PipelineSchema,
   recommendNode,
   type SuggestSharesResult,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { AgentSettingsMapBlob } from '../orchestrator-store-schemas.js'
 import {
   applyNodeAutoTune,

@@ -5,7 +5,7 @@ import {
   type AccessoryChildSpec,
   type DeviceContext,
   type IDevice,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { shcClimateEntityName } from '../shc-discovery.js'
 import { SHC_ROOM_CLIMATE_SUFFIX, shcClimateRole } from '../shc-domain-mapping.js'
 import { shcStableIdSuffixFromDeviceId } from '../shc-stable-id-suffix.js'

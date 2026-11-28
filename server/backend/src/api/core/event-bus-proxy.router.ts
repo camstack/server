@@ -22,7 +22,7 @@
  * Introduced in session 7 (EventBus wiring for forked addons).
  */
 
-import type { IEventBus, SystemEvent } from '@camstack/types'
+import type { IEventBus, SystemEvent } from '@dominevo/types'
 import { z } from 'zod'
 import { adminProcedure, protectedProcedure, trpcRouter } from '../trpc/trpc.middleware.js'
 import { scopedEventVisibility } from '../trpc/principal-visibility.js'

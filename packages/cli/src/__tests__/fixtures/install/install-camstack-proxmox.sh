@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Install CamStack into a Proxmox VE LXC (Ubuntu 24.04 + Docker CE + amd image).
+# Install Dominevo into a Proxmox VE LXC (Ubuntu 24.04 + Docker CE + amd image).
 # Run on the PVE HOST (needs `pct`), not inside a container.
 #
 #   ROLE=hub  VMID=200 bash install-camstack-proxmox.sh
@@ -45,7 +45,7 @@ MEMORY_MB="${MEMORY_MB:-8192}"
 SWAP_MB="${SWAP_MB:-2048}"
 DISK_GB="${DISK_GB:-64}"
 BRIDGE="${BRIDGE:-vmbr0}"
-IMAGE_TAG="${IMAGE_TAG:-ghcr.io/camstack/camstack:amd-latest}"
+IMAGE_TAG="${IMAGE_TAG:-ghcr.io/dominevo/dominevo:amd-latest}"
 # Optional: host directory for recordings, bound at /opt/camstack/recordings
 # in the CT (same path Docker maps to CAMSTACK_MEDIA_ROOT). Prefer attaching
 # a real HD later with setup-camstack-recordings-volume.sh if unknown now.

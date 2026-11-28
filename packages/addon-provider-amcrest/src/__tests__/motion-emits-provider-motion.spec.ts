@@ -3,7 +3,7 @@
  * rides `ProviderMotion`, never `MotionOnMotionChanged` (the orchestrator's
  * camera-sensors bridge is the one emitter of the effective motion).
  */
-import { EventCategory } from '@camstack/types'
+import { EventCategory } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { AmcrestCamera } from '../amcrest-camera.js'
 

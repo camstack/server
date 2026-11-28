@@ -29,7 +29,7 @@ import {
   featureForwards,
   isForwardInputRef,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { ActuatorDispatchInput } from './actuator-dispatch.js'
 import type { SourceResolution } from './source-readings.js'
 

@@ -16,7 +16,7 @@ import { scanKindSpecs, scanWhereUses, unclassifiedKinds } from '../lib/parse-re
 import { z } from 'zod'
 
 const KINDS_FILE = `
-import { defineRecordKinds } from '@camstack/types'
+import { defineRecordKinds } from '@dominevo/types'
 export const kinds = defineRecordKinds({
   media: {
     schema: z.object({ loc: z.string(), bytes: z.number() }),

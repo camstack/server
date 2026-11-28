@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { HomeConnectDescriptionStore } from '../home-connect-description-store.js'
 import {
   createScriptedHomeConnectWire,

@@ -6,7 +6,7 @@
  * Behind a small interface so the auto-adopt logic is exercised without a
  * database; {@link RecordsAdoptionLedger} is the real one.
  */
-import type { AdoptionRecord, AdoptMode, RecordKindHandle, RecordsAccess } from '@camstack/types'
+import type { AdoptionRecord, AdoptMode, RecordKindHandle, RecordsAccess } from '@dominevo/types'
 import { readAllRows } from '../../records/read-all-rows.js'
 import { deviceManagerRecordKinds, type AdoptionModeBody } from './record-kinds.js'
 

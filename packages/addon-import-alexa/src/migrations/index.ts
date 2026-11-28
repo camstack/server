@@ -3,7 +3,7 @@ import {
   type BrokerLinkPorts,
   type FlattenRowPorts,
   moveBrokerLinksToConnections,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   INTEGRATION_ROWS_TO_RECORD_ID,
   moveAlexaIntegrationRows,

@@ -8,8 +8,8 @@
  * after a boot would otherwise write that empty ledger over the real one. A read that fails
  * rejects (and is not cached), so the request fails and a later one reads again.
  */
-import type { IScopedLogger, RecordKindHandle } from '@camstack/types'
-import { isInstanceOn } from '@camstack/types'
+import type { IScopedLogger, RecordKindHandle } from '@dominevo/types'
+import { isInstanceOn } from '@dominevo/types'
 import type { ActionSceneEntry, ActionSceneExports } from './action-scenes.js'
 import {
   EMPTY_GOOGLE_EXPORTS,

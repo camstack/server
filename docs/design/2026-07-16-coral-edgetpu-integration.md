@@ -2,9 +2,9 @@
 
 Status (2026-07-16): **passthrough OK · runtime OK · python backend committed & bench-validated on-device · executor TS wiring PENDING.**
 
-The Coral USB Edge TPU attached to the Unraid hub (<hub-ip>, container `CamStack`) is now a working full-integer tflite inference device. Validated end-to-end through the real `inference_pool.py`: **SSD MobileNet V2 (COCO, 300×300) at ~11.7 ms predict / ~15 ms E2E per frame (~85 fps)**, correct person/tie detection on `grace_hopper`.
+The Coral USB Edge TPU attached to the Unraid hub (<hub-ip>, container `Dominevo`) is now a working full-integer tflite inference device. Validated end-to-end through the real `inference_pool.py`: **SSD MobileNet V2 (COCO, 300×300) at ~11.7 ms predict / ~15 ms E2E per frame (~85 fps)**, correct person/tie detection on `grace_hopper`.
 
-> ⚠️ `/dev/accel0` on the host is the reference NVR's Intel-NPU/PCIe accel context. The CamStack container's own `/dev/accel` mapping is the operator's Intel NPU (OpenVINO) — left untouched. The Coral is a **USB** device, wired via `/dev/bus/usb`.
+> ⚠️ `/dev/accel0` on the host is the reference NVR's Intel-NPU/PCIe accel context. The Dominevo container's own `/dev/accel` mapping is the operator's Intel NPU (OpenVINO) — left untouched. The Coral is a **USB** device, wired via `/dev/bus/usb`.
 
 ## 1. USB passthrough (DONE)
 
@@ -15,8 +15,8 @@ Applied to the container (Unraid-native, sourced from the operator's own templat
 - **Template** `/boot/config/plugins/dockerMan/templates-user/my-camstack.xml` (backup `*.bak-pre-coral-*`):
   - `<Config … Type="Path" Target="/dev/bus/usb">/dev/bus/usb</Config>` → `-v /dev/bus/usb:/dev/bus/usb` (bind dir so re-enumerated nodes appear live).
   - `<ExtraParams>--shm-size=2g --device-cgroup-rule='c 189:* rmw'</ExtraParams>` → authorize any USB minor (major 189).
-  - Also corrected `<Repository>` to the running image `ghcr.io/camstack/camstack-server:intel-1.1.62` and added the 3 runtime-injected env vars (`CAMSTACK_HUB_PUBLIC_URL`, `CAMSTACK_MOLECULER_EVENT_FANOUT`, `CAMSTACK_SHM_RING_BUDGET_MB`) so a template rebuild is faithful.
-- **Recreate**: `rebuild_container CamStack` (Unraid) → `docker start CamStack`. `xmlToCommand` output was dry-run reviewed before executing; `/dev/dri` + `/dev/accel` come from the operator's own template lines.
+  - Also corrected `<Repository>` to the running image `ghcr.io/dominevo/camstack-server:intel-1.1.62` and added the 3 runtime-injected env vars (`CAMSTACK_HUB_PUBLIC_URL`, `CAMSTACK_MOLECULER_EVENT_FANOUT`, `CAMSTACK_SHM_RING_BUDGET_MB`) so a template rebuild is faithful.
+- **Recreate**: `rebuild_container Dominevo` (Unraid) → `docker start Dominevo`. `xmlToCommand` output was dry-run reviewed before executing; `/dev/dri` + `/dev/accel` come from the operator's own template lines.
 - A faithful `docker inspect`-based alternative is staged at `/mnt/user/appdata/camstack/edgetpu-recreate/recreate.sh` (+ `camstack.env`).
 
 Verified: `/dev/bus/usb/002/004` visible in-container; delegate load re-enumerates the device and the `c 189:* rmw` rule admits the new minor.
@@ -45,7 +45,7 @@ Validated by driving the real pool wire protocol on-device (config `runtime=edge
 
 ## 4. Remaining — executor TS wiring (NOT done this session)
 
-Broad cross-package cascade (`@camstack/types`, `@camstack/system`, `@camstack/addon-pipeline`); deferred to avoid a partial build on top of the concurrent shm-removal work. Precise insertion points:
+Broad cross-package cascade (`@dominevo/types`, `@dominevo/system`, `@dominevo/addon-pipeline`); deferred to avoid a partial build on top of the concurrent shm-removal work. Precise insertion points:
 
 1. `packages/types/src/inference/runtime-capabilities.ts` — add `'edgetpu'` to `RuntimeId`; add `EDGETPU_DEF` (supports = Coral present; devices = `[usb]`; defaultDevice `usb`) + register in `RUNTIMES` + score in `scoreRuntimes`.
 2. `packages/types/src/interfaces/platform.ts` — add a Coral hardware field (e.g. extend `NpuInfo.type` with `'coral-edgetpu'` or a new `coral` field).
@@ -73,7 +73,7 @@ The probe and the executor address PCIe Corals beside USB ones (code: the
   `usb:1`. A node with both buses lists both, USB first.
 - **Host prerequisites (not code)**: the gasket/apex kernel driver loaded on
   the host, `/dev/apex_N` passed into the container (`--device /dev/apex_0`
-  …) and readable/writable by the CamStack user (the `apex` group or a udev
+  …) and readable/writable by the Dominevo user (the `apex` group or a udev
   rule), plus the same libedgetpu delegate as USB. On an LXC host (Proxmox) the
   container entry is `devN: /dev/apex_N,gid=993,mode=0660` — a container
   contract change mirrored by hand in the Proxmox install script (D717).
@@ -118,9 +118,9 @@ server 1.2.608. What it actually took, beyond the code:
 
 ```sh
 # Re-install runtime after a venv rebuild:
-docker exec CamStack sh /data/addons/@camstack/addon-pipeline/python/edgetpu-install.sh
+docker exec Dominevo sh /data/addons/@dominevo/addon-pipeline/python/edgetpu-install.sh
 # Standalone on-device bench (SSD MobileNet V2):
-docker exec CamStack /data/deps/python/bin/python /data/deps/edgetpu/bench.py
+docker exec Dominevo /data/deps/python/bin/python /data/deps/edgetpu/bench.py
 # Full-pool E2E test (spawns real inference_pool.py):
-docker exec CamStack sh -c 'cd /data/deps/edgetpu-pool && /data/deps/python/bin/python test_edgetpu_pool.py'
+docker exec Dominevo sh -c 'cd /data/deps/edgetpu-pool && /data/deps/python/bin/python test_edgetpu_pool.py'
 ```

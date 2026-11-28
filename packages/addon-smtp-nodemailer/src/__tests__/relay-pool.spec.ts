@@ -3,7 +3,7 @@ import {
   clearInstanceSwitches,
   recordInstanceSwitch,
   type PeerBytesOpenResult,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { RelayPool } from '../relay-pool.js'
 import { RELAY_DEFAULT_BODY, type SmtpRelayBody } from '../relay-record-kinds.js'

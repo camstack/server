@@ -28,7 +28,7 @@
  * day": measured, not predicted — with `maxPerDay` bounding the worst case
  * whatever the thresholds turn out to be.
  */
-import type { IScopedLogger, Track } from '@camstack/types'
+import type { IScopedLogger, Track } from '@dominevo/types'
 import {
   type AudioAnomalyConfig,
   type AudioBaselineState,

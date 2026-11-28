@@ -15,7 +15,7 @@
  */
 import { constants as fsConstants } from 'node:fs'
 import { access } from 'node:fs/promises'
-import type { MetricsGpuInfo } from '@camstack/types'
+import type { MetricsGpuInfo } from '@dominevo/types'
 
 /** `access(path, X_OK)` — resolves when executable, rejects otherwise. */
 export type AccessCheck = (path: string) => Promise<void>

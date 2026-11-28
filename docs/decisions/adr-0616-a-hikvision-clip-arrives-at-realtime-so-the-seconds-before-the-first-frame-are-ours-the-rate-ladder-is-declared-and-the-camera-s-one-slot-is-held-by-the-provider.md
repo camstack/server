@@ -295,7 +295,7 @@ place that assumed otherwise says so.** Four rules, one per complaint.
    appears the moment the operator plays the clip is `not yet`, which is what
    an offer plus a final refusal says exactly. The second is mechanical:
    `thumbnailUnavailable.reason` is a Zod enum on the cap OUTPUT and is
-   validated by the hub's own installed `@camstack/types`, so widening it is a
+   validated by the hub's own installed `@dominevo/types`, so widening it is a
    framework train (publish types → server → install) while
    `ClipStillRefusalCode` travels only in the `x-camstack-reason-code` HEADER
    and is not validated anywhere. The cost of the offer is one `stat` and a
@@ -372,7 +372,7 @@ to resolve it is NAMED.
   reason table does not know the code yet and will show its generic text.
 - **`replay-busy` is the stream route's vocabulary, not the export's.** The
   file path's outcome travels on `ClipExportFailure`, a cross-provider enum in
-  `@camstack/types` that a Hikvision-shaped fact has no business widening, so
+  `@dominevo/types` that a Hikvision-shaped fact has no business widening, so
   it is folded to `camera-refused` in ONE place (`asExportFailure`) with the
   branch kept in the detail and in the lane's own log line.
 - **`-frag_duration` costs 0.04 % of the bytes** and one `moof` every half

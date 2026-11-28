@@ -5,7 +5,7 @@
  * kernel does), and pushes HA states through the SAME `broker.message`
  * listener the integration manager feeds in production.
  */
-import { DeviceType, type IDeviceRuntimeState } from '@camstack/types'
+import { DeviceType, type IDeviceRuntimeState } from '@dominevo/types'
 import { vi } from 'vitest'
 import { HaBinarySensorDevice } from '../ha-binary-sensor-device.js'
 import type { HaEntityState } from '../../ha-types.js'
@@ -132,7 +132,7 @@ export function makeBinarySensor(
     },
     logger,
     // Test boundary: the stub carries only what the device reads.
-  } as unknown as import('@camstack/types').DeviceContext
+  } as unknown as import('@dominevo/types').DeviceContext
 
   const device = new HaBinarySensorDevice(ctx)
   return {

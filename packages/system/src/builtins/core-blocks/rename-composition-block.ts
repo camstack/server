@@ -11,7 +11,7 @@ import {
   type CompositionGetRead,
   errMsg,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** `CoreBlockSchema` / `ComposerBlockSchema` name max. A longer device name cannot be stored on the block. */
 const BLOCK_NAME_MAX = 120

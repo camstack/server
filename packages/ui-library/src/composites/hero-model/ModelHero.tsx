@@ -1,4 +1,4 @@
-import type { HeroAction, HeroCall } from '@camstack/types'
+import type { HeroAction, HeroCall } from '@dominevo/types'
 import { type ReactNode, useCallback, useEffect, useState } from 'react'
 import { useTrpcClient } from '../../contexts/system-context'
 import { Skeleton } from '../../primitives/skeleton'

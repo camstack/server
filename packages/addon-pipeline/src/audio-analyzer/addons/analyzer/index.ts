@@ -9,7 +9,7 @@ import type {
   ConfigUISchemaWithValues,
   ScopedSettingsScope,
   ProviderRegistration,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   AUDIO_BACKEND_CHOICES,
   BaseAddon,
@@ -21,9 +21,9 @@ import {
   errMsg,
   hydrateSchema,
   mapAudioLabelToMacro,
-} from '@camstack/types'
-import type { AudioClassificationResult, AudioClassifyOutcome } from '@camstack/types'
-import type { DurableState, IScopedLogger } from '@camstack/types'
+} from '@dominevo/types'
+import type { AudioClassificationResult, AudioClassifyOutcome } from '@dominevo/types'
+import type { DurableState, IScopedLogger } from '@dominevo/types'
 import { z } from 'zod'
 import type {
   AudioBackend,
@@ -44,7 +44,7 @@ import {
   PoolMemoryWatchdog,
   resolvePoolMemoryPolicy,
   type PoolMemoryTelemetry,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /**
  * AudioAnalyzerProvider — implements IAudioAnalyzer.

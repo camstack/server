@@ -6,7 +6,7 @@
  * batch-mode behaviour (activation → checkboxes → bulk bar → selected visual);
  * here we only assert the page-level wiring renders the activation affordance.
  *
- * Queries + mutation hooks are stubbed on `@camstack/ui-library`; the real
+ * Queries + mutation hooks are stubbed on `@dominevo/ui-library`; the real
  * `DeviceList` keeps its implementation so the wiring is exercised end to end.
  */
 import { beforeEach, describe, it, expect, vi } from 'vitest'
@@ -77,9 +77,9 @@ const mutationStub = () => ({
   isPending: false,
 })
 
-vi.mock('@camstack/ui-library', async () => {
+vi.mock('@dominevo/ui-library', async () => {
   const actual =
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+    await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return {
     ...actual,
     useIntegrationsList: () => ({

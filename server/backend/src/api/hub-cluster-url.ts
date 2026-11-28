@@ -18,7 +18,7 @@
  * reach, the delivery fails with a reason that names the Network page, instead
  * of shipping an address that names the agent itself.
  */
-import type { HubAddressBook } from '@camstack/types'
+import type { HubAddressBook } from '@dominevo/types'
 
 /** The roles this module resolves. */
 export type HubSelfAddressRole = 'internal' | 'publicEndpoint'

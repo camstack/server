@@ -13,8 +13,8 @@
  * — with real derivations (no mocks).
  */
 
-import type { CameraDetectionConfig, CamProfile, PipelineStepInputOutput } from '@camstack/types'
-import { DeviceFeature } from '@camstack/types'
+import type { CameraDetectionConfig, CamProfile, PipelineStepInputOutput } from '@dominevo/types'
+import { DeviceFeature } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   ACTIVITY_DETECTION_FPS_DEFAULT,

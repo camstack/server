@@ -14,7 +14,7 @@
  * ever "recorded" those values — otherwise the next change-only comparison runs
  * against a value that was never stored and the hole lasts until the value moves.
  */
-import type { DeviceHistorySubject, IScopedLogger } from '@camstack/types'
+import type { DeviceHistorySubject, IScopedLogger } from '@dominevo/types'
 import type { SeriesRegistry } from '../store/series-registry.js'
 import type { HistoryStore } from '../store/history-store.js'
 import type { HistoryCounters } from '../status/counters.js'

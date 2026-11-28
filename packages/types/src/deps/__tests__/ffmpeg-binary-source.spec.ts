@@ -5,7 +5,7 @@
  * holds. First the resolution was `deps dir → system PATH → download`, so the
  * binary every transcode ran through was whatever the host happened to have —
  * unknown version, unknown vendor libraries, changing on any host update
- * (D536). Then the container image installed one and CamStack preferred it,
+ * (D536). Then the container image installed one and Dominevo preferred it,
  * which fixed the hub and made the answer depend on where the node ran: an
  * image node got VAAPI and a native one got a portable build with none.
  *

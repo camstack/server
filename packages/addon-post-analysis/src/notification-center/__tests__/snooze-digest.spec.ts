@@ -9,7 +9,7 @@
  * that the plural is the LANGUAGE's and not English's wearing Italian words.
  */
 
-import type { NcSnooze, NcSnoozeSuppressed } from '@camstack/types'
+import type { NcSnooze, NcSnoozeSuppressed } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { buildSnoozeDigest, digestTargets } from '../snooze-digest.js'
 import { NcTextCatalog } from '../text-catalog.js'

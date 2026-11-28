@@ -9,7 +9,7 @@
  *    descriptor as `app`" fails, and so does D681's whitelist key-set guard;
  *  - leave `fusion` out of `replayTape`'s control cases: "RecordedTracker reports recorded fusions" fails.
  */
-import { APPEARANCE_BIN_COUNT } from '@camstack/types'
+import { APPEARANCE_BIN_COUNT } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { buildFrameRecord } from '../recorder/frame-record.js'
 import { FRAME, FULL, faces, OBSERVATION } from '../recorder/__tests__/frame-record-fixtures.js'

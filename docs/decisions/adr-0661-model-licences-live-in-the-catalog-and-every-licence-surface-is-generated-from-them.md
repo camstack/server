@@ -16,7 +16,7 @@ applies-to:
 
 ## Context
 
-`camstack/server` (MIT) is becoming public, and CamStack downloads more than
+`dominevo/server` (MIT) is becoming public, and Dominevo downloads more than
 eighty models from its own Hugging Face mirror and from third parties. On
 2026-09-26 the catalog's `license` field was a bare string, filled on 12 of 77
 entries; the mirror had no README and no LICENSE; nothing refused an entry
@@ -49,10 +49,10 @@ behind the catalog the day SigLIP 2 and YuNet landed.
    copies, and the model table of the HF card (required attributions verbatim
    — "Built with Llama" and Apple's AMLR sentence among them). Operator-facing
    *Models and licenses* lives in the public docs
-   (`camstack/docs` → `/docs/detection/models`), not in the Admin UI
+   (`dominevo/docs` → `/docs/detection/models`), not in the Admin UI
    (operator, 2026-10-04: the Admin page was removed).
 3. **The Ultralytics AGPL-3.0 weights are kept** (operator premise
-   2026-09-26: the server is public, CamStack stays free and open source).
+   2026-09-26: the server is public, Dominevo stays free and open source).
    Their Corresponding Source is the upstream checkpoint plus the export
    scripts, set out once in the notice's source offer.
 4. **A non-commercial model ships only by name**, listed in
@@ -70,7 +70,7 @@ behind the catalog the day SigLIP 2 and YuNet landed.
 
 ### `yolov8n-package`: kept, AGPL-3.0, declared (operator, 2026-09-27)
 
-`yolov8n-package` is Ultralytics YOLOv8n fine-tuned by CamStack: **AGPL-3.0**,
+`yolov8n-package` is Ultralytics YOLOv8n fine-tuned by Dominevo: **AGPL-3.0**,
 declared as such in the catalog and the notice, its fine-tuning data
 unverified. The operator decided on 2026-09-27 to **keep it**, declared, with
 the source public — on the same premise as the other Ultralytics weights
@@ -95,19 +95,19 @@ Retiring it is part of any later clean-up of the face line.
 ### Model Studio's curated catalogs
 
 The pinned plugin catalog YOLOv9 manifest (34 builds) and the plus catalog public catalog
-(Coral MobileDet) are lists CamStack writes, not operator uploads, so they carry
+(Coral MobileDet) are lists Dominevo writes, not operator uploads, so they carry
 records and are walked by the guard like any catalog: every entry must DECLARE
 its licence, and Model Studio shows it. Since 2026-10-06 the generator keeps
 them OUT of the public notice (`FIXED_STEPS` → `excluded`): they are imported
 on the operator's request straight from their publishers, never hosted or
-redistributed by CamStack, so the notice names them only in one prose paragraph
+redistributed by Dominevo, so the notice names them only in one prose paragraph
 under "Your own models", and no public licence surface names a third-party NVR
 project's catalog. The
 plugin catalog weights are `UNKNOWN` per model with GPL-3.0 code: the ONNX export's
 node traces name WongKinYiu's `yolov9` code (`models.yolo.DetectionModel`), not
 Ultralytics, and the repository is tagged MIT only at repository level. The
 plus catalog MobileDet is Google's Apache-2.0 Coral model. Neither is re-hosted by
-CamStack.
+Dominevo.
 
 ### SCRFD alternatives, recorded for the later decision
 
@@ -129,7 +129,7 @@ licence, not the data question.
 ## Consequences
 
 - A new catalog entry cannot land without its licence record, and a
-  CamStack-hosted one without the statement of what CamStack changed (Apache
+  Dominevo-hosted one without the statement of what Dominevo changed (Apache
   §4(b), GPL/AGPL §5(a) and the Apple AMLR all ask for it).
 - `NON_COMMERCIAL_ACCEPTED` IS the list of accepted non-commercial models.
   Removing a model removes its catalog entry, its line there, and — by the
@@ -137,11 +137,11 @@ licence, not the data question.
 - The generated surfaces are as current as the catalog, and only as TRUE as
   the records: `UNKNOWN` (`arcface-r100`, `inception-resnet-v1`) is an honest
   gap and is shown as one.
-- The public docs list CamStack's first-party catalog offer separately from
+- The public docs list Dominevo's first-party catalog offer separately from
   Model Studio third-party import surfaces (plugin catalog / plus catalog). A custom
-  model's licence is its author's; CamStack does not record it and says so.
+  model's licence is its author's; Dominevo does not record it and says so.
 - A framework release is needed for `ModelLicenseSchema` to reach a running
-  hub (`@camstack/types` travels inside `@camstack/server`).
+  hub (`@dominevo/types` travels inside `@dominevo/server`).
 
 ## Enforcement
 

@@ -24,7 +24,7 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import type { DataPlaneHandler, IScopedLogger } from '@camstack/types'
+import type { DataPlaneHandler, IScopedLogger } from '@dominevo/types'
 import type { TrainingExportPlan } from './dataset-plan.js'
 import { streamDataset, type ArchiveSink, type BlobReader } from './training-export-stream.js'
 

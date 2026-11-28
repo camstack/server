@@ -1,4 +1,4 @@
-import type { DeviceSearchItem, DeviceValueOption } from '@camstack/types'
+import type { DeviceSearchItem, DeviceValueOption } from '@dominevo/types'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import type { JSX, KeyboardEvent, ReactNode } from 'react'
 import { useUiText } from '../../contexts/ui-text'

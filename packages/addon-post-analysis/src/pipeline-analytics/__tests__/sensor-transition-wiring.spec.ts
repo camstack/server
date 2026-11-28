@@ -4,7 +4,7 @@
  * `sensor-transition-gate.spec.ts` proves the predicate. This proves it is
  * actually ASKED: the gate is one line in `handleSensorStateChanged`, and a
  * unit test of the gate alone stays green with that line deleted. Which is the
- * whole defect — the predicate already existed in `@camstack/types`
+ * whole defect — the predicate already existed in `@dominevo/types`
  * (`evaluateSensorEdge`), the doorbell and the recorder already called it, and
  * post-analysis was the consumer that did not.
  *
@@ -14,7 +14,7 @@
  * Both produced a `SensorEvent` row and a synthetic `contact` track.
  */
 
-import type { IScopedLogger, SensorEvent, Track } from '@camstack/types'
+import type { IScopedLogger, SensorEvent, Track } from '@dominevo/types'
 import { makeDeviceStateChangedEvent } from '../../__tests__/support/events.js'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { NotificationCenter } from '../../notification-center/index.js'

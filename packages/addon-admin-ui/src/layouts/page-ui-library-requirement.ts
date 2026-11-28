@@ -10,7 +10,7 @@
  * refuse, and an unknown host version never refuses.
  */
 
-export const UI_LIBRARY_PACKAGE = '@camstack/ui-library'
+export const UI_LIBRARY_PACKAGE = '@dominevo/ui-library'
 
 /** The part of a share-scope entry this check reads. */
 interface DeclaredShare {

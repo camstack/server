@@ -9,8 +9,8 @@ import type {
   IScopedLogger,
   RunDetailSubtreeInput,
   RunDetailSubtreeResult,
-} from '@camstack/types'
-import { nodePin } from '@camstack/types'
+} from '@dominevo/types'
+import { nodePin } from '@dominevo/types'
 import type { TrackDetailFrame } from '../detail-dispatcher.js'
 import { TrackDetailDispatcher } from '../detail-dispatcher.js'
 import { DetailRoute } from '../frame/detail-route.js'

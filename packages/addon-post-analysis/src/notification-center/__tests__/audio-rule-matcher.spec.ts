@@ -23,7 +23,7 @@
  * no timers and does no I/O.
  */
 
-import type { NcAudioCondition } from '@camstack/types'
+import type { NcAudioCondition } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   AudioWatcher,

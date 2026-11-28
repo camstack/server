@@ -5,7 +5,7 @@
  * scene and the controls below it. Until it lands they use the user's unit
  * preferences alone; outside a card they see `null`.
  */
-import type { SourceInfo } from '@camstack/types'
+import type { SourceInfo } from '@dominevo/types'
 import { createContext, type ReactNode, useContext, useMemo } from 'react'
 import { useDeviceManagerGetDevice } from '../../generated/system-hooks'
 import type { ReadingDisplaySubject } from './measurement-display'

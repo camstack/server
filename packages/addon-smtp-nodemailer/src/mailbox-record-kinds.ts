@@ -3,7 +3,7 @@
  * `smtp-nodemailer`. The row id is the broker id. The SMTP AUTH password is a keychain-bound secret
  * field; nothing else holds a copy.
  */
-import { type DefinedRecordKind, defineEntryKind, entryBody } from '@camstack/types'
+import { type DefinedRecordKind, defineEntryKind, entryBody } from '@dominevo/types'
 import { z } from 'zod'
 
 export const MailboxBodySchema = entryBody({

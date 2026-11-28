@@ -34,7 +34,7 @@ import {
   type ReadingQuantity,
   type WebrtcStreamTarget,
   baseUnitOf,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { cameraStreamEntities } from './camera-entities.js'
 import { type PlatformSupport, UNNEGOTIATED_SUPPORT } from './component-support.js'
 import { isItemEntityCap, ITEM_ENTITY_MAP, type ItemEntity } from './item-entities.js'
@@ -315,7 +315,7 @@ function deviceBlock(device: CatalogDevice): HaDeviceBlock {
   return {
     ids: [deviceKeyFor(device.id)],
     name: device.name,
-    mf: device.manufacturer ?? 'CamStack',
+    mf: device.manufacturer ?? 'Dominevo',
     mdl: device.model ?? device.type,
   }
 }
@@ -2692,14 +2692,14 @@ export const CAPS_NOT_EXPORTED: readonly UnexportedCap[] = [
       "camera's footage is being written and why not when it is not. Home Assistant " +
       'would carry it as a property of the camera the operator is looking at, and the ' +
       'camera catalog does not model the recorder — exporting it here would put a ' +
-      'CamStack-internal reason string on a device entity nothing in HA can act on.',
+      'Dominevo-internal reason string on a device entity nothing in HA can act on.',
   },
   {
     cap: 'navigation',
     reason:
       'Rooms, zones and a map for a robot: a spatial surface with no Home Assistant ' +
       'entity shape. HA models a vacuum as a `vacuum` entity with commands, which ' +
-      '`vacuum-control` already provides; the map behind it is drawn by the CamStack ' +
+      '`vacuum-control` already provides; the map behind it is drawn by the Dominevo ' +
       'UI and has no projection that survives being flattened into a state string.',
   },
   {
@@ -2809,7 +2809,7 @@ export const CAPS_NOT_EXPORTED: readonly UnexportedCap[] = [
   {
     cap: 'pipeline-analytics',
     reason:
-      'Pipeline telemetry. Cluster health is already the CamStack Server synthetic device; per-camera pipeline counters would fan out across the fleet with nothing consuming them.',
+      'Pipeline telemetry. Cluster health is already the Dominevo Server synthetic device; per-camera pipeline counters would fan out across the fleet with nothing consuming them.',
   },
   {
     cap: 'stream-params',
@@ -2887,7 +2887,7 @@ export const CAPS_NOT_EXPORTED: readonly UnexportedCap[] = [
   {
     cap: 'heating-valve',
     reason:
-      'Radiator valve position telemetry (0–100 %). Shown on the CamStack thermostat ' +
+      'Radiator valve position telemetry (0–100 %). Shown on the Dominevo thermostat ' +
       'row; no Home Assistant / voice-assistant entity mapping is defined yet — ' +
       'export would mint a sensor with no agreed device_class or control surface.',
   },

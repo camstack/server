@@ -5,7 +5,7 @@ import {
   type ControlStatus,
   type DeviceContext,
   type InferNativeProvider,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { MowerDevice as DreameMower, type MowerMap } from '@apocaliss92/nodedreame'
 import { DreameChildDevice } from './dreame-child-device.js'
 

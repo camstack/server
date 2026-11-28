@@ -8,7 +8,7 @@
  */
 import { describe, it, expect } from 'vitest'
 import { buildTreeFromAddons, resolvePipeline } from '../pipeline-resolver.js'
-import type { PipelineEngineChoice, PipelineSchema } from '@camstack/types'
+import type { PipelineEngineChoice, PipelineSchema } from '@dominevo/types'
 
 const ENGINE_CPU: PipelineEngineChoice = { runtime: 'python', backend: 'cpu', format: 'onnx' }
 

@@ -47,7 +47,7 @@ from the LogManager that accepted it.
   router reads `addonId` / `nodeId` as provider routing.
 - Cancellation granularity is one slice (≤ 1 s by default) plus `cancelRead`.
 - Debug lines live only in the tail when winston's level is `info`.
-- A cap change: `@camstack/system` and `@camstack/server` must be
+- A cap change: `@dominevo/system` and `@dominevo/server` must be
   force-published for it to reach a node.
 
 ## Enforcement

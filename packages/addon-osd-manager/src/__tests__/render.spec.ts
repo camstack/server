@@ -1,4 +1,4 @@
-import { type OsdSlotBinding, OsdSlotBindingSchema } from '@camstack/types'
+import { type OsdSlotBinding, OsdSlotBindingSchema } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { type OsdFacts, renderSlot } from '../render.js'
 import type { TemplateOutcome } from '../template-context.js'
@@ -44,9 +44,9 @@ describe('renderSlot', () => {
 
   it('writes the rendered outcome for static text, not raw template markup', () => {
     const staticBinding = binding({ source: { kind: 'static', text: '{{ camera.name }}' } })
-    expect(
-      renderSlot('text-1', staticBinding, CAMERA, facts(), undefined),
-    ).toMatchObject({ outcome: 'unreadable' })
+    expect(renderSlot('text-1', staticBinding, CAMERA, facts(), undefined)).toMatchObject({
+      outcome: 'unreadable',
+    })
     expect(
       renderSlot(
         'text-1',

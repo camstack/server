@@ -97,7 +97,7 @@ is REQUIRED, input travels on stdin (never argv), output is counts and keys.
 
 **Truth per addon: the source the RUNNING build read.** A forked addon read its BLOB; a
 hub-main builtin reads the hub rows. The hub-main set is DERIVED from `addons.list` with the
-rule the addon reference is generated from (a `@camstack/system` builtin without
+rule the addon reference is generated from (a `@dominevo/system` builtin without
 `execution.isolate`; `--hub-main-addons` can only ADD), never hard-coded: `local-network`,
 `local-auth`, `alert-center`, `backup-orchestrator`, `core-blocks`, `calendars`… all read the
 hub rows, which are live truth for them (never "hub-only"), and the verify covers them on

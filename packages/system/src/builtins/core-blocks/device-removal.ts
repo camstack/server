@@ -39,7 +39,7 @@ import {
   type IScopedLogger,
   type LinkedTriggerSource,
   type UnitResolver,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { isGeneratedCode } from './automation-template-instances.js'
 import type { ComposedDeviceRowBody } from './record-kinds.js'
 

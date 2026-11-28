@@ -9,7 +9,7 @@
  *  2. `planDropMovedExposure` (plan): the two keys are deleted only while the record holds every
  *     device and action the settings carried; a record that cannot be read leaves them in place.
  */
-import { type MigrationPlan, type MigrationProcedureResult, preconditionOf } from '@camstack/types'
+import { type MigrationPlan, type MigrationProcedureResult, preconditionOf } from '@dominevo/types'
 import type { ActionSceneEntry } from '../action-scenes.js'
 import {
   ALEXA_INSTANCE_ID,

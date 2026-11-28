@@ -27,7 +27,7 @@ import {
   type TrackRelationKind,
   type TrackRelationRefusal,
   type TrackSide,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { relationRowId, type TrackRelationsStore } from '../store/track-relations-store.js'
 
 export interface TrackFacts {

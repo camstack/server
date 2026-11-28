@@ -21,7 +21,7 @@
  *    does this: an empty `runs` would tell every rule it had not run (D393).
  */
 
-import type { NcRuleLastRun, NcRuleLastRuns } from '@camstack/types'
+import type { NcRuleLastRun, NcRuleLastRuns } from '@dominevo/types'
 import type { NcOutboxStatus } from './outbox.js'
 
 /**

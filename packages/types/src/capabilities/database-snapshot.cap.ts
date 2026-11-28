@@ -7,7 +7,7 @@ import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
  * The suffix of a verified snapshot, written next to the live database it
  * copies: `<db>.backup-snapshot`. A restore promotes it back over `<db>`
  * (`server/backend/src/sqlite-restore.ts` spells the same string — the
- * launcher stays free of `@camstack/*` runtime imports — and a spec pins the
+ * launcher stays free of `@dominevo/*` runtime imports — and a spec pins the
  * two together).
  */
 export const DATABASE_SNAPSHOT_SUFFIX = '.backup-snapshot'

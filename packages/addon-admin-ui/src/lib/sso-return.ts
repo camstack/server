@@ -12,7 +12,7 @@
  *
  * A `#token=` fragment is the session itself and belongs to the auth context.
  */
-import type { SecondFactorKind } from '@camstack/sdk'
+import type { SecondFactorKind } from '@dominevo/sdk'
 import i18n from '../i18n/index'
 
 export type SsoReturn =

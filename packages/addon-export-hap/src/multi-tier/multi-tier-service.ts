@@ -48,7 +48,7 @@ import {
   Service,
   type CharacteristicValue,
 } from '@homebridge/hap-nodejs'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 import type { MultiTierNegotiation } from './negotiation.js'
 
@@ -237,7 +237,7 @@ export function buildMultiTierServices(input: MultiTierInput): MultiTierServices
 
   // ── Camera Multi-Tier RTP Stream Management (0x8031) ───────────────
   const streamManagement = new Service(
-    'CamStack multi tier',
+    'Dominevo multi tier',
     MULTI_TIER_RTP_SERVICE_UUID,
     'multi-tier',
   )

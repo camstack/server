@@ -38,11 +38,11 @@
  * a field on the result: the cap output schema
  * (`pipeline-runner.cap.ts` → `z.object({ details }).nullable()`) is parsed on
  * the hub route and Zod strips unknown keys, so a new field would need a
- * `@camstack/types` + codegen + server-train change to survive. The marker has
+ * `@dominevo/types` + codegen + server-train change to survive. The marker has
  * a TWIN in `addon-post-analysis/src/pipeline-analytics/detail-refusal.ts`
  * (addons never import each other) — keep the two identical.
  */
-import type { PipelineStepInputOutput } from '@camstack/types'
+import type { PipelineStepInputOutput } from '@dominevo/types'
 
 /**
  * How long a soft-detached camera's detail step tree stays resolvable.

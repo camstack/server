@@ -23,8 +23,8 @@
  * branch that drops work logs it. A runner that is mid-respawn contributes
  * nothing for one call, and the rest of the cluster still answers.
  */
-import type { ILoadContributionProvider, ReportedLoadContribution } from '@camstack/types'
-import { errMsg } from '@camstack/types'
+import type { ILoadContributionProvider, ReportedLoadContribution } from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
 
 /** What {@link buildLoadContributionPlane} needs off the registry, and no more. */
 export interface LoadContributionProviderSource {

@@ -16,12 +16,12 @@ on:
         options: [affected, all]
         default: affected
       include_dependents:
-        description: "Rarely needed. OFF (default) publishes only packages whose OWN files changed, plus @camstack/server whenever one of them is in the server's dependency closure — which is how a framework change actually reaches a node. ON adds every package that DEPENDS on a changed lib: a dozen addons that pin nothing, declare @camstack/* as '*', and gain nothing from the bump. Turn it ON only when a dependent's PUBLISHED tarball must change without its own files changing."
+        description: "Rarely needed. OFF (default) publishes only packages whose OWN files changed, plus @dominevo/server whenever one of them is in the server's dependency closure — which is how a framework change actually reaches a node. ON adds every package that DEPENDS on a changed lib: a dozen addons that pin nothing, declare @dominevo/* as '*', and gain nothing from the bump. Turn it ON only when a dependent's PUBLISHED tarball must change without its own files changing."
         required: false
         type: boolean
         default: false
       force_packages:
-        description: "Comma-separated extra packages to publish on top of scope detection (e.g. @camstack/types,@camstack/sdk). Useful when only the workflow changed but a specific package needs a republish."
+        description: "Comma-separated extra packages to publish on top of scope detection (e.g. @dominevo/types,@dominevo/sdk). Useful when only the workflow changed but a specific package needs a republish."
         required: false
         type: string
         default: ""
@@ -89,7 +89,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Pre-build @camstack/nx-plugin. `nx.json` registers it as a plugin,
+      # Pre-build @dominevo/nx-plugin. `nx.json` registers it as a plugin,
       # so the very first `nx` call below loads `./dist/index.js` — which
       # does not exist on a fresh checkout. (The same step is in the
       # Dockerfile for the same reason.)
@@ -141,7 +141,7 @@ jobs:
               PROJECTS='[]'
             elif [ "$INCLUDE_DEPENDENTS" = "true" ]; then
               # Cascade: changed packages + everything that depends on them
-              # (e.g. a real @camstack/types source change → all dependents).
+              # (e.g. a real @dominevo/types source change → all dependents).
               echo "mode=affected+dependents" >> $GITHUB_OUTPUT
               PROJECTS=$(npx nx show projects --affected --files="$CHANGED" --json)
             else
@@ -150,7 +150,7 @@ jobs:
               # not its dependents — turn on include_dependents to cascade.
               # Direct changes + the two cascades that make a release REACH a
               # node: a package that compiles another's source into its own
-              # artifact, and @camstack/server for anything in its pinned
+              # artifact, and @dominevo/server for anything in its pinned
               # closure. Both live in scripts/ci/publish-scope.mjs, under test
               # against the real workspace (scripts/__tests__).
               echo "mode=affected (direct + bundle candidates + closure)" >> $GITHUB_OUTPUT
@@ -170,7 +170,7 @@ jobs:
 
           # Pass through to the filter step: nx-detected projects (JSON
           # array of nx project names) + force_packages (comma-separated
-          # npm package names like "@camstack/types").
+          # npm package names like "@dominevo/types").
           # The filter resolves each to a workspace package dir and
           # de-duplicates. Private packages stay in the INPUT so a change to
           # one can still cascade; partitionPublishSet drops them from the
@@ -214,10 +214,10 @@ jobs:
             // scripts/ci/publish-scope.mjs, under test against the real
             // workspace: a package that compiles another's SOURCE into its
             // artifact (admin-ui holds a COPY of ui-library), and
-            // @camstack/server for anything in its pinned closure. Applied
+            // @dominevo/server for anything in its pinned closure. Applied
             // here too so force_packages and scope=all get the same answer as
             // the affected path; a second copy of the rules in this YAML is how
-            // the closure rule covered @camstack/server/system and nothing else for a
+            // the closure rule covered @dominevo/server/system and nothing else for a
             // month.
             //
             // NO BACKTICKS IN THIS BLOCK. It is a double-quoted shell string,
@@ -382,8 +382,8 @@ jobs:
         run: npx tsx scripts/release-changelog.ts "${{ steps.output.outputs.packages }}"
 
       # ── Pin root-package dependency closures ──────────────────────
-      # The workspace declares @camstack/* deps as "*" (always link local);
-      # the PUBLISHED @camstack/server (the single root package for every node
+      # The workspace declares @dominevo/* deps as "*" (always link local);
+      # the PUBLISHED @dominevo/server (the single root package for every node
       # role) must pin exact versions or applyServerUpdate + Docker builds
       # resolve to "latest of
       # everything at install time" and stop being reproducible checkpoints.
@@ -439,19 +439,19 @@ jobs:
 
             # THE CLOSURE IS PUBLISHED LAST, AND ONLY IF WHAT IT PINS EXISTS.
             #
-            # `pin-root-deps.mjs` rewrites @camstack/* deps from "*" to the exact
+            # `pin-root-deps.mjs` rewrites @dominevo/* deps from "*" to the exact
             # version this run is about to publish. That pin is written whether or
             # not the dependency actually lands, so a run where ui-library failed
-            # still shipped a @camstack/server pinning it — and every node then
+            # still shipped a @dominevo/server pinning it — and every node then
             # refused to stage with ETARGET, hours later, far from the cause
             # (2026-09-14: server@1.2.294 pinned ui-library@1.2.162, which was
             # never on the registry). The closure is the ONE artifact whose
             # installability depends on this run's other publishes, so it asks.
             # THE CLOSURE SHIPS ONLY IF THE REST OF THE RUN DID.
             #
-            # `pin-root-deps.mjs` pins @camstack/* to the versions THIS run
+            # `pin-root-deps.mjs` pins @dominevo/* to the versions THIS run
             # publishes, whether or not they land. A run where one of them
-            # failed would otherwise ship a @camstack/server nobody can
+            # failed would otherwise ship a @dominevo/server nobody can
             # install, and the failure surfaces on the nodes — a staging
             # ETARGET, twenty minutes and one deploy chain away from its cause.
             #
@@ -462,7 +462,7 @@ jobs:
             # AND IT VERIFIES THE PINS IT IS ABOUT TO SHIP.
             #
             # The rule above answers from what this run knows, and that was not
-            # enough: on 2026-09-18 npm printed `+ @camstack/addon-pipeline@
+            # enough: on 2026-09-18 npm printed `+ @dominevo/addon-pipeline@
             # 1.2.263` and exited 0, the run counted it published, the closure
             # pinned it — and two hours later the version was still absent from
             # the registry. Every node then refused to stage with ETARGET, which
@@ -474,11 +474,11 @@ jobs:
             # what it pins can be installed, with a bounded retry for the
             # registry's own lag. A false refusal costs a re-run; a false accept
             # costs every node's update path until somebody notices.
-            if [ "$NAME" = "@camstack/server" ] && [ "$FAILED" -eq 0 ]; then
+            if [ "$NAME" = "@dominevo/server" ] && [ "$FAILED" -eq 0 ]; then
               MISSING=$(node -e "
                 const fs=require('fs');
                 const pj=JSON.parse(fs.readFileSync('package.json','utf-8'));
-                const deps=Object.entries(pj.dependencies||{}).filter(([n])=>n.startsWith('@camstack/'));
+                const deps=Object.entries(pj.dependencies||{}).filter(([n])=>n.startsWith('@dominevo/'));
                 console.log(deps.map(([n,v])=>n+'@'+v).join(' '));
               ")
               for SPEC in $MISSING; do
@@ -504,7 +504,7 @@ jobs:
                 fi
               done
             fi
-            if [ "$NAME" = "@camstack/server" ] && [ "$FAILED" -gt 0 ]; then
+            if [ "$NAME" = "@dominevo/server" ] && [ "$FAILED" -gt 0 ]; then
               echo "::error::refusing to publish $NAME@$VER — $FAILED package(s) failed earlier in this run, so the closure pins versions that were never published:$FAILED_NAMES"
               echo "✗ $NAME@$VER REFUSED (the closure would be uninstallable)"
               FAILED=$((FAILED + 1))

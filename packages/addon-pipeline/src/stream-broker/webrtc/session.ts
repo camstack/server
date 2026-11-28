@@ -46,7 +46,7 @@ export interface IceCandidatePayload {
   sdpMid: string | null
   sdpMLineIndex: number | null
 }
-import { errMsg, type EncodeProfile, type WebrtcStreamTarget } from '@camstack/types'
+import { errMsg, type EncodeProfile, type WebrtcStreamTarget } from '@dominevo/types'
 import { WEBRTC_FALLBACK_PROFILE } from './webrtc-fallback-profile.js'
 import { SendHistory, type SendHistoryReader } from './delivery-meter.js'
 import { ADAPTIVE_DELIVERY_CONFIG } from './adaptive-config.js'
@@ -88,7 +88,7 @@ async function loadWerift(): Promise<WeriftModule> {
   // the closure was "the patched copy". It was not: `patch-package` runs on the repo root's
   // postinstall, in a DEV tree, and the closure installs werift from npm with no patch step —
   // so the hub, the Docker agent and the Electron agent all ran it UNPATCHED from the day the
-  // patch was written until 2026-09-12 (D478). It is patched there now because @camstack/server
+  // patch was written until 2026-09-12 (D478). It is patched there now because @dominevo/server
   // ships the patch in `dist/closure-patches/` and applies it from its own postinstall, and
   // `findUnappliedClosurePatches` refuses to swap into a closure where the marker is absent.
   // Bumping werift means re-taking the patch AND moving the exact pin in patch-reach.json and

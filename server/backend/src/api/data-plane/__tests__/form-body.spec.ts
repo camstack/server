@@ -5,7 +5,7 @@
  */
 import { createServer, IncomingMessage } from 'node:http'
 import { Socket } from 'node:net'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { proxyToUpstream } from '../../../../../../packages/system/src/http/reverse-proxy.js'
 import Fastify, { type FastifyInstance } from 'fastify'
 import { afterEach, describe, expect, it, vi } from 'vitest'

@@ -9,7 +9,7 @@ import {
   type IDeviceRuntimeState,
   type InferNativeProvider,
   switchCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { Homematic } from 'nodehomematic'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { HmActuatorDevice } from '../devices/hm-actuator-device.js'

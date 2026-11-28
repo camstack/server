@@ -33,7 +33,7 @@ import type {
   CameraAudioStatus,
   CameraRecordingStatus,
   CameraRecordingMode,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 // ── Stage result types ────────────────────────────────────────────────────────
 // Each type mirrors the fields the implementation (Task 3) will collect from

@@ -1,4 +1,4 @@
-import type { ConfigUISchema } from '@camstack/types'
+import type { ConfigUISchema } from '@dominevo/types'
 import { z } from 'zod'
 
 /**
@@ -55,7 +55,7 @@ const veluxDeviceBase = z.object({
   system: z.literal('velux'),
 })
 
-/** The gateway box itself ({@link import('@camstack/types').DeviceType.Gateway}). */
+/** The gateway box itself ({@link import('@dominevo/types').DeviceType.Gateway}). */
 export const veluxGatewayDeviceSchema = veluxDeviceBase.extend({
   /** The adoption candidate id (`<integration>:gateway`). */
   nativeId: z.string().min(1),
@@ -71,7 +71,7 @@ const veluxNodeFields = {
 
 /**
  * A window with an integrated rain sensor: a
- * {@link import('@camstack/types').DeviceType.Container} whose accessory children
+ * {@link import('@dominevo/types').DeviceType.Container} whose accessory children
  * are its cover and its rain sensor.
  */
 export const veluxWindowSchema = veluxDeviceBase.extend({

@@ -3,7 +3,7 @@
  * operator already has, audited as `orphaned-device` (D865), and lists what it
  * holds for the admin clean-up.
  */
-import type { IScopedLogger, TrackCascadeCounts } from '@camstack/types'
+import type { IScopedLogger, TrackCascadeCounts } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { createAnalyticsRemovalHook } from '../device-removal-hook.js'
 

@@ -1,5 +1,5 @@
 /**
- * `camstack discover` — list the hubs `camstack login` would offer (D838):
+ * `dominevo discover` — list the hubs `dominevo login` would offer (D838):
  * the ones the LAN announces over mDNS (`_camstack._tcp`, the hub's HTTPS
  * endpoint) plus the ones this machine already knows, reachable ones only,
  * each with the SOURCE that named it.
@@ -13,7 +13,7 @@ import { describeHub, findHubs } from '../discovery/hub-finder.js'
 
 const DEFAULT_LISTEN_SECONDS = 3
 
-/** Sub-command entrypoint — `camstack discover`. */
+/** Sub-command entrypoint — `dominevo discover`. */
 export async function runDiscover(args: readonly string[]): Promise<void> {
   const { values } = parseArgs({
     args: [...args],
@@ -53,7 +53,7 @@ export async function runDiscover(args: readonly string[]): Promise<void> {
   }
   if (hubs.length === 0) {
     console.log(
-      '[camstack] No hub responded. Pass --server https://<host>:<port> to `camstack login`, ' +
+      '[camstack] No hub responded. Pass --server https://<host>:<port> to `dominevo login`, ' +
         'or check the hub is reachable (mDNS needs UDP 5353 multicast on the LAN).',
     )
     return
@@ -61,6 +61,6 @@ export async function runDiscover(args: readonly string[]): Promise<void> {
   console.log(`[camstack] Found ${hubs.length} hub(s):`)
   for (const hub of hubs) {
     console.log(`  • ${describeHub(hub)}`)
-    console.log(`      → camstack login -s ${hub.url}`)
+    console.log(`      → dominevo login -s ${hub.url}`)
   }
 }

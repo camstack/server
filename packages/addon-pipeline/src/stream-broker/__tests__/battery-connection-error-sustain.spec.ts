@@ -19,7 +19,7 @@ import type {
   IScopedLogger,
   StreamSource,
   SystemEvent,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { StreamBroker } from '../stream-broker/stream-broker.js'
 import { StreamBrokerManager } from '../stream-broker/stream-broker-manager.js'
 import {

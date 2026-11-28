@@ -25,8 +25,8 @@ import type {
   IScopedLogger,
   ProviderRegistration,
   SystemEvent,
-} from '@camstack/types'
-import { EventCategory } from '@camstack/types'
+} from '@dominevo/types'
+import { EventCategory } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { makeRecordsAccessForOwner } from '../../sqlite-storage/__tests__/support/records-world.js'
 import { DeviceRegistry } from '../../../kernel/device-registry.js'

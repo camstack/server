@@ -4,7 +4,7 @@ Authentication bundle — OIDC and WebAuthn/passkey. Multi-entry npm package shi
 
 <!-- readme:generated:start (derived from the manifest; edit outside this block) -->
 
-Package `@camstack/addon-auth` on npm.
+Package `@dominevo/addon-auth` on npm.
 
 ## What it provides
 
@@ -16,11 +16,11 @@ Package `@camstack/addon-auth` on npm.
 ## Requirements
 
 - Placement: hub-only (runner group `auth`).
-- A CamStack hub. An agent is used only where the placement above allows it.
+- A Dominevo hub. An agent is used only where the placement above allows it.
 
 ## Documentation
 
-- [docs/architecture/authentication.md](https://github.com/camstack/server/blob/main/docs/architecture/authentication.md)
+- [docs/architecture/authentication.md](https://github.com/dominevo/server/blob/main/docs/architecture/authentication.md)
 
 See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
 

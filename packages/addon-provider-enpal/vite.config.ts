@@ -6,6 +6,6 @@ export default buildLibPreset({
     addon: 'src/addon.ts',
   },
   // Pure TypeScript over `fetch`: no runtime dependency, ships self-contained
-  // (only @camstack/kernel + node builtins stay external).
+  // (only @dominevo/kernel + node builtins stay external).
   externals: 'self-contained',
 })

@@ -1,4 +1,4 @@
-import type { IDevice } from '@camstack/types'
+import type { IDevice } from '@dominevo/types'
 
 /**
  * Mark every HA device of `brokerId` — containers AND their entity-children —

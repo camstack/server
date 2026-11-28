@@ -71,7 +71,7 @@ import {
   type MotionSource,
   type MotionSources,
   type MotionStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { CameraIdsRead } from './controller.js'
 
 /** One `MotionOnMotionChanged`, as the slice reads it. */

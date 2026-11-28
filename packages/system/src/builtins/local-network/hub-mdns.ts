@@ -1,5 +1,5 @@
 /**
- * Hub mDNS advertisement (D838) — how `camstack login` / `camstack discover`
+ * Hub mDNS advertisement (D838) — how `dominevo login` / `dominevo discover`
  * find a hub on the LAN.
  *
  * The hub publishes ONE `_camstack._tcp` service for its HTTPS endpoint. There
@@ -17,8 +17,8 @@
  */
 import { isIP } from 'node:net'
 
-import type { HubAddressBook, IScopedLogger } from '@camstack/types'
-import { HUB_MDNS_ROLE, HUB_MDNS_SERVICE_TYPE, HUB_MDNS_TXT_KEYS } from '@camstack/types'
+import type { HubAddressBook, IScopedLogger } from '@dominevo/types'
+import { HUB_MDNS_ROLE, HUB_MDNS_SERVICE_TYPE, HUB_MDNS_TXT_KEYS } from '@dominevo/types'
 import { isAnnouncedHubId } from '../../kernel/hub-identity.js'
 
 /** What one published service says. Every value is public. */

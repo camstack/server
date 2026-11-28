@@ -3,8 +3,8 @@
  * A grid is created empty and laid out on its block; a Terminal camera names
  * one Terminal, and a Terminal another block already shows is not offered.
  */
-import type { CompositionListRead, CoreBlock } from '@camstack/types'
-import { DeviceType } from '@camstack/types'
+import type { CompositionListRead, CoreBlock } from '@dominevo/types'
+import { DeviceType } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { terminalCameraIndex, terminalChoices } from '../camera-block-model'
 import { canSaveDraft, compileDraft, draftForPick, draftFromHelper } from '../helper-form-model'

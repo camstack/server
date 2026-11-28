@@ -9,7 +9,7 @@
  * did not answer is never "orphan" — and only an orphan can be deleted from
  * the page (D315: absence is claimed only from a query that answered).
  */
-import { type KeychainSecretUsage, parseSecretRef, type SecretScope } from '@camstack/types'
+import { type KeychainSecretUsage, parseSecretRef, type SecretScope } from '@dominevo/types'
 import { LEGACY_INTEGRATION_ROWS_TABLE } from '../sqlite-storage/migrations/legacy-integration-rows-door.js'
 import type { KeychainDoor, KeychainSecretRow } from './keychain-store.js'
 import {

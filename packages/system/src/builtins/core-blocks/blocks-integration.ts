@@ -32,7 +32,7 @@ import {
   DeclaredDevices,
   errMsg,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** Operator-visible name of the shared integration. Seeded once, at create. */
 export const BLOCKS_INTEGRATION_NAME = 'Blocks'

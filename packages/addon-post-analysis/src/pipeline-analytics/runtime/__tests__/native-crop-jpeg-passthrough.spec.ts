@@ -28,7 +28,7 @@
  */
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { defined } from '../../../__tests__/support/vitest-mock.js'
-import type { AddonContext, FrameHandle, IScopedLogger } from '@camstack/types'
+import type { AddonContext, FrameHandle, IScopedLogger } from '@dominevo/types'
 
 /** Construction count at the ONE decode/encode seam this addon has: `sharp`. */
 const seam = vi.hoisted(() => ({ sharpCalls: 0 }))

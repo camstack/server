@@ -39,7 +39,7 @@ import type {
   ObjectEvent,
   SensorEvent,
   Track,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { NcAlarmPanelPort, NotificationCenterDeps } from './index.js'
 
 /** Bound on the post-hold-off `nodes.directory` read that names a node. */

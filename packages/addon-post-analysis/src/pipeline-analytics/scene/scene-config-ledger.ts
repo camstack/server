@@ -12,8 +12,8 @@
  * The reseed is bounded by {@link SCENE_LEDGER_LOAD_LIMIT}-sized pages: a bound
  * nobody chose is the default wearing the word.
  */
-import type { IScopedLogger, RecordKindHandle, RecordRow } from '@camstack/types'
-import { SceneMonitorSchema } from '@camstack/types'
+import type { IScopedLogger, RecordKindHandle, RecordRow } from '@dominevo/types'
+import { SceneMonitorSchema } from '@dominevo/types'
 import type { SceneBody } from '../record-kinds.js'
 
 /** One persisted scene definition. */

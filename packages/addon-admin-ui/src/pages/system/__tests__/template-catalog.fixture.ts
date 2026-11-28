@@ -1,4 +1,4 @@
-import type { NcTemplateVarDescriptor } from '@camstack/types'
+import type { NcTemplateVarDescriptor } from '@dominevo/types'
 
 /**
  * A small, deliberate catalog for specs that exercise the placeholder picker

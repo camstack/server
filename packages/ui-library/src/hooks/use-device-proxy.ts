@@ -29,8 +29,8 @@
  * proxy shape (matches both at runtime).
  */
 import { useCallback, useMemo, useSyncExternalStore } from 'react'
-import type { DeviceBinding, DeviceProxy } from '@camstack/types'
-import { createDeviceProxy } from '@camstack/types'
+import type { DeviceBinding, DeviceProxy } from '@dominevo/types'
+import { createDeviceProxy } from '@dominevo/types'
 import { getDeviceProxyRegistry } from './device-proxy-registry.js'
 
 /**

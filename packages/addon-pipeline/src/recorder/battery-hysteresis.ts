@@ -1,4 +1,4 @@
-import { BatteryStatusSchema } from '@camstack/types'
+import { BatteryStatusSchema } from '@dominevo/types'
 import { bandActiveAt } from './band-engine.js'
 import type { RecordingBand } from './config-types.js'
 

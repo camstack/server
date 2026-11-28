@@ -1,4 +1,4 @@
-import { createEvent, DeviceType, NcRuleInputSchema } from '@camstack/types'
+import { createEvent, DeviceType, NcRuleInputSchema } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import type { NcTargetRef } from '../dispatcher.js'
@@ -162,7 +162,7 @@ describe('NotificationCenter system-event outbox', () => {
         { type: 'core', id: 'updates' },
         {
           target: 'addon',
-          packageName: '@camstack/addon-terminal',
+          packageName: '@dominevo/addon-terminal',
           currentVersion: '0.1.47',
           latestVersion: '0.1.51',
           nodeId: 'agent-a',

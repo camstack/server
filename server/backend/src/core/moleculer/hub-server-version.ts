@@ -1,5 +1,5 @@
 /**
- * The `@camstack/server` version this hub runs, carried on every `$hub.registerNode` ack so an
+ * The `@dominevo/server` version this hub runs, carried on every `$hub.registerNode` ack so an
  * agent can align its own closure to it (agent self-update). Read once from the running
  * package.json (`dist/core/moleculer/` -> `../../../package.json`); null when it cannot be read —
  * the ack then simply omits it and the agent says "hub version unknown" instead of guessing.

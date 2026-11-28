@@ -18,14 +18,14 @@ import * as path from 'node:path'
 //   scopedToken → `userManagement`, toast → `toast` cap, inference →
 //   `pipelineExecutor` cap, pipeline → `pipelineConfig` cap,
 //   systemEvents → kept manual.
-import type { CapabilityRegistry, NotificationService, ToastService } from '@camstack/server/system'
+import type { CapabilityRegistry, NotificationService, ToastService } from '@dominevo/server/system'
 import type {
   BrokerConsumerAttribution,
   InferProvider,
   WebrtcClientHints,
   WebrtcStreamTarget,
-} from '@camstack/types'
-import { webrtcSessionCapability } from '@camstack/types'
+} from '@dominevo/types'
+import { webrtcSessionCapability } from '@dominevo/types'
 import type { AddonPackageService } from '../../core/addon/addon-package.service'
 import type { AddonRegistryService } from '../../core/addon/addon-registry.service'
 import type { AddonBridgeService } from '../../core/addon-bridge/addon-bridge.service'
@@ -337,8 +337,8 @@ export function wrapWebrtcSessionProviderWithRelay(
  * transforms a registry provider (`webrtc-session` wraps the broker to inject
  * the request User-Agent). The runtime builder mounts the route from the live
  * def schemas and resolves the provider through this map instead of the
- * registry — keeping backend composition in `@camstack/server` (the
- * self-sufficiency invariant: `@camstack/server/system` never touches a backend
+ * registry — keeping backend composition in `@dominevo/server` (the
+ * self-sufficiency invariant: `@dominevo/server/system` never touches a backend
  * service). Each factory receives the per-request tRPC `ctx`.
  */
 function buildServerProviders(
@@ -409,11 +409,11 @@ function buildServerProviders(
 /**
  * Build the AppRouter capability track (BIG PLAN 2).
  *
- * The per-cap router CONSTRUCTION now lives in `@camstack/server/system`
+ * The per-cap router CONSTRUCTION now lives in `@dominevo/server/system`
  * (`buildCapRouters`), driven at runtime by `ALL_CAPABILITY_DEFINITIONS`
  * + the declarative `mount` hint on each cap def. A capability update
- * therefore ships via the framework plugin (`@camstack/types` +
- * `@camstack/server/system`) with NO `@camstack/server` rebuild — the value is
+ * therefore ships via the framework plugin (`@dominevo/types` +
+ * `@dominevo/server/system`) with NO `@dominevo/server` rebuild — the value is
  * dynamic.
  *
  * The AppRouter TYPE stays codegen-derived: the dynamic value is assigned

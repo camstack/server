@@ -1,4 +1,4 @@
-import { defaultIntegrationName } from '@camstack/types'
+import { defaultIntegrationName } from '@dominevo/types'
 
 /**
  * A discovery candidate that must be finished in the integration form

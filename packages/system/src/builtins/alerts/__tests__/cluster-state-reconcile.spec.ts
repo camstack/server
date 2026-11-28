@@ -3,7 +3,7 @@
  * that were already active when it booted. `agent.online` is a hint; a
  * dropped one still clears on the next reconcile.
  */
-import type { AddonContext, IEventBus, IScopedLogger, SystemEvent } from '@camstack/types'
+import type { AddonContext, IEventBus, IScopedLogger, SystemEvent } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AlertCenterAddon } from '../alerts.addon.js'
 import { CLUSTER_STATE_RECONCILE_MS } from '../cluster-state-alerts.js'

@@ -52,7 +52,7 @@
  * residual hole logged at `warn`. That is the shape the unit tests exercise.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 /** One mirrored device. `restored` is DERIVED, never persisted: every row that
  *  comes back from {@link DeviceFeaturesMirror.hydrate} is restored by

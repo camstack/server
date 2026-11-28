@@ -35,7 +35,7 @@
  * same one.
  */
 
-import type { AlarmArmMode, AlarmState, NcSystemEventKind } from '@camstack/types'
+import type { AlarmArmMode, AlarmState, NcSystemEventKind } from '@dominevo/types'
 import type { NcRuleFireRef } from '../rule-engine.js'
 import { armModeOf, shouldAnnounceArm } from './alarm-mode-coverage.js'
 import type { AlarmEntryDelay, AlarmExitDelay } from './alarm-state-machine.js'

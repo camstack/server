@@ -1,5 +1,5 @@
-import type { AddonPeerBytes, LogExtras } from '@camstack/types'
-import { EMAIL_IMAGE_SLOT } from '@camstack/types'
+import type { AddonPeerBytes, LogExtras } from '@dominevo/types'
+import { EMAIL_IMAGE_SLOT } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   buildEmailDescriptor,
@@ -43,7 +43,7 @@ async function emailTargetOver(
 
 const SAMPLE = {
   body: 'Hello',
-  title: 'CamStack',
+  title: 'Dominevo',
   format: 'text',
   priority: 3,
 } as const
@@ -113,7 +113,7 @@ describe('email send path', () => {
     expect(resolveSender).toHaveBeenCalledWith('acct-1')
     expect(sendEmail.mock.calls[0]?.[0]).toMatchObject({
       to: ['ops@example.com'],
-      subject: 'CamStack',
+      subject: 'Dominevo',
       text: expect.stringContaining('Hello') as string,
       addonId: 'google-services',
       instanceId: 'acct-1',

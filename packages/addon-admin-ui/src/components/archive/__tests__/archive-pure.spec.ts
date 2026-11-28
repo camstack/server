@@ -1,4 +1,4 @@
-import type { HealthFinding, OpsLogEntry } from '@camstack/types'
+import type { HealthFinding, OpsLogEntry } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { filterActivity, findingItem, opsLogItem } from '../activity-feed'
 import { daysUntilFull, growthPerDay, oldestFootage } from '../archive-numbers'

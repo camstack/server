@@ -1,5 +1,5 @@
 import { createHash, randomUUID, timingSafeEqual } from 'node:crypto'
-import type { ISsoBridgeProvider, TokenScope } from '@camstack/types'
+import type { ISsoBridgeProvider, TokenScope } from '@dominevo/types'
 import type { OauthSessionManager } from './oauth-session-manager.js'
 
 const TTL = { 'oauth-code': 60, 'oauth-access': 3600 } as const

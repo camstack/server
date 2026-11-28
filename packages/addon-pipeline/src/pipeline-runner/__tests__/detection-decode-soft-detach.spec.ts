@@ -16,7 +16,7 @@
  * the two were entangled behind one flag and the wrong one must not come back
  * with the right one.
  */
-import type { RunnerCameraConfig } from '@camstack/types'
+import type { RunnerCameraConfig } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest'
 import { makeRunnerCameraConfig } from '../../__tests__/support/runner-camera-config.js'
 import PipelineRunnerAddon from '../index.js'

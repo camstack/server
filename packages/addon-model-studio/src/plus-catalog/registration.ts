@@ -19,7 +19,7 @@ import {
   type ModelCatalogEntry,
   type ModelFormat,
   type PostprocessorType,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   PLUS_CATALOG_MODEL_PRESETS,
   type PlusCatalogModelType,

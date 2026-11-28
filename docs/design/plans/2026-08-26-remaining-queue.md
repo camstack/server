@@ -72,7 +72,7 @@ converted. Some remain.
 - [ ] Enumerate the remaining `rows.get(` calls in loops. **Measure, do not
       deduce**: two attributions deduced from the shape of the code cost half a
       day each in this repo.
-- [ ] Convert one per commit, with the `@camstack/system` suite green at every
+- [ ] Convert one per commit, with the `@dominevo/system` suite green at every
       step.
 
 ### Task A.3 — `get recorder:recording-configs`, ~44% empty

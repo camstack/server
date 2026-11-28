@@ -2,7 +2,7 @@
  * R3 (D690): the rules list has a Snooze COLUMN with a switch — on while the
  * rule has a live rule-scoped window. Nothing about the alarm in prose.
  */
-import type { NcSnooze } from '@camstack/types'
+import type { NcSnooze } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { activeRuleSnoozeIds } from '../NotificationRuleSnoozeSwitch'
 

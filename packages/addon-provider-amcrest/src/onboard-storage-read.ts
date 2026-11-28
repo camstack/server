@@ -1,4 +1,4 @@
-import type { OnboardStorage } from '@camstack/types'
+import type { OnboardStorage } from '@dominevo/types'
 
 import { isCgiHttpStatus } from './amcrest-cgi-client.js'
 import { parseOnboardStorage } from './recording-onboard-mapping.js'

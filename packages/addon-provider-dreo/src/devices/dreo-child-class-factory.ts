@@ -1,4 +1,4 @@
-import type { DeviceContext, IDevice } from '@camstack/types'
+import type { DeviceContext, IDevice } from '@dominevo/types'
 import { classifyDreoModel } from '../dreo-domain-mapping.js'
 import { DreoFanDevice } from './dreo-fan-device.js'
 import { DreoPurifierDevice } from './dreo-purifier-device.js'

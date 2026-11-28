@@ -25,7 +25,7 @@
  *     a motion session open?"
  */
 
-import { COCO_TO_MACRO } from '@camstack/types'
+import { COCO_TO_MACRO } from '@dominevo/types'
 import { computeStaticTrackMetrics } from '../static-track-gate.js'
 import { STATIC_DISPLACEMENT_FRAC, STATIC_SPAN_FRAC } from '../key-event-scoring.js'
 import {

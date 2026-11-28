@@ -11,7 +11,7 @@
  * order, rather than about the source that comes out.
  */
 import { describe, expect, it, vi } from 'vitest'
-import type { MediaFileBytes, MediaFileInfo } from '@camstack/types'
+import type { MediaFileBytes, MediaFileInfo } from '@dominevo/types'
 import {
   loadRebuildSource,
   type RebuildEventReader,

@@ -11,7 +11,7 @@
  * `tolerate`: an unmigrated node must still boot so the addon's own migration can
  * copy the rows. The failure stays in the ledger and is retried on the next boot.
  */
-import type { MigrationMeta } from '@camstack/types'
+import type { MigrationMeta } from '@dominevo/types'
 import type {
   HubSqlMigration,
   MigrationDatabase,

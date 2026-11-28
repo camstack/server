@@ -3,7 +3,7 @@
  * clean slate and the disk-wins reconcile — moved out of
  * `pipeline-analytics/index.ts` verbatim (Plan B, extraction 1).
  */
-import type { AddonContext, EventOwnerType, TrackCascadeCounts } from '@camstack/types'
+import type { AddonContext, EventOwnerType, TrackCascadeCounts } from '@dominevo/types'
 import type { LocationAwareMediaBlobStorage } from '../location-aware-media-storage.js'
 import {
   EMPTY_CASCADE_TALLY,

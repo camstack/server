@@ -1,4 +1,4 @@
-import type { EncodeProfile } from '@camstack/types'
+import type { EncodeProfile } from '@dominevo/types'
 
 /**
  * Hardcoded fallback encode profile for the WebRTC viewer path. Used only

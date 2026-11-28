@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Eye } from 'lucide-react'
-import { Button } from '@camstack/ui-library'
+import { Button } from '@dominevo/ui-library'
 
 interface SnapshotPopoverProps {
   deviceName: string

@@ -1,8 +1,8 @@
 /**
- * CamStack Alexa Smart Home Lambda — one skill, many hubs, and the skill's
+ * Dominevo Alexa Smart Home Lambda — one skill, many hubs, and the skill's
  * token broker (D753).
  *
- * One Lambda + one skill serves every CamStack hub. Directives are routed by
+ * One Lambda + one skill serves every Dominevo hub. Directives are routed by
  * the `hubUrl` claim each hub bakes into the OAuth tokens it mints. Since D753
  * the Lambda is also the ONLY holder of the skill's LWA client secret: it
  * exchanges AcceptGrant codes itself, keeps each user's LWA refresh token in

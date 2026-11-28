@@ -13,8 +13,8 @@
  * thing worth asserting here is the wiring around it.
  */
 
-import { DeviceType, type CoreBlock } from '@camstack/types'
-import { ConfirmDialogProvider } from '@camstack/ui-library'
+import { DeviceType, type CoreBlock } from '@dominevo/types'
+import { ConfirmDialogProvider } from '@dominevo/ui-library'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { useState, type ReactNode } from 'react'
@@ -66,9 +66,9 @@ interface LogStreamProps {
   readonly addonId?: string
 }
 
-vi.mock('@camstack/ui-library', async (importOriginal) => ({
+vi.mock('@dominevo/ui-library', async (importOriginal) => ({
   // Real ConfirmDialogProvider + useConfirm: the delete test drives the modal.
-  ...(await importOriginal<typeof import('@camstack/ui-library')>()),
+  ...(await importOriginal<typeof import('@dominevo/ui-library')>()),
   useUiText: () => (_key: string, fallback: string | { other: string }) =>
     typeof fallback === 'string' ? fallback : fallback.other,
   useSystem: () => ({

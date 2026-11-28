@@ -10,12 +10,12 @@
  * boolean, a camera probe), so the service has to do the derivation that
  * production does.
  */
-import type { CameraSwitchDerivationInput, CameraSwitchId } from '@camstack/types'
+import type { CameraSwitchDerivationInput, CameraSwitchId } from '@dominevo/types'
 import {
   AUDIO_ANALYSIS_CAP_NAME,
   DETECTION_PIPELINE_CAP_NAME,
   PRIVACY_MASK_CAP_NAME,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** Every authority readable, every function on. */
 export function healthyAuthorities(

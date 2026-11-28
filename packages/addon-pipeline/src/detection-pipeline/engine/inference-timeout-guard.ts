@@ -4,7 +4,7 @@
  *
  * ## Why
  *
- * `@camstack/server` 1.2.218 reintroduced the inference timeouts 1.2.216 had
+ * `@dominevo/server` 1.2.218 reintroduced the inference timeouts 1.2.216 had
  * fixed: ~3 760 `inference request timed out` an hour for 4 h 19 min (16 215
  * lines, ~19 000 `runInference failed`), on a cluster whose previous hour had
  * seen ~5. Nothing said so. 1.2.219 fixed it again as a side effect of the
@@ -35,7 +35,7 @@
  * timer, the store and the emit.
  */
 import { dirname, join } from 'node:path'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 export const TIMEOUT_GUARD_BUCKET_MS = 5 * 60_000
 /** One hour of buckets is what the previous fingerprint hands over. */
@@ -139,9 +139,9 @@ export interface ClosureFileReader {
 /**
  * The closure version, read from the closure the runner was started from.
  *
- * The forked runner script is `<closure>/node_modules/@camstack/server/system/dist/
+ * The forked runner script is `<closure>/node_modules/@dominevo/server/system/dist/
  * addon-runner.js` (hub: `/data/server-root/current/…`); the closure's own
- * `@camstack/server/package.json` sits two directories up. This is read from
+ * `@dominevo/server/package.json` sits two directories up. This is read from
  * disk rather than asked of `server-management` because that cap is
  * server-provided and the parent refuses to route it for a forked addon —
  * "no provider registered for cap server-management", measured on all
@@ -155,7 +155,7 @@ export function closureVersionFromRunnerPath(
   if (runnerScript === undefined || runnerScript.length === 0) return null
   let dir = dirname(runnerScript)
   for (let depth = 0; depth < 12; depth += 1) {
-    const candidate = join(dir, 'node_modules', '@camstack', 'server', 'package.json')
+    const candidate = join(dir, 'node_modules', '@dominevo', 'server', 'package.json')
     const raw = fs.readFile(candidate)
     if (raw !== null) {
       try {

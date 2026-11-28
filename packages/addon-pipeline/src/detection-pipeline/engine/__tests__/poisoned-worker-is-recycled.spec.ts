@@ -191,7 +191,7 @@ beforeEach(() => {
 afterEach(async () => {
   vi.useRealTimers()
   // Each test re-imports the pool's whole module graph (`vi.resetModules()`),
-  // `@camstack/types` barrel included: ~116 MB a test once the pool imported
+  // `@dominevo/types` barrel included: ~116 MB a test once the pool imported
   // a runtime value from it. Two things kept every one of those graphs alive
   // for the file's lifetime, and the worker OOM'd at 3 GB:
   //  - a pool left with requests in flight under REAL timers holds their

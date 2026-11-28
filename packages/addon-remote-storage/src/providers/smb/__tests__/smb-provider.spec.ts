@@ -19,7 +19,7 @@
  *  5. Credentials never appear in an operator-facing error string.
  */
 import { statSync } from 'node:fs'
-import type { IScopedLogger, StorageLocation } from '@camstack/types'
+import type { IScopedLogger, StorageLocation } from '@dominevo/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mapSmbError, smbConfigFromRecord, SmbStorageProvider } from '../smb-provider.js'
 import { SmbBinaryUnavailableError, type SmbClientLike, type SmbItem } from '../smb-client.js'
@@ -348,7 +348,7 @@ describe('paths that reach smbclient’s command string', () => {
     expect(() => safeSmbRelativePath('a/../../b')).toThrow(/escapes the location base/)
   })
 
-  it('passes the names CamStack actually generates', () => {
+  it('passes the names Dominevo actually generates', () => {
     expect(safeSmbRelativePath('camstack-2026-08-30_02-00-00.zip')).toBe(
       'camstack-2026-08-30_02-00-00.zip',
     )

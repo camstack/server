@@ -7,7 +7,7 @@
  * per process. They are migrations, not policy: candidates for deletion once
  * the fleet's stores hold none of these keys (needs production counts first).
  */
-import type { AddonContext, IScopedLogger } from '@camstack/types'
+import type { AddonContext, IScopedLogger } from '@dominevo/types'
 import {
   deriveSuggestionMinCosine,
   type FaceSettings,

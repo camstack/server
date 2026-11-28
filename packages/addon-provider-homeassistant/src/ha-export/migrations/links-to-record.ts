@@ -17,7 +17,7 @@
  *     `exportTo` / `mediaRole` values on the integrations are the provider's instance data and
  *     are not touched here; nothing in this addon reads them any more.
  */
-import { type MigrationPlan, type MigrationProcedureResult, preconditionOf } from '@camstack/types'
+import { type MigrationPlan, type MigrationProcedureResult, preconditionOf } from '@dominevo/types'
 import type { HaInstanceRow } from '../../migrations/legacy-integration-rows.js'
 import type { HaExportLinksBody } from './legacy-links-kind.js'
 import { HA_MEDIA_ROLES, type HaMediaRole } from '../media-url.js'

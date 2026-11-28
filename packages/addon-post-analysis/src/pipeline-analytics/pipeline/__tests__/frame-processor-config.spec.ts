@@ -11,7 +11,7 @@
  * Disarm: in `createFrameProcessor`, drop `deps` from `new FrameProcessor(…)`
  * — the third test must fail (a random id, not `replay-1`).
  */
-import type { FrameResult } from '@camstack/types'
+import type { FrameResult } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { DETECTION_SENSITIVITY_DEFAULTS } from '../../detection-sensitivity-settings.js'
 import { TRACKING_DEFAULTS } from '../../tracking-settings.js'

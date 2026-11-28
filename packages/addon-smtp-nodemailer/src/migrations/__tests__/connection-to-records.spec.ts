@@ -8,7 +8,7 @@ import {
   makeInMemoryRecords,
   type MigrationOwnerResult,
   preconditionOf,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { smtpRelaysKind } from '../../relay-record-kinds.js'
 import {
@@ -76,7 +76,7 @@ const OLD = {
   username: 'mailer',
   password: 'pw-secret',
   fromAddress: 'cam@example.com',
-  fromName: 'CamStack',
+  fromName: 'Dominevo',
   ...MARK,
 }
 
@@ -93,7 +93,7 @@ describe('smtp-nodemailer/2026-11-02-connection-to-records', () => {
       username: 'mailer',
       password: 'pw-secret',
       fromAddress: 'cam@example.com',
-      fromName: 'CamStack',
+      fromName: 'Dominevo',
     })
     expect(w.store.has('password')).toBe(false)
     expect(JSON.stringify(result)).not.toContain('pw-secret')

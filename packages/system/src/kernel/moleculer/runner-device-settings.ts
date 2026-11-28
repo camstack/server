@@ -8,7 +8,7 @@
  * process asks. Before D870 the runner kept its own `<addonId>:addon-devices`
  * blob per device; a hub-side write to the rows was invisible to it.
  */
-import type { ResolvedSettings } from '@camstack/types/addon'
+import type { ResolvedSettings } from '@dominevo/types/addon'
 import { createDeviceSettingsResolver } from '../device-settings-resolver.js'
 import {
   type DeviceSettingsDoor,

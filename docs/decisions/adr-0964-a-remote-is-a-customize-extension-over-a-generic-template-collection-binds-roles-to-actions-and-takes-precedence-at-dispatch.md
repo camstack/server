@@ -27,7 +27,7 @@ was talking to (D963).
 1. **Templates are a generic collection.** `template` (system, collection)
    stores `{ id, kind, name, payload }`; a kind registers only a payload schema.
    The one kind today is `remote` (a button grid whose buttons are named roles,
-   vocabulary exported from `@camstack/types`). `delete` refuses with a typed
+   vocabulary exported from `@dominevo/types`). `delete` refuses with a typed
    `in-use` result naming the devices that still use the template.
 2. **A remote is a Customize extension (D944) offered on media-player devices.**
    Its config lives in the device settings store (D865):
@@ -36,7 +36,7 @@ was talking to (D963).
    binding is `ir-transmitter.send` on a transmitter device with the pulse train.
    The config also names a default transmitter; a binding carries its own device,
    so one command may use another. The
-   SmartIR parser is the one in `@camstack/types/ir`; the admin UI parses and
+   SmartIR parser is the one in `@dominevo/types/ir`; the admin UI parses and
    saves the bindings, the server never receives a code file. A repeat count is never stored: `sendCommand`
    takes `repeat` (int >= 1, default 1) per call.
 3. **Precedence is at dispatch.** A media-player command (`play`, `pause`,

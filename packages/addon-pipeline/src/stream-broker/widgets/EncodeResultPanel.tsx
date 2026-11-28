@@ -2,8 +2,8 @@ import type {
   DerivedEffectiveEncodeStats,
   DerivedEncodePreview,
   EncodeProfile,
-} from '@camstack/types'
-import { Badge, Button } from '@camstack/ui-library'
+} from '@dominevo/types'
+import { Badge, Button } from '@dominevo/ui-library'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import * as React from 'react'
 import { useState } from 'react'

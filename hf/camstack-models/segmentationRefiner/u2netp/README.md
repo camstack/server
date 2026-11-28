@@ -10,7 +10,7 @@
 | Code licence | Apache-2.0 |
 | **Weights licence** | Apache-2.0 ([`LICENSES/Apache-2.0.txt`](../../LICENSES/Apache-2.0.txt)) |
 | Training data | DUTS-TR (terms not checked) |
-| CamStack modifications | converted to ONNX, OpenVINO IR and CoreML |
+| Dominevo modifications | converted to ONNX, OpenVINO IR and CoreML |
 | Commercial use | permitted by Apache-2.0 |
 
-CamStack redistributes the files in this folder; every change from the upstream is stated above. Converting a model does not change its licence. The collection statement is [`LICENSE`](../../LICENSE); every model's attribution is in [`THIRD_PARTY_MODELS.md`](../../THIRD_PARTY_MODELS.md).
+Dominevo redistributes the files in this folder; every change from the upstream is stated above. Converting a model does not change its licence. The collection statement is [`LICENSE`](../../LICENSE); every model's attribution is in [`THIRD_PARTY_MODELS.md`](../../THIRD_PARTY_MODELS.md).

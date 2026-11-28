@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { resolveSessionDecodeHostname, resolveSessionDecodeOwnerNodeId } from '../index.js'
-import type { RunnerFrameSource } from '@camstack/types'
+import type { RunnerFrameSource } from '@dominevo/types'
 
 /**
  * Point 3 (cross-node): the session-decode worker must dial the SOURCE owner's

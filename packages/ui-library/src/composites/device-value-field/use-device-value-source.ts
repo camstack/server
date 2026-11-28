@@ -1,4 +1,4 @@
-import type { DeviceSearchRequires } from '@camstack/types'
+import type { DeviceSearchRequires } from '@dominevo/types'
 import { useMemo } from 'react'
 import {
   useDeviceManagerGetWireableFields,

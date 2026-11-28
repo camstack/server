@@ -15,14 +15,14 @@ import {
   ROLLING_SPANS,
   type RollingSpan,
   STATISTIC_STATS,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   Button,
   CameraGridLayoutEditor,
   ExpressionInput,
   Input,
   Select,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'

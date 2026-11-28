@@ -4,7 +4,7 @@
  * signed-out integration is stopped with its devices offline — never treated as deleted.
  */
 import { describe, expect, it, vi } from 'vitest'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { boschWorld } from '../../shared/__tests__/bosch-world.js'
 import type { HomeComConfig } from '../config.js'
 import {

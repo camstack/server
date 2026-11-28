@@ -10,7 +10,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import type { AddonContext, IScopedLogger, MediaFileKind } from '@camstack/types'
+import type { AddonContext, IScopedLogger, MediaFileKind } from '@dominevo/types'
 import PipelineAnalyticsAddon from '../index.js'
 import { MediaStore } from '../store/media-store.js'
 import {

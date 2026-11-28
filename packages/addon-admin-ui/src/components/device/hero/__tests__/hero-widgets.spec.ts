@@ -5,7 +5,7 @@
  * The helper knows no widget by name. Consumables is NOT one of them any more:
  * it moved into the device card (D1023), so no hero widget carries its id.
  */
-import type { ConfigSectionWithValues } from '@camstack/types'
+import type { ConfigSectionWithValues } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { heroDrawnWidgets } from '../hero-drawn-widgets'
 import { heroWidgets } from '../hero-widgets'

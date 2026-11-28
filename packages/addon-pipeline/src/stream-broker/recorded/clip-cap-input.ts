@@ -1,4 +1,4 @@
-import type { CamProfile, ClipWake } from '@camstack/types'
+import type { CamProfile, ClipWake } from '@dominevo/types'
 import type { ClipStreamAudioAsk } from './clip-stream-feeder.js'
 
 /**

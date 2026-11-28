@@ -8,7 +8,7 @@ import {
   DeviceCardFrameProvider,
   DeviceContextProvider,
   useDeviceManagerGetDevice,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'

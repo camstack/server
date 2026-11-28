@@ -14,8 +14,8 @@
 import type { ReactElement } from 'react'
 import { Eye, Info, LogOut, Pencil, ShieldCheck, Trash2 } from 'lucide-react'
 import { Navigate, useSearchParams } from 'react-router-dom'
-import type { TokenScope } from '@camstack/types'
-import { Button, describeDeviceSelector, useUiText } from '@camstack/ui-library'
+import type { TokenScope } from '@dominevo/types'
+import { Button, describeDeviceSelector, useUiText } from '@dominevo/ui-library'
 import { Trans, useTranslation } from 'react-i18next'
 
 import { useAuth, type AuthUser } from '../../contexts/auth-context'

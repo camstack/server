@@ -2,7 +2,7 @@
  * The value of a Lists row: native items plus assigned ones, as a count and
  * their names. An unread native list is said, never treated as empty (D315).
  */
-import { readKeyedArrayItems, type DeviceInfo } from '@camstack/types'
+import { readKeyedArrayItems, type DeviceInfo } from '@dominevo/types'
 import type { TFunction } from 'i18next'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'

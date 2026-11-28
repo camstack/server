@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Sidebar } from '@camstack/ui-library'
+import { Sidebar } from '@dominevo/ui-library'
 import { Camera, Bell, LayoutGrid, Video, Cpu, Settings, HelpCircle, LogOut } from 'lucide-react'
 
 const Frame = ({ children }: { children: ReactNode }) => (
@@ -11,7 +11,7 @@ const Frame = ({ children }: { children: ReactNode }) => (
 const Logo = () => (
   <div className="flex items-center gap-2 px-1 py-1">
     <div className="h-5 w-5 rounded bg-primary/80" />
-    <span className="text-xs font-semibold text-foreground">CamStack</span>
+    <span className="text-xs font-semibold text-foreground">Dominevo</span>
   </div>
 )
 

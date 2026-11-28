@@ -1,7 +1,7 @@
 {
-  "name": "@camstack/addon-matter-broker",
-  "version": "0.2.183",
-  "description": "Matter broker addon for CamStack — owns a Matter fabric (commissioning + the long-lived controller) via the matter.js controller and brokers commissioned Matter nodes into CamStack",
+  "name": "@dominevo/addon-matter-broker",
+  "version": "0.1.0",
+  "description": "Matter broker addon for Dominevo — owns a Matter fabric (commissioning + the long-lived controller) via the matter.js controller and brokers commissioned Matter nodes into Dominevo",
   "keywords": [
     "camstack",
     "addon",
@@ -14,12 +14,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/camstack/server.git",
+    "url": "https://github.com/dominevo/server.git",
     "directory": "packages/addon-matter-broker"
   },
   "homepage": "https://camstack-docs.zentik.app",
   "bugs": {
-    "url": "https://github.com/camstack/server/issues"
+    "url": "https://github.com/dominevo/server/issues"
   },
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -39,7 +39,7 @@
         "category": "providers",
         "name": "Matter",
         "version": "0.1.0",
-        "description": "Own a Matter fabric and broker commissioned Matter nodes into CamStack (commission via QR / pairing code; map endpoints to typed device caps)",
+        "description": "Own a Matter fabric and broker commissioned Matter nodes into Dominevo (commission via QR / pairing code; map endpoints to typed device caps)",
         "entry": "./dist/addon.js",
         "icon": "assets/icon.svg",
         "color": "#3b6ea5",
@@ -65,7 +65,7 @@
       }
     ],
     "requires": {
-      "server": ">=1.2.974"
+      "server": ">=0.1.0"
     }
   },
   "files": [
@@ -83,7 +83,7 @@
     "publish:npm": "npm publish --access public"
   },
   "devDependencies": {
-    "@camstack/types": "*",
+    "@dominevo/types": "0.1.0",
     "@matter/main": "^0.17.3",
     "@matter/nodejs": "^0.17.3",
     "@matter/protocol": "^0.17.3",

@@ -54,7 +54,7 @@ include the recorder, or a grid with recording enabled would record nothing.
 ## Decision
 
 A composite camera is **one ffmpeg child** performing N decodes, one composition
-and ONE encode, assembled by the shared builder in `@camstack/types`
+and ONE encode, assembled by the shared builder in `@dominevo/types`
 (`extraInputs` + `filterGraph`, `-map` derived from the graph's declared pad) and
 emitting only compressed packets — frames never cross a process boundary at
 frame-rate ([D9](adr-0009.md)/[D18](adr-0018.md)).
@@ -166,7 +166,7 @@ robot camera showed a tab called "navigation", 2026-09-06), and that file was
 outside this slice's reach.
 
 **The cost, stated:** a new capability is a framework change. It reaches a node
-only inside a published `@camstack/server` (D16) — `camstack deploy
+only inside a published `@dominevo/server` (D16) — `dominevo deploy
 packages/addon-camera-grid` alone will NOT make this editor appear.
 
 ### The snapshot is a frame of the composition, and never a dial
@@ -195,7 +195,7 @@ wrapper's ladder, and it answers one of three things:
 session, so a thumbnail can never be the reason sources get acquired. The kept
 frame is `GridLastFrameFileStore`, one file per grid under the addon's own
 `dataDir` — the same shape and the same reasoning as
-`@camstack/system`'s `SnapshotDurableStore`, restated rather than imported
+`@dominevo/system`'s `SnapshotDurableStore`, restated rather than imported
 because that class is a builtin's internals and an addon reaching into one would
 be importing another addon.
 

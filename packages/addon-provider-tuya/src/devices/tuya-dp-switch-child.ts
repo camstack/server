@@ -3,7 +3,7 @@ import {
   type InferNativeProvider,
   switchCapability,
   type SwitchStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { booleanDpPatch, readBooleanDp } from '../tuya-dp-mapping.js'
 import { tuyaChildSchema, TuyaChildDevice } from './tuya-child-device.js'

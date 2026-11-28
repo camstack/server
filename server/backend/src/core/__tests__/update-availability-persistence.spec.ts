@@ -9,7 +9,7 @@
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import type { IEventBus, IScopedLogger, SystemEvent } from '@camstack/types'
+import type { IEventBus, IScopedLogger, SystemEvent } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { UpdateAvailabilityEmitter } from '../update-availability-emitter.js'
 import { FileUpdateAvailabilityStore } from '../update-availability-store.js'
@@ -32,7 +32,7 @@ function silentLogger(): IScopedLogger {
 
 const PIPELINE = {
   target: 'addon' as const,
-  packageName: '@camstack/addon-pipeline',
+  packageName: '@dominevo/addon-pipeline',
   currentVersion: '1.2.3',
   latestVersion: '1.2.4',
 }
@@ -106,7 +106,7 @@ describe('UpdateAvailabilityEmitter durable dedup', () => {
     )
     const reolink = {
       target: 'addon' as const,
-      packageName: '@camstack/addon-provider-reolink',
+      packageName: '@dominevo/addon-provider-reolink',
       currentVersion: '1.0.0',
       latestVersion: '1.0.1',
     }

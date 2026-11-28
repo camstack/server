@@ -32,8 +32,8 @@ import type {
   PipelineRunOptions,
   RootInputSource,
   StepOutput,
-} from '@camstack/types'
-import { errMsg } from '@camstack/types'
+} from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
 import { dispatchPostprocess } from '../postprocess/dispatch.js'
 import {
   type AbsoluteBbox,
@@ -1037,7 +1037,7 @@ export class PipelineExecutor {
 
     // Inference
     const inferenceStart = Date.now()
-    let engineOutput: import('@camstack/types').EngineOutput
+    let engineOutput: import('@dominevo/types').EngineOutput
 
     try {
       engineOutput = await step.engine.infer(input)

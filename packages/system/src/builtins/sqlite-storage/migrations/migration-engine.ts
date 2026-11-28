@@ -29,7 +29,7 @@ import {
   type MigrationOwnerStep,
   type MigrationStatus,
   orderMigrations,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { PRE_MIGRATION_DIR_SUFFIX } from '../sqlite-snapshotter.js'
 import { clearHold, readHold, releaseFromHold, writeHold } from './migration-hold.js'
 import {

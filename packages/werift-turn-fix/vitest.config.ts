@@ -2,7 +2,7 @@ import { defineConfig } from 'vitest/config'
 import { vitestWorkers } from '../../vitest.workers'
 
 /**
- * Vitest config for `@camstack/werift-turn-fix`.
+ * Vitest config for `@dominevo/werift-turn-fix`.
  *
  * `vitest` is pinned to `^3.2.4` in this package's own `devDependencies`
  * (the repo root hoists vitest 4.x whose ESM evaluator mis-resolves Node

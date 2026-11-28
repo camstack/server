@@ -4,7 +4,7 @@
  * typed value against the knob's own bounds, and building the settings call that
  * writes it back.
  */
-import type { RetentionKnob } from '@camstack/types'
+import type { RetentionKnob } from '@dominevo/types'
 
 export interface RetentionGroup {
   readonly group: string

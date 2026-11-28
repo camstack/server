@@ -8,9 +8,9 @@ last-verified: 2026-10-09
 # Running on Unraid
 
 Unraid is the reference deployment. This page is for the person installing
-CamStack on one, and for whoever has to keep the templates true.
+Dominevo on one, and for whoever has to keep the templates true.
 
-There is **one** container image, `ghcr.io/camstack/camstack`, and it serves both
+There is **one** container image, `ghcr.io/dominevo/dominevo`, and it serves both
 roles. `CAMSTACK_ROLE` picks which at boot: `hub` (the default) runs the full
 server and admin UI on 4443; `agent` runs a worker that joins a hub and serves a
 status dashboard on 4444. There are two templates because the two roles want
@@ -19,14 +19,14 @@ different defaults, not because there are two images.
 !!! note "One step left before a stranger can install"
 
     As of 2026-07-26 the image is **public** and the distribution repo
-    ([camstack/unraid-templates](https://github.com/camstack/unraid-templates))
+    ([camstack/unraid-templates](https://github.com/dominevo/unraid-templates))
     exists, so an anonymous `docker pull` works and every
     `raw.githubusercontent.com` link in a template resolves — both re-verified
     anonymously on 2026-08-26 (an anonymous GHCR token resolves the
     `intel-latest` manifest; the templates, `ca_profile.xml` and `icon.png` all
     answer 200), which is the check that matters: these links look fine to
     anyone whose browser is already authenticated, which is exactly why they
-    were broken unnoticed. `camstack/server` itself stays private, and that is
+    were broken unnoticed. `dominevo/server` itself stays private, and that is
     fine — nothing a template fetches lives here. Remaining: the Community
     Applications submission. See [Distributing](#distributing).
 
@@ -35,7 +35,7 @@ different defaults, not because there are two images.
 Run the hub first. One per cluster.
 
 1. **Docker → Add Container → Template**, paste
-   `https://raw.githubusercontent.com/camstack/unraid-templates/main/templates/camstack.xml`.
+   `https://raw.githubusercontent.com/dominevo/unraid-templates/main/templates/camstack.xml`.
 2. There is no credential in the template, and none is read from the
    container's environment ([D797](../decisions/adr-0797-no-secret-reaches-a-node-through-its-environment-the-hub-keeps-its-own-in-the-keychain.md)).
    A fresh hub seeds `admin` / `changeme`; the first sign-in with `changeme`
@@ -62,13 +62,13 @@ local CA; to serve your own instead, upload it in **Network → Local access**
 healthcheck allows 180 seconds before it starts complaining.
 
 The image carries no addon tree ([D129](../decisions/adr-0129.md), 2026-08-13),
-only the `@camstack/server` closure it falls back to. So the first boot needs to
+only the `@dominevo/server` closure it falls back to. So the first boot needs to
 reach the npm registry: without it the container still boots and logs that it
 installed nothing, but comes up with **no addons** at all. That is the deliberate
 trade for one version of everything per node.
 
 To add a worker, install
-`https://raw.githubusercontent.com/camstack/unraid-templates/main/templates/camstack-agent.xml`
+`https://raw.githubusercontent.com/dominevo/unraid-templates/main/templates/camstack-agent.xml`
 on the other machine and set **Hub address** to the hub's IP. Use a different
 appdata folder from the hub. Leaving Hub address blank is fine — set it from the agent's
 dashboard on port 4444. A worker advertises itself on the network (mDNS) and is paired
@@ -92,7 +92,7 @@ the setting. The guard exists because every one of them was wrong at some point.
 
 `--shm-size=2g` used to be on that list and was **removed on 2026-09-19**. It
 reserved a 2 GB tmpfs for the decoder frame rings, and that subsystem left with
-`@camstack/shm-ring` on 2026-07-16 — nothing constructs a segment any more. The
+`@dominevo/shm-ring` on 2026-07-16 — nothing constructs a segment any more. The
 guard could not catch it, and that is the part worth keeping: `EXTRA_PARAM_REASONS`
 exists so that no flag survives unexplained, but this flag HAD a reason on file.
 The reason had simply stopped being true. A reason is only as fresh as the last
@@ -206,7 +206,7 @@ is a template-authoring tool, not an app. So: **a CA template repository, not a
 plugin.**
 
 CA reads templates from a public GitHub repository that the author registers
-once. That repository, `camstack/unraid-templates`, is the only copy of the
+once. That repository, `dominevo/unraid-templates`, is the only copy of the
 templates ([D717](../decisions/adr-0717-the-unraid-templates-and-the-compose-example-are-maintained-outside-this-repo.md)):
 
 ```
@@ -223,11 +223,11 @@ camstack/unraid-templates/
 Nothing below can be automated from here, and until all of it is done the
 templates are correct but unusable by anyone outside the org.
 
-1. ~~Create the public repo `camstack/unraid-templates`~~ — **done 2026-07-26.**
+1. ~~Create the public repo `dominevo/unraid-templates`~~ — **done 2026-07-26.**
    Public, MIT, `ca_profile.xml` + `icon.png` at the root with `templates/`
    beside them, and a README stating the files are generated and must not be
    edited there.
-2. ~~Make `ghcr.io/camstack/camstack` public~~ — **done 2026-07-26.** Verified
+2. ~~Make `ghcr.io/dominevo/dominevo` public~~ — **done 2026-07-26.** Verified
    anonymously against the registry's token endpoint, not by a browser that was
    already signed in.
 3. **Submit the repo** at <https://ca.unraid.net/submit/new>: sign in with an
@@ -235,7 +235,7 @@ templates are correct but unusable by anyone outside the org.
    anything it reports, then submit for moderator review. This replaced the old
    forum-PM process in June 2026.
 4. **Keep it current by hand.** There is no sync job and no generator: edit the
-   XML in `camstack/unraid-templates` directly whenever the container contract
+   XML in `dominevo/unraid-templates` directly whenever the container contract
    changes (D717).
 
 `<Project>` points at <https://camstack.io> and `<Support>` at the distribution
@@ -246,7 +246,7 @@ would have caught the 404s it was written for.
 ## Keeping the templates true
 
 `templates/camstack.xml` and `templates/camstack-agent.xml` in
-`camstack/unraid-templates` are maintained by hand, and so is the Docker Compose
+`dominevo/unraid-templates` are maintained by hand, and so is the Docker Compose
 example in the public docs. Nothing in this repo checks either of them
 ([D717](../decisions/adr-0717-the-unraid-templates-and-the-compose-example-are-maintained-outside-this-repo.md);
 the generator of D22 and D23 is gone). A change to the container contract — an

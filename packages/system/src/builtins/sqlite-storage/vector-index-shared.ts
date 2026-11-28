@@ -8,7 +8,7 @@
  * takes over wholesale — not inside this module.
  */
 
-import type { VectorFilter, VectorMetadata, VectorMetric } from '@camstack/types'
+import type { VectorFilter, VectorMetadata, VectorMetric } from '@dominevo/types'
 
 /** Metadata keys promoted to real, indexable columns in every backend. */
 export const PROMOTED_COLUMNS = ['deviceId', 'timestamp', 'className', 'modelId'] as const

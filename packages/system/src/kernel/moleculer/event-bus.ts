@@ -1,4 +1,4 @@
-import type { EventFilter, IEventBus, SystemEvent } from '@camstack/types'
+import type { EventFilter, IEventBus, SystemEvent } from '@dominevo/types'
 import type { ServiceBroker } from 'moleculer'
 import type { CrossNodeInterestSnapshot, SharedBusState } from './event-bus-core.js'
 import { getDeviceRecent } from './device-event-ring.js'
@@ -27,7 +27,7 @@ export interface BrokerLike {
   logger: { warn?: (msg: string) => void }
 }
 
-/** Documented boundary: CamStack brokers are always `createBroker` products. */
+/** Documented boundary: Dominevo brokers are always `createBroker` products. */
 export function asBrokerLike(broker: ServiceBroker): BrokerLike {
   return broker as BrokerLike
 }

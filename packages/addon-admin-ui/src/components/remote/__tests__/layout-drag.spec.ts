@@ -3,7 +3,7 @@ import {
   insertComponent,
   type RemoteLayoutComponent,
   type RemoteLayoutPayload,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   arrowStep,
@@ -14,7 +14,7 @@ import {
   nudgeItem,
   previewMove,
 } from '../layout-drag'
-import { clampToGrid, frameClass, shapeClass, toneClass } from '@camstack/ui-library'
+import { clampToGrid, frameClass, shapeClass, toneClass } from '@dominevo/ui-library'
 import {
   canFillWidth,
   componentName,

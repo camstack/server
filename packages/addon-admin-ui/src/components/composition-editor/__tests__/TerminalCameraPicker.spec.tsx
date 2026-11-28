@@ -3,7 +3,7 @@
  * already shows is offered disabled and named, none at all links to the
  * Terminal page, and a list that has not answered is never "none".
  */
-import { selectOption } from '@camstack/ui-library/testing'
+import { selectOption } from '@dominevo/ui-library/testing'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -17,8 +17,8 @@ const h = vi.hoisted(() => ({
   compositions: undefined as unknown,
 }))
 
-vi.mock('@camstack/ui-library', async () => {
-  const actual = await vi.importActual<Record<string, unknown>>('@camstack/ui-library')
+vi.mock('@dominevo/ui-library', async () => {
+  const actual = await vi.importActual<Record<string, unknown>>('@dominevo/ui-library')
   return {
     ...actual,
     useInstancesOfCap: () => ({

@@ -14,7 +14,7 @@
  * backed off and says so.
  */
 import { EventEmitter } from 'node:events'
-import type { IScopedLogger, PipelineDefaultStep } from '@camstack/types'
+import type { IScopedLogger, PipelineDefaultStep } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { EngineFactory } from '../engine/engine-factory.js'
 

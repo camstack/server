@@ -21,7 +21,7 @@ import {
   type GridHelperSpec,
   type IDeviceRuntimeState,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'

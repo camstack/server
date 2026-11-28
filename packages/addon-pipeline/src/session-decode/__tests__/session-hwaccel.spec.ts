@@ -9,7 +9,7 @@
  * time); the worker must follow it rather than rediscover the failure per
  * session.
  */
-import type { IKernelHwAccel } from '@camstack/types'
+import type { IKernelHwAccel } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   isSessionHwaccelOffer,

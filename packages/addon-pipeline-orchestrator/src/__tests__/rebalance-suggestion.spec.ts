@@ -5,7 +5,7 @@
  * action runs `rebalanceNow`. Everything is read from in-memory state (D49): a
  * failed plan changes nothing.
  */
-import type { Alert } from '@camstack/types'
+import type { Alert } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AUTO_REBALANCE_MIN_IMPROVEMENT } from '../orchestrator-types.js'
 import {

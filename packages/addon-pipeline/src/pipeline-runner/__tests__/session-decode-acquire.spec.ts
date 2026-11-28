@@ -9,8 +9,8 @@
  * `remote-source-plane.spec.ts` fake-api pattern.
  */
 import { DETECTION_PRE_ROLL_REQUEST_MS } from '../../stream-broker/rtsp/restream-intent.js'
-import type { AddonApi, IScopedLogger } from '@camstack/types'
-import { nodePin } from '@camstack/types'
+import type { AddonApi, IScopedLogger } from '@dominevo/types'
+import { nodePin } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 
 import { acquireSessionDecodeRestreamFrom } from '../index.js'

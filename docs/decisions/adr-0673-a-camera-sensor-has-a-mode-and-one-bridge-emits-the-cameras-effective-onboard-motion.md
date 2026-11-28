@@ -18,7 +18,7 @@ applies-to:
 > the camera's `motion` runtime SLICE is the effective motion, and only the
 > orchestrator writes it. D696 also owns the release order of the whole motion
 > path. **Amended 2026-10-02:** the orchestrator, `addon-pipeline` and the admin
-> UI ship inside the `@camstack/server` closure and move at the server step, so
+> UI ship inside the `@dominevo/server` closure and move at the server step, so
 > the order below is the corrected one (server → providers).
 
 ## Context
@@ -61,7 +61,7 @@ exists to keep:**
 - **Providers are not all released with the orchestrator.** A split provider in
   front of an orchestrator that does not subscribe `ProviderMotion` loses every
   one of its cameras' motion, with no log line — and `camera-grid` ships inside
-  `@camstack/server`, which releases BEFORE the orchestrator (task 14 ruling;
+  `@dominevo/server`, which releases BEFORE the orchestrator (task 14 ruling;
   corrected 2026-10-02: the orchestrator is in the same closure, see below).
 - **The raw/effective split did not reach Home Assistant.** HA export also
   publishes a camera's motion from its `motion` slice, which Hikvision and
@@ -119,7 +119,7 @@ camera-sensors bridge — and each attached sensor carries a mode.**
    sees motion. **That hold stays until the emitter guard's deferred map is
    empty AND the minimum providers carry the split.**
 8. **`camera-grid` is DEFERRED, and unsplit.** It ships inside
-   `@camstack/server`, which cannot assume an orchestrator at the floor (see
+   `@dominevo/server`, which cannot assume an orchestrator at the floor (see
    "Release order and rollback"), so it keeps
    emitting `MotionOnMotionChanged` until the minimum orchestrator carries the
    `ProviderMotion` subscription; the guard names it in
@@ -129,7 +129,7 @@ camera-sensors bridge — and each attached sensor carries a mode.**
 ### Release order and rollback
 
 **server (carrying `addon-pipeline`, the orchestrator and the admin UI) →
-providers.** `@camstack/server` re-aligns the addons it carries at boot (D518):
+providers.** `@dominevo/server` re-aligns the addons it carries at boot (D518):
 on the hub `addon-admin-ui`, `addon-auth`, `addon-decoder-nodeav`,
 `addon-notifiers`, `addon-pipeline`, `addon-pipeline-orchestrator`,
 `addon-post-analysis`; on an agent `addon-pipeline`, `addon-decoder-nodeav`,
@@ -144,7 +144,7 @@ AFTER an orchestrator that subscribes `ProviderMotion`. The orchestrator
 normally moves at the server step, but the closure does not guarantee it (the
 re-alignment is conditional, and its failure only WARNs): the provider step
 waits for a live read — `addons.listPackages` shows
-`@camstack/addon-pipeline-orchestrator` at or above the floor
+`@dominevo/addon-pipeline-orchestrator` at or above the floor
 (`update-and-release.md`, "The order").
 
 Floors below are release artefacts, not task numbers: **record, at release
@@ -179,7 +179,7 @@ floor*.
   envelope `mode: 'in-addition'`, which a per-sensor value no longer carries).
   CS-2 rows read `unreadable` on a rolled-back CS-1 orchestrator.
 - **`camera-grid` stays deferred (rule 8).** It moves with the server
-  (`@camstack/system`); the orchestrator moves at the same boot only when the
+  (`@dominevo/system`); the orchestrator moves at the same boot only when the
   re-alignment re-aligns it (a closure copy strictly newer, an install older
   than the closure), so the server cannot assume an orchestrator at the floor.
   A grid device's motion is never dropped: camera-grid stays unsplit and emits

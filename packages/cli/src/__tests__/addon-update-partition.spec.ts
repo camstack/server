@@ -9,16 +9,16 @@ describe('partitionAddonUpdates', () => {
   it('does not offer 1.2.681 over a 1.2.942 dev build and says the install is newer', () => {
     const r = partitionAddonUpdates([
       {
-        name: '@camstack/addon-pipeline',
+        name: '@dominevo/addon-pipeline',
         currentVersion: '1.2.942-dev.1795359713',
         latestVersion: '1.2.681',
       },
-      { name: '@camstack/addon-x', currentVersion: '1.2.6', latestVersion: '1.2.7' },
+      { name: '@dominevo/addon-x', currentVersion: '1.2.6', latestVersion: '1.2.7' },
     ])
-    expect(r.offer.map((u) => u.name)).toEqual(['@camstack/addon-x'])
+    expect(r.offer.map((u) => u.name)).toEqual(['@dominevo/addon-x'])
     expect(r.installedNewer).toEqual([
       {
-        name: '@camstack/addon-pipeline',
+        name: '@dominevo/addon-pipeline',
         installed: '1.2.942-dev.1795359713',
         registry: '1.2.681',
         note: INSTALLED_NEWER_NOTE,

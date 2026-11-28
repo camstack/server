@@ -1,4 +1,4 @@
-import type { HeroModel } from '@camstack/types'
+import type { HeroModel } from '@dominevo/types'
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { HeroModelCard } from '../HeroModelCard'

@@ -21,7 +21,7 @@ import {
   type IEventBus,
   type InMemoryRecords,
   makeInMemoryRecords,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import { benchmarkActions } from '../benchmark-actions.js'

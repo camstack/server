@@ -13,11 +13,11 @@ applies-to:
 
 ## Context
 
-`@camstack/system` builds every tRPC cap router from the cap definitions it
+`@dominevo/system` builds every tRPC cap router from the cap definitions it
 INLINES — `bundleTypesMainEntry: true` in `packages/system/vite.config.ts`
-bundles the bare `@camstack/types` entry into system's own dist, so that
-`camstack deploy packages/system` refreshes the hub's capability surface with
-no new server image. The hub never reads those symbols from `@camstack/types`.
+bundles the bare `@dominevo/types` entry into system's own dist, so that
+`dominevo deploy packages/system` refreshes the hub's capability surface with
+no new server image. The hub never reads those symbols from `@dominevo/types`.
 
 The publish workflow decides what to republish from a resolver
 (`scripts/ci/publish-scope.mjs`, 2026-09-17) whose "bundled-into" rule read one
@@ -28,19 +28,19 @@ across five runs that day; `system` was in none of them and stayed at 1.2.273,
 built at 22:00 the evening before with `types@1.2.226`. Each closure pinned
 `system@1.2.273 (npm — not in this publish set)` next to the new `types`. On
 the hub, `dist-D5ONNqL6.js:4235` carried an eight-id enum while
-`@camstack/types@1.2.231` beside it carried nine, and every "Event saving"
+`@dominevo/types@1.2.231` beside it carried nine, and every "Event saving"
 switch on the fleet was refused with a zod error. A forced republish produced
 `system@1.2.274` with nine ids from unchanged source.
 
 What was tried first: three hypotheses about the build — an `nx reset` that
 might not run, a build order that might not respect `system → types`, a bump
 that might follow the build. The run logs refute all three: the reset has no
-`if:`, `@camstack/types:build` transformed 351 modules in that run with no
+`if:`, `@dominevo/types:build` transformed 351 modules in that run with no
 cache read, and the order is detect → bump → build → pin → publish. The
 artifact was right. It was never published.
 
 The wider fact the artifacts then showed: forty-seven packages carry a copy of
-`@camstack/types` — every `externals: 'self-contained'` addon (the preset's
+`@dominevo/types` — every `externals: 'self-contained'` addon (the preset's
 self-contained externals do not keep types outside the bundle), the CLI
 (tsup bundles a devDependency and what it reaches), the admin UI. The
 workflow's own `include_dependents` help text says those dependents "gain

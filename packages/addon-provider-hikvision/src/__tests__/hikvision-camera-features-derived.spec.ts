@@ -10,7 +10,7 @@
  */
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
-import { DeviceFeature } from '@camstack/types'
+import { DeviceFeature } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { HikvisionCamera } from '../hikvision-camera.js'
 

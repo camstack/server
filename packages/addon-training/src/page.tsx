@@ -16,7 +16,7 @@ import {
   TabsList,
   TabsTrigger,
   type AddonPageProps,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Plus } from 'lucide-react'
 import { FramesSection } from './page/frames/FramesSection.js'
 import { JobsSection } from './page/JobsSection.js'

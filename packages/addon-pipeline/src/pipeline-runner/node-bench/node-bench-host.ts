@@ -24,7 +24,7 @@ import {
   type NodeBenchRunnerStatus,
   type NodeDecodeProfile,
   type PipelineStepInputOutput,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { CapacityStallWindow } from '../capacity/capacity-runner.js'
 import type { BenchFrameSet } from './bench-frames.js'
 import { DecodeBenchDriver, type DecodeRigOutcome } from './decode-bench-driver.js'

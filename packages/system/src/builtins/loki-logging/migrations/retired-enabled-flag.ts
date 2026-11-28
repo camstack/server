@@ -8,7 +8,7 @@
  * plan the engine applies under a precondition. Absence of the keys is the marker; a rerun finds
  * nothing and writes nothing. A read that fails throws and nothing is written.
  */
-import { type MigrationPlan, preconditionOf } from '@camstack/types'
+import { type MigrationPlan, preconditionOf } from '@dominevo/types'
 import { ADDON_SETTINGS_TABLE, LOKI_ADDON_ID } from './connection-to-records.js'
 
 /** The retired settings key. */

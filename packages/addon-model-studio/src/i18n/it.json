@@ -247,7 +247,7 @@
     "opDone": "Scaricato {{format}} su {{nodeId}}",
     "loading": "Caricamento del catalogo…",
     "noModels": "Nessun modello",
-    "noCamstackModels": "Nessun modello CamStack per questo step.",
+    "noCamstackModels": "Nessun modello Dominevo per questo step.",
     "sourceAria": "Sorgente del catalogo"
   },
   "inventory": {

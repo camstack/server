@@ -1,5 +1,5 @@
 import * as net from 'node:net'
-import type { EncodedPacket, IScopedLogger, StreamSource } from '@camstack/types'
+import type { EncodedPacket, IScopedLogger, StreamSource } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from 'vitest'
 import { DEFAULT_PREBUFFER_SEC } from '../prebuffer'
 import { RtpDepacketizer, type RtpPacketClass } from '../rtsp/rtp-depacketizer.js'

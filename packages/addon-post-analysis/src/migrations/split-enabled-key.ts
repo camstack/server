@@ -16,7 +16,7 @@ import {
   type MigrationPlan,
   preconditionOf,
   type StoredKeyRead,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export const PIPELINE_ANALYTICS_ID = 'pipeline-analytics'
 export const RETIRED_ENABLED_KEY = 'enabled'

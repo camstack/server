@@ -3,7 +3,7 @@ import {
   type EventVocabularyCarrier,
   findVocabularyEntry,
   readEventVocabulary,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { ReactElement } from 'react'
 import { useTrpcClient } from '../../../contexts/system-context'
 import { type UiTextFn, useUiText } from '../../../contexts/ui-text'

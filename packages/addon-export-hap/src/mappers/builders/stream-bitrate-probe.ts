@@ -29,7 +29,7 @@
  * branch. Answering with less evidence is therefore strictly better than
  * answering after the controller has left.
  */
-import type { CameraStream, IScopedLogger, ProfileSlot, WebrtcStreamChoice } from '@camstack/types'
+import type { CameraStream, IScopedLogger, ProfileSlot, WebrtcStreamChoice } from '@dominevo/types'
 
 import type { BuilderContext } from '../types.js'
 import { withDeadline } from './deadline.js'

@@ -1,4 +1,4 @@
-import type { TimedRunResult } from '@camstack/types'
+import type { TimedRunResult } from '@dominevo/types'
 
 /**
  * The switch's timed run, as every card whose power is a `switch` offers it

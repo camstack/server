@@ -6,7 +6,7 @@ import {
   type CustomizeCatalog,
   type CustomizeCatalogTarget,
   type DeviceInfo,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import {

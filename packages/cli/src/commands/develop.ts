@@ -1,7 +1,7 @@
 /**
- * `camstack develop …` — developer tooling for addon authors.
+ * `dominevo develop …` — developer tooling for addon authors.
  *
- * Thin CLI over `@camstack/develop` (same ops as `@camstack/mcp-develop`).
+ * Thin CLI over `@dominevo/develop` (same ops as `@dominevo/mcp-develop`).
  * Zero hub mutations; no SQLite opens.
  */
 import { parseArgs } from 'node:util'
@@ -22,9 +22,9 @@ import {
   SCAFFOLD_KINDS,
   validateAddon,
   whoProvides,
-} from '@camstack/develop'
+} from '@dominevo/develop'
 
-const HELP = `Usage: camstack develop <subcommand> [options]
+const HELP = `Usage: dominevo develop <subcommand> [options]
 
 Catalogue:
   list-addons [--json]              List workspace packages with camstack.addons[]
@@ -56,7 +56,7 @@ Skills:
   skills [--json]                   Paths to the portable skill pack
   skill <id>                        Print one skill markdown file
 
-Also: nx g @camstack/nx-plugin:addon <name> (Nx path to the same idea).
+Also: nx g @dominevo/nx-plugin:addon <name> (Nx path to the same idea).
 `
 
 function printJson(value: unknown): void {
@@ -142,7 +142,7 @@ function cmdWhoProvides(args: readonly string[]): void {
   const json = wantJson(args)
   const cleaned = withoutJson(args)
   const cap = cleaned[0]
-  if (!cap) throw new Error('Usage: camstack develop who-provides <cap>')
+  if (!cap) throw new Error('Usage: dominevo develop who-provides <cap>')
   const root = requireWorkspaceRoot()
   const hits = whoProvides(root, cap)
   if (json) {
@@ -162,7 +162,7 @@ function cmdFindExample(args: readonly string[]): void {
   const json = wantJson(args)
   const cleaned = withoutJson(args)
   const query = cleaned.join(' ').trim()
-  if (!query) throw new Error('Usage: camstack develop find-example <query>')
+  if (!query) throw new Error('Usage: dominevo develop find-example <query>')
   const root = findWorkspaceRoot() ?? process.cwd()
   const hits = findExample(root, query)
   if (json) {
@@ -197,7 +197,7 @@ function cmdScaffold(args: readonly string[]): void {
   const kind = args[0]
   if (kind === 'addon') return cmdScaffoldAddon(args.slice(1))
   if (kind === 'cap' || kind === 'capability') return cmdScaffoldCap(args.slice(1))
-  throw new Error('Usage: camstack develop scaffold addon|cap <name> [options]')
+  throw new Error('Usage: dominevo develop scaffold addon|cap <name> [options]')
 }
 
 function cmdScaffoldAddon(args: readonly string[]): void {
@@ -214,7 +214,7 @@ function cmdScaffoldAddon(args: readonly string[]): void {
     strict: true,
   })
   const name = positionals[0]
-  if (!name) throw new Error('Usage: camstack develop scaffold addon <name>')
+  if (!name) throw new Error('Usage: dominevo develop scaffold addon <name>')
 
   const kindRaw = typeof values.kind === 'string' ? values.kind : 'empty'
   if (!isScaffoldKind(kindRaw)) {
@@ -254,7 +254,7 @@ function cmdScaffoldCap(args: readonly string[]): void {
     strict: true,
   })
   const name = positionals[0]
-  if (!name) throw new Error('Usage: camstack develop scaffold cap <name>')
+  if (!name) throw new Error('Usage: dominevo develop scaffold cap <name>')
 
   const scope = typeof values.scope === 'string' ? values.scope : 'system'
   const mode = typeof values.mode === 'string' ? values.mode : 'singleton'
@@ -297,7 +297,7 @@ function cmdExtend(args: readonly string[]): void {
   const addon = positionals[0]
   const entry = typeof values.entry === 'string' ? values.entry : undefined
   if (!addon || !entry) {
-    throw new Error('Usage: camstack develop extend <addon> --entry <id>')
+    throw new Error('Usage: dominevo develop extend <addon> --entry <id>')
   }
 
   const root = requireWorkspaceRoot()
@@ -347,7 +347,7 @@ function cmdSkills(args: readonly string[]): void {
     printJson(skills)
     return
   }
-  console.log('Portable skill pack (@camstack/develop/skills):\n')
+  console.log('Portable skill pack (@dominevo/develop/skills):\n')
   for (const s of skills) {
     console.log(`${s.id}\t${s.title}\n  ${s.absolutePath}`)
   }
@@ -355,7 +355,7 @@ function cmdSkills(args: readonly string[]): void {
 
 function cmdSkill(args: readonly string[]): void {
   const id = args[0]
-  if (!id) throw new Error('Usage: camstack develop skill <id>')
+  if (!id) throw new Error('Usage: dominevo develop skill <id>')
   const skill = readSkill(id)
   if (!skill) {
     const known = listSkills()

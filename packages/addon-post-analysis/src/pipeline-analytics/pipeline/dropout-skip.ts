@@ -9,7 +9,7 @@
  * genuinely empty and processed normally so tracks can age out.
  */
 
-import type { FrameResult } from '@camstack/types'
+import type { FrameResult } from '@dominevo/types'
 import { selectLowScoreContinuations } from './tracker/low-score-continuation.js'
 
 export interface DropoutSkipConfig {

@@ -23,7 +23,7 @@ import {
   type HeroConfirm,
   type HeroControl,
   type HeroMeasurement,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { type ReactNode, useCallback, useState } from 'react'
 import { useTrpcClient } from '../../contexts/system-context'
 import { useUiText } from '../../contexts/ui-text'

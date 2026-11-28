@@ -44,7 +44,7 @@
  * triggered panel whose target read DISARM tells iOS somebody disarmed the
  * system while the siren is sounding.
  */
-import type { AlarmArmMode, AlarmState } from '@camstack/types'
+import type { AlarmArmMode, AlarmState } from '@dominevo/types'
 import { Characteristic } from '@homebridge/hap-nodejs'
 
 /** The last SETTLED state, remembered by the caller for the transitions. */

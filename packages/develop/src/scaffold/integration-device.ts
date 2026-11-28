@@ -17,7 +17,7 @@ import {
   type IntegrationTestConnectionResult,
   RecordIntegrationInstances,
   type RecordsAccess,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 
 export const <%= className %>ConnectionsKind = defineEntryKind('connections', {
@@ -92,7 +92,7 @@ export const DEVICE_DEVICES_TS = `/**
  * Per-device configuration lives ONLY in \`ctx.settings.*DeviceStore\`, never in a field of the
  * addon's own storage (D865).
  */
-import { BaseDevice, type DeviceContext, type DeviceFeature, DeviceType } from '@camstack/types'
+import { BaseDevice, type DeviceContext, type DeviceFeature, DeviceType } from '@dominevo/types'
 import { z } from 'zod'
 
 export const <%= className %>_SYSTEM = '<%= fileName %>'
@@ -140,7 +140,7 @@ import {
   errMsg,
   type IDeviceAdoptionProvider,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { <%= className %>_GATEWAY_ID } from './<%= fileName %>-devices.js'
 
 export interface RemoteSensor {
@@ -298,7 +298,7 @@ import {
   type IntegrationTestConnectionResult,
   integrationInstancesCapability,
   type RecordIntegrationInstances,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { build<%= className %>AdoptionProvider } from './<%= fileName %>-adoption.js'
 import {
   <%= className %>_SYSTEM,

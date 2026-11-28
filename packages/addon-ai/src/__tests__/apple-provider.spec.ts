@@ -7,7 +7,7 @@
  * can do (`supportsVision`) is stamped from the node, never taken from the
  * form; identity/biometric consumers never reach it.
  */
-import type { LlmGenerateResult, LlmProfile } from '@camstack/types'
+import type { LlmGenerateResult, LlmProfile } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { LlmClient } from '../client/llm-client.js'
 import { DefaultsStore } from '../defaults-store.js'

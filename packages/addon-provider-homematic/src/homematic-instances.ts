@@ -13,7 +13,7 @@ import {
   type RecordsAccess,
   RecordIntegrationInstances,
   type ResolvedInstance,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import {
   buildConnectionFormSchema,

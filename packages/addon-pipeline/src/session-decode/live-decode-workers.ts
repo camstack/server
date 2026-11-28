@@ -28,9 +28,9 @@
  * reach a recycled pid.
  */
 
-import type { IScopedLogger } from '@camstack/types'
-import { errMsg } from '@camstack/types'
-import type { ChildCostRegistry } from '@camstack/types/node'
+import type { IScopedLogger } from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
+import type { ChildCostRegistry } from '@dominevo/types/node'
 import type { ForkDecodeWorkerDeps } from './fork-decode-worker.js'
 import type { ForkedChildLike } from './session-decode-coordinator.js'
 import type { VideoFrameSource } from './video-frame-generator.js'

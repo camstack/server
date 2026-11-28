@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { HubAddressBook } from '@camstack/types'
+import type { HubAddressBook } from '@dominevo/types'
 import {
   advertisedHubOrigins,
   claimedRequestOrigins,

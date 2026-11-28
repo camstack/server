@@ -9,7 +9,7 @@
  * (`pipeline-analytics`).
  */
 import { z } from 'zod'
-import { defineRecordKinds, RECORD_MAX_DATA_BYTES, SceneMonitorSchema } from '@camstack/types'
+import { defineRecordKinds, RECORD_MAX_DATA_BYTES, SceneMonitorSchema } from '@dominevo/types'
 import { DurableLedgerBodySchema } from '../durable/durable-record-body.js'
 import {
   AudioEventBodySchema,

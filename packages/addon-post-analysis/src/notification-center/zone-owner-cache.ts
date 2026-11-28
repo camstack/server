@@ -33,7 +33,7 @@
  * answer for is dropped to unknown (flat semantics), and says so once.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { NcZoneOwnerLookup } from './zone-ownership.js'
 
 export interface NcZoneOwnershipCacheDeps {

@@ -11,7 +11,7 @@ import type { AgentServiceSpec } from '../../windows-service/winsw-config'
 const spec: AgentServiceSpec = {
   nodeExe: 'C:\\Program Files\\CamStack\\resources\\node\\node.exe',
   supervisorJs: 'C:\\App\\resources\\service\\service-supervisor.js',
-  starterJs: 'C:\\App\\resources\\node_modules\\@camstack\\server\\dist\\starter.js',
+  starterJs: 'C:\\App\\resources\\node_modules\\@dominevo\\server\\dist\\starter.js',
   workingDir: 'C:\\App\\resources',
   env: { CAMSTACK_ROLE: 'agent' },
   logDir: '',

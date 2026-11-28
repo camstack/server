@@ -16,7 +16,7 @@
  * password is set back to `changeme`, once — the next sign-in forces a change.
  */
 import * as path from 'node:path'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import {
   type AdminSeedOutcome,
   type EnsureAdminOptions,

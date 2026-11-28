@@ -20,8 +20,8 @@
  * provider for exactly the same method, so the operator never sees two
  * controls that can disagree.
  */
-import { FIRST_LEVEL_MACRO_CLASSES, type FirstLevelMacroClass } from '@camstack/types'
-import type { PtzAutotrackSettings, PtzAutotrackStatus } from '@camstack/types'
+import { FIRST_LEVEL_MACRO_CLASSES, type FirstLevelMacroClass } from '@dominevo/types'
+import type { PtzAutotrackSettings, PtzAutotrackStatus } from '@dominevo/types'
 import { type AutotrackLoopConfig, DEFAULT_AUTOTRACK_LOOP_CONFIG } from './autotrack-config.js'
 
 /**

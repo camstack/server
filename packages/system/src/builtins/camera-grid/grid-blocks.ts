@@ -14,7 +14,7 @@ import {
   type GridHelperSpec,
   type GridLayoutCell,
   type GridProfile,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export type NormalizedRect = {
   readonly x: number

@@ -12,12 +12,12 @@ import {
   TABLE_SCROLL_MAX_H,
   type AddonPageProps,
   type DataColumn,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import {
   inferModelProvider,
   type CustomModelDescriptor,
   type ModelProviderId,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { listAvailability, listCustomModels, removeCustomModel } from '../ui/api.js'
 import {
   formatMB,

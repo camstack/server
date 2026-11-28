@@ -12,8 +12,8 @@ import {
   rebootCapability,
   type SavedDevice,
   workloadCapability,
-} from '@camstack/types'
-import { fakeAddonContext } from '@camstack/types/testing'
+} from '@dominevo/types'
+import { fakeAddonContext } from '@dominevo/types/testing'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { UnifiProviderAddon } from '../addon.js'
 import { UNIFI_SYSTEM } from '../config.js'

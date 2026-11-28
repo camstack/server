@@ -1,6 +1,6 @@
 import { type ReactElement } from 'react'
-import { primaryChildPreferenceOf } from '@camstack/types'
-import { ContainerPrimaryHero, useSystem, type ContainerHeroChild } from '@camstack/ui-library'
+import { primaryChildPreferenceOf } from '@dominevo/types'
+import { ContainerPrimaryHero, useSystem, type ContainerHeroChild } from '@dominevo/ui-library'
 import { useDevice, useDeviceChildren } from '../../../hooks/useDevice'
 import type { HeroProps } from './HeroRegistry'
 

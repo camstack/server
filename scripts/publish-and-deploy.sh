@@ -14,7 +14,7 @@
 #   • Published to npm: every affected, non-private workspace package.
 #   • Deployed to the local hub: the subset that declares a
 #     `camstack.addons` manifest (i.e. is a runtime addon, not a
-#     library). `@camstack/core` is excluded — its addons are
+#     library). `@dominevo/core` is excluded — its addons are
 #     hub-side builtins that require a server restart, not a deploy.
 #
 # Usage:
@@ -24,10 +24,10 @@
 #   ./scripts/publish-and-deploy.sh --dry-run               # plan only
 #   ./scripts/publish-and-deploy.sh --skip-publish          # only deploy
 #   ./scripts/publish-and-deploy.sh --server <url>          # override deploy target
-#   ./scripts/publish-and-deploy.sh --node <id> | --cluster # forward to camstack deploy
+#   ./scripts/publish-and-deploy.sh --node <id> | --cluster # forward to dominevo deploy
 #
-# Deploy target resolution mirrors `camstack deploy` defaults: cached
-# session file (`camstack login` first), which is the only credential; the
+# Deploy target resolution mirrors `dominevo deploy` defaults: cached
+# session file (`dominevo login` first), which is the only credential; the
 # address may also come from `CAMSTACK_SERVER`.
 # ──────────────────────────────────────────────────────────────────────────────
 set -euo pipefail
@@ -79,7 +79,7 @@ fi
 # ── Detect deployable packages ───────────────────────────────────────────────
 # Re-run the same affected detection publish.sh uses, but filter to packages
 # that ARE camstack addons (declare a `camstack.addons` manifest) and are
-# NOT `@camstack/core` (whose "addons" are hub builtins, deployed via
+# NOT `@dominevo/core` (whose "addons" are hub builtins, deployed via
 # server restart not CLI push).
 if [ -z "$LAST_PUBLISH_TAG" ]; then
   echo "[publish-and-deploy] No previous publish-* tag — defaulting to ALL deployable packages"
@@ -90,7 +90,7 @@ else
 fi
 
 # Filter via node — pulls every affected workspace's package.json and
-# keeps it iff it has a camstack.addons manifest and isn't @camstack/core.
+# keeps it iff it has a camstack.addons manifest and isn't @dominevo/core.
 DEPLOYABLE_DIRS=$(echo "$AFFECTED_JSON" | node -e "
   const fs = require('fs'), path = require('path');
   const data = JSON.parse(fs.readFileSync('/dev/stdin','utf-8'));
@@ -106,7 +106,7 @@ DEPLOYABLE_DIRS=$(echo "$AFFECTED_JSON" | node -e "
     }
     if (!pkgDir) continue;
     const pj = JSON.parse(fs.readFileSync(path.join(pkgDir,'package.json'),'utf-8'));
-    if (pj.name === '@camstack/core') continue;
+    if (pj.name === '@dominevo/core') continue;
     if (!pj.camstack || !Array.isArray(pj.camstack.addons) || pj.camstack.addons.length === 0) continue;
     out.push(pkgDir + '\t' + pj.name);
   }
@@ -128,7 +128,7 @@ if [ -f "$LOCAL_CLI" ]; then
 elif command -v camstack >/dev/null 2>&1; then
   CAMSTACK_CMD=(camstack)
 else
-  CAMSTACK_CMD=(npx --yes -p @camstack/cli camstack)
+  CAMSTACK_CMD=(npx --yes -p @dominevo/cli camstack)
 fi
 
 # Build the per-call target args once — they're identical across every
@@ -152,7 +152,7 @@ while IFS=$'\t' read -r dir pkg; do
   [ -z "$dir" ] && continue
   echo ""
   echo "──────────────────────────────────────────────────────────────"
-  echo " camstack deploy $dir ($pkg)"
+  echo " dominevo deploy $dir ($pkg)"
   echo "──────────────────────────────────────────────────────────────"
   # `--build skip` because publish.sh already ran the build step; running
   # `npm run build` a second time wastes ~20-60s per package and risks

@@ -10,10 +10,10 @@
  *                  same semantics
  *   has tilt     → a second `Alexa.RangeController`, `Blind.Tilt`, no semantics
  *
- * CamStack's `cover` position is 0 = closed, 100 = open: the same direction as
+ * Dominevo's `cover` position is 0 = closed, 100 = open: the same direction as
  * Alexa's Opening, so nothing is inverted.
  */
-import { CoverStatusSchema } from '@camstack/types'
+import { CoverStatusSchema } from '@dominevo/types'
 import type {
   AlexaActionMapping,
   AlexaCapability,

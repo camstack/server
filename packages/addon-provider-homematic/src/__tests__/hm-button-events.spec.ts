@@ -115,7 +115,7 @@ function adoptedDeps(facade: Parameters<typeof fakeDeps>[0]) {
   }
 }
 
-const PROGRAM = 'CamStack: Pulsante bagno camerette events'
+const PROGRAM = 'Dominevo: Pulsante bagno camerette events'
 
 describe('HmIP key events need a CCU program', () => {
   it('reports a central link without the program as off, with it as on', async () => {

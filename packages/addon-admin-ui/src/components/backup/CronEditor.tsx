@@ -23,7 +23,7 @@
  */
 import { useEffect, useMemo, useState } from 'react'
 import { Loader2 } from 'lucide-react'
-import { useBackupPreviewSchedule, Button, Input } from '@camstack/ui-library'
+import { useBackupPreviewSchedule, Button, Input } from '@dominevo/ui-library'
 import { Trans, useTranslation } from 'react-i18next'
 import i18n from '../../i18n/index'
 

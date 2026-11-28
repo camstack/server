@@ -31,7 +31,7 @@ import type {
   ProbeTargetConfigResult,
   SendResult,
   TargetKind,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { concatCollection } from '../../api/trpc/cap-mount-helpers.js'
 import { makeCtx, invokeProcedure, buildCapRouterForTest } from './harness.js'
 

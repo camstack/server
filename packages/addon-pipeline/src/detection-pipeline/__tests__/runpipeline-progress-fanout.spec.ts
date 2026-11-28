@@ -27,8 +27,8 @@ import type {
   IScopedLogger,
   PipelineStepInput,
   SystemEvent,
-} from '@camstack/types'
-import { EventCategory } from '@camstack/types'
+} from '@dominevo/types'
+import { EventCategory } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { DetectionPipelineProvider } from '../provider.js'
 

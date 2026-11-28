@@ -14,9 +14,9 @@
  *    rows — not the dedup id, which a replay under a different window key does not match.
  */
 
-import { NC_GROUPING_MAX_SEC, type ObjectEvent } from '@camstack/types'
+import { NC_GROUPING_MAX_SEC, type ObjectEvent } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
-import type { InMemoryRecords } from '@camstack/types'
+import type { InMemoryRecords } from '@dominevo/types'
 import { withNcFaults } from './support/nc-test-deps.js'
 import { RECONCILE_OVERLAP_MS, RECONCILE_SCAN_LIMIT } from '../index.js'
 import type { NcRuleStatus } from '../rule-status.js'

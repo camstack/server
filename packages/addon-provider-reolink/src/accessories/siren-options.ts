@@ -1,4 +1,4 @@
-import { SirenDurationUnit, type SirenOptions, SirenOptionsSource } from '@camstack/types'
+import { SirenDurationUnit, type SirenOptions, SirenOptionsSource } from '@dominevo/types'
 
 /**
  * Reolink counts PLAYS, not seconds: `setSiren(channel, true, n)` plays the

@@ -1,10 +1,10 @@
 # Tuya Provider
 
-Tuya / Smart Life device-provider addon for CamStack — account-onboarded (Tuya IoT cloud fetch of device localKeys) + LOCAL DP control via the @apocaliss92/nodetuya encrypted-LAN client, exposing switch / water-heater-family kettle entities.
+Tuya / Smart Life device-provider addon for Dominevo — account-onboarded (Tuya IoT cloud fetch of device localKeys) + LOCAL DP control via the @apocaliss92/nodetuya encrypted-LAN client, exposing switch / water-heater-family kettle entities.
 
 <!-- readme:generated:start (derived from the manifest; edit outside this block) -->
 
-Package `@camstack/addon-provider-tuya` on npm.
+Package `@dominevo/addon-provider-tuya` on npm.
 
 ## What it provides
 
@@ -23,11 +23,11 @@ Edit these from System, Addons, this addon, Settings (a device's own settings ar
 ## Requirements
 
 - Placement: hub-only.
-- A CamStack hub. An agent is used only where the placement above allows it.
+- A Dominevo hub. An agent is used only where the placement above allows it.
 
 ## Documentation
 
-- [docs/architecture/device-model.md](https://github.com/camstack/server/blob/main/docs/architecture/device-model.md)
+- [docs/architecture/device-model.md](https://github.com/dominevo/server/blob/main/docs/architecture/device-model.md)
 
 See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
 

@@ -28,7 +28,7 @@ import {
   type TemplateScalarValue,
   TemplateDeviceStateValueSchema,
   TemplateTimeWindowValueSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   Button,
   DeviceEventPicker,
@@ -41,7 +41,7 @@ import {
   Switch,
   useDeviceLabelById,
   useDeviceStateGetCapSlice,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Plus, Trash2, X } from 'lucide-react'
 import { Fragment, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'

@@ -1,4 +1,4 @@
-// Re-export config UI types from @camstack/types
+// Re-export config UI types from @dominevo/types
 export type {
   ConfigUISchema,
   ConfigUISchemaWithValues,
@@ -41,4 +41,4 @@ export type {
   ModelFormatEntry,
   ModelOutputFormat,
   LabelDefinition,
-} from '@camstack/types'
+} from '@dominevo/types'

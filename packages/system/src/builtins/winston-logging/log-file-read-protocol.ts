@@ -2,7 +2,7 @@
  * Messages between `WinstonDestination` and its reader thread (D898), and the
  * one function both the thread and the in-process mode run.
  */
-import type { LogReadQuery, LogReadResult } from '@camstack/types'
+import type { LogReadQuery, LogReadResult } from '@dominevo/types'
 import type { LogFileIndexStore } from './log-file-index-store.js'
 import {
   readLogFilesBackward,

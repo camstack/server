@@ -1,4 +1,4 @@
-import { Checkbox, FormField, Input, Select } from '@camstack/ui-library'
+import { Checkbox, FormField, Input, Select } from '@dominevo/ui-library'
 import type { ConfigParam, ConfigValue } from '../ccu/ccu-schemas.js'
 import { useT } from '../i18n/index.js'
 

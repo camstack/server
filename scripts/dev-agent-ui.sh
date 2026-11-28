@@ -4,7 +4,7 @@ set -e
 # =============================================================================
 # dev-agent-ui.sh — Start agent + agent-ui for local development
 #
-# The agent is the SAME @camstack/server booted with CAMSTACK_ROLE=agent
+# The agent is the SAME @dominevo/server booted with CAMSTACK_ROLE=agent
 # (packages/agent no longer exists). This runs the launcher from src via tsx —
 # mirroring the hub's `npm run serve` leg — plus the agent-ui Vite dev server.
 #
@@ -30,12 +30,12 @@ done
 
 cd "$ROOT_DIR"
 
-# The tsx launcher imports the BUILT `@camstack/*` system-package dist. Build it
+# The tsx launcher imports the BUILT `@dominevo/*` system-package dist. Build it
 # once if missing so the first-run launcher doesn't crash on stale/absent dist.
 if [ ! -d "packages/kernel/dist" ]; then
   echo "[dev-agent-ui] Building system packages..."
   npx nx run-many -t build \
-    --projects='@camstack/types,@camstack/server/system,sdk,@camstack/ui-library' \
+    --projects='@dominevo/types,@dominevo/server/system,sdk,@dominevo/ui-library' \
     --parallel=4
 fi
 

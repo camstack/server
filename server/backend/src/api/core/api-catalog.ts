@@ -12,14 +12,14 @@
  *     method's `description` option, else its JSDoc); a core route has none;
  *   - the input schema is the procedure's own Zod parser, as JSON Schema.
  */
-import { METHOD_ACCESS_MAP } from '@camstack/server/system'
-import { METHOD_DESCRIPTIONS } from '@camstack/types'
+import { METHOD_ACCESS_MAP } from '@dominevo/server/system'
+import { METHOD_DESCRIPTIONS } from '@dominevo/types'
 import type {
   ApiCatalogEntry,
   ApiCatalogScope,
   ApiProcedureKind,
   JsonSchemaDocument,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import type { ProcedureTier } from '../trpc/trpc.middleware.js'
 

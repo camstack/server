@@ -6,7 +6,7 @@
  * production does not produce is a table that works only in its own tests.
  */
 import { describe, expect, it } from 'vitest'
-import { DEVICE_STATE_READERS, readDeviceStateFrom, stateVocabularyFor } from '@camstack/types'
+import { DEVICE_STATE_READERS, readDeviceStateFrom, stateVocabularyFor } from '@dominevo/types'
 
 /** Verbatim from `deviceManager.loadRuntimeState({deviceId:647})`. */
 const liveSwitch = {

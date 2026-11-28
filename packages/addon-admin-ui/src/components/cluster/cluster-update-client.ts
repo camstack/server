@@ -4,8 +4,8 @@ import type {
   ClusterUpdateOptions,
   ClusterUpdatePlan,
   StartClusterUpdateResult,
-} from '@camstack/types'
-import { useSystem } from '@camstack/ui-library'
+} from '@dominevo/types'
+import { useSystem } from '@dominevo/ui-library'
 
 /** The three calls the dialog makes. Injected in specs; the page uses the hub client. */
 export interface ClusterUpdateClient {

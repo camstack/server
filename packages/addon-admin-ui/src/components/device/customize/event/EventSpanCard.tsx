@@ -2,8 +2,8 @@
  * A span whose authority is the camera's attached sensors. The list is written
  * only after it was read (D49). Timeout is the camera's `motionCooldownMs`.
  */
-import type { DeviceInfo, SpanCompiled, SpanSensorRow } from '@camstack/types'
-import { projectSpanAssignment, type SpanRead } from '@camstack/types'
+import type { DeviceInfo, SpanCompiled, SpanSensorRow } from '@dominevo/types'
+import { projectSpanAssignment, type SpanRead } from '@dominevo/types'
 import {
   Badge,
   Button,
@@ -12,7 +12,7 @@ import {
   useDeviceNameNouns,
   usePipelineOrchestratorApplyDeviceSettingsPatch,
   usePipelineOrchestratorSetCameraSensors,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Activity } from 'lucide-react'
 import { type ReactNode, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'

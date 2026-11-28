@@ -19,7 +19,7 @@
  * and holding the exclusions are the panel's and the centre's.
  */
 
-import type { AlarmArmMode, NcConditions } from '@camstack/types'
+import type { AlarmArmMode, NcConditions } from '@dominevo/types'
 import { z } from 'zod'
 import { armedStateFor } from './alarm-mode-coverage.js'
 

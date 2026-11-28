@@ -12,7 +12,7 @@ import {
   type Scheduler,
   type SchedulerInput,
   type TemplateRecord,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { parseRecipeFromCode } from '../automation/recipe-from-code'
 import { type DraftCheck, checkDraft, draftOf } from '../actions/action-draft'
 import { schedulerInputOf } from '../schedulers/scheduler-model'

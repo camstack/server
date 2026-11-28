@@ -8,7 +8,7 @@
  * subject is `forNodeId` (as `metrics.getLoadSeries` names it), and no
  * device-history method may declare a top-level `nodeId` again.
  */
-import { deviceHistoryCapability, expandCapMethods } from '@camstack/types'
+import { deviceHistoryCapability, expandCapMethods } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import {

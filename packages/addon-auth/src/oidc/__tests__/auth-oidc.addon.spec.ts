@@ -26,9 +26,9 @@ import {
   RecordSecretUnavailableError,
   recordSecretRef,
   type SecretsAccess,
-} from '@camstack/types'
+} from '@dominevo/types'
 // Import AFTER the mock declaration so the addon picks up our stub.
-import { makeInMemoryRecords } from '@camstack/types'
+import { makeInMemoryRecords } from '@dominevo/types'
 import { AuthOidcAddon } from '../auth-oidc.addon.js'
 import { oidcProviderEntryKind } from '../oidc-provider-record-kinds.js'
 
@@ -1797,7 +1797,7 @@ describe('AuthOidcAddon — native app flow (D858)', () => {
       codeChallenge: CHALLENGE,
       state: 'app-state-0123456789',
       purpose: 'new-session',
-      redirect: 'camstack://auth-callback',
+      redirect: 'dominevo://auth-callback',
     })
     expect(claims.browserBinding).toMatch(/^[0-9a-f]{64}$/)
   })
@@ -1851,7 +1851,7 @@ describe('AuthOidcAddon — native app flow (D858)', () => {
     const res = await callback({ error: 'access_denied', state })
     expect(res.status).toBe(302)
     expect(res.headers.get('location')).toBe(
-      'camstack://auth-callback?error=idp-error&state=app-state-0123456789',
+      'dominevo://auth-callback?error=idp-error&state=app-state-0123456789',
     )
   })
 
@@ -1867,7 +1867,7 @@ describe('AuthOidcAddon — native app flow (D858)', () => {
     const res = await callback({ code: 'C', state })
     expect(res.status).toBe(302)
     expect(res.headers.get('location')).toBe(
-      'camstack://auth-callback?error=idp-failed&state=app-state-0123456789',
+      'dominevo://auth-callback?error=idp-failed&state=app-state-0123456789',
     )
   })
 
@@ -1883,7 +1883,7 @@ describe('AuthOidcAddon — native app flow (D858)', () => {
     await callback({ code: 'C', state })
     const replay = await callback({ code: 'C', state })
     expect(replay.status).toBe(302)
-    expect(replay.headers.get('location')).toBe('camstack://auth-callback?error=state-expired')
+    expect(replay.headers.get('location')).toBe('dominevo://auth-callback?error=state-expired')
   })
 
   it('an expired app state is refused at the default callback', async () => {
@@ -1893,7 +1893,7 @@ describe('AuthOidcAddon — native app flow (D858)', () => {
     const state = new URL(started.headers.get('location')!).searchParams.get('state')!
     vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 6 * 60_000)
     const res = await callback({ code: 'C', state })
-    expect(res.headers.get('location')).toBe('camstack://auth-callback?error=state-expired')
+    expect(res.headers.get('location')).toBe('dominevo://auth-callback?error=state-expired')
   })
 
   it('an unknown NON-app state keeps the web behaviour (a JSON error, never the app)', async () => {
@@ -1994,7 +1994,7 @@ describe('AuthOidcAddon — step-up freshness and bounded pending states (D858)'
   ])('a step-up id_token with %s is refused at the app, no bridge minted', async (_n, extra) => {
     const { res, ssoBridge } = await stepUp(extra)
     expect(res.headers.get('location')).toBe(
-      'camstack://auth-callback?error=step-up-not-fresh&state=app-state-0123456789',
+      'dominevo://auth-callback?error=step-up-not-fresh&state=app-state-0123456789',
     )
     expect(ssoBridge.signBridgeToken).not.toHaveBeenCalled()
   })
@@ -2031,7 +2031,7 @@ describe('AuthOidcAddon — step-up freshness and bounded pending states (D858)'
     const refused = await start({ ...APP, purpose: 'new-session' }, mine)
     expect(refused.status).toBe(302)
     expect(refused.headers.get('location')).toBe(
-      'camstack://auth-callback?error=too-many-requests&state=app-state-0123456789',
+      'dominevo://auth-callback?error=too-many-requests&state=app-state-0123456789',
     )
   })
 

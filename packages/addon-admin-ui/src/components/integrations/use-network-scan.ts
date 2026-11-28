@@ -14,7 +14,7 @@ import {
   useDeviceManagerListAll,
   useDeviceManagerListDiscoveryProposals,
   useDeviceManagerProviderDiscoveryParamsSchema,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useMemo, useState } from 'react'
 import type { ConfigUISchema } from '../../types/config-ui'

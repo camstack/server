@@ -5,8 +5,8 @@ import type {
   StorageCleanupJob,
   StorageCleanupPhase,
   StorageLocation,
-} from '@camstack/types'
-import { evictionPolicyOfLocation } from '@camstack/types'
+} from '@dominevo/types'
+import { evictionPolicyOfLocation } from '@dominevo/types'
 import type { StorageOrchestratorService } from './storage-orchestrator.service.js'
 
 const FOOTAGE_TYPES = new Set(['recordings', 'recordingsLow'])

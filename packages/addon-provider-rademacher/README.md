@@ -1,10 +1,10 @@
 # Rademacher Provider
 
-Rademacher HomePilot device-provider addon for CamStack — wraps the @apocaliss92/noderademacher local-hub client (roller shutters over the cover cap).
+Rademacher HomePilot device-provider addon for Dominevo — wraps the @apocaliss92/noderademacher local-hub client (roller shutters over the cover cap).
 
 <!-- readme:generated:start (derived from the manifest; edit outside this block) -->
 
-Package `@camstack/addon-provider-rademacher` on npm.
+Package `@dominevo/addon-provider-rademacher` on npm.
 
 ## What it provides
 
@@ -22,11 +22,11 @@ Edit these from System, Addons, this addon, Settings (a device's own settings ar
 ## Requirements
 
 - Placement: hub-only.
-- A CamStack hub. An agent is used only where the placement above allows it.
+- A Dominevo hub. An agent is used only where the placement above allows it.
 
 ## Documentation
 
-- [docs/architecture/device-model.md](https://github.com/camstack/server/blob/main/docs/architecture/device-model.md)
+- [docs/architecture/device-model.md](https://github.com/dominevo/server/blob/main/docs/architecture/device-model.md)
 
 See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
 
@@ -34,15 +34,15 @@ See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
 
 ## Setup
 
-1. In CamStack: Integrations, add **Rademacher**. Type the hub's **host / IP**; there is no network scan, because a hub answers
+1. In Dominevo: Integrations, add **Rademacher**. Type the hub's **host / IP**; there is no network scan, because a hub answers
    nothing that tells it apart from any other web server. Leave the **password** blank for an
-   unprotected hub; it is stored in the CamStack keychain and never put in an environment variable, a command
+   unprotected hub; it is stored in the Dominevo keychain and never put in an environment variable, a command
    line or a log line. **Test** logs in and reads the hub's model and firmware.
 2. Open the integration's discovery. The hub appears as one **Gateway** device (its web page, model, firmware,
    MAC and online state); every roller shutter appears as a cover, with the integration in its id so two hubs
    never collide. Adopt the ones you want. The products are siblings of the gateway, not its children.
 3. The hub has no push channel, so it is polled every **poll interval** (30 s by default). A hub that is down
-   when CamStack starts is retried with a growing delay, and a hub that stops answering reads offline until it
+   when Dominevo starts is retried with a growing delay, and a hub that stops answering reads offline until it
    answers again.
 4. Reboot and firmware update are not offered: the HomePilot API only reports that an update exists, it cannot
    restart the hub or start one.

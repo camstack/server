@@ -7,7 +7,7 @@ import type {
   ConsumableLevel,
   RemoteLayoutPayload,
   RemoteSource,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { ReactNode } from 'react'
 import type { CardGlyph } from '../icons'
 import type { CardEvent } from '../parts/EventList'

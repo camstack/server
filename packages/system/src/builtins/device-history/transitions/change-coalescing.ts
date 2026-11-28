@@ -15,7 +15,7 @@
  * Pure. Nothing else in the repository implements this rule; the write-time correlator that
  * held it before was removed with the confirmation machinery.
  */
-import type { TransitionValue } from '@camstack/types'
+import type { TransitionValue } from '@dominevo/types'
 
 /** A capability's changes closer together than this are one burst. */
 export const SETTLE_QUIET_MS = 5_000

@@ -4,7 +4,7 @@
  * kinds, read a kind for diagnosis. It never drops a table: a table the code
  * no longer creates is dropped by hand, offline, on the operator hubs (D901).
  */
-import { type IScopedLogger, type IStorageAdminProvider, type StorageTable } from '@camstack/types'
+import { type IScopedLogger, type IStorageAdminProvider, type StorageTable } from '@dominevo/types'
 import type { StaleDataAudit } from './stale-data/stale-data-audit.js'
 import type { RecordsProvider } from './records/records-provider.js'
 import type { OwnedSqliteFile } from './owned-sqlite-file.js'

@@ -16,7 +16,7 @@ import {
   nodeRemovalHookCapability,
   type ProviderRegistration,
   type RecordsAccess,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { AppleNodeMirror } from './apple-node-mirror.js'
 import { createLlmClient, type LlmClient } from './client/llm-client.js'
 import { DefaultsStore } from './defaults-store.js'

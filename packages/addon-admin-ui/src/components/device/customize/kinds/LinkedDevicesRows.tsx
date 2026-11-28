@@ -6,7 +6,7 @@
  * was read at. Devices are added through the table's "+ Add" picker (the shared
  * device picker, with the room's suggestions), never ticked for the operator.
  */
-import type { DeviceInfo } from '@camstack/types'
+import type { DeviceInfo } from '@dominevo/types'
 import {
   Button,
   deviceTypeMetaOf,
@@ -16,7 +16,7 @@ import {
   useDeviceExtensionListSlots,
   useDeviceExtensionSetSlot,
   useUiText,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { Sparkles, X } from 'lucide-react'
 import { type ReactNode, useRef, useState } from 'react'

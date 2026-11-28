@@ -1,5 +1,5 @@
 import { EventEmitter } from 'node:events'
-import type { IScopedLogger, LogExtras } from '@camstack/types'
+import type { IScopedLogger, LogExtras } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { WalCheckpointer, type WorkerFactory } from '../wal-checkpointer.js'
 

@@ -4,7 +4,7 @@
  * for each provider that is both, its description and its records. One query per provider, by
  * `addonId` — a record carries no addon id, so a fan-out without one could not route an action.
  */
-import { useAddonsList, useAddonsListCapabilityProviders, useSystem } from '@camstack/ui-library'
+import { useAddonsList, useAddonsListCapabilityProviders, useSystem } from '@dominevo/ui-library'
 import { useQueries } from '@tanstack/react-query'
 import { useCallback, useMemo } from 'react'
 import {

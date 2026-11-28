@@ -1,4 +1,4 @@
-import { DeviceType, type DiscoveredChildDevice } from '@camstack/types'
+import { DeviceType, type DiscoveredChildDevice } from '@dominevo/types'
 import type { MatterNodeSnapshot } from './matter-controller.js'
 import { endpointLabel, mapMatterEndpointToCamStack } from './matter-cluster-mapping.js'
 
@@ -13,7 +13,7 @@ import { endpointLabel, mapMatterEndpointToCamStack } from './matter-cluster-map
  */
 export function buildMatterNodeCandidate(input: {
   readonly node: MatterNodeSnapshot
-  /** Adopted CamStack device id for this node, or null when not yet adopted. */
+  /** Adopted Dominevo device id for this node, or null when not yet adopted. */
   readonly adoptedDeviceId: number | null
 }): DiscoveredChildDevice {
   const { node, adoptedDeviceId } = input

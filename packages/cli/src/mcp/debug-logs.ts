@@ -4,7 +4,7 @@
  * stream's encoder respawned, a restream dropped packets), counted with their
  * rate and the gap between them, plus the notable lines themselves, scrubbed.
  */
-import { scrubSecrets } from '@camstack/develop'
+import { scrubSecrets } from '@dominevo/develop'
 import type { LogEntry } from './ops-logs.js'
 
 interface ChurnPattern {

@@ -9,7 +9,7 @@
  * silence.
  */
 
-import { NcStateSummarySectionIdSchema } from '@camstack/types'
+import { NcStateSummarySectionIdSchema } from '@dominevo/types'
 import { z } from 'zod'
 
 export const NcStateSummaryTestSchema = z.object({

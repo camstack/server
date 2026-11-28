@@ -15,7 +15,7 @@
  */
 import { useCallback, useEffect, useState, type JSX } from 'react'
 import { Check, Copy } from 'lucide-react'
-import { usePrompt, Button } from '@camstack/ui-library'
+import { usePrompt, Button } from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 
 const COPIED_RESET_MS = 1_400

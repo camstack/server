@@ -13,7 +13,7 @@ last-verified: 2026-10-09
 > own AST/codegen scripts do.
 
 On 2026-10-09 at 07:36 two CI runs started on the two runner containers of
-agent-a (4-core N100, 16 GB, no swap, also hosting a CamStack agent).
+agent-a (4-core N100, 16 GB, no swap, also hosting a Dominevo agent).
 Both reached "Build all packages" together; the host thrashed (load ~100,
 182 MB free) and became unreachable. The runner-side mitigations (one runner, a
 container memory limit) are another session's work. This record answers why a
@@ -90,7 +90,7 @@ sources needs ~3.4 GB of heap). Lowering it only bounds the worst case.
 ### Top causes
 
 1. **admin-ui's build gate re-typechecks three other packages from source.**
-   `tsconfig.json` maps `@camstack/types`, `sdk` and `ui-library` to their
+   `tsconfig.json` maps `@dominevo/types`, `sdk` and `ui-library` to their
    `src/` via `paths`, so `tsc --noEmit` in `build` is a 3 185-file program
    (406 k lines of TS, 6.3 M instantiations, 3.4 GB "Memory used", 25 s check)
    — on every CI build, and again in the separate `typecheck` target. Against
@@ -100,7 +100,7 @@ sources needs ~3.4 GB of heap). Lowering it only bounds the worst case.
    tsc 2.4 GB, system `vite-plugin-dts` 2.1 GB (a plain `tsc
    --emitDeclarationOnly` of the same tree is 1.58 GB — the plugin costs
    ~0.5 GB on top), types 1.8 GB, ui-library 1.7 GB, desktop 1.7 GB. Each
-   re-reads the `@camstack/types` declarations; none share work.
+   re-reads the `@dominevo/types` declarations; none share work.
 3. **3 tasks × 8 GB ceiling × 2 runners on one 16 GB host.** One build's
    worst overlap is ~7.7 GB of peaks; two builds at once ~15 GB, before the
    agent container and the OS. That is exactly the 07:36 failure.

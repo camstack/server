@@ -18,7 +18,7 @@ import {
   useDeviceExportUnexposeEntity,
   useInstancesOfCap,
   type LinkableInstance,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'

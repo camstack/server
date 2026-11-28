@@ -4,7 +4,7 @@ import * as path from 'node:path'
 import * as os from 'node:os'
 import { FeatureService } from './feature.service'
 import { ConfigService } from '../config/config.service'
-import type { FeatureManifest } from '@camstack/types'
+import type { FeatureManifest } from '@dominevo/types'
 
 /**
  * Test-only ConfigService subclass that overrides the `features` getter

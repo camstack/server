@@ -1,4 +1,4 @@
-import type { Toast } from '@camstack/types'
+import type { Toast } from '@dominevo/types'
 
 export type Unsubscribe = () => void
 

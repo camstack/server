@@ -4,7 +4,7 @@
  * only) step tree from the per-(node,device) BASE and the camera's
  * settings-only layer. The model comes from the base alone (D927).
  */
-import type { PipelineStepInputOutput } from '@camstack/types'
+import type { PipelineStepInputOutput } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { applyDeviceProvisioning } from '../apply-device-provisioning.js'
 

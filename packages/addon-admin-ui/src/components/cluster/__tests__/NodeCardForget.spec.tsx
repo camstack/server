@@ -20,7 +20,7 @@ import { render, screen, fireEvent, act } from '@testing-library/react'
 const forgetNodeMutate = vi.fn()
 const removeAgentSettingsMutate = vi.fn()
 
-vi.mock('@camstack/ui-library', () => ({
+vi.mock('@dominevo/ui-library', () => ({
   Button: ({
     children,
     variant: _v,

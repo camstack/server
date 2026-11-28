@@ -8,7 +8,7 @@
 import { useMemo, type JSX } from 'react'
 import { PlusCircle } from 'lucide-react'
 import { useUiText } from '../contexts/ui-text'
-import type { PipelineSchema, PipelineAddonSchema } from '@camstack/types'
+import type { PipelineSchema, PipelineAddonSchema } from '@dominevo/types'
 import { PipelineStep } from './pipeline-step'
 import type { PipelineStepDisplayConfig } from './pipeline-step'
 

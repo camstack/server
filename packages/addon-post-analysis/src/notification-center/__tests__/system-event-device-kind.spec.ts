@@ -26,8 +26,8 @@
  *     on a device the mirror cannot name: "only my cameras" is never satisfied
  *     by a device nobody can identify.
  */
-import type { NcRule, SystemEvent } from '@camstack/types'
-import { DeviceType, NcRuleInputSchema } from '@camstack/types'
+import type { NcRule, SystemEvent } from '@dominevo/types'
+import { DeviceType, NcRuleInputSchema } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { NcDeviceIdentity, NcDeviceLookup } from '../device-directory.js'
 import { discardedSystemEvent, incomingFromSystemEvent } from '../event-intake.js'

@@ -16,8 +16,8 @@ interface ListState {
 }
 let listState: ListState = { data: undefined, error: null }
 
-vi.mock('@camstack/ui-library', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@camstack/ui-library')>()),
+vi.mock('@dominevo/ui-library', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@dominevo/ui-library')>()),
   useActionsList: () => ({ ...listState, refetch: vi.fn() }),
   useActionsRun: () => ({ mutate: vi.fn(), isPending: false, error: null }),
   useActionsUpdate: () => ({ mutate: vi.fn(), isPending: false, error: null, reset: vi.fn() }),

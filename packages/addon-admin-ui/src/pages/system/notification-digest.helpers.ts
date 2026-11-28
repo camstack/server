@@ -12,7 +12,7 @@
  * Everything here is pure and clock-free (the clock is always an argument).
  */
 
-import type { NcRuleTarget, NcSchedule } from '@camstack/types'
+import type { NcRuleTarget, NcSchedule } from '@dominevo/types'
 import i18n from '../../i18n/index'
 
 /** Compact duration: 90 → `90s`, 300 → `5m`, 3600 → `1h`, 5400 → `1h30m`. */

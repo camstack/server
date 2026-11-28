@@ -10,7 +10,7 @@ import {
   type IScopedLogger,
   mergeIdentifiers,
   type SetIdentifiersInput,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { type VeSyncIdentityRead, vesyncIdentifiers } from '../vesync-identifiers.js'
 import { snapshotOf, type TsVeSyncFan } from '../vesync-tsvesync-client.js'

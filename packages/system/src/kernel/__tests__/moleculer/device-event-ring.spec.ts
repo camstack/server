@@ -7,7 +7,7 @@
  * siblings. Every test here fails if the per-device ring, the mirror coalescing
  * or the payload cap is removed.
  */
-import type { SystemEvent } from '@camstack/types'
+import type { SystemEvent } from '@dominevo/types'
 import { ServiceBroker } from 'moleculer'
 import { afterEach, describe, expect, it } from 'vitest'
 import {

@@ -19,7 +19,7 @@
 
 import { join } from 'node:path'
 import { Environment, ServerNode } from '@matter/main'
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IScopedLogger } from '@dominevo/types'
 import {
   MatterControllerNotWiredError,
   type CommissionResult,

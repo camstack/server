@@ -4,8 +4,8 @@
  * `single` removes the key, so a recipe nobody touched stays byte-identical.
  */
 
-import type { AutomationRecipe, AutomationRunMode } from '@camstack/types'
-import { DurationInput } from '@camstack/ui-library'
+import type { AutomationRecipe, AutomationRunMode } from '@dominevo/types'
+import { DurationInput } from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 import { DraftNumberInput } from '../flow/DraftNumberInput'
 import { FixedSelect } from '../flow/FixedSelect'

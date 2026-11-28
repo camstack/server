@@ -7,7 +7,7 @@
  * same bug as one that silently drops).
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { ReolinkAccessoryHost } from './base.js'
 
 export type AccessoryAbilityFlag = 'hasFloodlight' | 'hasSiren'

@@ -17,7 +17,7 @@ import {
   type LlmRuntimeStatus,
   type ManagedModelRef,
   type ManagedRuntimeConfig,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { RuntimeClient } from './provider.js'
 
 interface PinOpts {

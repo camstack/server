@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { RunnerLocalMetricsSchema } from '@camstack/types'
+import { RunnerLocalMetricsSchema } from '@dominevo/types'
 import PipelineRunnerAddon from '../index.js'
 import { emptyFrameLazyCounters } from '../frame-lazy-metrics.js'
 

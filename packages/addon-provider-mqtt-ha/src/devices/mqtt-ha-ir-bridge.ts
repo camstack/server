@@ -9,7 +9,7 @@ import {
   type IrTimings,
   type IrTransmitterInfo,
   type TransmitSettings,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { renderTemplate } from '../mqtt-ha-template.js'
 import type { MqttHaIrMatch } from '../mqtt-ha-ir-profiles.js'
 

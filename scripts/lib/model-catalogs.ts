@@ -1,5 +1,5 @@
 /**
- * Every BUILT-IN model catalog CamStack can download from, in one walk (D661).
+ * Every BUILT-IN model catalog Dominevo can download from, in one walk (D661).
  *
  * Shared by `scripts/check-catalog-licence.ts` (the guard) and
  * `scripts/gen-model-licenses.ts` (the generator), so the two can never
@@ -8,7 +8,7 @@
  * walked so the guard can require each entry to DECLARE a licence (Model
  * Studio shows it); the generator keeps them out of the public notice, since
  * they are imported on request from their publishers and never hosted by
- * CamStack. What an operator uploads or pulls from a plus catalog account is
+ * Dominevo. What an operator uploads or pulls from a plus catalog account is
  * theirs and is not walked.
  *
  * A new catalog array exported from `model-catalogs.ts` is picked up on its
@@ -68,7 +68,7 @@ export function builtInCatalogEntries(): readonly CatalogEntryRef[] {
 
 export const HF_MIRROR_PREFIX = 'https://huggingface.co/camstack/camstack-models/resolve/main/'
 
-/** The `<category>/<model>` folders of the CamStack HF mirror an entry downloads from. */
+/** The `<category>/<model>` folders of the Dominevo HF mirror an entry downloads from. */
 export function hostedFolders(entry: ModelCatalogEntry): readonly string[] {
   const urls = [
     ...Object.values(entry.formats).map((f) => f?.url ?? ''),

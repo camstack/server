@@ -16,7 +16,7 @@ applies-to:
 > Everything else in those two records stands.
 >
 > **Amended 2026-10-02 (post-release):** `addon-pipeline`, the orchestrator and
-> the admin UI ship INSIDE the `@camstack/server` closure, so the release order
+> the admin UI ship INSIDE the `@dominevo/server` closure, so the release order
 > below could not be followed. The real order, its windows, a per-camera
 > PROVIDER gate beside the runner gate, and the rollback (a server rollback
 > rolls none of them back) replace the old "Release order" and "Rollback rules"
@@ -193,7 +193,7 @@ So a camera is also gated on its OWN provider
 (`ProviderSliceGate`, `camera-sensors/motion-slice-provider-gate.ts`):
 - **The flag.** `deviceProvider.getStatus` answers
   `motionSliceWriter: 'orchestrator'`, said by `BaseDeviceProvider`. Every
-  provider builds `self-contained` and BUNDLES `@camstack/types`, so only a
+  provider builds `self-contained` and BUNDLES `@dominevo/types`, so only a
   provider built from this code says it, whatever server it runs under. Absent
   means "may still write".
 - **Which cameras.** A camera whose owning addon is one of the four
@@ -224,7 +224,7 @@ So a camera is also gated on its OWN provider
   addon module, emitted before that frame is acked — so before `initialize()`,
   any device restore and any boot seed. `WorkerOffline` follows the live
   connection's close, after the hub unregistered the child. Framework code:
-  live only with a `@camstack/server` that carries it. Left: the event reaches
+  live only with a `@dominevo/server` that carries it. Left: the event reaches
   the orchestrator as a UDS frame while the provider loads (its first write
   takes several round trips, so the event normally wins), and an orchestrator
   write already in flight still lands. A dropped event is bounded by the next
@@ -255,7 +255,7 @@ So a camera is also gated on its OWN provider
 
 ### Release order
 
-`@camstack/server` re-aligns the addons it carries at boot (D518): on the hub
+`@dominevo/server` re-aligns the addons it carries at boot (D518): on the hub
 `addon-admin-ui`, `addon-auth`, `addon-decoder-nodeav`, `addon-notifiers`,
 `addon-pipeline`, `addon-pipeline-orchestrator`, `addon-post-analysis`; on an
 agent `addon-pipeline`, `addon-decoder-nodeav`, `addon-agent-ui`. So the order
@@ -281,7 +281,7 @@ the first lasted ~1.5 min with only the old providers' raw writes.
 The released D696 providers carry no flag. Ship the four providers rebuilt with
 it BEFORE the server that carries the provider gate ONLY when a live read
 confirms that the hub's installed orchestrator is at or above the floor
-(`addons.listPackages`: `@camstack/addon-pipeline-orchestrator` ≥ 1.2.272, the
+(`addons.listPackages`: `@dominevo/addon-pipeline-orchestrator` ≥ 1.2.272, the
 version installed on the hub's disk) and
 that every runner is D696 (`pipelineOrchestrator.getAgentLoad`: every online
 entry carries `load.motionSliceWriter: "orchestrator"`). The closure does not

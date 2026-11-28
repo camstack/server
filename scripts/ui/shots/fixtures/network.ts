@@ -33,7 +33,7 @@ const withTwin = true
 
 const rows = [
   row({
-    label: 'CamStack app link',
+    label: 'Dominevo app link',
     baseUrl: APP_LINK,
     kind: 'app-link',
     interfaceKind: 'public',

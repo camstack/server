@@ -24,7 +24,7 @@
  * their own preset "Day mode", and a name match would make their slot
  * unwritable.
  */
-import type { PtzPresetFunction } from '@camstack/types'
+import type { PtzPresetFunction } from '@dominevo/types'
 
 const RESERVED: ReadonlyMap<string, PtzPresetFunction> = new Map([
   ['34', 'home'],

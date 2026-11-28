@@ -35,7 +35,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const CAMSTACK = {
   source: 'analytics',
-  label: 'CamStack recordings',
+  label: 'Dominevo recordings',
   addonId: 'pipeline-analytics',
   availability: { state: 'ok' },
 }
@@ -106,7 +106,7 @@ describe('ClipsSection — the picker is the shared Select, never a hand-rolled 
   it('offers every provider the camera is bound to, by the label its rows carry', () => {
     render(<ClipsSection deviceId={107} />)
     const labels = selectOptionLabels(picker())
-    expect(labels.join('|')).toContain('CamStack recordings')
+    expect(labels.join('|')).toContain('Dominevo recordings')
     expect(labels.join('|')).toContain('SD card')
   })
 })
@@ -114,10 +114,10 @@ describe('ClipsSection — the picker is the shared Select, never a hand-rolled 
 /**
  * The section used to send NOTHING until the operator chose, on the strength of
  * the cap's documented default: *"absent means the device's bound provider,
- * which is CamStack on every camera"*. Measured on the live hub 2026-09-20,
+ * which is Dominevo on every camera"*. Measured on the live hub 2026-09-20,
  * device 107 bound to `recorder` AND `provider-reolink`: a bare `listClips`
  * with `limit: 3` came back with SIX rows, three per source, merged — and the
- * default option was LABELLED "CamStack recordings" while sending neither.
+ * default option was LABELLED "Dominevo recordings" while sending neither.
  *
  * There is no default to restore (D554 amended): a collection cap's binding set is
  * derived and plural, so the pick belongs to the surface, which has the
@@ -159,12 +159,12 @@ describe('ClipsSection — a provider is always NAMED', () => {
 describe('ClipsSection — one bound provider is a fleet STATE, not an empty control', () => {
   it('names the single provider and says why there is nothing to choose', () => {
     // Today's fleet: `listSources` derives from `getBindings`, and only
-    // CamStack is bound for `videoclips`.
+    // Dominevo is bound for `videoclips`.
     sourceRows = [CAMSTACK]
     render(<ClipsSection deviceId={107} />)
     const only = picker()
     expect(only.disabled).toBe(true)
-    expect(only.textContent).toContain('CamStack recordings')
+    expect(only.textContent).toContain('Dominevo recordings')
     expect(screen.getByText(/one clip provider/i)).toBeTruthy()
   })
 })
@@ -181,7 +181,7 @@ describe('ClipsSection — every source the camera has stays PICKABLE', () => {
     // The picker carries LABELS, which is what the operator picks by — the
     // addon id is the wire's business and was only ever visible in the table.
     const options = selectOptionLabels(picker())
-    expect(options).toContain('CamStack recordings')
+    expect(options).toContain('Dominevo recordings')
     expect(options).toContain('SD card')
   })
 })

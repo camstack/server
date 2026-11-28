@@ -45,7 +45,7 @@ export interface BootKpis {
 const ISO_PREFIX = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z)\s+(.*)$/
 const NEEDLE = {
   entrypoint: '[entrypoint]',
-  api: 'CamStack server listening',
+  api: 'Dominevo server listening',
   writePath: 'recorder addon started (continuous write path active)',
   keyframe: 'First keyframe',
   pin: 'recorder pinned broker source(s) for recording',

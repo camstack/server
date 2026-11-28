@@ -6,7 +6,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import type { ProfileSlot, RecordingConfig } from '@camstack/types'
+import type { ProfileSlot, RecordingConfig } from '@dominevo/types'
 
 const ALWAYS_CONTINUOUS = {
   days: [0, 1, 2, 3, 4, 5, 6],

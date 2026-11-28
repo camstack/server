@@ -5,7 +5,7 @@ import {
   DeviceType,
   type ExpressionValue,
   planComposition,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { type AssemblerEntry, assembleSlice } from '../slice-assembler.js'
 import { LOOKUP_CAP } from './fixtures.js'

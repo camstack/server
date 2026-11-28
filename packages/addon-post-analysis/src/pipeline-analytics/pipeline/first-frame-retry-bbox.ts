@@ -1,4 +1,4 @@
-import type { BoundingBox } from '@camstack/types'
+import type { BoundingBox } from '@dominevo/types'
 
 /** Crop box for a late firstFrame retry: the BIRTH geometry, not the
  *  later frozen/coasted box (track 1b659d56). */

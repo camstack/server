@@ -3,7 +3,7 @@
  * own device list. Signing in uses the broker's refresh token, so the operator
  * never types a second Amazon password; nothing here prompts for a code.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { EchoPushSink, PushChannelState } from './echo-push.js'
 import { type BrokerSeed, regionOfDomain } from './broker-seed.js'
 import type { SpeakSessionStore } from './session-store.js'

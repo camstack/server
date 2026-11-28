@@ -44,8 +44,8 @@ import type {
   TrackProjection,
   TrackSource,
   TrackZoneFilter,
-} from '@camstack/types'
-import { EVENT_DENSITY_BATCH_MAX } from '@camstack/types'
+} from '@dominevo/types'
+import { EVENT_DENSITY_BATCH_MAX } from '@dominevo/types'
 import { mediaOwnerUrl, toWireMediaFile, toWireMediaFileInfo } from './media-file-url.js'
 
 import type { EventDensityBucket, EventStore } from './store/event-store.js'

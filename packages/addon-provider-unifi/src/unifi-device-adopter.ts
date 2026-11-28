@@ -1,4 +1,4 @@
-import type { DeviceManagerApi, InitialDeviceMeta } from '@camstack/types'
+import type { DeviceManagerApi, InitialDeviceMeta } from '@dominevo/types'
 import { UNIFI_SYSTEM } from './config.js'
 import { UnifiFeatureDevice } from './devices/unifi-feature-device.js'
 import { UnifiInfraDevice } from './devices/unifi-infra-device.js'

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { AlexaAppliance, AlexaClient } from '../alexa-client.js'
 import { alexaConnectionSchema } from '../config.js'
 import { AlexaIntegrationManager } from '../alexa-integration-manager.js'

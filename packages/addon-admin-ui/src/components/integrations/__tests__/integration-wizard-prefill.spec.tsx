@@ -25,8 +25,8 @@ const calls = vi.hoisted(() => ({
   createInstance: [] as unknown[],
 }))
 
-vi.mock('@camstack/ui-library', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@camstack/ui-library')>()
+vi.mock('@dominevo/ui-library', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dominevo/ui-library')>()
   return {
     ...actual,
     useIntegrationInstancesInstanceFormSchema: () => ({ data: schema }),
@@ -114,7 +114,7 @@ vi.mock('../ProviderPicker', () => ({
   ),
 }))
 
-import { ConfirmDialogProvider } from '@camstack/ui-library'
+import { ConfirmDialogProvider } from '@dominevo/ui-library'
 import { IntegrationWizard } from '../IntegrationWizard'
 
 function renderWizard(seed?: {

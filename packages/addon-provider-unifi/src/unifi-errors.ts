@@ -21,7 +21,7 @@ export class UnifiNoCredentialError extends Error {
   }
 }
 
-/** The account asks for a second factor (or is a UI.com cloud account); CamStack cannot answer one. */
+/** The account asks for a second factor (or is a UI.com cloud account); Dominevo cannot answer one. */
 export class UnifiMfaRequiredError extends Error {
   constructor() {
     super(

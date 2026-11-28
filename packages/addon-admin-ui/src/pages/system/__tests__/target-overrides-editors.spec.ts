@@ -4,7 +4,7 @@
  * the edit plus every untouched target. The patch merges over the stored rule,
  * so a map that named only the edited target would wipe the others.
  */
-import type { NcTargetOverrides } from '@camstack/types'
+import type { NcTargetOverrides } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   buildCalendarEventsCreateInput,

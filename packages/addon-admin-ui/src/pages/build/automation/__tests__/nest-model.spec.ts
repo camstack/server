@@ -1,4 +1,4 @@
-import type { AutomationAction } from '@camstack/types'
+import type { AutomationAction } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { isBranchStep } from '../choose-model'
 import { bodyKindsAt, isBodyStep } from '../nest-model'

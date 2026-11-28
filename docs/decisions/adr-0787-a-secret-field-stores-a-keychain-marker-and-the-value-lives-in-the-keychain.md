@@ -21,10 +21,10 @@ applies-to:
 
 ## Context
 
-Every credential CamStack holds — camera passwords, OIDC client secrets, the
+Every credential Dominevo holds — camera passwords, OIDC client secrets, the
 Cloudflare and Tailscale tokens, the Alexa broker credential, notifier tokens —
 was plaintext JSON in `camstack.db`. Only the MQTT broker encrypted anything,
-and its key file sat next to the ciphertext in every backup. CamStack's own
+and its key file sat next to the ciphertext in every backup. Dominevo's own
 system backups (which may go to S3 or SFTP) carried the whole database, and
 admin forms received the stored plaintext on purpose (`hydrateSchema`) because
 a masked form written back had clobbered the cloudflare token (D780 restored
@@ -60,7 +60,7 @@ claim stripped, and only a hub in-process caller states its own identity.
 
 ## Consequences
 
-- A copy of `camstack.db`, a stray `-wal` or a CamStack backup holds
+- A copy of `camstack.db`, a stray `-wal` or a Dominevo backup holds
   ciphertext (AES-256-GCM under a data key, AAD = the ref) and wrapped key
   material — never a value — as long as the master key is not in the same
   archive (D788).

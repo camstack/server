@@ -17,8 +17,8 @@
  * An entry lives only while it is observed, so a remount starts from a fresh
  * fetch exactly as a fresh hook did before.
  */
-import type { DeviceBinding, SliceHandleSource, createDeviceProxy } from '@camstack/types'
-import { createLazyTrpcSource } from '@camstack/types'
+import type { DeviceBinding, SliceHandleSource, createDeviceProxy } from '@dominevo/types'
+import { createLazyTrpcSource } from '@dominevo/types'
 import type { UseDeviceProxyTrpc } from './use-device-proxy.js'
 
 const BINDING_CHANGED_CATEGORY = 'capability.binding-changed'

@@ -2,7 +2,7 @@
  * D1062: the NVR session's sleep reconcile is driven by the core, through the session's own
  * `refresh()`. It reads the NVR only: a refresh never dials or wakes a child camera.
  */
-import { deviceStateRefreshCapability } from '@camstack/types'
+import { deviceStateRefreshCapability } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { HUB_CHILD_SLEEP_RECONCILE_MS } from '../reolink-hub-session.js'
 import { hubChildRefreshPolicy, registerHubChildStateRefresh } from '../reolink-state-refresh.js'

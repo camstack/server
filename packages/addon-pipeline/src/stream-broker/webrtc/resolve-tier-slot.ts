@@ -9,8 +9,8 @@
  * same single-source tier order used by `stream-broker-manager` and the
  * analogous no-hints tier-selection fallback in `broker-webrtc-server.ts`.
  */
-import { CAM_PROFILE_ORDER } from '@camstack/types'
-import type { CamProfile, ProfileSlot } from '@camstack/types'
+import { CAM_PROFILE_ORDER } from '@dominevo/types'
+import type { CamProfile, ProfileSlot } from '@dominevo/types'
 
 /** One resolved tier slot's addressing info. */
 export interface ResolvedTierSlot {

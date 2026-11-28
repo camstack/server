@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import * as jwt from 'jsonwebtoken'
-import type { TokenPayload } from '@camstack/types'
+import type { TokenPayload } from '@dominevo/types'
 import { ConfigManager, type ISettingsStore } from '../../kernel/config-manager.js'
 import { AuthManager } from '../auth-manager.js'
 import { staticJwtSigningKey } from '../jwt-signing-key.js'

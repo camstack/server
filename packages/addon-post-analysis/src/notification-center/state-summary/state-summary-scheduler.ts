@@ -18,8 +18,8 @@ import {
   type NcRule,
   type NcSchedule,
   systemEventSummaryScheduleOf,
-} from '@camstack/types'
-import { canonicalHash } from '@camstack/types/node'
+} from '@dominevo/types'
+import { canonicalHash } from '@dominevo/types/node'
 import type { ClosedWindow } from '../timelapse/window-bounds.js'
 import { isEmptyStateSummary, type NcStateSummary } from './state-summary.js'
 import type { NcStateSummaryStamp, NcStateSummaryStampPort } from './state-summary-stamps.js'

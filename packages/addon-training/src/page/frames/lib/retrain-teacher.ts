@@ -11,7 +11,7 @@
  * catalog carries for every model: a teacher smaller than the camera's own
  * detector would teach it nothing.
  */
-import type { PipelineSchema } from '@camstack/types'
+import type { PipelineSchema } from '@dominevo/types'
 import { OBJECT_DETECTION_STEP_ID } from './retrain-assist-defaults.js'
 
 export interface TeacherCandidate {

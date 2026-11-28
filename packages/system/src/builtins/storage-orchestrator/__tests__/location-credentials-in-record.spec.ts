@@ -18,7 +18,7 @@ import {
   type SecretsAccess,
   storageCapability,
   type StorageLocationDeclaration,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   type FakeKeychain,

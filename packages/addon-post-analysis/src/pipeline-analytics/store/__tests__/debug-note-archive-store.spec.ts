@@ -18,7 +18,7 @@ import {
   MAX_ARCHIVED_DEBUG_NOTES,
   type RecordKindHandle,
   type RecordsAccess,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { type FakeRecords, kindRows, makeAnalyticsRecords } from '../../__tests__/fake-records.js'
 import { makeLogRecorder, makeSilentLogger } from '../../__tests__/test-helpers.js'

@@ -19,7 +19,7 @@
  * shrink rows it never saw.
  */
 import { z } from 'zod'
-import { isSecretMarker, type IScopedLogger } from '@camstack/types'
+import { isSecretMarker, type IScopedLogger } from '@dominevo/types'
 import { ProbedSnapshotSchema } from './stream-broker/probed-summary.js'
 
 /** Per-device settings keys. */

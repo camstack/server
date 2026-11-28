@@ -1,4 +1,4 @@
-import { hostTimeZone, isWithinClockRange, zoneOnlySite } from '@camstack/types'
+import { hostTimeZone, isWithinClockRange, zoneOnlySite } from '@dominevo/types'
 import type { RecordingBand } from './config-types.js'
 
 const MINUTES_PER_DAY = 1440

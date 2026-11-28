@@ -40,13 +40,13 @@ import type {
   DurableState,
   IScopedLogger,
   PipelineSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   cameraScopedStepSettings,
   ClusterDetectionDefaultsSchema,
   errMsg,
   sleep,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { ZodType } from 'zod'
 import type { CameraStepLayer } from './apply-device-provisioning.js'
 import {

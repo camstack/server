@@ -8,7 +8,7 @@
  */
 import { describe, expect, it, vi } from 'vitest'
 import sharp from 'sharp'
-import { plusCatalogLabelFields } from '@camstack/types'
+import { plusCatalogLabelFields } from '@dominevo/types'
 import type {
   EngineOutput,
   IInferenceEngine,
@@ -16,7 +16,7 @@ import type {
   IScopedLogger,
   ModelCatalogEntry,
   StepDefinition,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { PipelineExecutor } from '../executor.js'
 import { ROOT_SUPPLIED_PLATE_MARGIN_FRACTION } from '../plate-ocr-crop-policy.js'
 import type { ExecutableStep } from '../tree-builder.js'

@@ -1,4 +1,4 @@
-import type { UpdateResult } from '@camstack/types'
+import type { UpdateResult } from '@dominevo/types'
 
 export interface StagedUpdateInput {
   readonly name: string

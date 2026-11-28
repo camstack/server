@@ -33,7 +33,7 @@
  */
 import { useState } from 'react'
 import { Fingerprint, Loader2 } from 'lucide-react'
-import { useSystem, type WidgetProps, Button } from '@camstack/ui-library'
+import { useSystem, type WidgetProps, Button } from '@dominevo/ui-library'
 import { isPasskeySupported, runPasskeyAuthentication } from './passkey-ceremony'
 import { useT } from '../../i18n'
 

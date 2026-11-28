@@ -14,8 +14,8 @@
  * keeps the previous stored value instead of storing a guess. Use the input
  * with `clockOnly` so the operator cannot reach those values.
  */
-import type { NcScheduleWindow, TimeSpec, TimeWindow, WeekdayKey } from '@camstack/types'
-import { weekdayKeyOfIndex } from '@camstack/types'
+import type { NcScheduleWindow, TimeSpec, TimeWindow, WeekdayKey } from '@dominevo/types'
+import { weekdayKeyOfIndex } from '@dominevo/types'
 
 /** The stored `HH:MM` range of a recording band (its mode, battery and triggers are not the window's). */
 export interface StoredBandRange {

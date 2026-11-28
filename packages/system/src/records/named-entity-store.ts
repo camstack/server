@@ -12,7 +12,7 @@
  * picker" is one call. A reference whose id is unknown reads as `null`
  * ({@link nameOf}): a reader never throws on it and never shows the raw id.
  */
-import { type EntityKind, entityNameKey, newEntityId, type RecordKindHandle } from '@camstack/types'
+import { type EntityKind, entityNameKey, newEntityId, type RecordKindHandle } from '@dominevo/types'
 import { createWriteLock, type WriteLock } from '../builtins/device-manager/write-lock.js'
 import { readAllRows } from './read-all-rows.js'
 

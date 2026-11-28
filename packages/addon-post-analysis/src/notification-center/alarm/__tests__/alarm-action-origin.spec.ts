@@ -4,8 +4,8 @@
  * refused (D735). A press with no command origin at all is a person's.
  */
 
-import { commandOrigin } from '@camstack/types'
-import { runWithCapCallContext } from '@camstack/server/system'
+import { commandOrigin } from '@dominevo/types'
+import { runWithCapCallContext } from '@dominevo/server/system'
 import { afterEach, describe, expect, it } from 'vitest'
 import type { NcAlarmPublishReport } from '../alarm-panel-device.js'
 import { NcAlarmPanelDevice } from '../alarm-panel-device.js'

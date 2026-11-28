@@ -34,8 +34,8 @@ import type {
   IEventBus,
   ObjectDetection,
   PipelineInferenceResultPayload,
-} from '@camstack/types'
-import { EventCategory, createEvent } from '@camstack/types'
+} from '@dominevo/types'
+import { EventCategory, createEvent } from '@dominevo/types'
 import { CONFIRMATION_CROP_MAX_WIDTH } from '../index.js'
 import { bootAnalytics, type Booted } from './boot-analytics.js'
 import type { FakeNativeCropRequest } from './test-helpers.js'

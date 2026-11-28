@@ -26,7 +26,7 @@ The live hub reports `addons.getAutoUpdateSettings → {"channel":"off"}`, which
 is the correct operator choice — "tell me, don't install". So the one periodic
 publisher was structurally unreachable on exactly the configuration everybody
 runs, and the operator had never received an update notification. At the same
-time `addons.listFrameworkPackages` was returning `@camstack/system` with
+time `addons.listFrameworkPackages` was returning `@dominevo/system` with
 `hasUpdate: true` and emitting nothing.
 
 The dedup state was two RAM `Map`s. Even had the poll existed, every restart

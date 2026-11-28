@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next'
  * row so the two layouts stay visually identical.
  */
 import { Cpu, Server } from 'lucide-react'
-import { Badge } from '@camstack/ui-library'
+import { Badge } from '@dominevo/ui-library'
 import type { BoardNode } from './board-model'
 
 export interface NodeIdentityProps {

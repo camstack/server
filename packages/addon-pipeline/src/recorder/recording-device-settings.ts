@@ -5,7 +5,7 @@
  * playback natively, reading/writing via the `recording.getDeviceConfig` /
  * `setDeviceConfig` cap methods — so no schema-driven settings fields remain here.
  */
-import type { ConfigUISchema } from '@camstack/types'
+import type { ConfigUISchema } from '@dominevo/types'
 
 export function buildRecordingDeviceSchema(): ConfigUISchema {
   return {

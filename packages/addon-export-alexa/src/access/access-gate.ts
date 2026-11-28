@@ -12,7 +12,7 @@
  * was missing is enforcement. This gate intersects the link with that user's
  * LIVE grants, read from the authority that owns them (`userManagement`), and
  * resolved with the SAME selector engine the tRPC middleware uses
- * (`resolveViewableDeviceIds`, `@camstack/types`) so the two can never
+ * (`resolveViewableDeviceIds`, `@dominevo/types`) so the two can never
  * disagree about a device:
  *
  *  - an admin user's link reaches every exposed device;
@@ -27,8 +27,8 @@
  * D49); a gate that has never read successfully answers `unavailable`, and
  * every caller treats that as a refusal.
  */
-import type { DeviceMetaLike, IScopedLogger, MethodAccess, UserScope } from '@camstack/types'
-import { errMsg, resolveViewableDeviceIds } from '@camstack/types'
+import type { DeviceMetaLike, IScopedLogger, MethodAccess, UserScope } from '@dominevo/types'
+import { errMsg, resolveViewableDeviceIds } from '@dominevo/types'
 import type { ParsedEndpointId } from '../handlers/endpoint-id.js'
 
 /** How long a user-grants read is trusted before the next directive re-reads. */

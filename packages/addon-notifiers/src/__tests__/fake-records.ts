@@ -7,7 +7,7 @@ import {
   notificationTargetKinds,
   type InMemoryRecords,
   type TargetKind,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { notifierDescriptors } from '../record-kinds.js'
 
 export type FakeNotifiersRecords = InMemoryRecords

@@ -11,13 +11,13 @@ import {
   type DeviceInfo,
   type FanPreset,
   type RemoteConfig,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   trpc,
   useCoreBlocksUpdateComposition,
   useFanPresetsSetPresets,
   useRemoteSetConfig,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { createContext, type ReactNode, useContext, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'

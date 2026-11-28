@@ -3,7 +3,7 @@
  * (`deploy`, `dev`, `watch`, `mcp` ...), `scripts/hub/hub.mjs` and the MCP
  * servers. One mechanism, no copy (D1101, which retires the D835 overrides).
  *
- * A client reaches a hub in exactly ONE way: the `camstack login` session
+ * A client reaches a hub in exactly ONE way: the `dominevo login` session
  * cached in `~/.camstack/<host>_<port>.json` (0600), renewed unattended by
  * `session-refresh.ts`. There is no flag, no token file and no environment
  * variable that carries a credential. A headless service logs in once, then
@@ -74,7 +74,7 @@ export interface ResolvedCredentials {
 export interface CachedSessionLike {
   readonly server: string
   readonly token: string
-  /** Copied from `camstack login` when the hub reported an admin user. */
+  /** Copied from `dominevo login` when the hub reported an admin user. */
   readonly isAdmin?: boolean
   /** The `csr_...` token that renews the session; absent on older files. */
   readonly refreshToken?: string
@@ -95,7 +95,7 @@ export class MissingCredentialsError extends Error {
     super(
       [
         reason ? `${reason} (${server ?? 'any hub'}).` : `Not logged in to ${server ?? 'any hub'}.`,
-        `  Run \`camstack login ${server ?? '<host>'}\` once, interactively: every tool uses that session`,
+        `  Run \`dominevo login ${server ?? '<host>'}\` once, interactively: every tool uses that session`,
         '  and the saved session renews itself, so a headless service is logged in once.',
       ].join('\n'),
     )
@@ -119,7 +119,7 @@ export function resolveCredentials(inputs: CredentialInputs): ResolvedCredential
 
 const REJECTION_ADVICE: Readonly<Record<CredentialSource, string>> = {
   session:
-    'The hub rejected the cached session (revoked or expired). Run `camstack login <host>` again.',
+    'The hub rejected the cached session (revoked or expired). Run `dominevo login <host>` again.',
 }
 
 /**

@@ -24,7 +24,7 @@ import {
   stableIdMapOf,
   type TimeSite,
   zoneOnlySite,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** Builds the evaluator for one run, bound to the devices its caller may read (`undefined` = all). */
 export type StepConditionDoor = (readable?: readonly number[]) => EvaluateStepCondition

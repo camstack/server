@@ -2,10 +2,10 @@
  * Paints a class with the cluster display palette (D939).
  *
  * The read is cached. A failed or `unknown` read is not stored as the
- * default: the painter keeps the bundled CamStack preset and says so once.
+ * default: the painter keeps the bundled Dominevo preset and says so once.
  */
-import type { IScopedLogger } from '@camstack/types'
-import { bundledCamstack, paintHex, paletteResultSchema, type PaletteReady } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
+import { bundledCamstack, paintHex, paletteResultSchema, type PaletteReady } from '@dominevo/types'
 
 const REFRESH_MS = 30_000
 
@@ -54,7 +54,7 @@ export function createDisplayPalettePainter(
   const say = (reason: string): void => {
     if (announced) return
     announced = true
-    logger.warn('painting the bundled CamStack preset', { meta: { reason } })
+    logger.warn('painting the bundled Dominevo preset', { meta: { reason } })
   }
 
   const refresh = (): void => {

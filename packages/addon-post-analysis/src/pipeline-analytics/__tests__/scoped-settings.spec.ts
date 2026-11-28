@@ -4,7 +4,7 @@
  * cluster-wide knobs are the cluster form of `pipeline-analytics`; the knobs a camera can override
  * are the fleet defaults of `pipeline-analytics`. One key lives in exactly one scope.
  */
-import type { ConfigUISchema } from '@camstack/types'
+import type { ConfigUISchema } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import PipelineAnalyticsAddon from '../index.js'
 import { buildGlobalSettingsSchema } from '../settings-schema.js'

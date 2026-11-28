@@ -33,7 +33,7 @@ import type {
   ZoneCrossingDirection,
   ZoneEvent,
   ZoneRule,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { DetectionEventEmitter } from './events/event-emitter.js'
 import type { EventEmitterConfig } from './events/event-filter.js'
 import { TripwireTracker } from './events/tripwire-tracker.js'

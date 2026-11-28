@@ -138,4 +138,4 @@ hf auth whoami
 hf upload "$REPO_ID" "$STAGE" . \
   --repo-type model \
   --commit-message "${HF_COMMIT_MESSAGE:-docs: licence, notices, model cards and source/}" \
-  --commit-description "Licence files, notices, model cards and the source/ folder (AGPL Corresponding Source scripts) from the CamStack repository. Only files that differ from the Hub are included. No weight file is touched."
+  --commit-description "Licence files, notices, model cards and the source/ folder (AGPL Corresponding Source scripts) from the Dominevo repository. Only files that differ from the Hub are included. No weight file is touched."

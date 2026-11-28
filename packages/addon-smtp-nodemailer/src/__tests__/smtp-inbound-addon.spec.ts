@@ -5,7 +5,7 @@ import {
   SMTP_INBOUND_DEFAULT_ID,
   brokerCapability,
   makeInMemoryRecords,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import type { ListenerFactory } from '../inbound-listener.js'
 import { mailboxesKind } from '../mailbox-record-kinds.js'

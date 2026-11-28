@@ -18,9 +18,9 @@ import {
   usePTZ,
   PTZOverlay,
   useSystem,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useDeviceDetections } from '../../hooks/useDeviceDetections'
-import { useStationaryOverlay } from '@camstack/ui-library'
+import { useStationaryOverlay } from '@dominevo/ui-library'
 import { hubOrigin } from '../../lib/mount'
 
 export interface LiveStreamViewerProps {

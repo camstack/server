@@ -26,7 +26,7 @@
  * `x-error-code: GatedRepo`. Reading the status alone would tell a
  * typo'd repo name that it is gated, which is the wrong instruction.
  *
- * CamStack never authenticates to Hugging Face: no token is read from the
+ * Dominevo never authenticates to Hugging Face: no token is read from the
  * environment or sent. A gated repo is therefore reported as such and cannot
  * be installed — the operator picks an ungated repo or mirror.
  *
@@ -298,8 +298,8 @@ interface TreeEntry {
   readonly sha256?: string
 }
 
-/** Anonymous requests only — CamStack sends no Hugging Face credential. */
-const HF_HEADERS: Readonly<Record<string, string>> = { 'User-Agent': 'CamStack/1.0' }
+/** Anonymous requests only — Dominevo sends no Hugging Face credential. */
+const HF_HEADERS: Readonly<Record<string, string>> = { 'User-Agent': 'Dominevo/1.0' }
 
 /** HF's 401-for-everything is only decodable through `x-error-code`. */
 function authError(response: Response, repo: string): HfRefError {
@@ -307,7 +307,7 @@ function authError(response: Response, repo: string): HfRefError {
   if (code === 'GatedRepo' || code === 'GatedRepoAccessDenied') {
     return fail(
       'gated',
-      `${repo} is a gated Hugging Face repo. CamStack downloads anonymously and cannot install a gated repo — pick an ungated repo or mirror of the same model.`,
+      `${repo} is a gated Hugging Face repo. Dominevo downloads anonymously and cannot install a gated repo — pick an ungated repo or mirror of the same model.`,
     )
   }
   return fail(

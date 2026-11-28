@@ -7,7 +7,7 @@
  * Calls go through the admin UI's own tRPC client, with the operator's
  * session — no other auth path.
  */
-import type { ApiCallable, ApiCatalogMethod } from '@camstack/types'
+import type { ApiCallable, ApiCatalogMethod } from '@dominevo/types'
 import {
   Badge,
   type BadgeVariant,
@@ -21,7 +21,7 @@ import {
   Textarea,
   trpc,
   useConfirm,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { getUntypedClient } from '@trpc/client'
 import { Braces, Play, RotateCcw } from 'lucide-react'
 import { type ReactNode, useEffect, useMemo, useState } from 'react'

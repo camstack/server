@@ -20,7 +20,7 @@
  * clients — they reverse-connect to the hub. Exposing their interfaces
  * via the same surface would leak internal topology with no upside.
  *
- * Implementation in `@camstack/server/system/builtins/local-network/`.
+ * Implementation in `@dominevo/server/system/builtins/local-network/`.
  */
 import { z } from 'zod'
 import { DiscoveryHitSchema, DiscoveryModeSchema } from './device-provider.cap.js'
@@ -101,7 +101,7 @@ const ConnectionEndpointSchema = z.object({
     'lan-ipv6', // private IPv6
     'public', // tunnel / external FQDN
     'loopback', // 127.0.0.1 — last-resort fallback
-    // The CamStack app link (`https://camstack.zentik.app`, D709) — NOT a hub
+    // The Dominevo app link (`https://camstack.zentik.app`, D709) — NOT a hub
     // address and never raced: a viewer link built on it opens the native
     // app (or the hosted viewer) and carries the hub as `hub=`. Emitted only
     // when the caller passes `includeAppLink: true` (the Network page).
@@ -192,7 +192,7 @@ const GetConnectionEndpointsResultSchema = z.object({
 
 /**
  * The address flagged for notification taps (`notificationTaps`). `baseUrl: null` = AUTO, which
- * since D709 is the CamStack app link; `resolved` reports the effective value,
+ * since D709 is the Dominevo app link; `resolved` reports the effective value,
  * so the UI can show it either way.
  */
 const NotificationEndpointSchema = z.object({
@@ -200,7 +200,7 @@ const NotificationEndpointSchema = z.object({
   baseUrl: z.string().nullable(),
   /**
    * The effective flagged address: the explicit choice, else (AUTO) the
-   * CamStack app link `https://camstack.zentik.app` (D709). A pre-D709 hub
+   * Dominevo app link `https://camstack.zentik.app` (D709). A pre-D709 hub
    * answered the public tunnel / mesh here, or null.
    */
   resolved: z.string().nullable(),
@@ -275,7 +275,7 @@ const HubAppConnectionsResolutionSchema = z.object({
 
 /**
  * One row of the Network page's Addresses table: a detected endpoint, an
- * operator-entered custom address, or the CamStack app link — flagged the
+ * operator-entered custom address, or the Dominevo app link — flagged the
  * same way. A URL that is both detected and entered is ONE row.
  */
 const HubAddressRowSchema = ConnectionEndpointSchema.extend({
@@ -455,7 +455,7 @@ export const localNetworkCapability = {
          *  to avoid mixed-content blocks in the browser. The public
          *  tunnel always emits `https://` regardless. */
         scheme: z.enum(['http', 'https']).optional(),
-        /** Append the CamStack app link entry (`kind: 'app-link'`, D709) —
+        /** Append the Dominevo app link entry (`kind: 'app-link'`, D709) —
          *  an address notification taps can be flagged with, not a hub
          *  route. Default `false`: racers and rankers never see it. */
         includeAppLink: z.boolean().optional(),
@@ -465,7 +465,7 @@ export const localNetworkCapability = {
 
     /**
      * The `notificationTaps` role (D734): where TAPPING a notification opens.
-     * `baseUrl: null` means AUTO, which is the CamStack app link (D709): taps
+     * `baseUrl: null` means AUTO, which is the Dominevo app link (D709): taps
      * go through `https://camstack.zentik.app/…?hub=<appLinkHub>` and open the
      * app. Any hub address the palette lists can be flagged instead; then a
      * tap opens that address. Only the tap: action buttons, attachment /
@@ -682,7 +682,7 @@ export const localNetworkCapability = {
       auth: 'admin',
     }),
   },
-  /** BIG PLAN 2: declarative mount hint — read by `@camstack/server/system` `buildCapRouters`. */
+  /** BIG PLAN 2: declarative mount hint — read by `@dominevo/server/system` `buildCapRouters`. */
   mount: { kind: 'hub-only' },
   vocabulary: { notOperatorFacing: NOT_A_DEVICE.NETWORK },
 } as const satisfies CapabilityDefinition

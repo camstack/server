@@ -18,7 +18,7 @@ covers:
 
 > **Superseded on 2026-08-09** by
 > `../superpowers/specs/2026-08-04-ha-native-export-design.md` (planning repo: superpowers/specs/2026-08-04-ha-native-export-design.md).
-> The MQTT exporter (`@camstack/addon-export-ha-mqtt`) was retired and its
+> The MQTT exporter (`@dominevo/addon-export-ha-mqtt`) was retired and its
 > package deleted; Home Assistant is now served over one path only, an HTTP push
 > to a custom component. Everything below is kept for the MEASUREMENTS and the
 > capability→entity reasoning it records — the file paths it names no longer
@@ -68,7 +68,7 @@ covers:
 > never — a track, a media handle and a zone polygon are not entities. Of §5.3's
 > deferred list, `consumables`, `audio-metrics`, `audio-analysis` and `notifier`
 > are still unexported, and `cover`, `valve`, `humidifier`, `color` and
-> `weather` never were CamStack capability names at all: those Home Assistant
+> `weather` never were Dominevo capability names at all: those Home Assistant
 > platforms are fed by `control`/`switch` slices absorbed by
 > `native-platforms.ts`. §5.7's `via_device` bridge device and per-NODE
 > availability were never built.
@@ -81,7 +81,7 @@ covers:
 > `reachability-reconcile.ts`. §5.6b's namespaced device-settings keys survived
 > the transport change and are still the rule.
 
-`@camstack/addon-export-ha-mqtt` has existed for months. Nobody ever wrote down
+`@dominevo/addon-export-ha-mqtt` has existed for months. Nobody ever wrote down
 what it was supposed to do when it was finished, so nobody could tell that it
 wasn't. This document fixes that first, then designs against the definition.
 
@@ -146,11 +146,11 @@ never speaks.
 The failure this prevents is exactly §1: a `default:` branch that manufactures a
 `sensor` for a `vacuum`.
 
-### C2 — Fidelity: the discovery payload carries what CamStack actually knows
+### C2 — Fidelity: the discovery payload carries what Dominevo actually knows
 
 `device_class`, `unit_of_measurement`, `state_class`, `options`, `min`/`max`/
 `step` and `suggested_display_precision` are read **from the live slice**, not
-hardcoded per kind. CamStack already carries them: `control` puts
+hardcoded per kind. Dominevo already carries them: `control` puts
 `options`/`unit`/`min`/`max`/`step`/`precision` in the slice on purpose
 (`packages/types/src/capabilities/control.cap.ts` says so in prose), and
 `numeric-sensor`, `temperature-sensor`, `humidity-sensor` and `pressure-sensor`
@@ -159,10 +159,10 @@ each carry a live `unit` that overrides the canonical one.
 The failure this prevents: a Fahrenheit feed rendering as `°C` because the
 exporter hardcoded the role's canonical unit.
 
-### C3 — Grouping: one CamStack device tree is one HA device
+### C3 — Grouping: one Dominevo device tree is one HA device
 
 Entities are attached to an HA `device` block keyed on the **root** of the
-CamStack parent chain, stopping before a `hub`-type ancestor. On the live
+Dominevo parent chain, stopping before a `hub`-type ancestor. On the live
 cluster this yields:
 
 - the 30-odd entities of `318:container:Robot primo piano` (vacuum, 3 switches,
@@ -271,7 +271,7 @@ different commitments.
 
 ### A track is not an entity — **never**
 
-A CamStack track is a time-bounded observation: it begins, accumulates
+A Dominevo track is a time-bounded observation: it begins, accumulates
 best-shot media and enrichment (faces, plates, zones), and ends. Home
 Assistant's entity model is a *thing with a current state*. There is no HA
 entity whose state is "an occurrence that existed between t0 and t1". Forcing
@@ -289,7 +289,7 @@ What is exportable, and what this design exports instead:
   lifetime; it is a timestamped fact with attributes, which is what a track's
   *emission* is.
 
-The track's identity, its media handles and its enrichment stay on the CamStack
+The track's identity, its media handles and its enrichment stay on the Dominevo
 side. HA gets told that a person was seen, not handed the object that says so.
 
 ### Media is not an entity — **never**
@@ -318,7 +318,7 @@ nothing. Revisit once the per-device pipeline switches settle.
 
 ### Node and runner health — **deferred**
 
-A CamStack node's online state is a real thing HA could show, but it belongs to
+A Dominevo node's online state is a real thing HA could show, but it belongs to
 a *bridge device* this design does not yet publish (see §5, `via_device`).
 
 ## 5. The design
@@ -336,7 +336,7 @@ moment a component's topic layout differs — and it already does, for `light`.
 <statePrefix>/device/<deviceId>/availability         # device-status.online, retained
 <statePrefix>/device/<deviceId>/<entityKey>/state    # retained
 <statePrefix>/device/<deviceId>/<entityKey>/attrs    # retained, optional
-<statePrefix>/device/<deviceId>/<entityKey>/set      # subscribed, HA → CamStack
+<statePrefix>/device/<deviceId>/<entityKey>/set      # subscribed, HA → Dominevo
 ```
 
 `objectId` = `<idPrefix>_<deviceId>_<entityKey>`, e.g. `camstack_871_control`.

@@ -1,4 +1,4 @@
-import { DeviceFeature } from '@camstack/types'
+import { DeviceFeature } from '@dominevo/types'
 
 /**
  * Reolink-specific flag bag stored in the `feature-probe` runtime-state

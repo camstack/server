@@ -65,8 +65,8 @@
  * judge the same question with the same vocabulary and two different
  * tolerances. The names here are Reolink's, to the letter, so the extraction
  * is mechanical when it happens — see D623 for why it did NOT happen in this
- * change: the shared home is `@camstack/types`, which travels in the published
- * `@camstack/server` closure, so extracting would have turned a provider
+ * change: the shared home is `@dominevo/types`, which travels in the published
+ * `@dominevo/server` closure, so extracting would have turned a provider
  * bugfix into a framework release on every node.
  */
 

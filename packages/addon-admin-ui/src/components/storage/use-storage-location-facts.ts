@@ -1,14 +1,14 @@
 /**
  * What the Storage table knows about a location beyond its instance record: the volume's capacity,
- * CamStack's own share of it, and how far a draining location has got. The three reads are the
+ * Dominevo's own share of it, and how far a draining location has got. The three reads are the
  * ones the page always made; each cell asks for them, and react-query serves one request.
  */
-import type { StorageLocation } from '@camstack/types'
+import type { StorageLocation } from '@dominevo/types'
 import {
   useRecordingArchiveGetStorageUsage,
   useStorageListDrainProgress,
   useStorageListLocations,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useMemo } from 'react'
 import {
   type DrainDisplay,

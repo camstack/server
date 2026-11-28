@@ -1,7 +1,7 @@
 /**
  * The scalar targets of the Customize catalog, one entry per (cap, target).
  */
-import { CAP_CUSTOMIZE_CATALOG, type CustomizeCatalogTarget } from '@camstack/types'
+import { CAP_CUSTOMIZE_CATALOG, type CustomizeCatalogTarget } from '@dominevo/types'
 
 export interface ScalarCardTarget {
   readonly cap: string

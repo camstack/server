@@ -2,10 +2,10 @@
  * Single-copy framework layout — the ONE physical copy of a node's runtime
  * root closure. ZERO-DEP (node:fs/node:path only): loaded by the baked STARTER
  * before any node_modules resolution is trusted, so it must never import from
- * `@camstack/*` (runtime) or any npm package.
+ * `@dominevo/*` (runtime) or any npm package.
  *
  * Replaces the legacy multi-copy model (`versions/<X>` + an N-1 rollback copy +
- * a separate `/data/framework` copy + a `/data/addons/@camstack/server/system` copy).
+ * a separate `/data/framework` copy + a `/data/addons/@dominevo/server/system` copy).
  * There is now exactly ONE closure:
  *
  *   <dataDir>/server-root/current/                 the ONE canonical closure
@@ -15,7 +15,7 @@
  *   <dataDir>/server-root/.trash-*                 transient old-copy graveyard
  *
  * hub-main, the forked addon-runners, and the framework BUILTINS all resolve
- * `@camstack/{system,types,sdk}` from `current/node_modules`; there is
+ * `@dominevo/{system,types,sdk}` from `current/node_modules`; there is
  * no drift and no seed-vs-data-root divergence. `applyServerUpdate` stages a
  * new closure into `.staging-*`, writes the pending-root-swap marker and
  * restarts; the STARTER performs the atomic swap of `current` on the next boot
@@ -192,13 +192,13 @@ export function findMissingNativePrebuilds(closureDir: string): string[] {
 // ---------------------------------------------------------------------------
 
 /**
- * Where `@camstack/server` ships the patches it applies from its own
+ * Where `@dominevo/server` ships the patches it applies from its own
  * `postinstall`, and the manifest that says which files carry which marker.
  * Written by `server/backend/scripts/copy-closure-patches.mjs` at build time.
  */
 const CLOSURE_PATCH_PAYLOAD: readonly string[] = [
   'node_modules',
-  '@camstack',
+  '@dominevo',
   'server',
   'dist',
   'closure-patches',
@@ -228,7 +228,7 @@ function fileContains(file: string, marker: string): boolean {
  * apply in the closure actually landed.
  *
  * This is the FAIL-CLOSED half of D478, and the split is the point.
- * `@camstack/server`'s `postinstall` is best-effort — it cannot fail an install,
+ * `@dominevo/server`'s `postinstall` is best-effort — it cannot fail an install,
  * and an `ignore-scripts` npmrc, a hoisting surprise or a version that drifted
  * off the pinned one all make it exit 0 having done nothing. Before D478 that
  * exact silence WAS the production state for `werift`: three nodes ran an

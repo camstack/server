@@ -12,7 +12,7 @@ import {
   PaletteRejectedError,
   type StoredKeyRead,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   DISPLAY_PALETTE_STORE_KEY,

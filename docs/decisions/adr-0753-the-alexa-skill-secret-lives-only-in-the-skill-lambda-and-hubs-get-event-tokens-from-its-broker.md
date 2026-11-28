@@ -32,7 +32,7 @@ and renewing it needs the skill's "Send Alexa Events" LWA **client secret**. The
 Lambda exchanged the AcceptGrant code and handed the hub the refresh token; the
 hub then refreshed it itself, with the secret read from `public-skill.ts` — a
 constant committed to source, justified in a comment ("the per-account refresh
-token is the real gate"). `@camstack/addon-export-alexa` is public on npm: every
+token is the real gate"). `@dominevo/addon-export-alexa` is public on npm: every
 one of its 164 published versions carries the secret, and so does git history.
 
 The justification was wrong about what it protects. With the secret, anyone who

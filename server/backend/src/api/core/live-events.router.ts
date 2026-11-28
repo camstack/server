@@ -5,18 +5,18 @@
  * Wraps `EventBusService` with per-device permission enforcement.
  */
 import { z } from 'zod'
-import type { SystemEvent } from '@camstack/types'
+import type { SystemEvent } from '@dominevo/types'
 import type { EventBusService } from '../../core/events/event-bus.service.js'
 import type { AddonRegistryService } from '../../core/addon/addon-registry.service.js'
 import { trpcRouter, protectedProcedure, iterableSubscription } from '../trpc/trpc.middleware.js'
 import { liveEventInShareScope } from '../trpc/share-view-access.js'
 import { scopedEventVisibility } from '../trpc/principal-visibility.js'
 import { isPublicEvent, publicRecent } from './public-event-filter.js'
-import { shareViewGrantOf, userError } from '@camstack/types'
+import { shareViewGrantOf, userError } from '@dominevo/types'
 
-// The pushed wire shape is `SystemEvent` from @camstack/types — the exact
+// The pushed wire shape is `SystemEvent` from @dominevo/types — the exact
 // type `EventBusService.subscribe` hands its handlers. It MUST be a type
-// exported from @camstack/types (not a local interface): the AppRouter
+// exported from @dominevo/types (not a local interface): the AppRouter
 // type expansion (`scripts/generate-api-types.ts`) prints subscription
 // output types by name, and a router-local name is unresolvable from the
 // generated `packages/types/src/generated/addon-api.ts`.

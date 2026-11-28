@@ -11,7 +11,7 @@
  * histogram stays its own widget: per-class object counts are events this
  * addon keeps, not a device-history series.
  */
-import { DeviceHistoryView, GRID_GAP, STACK_GAP, WidgetSlot } from '@camstack/ui-library'
+import { DeviceHistoryView, GRID_GAP, STACK_GAP, WidgetSlot } from '@dominevo/ui-library'
 
 interface LiveStatsTabProps {
   readonly deviceId: number

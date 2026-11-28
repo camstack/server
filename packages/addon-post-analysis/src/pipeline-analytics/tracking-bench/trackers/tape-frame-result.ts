@@ -3,7 +3,7 @@
  * A face pseudonym becomes the face's label — labels steer label writes, not
  * association, so the tracker sees what it saw.
  */
-import type { FrameResult, ObjectDetection, Zone, ZoneRule } from '@camstack/types'
+import type { FrameResult, ObjectDetection, Zone, ZoneRule } from '@dominevo/types'
 import { tapeDiscardCorners } from '../recorder/frame-record.js'
 import type { TapeDetection, TapeFrame, TapeScene } from '../tape-schema.js'
 

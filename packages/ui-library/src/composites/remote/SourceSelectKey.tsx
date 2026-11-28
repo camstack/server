@@ -5,7 +5,7 @@
  * Inputs (sequences and infrared codes) — and a pick runs `remote.selectSource` through
  * `sendMediaCommand`. A remote that declares no source draws NOTHING here.
  */
-import type { RemoteLayoutButton, RemoteSource, RemoteRefusalReason } from '@camstack/types'
+import type { RemoteLayoutButton, RemoteSource, RemoteRefusalReason } from '@dominevo/types'
 import { Tv } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
 import { useUiText } from '../../contexts/ui-text'

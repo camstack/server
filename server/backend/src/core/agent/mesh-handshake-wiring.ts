@@ -16,7 +16,7 @@ import {
   type MeshPeers,
   type MeshRegistrations,
   type RenewMeshResult,
-} from '@camstack/server/system'
+} from '@dominevo/server/system'
 import type { MoleculerService } from '../moleculer/moleculer.service.js'
 import { createExpiredLeafRenewer } from './expired-leaf-renewer.js'
 import { createNodeCertificatesClient } from './node-certificates-client.js'

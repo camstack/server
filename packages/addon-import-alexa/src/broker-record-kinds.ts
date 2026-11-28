@@ -1,4 +1,4 @@
-import { declareLinkKind, defineEntryKind, entryBody } from '@camstack/types'
+import { declareLinkKind, defineEntryKind, entryBody } from '@dominevo/types'
 import { z } from 'zod'
 import { alexaConnectionSchema } from './config.js'
 import { ALEXA_ACCOUNT_LINK } from './speak/constants.js'

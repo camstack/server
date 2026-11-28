@@ -12,7 +12,7 @@ export type StorageRowsReader = (dbPath: string) => Promise<readonly unknown[]>
 /** `dist/storage-report-worker.js` at the package root (see `wal-checkpointer.ts`). */
 export function defaultStorageReportWorkerPath(): string {
   const require_ = createRequire(import.meta.url)
-  const packageRoot = path.dirname(require_.resolve('@camstack/server/system/package.json'))
+  const packageRoot = path.dirname(require_.resolve('@dominevo/server/system/package.json'))
   return path.join(packageRoot, 'dist', 'storage-report-worker.js')
 }
 

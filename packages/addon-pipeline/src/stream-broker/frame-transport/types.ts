@@ -21,7 +21,7 @@
  * for `DecodedFrame`; the length-prefix codec is generic and reusable
  * for other message types (encoded packets, audio chunks, events).
  */
-import type { Unsubscribe } from '@camstack/types'
+import type { Unsubscribe } from '@dominevo/types'
 
 // ── Transport layer ─────────────────────────────────────────────────────────
 

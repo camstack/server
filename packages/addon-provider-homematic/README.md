@@ -1,10 +1,10 @@
 # Homematic Provider
 
-Homematic / HomematicIP (CCU3 / RaspberryMatic) device-provider addon for CamStack — wraps the nodehomematic library.
+Homematic / HomematicIP (CCU3 / RaspberryMatic) device-provider addon for Dominevo — wraps the nodehomematic library.
 
 <!-- readme:generated:start (derived from the manifest; edit outside this block) -->
 
-Package `@camstack/addon-provider-homematic` on npm.
+Package `@dominevo/addon-provider-homematic` on npm.
 
 ## What it provides
 
@@ -26,12 +26,12 @@ Edit these from System, Addons, this addon, Settings (a device's own settings ar
 ## Requirements
 
 - Placement: hub-only.
-- A CamStack hub. An agent is used only where the placement above allows it.
+- A Dominevo hub. An agent is used only where the placement above allows it.
 
 ## Documentation
 
-- [docs/architecture/device-model.md](https://github.com/camstack/server/blob/main/docs/architecture/device-model.md)
-- [packages/addon-provider-homematic/AGENTS.md](https://github.com/camstack/server/blob/main/packages/addon-provider-homematic/AGENTS.md)
+- [docs/architecture/device-model.md](https://github.com/dominevo/server/blob/main/docs/architecture/device-model.md)
+- [packages/addon-provider-homematic/AGENTS.md](https://github.com/dominevo/server/blob/main/packages/addon-provider-homematic/AGENTS.md)
 
 See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
 
@@ -39,17 +39,17 @@ See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
 
 ## Setup
 
-1. In CamStack: Integrations, add **Homematic**. Pick the CCU found on your network (the scan asks each host of the
+1. In Dominevo: Integrations, add **Homematic**. Pick the CCU found on your network (the scan asks each host of the
    local /24 networks whether it is a CCU3 or RaspberryMatic WebUI) or type its **host / IP**. Choose the
    **interfaces** to bind, and set the **callback host** if the hub has more than one address (it must be one the
    CCU can reach, never 127.0.0.1; blank infers it). The WebUI **username and password** are optional: they unlock
-   friendly names and rooms, and the password is stored in the CamStack keychain, never in an environment variable,
+   friendly names and rooms, and the password is stored in the Dominevo keychain, never in an environment variable,
    a command line or a log line. **Test** asks every enabled interface and, with credentials, logs in.
 2. Open the integration's discovery. The CCU appears as one **Gateway** device (online state, host, and a link to
    its WebUI); every CCU device appears as a candidate, or as one candidate per entity under the **Entities**
    filter. Ids carry the integration, so two CCUs never collide. Products are siblings of the gateway, not its
    children.
-3. A CCU that is down when CamStack starts is retried with a growing delay, and again on every integration change.
+3. A CCU that is down when Dominevo starts is retried with a growing delay, and again on every integration change.
 4. Reboot and firmware update of the CCU are not offered: the library has no call that restarts the CCU, and its
    firmware call installs an update on a radio device by address.
 
@@ -60,6 +60,6 @@ An older broker-based CCU is not migrated: remove it and add the integration.
 
 ## Button events need a central link
 
-A wall switch or remote (HmIP-BS2, HmIP-WRC*, HmIP-RC*) only delivers a press to CamStack when that key channel has a **central link** on the CCU. Direct links to other devices stay as they are. On the Homematic CCU page, an adopted device with key channels shows **button events: on / off** for each channel, and **Enable button events** / **Disable** creates or removes the central link.
+A wall switch or remote (HmIP-BS2, HmIP-WRC*, HmIP-RC*) only delivers a press to Dominevo when that key channel has a **central link** on the CCU. Direct links to other devices stay as they are. On the Homematic CCU page, an adopted device with key channels shows **button events: on / off** for each channel, and **Enable button events** / **Disable** creates or removes the central link.
 
-Until that link exists the Buttons child says that the CCU is not sending those presses. The first press a channel delivers after CamStack starts is logged once at info; every press is logged at debug.
+Until that link exists the Buttons child says that the CCU is not sending those presses. The first press a channel delivers after Dominevo starts is logged once at info; every press is logged at debug.

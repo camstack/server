@@ -33,13 +33,13 @@ import type {
   IReadinessRegistry,
   ReadinessTransition,
   RunnerCameraConfig,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   errMsg,
   type IScopedLogger,
   pipelineExecutorCapability,
   ReadinessRegistry,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { AgentLoadService } from './agent-load-service.js'
 import { type AttachPipelineOutcome, withAttachPipeline } from './attach-pipeline.js'
 import { balance } from './load-balancer.js'

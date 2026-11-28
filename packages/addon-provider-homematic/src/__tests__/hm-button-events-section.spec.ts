@@ -48,15 +48,15 @@ describe('buttonEventsSection', () => {
 
   it('names the program that sends the key, and links to the Programs tab', () => {
     const [section] = buttonEventsSection('hm_1', [
-      { ...KEY1, central: true, programName: 'CamStack: Pulsante bagno events' },
+      { ...KEY1, central: true, programName: 'Dominevo: Pulsante bagno events' },
     ])
     const table = section?.fields.find((field) => field.type === 'object-array')
     expect(table?.type === 'object-array' ? table.value[0]?.['program'] : null).toBe(
-      'CamStack: Pulsante bagno events',
+      'Dominevo: Pulsante bagno events',
     )
     const info = section?.fields.find((field) => field.type === 'info' && field.format === 'html')
     expect(info?.type === 'info' ? info.content : '').toContain('tab=programs')
-    expect(info?.type === 'info' ? info.content : '').toContain('CamStack: Pulsante bagno events')
+    expect(info?.type === 'info' ? info.content : '').toContain('Dominevo: Pulsante bagno events')
     expect(info?.type === 'info' ? info.format : undefined).toBe('html')
   })
 

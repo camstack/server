@@ -95,7 +95,7 @@ function blob(tokenDate: number): AlexaRegistration {
     loginCookie: 'frc=F; map-md=M; session-id=OLD',
     deviceSerial: 'SERIAL',
     amazonPage: 'amazon.it',
-    deviceAppName: 'CamStack',
+    deviceAppName: 'Dominevo',
     localCookie: 'session-id=OLD; csrf=OLD',
     csrf: 'OLD',
     tokenDate,

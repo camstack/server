@@ -6,7 +6,7 @@ covers:
 
 # addon-provider-zigbee-z2m — package notes
 
-Connects to an EXISTING Zigbee2MQTT server and lets CamStack see and operate its devices. It is
+Connects to an EXISTING Zigbee2MQTT server and lets Dominevo see and operate its devices. It is
 independent of `provider-mqtt-ha`: it does not read the MQTT broker, migrates nothing from it and
 does not look for duplicates (an operator removes devices an earlier import left behind).
 
@@ -25,7 +25,7 @@ socket URL's query string and logs name only `host:port`). The transport is the 
 
 ## Devices
 
-One CamStack device per Zigbee device, keyed by `ieee_address`; the `friendly_name` is the label and
+One Dominevo device per Zigbee device, keyed by `ieee_address`; the `friendly_name` is the label and
 can change: a command goes to `<friendly_name>/set` resolved at the moment of the call. The Gateway
 (the server itself) is adopted as a sibling, never as the parent.
 
@@ -84,7 +84,7 @@ action acts on the only open integration and refuses when there are several.
 | `deviceUpdates` (query) | none: read from the pushed state | each device's `update` block: state, progress, remaining seconds, installed and latest version |
 
 Progress is never polled: it is the `update` block the server publishes with a device's state, which
-is also in the device's raw state. CamStack sends only the one request; how a sleepy device is reached is the server's
+is also in the device's raw state. Dominevo sends only the one request; how a sleepy device is reached is the server's
 business.
 
 ### Firmware as a device

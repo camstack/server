@@ -8,9 +8,9 @@
  * swallow the error of a create and "stops and says how far" fails; send the array on one tick
  * and "one tick" fails.
  */
-import type { System } from '@camstack/sdk'
-import type { ConfigSelectField } from '@camstack/types'
-import { SystemProvider, trpc } from '@camstack/ui-library'
+import type { System } from '@dominevo/sdk'
+import type { ConfigSelectField } from '@dominevo/types'
+import { SystemProvider, trpc } from '@dominevo/ui-library'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createTRPCClient, TRPCClientError, type TRPCLink } from '@trpc/client'
 import { observable } from '@trpc/server/observable'

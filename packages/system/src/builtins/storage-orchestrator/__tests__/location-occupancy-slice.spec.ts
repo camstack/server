@@ -2,7 +2,7 @@
  * Per-location occupancy (D388) — and the one distinction the whole feature
  * exists to protect: a location nobody reports for is UNKNOWN, never zero.
  */
-import type { IScopedLogger, IStorageOccupancyProvider } from '@camstack/types'
+import type { IScopedLogger, IStorageOccupancyProvider } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { LocationOccupancySlice } from '../location-occupancy-slice.js'
 

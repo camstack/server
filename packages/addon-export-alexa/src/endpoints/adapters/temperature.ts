@@ -1,4 +1,4 @@
-import { TemperatureSensorStatusSchema } from '@camstack/types'
+import { TemperatureSensorStatusSchema } from '@dominevo/types'
 import { iface, numericValueField } from './shared.js'
 import type { GenericAdapter } from './types.js'
 

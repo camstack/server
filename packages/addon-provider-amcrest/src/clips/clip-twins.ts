@@ -53,7 +53,7 @@
  * but it is a missing READER of the ladder in the upgrade direction, not a
  * missing field — which is candidate 1 of the three it listed.
  */
-import type { CamProfile } from '@camstack/types'
+import type { CamProfile } from '@dominevo/types'
 
 /**
  * Which archived copy a call means. One member, because the camera archives

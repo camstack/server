@@ -1,4 +1,4 @@
-import type { DeviceCall, DeviceCallRedirect } from '@camstack/types'
+import type { DeviceCall, DeviceCallRedirect } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { composeRedirects, LockDoorGate } from '../lock-door-gate.js'
 import { recordingLogger } from './fixtures.js'

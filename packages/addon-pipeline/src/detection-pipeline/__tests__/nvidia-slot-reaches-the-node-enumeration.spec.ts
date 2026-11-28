@@ -4,7 +4,7 @@
  * `gpu`: the iGPU keeps `openvino:gpu`, and `cuda:gpu` appears only once the
  * slot is usable (the CUDA execution provider exists).
  */
-import { enumerateInferenceDevices, describeNvidia, type NvidiaInfo } from '@camstack/types'
+import { enumerateInferenceDevices, describeNvidia, type NvidiaInfo } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { envToHardwareInfo, type RuntimeEnv } from '../runtimes.js'
 

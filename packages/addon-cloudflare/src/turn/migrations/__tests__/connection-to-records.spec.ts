@@ -8,7 +8,7 @@ import {
   makeInMemoryRecords,
   type MigrationOwnerResult,
   preconditionOf,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { CLOUDFLARE_TURN_RECORD_ID, cloudflareTurnAccountsKind } from '../../turn-record-kinds.js'
 import {

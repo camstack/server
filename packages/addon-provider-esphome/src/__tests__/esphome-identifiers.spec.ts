@@ -10,7 +10,7 @@ import {
   type IScopedLogger,
   mergeIdentifiers,
   type SetIdentifiersInput,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { espBoardIdentifiers } from '../esphome-identifiers.js'
 import type { EspBoardInfo } from '../esphome-link.js'

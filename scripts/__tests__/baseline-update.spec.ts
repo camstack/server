@@ -40,7 +40,7 @@ describe('planBaselineUpdate', () => {
   })
 
   it('refuses ANY production typecheck entry, even with the flag', () => {
-    const plan = planBaselineUpdate('typecheck', new Map([['@camstack/x', 1]]), {}, true)
-    expect(plan.refusals).toEqual([{ bucket: '@camstack/x', pinned: null, actual: 1 }])
+    const plan = planBaselineUpdate('typecheck', new Map([['@dominevo/x', 1]]), {}, true)
+    expect(plan.refusals).toEqual([{ bucket: '@dominevo/x', pinned: null, actual: 1 }])
   })
 })

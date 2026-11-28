@@ -32,7 +32,7 @@ import {
   AutomationRecipeSchema,
   LINKED_TRIGGER_TEMPLATE_ID,
   readRecipeLiteral,
-} from '@camstack/types'
+} from '@dominevo/types'
 import i18n from '../../../i18n/index'
 
 /** The declaration the generator emits. Matched as a whole so a mention of

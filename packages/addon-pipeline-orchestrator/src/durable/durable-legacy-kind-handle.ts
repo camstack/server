@@ -5,7 +5,7 @@
  * Maps rows through the owning spec's `toValue` / `fromRecord` — the same
  * shapes the hub records kind adopts from.
  */
-import type { RecordKindHandle, RecordPut, RecordRow, SettingsStoreClient } from '@camstack/types'
+import type { RecordKindHandle, RecordPut, RecordRow, SettingsStoreClient } from '@dominevo/types'
 import type { DurableLedgerSpec } from './durable-ledger.js'
 
 /** Persisted body for a durable row — the legacy column map minus the pk. */

@@ -14,8 +14,8 @@ import type {
   TemplateBinding,
   TemplateInput,
   TemplatePath,
-} from '@camstack/types'
-import { TEMPLATE_INPUT_KEY_RE } from '@camstack/types'
+} from '@dominevo/types'
+import { TEMPLATE_INPUT_KEY_RE } from '@dominevo/types'
 
 export type BindableKind = 'device' | 'event' | 'action' | 'duration' | 'number'
 

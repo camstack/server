@@ -1,16 +1,16 @@
-# @camstack/mcp-develop
+# @dominevo/mcp-develop
 
 > **The standalone server is retired.** The tools ship inside the CLI:
-> `npm i -g camstack`, then
-> `claude mcp add camstack -- camstack mcp --toolsets develop`.
+> `npm i -g dominevo`, then
+> `claude mcp add camstack -- dominevo mcp --toolsets develop`.
 > This package stays as the library behind that toolset
 > (`registerDevelopTools`); it no longer has a binary.
 
-Tool registrations for CamStack plugin authors; they wrap `@camstack/develop`.
+Tool registrations for Dominevo plugin authors; they wrap `@dominevo/develop`.
 
 ## Workspace tools
 
-Operate on the local CamStack workspace only (no hub): `list_addons`,
+Operate on the local Dominevo workspace only (no hub): `list_addons`,
 `get_addon`, `list_capabilities`, `get_capability`, `who_provides`,
 `list_examples`, `find_example`, `validate_addon`, `scaffold_addon`,
 `scaffold_cap_stub`, `extend_addon`, `list_skills`, `get_skill`.
@@ -39,19 +39,19 @@ Hub methods used (`pipelineAnalytics.*` unless noted): `deviceManager.listAll`,
 
 ### Configuration
 
-Run `camstack login <host>` once (admin account for the write tools): the tools use that saved session, address and TLS pin included. The variables below are optional overrides and win over the session.
+Run `dominevo login <host>` once (admin account for the write tools): the tools use that saved session, address and TLS pin included. The variables below are optional overrides and win over the session.
 
 | Variable | Meaning |
 | --- | --- |
 | `CAMSTACK_HUB_URL` | Hub address, e.g. `https://hub.local:4443`. |
 | `CAMSTACK_HUB_CA_FILE` | PEM of the hub's CA / pinned certificate for a self-signed hub. |
 
-The credential is the `camstack login` session, and only that: no token variable is read (see the `hub-access` skill). TLS verification is never disabled. `track_review_apply` and `track_review_backfill_origin` (with `confirm`) need an admin login; a non-admin credential is refused up front, before any hub call. Tokens never appear in output.
+The credential is the `dominevo login` session, and only that: no token variable is read (see the `hub-access` skill). TLS verification is never disabled. `track_review_apply` and `track_review_backfill_origin` (with `confirm`) need an admin login; a non-admin credential is refused up front, before any hub call. Tokens never appear in output.
 
 
 <!-- readme:generated:start (derived from the manifest; edit outside this block) -->
 
-Package `@camstack/mcp-develop` on npm.
+Package `@dominevo/mcp-develop` on npm.
 
 ## Requirements
 

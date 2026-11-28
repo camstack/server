@@ -13,14 +13,14 @@ applies-to:
 ## Context
 
 The operator reported that updating the `agent-a` agent (Intel N100,
-Unraid, container `CamStack-Agent`) had become "dannatamente lento" [damn slow] — it used to
+Unraid, container `Dominevo-Agent`) had become "dannatamente lento" [damn slow] — it used to
 be effectively instant — and volunteered a cause: the moleculer patch landed
 "un paio di giorni" [a couple of days] earlier. Both halves of that report were checked. The date
 was right. The cause was not, and neither was any of the six numbers the
 investigation inherited.
 
 **The regression is real and datable to the hour.** The agent's own
-`docker logs CamStack-Agent` (retained since the container was created
+`docker logs Dominevo-Agent` (retained since the container was created
 2026-08-27) carries a start marker, `root package update requested`, and an end
 marker, `root package update staged — restarting to apply`. Fourteen pairs:
 
@@ -102,7 +102,7 @@ from a partial signal instead of measured.**
 
 | Inherited | Measured |
 | --- | --- |
-| staged closure is 1096 MB, `current` was 947 MB, "it GREW ~149 MB" | A fresh 1.2.275 install is **947 MB / 29 704 files**; `current` is **947 MB / 29 704 files**. The dependency sets of `@camstack/server@1.2.274` and `@1.2.275` are **byte-identical** — no package added, removed or changed. Nothing grew. |
+| staged closure is 1096 MB, `current` was 947 MB, "it GREW ~149 MB" | A fresh 1.2.275 install is **947 MB / 29 704 files**; `current` is **947 MB / 29 704 files**. The dependency sets of `@dominevo/server@1.2.274` and `@1.2.275` are **byte-identical** — no package added, removed or changed. Nothing grew. |
 | "roughly 2 minutes of `npm install`" | **202.7 s**, and the four before it were 297, 341, 363, 407 s. Worse than reported. |
 | node-av 325 MB, `@seydx` 167 MB, "may be carrying prebuilds for every platform" | node-av **176 MB**, `@seydx` **167 MB** containing **only `node-av-linux-x64`**. npm skipped the other seven platforms correctly via `optionalDependencies`. Not a multi-platform problem — the ffmpeg static lib is simply 167 MB in 3 files. |
 | "NOT ruled out — CPU: the agent was at 283 %" | 283 % is right and misleading: **100–180 % of it is iowait** and user CPU *fell* across the regression. IO/dirty-page starvation, not CPU contention. |
@@ -136,13 +136,13 @@ metadata floor alone.
 
 | package | MB | files | why it is there |
 | --- | --- | --- | --- |
-| monaco-editor | 99 | 1 909 | `@camstack/addon-admin-ui` `dependencies` |
+| monaco-editor | 99 | 1 909 | `@dominevo/addon-admin-ui` `dependencies` |
 | lucide-react (×2) | 88 | 7 276 | `ui-library` (`^0.576`) **and** admin-ui/pipeline/post-analysis (`^0.511`) — the version split forces a nested second copy |
 | hls.js | 32 | 166 | `ui-library` + admin-ui `dependencies` |
 | @xyflow/react | 5 | 1 388 | admin-ui |
 | react-dom, konva, @xterm | 18 | ~380 | admin-ui |
 
-`@camstack/server` depends unconditionally on all eight addon packages,
+`@dominevo/server` depends unconditionally on all eight addon packages,
 `addon-admin-ui` among them, so an agent that will never serve the admin UI
 installs its entire browser toolchain. And it is dead weight even on the hub:
 `addon-admin-ui` publishes `files: ["dist"]` — a 7.1 MB self-contained vite
@@ -194,7 +194,7 @@ extraction back-pressure and will attribute a filesystem problem to the network.
 - The lucide-react version split (`^0.576` in ui-library vs `^0.511` in three
   addons) costs a full second 46 MB / 3 638-file copy. Aligning the range is
   worth as much as removing one of them.
-- `@camstack/server` depending unconditionally on `addon-admin-ui` and
+- `@dominevo/server` depending unconditionally on `addon-admin-ui` and
   `addon-auth` remains: an agent still installs addons it will never run. Making
   the closure role-aware is the architectural version of this rule and is NOT
   done here.

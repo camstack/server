@@ -5,7 +5,7 @@ import {
   type PropertyResult,
   type StateChangedEvent,
 } from '@apocaliss92/nodedreame'
-import type { IntegrationSessionSink, IScopedLogger } from '@camstack/types'
+import type { IntegrationSessionSink, IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { type DreameConfig, settingsToDreameConfig } from '../config.js'
 import { dreameFacades } from '../dreame-gateway.js'

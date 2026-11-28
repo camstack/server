@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { isSecretMarkerLike, type ConfigUISchema } from '@camstack/types'
+import { isSecretMarkerLike, type ConfigUISchema } from '@dominevo/types'
 
 /**
  * Operator-supplied Ecowitt gateway settings for ONE broker (= one station).

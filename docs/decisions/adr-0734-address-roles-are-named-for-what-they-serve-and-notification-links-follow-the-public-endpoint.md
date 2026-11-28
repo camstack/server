@@ -27,7 +27,7 @@ one of them did two jobs:
   was minted on — action buttons, attachment / media links, the admin page a
   system event taps into. An operator who flagged a LAN address so taps opened
   the hub at home quietly moved every button and attachment onto the LAN,
-  where a phone away from home cannot open them. The default (the CamStack app
+  where a phone away from home cannot open them. The default (the Dominevo app
   link) hid the coupling, because the ladder skips the app link and fell
   through to the tunnel.
 - `signIn` already resolved "the address that works from outside" (tunnel,
@@ -43,8 +43,8 @@ page's Addresses table are in bold:
 
 | Role | Label | Values | Serves | Automatic |
 | --- | --- | --- | --- | --- |
-| `appConnections` | **App connections** | many | the addresses the CamStack apps try when connecting | LAN IPv4 + the public tunnel |
-| `notificationTaps` | **Notification taps** | one | ONLY where tapping a notification opens | the CamStack app link |
+| `appConnections` | **App connections** | many | the addresses the Dominevo apps try when connecting | LAN IPv4 + the public tunnel |
+| `notificationTaps` | **Notification taps** | one | ONLY where tapping a notification opens | the Dominevo app link |
 | `publicEndpoint` | **Public endpoint** | one | every URL that must work off the LAN: sign-in links, OIDC / OAuth2 callbacks, the passkey relying party, account linking, and the notification centre's action buttons, attachment / media links and admin links; the admin "Connect a phone" link pre-selects it | the tunnel, then the mesh, then the LAN |
 | `internal` | **Internal** | one | what agents and LAN devices download from: addon / model delivery, the Dreame relay host, the Home Assistant media base | the hub's LAN address |
 

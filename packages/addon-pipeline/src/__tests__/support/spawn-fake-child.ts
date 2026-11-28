@@ -2,7 +2,7 @@ import { EventEmitter } from 'node:events'
 import { PassThrough } from 'node:stream'
 import type { SpawnOptions } from 'node:child_process'
 import type { FfmpegSpawnFn } from '../../stream-broker/stream-broker/ffmpeg-invocation.js'
-import type { SpawnedFfmpegProcess } from '@camstack/types/node'
+import type { SpawnedFfmpegProcess } from '@dominevo/types/node'
 
 /** Minimal ffmpeg child for transcode / egress specs (stdout chunk + kill). */
 export class FakeFfmpegChild extends EventEmitter implements SpawnedFfmpegProcess {

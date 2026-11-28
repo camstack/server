@@ -51,7 +51,7 @@
  * 409 handles/s; if it ever binds again, the answer is still not a bigger
  * number.
  */
-import type { FrameHandle } from '@camstack/types'
+import type { FrameHandle } from '@dominevo/types'
 import {
   classifyNativeCropLeaseAge,
   NATIVE_CROP_LEASE_MAX_AGE_MS,

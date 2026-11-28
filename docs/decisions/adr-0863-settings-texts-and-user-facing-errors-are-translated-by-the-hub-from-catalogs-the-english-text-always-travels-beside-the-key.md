@@ -38,7 +38,7 @@ data into a response, and **the English text always travels beside the key**.
   validated with zod; a broken file is logged and ignored. Namespace `server`
   (error texts and core schema labels) lives in `packages/system/src/i18n/`;
   an addon package ships `i18n/<lang>.json` and its namespace is the package's
-  short name (`@camstack/addon-provider-reolink` -> `provider-reolink`; a
+  short name (`@dominevo/addon-provider-reolink` -> `provider-reolink`; a
   package may host several addons).
 - **Schema fields** carry an optional `labelKey` / `descriptionKey` (sections:
   `titleKey` / `descriptionKey`) of the form `"<namespace>:<key>"` next to the

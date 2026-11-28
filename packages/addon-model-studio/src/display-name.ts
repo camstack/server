@@ -2,7 +2,7 @@
  * Display names of IMPORTED models (registry rows: plus catalog, plus catalog,
  * plugin catalog, custom uploads and conversions). The name lives on the registry
  * row (`entry.name`) — there is no second store — and it never touches the
- * model id, so pins and availability are unaffected by a rename. CamStack's
+ * model id, so pins and availability are unaffected by a rename. Dominevo's
  * own catalog models are not renameable.
  *
  * Shared by the hub action (validation) and the page (field + resolver).

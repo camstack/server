@@ -4,7 +4,7 @@
  * Pure, so both rules below are unit-assertable instead of buried in the
  * runner's 200-line `runSyntheticBench`.
  */
-import type { FrameInput } from '@camstack/types'
+import type { FrameInput } from '@dominevo/types'
 import type { BenchStepShape } from './bench-step-schema.js'
 import type { NodeDeviceChoice } from './node-device-election.js'
 

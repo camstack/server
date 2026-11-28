@@ -11,11 +11,11 @@ interface Entry {
 
 const addon = (name: string, version: string): Entry => ({
   dir: `packages/${name}`,
-  pkg: { name: `@camstack/${name}`, version, camstack: { addons: [] } },
+  pkg: { name: `@dominevo/${name}`, version, camstack: { addons: [] } },
 })
 const server: Entry = {
   dir: 'server/backend',
-  pkg: { name: '@camstack/server', version: '1.2.718', camstack: { addons: [] } },
+  pkg: { name: '@dominevo/server', version: '1.2.718', camstack: { addons: [] } },
 }
 const wrapperMinimums = { desktop: '>=0.1.6', image: '>=1.2.700' }
 
@@ -38,7 +38,7 @@ describe('stamp-requires (D989)', () => {
       wrapperMinimums,
     })
     expect(stamps.get('server/backend')).toEqual({
-      addons: { '@camstack/addon-a': '>=1.0.5' },
+      addons: { '@dominevo/addon-a': '>=1.0.5' },
       wrapper: wrapperMinimums,
     })
   })
@@ -47,11 +47,11 @@ describe('stamp-requires (D989)', () => {
     const pageAddon: Entry = {
       dir: 'packages/addon-p',
       pkg: {
-        name: '@camstack/addon-p',
+        name: '@dominevo/addon-p',
         version: '1.0.0',
         camstack: {
           addons: [{ pages: [{ id: 'p' }] }],
-          requires: { addons: { '@camstack/other': '>=1.0.0' } },
+          requires: { addons: { '@dominevo/other': '>=1.0.0' } },
         },
       },
     }
@@ -63,14 +63,14 @@ describe('stamp-requires (D989)', () => {
     })
     expect(stamps.get('packages/addon-p')).toEqual({
       server: '>=1.2.718',
-      addons: { '@camstack/other': '>=1.0.0', '@camstack/addon-admin-ui': '>=1.2.600' },
+      addons: { '@dominevo/other': '>=1.0.0', '@dominevo/addon-admin-ui': '>=1.2.600' },
     })
     expect(stamps.get('packages/addon-a')).toEqual({ server: '>=1.2.718' })
   })
 
   it('leaves a non-addon package unstamped', () => {
     const stamps = computeStamps({
-      packages: [{ dir: 'packages/types', pkg: { name: '@camstack/types', version: '1.0.0' } }],
+      packages: [{ dir: 'packages/types', pkg: { name: '@dominevo/types', version: '1.0.0' } }],
       serverVersion: '1.2.718',
       wrapperMinimums,
     })
@@ -84,7 +84,7 @@ describe('stamp-requires (D989)', () => {
     const file = path.join(root, dir, 'package.json')
     fs.writeFileSync(
       file,
-      `${JSON.stringify({ name: '@camstack/addon-a', version: '1.0.5', camstack: { addons: [] } }, null, 2)}\n`,
+      `${JSON.stringify({ name: '@dominevo/addon-a', version: '1.0.5', camstack: { addons: [] } }, null, 2)}\n`,
     )
     expect(applyStamp(dir, { server: '>=1.2.718' }, root)).toBe(true)
     const stamped = fs.readFileSync(file, 'utf-8')

@@ -1,12 +1,12 @@
 // @vitest-environment jsdom
 /**
- * Provider-first model picker: CamStack / plus catalog / plugin catalog / Custom are
+ * Provider-first model picker: Dominevo / plus catalog / plugin catalog / Custom are
  * mutually exclusive catalogs. The grouped Family→Tier selector runs INSIDE
  * the selected provider; there is no hidden "Use a custom model…" toggle.
  */
 
 import { selectOptionValues } from '../../testing/select-option'
-import type { PipelineAddonSchema } from '@camstack/types'
+import type { PipelineAddonSchema } from '@dominevo/types'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { ModelPicker } from '../model-picker'
@@ -52,7 +52,7 @@ const MODELS: readonly ModelOption[] = [
 afterEach(cleanup)
 
 describe('ModelPicker — provider-first', () => {
-  it('hides the provider row when every model is CamStack', () => {
+  it('hides the provider row when every model is Dominevo', () => {
     render(
       <ModelPicker
         models={MODELS.filter((m) => m.provider === 'camstack')}
@@ -60,21 +60,21 @@ describe('ModelPicker — provider-first', () => {
         onChange={() => {}}
       />,
     )
-    expect(screen.queryByRole('button', { name: 'CamStack' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Dominevo' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'plus catalog' })).toBeNull()
     expect(screen.getByText(/— size/)).toBeTruthy()
   })
 
   it('shows a provider chip row when more than one provider is present', () => {
     render(<ModelPicker models={MODELS} value="yolo26n" onChange={() => {}} />)
-    expect(screen.getByRole('button', { name: 'CamStack' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Dominevo' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'plus catalog' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'plugin catalog' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Custom' })).toBeTruthy()
     expect(screen.queryByRole('button', { name: /custom model/i })).toBeNull()
   })
 
-  it("opens on the pinned model's provider and keeps CamStack families out of plugin catalog", () => {
+  it("opens on the pinned model's provider and keeps Dominevo families out of plugin catalog", () => {
     render(<ModelPicker models={MODELS} value="scrypted-yolov9s-relu-onnx" onChange={() => {}} />)
     // The plugin catalog family has ONE size, so it draws no size ladder (a ladder
     // with one rung is nothing to pick); the selection is the pinned model.
@@ -94,7 +94,7 @@ describe('ModelPicker — provider-first', () => {
     render(<ModelPicker models={MODELS} value="my-wildlife" onChange={() => {}} />)
     const select = screen.getByRole('combobox') as HTMLSelectElement
     expect(select.value).toBe('my-wildlife')
-    fireEvent.click(screen.getByRole('button', { name: 'CamStack' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Dominevo' }))
     expect(screen.getByText(/— size/)).toBeTruthy()
   })
 })

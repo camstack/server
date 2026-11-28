@@ -34,7 +34,7 @@
  * still grow. Everything that cannot grow another frame keeps D178's zero wait.
  */
 
-import type { IScopedLogger, MediaFile } from '@camstack/types'
+import type { IScopedLogger, MediaFile } from '@dominevo/types'
 import { makeTestMediaFile } from '../../__tests__/support/media-file.js'
 import { describe, expect, it } from 'vitest'
 import { NcDispatcher, type NcSendInput, type NcTargetRef } from '../dispatcher.js'

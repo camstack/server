@@ -1,4 +1,4 @@
-import type { CameraDetectionConfig, Unsubscribe } from '@camstack/types'
+import type { CameraDetectionConfig, Unsubscribe } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   AudioSubscriptionController,

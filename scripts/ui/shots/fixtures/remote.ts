@@ -9,7 +9,7 @@ import {
   builtinRemoteComponent,
   insertComponent,
   type RemoteLayoutPayload,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { planSourceSelectRow } from '../../../remote/source-select-row'
 import { defineFixtures } from './_define'
 import customizeArea from './customize'

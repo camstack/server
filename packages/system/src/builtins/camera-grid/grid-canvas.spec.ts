@@ -13,7 +13,7 @@
  * source is what its rectangle holds when the output tick fires, and the output
  * has its own clock.
  *
- * yuv420p, because that is the one pixel format every consumer of a CamStack
+ * yuv420p, because that is the one pixel format every consumer of a Dominevo
  * profile reads, and because a plane copy is a strided memcpy — no arithmetic
  * per pixel. Its chroma planes are half resolution in both axes, which is why
  * every rectangle here must be EVEN: an odd origin would land a tile's chroma

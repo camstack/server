@@ -35,7 +35,7 @@ import {
   type SeriesRead,
   statisticCadenceMs,
   type CompositionSourceRef,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { capSeriesKey } from '../device-history/capture/capture-engine.js'
 import type { DeadlineTimer } from './composition-runtime.js'
 

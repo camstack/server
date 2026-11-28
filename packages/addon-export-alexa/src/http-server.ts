@@ -19,8 +19,8 @@
  * (integration=export-alexa). This addon registers an `oauth-integration`
  * provider; it no longer owns /oauth/authorize or /oauth/token routes.
  */
-import { TokenScopeSchema } from '@camstack/types'
-import type { AddonHttpReply, AddonHttpRequest, IAddonHttpRoute } from '@camstack/types'
+import { TokenScopeSchema } from '@dominevo/types'
+import type { AddonHttpReply, AddonHttpRequest, IAddonHttpRoute } from '@dominevo/types'
 import { z } from 'zod'
 
 import {
@@ -40,7 +40,7 @@ import { readIngressHeader, verifyIngressToken } from './ingress-token.js'
 import type { KnownOriginsReader, PublicEndpointReader } from './public-endpoint.js'
 import { judgeRoutingClaim, readRoutingClaim } from './routing-claim.js'
 import { handleSnapshotFetch, type SnapshotRouteDeps } from './snapshots/snapshot-route.js'
-import type { AddonContext, IScopedLogger } from '@camstack/types'
+import type { AddonContext, IScopedLogger } from '@dominevo/types'
 import type { AlexaSettings } from './alexa-settings.js'
 import type { SkillLookup } from './instance-routing.js'
 import {

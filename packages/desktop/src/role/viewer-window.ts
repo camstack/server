@@ -180,7 +180,7 @@ export class ViewerWindowController {
       height: bounds.height,
       x: bounds.x,
       y: bounds.y,
-      title: 'CamStack',
+      title: 'Dominevo',
       backgroundColor: '#0c0a09',
       icon: nativeImage.createFromPath(this.deps.iconPath),
       webPreferences: {

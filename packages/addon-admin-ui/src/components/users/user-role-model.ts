@@ -20,7 +20,7 @@ import {
   type UserScope,
   type ViewerFeatureId,
   type ViewerTokenScope,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** Which list the one picker edits. */
 export type ViewerDeviceMode = 'except' | 'only'

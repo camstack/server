@@ -39,7 +39,7 @@
  * (D182/D185).
  */
 
-import type { Track } from '@camstack/types'
+import type { Track } from '@dominevo/types'
 
 /** One entry of `Track.audioLabels`, derived from the schema rather than
  *  restated — the shape has exactly one definition (`TrackAudioLabelSchema`). */

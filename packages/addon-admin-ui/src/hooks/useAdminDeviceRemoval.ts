@@ -11,7 +11,7 @@
 import { useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { type DeviceRemoval, useDeviceManagerRemove, useDeviceRemoval } from '@camstack/ui-library'
+import { type DeviceRemoval, useDeviceManagerRemove, useDeviceRemoval } from '@dominevo/ui-library'
 import { pushToast } from '../components/ui/toast-bus'
 
 export function useAdminDeviceRemoval(): DeviceRemoval {

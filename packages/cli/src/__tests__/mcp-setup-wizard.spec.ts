@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { MutationGate, isSecretBearing } from '@camstack/develop'
+import { MutationGate, isSecretBearing } from '@dominevo/develop'
 import { z } from 'zod'
 import type { McpContext } from '../mcp/context.js'
 import { createPublicServer } from '../mcp/server.js'
@@ -224,7 +224,7 @@ function noHub(extra: Partial<McpContext> = {}): McpContext {
       ok: false,
       reason: 'no-session',
       message: 'no usable hub session: no hub address',
-      action: 'run `camstack login <host>` in a terminal',
+      action: 'run `dominevo login <host>` in a terminal',
     }),
     gate: new MutationGate({ allowMutations: true, audit: () => {} }),
     fetch: async () => new Response(JSON.stringify({ version: '9.9.9' })),
@@ -438,7 +438,7 @@ describe('setup_wizard: against a hub', () => {
     )
 
     expect(answer.nextStep?.id).toBe('core-addons')
-    expect(step(answer, 'core-addons').detail).toContain('@camstack/addon-provider-onvif')
+    expect(step(answer, 'core-addons').detail).toContain('@dominevo/addon-provider-onvif')
   })
 
   it('a hub reachable on the LAN only: remote access is suggested, not missing', async () => {

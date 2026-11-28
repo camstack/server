@@ -2,7 +2,7 @@ import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import type { DeviceTemplateView } from '@camstack/types'
+import type { DeviceTemplateView } from '@dominevo/types'
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { DeviceTemplateRenderer, type DeviceTemplateResolver } from '../template-renderer.js'
 

@@ -23,7 +23,7 @@
  * Harness style mirrors `device-disabled-events.spec.ts` — real addon, real
  * sqlite-backed row store, fake api surfaces.
  */
-import { CAMERA_SWITCH_ORDER, EventCategory } from '@camstack/types'
+import { CAMERA_SWITCH_ORDER, EventCategory } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { registerCamera, setup, type SwitchCall } from './device-manager-harness.js'
 

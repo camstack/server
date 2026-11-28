@@ -1,4 +1,4 @@
-import { DeviceRole, DeviceType } from '@camstack/types'
+import { DeviceRole, DeviceType } from '@dominevo/types'
 
 /**
  * What a UniFi infra device IS, read from its model and the Integration API's `features` list.

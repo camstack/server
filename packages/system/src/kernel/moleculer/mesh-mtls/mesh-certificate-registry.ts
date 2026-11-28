@@ -17,7 +17,7 @@ import type {
   IScopedLogger,
   RecordKindHandle,
   SettingsStoreClient,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { MeshNodeCertificateBody } from '../../../builtins/system-config/record-kinds.js'
 import { systemConfigRecordKinds } from '../../../builtins/system-config/record-kinds.js'
 import { subjectCn } from './mesh-ca.js'

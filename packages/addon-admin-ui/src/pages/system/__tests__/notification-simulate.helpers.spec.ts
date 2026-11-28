@@ -11,7 +11,7 @@
  *     a `minConfidence` condition fails on a subject with no confidence and
  *     passes on one carrying zero — two different, both plausible, answers.
  */
-import type { NcRule } from '@camstack/types'
+import type { NcRule } from '@dominevo/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import {

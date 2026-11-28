@@ -16,7 +16,7 @@ import {
   type NotificationField,
   type Target,
   type TargetKind,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export const MEMBERS_KEY = 'members'
 

@@ -2,8 +2,8 @@
  * Authoring rules for a rule's actions: hooks name Action ids, buttons name one.
  */
 
-import type { ActionEntry, NcRuleActions } from '@camstack/types'
-import { NotificationActionIconSchema } from '@camstack/types'
+import type { ActionEntry, NcRuleActions } from '@dominevo/types'
+import { NotificationActionIconSchema } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   actionsToForm,

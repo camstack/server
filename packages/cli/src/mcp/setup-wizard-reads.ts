@@ -5,7 +5,7 @@
  * backup destination to its enabled flag, cadence and last success. Nothing
  * here can carry a credential into an answer.
  */
-import type { HubClient } from '@camstack/develop'
+import type { HubClient } from '@dominevo/develop'
 import {
   CameraStreamSchema,
   ProfileSlotSchema,
@@ -13,7 +13,7 @@ import {
   deriveRecordingMode,
   type CamProfile,
   type RecordingStorageMode,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { readQuery, type Read } from './ops-hub.js'
 import { READ_CONCURRENCY, mapLimit } from './setup-assist-common.js'

@@ -25,8 +25,8 @@ import type {
   SceneMonitor,
   SceneUnavailable,
   SceneVerdict,
-} from '@camstack/types'
-import { SCENE_DIVERGED } from '@camstack/types'
+} from '@dominevo/types'
+import { SCENE_DIVERGED } from '@dominevo/types'
 import type { EmbeddingEncoderClient } from '../embedding/embedding-dispatcher.js'
 import type { Coordinates } from './condition-resolver.js'
 import { resolveCondition } from './condition-resolver.js'

@@ -7,7 +7,7 @@
  * Disarm: make `revokerById` return 'not-active' for every id → every row of
  * the first case lands in `skipped`.
  */
-import { makeInMemoryRecords } from '@camstack/types'
+import { makeInMemoryRecords } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { sessionHarness } from '../../../auth/__tests__/session-test-harness.js'
 import { userManagementInternal } from '../../../auth/hub-sessions.js'

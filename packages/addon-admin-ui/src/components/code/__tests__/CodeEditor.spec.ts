@@ -42,7 +42,7 @@ function fakeMonaco() {
 
 const libs: readonly EditorExtraLib[] = [
   {
-    filePath: 'file:///node_modules/@camstack/types/index.d.ts',
+    filePath: 'file:///node_modules/@dominevo/types/index.d.ts',
     content: 'export interface BlockContext { readonly devices: unknown }',
   },
 ]
@@ -53,10 +53,10 @@ describe('applyExtraLibs', () => {
     // Documented boundary: the fake implements only the surface used here.
     applyExtraLibs(monaco as unknown as Parameters<typeof applyExtraLibs>[0], libs)
     expect(state.extraLibs).toHaveLength(1)
-    expect(state.extraLibs[0].filePath).toContain('@camstack/types')
+    expect(state.extraLibs[0].filePath).toContain('@dominevo/types')
   })
 
-  it('keeps a path that lets `import … from "@camstack/types"` resolve', () => {
+  it('keeps a path that lets `import … from "@dominevo/types"` resolve', () => {
     // Monaco resolves imports against the extra-lib paths. A file registered as
     // `types.d.ts` loads and then resolves nothing, which is the failure that
     // looks like success.

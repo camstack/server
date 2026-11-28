@@ -110,7 +110,7 @@ Linking starts in the Alexa app, which opens the skill Lambda's `/authorize`
 (`lambda-template/authorize-page.js`). That page asks for the hub's public HTTPS
 address — typed, because a cloud function cannot read this hub's `local-network`
 roles — and checks it before sending the browser on (https, not a local address,
-`GET /api/oauth2/integrations` answers as a CamStack hub that serves
+`GET /api/oauth2/integrations` answers as a Dominevo hub that serves
 `export-alexa`, certificate trusted by the Lambda). Every refusal is shown on the
 same page with a reason code (`not_https`, `local_address`, `unreachable`,
 `tls_error`, `not_camstack`, `integration_missing`, `hub_starting`). The hub shows
@@ -280,16 +280,16 @@ is `auth: 'admin'` (the framework default is any authenticated user).
   ([D62](../../docs/decisions/adr-0062.md), [D104](../../docs/decisions/adr-0104.md)).
   `unlinkAlexaAccounts` writes the oauth session store and this addon's own token
   store. Never add a third place that records whether Alexa is linked.
-- **`OauthSessionSummarySchema` is not on the `@camstack/types` barrel.** Re-declare
+- **`OauthSessionSummarySchema` is not on the `@dominevo/types` barrel.** Re-declare
   the fields you need locally (`link-status.ts`, `lwa-tokens-callback.ts` both do).
   Widening the barrel puts an addon-only change on the publish train.
 - **A 2xx from the Event Gateway is not delivery.** The cloud accepts the envelope
   and drops the event when the endpoint never declared the interface. Check
   `exportedSignatures` before believing a "posted" log line.
-- Shipping: this package goes live with `camstack deploy packages/addon-export-alexa`.
-  Anything in `server/backend`, `@camstack/types` or `@camstack/server/system` needs a
+- Shipping: this package goes live with `dominevo deploy packages/addon-export-alexa`.
+  Anything in `server/backend`, `@dominevo/types` or `@dominevo/server/system` needs a
   publish train + `applyServerUpdate`. Talk-back also needs the stream broker
-  (`camstack deploy packages/addon-pipeline`) and the `webrtc-session` cap field
+  (`dominevo deploy packages/addon-pipeline`) and the `webrtc-session` cap field
   on the hub (publish train).
 - R4 (object detection + event history) is BUILT as a switchable experiment
   (D779); R6 (remote live view) is a design only:

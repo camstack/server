@@ -19,7 +19,7 @@ import {
   useUiText,
   networkHasDevice,
   SECTION_BODY,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { RefreshCw, Waypoints } from 'lucide-react'
 import { useSearchParams } from 'react-router-dom'
 import { MeshNetworkView } from '../../components/device-mesh/MeshNetworkView'

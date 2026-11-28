@@ -5,7 +5,7 @@
  *
  * Idempotent: a store without either key yields an empty plan, which writes nothing.
  */
-import { type MigrationPlan, preconditionOf } from '@camstack/types'
+import { type MigrationPlan, preconditionOf } from '@dominevo/types'
 
 /** The addon id, the prefix of its rows in the canonical settings table. */
 export const GOOGLE_ADDON_ID = 'export-google'

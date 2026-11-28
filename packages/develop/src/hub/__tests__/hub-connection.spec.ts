@@ -18,12 +18,12 @@ describe('tryConnectHub — no session is a result, not a throw', () => {
       workspaceRoot: dir,
       env: {},
       sessionDir: dir,
-      loginCommand: 'camstack login',
+      loginCommand: 'dominevo login',
     })
     expect(outcome.ok).toBe(false)
     if (!outcome.ok) {
       expect(outcome.reason).toBe('no-session')
-      expect(outcome.action).toBe('run `camstack login <host>` in a terminal')
+      expect(outcome.action).toBe('run `dominevo login <host>` in a terminal')
     }
   })
 
@@ -33,7 +33,7 @@ describe('tryConnectHub — no session is a result, not a throw', () => {
       server: 'https://hub.example.test',
       env: {},
       sessionDir: dir,
-      loginCommand: 'camstack login',
+      loginCommand: 'dominevo login',
     })
     expect(outcome.ok).toBe(false)
     if (!outcome.ok) expect(outcome.message).toContain('hub.example.test')

@@ -5,7 +5,7 @@
  *
  * `packages/types/src/device/container-primary-child.ts` is the definition.
  * admin-ui's ui-library, the server's linked-devices expansion and the viewer
- * (`resolveContainerPrimaryChild` through `@camstack/types/client`) import it.
+ * (`resolveContainerPrimaryChild` through `@dominevo/types/client`) import it.
  * The Home Assistant provider cannot: it expresses the same precedence over the
  * `DeviceType` ENUM, because it answers a different question (what type should
  * the adopted PARENT be) from the same ordering. A copy that drifts makes the

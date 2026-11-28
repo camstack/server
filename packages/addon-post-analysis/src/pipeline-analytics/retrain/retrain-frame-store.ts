@@ -39,8 +39,8 @@ import type {
   PreparedTransactOp,
   RetrainDismissed,
   RetrainVerdictSubject,
-} from '@camstack/types'
-import { RetrainVerdictSubjectSchema } from '@camstack/types'
+} from '@dominevo/types'
+import { RetrainVerdictSubjectSchema } from '@dominevo/types'
 import type { EventLedgerCollection } from '../store/event-ledger-collection.js'
 import type { MediaBlobStorage } from '../location-aware-media-storage.js'
 import type { MediaWriteGate } from '../media-write-gate.js'

@@ -14,7 +14,7 @@ import {
   defineCustomActions,
   type INotificationOutputProvider,
   TargetKindSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 
 export const ncTargetActions = defineCustomActions({

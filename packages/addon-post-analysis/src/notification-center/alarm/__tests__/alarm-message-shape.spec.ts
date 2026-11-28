@@ -15,7 +15,7 @@
  * paragraph again fails here rather than in somebody's pocket.
  */
 
-import type { AlarmArmMode } from '@camstack/types'
+import type { AlarmArmMode } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { NC_LANGUAGES, type NcLanguage, NcTextCatalog } from '../../text-catalog.js'
 import {

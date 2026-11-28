@@ -45,8 +45,8 @@
  * `SiteLocationService.detect` refuses when `source === 'operator-set'`.
  */
 
-import type { IScopedLogger } from '@camstack/types'
-import { errMsg, processTimeZoneOr, type SiteLocationStatus } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
+import { errMsg, processTimeZoneOr, type SiteLocationStatus } from '@dominevo/types'
 
 /** The `system-settings` row this module owns. */
 export const SITE_LOCATION_KEY = 'site-location'

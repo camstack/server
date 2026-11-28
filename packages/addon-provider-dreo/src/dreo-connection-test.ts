@@ -1,4 +1,4 @@
-import { errMsg, type IConnectionProbe, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IConnectionProbe, type IScopedLogger } from '@dominevo/types'
 import { dreoConfigSchema } from './config.js'
 import { DreoBridgeError } from './dreo-bridge.js'
 import type { DreoBridgeFactory } from './dreo-integration-manager.js'

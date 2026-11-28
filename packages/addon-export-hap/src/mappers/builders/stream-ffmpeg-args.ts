@@ -3,7 +3,7 @@
  *
  * This file used to assemble the argument vector by hand. It no longer emits a
  * single argument: it describes the session as an {@link FfmpegInvocation} and
- * `buildFfmpegArgs` (`@camstack/types` `ffmpeg/invocation.ts`) emits every one.
+ * `buildFfmpegArgs` (`@dominevo/types` `ffmpeg/invocation.ts`) emits every one.
  * The repo keeps exactly ONE argv builder — `scripts/check-ffmpeg-primitive.ts`
  * Rule 1 refuses a second, and HomeKit was the last exception (D67).
  *
@@ -37,7 +37,7 @@ import {
   HAP_AUDIO_BASE,
   HAP_AUDIO_BITRATE_KBPS,
   HAP_AUDIO_VBV_KBITS,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { HwDecodeDecision } from './stream-hwaccel.js'
 
 /**
@@ -51,7 +51,7 @@ import type { HwDecodeDecision } from './stream-hwaccel.js'
  *  - Mono / low-delay profile matches Apple Home's published Opus decoder
  *    expectations for camera accessories.
  *
- * The numbers themselves live in `@camstack/types` `ffmpeg/encode-defaults.ts`
+ * The numbers themselves live in `@dominevo/types` `ffmpeg/encode-defaults.ts`
  * now, alongside every other live-egress constant, so the five sets that used
  * to disagree about Opus channel count can be diffed in one place. Re-exported
  * here because the session telemetry reports the bitrate it dialled.

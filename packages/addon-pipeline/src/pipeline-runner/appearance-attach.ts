@@ -7,7 +7,7 @@
  * and counts every box it could not describe — a skipped box in silence would
  * read as "the tracker had no appearance for that camera" with no reason.
  */
-import type { FrameResult } from '@camstack/types'
+import type { FrameResult } from '@dominevo/types'
 import {
   type AppearanceCrop,
   appearanceCrop,
@@ -98,7 +98,7 @@ const EMPTY_APPEARANCE_COST: AppearanceAttachCost = {
  * until Task 23 calibrates it, so a disabled camera must cost NOTHING extra
  * per frame — no crop, no resample, no descriptor. `enabled` must be the
  * SAME authority the tracker reads (`TrackerV2Config.appearanceResolvesAmbiguity`'s
- * default, `@camstack/types` `APPEARANCE_RESOLVES_AMBIGUITY_DEFAULT`) — never
+ * default, `@dominevo/types` `APPEARANCE_RESOLVES_AMBIGUITY_DEFAULT`) — never
  * a second flag that could disagree with it (CLAUDE.md D62). Disabled
  * short-circuits BEFORE `readView` is ever called, so `computeAppearanceDescriptor`
  * (reached only from inside {@link attachAppearanceDescriptors}, through a

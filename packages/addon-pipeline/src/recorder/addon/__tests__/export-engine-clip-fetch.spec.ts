@@ -2,8 +2,8 @@
  * The engine's CLIP branch — one by-handle fetch, under a bound, with a named
  * error on every failure and no ffmpeg anywhere near it (D558 § 3, § 5.1).
  */
-import type { ClipBytes, ExportClipSubject, ExportRecord, IScopedLogger } from '@camstack/types'
-import { clipExportFailureOf } from '@camstack/types'
+import type { ClipBytes, ExportClipSubject, ExportRecord, IScopedLogger } from '@dominevo/types'
+import { clipExportFailureOf } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { CLIP_WAKE_TTL_MS, type ClipFetchRequest, ExportEngine } from '../export-engine.js'
 import { getExportRecord, type RecordingExportsState, upsertExport } from '../export-store.js'

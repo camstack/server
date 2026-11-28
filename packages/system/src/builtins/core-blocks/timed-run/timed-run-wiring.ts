@@ -8,7 +8,7 @@ import {
   type IScopedLogger,
   type RecordsAccess,
   type TimedRunActuator,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { invokeCapOver } from '../actions-wiring.js'
 import { timeoutScheduler } from '../power-source-service.js'
 import { coreBlocksRecordKinds, type TimedRunRowBody } from '../record-kinds.js'

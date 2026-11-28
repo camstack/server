@@ -71,15 +71,15 @@ const PROVIDER_MAP_RE = /\b\w*(?:[Pp]rovider|[Ss]erver|[Nn]ode|[Ss]ource)s?\w*\.
 const OMIT_RE = /\bomitSectionIds\b/
 const DISPLAY_NAME_MAP_RE = /\bproviderNamesByAddon\b/
 /** An addon id or a package name as a literal in a comparison, a startsWith or a map key. */
-const ADDON_ID = String.raw`(?:@camstack/[a-z0-9-]+|(?:auth|addon|provider)-[a-z0-9-]+)`
+const ADDON_ID = String.raw`(?:@dominevo/[a-z0-9-]+|(?:auth|addon|provider)-[a-z0-9-]+)`
 const ADDON_ID_RES: readonly RegExp[] = [
   new RegExp(
     String.raw`\b(?:addonId|packageName|pkgName|pkg|addon\.id|providerId)\s*[!=]==\s*'${ADDON_ID}'`,
   ),
   new RegExp(String.raw`\.startsWith\(\s*'${ADDON_ID}'`),
-  // A map key or a list line: 'auth-oidc': ..., '@camstack/types',
+  // A map key or a list line: 'auth-oidc': ..., '@dominevo/types',
   new RegExp(String.raw`^\s*'${ADDON_ID}'\s*:`, 'm'),
-  new RegExp(String.raw`^\s*'@camstack/[a-z0-9-]+',?\s*$`, 'm'),
+  new RegExp(String.raw`^\s*'@dominevo/[a-z0-9-]+',?\s*$`, 'm'),
 ]
 
 function inScope(file: SourceFile): boolean {

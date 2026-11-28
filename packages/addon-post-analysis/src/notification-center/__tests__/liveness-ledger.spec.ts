@@ -20,7 +20,7 @@
  * the D49 direction of failure: a ledger that cannot read fails toward
  * DISCARD, never toward a flood.
  */
-import type { InMemoryRecords } from '@camstack/types'
+import type { InMemoryRecords } from '@dominevo/types'
 import { makeNcRecords, withNcFaults } from './support/nc-test-deps.js'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'

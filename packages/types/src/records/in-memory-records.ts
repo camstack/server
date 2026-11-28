@@ -1,6 +1,6 @@
 /**
  * In-memory `RecordsAccess` for specs. Kinds are declared by the caller.
- * Lives in `@camstack/types` so a spec does not import another package's source.
+ * Lives in `@dominevo/types` so a spec does not import another package's source.
  *
  * It is the REAL facade (`createRecordsAccess`) over a transport that keeps the
  * engine's contract (`packages/system/src/builtins/sqlite-storage/records/`),
@@ -10,7 +10,7 @@
  * a stale `ifRev`, a unique index, a body over `maxDataBytes`, a plaintext
  * secret. A store that would fail on the engine fails here.
  *
- * `records-in-memory-contract.spec.ts` (in `@camstack/server/system`) runs the same
+ * `records-in-memory-contract.spec.ts` (in `@dominevo/server/system`) runs the same
  * cases against this world and the real engine so the two cannot drift.
  */
 import type { SecretsAccess } from '../keychain/secrets-access.js'

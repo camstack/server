@@ -1,6 +1,6 @@
 ---
 name: camstack-docs
-description: Keep CamStack documentation true after a change — what is generated and must never be hand-edited, what prose to write, ADRs, and the docs check.
+description: Keep Dominevo documentation true after a change — what is generated and must never be hand-edited, what prose to write, ADRs, and the docs check.
 ---
 
 # Keeping the docs true

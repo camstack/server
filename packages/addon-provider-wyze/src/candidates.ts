@@ -7,14 +7,14 @@
  * needs (`isAdoptableCamera`).
  */
 
-import { DeviceType } from '@camstack/types'
-import type { DiscoveredChildDevice } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
+import type { DiscoveredChildDevice } from '@dominevo/types'
 import type { WyzeCamera } from '@apocaliss92/wyze-bridge-js'
 import { isAdoptableCamera } from './mapping.js'
 
 export interface BuildWyzeCandidatesInput {
   readonly cameras: readonly WyzeCamera[]
-  /** MAC (uppercased) → adopted CamStack device id. */
+  /** MAC (uppercased) → adopted Dominevo device id. */
   readonly adopted: ReadonlyMap<string, number>
 }
 

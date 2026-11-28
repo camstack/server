@@ -17,7 +17,7 @@
  * node, a disabled one included, which is how production came to keep its
  * only `animal-classifier.enabledClasses` on the switched-off `cpu` entry.
  */
-import type { DeviceStepConfig } from '@camstack/types'
+import type { DeviceStepConfig } from '@dominevo/types'
 
 /** The slice of a node's stored settings the base reads. */
 export interface NodeStepSource {

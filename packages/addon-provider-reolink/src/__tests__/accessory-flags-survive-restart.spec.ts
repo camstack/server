@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { AccessoryKind } from '@camstack/types'
+import { AccessoryKind } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { accessoryKindsFor, withPersistedProbe } from '../accessory-probe-flags'
 import { reolinkCameraSchema } from '../schema'

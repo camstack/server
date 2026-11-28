@@ -40,7 +40,7 @@ import {
   type SavedDevice,
   publicEndpointReaderFrom,
   isInstanceOn,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { HaContainerDevice } from './devices/ha-container-device.js'
 import { HaEventBusDevice } from './devices/ha-event-bus-device.js'
@@ -829,7 +829,7 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
         let haDevices = await this.fetchHaDiscoveredDevices(brokerId)
         // Synthetic orphan bucket is for the Entities tab only.
         haDevices = haDevices.filter((d) => d.haDeviceId !== HA_ORPHAN_ENTITIES_DEVICE_ID)
-        // Mark alreadyAdopted + the CamStack ids from the current registry state.
+        // Mark alreadyAdopted + the Dominevo ids from the current registry state.
         haDevices = markAdoption(haDevices, this.adoptionRegistry(allDevices))
 
         // Apply text/query filters (the candidate-list narrowing, distinct
@@ -1250,8 +1250,8 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
   }
 
   /**
-   * Best-effort: resolve an imported source area to a CamStack location and
-   * assign it to a freshly-adopted device. Reuses an existing CamStack location
+   * Best-effort: resolve an imported source area to a Dominevo location and
+   * assign it to a freshly-adopted device. Reuses an existing Dominevo location
    * via fuzzy match (`bestLocationMatch`), otherwise creates a new label.
    *
    * Takes the known-locations list and returns the possibly-extended list so

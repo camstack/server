@@ -4,7 +4,7 @@ import {
   baseUnitOf,
   enumerateSchemaFields,
   powerMeterCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   MatterClusterId,
   mapMatterEndpointToCamStack,

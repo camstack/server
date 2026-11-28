@@ -6,7 +6,7 @@
  * only found by the session when both name the same slot, because the slot is
  * part of the egress sharing key, so the decision must not exist twice.
  */
-import type { AddonApi, IScopedLogger } from '@camstack/types'
+import type { AddonApi, IScopedLogger } from '@dominevo/types'
 import type { ExposedDeviceEntry } from '../types.js'
 import {
   ALEXA_MAX_LINES,

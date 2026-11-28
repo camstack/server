@@ -1,4 +1,4 @@
-import type { ConfigUISchema, ProviderRegistration } from '@camstack/types'
+import type { ConfigUISchema, ProviderRegistration } from '@dominevo/types'
 import { clusterNodeIds, readRawKeys } from '../node-fields-per-node.js'
 import { ADDON_MIGRATIONS, STREAM_BROKER_ID } from './migrations/index.js'
 import { clientLogTags, createClientLogIngest, entryDeviceId } from './client-log-ingest'
@@ -24,7 +24,7 @@ import {
   armRemovalReconcile,
   deviceRemovalHookCapability,
   type LogChannelsProviderHandle,
-} from '@camstack/types'
+} from '@dominevo/types'
 // The declarations RUN on first evaluation of that module; importing the list
 // by VALUE is what pins it to one instance. A bare side-effect import let the
 // bundler emit it twice — see the note on `STREAM_BROKER_LOG_CHANNELS`.
@@ -71,8 +71,8 @@ import { createBrokerRemovalHook } from './device-removal-hook.js'
 import { TokenRecovery } from './rtsp-token-recovery.js'
 import type { FfmpegHwAccelSetting } from './stream-broker/ffmpeg-invocation'
 import { FFMPEG_HW_ACCEL_SETTINGS } from './stream-broker/ffmpeg-invocation'
-import type { CamProfile } from '@camstack/types'
-import { ChildCostRegistry } from '@camstack/types/node'
+import type { CamProfile } from '@dominevo/types'
+import { ChildCostRegistry } from '@dominevo/types/node'
 
 /** Seams `hydratePersistedRtspState` needs (durable handles + broker sinks). */
 export interface PersistedRtspStateDeps {

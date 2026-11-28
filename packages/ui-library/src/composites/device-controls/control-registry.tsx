@@ -10,8 +10,8 @@
  * means omitting a new enum member fails the build.
  */
 
-import type { DeviceControlKind } from '@camstack/types'
-import { DEVICE_TYPE_CONTROL_KIND, DeviceType, resolveDeviceControlKind } from '@camstack/types'
+import type { DeviceControlKind } from '@dominevo/types'
+import { DEVICE_TYPE_CONTROL_KIND, DeviceType, resolveDeviceControlKind } from '@dominevo/types'
 import type { ReactNode } from 'react'
 import type { UseDeviceProxyTrpc } from '../../hooks/use-device-proxy'
 import { EnergySystemInlineControl } from './energy-system-control'
@@ -244,9 +244,9 @@ const BUTTON_CONTROL: DeviceTypeControl = {
 
 /**
  * Presentation binding: the shared `DeviceControlKind` (decided in
- * `@camstack/types` `resolveDeviceControlKind`) → this platform's web
+ * `@dominevo/types` `resolveDeviceControlKind`) → this platform's web
  * components. Exhaustive over `DeviceControlKind` — omitting a kind fails the
- * build here. The type→kind DECISION is single-sourced in `@camstack/types`;
+ * build here. The type→kind DECISION is single-sourced in `@dominevo/types`;
  * this map only binds a kind to its web widgets.
  */
 const CONTROL_KIND_COMPONENTS: Record<DeviceControlKind, DeviceTypeControl> = {
@@ -286,7 +286,7 @@ const CONTROL_KIND_COMPONENTS: Record<DeviceControlKind, DeviceTypeControl> = {
  * Exhaustive record over DeviceType, DERIVED from the shared decision
  * (`DEVICE_TYPE_CONTROL_KIND`) composed with the web `CONTROL_KIND_COMPONENTS`
  * binding — so the type→control mapping can never diverge from the single
- * source in `@camstack/types`. Preserved as a public export for consumers/tests
+ * source in `@dominevo/types`. Preserved as a public export for consumers/tests
  * that index it by `DeviceType`.
  *
  * The `Object.fromEntries` result is a `{ [k: string]: DeviceTypeControl }`;
@@ -398,7 +398,7 @@ const DEVICE_TYPE_VALUES = new Set<string>(Object.values(DeviceType))
 
 /**
  * Runtime-string-safe lookup: a device row's `type` crosses the wire as a plain
- * string. The type→control-kind DECISION is single-sourced in `@camstack/types`
+ * string. The type→control-kind DECISION is single-sourced in `@dominevo/types`
  * (`resolveDeviceControlKind`, null for an unrecognised type); this maps the
  * resolved kind onto the web components.
  */

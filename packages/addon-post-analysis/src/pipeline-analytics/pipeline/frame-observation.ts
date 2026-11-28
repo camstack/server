@@ -4,7 +4,7 @@
  * `process({ observe: true })` asks; the production path never pays for it
  * and nothing here feeds back into a decision.
  */
-import type { BoundingBox, TrackState } from '@camstack/types'
+import type { BoundingBox, TrackState } from '@dominevo/types'
 import type { StationaryGateOutcome, TrackedDetectionOut } from './frame-processor.js'
 
 export interface FrameGateStrongHold {

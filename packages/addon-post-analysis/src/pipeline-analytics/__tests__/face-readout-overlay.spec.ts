@@ -6,8 +6,8 @@
  *
  * Disarm: return `{}` from `faceSuggestionReadoutOverlay` — the readout assertions fail.
  */
-import { fakeAddonContext } from '@camstack/types/testing'
-import type { ConfigFieldWithValue, ConfigUISchemaWithValues } from '@camstack/types'
+import { fakeAddonContext } from '@dominevo/types/testing'
+import type { ConfigFieldWithValue, ConfigUISchemaWithValues } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import PipelineAnalyticsAddon from '../index.js'
 import {

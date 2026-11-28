@@ -1,7 +1,7 @@
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { SystemBackupService } from '../system-backup.service.js'
 
@@ -30,12 +30,12 @@ describe('SystemBackupService', () => {
     dataDir = path.join(tmpRoot, 'data')
     fs.mkdirSync(dataDir, { recursive: true })
     fs.writeFileSync(path.join(dataDir, 'config.yaml'), 'cluster: prod\n')
-    fs.mkdirSync(path.join(dataDir, 'addons', '@camstack', 'foo'), {
+    fs.mkdirSync(path.join(dataDir, 'addons', '@dominevo', 'foo'), {
       recursive: true,
     })
     fs.writeFileSync(
-      path.join(dataDir, 'addons', '@camstack', 'foo', 'package.json'),
-      JSON.stringify({ name: '@camstack/foo', version: '1.0.0' }),
+      path.join(dataDir, 'addons', '@dominevo', 'foo', 'package.json'),
+      JSON.stringify({ name: '@dominevo/foo', version: '1.0.0' }),
     )
     service = new SystemBackupService(dataDir, noopLogger)
   })
@@ -45,7 +45,7 @@ describe('SystemBackupService', () => {
   })
 
   it('statLocations reports sizes without excluded subtrees — the modal shows what will be archived', async () => {
-    const addonDir = path.join(dataDir, 'addons', '@camstack', 'foo')
+    const addonDir = path.join(dataDir, 'addons', '@dominevo', 'foo')
     fs.mkdirSync(path.join(addonDir, 'node_modules', 'dep'), {
       recursive: true,
     })

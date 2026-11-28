@@ -26,7 +26,7 @@ import {
   type BoardKeySource,
   type IBoardKeySourceProvider,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 
 /** One HA connection, as this source needs it. */

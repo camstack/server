@@ -3,7 +3,7 @@
  * under Login sessions. A list carries no code, so it can only DENY ("not me");
  * approving takes the code typed at `/approve`.
  */
-import { Button, trpc } from '@camstack/ui-library'
+import { Button, trpc } from '@dominevo/ui-library'
 import { TerminalSquare } from 'lucide-react'
 import type { JSX } from 'react'
 import { useTranslation } from 'react-i18next'

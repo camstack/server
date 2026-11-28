@@ -1,10 +1,10 @@
 import { describe, it, expect, vi } from 'vitest'
-import { DeviceType, type IDeviceRuntimeState } from '@camstack/types'
+import { DeviceType, type IDeviceRuntimeState } from '@dominevo/types'
 import { HaWeatherDevice } from '../ha-weather-device.js'
 import type { HaEntityState } from '../../ha-types.js'
 
 function buildWeatherCtx(entityId: string): {
-  ctx: import('@camstack/types').DeviceContext
+  ctx: import('@dominevo/types').DeviceContext
   setCapStateCalls: Array<Record<string, unknown>>
 } {
   let runtimeStateRef: IDeviceRuntimeState | null = null
@@ -79,7 +79,7 @@ function buildWeatherCtx(entityId: string): {
       addContext: vi.fn(),
       with: vi.fn(),
     },
-  } as unknown as import('@camstack/types').DeviceContext
+  } as unknown as import('@dominevo/types').DeviceContext
 
   return { ctx, setCapStateCalls }
 }

@@ -19,8 +19,8 @@ import type {
   PipelineRunInput,
   PipelineStepInput,
   SystemEvent,
-} from '@camstack/types'
-import { EventCategory } from '@camstack/types'
+} from '@dominevo/types'
+import { EventCategory } from '@dominevo/types'
 import sharp from 'sharp'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { EngineFactory } from '../engine/engine-factory.js'

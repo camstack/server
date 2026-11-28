@@ -30,7 +30,7 @@
  *   floor rises is a builder; one named once is only a candidate.
  */
 import v8 from 'node:v8'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 const MIB = 1024 * 1024
 

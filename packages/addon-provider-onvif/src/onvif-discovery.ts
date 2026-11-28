@@ -1,4 +1,9 @@
-import { DeviceType, type DiscoveryCandidate, type DiscoveryHit, type DiscoveryMode } from '@camstack/types'
+import {
+  DeviceType,
+  type DiscoveryCandidate,
+  type DiscoveryHit,
+  type DiscoveryMode,
+} from '@dominevo/types'
 import type { DiscoveredOnvifCamera } from './onvif-types.js'
 
 const NVT_TYPE = 'NetworkVideoTransmitter'

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { ConfirmActionButton } from '@camstack/ui-library'
+import { ConfirmActionButton } from '@dominevo/ui-library'
 import { RotateCw, RefreshCw, Trash2 } from 'lucide-react'
 
 const Frame = ({ children }: { children: ReactNode }) => (

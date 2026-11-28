@@ -9,7 +9,7 @@
  * (measured 2026-09-06: exactly eight errors, ids 1–8, in the same second the
  * engine warmed up — on every fresh session, every node).
  */
-import type { DecodedFrame, FrameHandle, FrameResult } from '@camstack/types'
+import type { DecodedFrame, FrameHandle, FrameResult } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { RunnerConfig } from '../runner.js'
 import { PipelineRunner } from '../runner.js'

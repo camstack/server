@@ -21,7 +21,7 @@ export type PackageInstallDecision =
 /**
  * Who is allowed to run the package manager for this request.
  *
- * Apt/apk/dnf need root. In the CamStack container that is the
+ * Apt/apk/dnf need root. In the Dominevo container that is the
  * `camstack-pkgd` helper, not the runner and not hub-main (both uid
  * 1001). Brew is owned by the logged-in user, so it stays in-process.
  */

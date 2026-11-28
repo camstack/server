@@ -16,7 +16,7 @@
  *    per camera.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import { NC_RECORDED_FOOTAGE_WAIT_MS, NcDispatcher, type NcSendInput } from '../dispatcher.js'

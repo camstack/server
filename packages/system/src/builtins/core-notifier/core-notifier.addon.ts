@@ -18,7 +18,7 @@ import {
   NOTIFIER_GROUP_ADDON_ID,
   NotificationTargetStore,
   notificationOutputCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { groupRecordKinds, groupTargetKind } from './group-descriptor.js'
 import { groupInstancesSpec, refuseNestedGroups } from './group-instances.js'
 import { createGroupNotificationOutputProvider } from './group-notification-output.js'

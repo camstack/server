@@ -5,7 +5,7 @@ import {
   type DeviceFeature,
   DeviceType,
   errMsg,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { DEFAULT_SWITCH_DP } from '../tuya-dp-mapping.js'
 import { tuyaConnections } from '../tuya-gateway.js'

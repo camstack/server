@@ -1,7 +1,7 @@
 /**
  * D745 — the Auto tune plan as operator text.
  */
-import type { AutoTunePlan } from '@camstack/types'
+import type { AutoTunePlan } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { latencySourceText, planCounts, planIsNoop, reasonText } from '../auto-tune-view-model'
 

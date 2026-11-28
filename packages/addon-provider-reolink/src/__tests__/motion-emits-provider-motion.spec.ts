@@ -4,7 +4,7 @@
  * The orchestrator's camera-sensors bridge is the one emitter of the effective
  * motion, so a Confirm or Replace sensor can suppress the camera's own.
  */
-import { EventCategory } from '@camstack/types'
+import { EventCategory } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { createMotionSensorTracker } from '../motion-sensor-source.js'
 import { ReolinkCamera } from '../reolink-camera.js'

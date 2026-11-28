@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { DeviceEventPropagator } from '../device-event-propagator.js'
-import type { IEventBus, SystemEvent, EventFilter, KnownEventCategory } from '@camstack/types'
+import type { IEventBus, SystemEvent, EventFilter, KnownEventCategory } from '@dominevo/types'
 
 /**
  * Minimal in-memory event bus stub for propagator tests. Stores every

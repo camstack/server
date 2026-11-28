@@ -1,7 +1,7 @@
 /**
  * The four-way state, and the legacy fold that must not make footage vanish.
  */
-import { isStorageLocationMode } from '@camstack/types'
+import { isStorageLocationMode } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   LOCATION_MODE_CHOICES,

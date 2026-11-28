@@ -6,7 +6,7 @@
  *
  * The decision itself is `runGuarded` (pure, `lib/retrain-dirty.ts`).
  */
-import { useConfirm } from '@camstack/ui-library'
+import { useConfirm } from '@dominevo/ui-library'
 import { useCallback, useEffect } from 'react'
 import { useT } from '../../i18n/index.js'
 import { runGuarded } from './lib/retrain-dirty.js'

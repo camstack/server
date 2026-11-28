@@ -1,11 +1,11 @@
 /**
  * ServerUpdateService — hub-side adapter over the SHARED `RootUpdateService`
- * (`@camstack/node-root`, bundled into `dist/server-root/index.js`).
+ * (`@dominevo/node-root`, bundled into `dist/server-root/index.js`).
  *
  * The single-copy stage/apply engine — stage a closure into `.staging-*`,
  * arm the pending-root-swap marker, restart — lives in the shared core so the
  * hub and the agent can never drift. This class only binds the hub's
- * parameters: the `@camstack/server` root spec, the `CAMSTACK_SERVER_*` env
+ * parameters: the `@dominevo/server` root spec, the `CAMSTACK_SERVER_*` env
  * markers, the `CAMSTACK_DATA` data-dir default and the running package.json.
  *
  * The starter (server/backend/src/starter.ts → shared `runNodeStarter`) owns
@@ -23,7 +23,7 @@ import type {
   RunnerBootCheck,
   ServerUpdateCheckResult,
   UpdateBlocker,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   HUB_ROOT_SPEC,
   type NpmExecFn,
@@ -65,7 +65,7 @@ export interface ServerUpdateServiceOptions {
   readonly applyClosurePatches?: ApplyClosurePatchesFn
   readonly env?: NodeJS.ProcessEnv
   readonly now?: () => number
-  /** package.json of the RUNNING @camstack/server copy (test override). */
+  /** package.json of the RUNNING @dominevo/server copy (test override). */
   readonly runningPackageJsonPath?: string
   readonly eventBus?: IEventBus
   /** Moleculer node id of THIS process — stamped on availability events. */

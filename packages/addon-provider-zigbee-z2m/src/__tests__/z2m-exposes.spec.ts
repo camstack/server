@@ -1,4 +1,4 @@
-import { DeviceRole, DeviceType } from '@camstack/types'
+import { DeviceRole, DeviceType } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { planZ2mDevice, roleForPrimaryCap } from '../z2m-exposes.js'
 import {

@@ -8,7 +8,7 @@
  * reads `command: true` while the middleware refuses its command, and the
  * "agrees with enforcement" case fails.
  */
-import type { CredentialScope } from '@camstack/types'
+import type { CredentialScope } from '@dominevo/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import { deviceAccessOf } from '../device-access.js'

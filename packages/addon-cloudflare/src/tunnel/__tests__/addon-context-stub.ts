@@ -1,4 +1,4 @@
-import type { AddonContext } from '@camstack/types'
+import type { AddonContext } from '@dominevo/types'
 
 /**
  * A spec builds only the members of the addon context its subject reads. The members the addon

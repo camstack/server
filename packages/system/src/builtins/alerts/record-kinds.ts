@@ -1,7 +1,7 @@
 /**
  * Record kinds owned by alert-center (records plan phase 4).
  */
-import { AlertSchema, defineRecordKinds, type Alert, type DefinedRecordKind } from '@camstack/types'
+import { AlertSchema, defineRecordKinds, type Alert, type DefinedRecordKind } from '@dominevo/types'
 import { z } from 'zod'
 import type { IsolatedRecordKinds } from '../records-isolated.js'
 

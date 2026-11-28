@@ -16,7 +16,7 @@ import type {
   PreparedNotification,
   SendResult,
   TargetKind,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** At least one destination key — see {@link NotifierAdapter.destinationKeys}. */
 export type DestinationKeys = readonly [string, ...string[]]

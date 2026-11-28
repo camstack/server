@@ -3,7 +3,7 @@
  * events, what a pick writes on the row, and what the row still names that the
  * device no longer declares.
  */
-import type { DeviceFiredLeaf } from '@camstack/types'
+import type { DeviceFiredLeaf } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   firedEvents,

@@ -1,7 +1,7 @@
 {
-  "name": "@camstack/addon-provider-homeassistant",
-  "version": "1.2.705",
-  "description": "Home Assistant device provider addon for CamStack",
+  "name": "@dominevo/addon-provider-homeassistant",
+  "version": "0.1.0",
+  "description": "Home Assistant device provider addon for Dominevo",
   "keywords": [
     "camstack",
     "addon",
@@ -13,12 +13,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/camstack/server.git",
+    "url": "https://github.com/dominevo/server.git",
     "directory": "packages/addon-provider-homeassistant"
   },
   "homepage": "https://camstack-docs.zentik.app",
   "bugs": {
-    "url": "https://github.com/camstack/server/issues"
+    "url": "https://github.com/dominevo/server/issues"
   },
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -42,7 +42,7 @@
         "category": "messaging",
         "name": "Home Assistant",
         "version": "0.1.0",
-        "description": "Adopt Home Assistant devices into CamStack via WebSocket",
+        "description": "Adopt Home Assistant devices into Dominevo via WebSocket",
         "entry": "./dist/addon.js",
         "icon": "assets/icon.svg",
         "color": "#41bdf5",
@@ -108,7 +108,7 @@
         "category": "exports",
         "name": "Home Assistant Export",
         "version": "0.1.0",
-        "description": "Pushes CamStack entities to the CamStack Home Assistant custom component over HTTP. Chooses which devices reach which Home Assistant instance; Home Assistant never polls the hub for a value.",
+        "description": "Pushes Dominevo entities to the Dominevo Home Assistant custom component over HTTP. Chooses which devices reach which Home Assistant instance; Home Assistant never polls the hub for a value.",
         "entry": "./dist/ha-export/ha-export.addon.js",
         "icon": "assets/icon.svg",
         "color": "#41bdf5",
@@ -137,7 +137,7 @@
       "description": "Device provider (import) + native entity export (push). Two addons, one bundle, separate processes."
     },
     "requires": {
-      "server": ">=1.2.968"
+      "server": ">=0.1.0"
     }
   },
   "files": [
@@ -158,10 +158,10 @@
     "home-assistant-js-websocket": "^9.4.0"
   },
   "peerDependencies": {
-    "@camstack/types": "*"
+    "@dominevo/types": "0.1.0"
   },
   "devDependencies": {
-    "@camstack/types": "*",
+    "@dominevo/types": "0.1.0",
     "@types/ws": "^8.5.13",
     "typescript": "~6.0.3",
     "vite": "^8.0.11",

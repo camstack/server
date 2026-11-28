@@ -7,7 +7,7 @@ import {
   WorkloadStatusSchema,
   deriveWorkloadControls,
   workloadTransition,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { UnraidContainerInfo, UnraidSnapshot } from '../unraid-client-contract.js'
 import type { UnraidInstanceStatus } from '../unraid-integration-manager.js'

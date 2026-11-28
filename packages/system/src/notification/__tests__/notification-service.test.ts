@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NotificationService } from '../notification-service.js'
-import type { INotificationOutputProvider, RoutedNotification } from '@camstack/types'
+import type { INotificationOutputProvider, RoutedNotification } from '@dominevo/types'
 import type { IScopedLogger } from '../../logging/scoped-logger.js'
 
 function createMockLogger(): IScopedLogger {

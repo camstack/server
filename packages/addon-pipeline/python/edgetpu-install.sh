@@ -13,7 +13,7 @@
 # PCIe needs the host gasket/apex driver: this script installs userspace only.
 # A PCIe/M.2 Coral additionally needs the gasket + apex kernel modules loaded
 # ON THE HOST (they create /sys/class/apex/apex_N and /dev/apex_N), and each
-# /dev/apex_N passed into the container, readable and writable by the CamStack
+# /dev/apex_N passed into the container, readable and writable by the Dominevo
 # user. Until then the probe reports the Coral as `driver-missing` or
 # `device-not-accessible`, never as absent.
 #

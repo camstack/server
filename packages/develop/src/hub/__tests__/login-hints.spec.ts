@@ -4,8 +4,8 @@ import { adminCredentialHint, adminRejectedHint, BROWSER_LOGIN_HINT } from '../l
 describe('login hints', () => {
   it('both name the browser-approval login and the token-file fallback', () => {
     for (const hint of [
-      adminRejectedHint('camstack login'),
-      adminCredentialHint('camstack login'),
+      adminRejectedHint('dominevo login'),
+      adminCredentialHint('dominevo login'),
     ]) {
       expect(hint).toContain(BROWSER_LOGIN_HINT)
       expect(hint).toContain('--browser')

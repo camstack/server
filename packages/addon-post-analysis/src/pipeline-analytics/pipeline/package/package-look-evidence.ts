@@ -8,7 +8,7 @@
  * is still detecting — a lost track, a retracted birth), and that the
  * camera's early-pick-up switch reaches the tracker.
  */
-import type { FrameResult } from '@camstack/types'
+import type { FrameResult } from '@dominevo/types'
 import type { StationaryBbox } from '../stationary/stationary-types.js'
 import type { PackageContinuationBox, PackageStillnessInput } from './package-stillness-tracker.js'
 

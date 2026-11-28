@@ -1,6 +1,6 @@
 import { statSync } from 'node:fs'
-import type { IScopedLogger } from '@camstack/types'
-import { errMsg } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
 import type Database from 'better-sqlite3'
 
 /**

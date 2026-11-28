@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return -- AddonContext stub crosses typed boundaries. */
-import type { AddonContext, IScopedLogger, MigrationMeta } from '@camstack/types'
-import { makeInMemoryRecords } from '@camstack/types'
+import type { AddonContext, IScopedLogger, MigrationMeta } from '@dominevo/types'
+import { makeInMemoryRecords } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { LokiLoggingAddon } from '../loki-logging.addon.js'
 import { lokiDestinationsKind } from '../loki-record-kinds.js'

@@ -8,7 +8,7 @@ import type {
   InferProvider,
   ReachabilityRefreshHandle,
   StreamSourceEntry,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   buildDeviceAdminUrl,
   declareDeviceIdentifiers,
@@ -19,7 +19,7 @@ import {
   ptzCapability,
   snapshotCapability,
   registerReachabilityRefresh,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import type { OnvifClient } from './onvif-client.js'
 import { ONVIF_PTZ_TIMEOUT_MS } from './onvif-client.js'

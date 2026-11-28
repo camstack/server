@@ -1,6 +1,6 @@
 /**
  * `ensureNativePrebuilds` — the post-install native-prebuild ENSURE step the
- * shared RootUpdateService runs while staging a `@camstack/server` closure,
+ * shared RootUpdateService runs while staging a `@dominevo/server` closure,
  * BEFORE `findMissingNativePrebuilds` validates it.
  *
  * On a toolchain-less packaged desktop the closure's `npm install` can leave
@@ -18,7 +18,7 @@ import {
   type PrebuildFetchFn,
   type PrebuildTarget,
 } from '../ensure-native-prebuilds.js'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 function makeLogger(): IScopedLogger {
   const l: IScopedLogger = {

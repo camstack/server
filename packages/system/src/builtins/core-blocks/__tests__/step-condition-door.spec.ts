@@ -3,7 +3,7 @@
  * clock the door fetches through `system.getSiteLocation`. Without the site it
  * read `unknown` and neither branch ran.
  */
-import type { AddonApi, AutomationWhen, DaylightPhaseReading, SiteReading } from '@camstack/types'
+import type { AddonApi, AutomationWhen, DaylightPhaseReading, SiteReading } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { conditionDoorOver } from '../step-condition-door.js'
 import { recordingLogger } from './fixtures.js'

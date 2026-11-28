@@ -6,7 +6,7 @@ import {
   type InferNativeProvider,
   snapshotCapability,
   streamCatalogCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import type { TerminalCameraRelay } from './terminal-camera-relay.js'
 import {

@@ -16,7 +16,7 @@ import type {
   ObjectDetection,
   Zone,
   ZoneRule,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { FrameProcessor } from '../pipeline/frame-processor.js'
 

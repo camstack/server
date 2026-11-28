@@ -36,7 +36,7 @@
  * camera (same session, clean end) from a recorder that was not there. The
  * one before is the lookback's first segment and is decoded once.
  */
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IScopedLogger } from '@dominevo/types'
 import type { Tape } from '../tape-codec.js'
 import type { TapeBodyRecord } from '../tape-schema.js'
 import type { DecodedSegment } from './cut-window.js'

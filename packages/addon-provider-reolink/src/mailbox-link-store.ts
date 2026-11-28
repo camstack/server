@@ -3,7 +3,7 @@
  * Written here and not through `updateInstance`: a link change is bookkeeping, it must not make the
  * addon reconcile its hub sessions (`onChanged`).
  */
-import type { RecordsAccess } from '@camstack/types'
+import type { RecordsAccess } from '@dominevo/types'
 import { MAILBOX_LINK_FIELD, type MailboxLinkStore } from './email-push-bridge.js'
 import { reolinkConnectionsEntryKind } from './reolink-instances.js'
 

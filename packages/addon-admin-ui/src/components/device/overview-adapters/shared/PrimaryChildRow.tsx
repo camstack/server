@@ -27,8 +27,8 @@ import {
   useDeviceManagerSetPrimaryChildEntityId,
   type ContainerChild,
   type PrimaryChildOption,
-} from '@camstack/ui-library'
-import { DeviceType, primaryChildPreferenceOf } from '@camstack/types'
+} from '@dominevo/ui-library'
+import { DeviceType, primaryChildPreferenceOf } from '@dominevo/types'
 import { useDevice, useDeviceChildren } from '../../../../hooks/useDevice'
 import { InfoRow } from './overview-primitives'
 import { useTranslation } from 'react-i18next'

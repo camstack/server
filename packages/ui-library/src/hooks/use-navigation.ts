@@ -17,7 +17,7 @@ import type {
   NavigationFeatures,
   NavigationLightMode,
   NavigationStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { useDeviceProxy, useDeviceState, type UseDeviceProxyTrpc } from './use-device-proxy'
 
 export type NavigationDirection = 'forward' | 'left' | 'right' | 'spin'

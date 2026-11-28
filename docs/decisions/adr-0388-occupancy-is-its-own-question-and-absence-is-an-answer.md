@@ -1,6 +1,6 @@
 ---
 id: D388
-title: How much CamStack holds on a location is its OWN question — and absence is an answer
+title: How much Dominevo holds on a location is its OWN question — and absence is an answer
 status: accepted
 date: 2026-09-07
 supersedes:
@@ -92,8 +92,8 @@ number on a screen that no disk agrees with.
   value, and `MEASURED_USAGE_TYPES` goes away — a location is measured when it
   carries `owned`, not when its type is on a list. **Whoever merges must not
   leave both alive**: two sources for one figure is how they start disagreeing.
-- `@camstack/types` and `@camstack/system` ship inside the published
-  `@camstack/server` closure, so the cap and the stamp are not live until a
+- `@dominevo/types` and `@dominevo/system` ship inside the published
+  `@dominevo/server` closure, so the cap and the stamp are not live until a
   server containing them is installed on all three nodes. The two addon
   providers additionally need their addons deployed.
 

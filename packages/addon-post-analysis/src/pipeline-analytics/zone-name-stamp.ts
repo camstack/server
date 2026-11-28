@@ -18,7 +18,7 @@
  * this module owns only the rule.
  */
 
-import type { Track } from '@camstack/types'
+import type { Track } from '@dominevo/types'
 
 /**
  * Zone id → name for ONE device, or `null` when the catalogue is unknown.

@@ -5,10 +5,10 @@ import type { ReactNode } from 'react'
 import { Pause, Play } from 'lucide-react'
 import { useDeviceCapability } from '../../hooks/use-device-capability.js'
 import { useDeviceCommand } from '../../hooks/use-device-command.js'
-import { deriveMediaPlayerView } from '@camstack/types'
+import { deriveMediaPlayerView } from '@dominevo/types'
 import { cn } from '../../lib/cn.js'
 import type { ControlPanelProps } from './types.js'
-import type { MediaPlayerState, MediaPlayerRepeat } from '@camstack/types'
+import type { MediaPlayerState, MediaPlayerRepeat } from '@dominevo/types'
 
 /**
  * Exhaustive colour map — one entry per MediaPlayerState.

@@ -86,7 +86,7 @@ describe('detectorSupport — what our cluster can actually load', () => {
   })
 })
 
-describe('plusImportLane — which CamStack engine can run a build', () => {
+describe('plusImportLane — which Dominevo engine can run a build', () => {
   const lane = (id: string) => {
     const m = ALL.find((x) => x.id === id)
     if (m === undefined) throw new Error(`fixture has no ${id}`)

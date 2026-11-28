@@ -19,8 +19,8 @@
             "next": "Keep the answer: the next action sizes the install from it."
           },
           "manual": {
-            "text": "On the machine that will run CamStack, run the host check. It lists the CPU, the accelerators it finds and the image to use, and it changes nothing.",
-            "command": "npx camstack host-check",
+            "text": "On the machine that will run Dominevo, run the host check. It lists the CPU, the accelerators it finds and the image to use, and it changes nothing.",
+            "command": "npx dominevo host-check",
             "page": "/docs/installation/accelerators"
           }
         },
@@ -40,7 +40,7 @@
           },
           "manual": {
             "text": "Give the host check your camera count, their main stream, how you record and for how many days. It answers with the memory, CPU and disk the planning page measured for that load, and one verdict: hub only, hub plus agents, or not a hub.",
-            "command": "npx camstack host-check --cameras 8 --main-stream 4k --codec h265 --recording continuous --retention-days 14",
+            "command": "npx dominevo host-check --cameras 8 --main-stream 4k --codec h265 --recording continuous --retention-days 14",
             "page": "/docs/planning"
           }
         }
@@ -254,7 +254,7 @@
           "title": "See what is installed, configured or missing",
           "agent": {
             "tool": "setup_core_addons",
-            "next": "Act on its nextAction. Ask whether the person will open CamStack away from home before calling anything in the remote group required."
+            "next": "Act on its nextAction. Ask whether the person will open Dominevo away from home before calling anything in the remote group required."
           },
           "manual": {
             "text": "Open the Addons page and compare it with the core addons list: each row there says what it is for and where to configure it.",
@@ -274,7 +274,7 @@
           "agent": {
             "tool": "configure_addon_install",
             "args": {
-              "packageName": "@camstack/addon-provider-onvif"
+              "packageName": "@dominevo/addon-provider-onvif"
             },
             "next": "Find the package with configure_addons_search first."
           },
@@ -773,15 +773,15 @@
       "addons": [
         {
           "id": "admin-ui",
-          "package": "@camstack/addon-admin-ui"
+          "package": "@dominevo/addon-admin-ui"
         },
         {
           "id": "auth-webauthn",
-          "package": "@camstack/addon-auth"
+          "package": "@dominevo/addon-auth"
         },
         {
           "id": "auth-oidc",
-          "package": "@camstack/addon-auth"
+          "package": "@dominevo/addon-auth"
         }
       ],
       "page": "/docs/get-started/admin-first-run"
@@ -794,31 +794,31 @@
       "addons": [
         {
           "id": "stream-broker",
-          "package": "@camstack/addon-pipeline"
+          "package": "@dominevo/addon-pipeline"
         },
         {
           "id": "recorder",
-          "package": "@camstack/addon-pipeline"
+          "package": "@dominevo/addon-pipeline"
         },
         {
           "id": "decoder-nodeav",
-          "package": "@camstack/addon-decoder-nodeav"
+          "package": "@dominevo/addon-decoder-nodeav"
         },
         {
           "id": "detection-pipeline",
-          "package": "@camstack/addon-pipeline"
+          "package": "@dominevo/addon-pipeline"
         },
         {
           "id": "pipeline-runner",
-          "package": "@camstack/addon-pipeline"
+          "package": "@dominevo/addon-pipeline"
         },
         {
           "id": "motion-wasm",
-          "package": "@camstack/addon-pipeline"
+          "package": "@dominevo/addon-pipeline"
         },
         {
           "id": "pipeline-orchestrator",
-          "package": "@camstack/addon-pipeline-orchestrator"
+          "package": "@dominevo/addon-pipeline-orchestrator"
         }
       ],
       "page": "/docs/detection"
@@ -831,11 +831,11 @@
       "addons": [
         {
           "id": "pipeline-analytics",
-          "package": "@camstack/addon-post-analysis"
+          "package": "@dominevo/addon-post-analysis"
         },
         {
           "id": "embedding-encoder",
-          "package": "@camstack/addon-post-analysis"
+          "package": "@dominevo/addon-post-analysis"
         }
       ],
       "page": "/docs/detection/tracking"
@@ -848,7 +848,7 @@
       "addons": [
         {
           "id": "notifiers",
-          "package": "@camstack/addon-notifiers"
+          "package": "@dominevo/addon-notifiers"
         }
       ],
       "page": "/docs/notifications"
@@ -861,7 +861,7 @@
       "addons": [
         {
           "id": "benchmark",
-          "package": "@camstack/addon-benchmark"
+          "package": "@dominevo/addon-benchmark"
         }
       ],
       "page": "/docs/tools/benchmark"
@@ -874,27 +874,27 @@
       "addons": [
         {
           "id": "provider-onvif",
-          "package": "@camstack/addon-provider-onvif"
+          "package": "@dominevo/addon-provider-onvif"
         },
         {
           "id": "provider-rtsp",
-          "package": "@camstack/addon-provider-rtsp"
+          "package": "@dominevo/addon-provider-rtsp"
         },
         {
           "id": "provider-reolink",
-          "package": "@camstack/addon-provider-reolink"
+          "package": "@dominevo/addon-provider-reolink"
         },
         {
           "id": "provider-hikvision",
-          "package": "@camstack/addon-provider-hikvision"
+          "package": "@dominevo/addon-provider-hikvision"
         },
         {
           "id": "provider-amcrest",
-          "package": "@camstack/addon-provider-amcrest"
+          "package": "@dominevo/addon-provider-amcrest"
         },
         {
           "id": "provider-wyze",
-          "package": "@camstack/addon-provider-wyze"
+          "package": "@dominevo/addon-provider-wyze"
         }
       ],
       "page": "/docs/get-started/add-a-camera",
@@ -913,11 +913,11 @@
       "addons": [
         {
           "id": "cloudflare-turn",
-          "package": "@camstack/addon-cloudflare"
+          "package": "@dominevo/addon-cloudflare"
         },
         {
           "id": "static-turn",
-          "package": "@camstack/addon-static-turn"
+          "package": "@dominevo/addon-static-turn"
         }
       ],
       "page": "/docs/network/turn",
@@ -937,15 +937,15 @@
       "addons": [
         {
           "id": "cloudflare-tunnel",
-          "package": "@camstack/addon-cloudflare"
+          "package": "@dominevo/addon-cloudflare"
         },
         {
           "id": "tailscale-client",
-          "package": "@camstack/addon-tailscale"
+          "package": "@dominevo/addon-tailscale"
         },
         {
           "id": "tailscale-ingress",
-          "package": "@camstack/addon-tailscale"
+          "package": "@dominevo/addon-tailscale"
         }
       ],
       "page": "/docs/network/remote-access",
@@ -965,19 +965,19 @@
       "addons": [
         {
           "id": "smb-storage",
-          "package": "@camstack/addon-remote-storage"
+          "package": "@dominevo/addon-remote-storage"
         },
         {
           "id": "sftp-storage",
-          "package": "@camstack/addon-remote-storage"
+          "package": "@dominevo/addon-remote-storage"
         },
         {
           "id": "s3-storage",
-          "package": "@camstack/addon-remote-storage"
+          "package": "@dominevo/addon-remote-storage"
         },
         {
           "id": "webdav-storage",
-          "package": "@camstack/addon-remote-storage"
+          "package": "@dominevo/addon-remote-storage"
         }
       ],
       "page": "/docs/recording/storage",
@@ -1026,12 +1026,12 @@
     "page": "/docs/planning"
   },
   "hardwareReport": {
-    "issuesUrl": "https://github.com/camstack/server/issues/new",
+    "issuesUrl": "https://github.com/dominevo/server/issues/new",
     "template": "hardware_report.yml",
     "labels": [
       "hardware-report"
     ],
-    "text": "This machine is not among the ones CamStack was measured on, so the sizing figures are not a promise for it. Share what the host check and the node benchmark found: it takes a minute and it makes the tables true for the next person with the same hardware. The report holds the CPU model, the accelerators and the benchmark numbers — no address, no hostname, no secret.",
+    "text": "This machine is not among the ones Dominevo was measured on, so the sizing figures are not a promise for it. Share what the host check and the node benchmark found: it takes a minute and it makes the tables true for the next person with the same hardware. The report holds the CPU model, the accelerators and the benchmark numbers — no address, no hostname, no secret.",
     "page": "/docs/get-started#hardware-report"
   }
 }

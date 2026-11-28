@@ -6,7 +6,7 @@
 import { mkdtemp, readdir, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import type { NodeDecodeProfile } from '@camstack/types'
+import type { NodeDecodeProfile } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import {
   decodeSourceArgs,

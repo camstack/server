@@ -42,7 +42,7 @@ take `--token-file`.
 ## Consequences
 
 - Admin tokens authenticate tRPC only, not addon routes or uploads; the
-  developer `camstack deploy` flow keeps its addon-scoped `cst_`.
+  developer `dominevo deploy` flow keeps its addon-scoped `cst_`.
 - The audit log grows one row per admin-token request; it keeps 90 days.
 
 ## Enforcement

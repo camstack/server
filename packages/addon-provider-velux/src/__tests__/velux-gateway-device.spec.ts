@@ -8,7 +8,7 @@ import {
   DeviceFeature,
   DeviceType,
   type IDeviceRuntimeState,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { VeluxGatewayDevice } from '../devices/velux-gateway-device.js'
 import { VeluxWindowDevice } from '../devices/velux-window-device.js'

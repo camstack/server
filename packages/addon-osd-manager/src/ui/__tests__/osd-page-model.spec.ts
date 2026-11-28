@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { OsdSlotBinding, OsdSlotView } from '@camstack/types'
+import type { OsdSlotBinding, OsdSlotView } from '@dominevo/types'
 import {
   activeSourceChips,
   cameraOsdStatus,

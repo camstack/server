@@ -2,7 +2,7 @@
 /** Load balancing → Stale device pins names the CAMERA, never "Camera 3836". */
 import * as jestDomMatchers from '@testing-library/jest-dom/matchers'
 import { render, screen } from '@testing-library/react'
-import type { PlacementStats } from '@camstack/types'
+import type { PlacementStats } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 
 expect.extend(jestDomMatchers)
@@ -12,8 +12,8 @@ vi.mock('@tanstack/react-query', async () => ({
   useQueryClient: () => ({ invalidateQueries: vi.fn() }),
 }))
 
-vi.mock('@camstack/ui-library', async () => ({
-  ...(await vi.importActual<Record<string, unknown>>('@camstack/ui-library')),
+vi.mock('@dominevo/ui-library', async () => ({
+  ...(await vi.importActual<Record<string, unknown>>('@dominevo/ui-library')),
   usePipelineOrchestratorSetPipelineDevicePin: () => ({ mutate: vi.fn(), isPending: false }),
 }))
 

@@ -20,7 +20,7 @@
  * writer probe kept as a fallback for a contributor that omits it.
  */
 
-import type { ConfigSection } from '@camstack/types'
+import type { ConfigSection } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { isDeviceExportSection } from '../device-export-tab'
 

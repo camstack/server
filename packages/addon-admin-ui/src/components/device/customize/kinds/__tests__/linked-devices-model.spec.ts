@@ -1,4 +1,4 @@
-import type { ExtensionSlotState } from '@camstack/types'
+import type { ExtensionSlotState } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   linkedCandidates,

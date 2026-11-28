@@ -11,8 +11,8 @@
  *   1. `nunjucks` is imported ONLY by `device-template/nunjucks-internals.ts`
  *      (the typed wrapper). No other source file, in any package.
  *   2. The render worker's relative-import graph never VALUE-imports the bare
- *      `@camstack/types` barrel (D453) — the limits travel in `workerData`;
- *      `@camstack/types/units-lean` is the one allowed subpath. The catalogue
+ *      `@dominevo/types` barrel (D453) — the limits travel in `workerData`;
+ *      `@dominevo/types/units-lean` is the one allowed subpath. The catalogue
  *      caps travel in `workerData`.
  *
  * Specs may import nothing from nunjucks either: they render through the
@@ -59,11 +59,11 @@ export function barrelViolations(file: string, source: string): readonly Violati
   source.split('\n').forEach((text, index) => {
     const m = IMPORT_RE.exec(text)
     const spec = m?.groups?.['spec']
-    if (spec === '@camstack/types' && m?.groups?.['type'] === undefined) {
+    if (spec === '@dominevo/types' && m?.groups?.['type'] === undefined) {
       out.push({
         file,
         line: index + 1,
-        message: 'the render worker value-imports the @camstack/types barrel (D453)',
+        message: 'the render worker value-imports the @dominevo/types barrel (D453)',
       })
     }
   })

@@ -115,8 +115,8 @@ Operator-approved, 2026-10-01.
   addon-to-addon call: a UDS cap call routed by cap name to the
   orchestrator's provider (`child-cap-dispatch.ts`), never the hub's tRPC
   router. So (a) needs the new ORCHESTRATOR addon, not a server release:
-  `@camstack/types` (bundled with each addon) → `addon-pipeline-orchestrator`
-  (hub) → `addon-post-analysis` (hub, then agents) → `@camstack/server` on the
+  `@dominevo/types` (bundled with each addon) → `addon-pipeline-orchestrator`
+  (hub) → `addon-post-analysis` (hub, then agents) → `@dominevo/server` on the
   next ordinary train, which only exposes the method on the hub's tRPC/admin
   surface. An older orchestrator answers `method 'requestOccupancyLook' not
   found`: one warn per camera, and the cadence still commits. Verify after the

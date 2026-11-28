@@ -10,7 +10,7 @@
  */
 import { RefreshCw } from 'lucide-react'
 import type { JSX, ReactNode } from 'react'
-import type { MeshNode } from '@camstack/types'
+import type { MeshNode } from '@dominevo/types'
 import { useUiText } from '../../contexts/ui-text'
 import {
   useDeviceMeshGetNodeDiagnostics,

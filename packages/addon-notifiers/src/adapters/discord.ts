@@ -30,7 +30,7 @@ import type {
   ResolvedLevel,
   TargetKind,
   TargetKindCaps,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type {
   HttpRequestPlan,
   MultipartPart,

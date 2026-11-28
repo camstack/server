@@ -36,7 +36,7 @@ import {
   groupChildrenByLayout,
   useDeviceManagerGetDevice,
   useSystem,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { useDeviceChildren } from '../../hooks/useDevice'
@@ -168,7 +168,7 @@ export function ChildrenList({ parentDeviceId }: ChildrenListProps) {
       </div>
     ) : null
 
-  // Synthetic trailing "Disabled" section — every child whose CamStack-side
+  // Synthetic trailing "Disabled" section — every child whose Dominevo-side
   // `disabled` flag is set, pulled out of its normal placement. Collapsed by
   // default + muted (de-emphasized, matching the `!enabled` → `opacity-60`
   // idiom used elsewhere in the device-item composites). Localized title.

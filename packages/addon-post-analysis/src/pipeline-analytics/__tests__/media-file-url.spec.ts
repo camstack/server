@@ -29,7 +29,7 @@
  * kind at all, so the hazard is structurally gone rather than merely avoided.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { AnalyticsQueryFacade } from '../analytics-query-facade.js'
 import { MediaStore } from '../store/media-store.js'

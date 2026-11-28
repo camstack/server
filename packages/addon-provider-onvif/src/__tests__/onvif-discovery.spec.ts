@@ -1,4 +1,4 @@
-import type { DiscoveryHit } from '@camstack/types'
+import type { DiscoveryHit } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   findOnboardedOnvifMatch,
@@ -62,7 +62,10 @@ describe('already-onboarded marking (#541)', () => {
   const onboarded = [{ deviceId: 5, name: 'Porch', host: 'Cam-Porch.LOCAL' }]
 
   it('marks an owned camera, matching the host case-insensitively', () => {
-    const [candidate] = mapOnvifDiscoveryToCandidates([{ host: 'cam-porch.local', port: 80 }], onboarded)
+    const [candidate] = mapOnvifDiscoveryToCandidates(
+      [{ host: 'cam-porch.local', port: 80 }],
+      onboarded,
+    )
     expect(candidate?.alreadyOnboarded).toBe(true)
     expect(candidate?.onboardedDeviceId).toBe(5)
     expect(candidate?.onboardedName).toBe('Porch')

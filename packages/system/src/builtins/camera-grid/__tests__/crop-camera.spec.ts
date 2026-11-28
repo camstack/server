@@ -5,7 +5,7 @@
  * inherited, so these specs pin the compile step and prove the inherited
  * behaviour holds for a single cell.
  */
-import { type CropHelperSpec, newCropHelperSpec, seedCropRect } from '@camstack/types'
+import { type CropHelperSpec, newCropHelperSpec, seedCropRect } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   CROP_FULL_CELL,

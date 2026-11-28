@@ -64,7 +64,7 @@
  * `yolov9m-320-int8`), `MCE_MINAREA`, `MCE_THRESHOLD`, `MCE_ANALYSIS_W`,
  * `MCE_HUB` (an explicit hub address; otherwise it comes from
  * `CAMSTACK_HUB_URL` / `scratchpad/.hub-url` / the session; the token is the
- * `camstack login` session, through scripts/hub/credentials.mjs).
+ * `dominevo login` session, through scripts/hub/credentials.mjs).
  *
  * `MCE_NODE`/`MCE_MODEL` are NOT a property of the camera: the session
  * balancer places each detection session by capacity, so read

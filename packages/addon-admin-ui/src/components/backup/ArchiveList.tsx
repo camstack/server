@@ -29,8 +29,8 @@ import {
   useBackupListArchives,
   useConfirm,
   type DataColumn,
-} from '@camstack/ui-library'
-import type { DataStoreDatabase } from '@camstack/types'
+} from '@dominevo/ui-library'
+import type { DataStoreDatabase } from '@dominevo/types'
 import { BackupDatabaseBadges } from './BackupDatabaseBadges'
 import { selectionOfRow } from './backup-databases'
 import { formatBytes } from '../../lib/format-size'

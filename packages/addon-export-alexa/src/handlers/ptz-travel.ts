@@ -17,7 +17,7 @@
  * collapse into one). An unknown impulse is a single `move`.
  */
 
-import type { CommandOriginRequestOptions } from '@camstack/types/addon'
+import type { CommandOriginRequestOptions } from '@dominevo/types/addon'
 
 /** How far a voice command moves the head, in driver-pulse milliseconds. */
 export const TARGET_TRAVEL_MS = 1_000

@@ -38,8 +38,8 @@
  * would have made it survive failed.
  */
 
-import type { IScopedLogger, RequestCensusStatus } from '@camstack/types'
-import { errMsg } from '@camstack/types'
+import type { IScopedLogger, RequestCensusStatus } from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
 import { DEFAULT_REPORT_EVERY_MS, type HttpRequestCensus } from '../trpc/http-request-census.js'
 import type { SettingsStoreGateway } from './site-location.js'
 

@@ -12,13 +12,13 @@
  *   FP32 for another (`scripts/build-camstack-models.py`), so this answers
  *   `undefined` rather than guess.
  *
- * Kept in the addon, not in `@camstack/server/system` / `@camstack/types`: both are
+ * Kept in the addon, not in `@dominevo/server/system` / `@dominevo/types`: both are
  * host-resolved at runtime, so a new value there would reach an addon only
  * with a server release, and this addon would fail to load on an older hub.
  */
 import * as fs from 'node:fs'
 // eslint-disable-next-line no-restricted-imports -- model-download helpers are a build-time dep (same waiver as provider.ts).
-import { getModelFilePath, isModelDownloaded } from '@camstack/server/system/addon-utils'
+import { getModelFilePath, isModelDownloaded } from '@dominevo/server/system/addon-utils'
 import {
   HF_REPO,
   hfModelUrl,
@@ -26,7 +26,7 @@ import {
   type ModelFormat,
   type ModelFormatPrecision,
   type ModelOnDiskState,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** What this node holds for one (model, format). */
 export function modelOnDiskState(
@@ -59,8 +59,8 @@ function precisionFromName(name: string): ModelFormatPrecision | undefined {
  * The precision of one format's build, or `undefined` when nothing states it.
  * In order: a token in the file name; an `int8` variant group (every format of
  * an INT8 variant is quantised); an EdgeTPU build (the compiler accepts only
- * full-integer models); a Core ML build hosted on the CamStack mirror (every
- * CamStack Core ML export is FP16 — D743). Nothing else is assumed.
+ * full-integer models); a Core ML build hosted on the Dominevo mirror (every
+ * Dominevo Core ML export is FP16 — D743). Nothing else is assumed.
  */
 export function formatPrecision(
   entry: ModelCatalogEntry,

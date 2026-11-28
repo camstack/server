@@ -8,7 +8,7 @@
  *  - a browser handoff lands on the account page by default, or on the admin
  *    UI's root when the caller asked for `admin` — and on nothing else.
  */
-import { hasUrlScheme } from '@camstack/types'
+import { hasUrlScheme } from '@dominevo/types'
 import type { MintedSession } from './session-mint.js'
 import { SSO_LOGIN_PATH, SSO_PROFILE_PATH, sessionFragmentParams } from './sso-finish.js'
 

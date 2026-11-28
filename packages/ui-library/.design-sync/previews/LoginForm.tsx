@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
-import { LoginForm } from '@camstack/ui-library'
+import { LoginForm } from '@dominevo/ui-library'
 
-// CamStack is dark-first; render inside the DS dark canvas so the form chrome
+// Dominevo is dark-first; render inside the DS dark canvas so the form chrome
 // (surface card, bordered inputs, primary button) reads correctly.
 const Frame = ({ children }: { children: ReactNode }) => (
   <div className="dark bg-background text-foreground rounded-lg overflow-hidden">{children}</div>

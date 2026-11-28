@@ -2,7 +2,7 @@
  * House and heat-pump meters used to be created as "Consumption". A restore
  * may replace that default; a name the operator chose stays.
  */
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IScopedLogger } from '@dominevo/types'
 import { ENPAL_LEGACY_CONSUMPTION_NAME, findSpec } from '../enpal-catalog.js'
 
 export type CatalogNameWrite =

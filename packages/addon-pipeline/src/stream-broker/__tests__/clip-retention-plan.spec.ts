@@ -22,7 +22,7 @@ import type {
   CamStreamDescriptor,
   IScopedLogger,
   NcClipRetentionAsk,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { StreamBroker } from '../stream-broker/stream-broker.js'
 import { StreamBrokerManager } from '../stream-broker/stream-broker-manager.js'
 

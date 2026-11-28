@@ -50,9 +50,9 @@
  * {@link EgressTranscodeManager.acquireFragments}, NOT through the cap.
  * `egressTransportFromRequest` can never name it, so the cap path cannot be
  * handed a fragment child by accident. Its consumers are HKSV's recording
- * delegate (phase 4) and a CamStack clip source (roadmap 4b half 2), both
+ * delegate (phase 4) and a Dominevo clip source (roadmap 4b half 2), both
  * in-process; a `fragmentMs` on the request schema would be a codegen run and a
- * `@camstack/server/system` train for a field nothing off-node can call. When one of
+ * `@dominevo/server/system` train for a field nothing off-node can call. When one of
  * them lands off-node, the field goes on the schema and
  * `egressTransportFromRequest` is the single place that learns to read it.
  *
@@ -102,7 +102,7 @@ import type {
   FfmpegInvocation,
   FfmpegRateControl,
   IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   AUDIO_PRESETS,
   egressTranscodeSharingKey,
@@ -113,9 +113,9 @@ import {
   makeSourceBrokerId,
   RATE_CONTROL_RELAXED,
   RATE_CONTROL_TIGHT,
-} from '@camstack/types'
-import type { AudioEncode } from '@camstack/types'
-import { NO_COST_CLAIM, type ChildCostRegistry } from '@camstack/types/node'
+} from '@dominevo/types'
+import type { AudioEncode } from '@dominevo/types'
+import { NO_COST_CLAIM, type ChildCostRegistry } from '@dominevo/types/node'
 import type { AudioSidecarCodec, FfmpegSystemConfig } from './ffmpeg-invocation.js'
 import {
   defaultFfmpegSpawn,
@@ -123,7 +123,7 @@ import {
   toAudioSidecarCodec,
 } from './ffmpeg-invocation.js'
 import { FfmpegPushReader, type FfmpegPushReaderCallbacks } from '../rtsp/ffmpeg-push-reader.js'
-import { buildFfmpegArgs, maskUrlCredentials } from '@camstack/types'
+import { buildFfmpegArgs, maskUrlCredentials } from '@dominevo/types'
 import {
   decideEgressCopy,
   type EgressCopyDecision,
@@ -132,7 +132,7 @@ import {
 // The fMP4 transport is a PRIMITIVE, not a broker feature: `addon-export-hap`
 // needs the identical splitter/plane/child in a different runner, and the
 // alternative was a second copy of it there (D84).
-import { Fmp4FragmentChild, Fmp4FragmentPlane } from '@camstack/types/node'
+import { Fmp4FragmentChild, Fmp4FragmentPlane } from '@dominevo/types/node'
 import { isDecodeBackendFailure } from './decode-failure-attribution.js'
 import { deliveredGeometry } from './egress-geometry.js'
 import { waitForSourceMedia } from './egress-source-readiness.js'
@@ -522,7 +522,7 @@ export class EgressTranscodeManager {
 
   /**
    * Acquire a live fMP4 FRAGMENT plane — the media surface HKSV's recording
-   * delegate needs, and (roadmap 4b) the one a CamStack clip source attaches to
+   * delegate needs, and (roadmap 4b) the one a Dominevo clip source attaches to
    * alongside it. Same map, same refcount, same software retry, same liveness
    * removal as the other two transports; released through the same
    * {@link release}.

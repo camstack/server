@@ -1,4 +1,4 @@
-import type { IScopedLogger, LogTags } from '@camstack/types'
+import type { IScopedLogger, LogTags } from '@dominevo/types'
 
 const noop = (): void => {
   /* intentional no-op */

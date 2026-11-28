@@ -1,4 +1,4 @@
-import type { MediaPlayerRepeat } from '@camstack/types'
+import type { MediaPlayerRepeat } from '@dominevo/types'
 import type { ReactElement, ReactNode } from 'react'
 import { type UiTextFn, useUiText } from '../../../../contexts/ui-text'
 import { MediaArtwork } from '../../illustrations/MediaArtwork'

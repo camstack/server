@@ -23,7 +23,7 @@ question: "what is broken right now", never a list of changes.
 
 ## Decision
 
-`NC_SYSTEM_EVENT_CLASS_SPECS` (`@camstack/types`) groups the paired kinds into
+`NC_SYSTEM_EVENT_CLASS_SPECS` (`@dominevo/types`) groups the paired kinds into
 classes: a bad edge and a recovery edge of one condition (device, stream and node
 connectivity, the device switch, battery, consumables, tanks, recording health,
 storage space, critical alerts, rule health). One-edge kinds stay single.

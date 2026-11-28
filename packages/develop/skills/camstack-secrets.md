@@ -1,11 +1,11 @@
 ---
 name: camstack-secrets
-description: Handle a credential in CamStack — a password, token, API key or private key in an addon's settings, a device config, `secretStatePaths`, a token the addon mints, the hub's own secrets, or a credential a spawned child process (ffmpeg, a tunnel CLI) needs. Covers the keychain and `secret://` markers, declaring a secret by schema type, the read and clear rules, never using environment variables or argv, 0600 temp files for children, log scrubbing, the UI field, and the guards that enforce it. Use for "add a password field", "store a token", "pass a key to a subprocess", "a setting reads as { $secret }", "check-secret-fields-declared failed".
+description: Handle a credential in Dominevo — a password, token, API key or private key in an addon's settings, a device config, `secretStatePaths`, a token the addon mints, the hub's own secrets, or a credential a spawned child process (ffmpeg, a tunnel CLI) needs. Covers the keychain and `secret://` markers, declaring a secret by schema type, the read and clear rules, never using environment variables or argv, 0600 temp files for children, log scrubbing, the UI field, and the guards that enforce it. Use for "add a password field", "store a token", "pass a key to a subprocess", "a setting reads as { $secret }", "check-secret-fields-declared failed".
 ---
 
 # Secrets and the keychain
 
-Every password, token and key CamStack holds lives in ONE place: the hub's
+Every password, token and key Dominevo holds lives in ONE place: the hub's
 keychain, encrypted. A settings blob, device config, integration or storage
 location holds a **marker** where the value used to be:
 
@@ -86,7 +86,7 @@ own secrets), D798 (an addon reads its own settings resolved).
   child from a file or a pipe the child reads, never from a string you log.
 - Client-side developer tooling is different: it holds no secret of its own.
   The `camstack` CLI, `scripts/hub/hub.mjs` and the MCPs read the one
-  `camstack login` session — there is no token flag, file or variable (see the
+  `dominevo login` session — there is no token flag, file or variable (see the
   `hub-access` skill).
 
 ## 5. Logs, fixtures, the repository

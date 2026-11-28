@@ -36,7 +36,7 @@
  *    is left alone" fails.
  */
 import { beforeEach, describe, expect, it } from 'vitest'
-import type { Track } from '@camstack/types'
+import type { Track } from '@dominevo/types'
 
 import {
   type FakeSettingsStore,

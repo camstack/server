@@ -14,7 +14,7 @@ import {
   type RecordsAccess,
   type RecordKindHandle,
   runAddonMigrations,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import { ncRecordKinds, type RuleBody } from '../../notification-center/record-kinds.js'

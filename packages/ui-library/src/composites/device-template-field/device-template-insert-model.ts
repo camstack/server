@@ -1,4 +1,4 @@
-import { runtimeFieldUnit } from '@camstack/types'
+import { runtimeFieldUnit } from '@dominevo/types'
 import { type DeviceCapFields, deviceTemplateToken } from './device-template-model'
 
 export interface InsertTokenOptions {

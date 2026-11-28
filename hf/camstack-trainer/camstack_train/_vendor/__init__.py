@@ -1,4 +1,4 @@
-"""Byte-identical copies of CamStack code the trainer reuses, never edited here.
+"""Byte-identical copies of Dominevo code the trainer reuses, never edited here.
 
 - ``camstack_eval/`` is ``scripts/eval/camstack_eval/`` (the P5 evaluation
   harness): the letterbox + decode + metrics + D739 floor rule the hub's own

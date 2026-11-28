@@ -52,15 +52,15 @@ describe('unmetRequirements', () => {
   })
 
   it('names an addon that is too old or absent', () => {
-    const req = { addons: { '@camstack/addon-a': '>=2.0.0', '@camstack/addon-b': '>=1.0.0' } }
-    expect(unmetRequirements(req, running({ addons: { '@camstack/addon-a': '1.9.0' } }))).toEqual([
+    const req = { addons: { '@dominevo/addon-a': '>=2.0.0', '@dominevo/addon-b': '>=1.0.0' } }
+    expect(unmetRequirements(req, running({ addons: { '@dominevo/addon-a': '1.9.0' } }))).toEqual([
       {
         kind: 'addon-too-old',
-        packageName: '@camstack/addon-a',
+        packageName: '@dominevo/addon-a',
         required: '2.0.0',
         running: '1.9.0',
       },
-      { kind: 'addon-too-old', packageName: '@camstack/addon-b', required: '1.0.0', running: null },
+      { kind: 'addon-too-old', packageName: '@dominevo/addon-b', required: '1.0.0', running: null },
     ])
   })
 

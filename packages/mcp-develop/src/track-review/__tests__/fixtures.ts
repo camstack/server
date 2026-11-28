@@ -1,5 +1,5 @@
 /** Builders and a recording in-memory hub for the track-review specs. */
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import type {
   AddToCollectionResult,
   OriginBackfill,

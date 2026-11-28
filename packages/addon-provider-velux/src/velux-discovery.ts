@@ -6,7 +6,7 @@ import {
   floodCapability,
   gatewayDeviceName,
   rebootCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { VeluxNode } from './velux-client-contract.js'
 import { nodeNativeKey } from './velux-protocol.js'
 
@@ -82,7 +82,7 @@ export interface BuildVeluxCandidatesInput {
   /** Whether the gateway session is up (drives the gateway candidate's status). */
   readonly online: boolean
   readonly nodes: readonly VeluxNode[]
-  /** Native id → adopted CamStack device id, for the top-level devices already adopted. */
+  /** Native id → adopted Dominevo device id, for the top-level devices already adopted. */
   readonly adopted: ReadonlyMap<string, number>
 }
 

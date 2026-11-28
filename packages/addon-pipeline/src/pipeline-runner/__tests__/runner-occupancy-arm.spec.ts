@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- test file: vi.fn() mocks need narrow casts to match callback signatures */
 
-import type { FrameResult } from '@camstack/types'
+import type { FrameResult } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { RunnerConfig } from '../runner.js'
 import { PipelineRunner } from '../runner.js'

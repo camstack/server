@@ -1,5 +1,5 @@
 /**
- * Keeps a refreshing CamStack session alive without the user noticing.
+ * Keeps a refreshing Dominevo session alive without the user noticing.
  *
  * The hub hands a refreshing client a short access token (default 2 h) and a
  * rotating refresh token. This schedules `auth.refreshSession` shortly before

@@ -1,14 +1,14 @@
 # Matter Broker
 
-Matter broker addon for CamStack — owns a Matter fabric (commissioning + the long-lived controller) via the matter.js controller and brokers commissioned Matter nodes into CamStack.
+Matter broker addon for Dominevo — owns a Matter fabric (commissioning + the long-lived controller) via the matter.js controller and brokers commissioned Matter nodes into Dominevo.
 
 <!-- readme:generated:start (derived from the manifest; edit outside this block) -->
 
-Package `@camstack/addon-matter-broker` on npm.
+Package `@dominevo/addon-matter-broker` on npm.
 
 ## What it provides
 
-- **Matter** (`matter-broker`): Own a Matter fabric and broker commissioned Matter nodes into CamStack (commission via QR / pairing code; map endpoints to typed device caps). Category: providers.
+- **Matter** (`matter-broker`): Own a Matter fabric and broker commissioned Matter nodes into Dominevo (commission via QR / pairing code; map endpoints to typed device caps). Category: providers.
   - Capabilities: `device-provider`, `broker`, `integration-instances`, `device-adoption`.
 
 ## Configuration
@@ -22,11 +22,11 @@ Edit these from System, Addons, this addon, Settings (a device's own settings ar
 ## Requirements
 
 - Placement: hub-only.
-- A CamStack hub. An agent is used only where the placement above allows it.
+- A Dominevo hub. An agent is used only where the placement above allows it.
 
 ## Documentation
 
-- [docs/addons/addon-matter-broker.md](https://github.com/camstack/server/blob/main/docs/addons/addon-matter-broker.md)
+- [docs/addons/addon-matter-broker.md](https://github.com/dominevo/server/blob/main/docs/addons/addon-matter-broker.md)
 
 See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
 

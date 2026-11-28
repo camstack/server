@@ -29,8 +29,8 @@
  * tick.
  */
 import { Buffer } from 'node:buffer'
-import type { ExportBytes, IScopedLogger, TimelapsePreviewMode } from '@camstack/types'
-import { RECORDING_EXPORT_MAX_READ_BYTES } from '@camstack/types'
+import type { ExportBytes, IScopedLogger, TimelapsePreviewMode } from '@dominevo/types'
+import { RECORDING_EXPORT_MAX_READ_BYTES } from '@dominevo/types'
 import type { NcArtifactPublishMeta } from '../artifact-index.js'
 import type { NcArtifactPublication } from '../artifact-plane.js'
 import type { TimelapseArtifactRef } from './timelapse-delivery.js'

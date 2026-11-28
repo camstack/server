@@ -2,8 +2,8 @@
  * The undeclared prerequisite of the AppRouter expansion.
  *
  * `generate-api-types.ts` expands the hand-written core routers through the
- * SERVER tsconfig, and that tsconfig resolves `@camstack/types` and
- * `@camstack/server/system` the way Node does — through each package's
+ * SERVER tsconfig, and that tsconfig resolves `@dominevo/types` and
+ * `@dominevo/server/system` the way Node does — through each package's
  * `dist/index.d.ts`, never through its sources. So the expansion silently
  * depends on those two packages having been BUILT:
  *
@@ -30,7 +30,7 @@ import * as path from 'node:path'
 export interface FrameworkPackage {
   /** Workspace-relative directory, e.g. `packages/types`. */
   readonly dir: string
-  /** Package name, e.g. `@camstack/types`. */
+  /** Package name, e.g. `@dominevo/types`. */
   readonly name: string
 }
 
@@ -52,8 +52,8 @@ export interface FrameworkDistProblem {
  * while removing `node-root` or `addon-pipeline` changes nothing.
  */
 export const CORE_ROUTER_FRAMEWORK_PACKAGES: readonly FrameworkPackage[] = [
-  { dir: 'packages/types', name: '@camstack/types' },
-  { dir: 'packages/system', name: '@camstack/server-framework' },
+  { dir: 'packages/types', name: '@dominevo/types' },
+  { dir: 'packages/system', name: '@dominevo/server-framework' },
 ]
 
 /**

@@ -2,7 +2,7 @@
  * Create or edit one template: its name and the editor of its kind. The save
  * is the caller's; a refusal comes back as text and the dialog stays open.
  */
-import type { TemplateKind } from '@camstack/types'
+import type { TemplateKind } from '@dominevo/types'
 import {
   Button,
   Dialog,
@@ -16,7 +16,7 @@ import {
   IconButton,
   Select,
   useHotkey,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { ArrowLeft, Redo2, Undo2 } from 'lucide-react'
 import { type ReactNode, useEffect, useReducer, useState } from 'react'
 import { useTranslation } from 'react-i18next'

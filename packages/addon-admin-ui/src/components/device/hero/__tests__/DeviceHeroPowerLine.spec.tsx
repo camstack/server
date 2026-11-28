@@ -13,7 +13,7 @@ interface StatusStub {
 
 const status = vi.hoisted(() => ({ current: undefined as StatusStub | undefined }))
 
-vi.mock('@camstack/ui-library', () => ({
+vi.mock('@dominevo/ui-library', () => ({
   usePowerSourceGetStatus: () => ({ data: status.current }),
 }))
 vi.mock('react-i18next', () => ({

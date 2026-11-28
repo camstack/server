@@ -194,8 +194,8 @@ It checks at boot and then every 10 minutes.
   It used to sum the WAL cycle's running backfill total, which counted a frame
   once for every pass that saw it. The summary also carries `large` and
   `maxAppended`.
-- Everything here is `@camstack/system`, a framework package. It is live only
-  after a `@camstack/server` containing it is installed (D16). `camstack deploy`
+- Everything here is `@dominevo/system`, a framework package. It is live only
+  after a `@dominevo/server` containing it is installed (D16). `dominevo deploy`
   of an addon does not carry it.
 - The canary is Linux-only. On macOS it logs once (INFO) that it cannot look.
   On Linux a failed look (the `-shm` missing, procfs unreadable) is a WARN,
@@ -209,7 +209,7 @@ It checks at boot and then every 10 minutes.
   and the guard keeps it that way. *(Superseded by D693, 2026-10-01: a third
   owner file, `sqlite-snapshot-worker.ts`, the snapshot thread of the same
   runner.)* Not the whole `sqlite-storage/`
-  directory: `@camstack/system`'s index exports modules from it that hub-main
+  directory: `@dominevo/system`'s index exports modules from it that hub-main
   loads.
 - The guard has a named allowlist (`SQLITE_GUARD_ALLOWLIST`: file, rule,
   reason) for code that handles a database nobody has open, such as the
@@ -271,5 +271,5 @@ It checks at boot and then every 10 minutes.
   - `/proc/locks` on the hub shows the runner's pid with a lock on the `-shm`
     inode covering byte 128;
   - the runner's log carries `SQLite shm DMS lock held`;
-  - no `signal=SIGBUS` for `sqlite-settings` in `docker logs CamStack` after
+  - no `signal=SIGBUS` for `sqlite-settings` in `docker logs Dominevo` after
     the next 03:00 backup.

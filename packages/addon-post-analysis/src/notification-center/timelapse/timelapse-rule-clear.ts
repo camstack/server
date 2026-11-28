@@ -8,7 +8,7 @@
  * (`NcRuleUpdateInputSchema` / `NcRuleStore.update`, Plan A).
  *
  * ADDON-LOCAL on purpose: the timelapse rule rides no cap method (see
- * `timelapse-rule.ts` in `@camstack/types`), so this list travels on a bridge
+ * `timelapse-rule.ts` in `@dominevo/types`), so this list travels on a bridge
  * action this addon owns and needs no types release.
  *
  * Every key here is optional on `TimelapseRuleSchema`; a required one

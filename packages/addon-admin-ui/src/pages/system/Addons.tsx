@@ -1,4 +1,4 @@
-import type { AddonListItem as RawAddonListItem } from '@camstack/types'
+import type { AddonListItem as RawAddonListItem } from '@dominevo/types'
 import { addonProcessProblem } from '../../lib/addon-process-problem.js'
 import {
   Input,
@@ -22,7 +22,7 @@ import {
   Button,
   Select,
   FormSaveBar,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { CheckCircle2, Download, Loader2, RefreshCw, Search } from 'lucide-react'
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
@@ -64,13 +64,13 @@ function parseAddonSourceFilter(raw: string | null): AddonSourceFilter | null {
 }
 
 /**
- * Framework/system packages (`@camstack/{system,types,sdk,shm-ring,ui-library}`)
+ * Framework/system packages (`@dominevo/{system,types,sdk,shm-ring,ui-library}`)
  * are no longer operator-facing installable units — they ride inside each
- * node's root package (`@camstack/server`, hub or agent via CAMSTACK_ROLE) and are
+ * node's root package (`@dominevo/server`, hub or agent via CAMSTACK_ROLE) and are
  * managed from the "Server management" surface (runtime-updatable node
  * packages design, phase 4). They are hidden from the Addons page so there is
  * no separate "system packages" section and no legacy per-package update path.
- * `@camstack/addon-admin-ui` and every real addon stay listed.
+ * `@dominevo/addon-admin-ui` and every real addon stay listed.
  */
 /**
  * Cadence choices for the update-availability poll. The floor mirrors the
@@ -221,7 +221,7 @@ function groupByPackage(
     } else {
       // Phase C: prefer the manifest's `camstack.bundle.displayName`
       // when set — that's the operator-facing label for multi-entry
-      // npm packages (`@camstack/addon-pipeline` → "Pipeline"). Falls
+      // npm packages (`@dominevo/addon-pipeline` → "Pipeline"). Falls
       // back to legacy `packageDisplayName`, then to the first addon's
       // own name for single-entry cases.
       const bundleMeta = addon.manifest.bundle

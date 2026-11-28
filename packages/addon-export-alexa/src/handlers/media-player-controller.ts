@@ -6,8 +6,8 @@
  * (the remote sends that many trains); a command the player cannot do comes back
  * as an ErrorResponse, never as a success.
  */
-import type { AddonContext, IScopedLogger } from '@camstack/types'
-import { MEDIA_PLAYER_MAX_STEPS } from '@camstack/types'
+import type { AddonContext, IScopedLogger } from '@dominevo/types'
+import { MEDIA_PLAYER_MAX_STEPS } from '@dominevo/types'
 import { z } from 'zod'
 import {
   CAP_MEDIA_PLAYER,

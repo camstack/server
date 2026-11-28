@@ -3,7 +3,7 @@
  * device template: the dialog edits it with the formula input and saves the same
  * `CompositionExpressionSource` it always did.
  */
-import type { CompositionFieldSource } from '@camstack/types'
+import type { CompositionFieldSource } from '@dominevo/types'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { renderWithTemplateHub } from '../../../../../test-setup/device-template-hub'

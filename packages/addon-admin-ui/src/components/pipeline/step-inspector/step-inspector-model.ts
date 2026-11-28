@@ -6,7 +6,7 @@
  *
  * Everything that decides a MODEL goes through the shared primitives
  * (`resolveEffectiveStepModel`, `stepHasModelForFormat`), and everything that
- * decides a step's SETTINGS through `@camstack/types` `step-settings-layers`,
+ * decides a step's SETTINGS through `@dominevo/types` `step-settings-layers`,
  * so the inspector, its Compare matrix and the runtime give one answer.
  */
 import type {
@@ -14,12 +14,12 @@ import type {
   NodeInferenceDevice,
   PipelineAddonSchema,
   PipelineSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   clusterStepSettingFieldsFor,
   isRootSuppliableStepId,
   resolveRootSupply,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   acceleratorLabel,
   acceleratorShortLabel,
@@ -30,7 +30,7 @@ import {
   type StepTreeNode,
   stepHasModelForFormat,
   withoutModelScopedFields,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { acceleratorId } from '../../../lib/step-url-selection'
 
 export function findAddonInSchema(

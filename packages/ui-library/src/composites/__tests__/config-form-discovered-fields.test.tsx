@@ -8,7 +8,7 @@
  * `field.options` only and "lists the candidates" fails.
  */
 import { selectOption, selectOptionLabels } from '../../testing/select-option'
-import type { ConfigField } from '@camstack/types'
+import type { ConfigField } from '@dominevo/types'
 import * as jestDomMatchers from '@testing-library/jest-dom/matchers'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { useState } from 'react'

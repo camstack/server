@@ -46,7 +46,7 @@
  * under 0.1), and — since `left` lost its bbox on 2026-09-07 and outranked
  * `entered` in `peakForTrack` — usually no box at all.
  */
-import type { MediaFileBytes, MediaFileRef } from '@camstack/types'
+import type { MediaFileBytes, MediaFileRef } from '@dominevo/types'
 import {
   normaliseEventBbox,
   type NormalisedBbox,

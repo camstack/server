@@ -213,7 +213,7 @@ describe('a stalled install returns the node to idle', () => {
   fs.mkdirSync(dataDir, { recursive: true })
   fs.writeFileSync(
     runningPkgPath,
-    JSON.stringify({ name: '@camstack/server', version: '1.1.50' }),
+    JSON.stringify({ name: '@dominevo/server', version: '1.1.50' }),
     'utf-8',
   )
 
@@ -273,7 +273,7 @@ describe('stall and ceiling are not retried', () => {
   fs.mkdirSync(dataDir, { recursive: true })
   fs.writeFileSync(
     runningPkgPath,
-    JSON.stringify({ name: '@camstack/server', version: '1.1.50' }),
+    JSON.stringify({ name: '@dominevo/server', version: '1.1.50' }),
     'utf-8',
   )
 

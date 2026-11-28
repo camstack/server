@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import type { AddonPageProps } from '@camstack/ui-library'
+import type { AddonPageProps } from '@dominevo/ui-library'
 import {
   DetectionCanvas,
   DetectionResultTree,
@@ -12,9 +12,9 @@ import {
   type PipelineStepDisplayConfig,
   type Detection,
   Button,
-} from '@camstack/ui-library'
-import type { PipelineSchema, PipelineAddonSchema } from '@camstack/types'
-import type { FrameResult } from '@camstack/types'
+} from '@dominevo/ui-library'
+import type { PipelineSchema, PipelineAddonSchema } from '@dominevo/types'
+import type { FrameResult } from '@dominevo/types'
 import { buildPipelineRunInput } from '../bench-payloads.js'
 import { resolvedStepsToRunSteps } from '../camera-context.js'
 import { type ResolvedTarget, RunTargetPicker } from '../components/RunTargetPicker.js'

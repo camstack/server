@@ -4,7 +4,7 @@
  * commits it only on a keyframe.
  */
 import { describe, expect, it, vi, afterEach, beforeEach } from 'vitest'
-import type { IStreamBroker, Unsubscribe } from '@camstack/types'
+import type { IStreamBroker, Unsubscribe } from '@dominevo/types'
 import {
   bindPendingSource,
   judgeInPlaceSwitch,

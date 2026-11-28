@@ -33,7 +33,7 @@ const listAllSpy = vi.fn((_input?: ListAllInput, _options?: ListAllOptions) => (
   isLoading: true,
 }))
 
-vi.mock('@camstack/ui-library', () => ({
+vi.mock('@dominevo/ui-library', () => ({
   useDeviceManagerListAll: (input?: ListAllInput, options?: ListAllOptions) =>
     listAllSpy(input, options),
 }))

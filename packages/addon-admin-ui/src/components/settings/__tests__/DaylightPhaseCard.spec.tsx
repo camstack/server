@@ -5,8 +5,8 @@ const state = vi.hoisted(() => ({
   query: { data: undefined, isError: false } as { data: unknown; isError: boolean },
 }))
 
-vi.mock('@camstack/ui-library', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@camstack/ui-library')>()
+vi.mock('@dominevo/ui-library', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dominevo/ui-library')>()
   return {
     ...actual,
     useDaylightPhaseGetPhase: () => state.query,

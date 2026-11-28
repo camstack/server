@@ -8,7 +8,7 @@
  *    device-credential reaps after it down with it;
  *  - the auth schema no longer creates an `oauth_sessions` table.
  */
-import { createRecordsAccess } from '@camstack/types'
+import { createRecordsAccess } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { makeRecordsWorld } from '../../sqlite-storage/__tests__/support/records-world.js'
 import { SqliteSettingsBackend } from '../../sqlite-storage/sqlite-settings-backend.js'

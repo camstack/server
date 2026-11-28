@@ -73,7 +73,7 @@ import {
   type LogTags,
   type UnreleasedClaim,
   processTimeZoneOr,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { DeviceStateChangedData } from '../shared/device-state-changed.js'
 import { ClaimGate, type ClaimKey } from './claim-gate.js'
 import { adoptMathQuantities } from './math-quantity.js'

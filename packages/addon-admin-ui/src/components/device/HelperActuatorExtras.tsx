@@ -4,7 +4,7 @@
  * group also carries the two buttons, and unlocking it asks first, every time.
  * Bindings that have not answered stay pending — they are not "nothing shared".
  */
-import type { GroupTemplate, HelperMember } from '@camstack/types'
+import type { GroupTemplate, HelperMember } from '@dominevo/types'
 import {
   Button,
   ConfirmActionButton,
@@ -12,7 +12,7 @@ import {
   useDeviceManagerGetBindings,
   useLockControlLock,
   useLockControlUnlock,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Lock, LockOpen } from 'lucide-react'
 import { type ReactNode, useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'

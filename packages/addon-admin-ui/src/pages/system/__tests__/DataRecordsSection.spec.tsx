@@ -14,8 +14,8 @@ vi.mock('../../../components/system/deleted-devices/DeletedDevicesData', () => (
 vi.mock('../Storage', () => ({ StoragePage: () => <div /> }))
 vi.mock('../Backup', () => ({ BackupPage: () => <div /> }))
 vi.mock('../Secrets', () => ({ SecretsPage: () => <p>secrets-content</p> }))
-vi.mock('@camstack/ui-library', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@camstack/ui-library')>()
+vi.mock('@dominevo/ui-library', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dominevo/ui-library')>()
   return { ...actual, DataRecordsHub: () => <div data-testid="records-hub" /> }
 })
 

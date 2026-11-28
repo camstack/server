@@ -31,7 +31,7 @@ import {
   DATABASE_SNAPSHOT_SUFFIX,
   type IScopedLogger,
   type LogExtras,
-} from '@camstack/types'
+} from '@dominevo/types'
 import Database from 'better-sqlite3'
 import { afterEach, describe, expect, it } from 'vitest'
 import { SqliteSnapshotter, snapshotSpaceNeeded } from '../sqlite-snapshotter.js'

@@ -1,4 +1,4 @@
-# CamStack server docs
+# Dominevo server docs
 
 Everything here describes **this repository as it is now**. Two kinds of page, and
 the difference matters:
@@ -109,9 +109,9 @@ main checkout, not next to the worktree.
 
 ## The public docs are elsewhere
 
-User-facing documentation lives in **<https://github.com/camstack/docs>** (local
+User-facing documentation lives in **<https://github.com/dominevo/docs>** (local
 clone: `../docs/`), a Next.js + fumadocs site that also bundles the
-`@camstack/ui-library` Storybook under `/storybook/`. This directory is for
+`@dominevo/ui-library` Storybook under `/storybook/`. This directory is for
 people working **on** the server.
 
 Each public page can name the server code it describes in its frontmatter

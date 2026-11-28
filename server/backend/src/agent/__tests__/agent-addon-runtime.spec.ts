@@ -23,9 +23,9 @@ const runner = (name: string, addonIds: string[], pid = 100): RuntimeProcessInpu
 
 describe('joinAddonRuntime', () => {
   const addons = [
-    { id: 'decoder', status: 'running', version: '1.0.0', packageName: '@camstack/addon-d' },
-    { id: 'ml-a', status: 'running', version: '2.0.0', packageName: '@camstack/addon-ml' },
-    { id: 'ml-b', status: 'running', version: '2.0.0', packageName: '@camstack/addon-ml' },
+    { id: 'decoder', status: 'running', version: '1.0.0', packageName: '@dominevo/addon-d' },
+    { id: 'ml-a', status: 'running', version: '2.0.0', packageName: '@dominevo/addon-ml' },
+    { id: 'ml-b', status: 'running', version: '2.0.0', packageName: '@dominevo/addon-ml' },
     { id: 'in-process', status: 'running' },
   ]
 

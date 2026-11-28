@@ -31,8 +31,8 @@ import { NcRuleStore } from './rule-store.js'
 import { isSnoozeExempt, type ActionStepsOf } from './snooze-exempt.js'
 import { NcSnoozeStore } from './snooze-store.js'
 import { NcTextCatalog } from './text-catalog.js'
-import type { IScopedLogger, RetrainVerdictSubject } from '@camstack/types'
-import { alarmPanelCapability } from '@camstack/types'
+import type { IScopedLogger, RetrainVerdictSubject } from '@dominevo/types'
+import { alarmPanelCapability } from '@dominevo/types'
 import type { NcAlarmPanelPort, NotificationCenterDeps } from './index.js'
 
 /** The one cap whose `trigger` the combined alarm notification joins on. */

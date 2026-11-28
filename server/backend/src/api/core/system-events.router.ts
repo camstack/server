@@ -7,7 +7,7 @@
  * only receives matching events.
  */
 import { z } from 'zod'
-import type { SystemEvent } from '@camstack/types'
+import type { SystemEvent } from '@dominevo/types'
 import type { EventBusService } from '../../core/events/event-bus.service.js'
 import { trpcRouter, protectedProcedure, iterableSubscription } from '../trpc/trpc.middleware.js'
 import { scopedEventVisibility } from '../trpc/principal-visibility.js'

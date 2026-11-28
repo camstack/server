@@ -12,7 +12,7 @@
  *
  * Pure and total: a line it cannot read contributes nothing, never a throw.
  */
-import type { StreamAudioMetadata, StreamMetadata } from '@camstack/types'
+import type { StreamAudioMetadata, StreamMetadata } from '@dominevo/types'
 
 /** How long the probe waits on a network input, in µs (ffmpeg's unit). */
 const PROBE_INPUT_TIMEOUT_US = '5000000'

@@ -25,7 +25,7 @@ import {
   type ModelFormat,
   type ModelLicense,
   type PostprocessorType,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { CORAL_MOBILEDET_APACHE } from '../model-licenses.js'
 import { plusCatalogVariantGroup } from './plus-catalog-import.js'
 

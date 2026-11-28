@@ -1,4 +1,4 @@
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ConfigService } from '../../config/config.service'
 import { EventBusService } from '../../events/event-bus.service'
@@ -54,7 +54,7 @@ function registryRequiring(server: string, latest = '1.3.0'): typeof fetch {
   return async () =>
     new Response(
       JSON.stringify({
-        name: '@camstack/addon-x',
+        name: '@dominevo/addon-x',
         version: latest,
         camstack: { requires: { server } },
       }),
@@ -72,7 +72,7 @@ describe('addon requirements (D989)', () => {
     vi.spyOn(globalThis, 'fetch').mockImplementation(registryRequiring('>=1.3.0'))
     const service = build('1.2.0')
 
-    const result = await service.updatePackage('@camstack/addon-x', '1.3.0')
+    const result = await service.updatePackage('@dominevo/addon-x', '1.3.0')
 
     expect(result.success).toBe(false)
     expect(result.unmet).toEqual([{ kind: 'server-too-old', required: '1.3.0', running: '1.2.0' }])
@@ -82,7 +82,7 @@ describe('addon requirements (D989)', () => {
 
   it('an unreadable running server never passes a declared minimum', async () => {
     vi.spyOn(globalThis, 'fetch').mockImplementation(registryRequiring('>=1.3.0'))
-    const result = await build(null).updatePackage('@camstack/addon-x', '1.3.0')
+    const result = await build(null).updatePackage('@dominevo/addon-x', '1.3.0')
     expect(result.success).toBe(false)
     expect(result.unmet?.[0]?.kind).toBe('server-too-old')
   })
@@ -91,7 +91,7 @@ describe('addon requirements (D989)', () => {
     vi.spyOn(globalThis, 'fetch').mockImplementation(
       async () => new Response('unavailable', { status: 503 }),
     )
-    const result = await build('1.2.0').updatePackage('@camstack/addon-x', '1.3.0')
+    const result = await build('1.2.0').updatePackage('@dominevo/addon-x', '1.3.0')
     expect(result.success).toBe(false)
     expect(result.error).toContain('could not be read')
     expect(result.error).toContain('503')
@@ -99,7 +99,7 @@ describe('addon requirements (D989)', () => {
     vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
       throw new Error('socket hang up')
     })
-    const thrown = await build('1.2.0').updatePackage('@camstack/addon-x', '1.3.0')
+    const thrown = await build('1.2.0').updatePackage('@dominevo/addon-x', '1.3.0')
     expect(thrown.success).toBe(false)
     expect(thrown.error).toContain('socket hang up')
   })
@@ -109,7 +109,7 @@ describe('addon requirements (D989)', () => {
     const service = build('1.2.0')
 
     const updates = await service.checkUpdatesForInstalled([
-      { name: '@camstack/addon-x', version: '1.2.0' },
+      { name: '@dominevo/addon-x', version: '1.2.0' },
     ])
 
     expect(updates).toHaveLength(1)
@@ -122,7 +122,7 @@ describe('addon requirements (D989)', () => {
   it('the update sweep offers an update normally when the server meets the minimum', async () => {
     vi.spyOn(globalThis, 'fetch').mockImplementation(registryRequiring('>=1.3.0'))
     const updates = await build('1.3.0').checkUpdatesForInstalled([
-      { name: '@camstack/addon-x', version: '1.2.0' },
+      { name: '@dominevo/addon-x', version: '1.2.0' },
     ])
     expect(updates).toHaveLength(1)
     expect(updates[0]?.blockedBy).toBeUndefined()

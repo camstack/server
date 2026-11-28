@@ -44,7 +44,7 @@ describe('resolveCredentials', () => {
     expect(asked).toBe('https://from-env:4443')
   })
 
-  it('throws a MissingCredentialsError that names `camstack login`', () => {
+  it('throws a MissingCredentialsError that names `dominevo login`', () => {
     let caught: unknown
     try {
       resolveCredentials({
@@ -58,7 +58,7 @@ describe('resolveCredentials', () => {
     expect(caught).toBeInstanceOf(MissingCredentialsError)
     const msg = (caught as Error).message
     expect(msg).toContain('https://hub.lan:4443')
-    expect(msg).toContain('camstack login')
+    expect(msg).toContain('dominevo login')
     expect(msg).not.toContain('--token-file')
   })
 
@@ -76,7 +76,7 @@ describe('authRejectedHint', () => {
   it('explains a 401/403 against a cached session as revoked or expired', () => {
     const hint = authRejectedHint(401, 'session')
     expect(hint).toMatch(/revoked or expired/)
-    expect(hint).toContain('camstack login')
+    expect(hint).toContain('dominevo login')
     expect(authRejectedHint(403, 'session')).not.toBeNull()
   })
 

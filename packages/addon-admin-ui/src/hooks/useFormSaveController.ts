@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useMemo, useEffect } from 'react'
-import type { ConfigUISchemaWithValues, ConfigSection } from '@camstack/types'
+import type { ConfigUISchemaWithValues, ConfigSection } from '@dominevo/types'
 
 /**
  * Determines whether a field should auto-save on change.

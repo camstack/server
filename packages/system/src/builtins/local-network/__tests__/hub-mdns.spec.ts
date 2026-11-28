@@ -3,7 +3,7 @@
  * book's `internal` role and nothing else, carries no secret, follows a role
  * change, and a failing responder never escapes `start()`.
  */
-import type { HubAddressBook, IScopedLogger } from '@camstack/types'
+import type { HubAddressBook, IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   buildHubAnnouncement,

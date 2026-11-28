@@ -24,7 +24,7 @@ import type {
   CredentialScope,
   CredentialTokenClaims,
   UserScope,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   ADMIN_SCOPE,
   ALL_METHOD_ACCESS,
@@ -32,8 +32,8 @@ import {
   normalizeTokenScopes,
   PREFERENCES_SELF_SCOPE,
   scopesGrantAdmin,
-} from '@camstack/types'
-import type { UserManagementInternal } from '@camstack/server/system'
+} from '@dominevo/types'
+import type { UserManagementInternal } from '@dominevo/server/system'
 import type { DeviceScopeLookup } from '../api/trpc/scope-access.js'
 import { readCredentialIdentity } from '../api/trpc/trpc-error-principal.js'
 import { personSessionScopes } from './person-session-scopes.js'

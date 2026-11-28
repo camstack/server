@@ -101,7 +101,7 @@ describe('createKeyedSerializer — the require.cache purge stays purge-then-imp
       inFlight--
     }
 
-    // The four `@camstack/addon-remote-storage` addons (sftp, s3, webdav,
+    // The four `@dominevo/addon-remote-storage` addons (sftp, s3, webdav,
     // smb): distinct runners, one shared `dist/` directory, all in the same
     // plan.
     await Promise.all([

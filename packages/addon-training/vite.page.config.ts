@@ -80,13 +80,13 @@ export default defineConfig({
         '@tanstack/react-query': { singleton: true, requiredVersion: false, import: false },
         '@trpc/client': { singleton: true, requiredVersion: false, import: false },
         '@trpc/react-query': { singleton: true, requiredVersion: false, import: false },
-        '@camstack/ui-library': {
+        '@dominevo/ui-library': {
           singleton: true,
           requiredVersion: `>=${uiLibraryVersion}`,
           import: false,
         },
-        '@camstack/sdk': { singleton: true, requiredVersion: false, import: false },
-        '@camstack/types': { singleton: true, requiredVersion: false, import: false },
+        '@dominevo/sdk': { singleton: true, requiredVersion: false, import: false },
+        '@dominevo/types': { singleton: true, requiredVersion: false, import: false },
         // ui-library's barrel can pull `mf-runtime-init` into the page stub;
         // without this share the stub keeps a bare `import "@module-federation/runtime"`
         // that the browser cannot resolve (native ESM, no import map).

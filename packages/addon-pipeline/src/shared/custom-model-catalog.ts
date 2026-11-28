@@ -19,7 +19,7 @@ import type {
   IScopedLogger,
   ModelCatalogEntry,
   StepDefinition,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   groupCustomModelsByStep,
   mergeCustomModels,

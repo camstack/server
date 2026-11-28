@@ -4,7 +4,7 @@
  * EXECUTE would fail — and a device with nothing else is not exposable. No
  * `getOptions`, or a failed read, keeps the switch (D315).
  */
-import type { LogExtras } from '@camstack/types'
+import type { LogExtras } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { exportedCapNames } from '../device-gateway.js'
 import { traitsForCaps } from '../google-home/trait-catalog.js'

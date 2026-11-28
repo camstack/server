@@ -5,7 +5,7 @@
  */
 import * as net from 'node:net'
 import { describe, expect, it, vi } from 'vitest'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { RtspListenServer } from '../rtsp-listen-server.js'
 import { RtspRestreamer } from '../rtsp-restreamer.js'
 

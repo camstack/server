@@ -15,7 +15,7 @@ import {
   type IEventBus,
   type ObjectDetection,
   type PipelineInferenceResultPayload,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { bootAnalytics, type Booted, type LogLine } from './boot-analytics.js'
 
 const DEVICE_ID = 102

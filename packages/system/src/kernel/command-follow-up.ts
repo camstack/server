@@ -12,7 +12,7 @@
  * or error is what the caller gets. Cost when nothing is registered: one
  * undefined check (D181).
  */
-import { isCommand } from '@camstack/types/addon'
+import { isCommand } from '@dominevo/types/addon'
 
 /** The device command a follow-up is about. */
 export interface CommandFollowUpTarget {

@@ -24,7 +24,7 @@
  * 24 collection caps shared the one resolver, so all 24 shared the hole.
  *
  * A wrong identifier that produces a plausible answer instead of an error is a
- * recurring shape in this repo (`camstack deploy` accepting fake node ids). It
+ * recurring shape in this repo (`dominevo deploy` accepting fake node ids). It
  * gets a check.
  *
  * ## What it checks

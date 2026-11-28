@@ -1,4 +1,4 @@
-import { createAddonI18n } from '@camstack/ui-library'
+import { createAddonI18n } from '@dominevo/ui-library'
 import en from './en.json'
 import it from './it.json'
 

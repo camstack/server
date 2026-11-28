@@ -1,4 +1,4 @@
-import { AlertSchema, type Alert } from '@camstack/types'
+import { AlertSchema, type Alert } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   buildPinAlert,

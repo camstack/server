@@ -4,7 +4,7 @@
  * Hosted in the pipeline-analytics addon (`pipeline-analytics` owner stamp).
  * Declared by the hub; every node reads and writes them through `ctx.records`.
  */
-import { defineRecordKinds, RECORD_MAX_DATA_BYTES, type RecordRetention } from '@camstack/types'
+import { defineRecordKinds, RECORD_MAX_DATA_BYTES, type RecordRetention } from '@dominevo/types'
 import { DurableLedgerBodySchema } from '../durable/durable-record-body.js'
 
 const ledger = (

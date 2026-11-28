@@ -8,8 +8,8 @@
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
-import type { DeviceStepConfig, ConfigField, PipelineAddonSchema } from '@camstack/types'
-import { modelBindingKey } from '@camstack/types'
+import type { DeviceStepConfig, ConfigField, PipelineAddonSchema } from '@dominevo/types'
+import { modelBindingKey } from '@dominevo/types'
 import { AgentStepEditor } from '../agent-step-editor'
 
 const V9 = 'yolov9m-320-int8'

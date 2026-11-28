@@ -1,4 +1,4 @@
-import type { EventCatalog } from '@camstack/types'
+import type { EventCatalog } from '@dominevo/types'
 import type { PersistedClusterNode } from './cluster-node-history-store'
 
 /**

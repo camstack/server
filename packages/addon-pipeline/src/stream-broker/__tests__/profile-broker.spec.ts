@@ -9,7 +9,7 @@
  *   - profileMap persistence fires on every change
  */
 
-import type { EventFilter, IEventBus, IScopedLogger, SystemEvent } from '@camstack/types'
+import type { EventFilter, IEventBus, IScopedLogger, SystemEvent } from '@dominevo/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { StreamBrokerManager } from '../stream-broker/stream-broker-manager'
 

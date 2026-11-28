@@ -1,5 +1,5 @@
 import AlexaRemote from 'alexa-remote2'
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IScopedLogger } from '@dominevo/types'
 import {
   AlexaAuthError,
   type AlexaAppliance,

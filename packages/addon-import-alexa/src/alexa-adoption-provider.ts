@@ -1,10 +1,10 @@
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IScopedLogger } from '@dominevo/types'
 import type {
   IDeviceAdoptionProvider,
   AdoptionStatus,
   AdoptionFilter,
   DiscoveredChildDevice,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { AlexaAppliance } from './alexa-client.js'
 import {
   buildAlexaApplianceCandidate,
@@ -54,7 +54,7 @@ export interface AlexaAdoptionProviderDeps {
 /** Single granularity: each Alexa appliance adopts as one device. */
 const DEVICES_FILTER: AdoptionFilter = { id: 'devices', label: 'Devices', isDefault: true } as const
 
-/** Resolve the adopted CamStack device id for a (broker, appliance), or null. */
+/** Resolve the adopted Dominevo device id for a (broker, appliance), or null. */
 async function adoptedApplianceId(
   brokerId: string,
   applianceId: string,
@@ -72,7 +72,7 @@ async function adoptedApplianceId(
   return null
 }
 
-/** Resolve the adopted CamStack device id for a (broker, Echo serial), or null. */
+/** Resolve the adopted Dominevo device id for a (broker, Echo serial), or null. */
 async function adoptedEchoId(
   brokerId: string,
   serial: string,

@@ -1,4 +1,4 @@
-import type { WorkloadAction, WorkloadControl } from '@camstack/types'
+import type { WorkloadAction, WorkloadControl } from '@dominevo/types'
 import type { ReactElement } from 'react'
 import { useUiText } from '../../../../contexts/ui-text'
 import { cn } from '../../../../lib/cn'

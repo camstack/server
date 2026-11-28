@@ -10,7 +10,7 @@
  * The cheap question comes first (D54): everything here runs BEFORE any byte
  * is fetched, any camera session is opened and any wake is spent.
  */
-import type { Clip, ClipExportFailure, ExportClipSubject } from '@camstack/types'
+import type { Clip, ClipExportFailure, ExportClipSubject } from '@dominevo/types'
 
 /**
  * The slice of `videoclips` this gate reads. Narrower than the cap on purpose:

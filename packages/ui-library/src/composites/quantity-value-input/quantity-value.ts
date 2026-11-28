@@ -14,7 +14,7 @@ import {
   convertQuantityInput,
   tryConvertUnit,
   unitsForQuantity,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** A number held in its stored unit, with the unit the person picked for it. */
 export interface StoredQuantity {

@@ -7,7 +7,7 @@
  * place), so a slow provider call never overwrites a newer state with an old
  * snapshot.
  */
-import type { TrainingJob } from '@camstack/types'
+import type { TrainingJob } from '@dominevo/types'
 import type { JobStore } from './stores.js'
 
 export type JobUpdate = (job: TrainingJob) => TrainingJob | null

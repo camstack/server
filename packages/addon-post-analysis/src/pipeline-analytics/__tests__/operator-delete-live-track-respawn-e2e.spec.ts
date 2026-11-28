@@ -52,8 +52,8 @@ import type {
   IEventBus,
   ObjectDetection,
   PipelineInferenceResultPayload,
-} from '@camstack/types'
-import { createEvent, EventCategory } from '@camstack/types'
+} from '@dominevo/types'
+import { createEvent, EventCategory } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import { OBJECT_EVENTS_COLLECTION } from '../store/event-store.js'
 import { hubFacePseudonymizer } from '../tracking-bench/recorder/frame-record.js'

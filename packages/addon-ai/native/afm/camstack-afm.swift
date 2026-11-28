@@ -1,4 +1,4 @@
-// camstack-afm — CamStack's Apple Foundation Models helper.
+// camstack-afm — Dominevo's Apple Foundation Models helper.
 //
 // A long-lived child of the ai addon's `llm-runtime` provider, on darwin only.
 // It speaks ONE JSON object per line: requests on stdin, replies on stdout.

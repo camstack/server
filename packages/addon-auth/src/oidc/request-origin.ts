@@ -21,7 +21,7 @@
  * allowlisted origin, where the hub serves or 404s it and a strict IdP
  * refuses an unregistered one.
  *
- * The implementation lives in `@camstack/types` (`auth/request-origin.ts`) so the
+ * The implementation lives in `@dominevo/types` (`auth/request-origin.ts`) so the
  * hub's device-certificate challenge binds its nonce to the same advertised
  * origin set; this file re-exports it.
  */
@@ -32,4 +32,4 @@ export {
   pickRequestOrigin,
   type RequestHeaders,
   requestMountPrefix,
-} from '@camstack/types'
+} from '@dominevo/types'

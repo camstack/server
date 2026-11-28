@@ -15,7 +15,7 @@
  * would be the wrong shape for it.
  */
 
-import { Button, CodeBlock, useConfirm } from '@camstack/ui-library'
+import { Button, CodeBlock, useConfirm } from '@dominevo/ui-library'
 import { ChevronDown, ChevronRight, LogOut } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'

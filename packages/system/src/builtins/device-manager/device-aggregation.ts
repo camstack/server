@@ -34,7 +34,7 @@ import type {
   StreamProfile,
   StreamProfilePatch,
   WireableField,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   ALL_CAPABILITY_DEFINITIONS,
   CAP_NAMES_WITH_STATUS,
@@ -44,7 +44,7 @@ import {
   errMsg,
   isDeviceConfigCap,
   sleep,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { ContributionCache, CONTRIBUTION_BUDGET_MS } from './contribution-cache.js'
 import { readFieldCatalog } from './wireable-enum-catalog.js'
 import { mergeAggregates, tagContribution, toWireShape } from './device-aggregation-merge.js'

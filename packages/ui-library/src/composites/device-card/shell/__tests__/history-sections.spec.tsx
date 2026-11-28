@@ -6,7 +6,7 @@
  */
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { DeviceTransition } from '@camstack/types'
+import type { DeviceTransition } from '@dominevo/types'
 import { actuationFixturePage } from '../../__fixtures__/actuations'
 import type { CardHistory, CardState } from '../model'
 

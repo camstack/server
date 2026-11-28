@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import type { ConfigUISchema } from '@camstack/types'
+import type { ConfigUISchema } from '@dominevo/types'
 
 /** The ESPHome native API port every board listens on unless its YAML says otherwise. */
 export const ESPHOME_DEFAULT_PORT = 6053
@@ -84,7 +84,7 @@ export function buildIntegrationFormSchema(): ConfigUISchema {
 
 /** What the operator is told about the encryption key, on the form that asks for it. */
 export const ESPHOME_KEY_HINT =
-  'Needed only when the board is encrypted, that is when its YAML has api: encryption: key:. Copy the base64 value from there. Leave it empty for an unencrypted board; CamStack then tries to read the key from the ESPHome Builder in Home Assistant.'
+  'Needed only when the board is encrypted, that is when its YAML has api: encryption: key:. Copy the base64 value from there. Leave it empty for an unencrypted board; Dominevo then tries to read the key from the ESPHome Builder in Home Assistant.'
 
 /** The board a creation form describes. The key is a keychain secret once saved. */
 export const espBoardCreationSchema = z.object({

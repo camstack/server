@@ -1,4 +1,4 @@
-import type { IScopedLogger, LogExtras, LogTags } from '@camstack/types'
+import type { IScopedLogger, LogExtras, LogTags } from '@dominevo/types'
 import type { LogEntry, LogLevel } from './log-ring-buffer.js'
 
 export type { IScopedLogger }

@@ -12,7 +12,7 @@ import {
   type IActionSourceProvider,
   type IFanPresetsProvider,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { FanPresetsDevices, FanPresetsStore } from './fan-presets-service.js'
 
 const LOCAL_PREFIX = 'fan-preset:'

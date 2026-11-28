@@ -2,7 +2,7 @@
  * The loop end to end, with a fake clock, a fake logger and a fake command
  * sink. Nothing here waits on a timer and nothing touches a camera.
  */
-import type { IScopedLogger, LogExtras, LogTags, ObjectDetection } from '@camstack/types'
+import type { IScopedLogger, LogExtras, LogTags, ObjectDetection } from '@dominevo/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { DEFAULT_AUTOTRACK_LOOP_CONFIG } from '../autotrack-config.js'
 import {

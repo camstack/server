@@ -4,7 +4,7 @@
  * the pattern used by `pipeline-executor.router.spec.ts`.
  */
 import { describe, it, expect } from 'vitest'
-import type { IModelConvertProvider } from '@camstack/types'
+import type { IModelConvertProvider } from '@dominevo/types'
 import { makeCtx, invokeProcedure, buildCapRouterForTest } from './harness.js'
 
 function makeMockProvider(overrides: Partial<IModelConvertProvider> = {}): IModelConvertProvider {

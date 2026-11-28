@@ -12,7 +12,7 @@
  * the census is the retained heap.
  */
 import { describe, expect, it, vi } from 'vitest'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { CalendarIndex } from '../calendar-index.js'
 import {
   ArchiveFloorReader,

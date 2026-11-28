@@ -4,7 +4,7 @@
  * scenes. The addon is its only writer; the in-memory copy it loads at boot is what every
  * fulfillment intent reads.
  */
-import { type DefinedRecordKind, defineEntryKind } from '@camstack/types'
+import { type DefinedRecordKind, defineEntryKind } from '@dominevo/types'
 import { z } from 'zod'
 import type { ActionSceneEntry } from './action-scenes.js'
 import type { ExposedDeviceEntry, LinkedAccount } from './types.js'

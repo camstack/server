@@ -5,7 +5,7 @@ import {
   FACE_DETECTION_MODELS,
   VEHICLE_CLASSIFIER_MODELS,
 } from '../registry/model-catalogs.js'
-import { stepModelRunsOnFormat } from '@camstack/types'
+import { stepModelRunsOnFormat } from '@dominevo/types'
 import { buildSubtreeCanRun, resolveStepDevice } from '../../pipeline-runner/device-jump.js'
 import { getDefaultModelForFormat, getStepDefinition } from '../registry/step-definitions.js'
 

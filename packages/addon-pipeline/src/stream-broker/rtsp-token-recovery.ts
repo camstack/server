@@ -18,7 +18,7 @@
  *    PERSISTED at once, the alert says new URLs were issued, and the check stops
  *    for that camera.
  */
-import { isSecretMarker, type IScopedLogger, type KeychainResolveResult } from '@camstack/types'
+import { isSecretMarker, type IScopedLogger, type KeychainResolveResult } from '@dominevo/types'
 import type { DeviceKeyMirror, RtspTokensOfDevice } from './broker-device-state.js'
 
 export type HeldKind = 'unavailable' | 'missing'

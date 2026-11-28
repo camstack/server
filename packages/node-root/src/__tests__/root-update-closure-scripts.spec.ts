@@ -1,6 +1,6 @@
 /**
  * npm 12 blocks a dependency's install scripts by default (`allowScripts`), so
- * a closure staged with it silently gets NO `@camstack/server` postinstall —
+ * a closure staged with it silently gets NO `@dominevo/server` postinstall —
  * which is the only thing that applies the shipped `werift` patch — and no
  * `better-sqlite3` / `node-av` prebuild fetch either.
  *
@@ -8,7 +8,7 @@
  * while hub and agent-a still run npm 11:
  *
  *   npm warn install-scripts 7 packages had install scripts blocked because
- *   npm warn install-scripts   @camstack/server@1.2.277 (postinstall: …)
+ *   npm warn install-scripts   @dominevo/server@1.2.277 (postinstall: …)
  *   npm warn install-scripts   better-sqlite3@12.11.1 (install: …)
  *
  * The applier itself was fine — run by hand in that same staging closure it
@@ -61,7 +61,7 @@ beforeEach(() => {
   runningPkgPath = path.join(tmp, 'running-package.json')
   fs.writeFileSync(
     runningPkgPath,
-    JSON.stringify({ name: '@camstack/server', version: '1.2.276' }),
+    JSON.stringify({ name: '@dominevo/server', version: '1.2.276' }),
     'utf-8',
   )
   manifests = []
@@ -91,7 +91,7 @@ function makeNpm12InstallStub(version: string): NpmExecFn {
     fs.writeFileSync(path.join(pkgDir, 'dist', 'launcher.js'), '// entry', 'utf-8')
     fs.writeFileSync(
       path.join(pkgDir, 'package.json'),
-      JSON.stringify({ name: '@camstack/server', version }),
+      JSON.stringify({ name: '@dominevo/server', version }),
       'utf-8',
     )
     for (const rel of [
@@ -146,7 +146,7 @@ describe('staging a closure under an npm that blocks install scripts', () => {
     // snapshots and the database — the validator already refuses that closure,
     // but refusing every update is not a fix.
     expect(allow).toMatchObject({
-      '@camstack/server': true,
+      '@dominevo/server': true,
       'better-sqlite3': true,
       'node-av': true,
     })

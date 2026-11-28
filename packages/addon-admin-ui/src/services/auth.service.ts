@@ -2,8 +2,8 @@
 // Auth service — JWT token utilities
 // ---------------------------------------------------------------------------
 
-import type { TokenScope } from '@camstack/types'
-import { grantRowsOf, normalizeTokenScopes } from '@camstack/types'
+import type { TokenScope } from '@dominevo/types'
+import { grantRowsOf, normalizeTokenScopes } from '@dominevo/types'
 
 export interface TokenPayload {
   id: string

@@ -39,7 +39,7 @@ import type {
   SubscribeAudioChunksInput,
   SubscribeAudioChunksResult,
   SystemEvent,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   LowPowerSleepStatusSchema,
   lowPowerSleepCapability,
@@ -62,8 +62,8 @@ import {
   type ProfileRtspEntry,
   resolveEgressDecodeHwAccel,
   type VideoEncode,
-} from '@camstack/types'
-import type { ChildCostRegistry } from '@camstack/types/node'
+} from '@dominevo/types'
+import type { ChildCostRegistry } from '@dominevo/types/node'
 import { z } from 'zod'
 import { mergeViewerCounts, type ViewerCounts } from '../live-viewers.js'
 import { deviceIdFromBrokerId } from '../rtsp/broker-device-id.js'
@@ -2388,7 +2388,7 @@ export class StreamBrokerManager {
     // deliberately IN-PROCESS rather than through `ctx.api`: the leg and the
     // egress manager live in the same runner, `classifyCapRoute` would serve an
     // unpinned cap call hub-in-process anyway, and going out over tRPC would
-    // additionally depend on the INSTALLED `@camstack/server/system` carrying the D67
+    // additionally depend on the INSTALLED `@dominevo/server/system` carrying the D67
     // method. Placement of a transcode remains a caller-side `nodePin` on the
     // cap — nothing here forecloses it.
     server.setEgressTranscodeProvider({
@@ -4426,7 +4426,7 @@ export class StreamBrokerManager {
     /**
      * OPTIONAL on purpose, and defaulted right here rather than only in the cap
      * schema: a Zod `.default()` on a cap input is applied by the hub's router,
-     * which ships inside `@camstack/server/system` and therefore lags an addon deploy
+     * which ships inside `@dominevo/server/system` and therefore lags an addon deploy
      * by a whole publish train (CAP_INPUT_DEFAULTS). A caller that predates the
      * field must still get the operator's 4×, so the provider owns the fallback
      * too — the two sides agree, and the addon deploy alone is enough.
@@ -4878,7 +4878,7 @@ export class StreamBrokerManager {
     return derivedEncode !== undefined ? { ...stats, derivedEncode } : stats
   }
 
-  async listClients(input: { brokerId: string }): Promise<import('@camstack/types').BrokerClients> {
+  async listClients(input: { brokerId: string }): Promise<import('@dominevo/types').BrokerClients> {
     const broker = this.brokers.get(input.brokerId)
     if (!broker) {
       return {

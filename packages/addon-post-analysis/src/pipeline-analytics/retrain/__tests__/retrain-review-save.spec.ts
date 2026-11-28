@@ -7,7 +7,7 @@ import {
   type RetrainAnnotationDraft,
   type RetrainOrigin,
   type Track,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { makeAnalyticsWorld } from '../../__tests__/fake-records.js'
 import { makeSilentLogger } from '../../__tests__/test-helpers.js'

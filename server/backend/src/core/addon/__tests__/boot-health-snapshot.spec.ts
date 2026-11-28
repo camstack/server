@@ -6,8 +6,8 @@ describe('recordBootHealth', () => {
     const calls: string[] = []
     recordBootHealth({
       entries: [
-        ['ok', { packageName: '@camstack/addon-ok', initialized: true }],
-        ['broken', { packageName: '@camstack/addon-broken', initialized: false }],
+        ['ok', { packageName: '@dominevo/addon-ok', initialized: true }],
+        ['broken', { packageName: '@dominevo/addon-broken', initialized: false }],
       ],
       monitor: {
         recordSuccess: (_p, id) => calls.push(`success:${id}`),

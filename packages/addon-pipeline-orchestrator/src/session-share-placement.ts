@@ -19,8 +19,8 @@ import type {
   ShareAffinityDwell,
   ShareAffinityElection,
   ShareElection,
-} from '@camstack/types'
-import { electByShareWithAffinity } from '@camstack/types'
+} from '@dominevo/types'
+import { electByShareWithAffinity } from '@dominevo/types'
 import { isDeviceSaturated } from './device-balancer.js'
 import type { ShareElectionHistory } from './share-election-history.js'
 

@@ -8,7 +8,7 @@
  * is `yolov9m-320` — not the `yolo26n` this page used to hard-code, which is
  * the CATALOG default and matches no enabled accelerator on that node.
  */
-import type { CameraStatus, NodeInferenceDevice, PipelineSchema } from '@camstack/types'
+import type { CameraStatus, NodeInferenceDevice, PipelineSchema } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   type AssistDetectorInput,

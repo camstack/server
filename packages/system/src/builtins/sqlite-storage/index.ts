@@ -2,11 +2,11 @@
 //
 // `FilesystemStorageProvider` here is the new `storage-provider` cap
 // implementation (Task 7). The legacy sync `IStorageProvider` shape
-// still lives in `@camstack/types/node` (`LegacyFilesystemStorageProvider`
+// still lives in `@dominevo/types/node` (`LegacyFilesystemStorageProvider`
 // would be the rename — kept under its old name there for now since
 // `ctx.kernel.storage` consumers haven't been migrated yet). Importers
 // who need the legacy sync resolver should reach into
-// `@camstack/types/node` directly.
+// `@dominevo/types/node` directly.
 
 export { ConfigStore } from './config-store.js'
 export type { DeviceRow } from './device-store.js'

@@ -18,7 +18,7 @@ import {
   type GatedResult,
   type GatedToolSpec,
   type HubClient,
-} from '@camstack/develop'
+} from '@dominevo/develop'
 import { text } from './tool-result.js'
 import { z } from 'zod'
 import type { McpContext, ToolTextResult } from './context.js'
@@ -521,7 +521,7 @@ export function registerCameraTools(server: McpServer, ctx: McpContext): void {
 
   server.tool(
     'configure_camera_discover',
-    'Scan the network through one camera provider (the admin UI "add camera" discovery) and list the candidates with the non-secret fields to pass to configure_camera_add. Changes nothing on the hub. A credential in `params` is refused (`secret-required`). Needs an admin `camstack login`.',
+    'Scan the network through one camera provider (the admin UI "add camera" discovery) and list the candidates with the non-secret fields to pass to configure_camera_add. Changes nothing on the hub. A credential in `params` is refused (`secret-required`). Needs an admin `dominevo login`.',
     {
       addonId: z.string().min(1),
       params: z.record(z.string(), z.unknown()).optional(),

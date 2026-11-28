@@ -10,7 +10,7 @@
  * a failed lockstep delete on the SAME camera at another instant.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { makeNcOwnerMediaReader } from '../nc-owner-media-reader.js'
 import { MediaStore } from '../store/media-store.js'

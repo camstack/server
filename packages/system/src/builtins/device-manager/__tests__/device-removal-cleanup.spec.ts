@@ -12,7 +12,7 @@
  *    logged with `tags: { deviceId }`, and is retried by the bounded reconcile;
  *  - one summary line per device carries the counts per store.
  */
-import { createSecretsAccess, type KeychainTransport, type SecretsAccess } from '@camstack/types'
+import { createSecretsAccess, type KeychainTransport, type SecretsAccess } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { REMOVAL_RETRY_DELAYS_MS } from '../removal-cleanup.js'
 import { type Harness, registerCamera, setup } from './device-manager-harness.js'

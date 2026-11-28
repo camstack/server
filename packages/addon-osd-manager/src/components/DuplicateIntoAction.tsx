@@ -10,7 +10,7 @@ import {
   DialogTitle,
   Select,
   useOsdManagerCopyDeviceConfiguration,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useT } from '../i18n/index.js'
 
 interface DuplicateIntoActionProps {

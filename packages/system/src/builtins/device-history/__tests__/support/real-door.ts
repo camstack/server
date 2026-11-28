@@ -14,8 +14,8 @@
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { SqliteSettingsBackend } from '@camstack/server/system'
-import type { IScopedLogger } from '@camstack/types'
+import { SqliteSettingsBackend } from '@dominevo/server/system'
+import type { IScopedLogger } from '@dominevo/types'
 import type { HistoryDoor } from '../../store/history-door.js'
 
 export interface RealDoor {

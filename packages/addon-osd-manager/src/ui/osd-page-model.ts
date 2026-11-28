@@ -11,7 +11,7 @@ import {
   type OsdSlotBinding,
   type OsdSlotView,
   type OsdSource,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export interface CameraOption {
   readonly id: number

@@ -8,7 +8,7 @@
  * does anything but type — Backspace in a label field must never delete a box.
  * Save is the one exception, as it is in every editor.
  */
-import type { RetrainMacroClass } from '@camstack/types'
+import type { RetrainMacroClass } from '@dominevo/types'
 
 /** The part of a KeyboardEvent the map reads. */
 export interface ShortcutKey {

@@ -4,7 +4,7 @@
  * `fetchByIds`-capable), over a clip registry whose `clip` legacy id is what
  * the fusion spec's rows are written under.
  */
-import type { VectorMetadata } from '@camstack/types'
+import type { VectorMetadata } from '@dominevo/types'
 import { makeFakeVectorStore, makeSilentLogger } from '../../__tests__/test-helpers.js'
 import { testClipRegistry } from '../../__tests__/fixtures/clip-test-registry.js'
 import { ObjectEmbeddingStore, type ObjectVectorStoreClient } from '../object-embedding-store.js'

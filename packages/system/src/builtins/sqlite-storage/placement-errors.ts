@@ -5,7 +5,7 @@
  * code? }` and the main thread rebuilds the class with {@link rehydrateError},
  * so a caller's `instanceof CollectionPlacementError` survives the hop.
  */
-import type { DataStoreDatabase } from '@camstack/types'
+import type { DataStoreDatabase } from '@dominevo/types'
 
 /**
  * A collection was declared for one file while its table already lives in

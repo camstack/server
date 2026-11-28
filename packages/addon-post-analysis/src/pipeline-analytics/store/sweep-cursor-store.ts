@@ -19,7 +19,7 @@
  * is idempotent and the cursor is only ever a starting offset.
  */
 
-import type { IScopedLogger, RecordKindHandle, RecordsAccess } from '@camstack/types'
+import type { IScopedLogger, RecordKindHandle, RecordsAccess } from '@dominevo/types'
 import { pipelineAnalyticsRecordKinds, type SweepCursorBody } from '../record-kinds.js'
 import type { OrphanCursor } from '../retention/orphan-audit.js'
 

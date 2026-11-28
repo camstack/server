@@ -3,7 +3,7 @@
  * parsed body or a typed failure, never a throw, never a message carrying the
  * key. Shared by `list-models.ts` and the per-vendor readers beside it.
  */
-import type { LlmListModelsResult } from '@camstack/types'
+import type { LlmListModelsResult } from '@dominevo/types'
 import { z } from 'zod'
 
 export interface ListModelsOptions {

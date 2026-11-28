@@ -52,7 +52,7 @@ declares `protocolVersion`, the worker's ready reply reports its own
 `PROTOCOL_VERSION`, and BOTH sides independently take
 `min(mine, theirs)` as the effective layout. A worker and a host at different
 versions is the NORMAL state during a deploy on this cluster (framework code
-ships in the `@camstack/server` closure, addons ship separately), so:
+ships in the `@dominevo/server` closure, addons ship separately), so:
 
 - a v2 worker under an old host (no declaration) parses the v1 layout,
   byte-identical;

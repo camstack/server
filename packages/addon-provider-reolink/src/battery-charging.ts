@@ -1,4 +1,4 @@
-import type { BatteryStatus } from '@camstack/types'
+import type { BatteryStatus } from '@dominevo/types'
 
 /**
  * From `adapterStatus` + `chargeStatus` to the power source.

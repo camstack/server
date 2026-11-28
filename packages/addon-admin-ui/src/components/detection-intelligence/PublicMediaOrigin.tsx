@@ -14,8 +14,8 @@
  * lifts its endpoint origin to the parent.
  */
 import { useCallback, useEffect, useState, type ReactElement } from 'react'
-import { useAddonsListCapabilityProviders, useNetworkAccessGetStatus } from '@camstack/ui-library'
-import { NetworkAccessStatusSchema } from '@camstack/types'
+import { useAddonsListCapabilityProviders, useNetworkAccessGetStatus } from '@dominevo/ui-library'
+import { NetworkAccessStatusSchema } from '@dominevo/types'
 
 const STATUS_POLL_INTERVAL_MS = 30_000
 

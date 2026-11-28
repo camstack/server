@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { OPERATOR_WRITTEN_STALE_MS } from '@camstack/types'
+import { OPERATOR_WRITTEN_STALE_MS } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   buildOsdSection,
@@ -14,7 +14,7 @@ import { reolinkCameraSchema } from '../schema.js'
 /**
  * OSD overlay state honesty (D224 / D315-shape / D337 / D62-shape).
  *
- * Three defects compounded into "CamStack says the channel-name overlay is
+ * Three defects compounded into "Dominevo says the channel-name overlay is
  * ON while the camera has it OFF":
  *  1. the `getOsd` snapshot was effectively adoption-frozen — nothing on the
  *     settings-open path considered it stale (`hasIncompleteSettingsCache`
@@ -26,7 +26,7 @@ import { reolinkCameraSchema } from '../schema.js'
  *
  * Follow-up, same D62 shape as the switches that wrote a store nobody read:
  * the driver config held a SECOND copy of the OSD facts (`osd*` keys written
- * by `setAll`) that shadowed the camera's snapshot forever after one CamStack
+ * by `setAll`) that shadowed the camera's snapshot forever after one Dominevo
  * write. The camera is the only authority now — the config stores nothing,
  * a write is its own invalidation (the post-save `osd` slice re-read), and a
  * refused or partial `setOsd` is never stamped as fact because the snapshot

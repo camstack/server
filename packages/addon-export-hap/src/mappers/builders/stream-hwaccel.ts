@@ -37,8 +37,8 @@
  *
  * Everything here is pure; the cap read lives in `stream-hwaccel-probe.ts`.
  */
-import type { HwAccelBackend } from '@camstack/types'
-import { HWACCEL_OPTIONS } from '@camstack/types'
+import type { HwAccelBackend } from '@dominevo/types'
+import { HWACCEL_OPTIONS } from '@dominevo/types'
 
 /**
  * The DRM render node a VAAPI/QSV decode binds to.

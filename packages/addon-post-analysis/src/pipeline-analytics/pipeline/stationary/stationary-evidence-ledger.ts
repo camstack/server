@@ -31,7 +31,7 @@
  * candidates is always the number of observations the device offered.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 import { DurableLedger, type DurableLedgerSpec } from '../../../durable/durable-ledger.js'
 import { type DurableKindDeps } from '../../../durable/durable-wiring.js'

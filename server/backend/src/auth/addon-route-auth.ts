@@ -8,8 +8,8 @@
  * be asking about ("why did Home Assistant stop actuating?"), and a branch
  * that drops a request silently reads as "never happened" (D103).
  */
-import type { CredentialScope, TokenScope } from '@camstack/types'
-import { capabilityScopesOf } from '@camstack/types'
+import type { CredentialScope, TokenScope } from '@dominevo/types'
+import { capabilityScopesOf } from '@dominevo/types'
 import { type AddonRouteTarget, authorizeAddonRoute } from '../api/trpc/principal-authorization.js'
 import type { CredentialVerifier, Principal, RequestFacts } from './credential-verifier.js'
 

@@ -23,8 +23,8 @@ import type {
   IEventBus,
   ObjectDetection,
   PipelineInferenceResultPayload,
-} from '@camstack/types'
-import { EventCategory, createEvent } from '@camstack/types'
+} from '@dominevo/types'
+import { EventCategory, createEvent } from '@dominevo/types'
 import { bootAnalytics, type Booted } from './boot-analytics.js'
 
 const DEVICE_ID = 101

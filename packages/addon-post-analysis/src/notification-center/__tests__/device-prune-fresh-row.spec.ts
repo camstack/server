@@ -8,7 +8,7 @@
  * So every affected row is re-read from the store immediately before its
  * write, and the edit is re-planned from that fresh copy.
  */
-import { NcAlarmSettingsSchema } from '@camstack/types'
+import { NcAlarmSettingsSchema } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import { NcRuleStore } from '../rule-store.js'

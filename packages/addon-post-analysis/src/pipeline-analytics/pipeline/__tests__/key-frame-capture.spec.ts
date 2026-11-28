@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import sharp from 'sharp'
-import type { DecodedFrame } from '@camstack/types'
+import type { DecodedFrame } from '@dominevo/types'
 import {
   KEYFRAME_NATIVE_MAX_WIDTH,
   KEYFRAME_SMALL_MAX_WIDTH,

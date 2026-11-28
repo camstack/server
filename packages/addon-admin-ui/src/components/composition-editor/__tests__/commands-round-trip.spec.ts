@@ -8,7 +8,7 @@ import {
   CompositionSchema,
   type CompositionSourceRef,
   petFountainFromEntitiesComposition,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   compositionWithField,
@@ -18,7 +18,7 @@ import { planCustomizationSave } from '../../device/customize/customization-save
 import { resolveCustomization } from '../../device/customize/customization-read'
 import { commandRows, withRowCommand } from '../command-model'
 import { draftFromComposition, draftToComposition } from '../draft-reducer'
-import { ALL_CAPABILITY_DEFINITIONS } from '@camstack/types'
+import { ALL_CAPABILITY_DEFINITIONS } from '@dominevo/types'
 
 const ref = (stableId: string): CompositionSourceRef => ({
   addonId: 'provider-homeassistant',

@@ -7,7 +7,7 @@
  * answer ("no GPU") rather than as an absence.
  */
 import { describe, expect, it, vi } from 'vitest'
-import type { KernelInferenceHardware } from '@camstack/types'
+import type { KernelInferenceHardware } from '@dominevo/types'
 import PipelineRunnerAddon from '../index.js'
 
 function makeCtx(

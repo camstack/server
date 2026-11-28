@@ -26,8 +26,8 @@
  * A bare `<prefix>/<id-or-key>` (no `m/`/`o/` segment) is GONE — nothing in
  * this module builds one any more.
  */
-import type { MediaOwnerType } from '@camstack/types'
-import { isEventOwnerType } from '@camstack/types'
+import type { MediaOwnerType } from '@dominevo/types'
+import { isEventOwnerType } from '@dominevo/types'
 import { useEffect, useState } from 'react'
 import { hubPath } from './mount'
 

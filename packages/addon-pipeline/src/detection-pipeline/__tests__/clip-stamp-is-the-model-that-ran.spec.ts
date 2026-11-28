@@ -26,7 +26,7 @@ import type {
   IScopedLogger,
   PipelineStepInput,
   PoolModelConfig,
-} from '@camstack/types'
+} from '@dominevo/types'
 import sharp from 'sharp'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ClusterModelSource } from '../../shared/cluster-model-source.js'

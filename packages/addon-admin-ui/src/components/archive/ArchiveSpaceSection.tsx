@@ -3,7 +3,7 @@
  * danger zone — apply retention now, delete this camera's footage, delete its
  * events. Moved here from the overview tables; each action keeps its confirmation.
  */
-import { resolveLocationMode, type OpsLogReason } from '@camstack/types'
+import { resolveLocationMode, type OpsLogReason } from '@dominevo/types'
 import {
   Button,
   Select,
@@ -13,7 +13,7 @@ import {
   useRecordingArchivePruneFootage,
   useStorageListLocations,
   WidgetMetricCard,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { HardDrive, Scissors, Trash2 } from 'lucide-react'
 import { useCallback, useMemo, useState, type ReactElement } from 'react'

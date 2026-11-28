@@ -15,7 +15,7 @@
  * the handle for the track — rung 1 and rung 3 are skipped from then on, the
  * parked frame (D422) still serves — and logs it ONCE, tagged by camera.
  */
-import type { DetailStepAnnounce, FrameHandle, IScopedLogger } from '@camstack/types'
+import type { DetailStepAnnounce, FrameHandle, IScopedLogger } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { TrackDetailDispatcher, type TrackDetailFrame } from '../detail-dispatcher.js'
 import { makeFaceDetailSubtreeResult } from './support/detail-subtree-result.js'

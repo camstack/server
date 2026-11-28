@@ -6,7 +6,7 @@ import {
   type MigrationOwnerResult,
   moveBrokerLinksToConnections,
   runAddonMigrations,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { haBrokersEntryKind, haConnectionsEntryKind } from '../../broker-record-kinds.js'
 import { NO_CALENDAR_PORTS, NO_NOTIFY_PORTS } from '../../__tests__/no-link-ports.js'

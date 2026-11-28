@@ -3,7 +3,7 @@
  * non-blocking list for a mode is a valid configuration, and a mute on a
  * device that no longer exists silences nothing anyone can see.
  */
-import { NcAlarmSettingsSchema } from '@camstack/types'
+import { NcAlarmSettingsSchema } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { FakeAlarm, makePruneHarness } from './device-prune-harness.js'
 

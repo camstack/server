@@ -10,7 +10,7 @@ import {
   defineAddonMigrations,
   makeInMemoryRecords,
   runAddonMigrations,
-} from '@camstack/types'
+} from '@dominevo/types'
 import Database from 'better-sqlite3'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { MigrationEngine } from '../../../sqlite-storage/migrations/migration-engine.js'

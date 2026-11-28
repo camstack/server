@@ -1,5 +1,5 @@
 /** Pure mapping from a `media-player` slice and the device's features to the media scene. */
-import { DeviceFeature, type MediaPlayerStatus } from '@camstack/types'
+import { DeviceFeature, type MediaPlayerStatus } from '@dominevo/types'
 import type { MediaArtworkKind } from '../illustrations/MediaArtwork'
 import {
   DEFAULT_VOLUME_BOUNDS,

@@ -17,7 +17,7 @@ import {
   declareDeviceIdentifiers,
   type DeviceIdentifierKey,
   type RawDeviceIdentifiers,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { UnraidServerIdentity, UnraidVmInfo } from './unraid-client-contract.js'
 import { localIdOf } from './unraid-mapping.js'
 

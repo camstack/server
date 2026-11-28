@@ -2,11 +2,11 @@
 /**
  * The web glyph table covers the WHOLE icon catalog (D854).
  *
- * `@camstack/types` owns the keys; this table owns the drawing. A key with no
+ * `@dominevo/types` owns the keys; this table owns the drawing. A key with no
  * glyph is offered by the picker and draws nothing, so the coverage is pinned
  * here — against the REAL `lucide-react`, not a fake.
  */
-import { ICON_KEYS, canonicalIconKey } from '@camstack/types'
+import { ICON_KEYS, canonicalIconKey } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { FAST_ICON_GLYPHS } from '../device-meta'
 import { loadIconGlyphs, lucideExportName, resolveDisplayIcon } from '../icon-glyphs'

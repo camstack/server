@@ -15,7 +15,7 @@ import {
  * Assistant relay: `https://<ha>/api/camstack/p/<grant>/…` → hub `/…`) says
  * so with `X-Forwarded-Prefix`. The shell is the ONE response that has to
  * differ: it tells the page where it lives. Everything else is the page's
- * job (`@camstack/ui-library` `hub-mount.ts`).
+ * job (`@dominevo/ui-library` `hub-mount.ts`).
  */
 
 describe('parseForwardedPrefix', () => {
@@ -58,7 +58,7 @@ describe('injectSpaMount', () => {
   })
 
   const shell =
-    '<!DOCTYPE html>\n<html lang="en">\n  <head>\n    <meta charset="UTF-8" />\n    <title>CamStack Admin</title>\n  </head>\n  <body></body>\n</html>\n'
+    '<!DOCTYPE html>\n<html lang="en">\n  <head>\n    <meta charset="UTF-8" />\n    <title>Dominevo Admin</title>\n  </head>\n  <body></body>\n</html>\n'
 
   it('puts <base> and the mount meta first in <head>, with the trailing slash', () => {
     const out = injectSpaMount(shell, '/x/g1')

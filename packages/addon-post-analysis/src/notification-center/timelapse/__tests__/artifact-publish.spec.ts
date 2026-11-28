@@ -6,8 +6,8 @@
  * silently degraded notification. That is exactly why every branch below is
  * pinned — including which ones must never reach the artifact plane at all.
  */
-import type { IScopedLogger } from '@camstack/types'
-import { RECORDING_EXPORT_MAX_READ_BYTES } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
+import { RECORDING_EXPORT_MAX_READ_BYTES } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import type { NcArtifactPublication } from '../../artifact-plane.js'
 import {

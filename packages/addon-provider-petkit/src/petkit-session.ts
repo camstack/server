@@ -14,7 +14,7 @@ import {
   IntegrationSessionReporter,
   type IntegrationSessionSink,
   type SessionLossReason,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** PetKit application code for "session expired / not logged in". */
 const SESSION_EXPIRED_CODE = 5

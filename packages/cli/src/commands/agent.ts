@@ -20,7 +20,7 @@ export function buildAgentEnv(opts: AgentOptions): Record<string, string> {
     // `CAMSTACK_ROLE`, not `CAMSTACK_MODE`. Nothing in server/backend has ever
     // read `CAMSTACK_MODE` — the role switch is `resolveNodeRole`
     // (server/backend/src/node-role.ts), which returns 'hub' for an EMPTY
-    // value. So `camstack agent` set a variable no one reads and booted a HUB.
+    // value. So `dominevo agent` set a variable no one reads and booted a HUB.
     CAMSTACK_ROLE: 'agent',
     CAMSTACK_HUB_URL: `ws://${opts.hub}:${hubPort}/agent`,
     CAMSTACK_HUB_TOKEN: opts.token, // agent-join:line
@@ -57,5 +57,5 @@ export async function runAgent(args: readonly string[]): Promise<void> {
   // import; the launcher is what reads the role and branches to the agent
   // runtime. Importing main.js also skipped the launcher's framework/NODE_PATH
   // wiring entirely.
-  await import('@camstack/server/launcher.js')
+  await import('@dominevo/server/launcher.js')
 }

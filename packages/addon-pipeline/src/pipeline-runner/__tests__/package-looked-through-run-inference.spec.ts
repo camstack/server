@@ -10,7 +10,7 @@ import type {
   FrameResult,
   PipelineStepInput,
   RunnerCameraConfig,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { makeRunnerCameraConfig } from '../../__tests__/support/runner-camera-config.js'
 import PipelineRunnerAddon from '../index.js'

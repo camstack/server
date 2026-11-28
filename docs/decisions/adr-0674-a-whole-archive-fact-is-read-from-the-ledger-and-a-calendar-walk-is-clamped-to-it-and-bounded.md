@@ -160,8 +160,8 @@ camera (D418).
 - **Retention waits for the recorder.** After a recorder restart,
   follow-recordings cameras are not swept until its ledger has loaded, which
   is seconds on the live hub.
-- **Deploy order matters: `@camstack/addon-post-analysis` FIRST** (hub, then
-  agent-a), **then `@camstack/addon-pipeline`** (the recorder).
+- **Deploy order matters: `@dominevo/addon-post-analysis` FIRST** (hub, then
+  agent-a), **then `@dominevo/addon-pipeline`** (the recorder).
   - The reverse order reopens the delete window this record closes. An OLD
     pipeline-analytics still asks `getAvailability(0 → now)`. A NEW recorder
     refuses that walk (a camera absent from the ledger, or any camera before
@@ -171,7 +171,7 @@ camera (D418).
   - The safe order costs only this: a NEW analytics addon reads an OLD
     recorder's answer (no `complete`) as unreadable and does not sweep follow
     cameras until the recorder is updated. That is logged once per episode.
-  - No `@camstack/server` or `@camstack/types` publish is needed. `complete` is
+  - No `@dominevo/server` or `@dominevo/types` publish is needed. `complete` is
     additive and optional, it travels with each addon, and the hub's cap
     routers pass output through unvalidated (`cap-router-builder.ts`).
 - **Wide windows fail.** A caller that genuinely needs more than a year of exact

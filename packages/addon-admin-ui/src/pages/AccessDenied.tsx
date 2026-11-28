@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { ShieldX } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { Button } from '@camstack/ui-library'
+import { Button } from '@dominevo/ui-library'
 
 /**
  * Rendered inside `AppLayout` (sidebar + topbar stay visible) so users

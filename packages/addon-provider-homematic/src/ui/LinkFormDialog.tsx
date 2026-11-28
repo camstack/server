@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Button, FormField, ItemFormDialog, Select } from '@camstack/ui-library'
+import { Button, FormField, ItemFormDialog, Select } from '@dominevo/ui-library'
 import { Link2 } from 'lucide-react'
 import {
   LINK_PRESS_ACTIONS,

@@ -20,7 +20,7 @@
  * Pure: a catalog in, a string out. No clock, no store, no I/O.
  */
 
-import { eventKindLabel, isEventKindLabelKey } from '@camstack/types'
+import { eventKindLabel, isEventKindLabelKey } from '@dominevo/types'
 import type { NcTextCatalog } from './text-catalog.js'
 
 /** One class and how many of it — the input `{{detectionSummary}}` joins. */

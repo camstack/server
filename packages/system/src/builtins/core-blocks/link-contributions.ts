@@ -50,7 +50,7 @@ import {
   type IdentityLinkContribution,
   type IdentityLinksRead,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { CompositionChangedError, IDENTITY_LINKS_USER_ID } from './composition-api.js'
 
 /** Attempts per host per pass when the block keeps changing under the write. */

@@ -9,7 +9,7 @@
  */
 import { Characteristic, Service, type Accessory } from '@homebridge/hap-nodejs'
 
-import type { DeviceProxy } from '@camstack/types'
+import type { DeviceProxy } from '@dominevo/types'
 
 interface DeviceMetaLike {
   readonly model?: string | null
@@ -32,7 +32,7 @@ export async function populateAccessoryInfo(
     info.setCharacteristic(Characteristic.Name, device?.name ?? displayName)
     info.setCharacteristic(
       Characteristic.Manufacturer,
-      stringOr(metadata?.manufacturer, 'CamStack'),
+      stringOr(metadata?.manufacturer, 'Dominevo'),
     )
     info.setCharacteristic(Characteristic.Model, stringOr(metadata?.model, modelFallback))
     info.setCharacteristic(Characteristic.FirmwareRevision, stringOr(metadata?.firmware, '0.0.0'))

@@ -2,7 +2,7 @@
  * The service end of Step 1: a listed copy carries the boxes the pipeline drew
  * on it, read from the track store — never a model re-run.
  */
-import type { MediaFileRef, Track } from '@camstack/types'
+import type { MediaFileRef, Track } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { makeAnalyticsWorld } from '../../__tests__/fake-records.js'
 import { makeSilentLogger } from '../../__tests__/test-helpers.js'

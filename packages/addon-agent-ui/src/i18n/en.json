@@ -7,12 +7,12 @@
     "saving": "Saving…"
   },
   "crash": {
-    "title": "CamStack Agent UI crashed",
+    "title": "Dominevo Agent UI crashed",
     "body": "The dashboard hit an unexpected error while rendering. The agent itself keeps running — this only affects the UI. Details below (also in the agent log).",
-    "startFailed": "CamStack Agent UI failed to start"
+    "startFailed": "Dominevo Agent UI failed to start"
   },
   "dashboard": {
-    "defaultName": "CamStack Agent",
+    "defaultName": "Dominevo Agent",
     "unlocking": "Unlocking from hub…",
     "unreachable": "Unreachable",
     "hub": {

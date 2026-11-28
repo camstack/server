@@ -9,8 +9,8 @@ import {
   type AutomationRecipe,
   type CoreBlock,
   type CoreBlockInput,
-} from '@camstack/types'
-import { ErrorBox, Skeleton, useTemplateGet } from '@camstack/ui-library'
+} from '@dominevo/types'
+import { ErrorBox, Skeleton, useTemplateGet } from '@dominevo/ui-library'
 import { type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TemplateInstanceEditor } from './TemplateInstanceEditor'

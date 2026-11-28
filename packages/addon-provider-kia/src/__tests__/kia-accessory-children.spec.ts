@@ -3,7 +3,7 @@ import {
   DeviceRole,
   DeviceType,
   lockControlCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { kiaAccessoryChildren } from '../devices/kia-accessory-children.js'
 import { climateStatusOf, lockStateOf } from '../kia-domain-mapping.js'

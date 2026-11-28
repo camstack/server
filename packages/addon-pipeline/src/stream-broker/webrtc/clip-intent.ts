@@ -1,7 +1,7 @@
 /**
  * The clip intent of a WebRTC session (#566).
  *
- * A session opened to play a CamStack clip never dials the camera: the clip
+ * A session opened to play a Dominevo clip never dials the camera: the clip
  * is a file on our own storage, and on a sleeping battery camera every live
  * subscription is a wake. The intent covers the INITIAL negotiation only.
  * Everything that happens to the session after it is a re-offer of the same
@@ -18,7 +18,7 @@ import {
   parseProfileBrokerId,
   type WebrtcClientHints,
   type WebrtcStreamTarget,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { ClipPlaybackHandle } from '../recorded/timeline-session.js'
 
 export type ClipVideoCodec = 'H264' | 'H265'

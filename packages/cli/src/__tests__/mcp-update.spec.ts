@@ -58,7 +58,7 @@ beforeEach(() => {
 })
 afterEach(() => fs.rmSync(home, { recursive: true, force: true }))
 
-describe('camstack mcp update / rollback', () => {
+describe('dominevo mcp update / rollback', () => {
   it('a failing doctor leaves current unchanged and removes the staged dir', async () => {
     doctorOk = false
     const code = await runMcpUpdate(['2.0.0'], deps())

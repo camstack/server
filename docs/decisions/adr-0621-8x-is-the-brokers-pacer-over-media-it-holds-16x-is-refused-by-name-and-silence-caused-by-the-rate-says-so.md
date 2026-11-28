@@ -151,7 +151,7 @@ Corollaries, each of them a thing this record forbids:
     *"anche al nostro recording interno"* [also for our internal recording]: our own footage is on local disk and
     `RecordedFeeder` paces it off the same clamp.
 - **No provider package was touched.** The rate a provider offers is a constant
-  it names, and the three names it may pick from are all in `@camstack/types`.
+  it names, and the three names it may pick from are all in `@dominevo/types`.
 - **The viewer needs two changes, and neither is in this repository.** They
   are listed here rather than made, because an agent owns `camstack/`:
   1. `src/components/camera/recorded-transport.ts` holds
@@ -163,7 +163,7 @@ Corollaries, each of them a thing this record forbids:
      heard of"*), but the mirror has to move or the next reader trusts it.
      `src/components/camera/__tests__/recorded-transport.spec.ts` also pins the
      ladder's labels as a six-element literal and goes red the moment the
-     viewer's `@camstack/types` is bumped past 1.2.246.
+     viewer's `@dominevo/types` is bumped past 1.2.246.
   2. **Nothing in `camstack/` parses `clipAudio` at all** — not `src/`, not
      `embed/`; `embed/src/playback/recorded-track-session.ts` handles
      `servedProfile` and `clipDuration` and stops there. So the reason this

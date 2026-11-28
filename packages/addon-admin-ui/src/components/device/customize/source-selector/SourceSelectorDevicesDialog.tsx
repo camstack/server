@@ -11,7 +11,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { type ReactNode, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { AssignmentCandidate, AssignmentFilter } from '../assignments/assignment-candidates'

@@ -4,7 +4,7 @@
  * (weak). A DeviceInfo without a MAC (not reported) keeps the stored one (D49);
  * a board that is not connected declares nothing.
  */
-import type { DeviceIdentifierKey, RawDeviceIdentifiers } from '@camstack/types'
+import type { DeviceIdentifierKey, RawDeviceIdentifiers } from '@dominevo/types'
 import type { EspBoardInfo } from './esphome-link.js'
 
 export interface EspIdentifierDeclaration {

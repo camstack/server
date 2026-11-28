@@ -9,7 +9,7 @@ import {
   type LwaTokensCallbackDeps,
 } from '../handlers/lwa-tokens-callback.js'
 import { judgeTokenInstance } from '../token-instance.js'
-import type { AddonContext, AddonHttpReply, AddonHttpRequest } from '@camstack/types'
+import type { AddonContext, AddonHttpReply, AddonHttpRequest } from '@dominevo/types'
 
 // ── Minimal mock helpers ──────────────────────────────────────────────
 

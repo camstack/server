@@ -1,4 +1,4 @@
-import { Tooltip, TooltipContent, TooltipTrigger, useInstancesOfCap } from '@camstack/ui-library'
+import { Tooltip, TooltipContent, TooltipTrigger, useInstancesOfCap } from '@dominevo/ui-library'
 import type { TFunction } from 'i18next'
 import { type ReactElement, useCallback, useLayoutEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'

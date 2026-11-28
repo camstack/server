@@ -1,6 +1,6 @@
 ---
 name: camstack-server-change
-description: The general flow for a CamStack SERVER-SIDE change — anything in `server/backend`, `packages/system` (kernel + builtins), `packages/types`, `packages/sdk`, `packages/node-root`, the generated cap routers, or a manifest `placement` / `execution.group`. Covers how to test it, why the backend typecheck is not verification (use the real build), the `.d.ts` leak sweep, how it reaches a running node (dev deploy-server vs publish → applyServerUpdate → restart → verify), npm registry lag, and the CI rules (never dispatch Checks, the release tag). Use for "I changed the server", "is my framework fix live?", "No procedure found on path", "it typechecks but…".
+description: The general flow for a Dominevo SERVER-SIDE change — anything in `server/backend`, `packages/system` (kernel + builtins), `packages/types`, `packages/sdk`, `packages/node-root`, the generated cap routers, or a manifest `placement` / `execution.group`. Covers how to test it, why the backend typecheck is not verification (use the real build), the `.d.ts` leak sweep, how it reaches a running node (dev deploy-server vs publish → applyServerUpdate → restart → verify), npm registry lag, and the CI rules (never dispatch Checks, the release tag). Use for "I changed the server", "is my framework fix live?", "No procedure found on path", "it typechecks but…".
 ---
 
 # A server-side change, from edit to verified
@@ -15,8 +15,8 @@ that tells you which of them you need.
 
 | You changed | Reaches a node through | Needs |
 | --- | --- | --- |
-| `packages/addon-*/src` (not a builtin) | `<dataDir>/addons/` | `camstack deploy` — the `camstack-addon` skill |
-| `server/backend`, `packages/system` (kernel AND builtins), `types`, `sdk`, a `*.cap.ts`, generated routers, manifest `placement` / `execution.group` | the `@camstack/server` closure in `<dataDir>/server-root/current` | publish (or dev `deploy-server`) → `applyServerUpdate` per node |
+| `packages/addon-*/src` (not a builtin) | `<dataDir>/addons/` | `dominevo deploy` — the `camstack-addon` skill |
+| `server/backend`, `packages/system` (kernel AND builtins), `types`, `sdk`, a `*.cap.ts`, generated routers, manifest `placement` / `execution.group` | the `@dominevo/server` closure in `<dataDir>/server-root/current` | publish (or dev `deploy-server`) → `applyServerUpdate` per node |
 | the starter / entrypoint (`packages/node-root` starter code, heap flags, env, the `Dockerfile`) | the container IMAGE | a new image and a container RECREATE — `applyServerUpdate` never delivers it |
 
 Two consequences people miss:
@@ -25,7 +25,7 @@ Two consequences people miss:
   helper the addon bundled — addons are self-contained) is not live after
   `applyServerUpdate` alone. Deploy that addon too.
 - **`publish ≠ deployed ≠ live`.** A version on npm changes nothing on a node;
-  `camstack deploy` moves an addon, never the framework; only
+  `dominevo deploy` moves an addon, never the framework; only
   `applyServerUpdate` moves the closure.
 
 `packages/node-root` is `private` and absent from the closure: never import it
@@ -43,7 +43,7 @@ npm run build                                 # everything (nx run-many)
 ```
 
 - **The backend typecheck is not verification.** `npm run typecheck:pkg --
-  backend` resolves `@camstack/types` / `@camstack/server/system` from their
+  backend` resolves `@dominevo/types` / `@dominevo/server/system` from their
   BUILT `dist/`, so a signature you changed in source is invisible to it until
   you rebuild them. After touching `types` or `system`: build them first, then
   typecheck or build the consumers. tsup/vite builds do not type-check either —
@@ -101,7 +101,7 @@ calls `applyServerUpdate` **on the hub**. With `--cluster` / `-n` it then
 `POST /api/server-upload/propagate` + apply per agent (see
 `camstack-hub-image-deploy` §0b). Promotion wait often reports a timeout across
 the restart — verify with `getServerPackageStatus`, not the CLI exit code. A
-non-admin login is refused on apply; `camstack login <host>` as an admin once (every
+non-admin login is refused on apply; `dominevo login <host>` as an admin once (every
 tool, `hub.mjs` included, uses that session and refreshes it) + POST. Reuse an upload without rebuild:
 `deploy --closure --cluster --version <base>-dev.<epoch>`.
 
@@ -110,15 +110,15 @@ tool, `hub.mjs` included, uses that session and refreshes it) + POST. Reuse an u
 1. Push first (`git log --oneline origin/main..HEAD` must be empty) — the
    workflow builds `origin/main`, not your tree.
 2. `Publish Packages` with `include_dependents=false`; a framework or cap change
-   selects `@camstack/server` by itself (the framework is folded into its tarball, D989). Details and the lockfile preflight:
+   selects `@dominevo/server` by itself (the framework is folded into its tarball, D989). Details and the lockfile preflight:
    `camstack-publish-ci`.
 3. **Registry lag is not failure.** Right after a publish `npm view <pkg>
    version` serves the previous version and installs 404 for minutes. Read
    what the run published from its log, then wait for the tarball:
-   `curl -sI https://registry.npmjs.org/@camstack/server/-/server-<VER>.tgz | head -1`.
+   `curl -sI https://registry.npmjs.org/@dominevo/server/-/server-<VER>.tgz | head -1`.
    Never publish again because of a stale `npm view`.
 4. Check the closure pins your framework version:
-   `npm view @camstack/server@<VER> dependencies` — a server published in an
+   `npm view @dominevo/server@<VER> dependencies` — a server published in an
    earlier run legitimately pins the older `system`/`types`.
 
 ### Apply — every node, one by one
@@ -152,13 +152,13 @@ how it finds the hub and the token.)
 
 ### The "+1 restart" and builtins
 
-Builtins used to load from a `<dataDir>/addons/@camstack/system` copy that
+Builtins used to load from a `<dataDir>/addons/@dominevo/system` copy that
 `applyServerUpdate` did not refresh, so a second `serverManagement.restartServer`
 was the habit. Both roles now load builtins from the closure
 (`server/backend/src/core/addon/addon-registry.service.ts`,
 `server/backend/src/agent/main.ts`) and skip that copy, so one apply is enough.
 If a builtin still behaves like the old code: look for a stale
-`@camstack/server/system` under the node's addons dir (the hub's hot-load rescan
+`@dominevo/server/system` under the node's addons dir (the hub's hot-load rescan
 still reads it; an agent falls back to it, and logs so, when its closure
 cannot resolve the package), remove it, then one `restartServer` — and prove
 it with §4, not with a version number.
@@ -205,10 +205,10 @@ Paste the result in the done-gate `crashes:` line.
 - **A product release is a dispatch from `main`.** After npm has the closure,
   commit the product version (`product-version.json` and
   `packages/desktop/package.json`) and run
-  `gh workflow run "Release — CamStack (Docker + Electron)" --ref main -f publish_release=true`.
+  `gh workflow run "Release — Dominevo (Docker + Electron)" --ref main -f publish_release=true`.
   The workflow creates `v<version>` on that commit. It refuses a ref other
   than `refs/heads/main` and a tag that already exists. `derive-version`
-  resolves `@camstack/server` dist-tag `latest` (`camstack-publish-ci` §2).
+  resolves `@dominevo/server` dist-tag `latest` (`camstack-publish-ci` §2).
   Dispatch only after that publish has landed.
 - CI on push only builds and tests (D704). Watch your run with
   `gh run list --limit 3` / `gh run watch <id>` and fix forward.

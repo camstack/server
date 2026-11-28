@@ -6,8 +6,8 @@
  * invented `{ percentage: 0, binary: true }` for a row with no reading.
  * Device 3615 at 0% is a real battery and must stay listed.
  */
-import type { IScopedLogger } from '@camstack/types'
-import { NcRuleInputSchema, type NcRuleInput } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
+import { NcRuleInputSchema, type NcRuleInput } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { makeSilentLogger } from '../../../pipeline-analytics/__tests__/test-helpers.js'
 import { makeNcRecords, ncTable } from '../../__tests__/support/nc-test-deps.js'

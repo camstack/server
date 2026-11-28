@@ -28,8 +28,8 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import type { DataPlaneHandler, MediaFileKind, MediaOwnerType } from '@camstack/types'
-import { isEventOwnerType, isMediaOwnerType } from '@camstack/types'
+import type { DataPlaneHandler, MediaFileKind, MediaOwnerType } from '@dominevo/types'
+import { isEventOwnerType, isMediaOwnerType } from '@dominevo/types'
 import {
   MEDIA_GENERATION_SEGMENT,
   MEDIA_ID_SEGMENT,

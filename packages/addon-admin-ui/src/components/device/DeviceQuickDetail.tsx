@@ -32,7 +32,7 @@ import {
   useDeviceManagerGetBindings,
   useDeviceManagerGetDevice,
   useDeviceSeriesList,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useCallback, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DeviceWebInterfaceCard } from './DeviceWebInterfaceCard'

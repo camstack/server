@@ -12,7 +12,7 @@
  * Disarm: at the spawn site in `sort-tracker.ts`, call `newTrackId()` instead
  * of `this.mintTrackId()` — the first test must fail.
  */
-import type { FrameResult, ObjectDetection } from '@camstack/types'
+import type { FrameResult, ObjectDetection } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { FrameProcessor, type FrameProcessorResult } from '../frame-processor.js'
 import { sequentialTrackIdMinter, TRACK_ID_ALPHABET, TRACK_ID_LENGTH } from '../track-id.js'

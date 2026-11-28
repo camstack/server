@@ -18,7 +18,7 @@ import {
   type MediaFileKind,
   type ModelCatalogEntry,
   type ProviderRegistration,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { assembleAi } from './assembly.js'
 import { createLlmClient } from './client/llm-client.js'
 import { managedRuntimeOf } from './kinds/provider-config.js'

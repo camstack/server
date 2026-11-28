@@ -8,14 +8,14 @@
  *
  * WHICH integration a device belongs to is not decided here: it is
  * `resolveDeviceIntegration` / `deviceIntegrationResolver` in
- * `@camstack/ui-library` — `integrationId` first (a composed device, D659, is
+ * `@dominevo/ui-library` — `integrationId` first (a composed device, D659, is
  * served by `composer` but belongs to "Blocks"), `addonId` only for legacy
  * rows. This module only reads its answer: `orphan` is orphan; `unknown`
  * (integrations not answered yet — branded every device orphan for seconds
  * on 2026-08-18) and `unlinked` (names nothing) are not.
  */
 
-import type { DeviceIntegrationResolver } from '@camstack/ui-library'
+import type { DeviceIntegrationResolver } from '@dominevo/ui-library'
 
 /** The fields the split reads — structural subset of DeviceItemDevice. */
 export interface OrphanSplitDevice {

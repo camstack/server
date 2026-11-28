@@ -63,7 +63,7 @@ rule names at least one sensor kind and every one has a raise
   first): `sensorTransition: 'cleared'` on such a rule never fires. Not refused —
   the alarm-ness of a rule is derived — but the editor WARNS
   (`sensorTransitionNeverFires`; `ruleBelongsToAlarm` was hoisted into
-  `@camstack/types` so the engine and the warning share one predicate).
+  `@dominevo/types` so the engine and the warning share one predicate).
 - The linked-camera capture gate (`deviceEventRuleMayFireOnKind`) reads the edge
   too, with the evaluation's predicate: a refused edge takes no mosaic, and an
   unknown edge still captures.

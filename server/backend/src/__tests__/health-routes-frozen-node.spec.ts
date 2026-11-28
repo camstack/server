@@ -11,7 +11,7 @@
  * require a session-grade credential too.
  */
 
-import type { NodeLiveness } from '@camstack/types'
+import type { NodeLiveness } from '@dominevo/types'
 import Fastify from 'fastify'
 import { describe, expect, it, vi } from 'vitest'
 import {

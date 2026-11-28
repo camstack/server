@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { TRPCError } from '@trpc/server'
 import { createAuthRouter } from '../auth.router.js'
 import { AuthService } from '../../../core/auth/auth.service.js'
-import { staticJwtSigningKey } from '@camstack/server/system'
+import { staticJwtSigningKey } from '@dominevo/server/system'
 
 /**
  * Usernameless (passkey-FIRST) login tests for `auth.router` — the

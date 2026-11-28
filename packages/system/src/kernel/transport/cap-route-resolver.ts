@@ -2,7 +2,7 @@
  * CapRouteResolver — builds a live CapRouteSnapshot from injected deps and
  * dispatches a resolved CapRoute to the appropriate transport.
  *
- * Layer boundary: this file lives in `@camstack/kernel` and MUST NOT import
+ * Layer boundary: this file lives in `@dominevo/kernel` and MUST NOT import
  * from `server/backend`. All server-side state is injected via narrow named
  * interfaces (NodeCapAuthority, InProcessProviderLookup, BrokerHandle).
  *
@@ -28,7 +28,7 @@ import {
   CALLER_STAMPED_CAPABILITIES,
   commandOrigin,
   type CommandOriginClaim,
-} from '@camstack/types/addon'
+} from '@dominevo/types/addon'
 import { readCurrentCommandOrigin, runWithCapCallContext } from '../cap-call-scope.js'
 import type { ServiceDiscoveryBroker } from '../moleculer/resilient-cap-call.js'
 import { callWithServiceDiscovery } from '../moleculer/resilient-cap-call.js'

@@ -37,7 +37,7 @@ import type {
   NcMediaImage,
   NcSystemEventKind,
   RecordKindHandle,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { DurableLedgerBody } from '../durable/durable-record-body.js'
 import type { BboxRect } from '../pipeline-analytics/pipeline/zones/geometry.js'
 import type { DurableKindDeps } from '../durable/durable-wiring.js'

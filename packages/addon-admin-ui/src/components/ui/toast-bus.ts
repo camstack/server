@@ -3,7 +3,7 @@
  * subscription is not the only thing that has something to say. A page that
  * just finished an operation calls `pushToast` and the same container shows it.
  */
-import type { Toast } from '@camstack/types'
+import type { Toast } from '@dominevo/types'
 
 export type LocalToast = Pick<Toast, 'title' | 'message' | 'severity'> & {
   readonly duration?: number

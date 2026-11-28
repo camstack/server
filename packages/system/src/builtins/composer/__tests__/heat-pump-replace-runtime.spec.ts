@@ -17,7 +17,7 @@ import {
   type CompositionSourceRef,
   type HeatPumpStatus,
   type SourceReading,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { CompositionRuntime } from '../composition-runtime.js'
 import { mergeOwned, type OwnedCap } from '../../device-manager/field-ownership.js'

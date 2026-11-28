@@ -1,4 +1,4 @@
-import { AUTOMATION_LEAF_KINDS, leafCatalogEntry } from '@camstack/types'
+import { AUTOMATION_LEAF_KINDS, leafCatalogEntry } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import en from '../../../../i18n/en.json'
 import itLocale from '../../../../i18n/it.json'

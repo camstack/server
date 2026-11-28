@@ -5,7 +5,7 @@
  */
 import { useMemo } from 'react'
 import { MapPin } from 'lucide-react'
-import { useDeviceManagerListLocations, Input } from '@camstack/ui-library'
+import { useDeviceManagerListLocations, Input } from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 import { InfoRow } from './overview-primitives'
 

@@ -12,7 +12,7 @@
  * bytes, so a box that rode on one and not the other would make the answer
  * depend on which row a reader happened to pick.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { MediaSubjectBox } from '../../store/media-store.js'
 import { makeSilentLogger } from '../../__tests__/test-helpers.js'

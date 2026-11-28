@@ -105,7 +105,7 @@ describe('progress walks only an npm install staging directory', () => {
     }
     await runWatchedCommand({
       command: 'npm',
-      args: ['view', '@camstack/server@latest', 'version'],
+      args: ['view', '@dominevo/server@latest', 'version'],
       cwd: process.cwd(),
       stallMs: 1,
       ceilingMs: 60_000,

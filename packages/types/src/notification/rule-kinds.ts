@@ -5,7 +5,7 @@
  * WHY IT LIVES HERE
  * ─────────────────
  * Two editors author the same rules — the admin UI (React DOM, shipped with
- * `camstack deploy`) and the viewer (React Native / Hermes, shipped by EAS OTA)
+ * `dominevo deploy`) and the viewer (React Native / Hermes, shipped by EAS OTA)
  * — and the layer they were NOT sharing is this one: not the schema (already
  * shared) and not the widgets (they cannot be), but the model in between.
  * The divergence it caused is on the record: the viewer filtered conditions on
@@ -54,7 +54,7 @@
  * Phase 1 shipped; it was deleted in Phase 3 once the MF question was actually
  * answered rather than assumed. The admin UI is the module-federation HOST
  * (`packages/addon-admin-ui/vite.config.ts`: `federation({ name:
- * 'admin_ui_host', … shared: { '@camstack/types': { …, import: typesEsm } } })`)
+ * 'admin_ui_host', … shared: { '@dominevo/types': { …, import: typesEsm } } })`)
  * — it PROVIDES the singleton, bundled from the workspace at build time, and
  * never consumes one from a server closure. The lag is real for addon widget
  * REMOTES, which declare the same package `import: false`

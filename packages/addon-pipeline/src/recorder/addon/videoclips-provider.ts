@@ -20,7 +20,7 @@ import {
   EVENT_OWNER_TYPES,
   type IVideoclipsProvider,
   VISIT_MERGE_GAP_MS,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { applyQuietKinds } from './clip-quiet-kinds.js'
 import { clusterEventVisits, clusterFootageVisits, visitsToClips } from './videoclip-visits.js'
 import type {
@@ -350,7 +350,7 @@ export function createVideoclipsProvider(deps: VideoclipsProviderDeps): IVideocl
           // sources, which is why the per-device switch is keyed by SOURCE
           // rather than by this (D555) — this one happens to serve exactly one.
           addonId: CLIP_SOURCE_ADDON_ID,
-          label: 'CamStack recordings',
+          label: 'Dominevo recordings',
           // `ok` even when the event log is down, and the reason says what was
           // lost. This source ANSWERED — it shipped the footage visits — and
           // `unreachable` renders as "its clips are missing from this list"

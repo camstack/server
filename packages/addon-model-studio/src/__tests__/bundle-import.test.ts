@@ -17,7 +17,7 @@ import type {
   ImportModelBundleInput,
   ModelCatalogEntry,
   PeerBytesOpenResult,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { create } from 'tar'
 import { afterEach, describe, expect, it } from 'vitest'
 import { type BundleImportDeps, importModelBundle } from '../bundle/bundle-import.js'

@@ -4,7 +4,7 @@ import {
   type DeviceContext,
   type InferNativeProvider,
   type NotifierStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { HaBaseChildDevice } from '../ha-base-child-device.js'
 import type { HaEntityState } from '../ha-types.js'
 
@@ -25,7 +25,7 @@ const COLD_START: NotifierStatus = {
  * HA-backed notifier device — corresponds to a HA `notify.<service>`
  * service. NOT a regular HA entity: HA's notify domain is service-
  * only, but the addon synthesises an entity-like presence in the
- * discovery cache so the operator can adopt it as a CamStack device.
+ * discovery cache so the operator can adopt it as a Dominevo device.
  *
  * The HA service shape is:
  *   notify.<service>({title?, message, data?, target?})

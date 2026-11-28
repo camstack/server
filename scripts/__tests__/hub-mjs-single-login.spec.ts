@@ -11,11 +11,11 @@ function runHub(args: readonly string[]) {
   })
 }
 
-describe('hub.mjs: the camstack login session is the only credential (D1101)', () => {
+describe('hub.mjs: the dominevo login session is the only credential (D1101)', () => {
   it.each(['--token', '--token-file'])('%s is refused with the removal message', (flag) => {
     const res = runHub([flag, 'x', 'GET', 'addons.list'])
     expect(res.status).toBe(1)
     expect(res.stderr).toMatch(/removed/)
-    expect(res.stderr).toMatch(/camstack login/)
+    expect(res.stderr).toMatch(/dominevo login/)
   })
 })

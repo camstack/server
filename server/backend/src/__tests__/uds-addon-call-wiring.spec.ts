@@ -25,10 +25,10 @@ import {
   LocalChildClient,
   CustomActionRegistry,
   createLocalTransport,
-} from '@camstack/server/system'
-import type { AddonCallInput } from '@camstack/server/system'
-import { buildAddonRouteProvider, customAction, defineCustomActions } from '@camstack/types'
-import type { IAddonHttpRoute, CustomActionsSpec, CustomActionCaller } from '@camstack/types'
+} from '@dominevo/server/system'
+import type { AddonCallInput } from '@dominevo/server/system'
+import { buildAddonRouteProvider, customAction, defineCustomActions } from '@dominevo/types'
+import type { IAddonHttpRoute, CustomActionsSpec, CustomActionCaller } from '@dominevo/types'
 
 const nid = (): string => `f3-wiring-${process.pid}-${Math.random().toString(36).slice(2)}`
 

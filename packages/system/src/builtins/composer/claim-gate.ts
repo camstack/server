@@ -25,7 +25,7 @@
  * That is the runtime's `withhold`, immediate and reversible on the next event —
  * a source that blinked is not a withdrawal of the block's authority.
  */
-import type { FieldClaim, IScopedLogger } from '@camstack/types'
+import type { FieldClaim, IScopedLogger } from '@dominevo/types'
 
 export interface ClaimKey {
   readonly deviceId: number

@@ -85,7 +85,7 @@ request itself was taken.
 their agreement and the WRITE sets both.** `overwriteWhenFull` is
 `MediaGlobal.OverWrite` and `StorageGroup[<ReadWrite>].OverWrite`; equal → that
 value, different → `null`, which renders as "the camera did not say" rather than
-a winner picked by CamStack. `enabled` is the conjunction of `RecordMode.Mode`
+a winner picked by Dominevo. `enabled` is the conjunction of `RecordMode.Mode`
 and `Record.Enable`, because either one off means nothing is recorded.
 
 ## Consequences

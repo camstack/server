@@ -26,7 +26,7 @@ import {
   ThemeProvider,
   TrpcClientProvider,
   trpc,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import {
   ArrowDownToLine,
   ArrowUpFromLine,

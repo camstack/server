@@ -1,4 +1,4 @@
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IScopedLogger } from '@dominevo/types'
 import { type ShcConfig, sameShcConnection } from './config.js'
 import { nameShcDevices } from './shc-parse-devices.js'
 import { ShcClient, type ShcClientDeps, type ShcLinkDetail } from './shc-client.js'

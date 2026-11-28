@@ -23,7 +23,7 @@
  * Writes stay BEST-EFFORT: `createRecordingOpsLogSink().append` never throws —
  * a failed audit write must not fail the operation it records.
  */
-import { OpsLogEntrySchema, OPS_LOG_DEFAULT_LIMIT, OPS_LOG_RING_DEFAULT_MAX } from '@camstack/types'
+import { OpsLogEntrySchema, OPS_LOG_DEFAULT_LIMIT, OPS_LOG_RING_DEFAULT_MAX } from '@dominevo/types'
 import type {
   IScopedLogger,
   OpsLogEntry,
@@ -32,7 +32,7 @@ import type {
   OpsLogReason,
   RecordKindHandle,
   RecordsAccess,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { recorderRecordKinds } from './record-kinds.js'
 
 /** Row-per-operation handle over the `recorder` / `ops-log` record kind. */

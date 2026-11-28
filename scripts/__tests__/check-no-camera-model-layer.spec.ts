@@ -53,7 +53,7 @@ describe('camera model layer guard (D927)', () => {
 
   it('flags a camera page that renders a model picker, and nothing else', () => {
     const source = [
-      "import { StepModelRow, type PipelineStepDisplayConfig } from '@camstack/ui-library'",
+      "import { StepModelRow, type PipelineStepDisplayConfig } from '@dominevo/ui-library'",
       '<StepModelRow {...row} /> <GroupedModelSelector /> <StepModelRow />',
     ].join('\n')
     expect(modelPickersNamedIn(source)).toEqual(['StepModelRow', 'GroupedModelSelector'])

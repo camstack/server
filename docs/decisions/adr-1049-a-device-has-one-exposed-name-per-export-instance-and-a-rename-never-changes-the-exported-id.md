@@ -20,7 +20,7 @@ applies-to:
 D875 gave Alexa its own device name: an `alexaName` key in the Alexa addon's per-device store,
 a hand-written "Alexa name" field in its Export panel, used as the endpoint `friendlyName` and
 never as the endpoint id. HomeKit, Google Home and Home Assistant had nothing: a device was called
-on every platform what it was called in CamStack. Operators want "Porta" in HomeKit and
+on every platform what it was called in Dominevo. Operators want "Porta" in HomeKit and
 "Front door" in Alexa. Copying the Alexa field into three more addons would have meant three more
 hand-written fields, three stores and three ways for a rename to re-pair or duplicate a device.
 The Alexa name was also one per device, shared by every Alexa skill instance.
@@ -53,7 +53,7 @@ unchanged, to EVERY Alexa skill instance and deletes the old key.
 ## Consequences
 
 - `setExposedName` is a required method: every exporter, and the `exporter` scaffold, implements
-  it. A cap change: `@camstack/server` must be published, and the four exporters redeployed.
+  it. A cap change: `@dominevo/server` must be published, and the four exporters redeployed.
 - HomeKit renames by re-exposing the accessory in place (same UUID, pairing kept). Google learns
   a name on its next SYNC, which the hub cannot request (no HomeGraph key). Home Assistant gets
   it on the reconcile the save triggers; the name is part of the reconcile fingerprint.

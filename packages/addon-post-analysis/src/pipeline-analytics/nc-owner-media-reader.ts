@@ -19,7 +19,7 @@
  *   fail the generation test belong to another record and are refused out loud.
  */
 
-import type { IScopedLogger, MediaFileBytes } from '@camstack/types'
+import type { IScopedLogger, MediaFileBytes } from '@dominevo/types'
 import type { NcDispatcherDeps } from '../notification-center/dispatcher.js'
 import type { NcEventMediaScope } from '../notification-center/outbox-key.js'
 import type { MediaKind, OwnerKind } from './store/media-store.js'

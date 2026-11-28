@@ -26,7 +26,7 @@ import { useUiText, UiTrans, defaultUiText, type UiTextFn } from '../contexts/ui
 import { useMemo, useRef, useState } from 'react'
 import { useSearchFieldHotkey } from '../hotkeys/use-search-field-hotkey'
 import { Link2, Search } from 'lucide-react'
-import { DeviceType, type DeviceSelector } from '@camstack/types'
+import { DeviceType, type DeviceSelector } from '@dominevo/types'
 
 import { useDeviceManagerListAll } from '../generated/system-hooks'
 

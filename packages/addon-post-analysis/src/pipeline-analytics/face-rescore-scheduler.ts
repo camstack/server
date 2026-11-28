@@ -21,7 +21,7 @@
  * - Completed runs (manual ones included) record their fingerprint, which is
  *   what lets the next tick say "unchanged" after an operator's run.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import {
   type FaceRescoreJob,
   type FaceRescorePorts,

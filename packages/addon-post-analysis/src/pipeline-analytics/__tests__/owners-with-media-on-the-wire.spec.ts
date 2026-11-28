@@ -21,7 +21,7 @@
  * resolves to the survivor internally but answers KEYED BY THE ASKED id — see
  * `resolveTrackOwnerIds` in `track-alias-resolution.ts`.
  */
-import type { AddonContext, IScopedLogger, LogExtras, LogTags } from '@camstack/types'
+import type { AddonContext, IScopedLogger, LogExtras, LogTags } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import PipelineAnalyticsAddon from '../index.js'
 import { MediaStore } from '../store/media-store.js'

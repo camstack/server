@@ -11,7 +11,7 @@ import {
   AutomationTemplatePayloadSchema,
   type TemplateDeleteResult,
   type TemplateRecord,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   Badge,
   Button,
@@ -32,7 +32,7 @@ import {
   useTemplateDelete,
   useTemplateList,
   TaggedDataTable,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { templateSearchText, templateTags } from '../tag-accessors'
 import { useQueryClient } from '@tanstack/react-query'
 import { Copy, LayoutTemplate, Pencil, Plus, Trash2, Workflow } from 'lucide-react'

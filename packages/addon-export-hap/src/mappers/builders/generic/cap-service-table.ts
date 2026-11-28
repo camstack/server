@@ -54,7 +54,7 @@ import {
   SmokeStatusSchema,
   switchRefusesSetState,
   TemperatureSensorStatusSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { type Accessory, Categories, Characteristic, Service } from '@homebridge/hap-nodejs'
 
 import type { BuilderContext, BuilderHandle } from '../../types.js'
@@ -383,7 +383,7 @@ const ACCESSORY_CATEGORY_BY_TYPE: Partial<Record<DeviceType, Categories>> = {
 
 /**
  * The category, by type and then by the switch's sub-role (read only through
- * the `@camstack/types` accessors). A heater keeps a Switch service (see
+ * the `@dominevo/types` accessors). A heater keeps a Switch service (see
  * `onOffServiceKind`) and takes HomeKit's heater category, which is an icon
  * and promises no characteristic. A helper boolean stays a SWITCH.
  */

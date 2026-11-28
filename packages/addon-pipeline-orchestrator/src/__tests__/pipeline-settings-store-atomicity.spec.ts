@@ -12,7 +12,7 @@
  * through a `KeyedAsyncLock`, so these tests pin that both writes survive.
  */
 import { describe, expect, it } from 'vitest'
-import { type AgentPipelineSettings, createDurableState, type DurableState } from '@camstack/types'
+import { type AgentPipelineSettings, createDurableState, type DurableState } from '@dominevo/types'
 import type { ZodType } from 'zod'
 import { PipelineSettingsStore } from '../pipeline-settings-store.js'
 import { applyPatch, rowFakes } from './settings-store-row-fakes.js'

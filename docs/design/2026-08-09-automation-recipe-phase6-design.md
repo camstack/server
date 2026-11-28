@@ -34,8 +34,8 @@ automation table, no second rule engine, and nothing in this phase adds one.
 | `codegen.ts` | `generateAutomationBlock({name, recipe})` → the TypeScript of an ordinary core block |
 | `index.ts` | module barrel, re-exported from `packages/types/src/index.ts` |
 
-It lives in `@camstack/types` rather than in an addon for one reason: the bare
-`@camstack/types` entry is **bundled** into addons (D15), so `addon-admin-ui`
+It lives in `@dominevo/types` rather than in an addon for one reason: the bare
+`@dominevo/types` entry is **bundled** into addons (D15), so `addon-admin-ui`
 gets the model and the generator client-side with no hub round-trip and no train.
 That is what makes the editor work against the cluster as it stands today.
 
@@ -49,7 +49,7 @@ each one would have produced an automation surface that silently never fires:
 
 | Defect | How it presented | Found by |
 | --- | --- | --- |
-| **`croner` is not resolvable in a materialised block** | the runner spawns and dies in a crash loop, with **no error line at all**, until the circuit-breaker trips | creating three probe blocks — a control, one importing `@camstack/types`, one importing `croner`. Only the croner one died |
+| **`croner` is not resolvable in a materialised block** | the runner spawns and dies in a crash loop, with **no error line at all**, until the circuit-breaker trips | creating three probe blocks — a control, one importing `@dominevo/types`, one importing `croner`. Only the croner one died |
 | **`deviceState.getCapSlice` takes `capName`, not `cap`** | the call rejects, `readField` returns `undefined`, and EVERY condition leaf is false forever | `condition leaf unresolvable` on every tick, against a device whose slice plainly holds the field |
 | **`ctx.api` is keyed by ROUTER name (`alarmPanel`), not cap name (`alarm-panel`)** | every `cap` action throws `no such device method` — the whole THEN half is dead | reading the emitted `actuate` while wiring the editor |
 
@@ -91,7 +91,7 @@ boots through Module Federation and expects to be served by the hub; a local
 static harness with `/trpc`, `/api` and `/addon` proxied to the live cluster
 serves the assets and authenticates, but the app never issues a tRPC call and
 stalls at `Loading…`. Vite's dev server is not an alternative here: it resolves
-`@camstack/types` to source, and `utils/canonical-hash.ts` imports `node:crypto`
+`@dominevo/types` to source, and `utils/canonical-hash.ts` imports `node:crypto`
 at module top level, which the browser externalizes — this reproduces on an
 unmodified checkout and is unrelated to this work.
 
@@ -284,7 +284,7 @@ bindings and `vars` in one identifier namespace.
 
 1. **`CoreBlock.source` union** (`{kind:'code'} | {kind:'recipe'}`) — the proper
    home for the recipe. It is a `*.cap.ts` change, so: `npm run codegen`, then a
-   **force-publish of `@camstack/system`** (nx-affected misses cap changes), then
+   **force-publish of `@dominevo/system`** (nx-affected misses cap changes), then
    `applyServerUpdate`. Until then the `AUTOMATION_RECIPE` literal carries it.
    A boot migration maps existing `{code}` rows to `{kind:'code', code}`; it will
    find nothing on this cluster (`coreBlocks.list` → `{"blocks":[]}`, verified

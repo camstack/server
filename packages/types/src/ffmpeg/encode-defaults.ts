@@ -6,7 +6,7 @@
  * the broker's audio presets, and HomeKit's inline block. Three of them
  * disagreed about Opus channel count alone. They live here now because the
  * consumers are separate ADDONS and addons may never import each other —
- * `@camstack/types` is the only legal shared home.
+ * `@dominevo/types` is the only legal shared home.
  *
  * ## What changed value, and what kept a deliberate divergence
  *

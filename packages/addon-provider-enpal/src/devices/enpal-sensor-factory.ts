@@ -1,4 +1,4 @@
-import type { DeviceContext, IDevice } from '@camstack/types'
+import type { DeviceContext, IDevice } from '@dominevo/types'
 import { EnpalSensorDevice } from './enpal-sensor-device.js'
 
 /** Constructor closure the kernel calls for every Sensor child of an equipment Container. */

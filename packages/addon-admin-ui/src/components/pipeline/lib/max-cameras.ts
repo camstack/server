@@ -6,7 +6,7 @@
  * bulk-set summary/plan model (T2). Keeping the descriptor in one place
  * guarantees the per-node and cluster controls render identically.
  */
-import type { ConfigSliderField } from '@camstack/types'
+import type { ConfigSliderField } from '@dominevo/types'
 import i18n from '../../../i18n/index'
 
 /** Generous ceiling for the slider track — the cap itself accepts any positive int. */

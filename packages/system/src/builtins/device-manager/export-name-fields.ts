@@ -7,7 +7,7 @@
  * Field key: `export-name:<addonId>:<instanceId>`. The patch router splits these keys off before
  * the exporter's own `applyDeviceSettingsPatch` sees the rest.
  */
-import { ExportNameRefusedError, type IDeviceExportProvider } from '@camstack/types'
+import { ExportNameRefusedError, type IDeviceExportProvider } from '@dominevo/types'
 import type { ContributionShape } from './device-meta-types.js'
 
 export const EXPORT_NAME_FIELD_PREFIX = 'export-name:'

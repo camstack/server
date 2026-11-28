@@ -26,7 +26,7 @@
  * splitting them buys nothing and costs a range out of the budget.
  */
 
-import { EXPORT_DENSE_MAX_RANGES, type ExportDenseRange } from '@camstack/types'
+import { EXPORT_DENSE_MAX_RANGES, type ExportDenseRange } from '@dominevo/types'
 
 /** Re-exported so a caller plans and validates against the SAME ceiling the
  *  cap enforces — two constants would be free to drift, and the drift would

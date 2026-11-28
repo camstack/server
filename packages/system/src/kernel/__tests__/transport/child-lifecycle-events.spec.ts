@@ -12,7 +12,7 @@
  * synchronously, then yields one event-loop turn, before it acks that frame —
  * so a UDS consumer already holding the frame can close its gate first.
  */
-import { EventCategory, type SystemEvent } from '@camstack/types'
+import { EventCategory, type SystemEvent } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import { createLocalTransport } from '../../transport/create-local-transport.js'
 import { LocalChildClient } from '../../transport/local-child-client.js'

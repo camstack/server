@@ -7,7 +7,7 @@ import {
   type CoreBlock,
   type LinkedTriggerParams,
   type LinkedTriggerSource,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { listTemplateInstances } from '../automation-template-instances.js'
 

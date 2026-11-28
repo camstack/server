@@ -13,7 +13,7 @@ import {
   preconditionOf,
   runAddonMigrations,
   type StoredKeyRead,
-} from '@camstack/types'
+} from '@dominevo/types'
 import Database from 'better-sqlite3'
 
 export const ADDON_SETTINGS_TABLE = 'addon-settings'

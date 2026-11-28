@@ -69,7 +69,7 @@ if (!['pause', 'restore', 'verify'].includes(command ?? '')) {
 }
 
 // ── tRPC plumbing (mirrors scripts/hub/hub.mjs conventions) ──────────────────
-// The `camstack login` session through the shared resolver (renewed when it is about to expire).
+// The `dominevo login` session through the shared resolver (renewed when it is about to expire).
 const { server: SERVER, token } = await resolveHubAuth({
   server: opt('server', undefined),
 })

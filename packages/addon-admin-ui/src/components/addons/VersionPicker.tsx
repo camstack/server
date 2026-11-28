@@ -1,7 +1,7 @@
 import { Check, Download, Loader2, Upload, X } from 'lucide-react'
 import { useState } from 'react'
 
-import { Button, useAddonsGetVersions } from '@camstack/ui-library'
+import { Button, useAddonsGetVersions } from '@dominevo/ui-library'
 import { Trans, useTranslation } from 'react-i18next'
 import { hiddenOlderVersionCount, isDeprecatedVersion, versionsForPicker } from './visible-versions'
 interface VersionPickerProps {

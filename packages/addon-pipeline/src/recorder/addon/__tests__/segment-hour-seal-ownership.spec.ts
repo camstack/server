@@ -21,7 +21,7 @@
  * the hour is complete may write one. A writer knows its own hour only from the
  * moment it entered it.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { segmentRelPath } from '../../segment-path.js'
 import type { SegmentRow } from '../../types.js'

@@ -35,7 +35,7 @@ import type {
   EventFilter,
   IScopedLogger,
   ConfigUISchemaWithValues,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 function makeSilentLogger(): IScopedLogger {
   const noop = (): void => {

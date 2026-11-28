@@ -24,7 +24,7 @@ import {
   deviceAdminLinkCapability,
   type DeviceContext,
   type InferNativeProvider,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { unraidInstances } from './unraid-node-resolver.js'
 
 /**

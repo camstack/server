@@ -1,9 +1,9 @@
 /**
  * The starter layer ports the requirement check (it cannot import a runtime
- * value from `@camstack/types`). One table, both implementations: they cannot
+ * value from `@dominevo/types`). One table, both implementations: they cannot
  * drift without this failing.
  */
-import { type PackageRequires, type RunningWrapper, unmetRequirements } from '@camstack/types'
+import { type PackageRequires, type RunningWrapper, unmetRequirements } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { addonsBelowMinimum, unmetWrapperRequirements } from '../requirements.js'
 
@@ -20,16 +20,16 @@ const REQUIRES: readonly PackageRequires[] = [
   { wrapper: { image: '>=1.2.600' } },
   { wrapper: { image: '>=1.2.601', desktop: '>=0.2.0' } },
   { wrapper: { desktop: '>=0.1.7' } },
-  { addons: { '@camstack/a': '>=2.0.0', '@camstack/b': '>=1.0.0-beta.1' } },
+  { addons: { '@dominevo/a': '>=2.0.0', '@dominevo/b': '>=1.0.0-beta.1' } },
 ]
 const INSTALLED = [
   {},
-  { '@camstack/a': '2.0.0', '@camstack/b': '1.0.0' },
-  { '@camstack/a': '1.9.9' },
+  { '@dominevo/a': '2.0.0', '@dominevo/b': '1.0.0' },
+  { '@dominevo/a': '1.9.9' },
 ]
 
 describe('requirements port parity', () => {
-  it('agrees with @camstack/types on every wrapper case', () => {
+  it('agrees with @dominevo/types on every wrapper case', () => {
     for (const requires of REQUIRES)
       for (const wrapper of WRAPPERS) {
         const expected = unmetRequirements(requires, {
@@ -44,7 +44,7 @@ describe('requirements port parity', () => {
       }
   })
 
-  it('agrees with @camstack/types on every addon case', () => {
+  it('agrees with @dominevo/types on every addon case', () => {
     for (const requires of REQUIRES)
       for (const installed of INSTALLED) {
         const expected = unmetRequirements(requires, {

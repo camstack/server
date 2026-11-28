@@ -27,7 +27,7 @@ import {
   timedRunMaxIn,
   timedRunQuickRun,
   timedRunSeconds,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { PowerSourceScheduler, PowerSourceTimer } from '../power-source-service.js'
 import type { TimedRunRowBody } from '../record-kinds.js'
 

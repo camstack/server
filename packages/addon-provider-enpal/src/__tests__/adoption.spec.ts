@@ -1,4 +1,4 @@
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { buildEnpalAdoptionProvider } from '../enpal-adoption-provider.js'
 import { ENPAL_BOX_ID } from '../enpal-discovery.js'

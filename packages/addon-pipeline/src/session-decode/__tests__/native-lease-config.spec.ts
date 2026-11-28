@@ -10,7 +10,7 @@
  * checkable from a log.
  */
 
-import { DEFAULT_NATIVE_LEASE_SETTINGS } from '@camstack/types'
+import { DEFAULT_NATIVE_LEASE_SETTINGS } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { NATIVE_LEASE_ENV_VARS, resolveNativeLeaseKnobs } from '../native-lease-config.js'
 import { formatNativeLeaseKnobs, isWorkerLeaseKnobs } from '../native-lease-knobs.js'

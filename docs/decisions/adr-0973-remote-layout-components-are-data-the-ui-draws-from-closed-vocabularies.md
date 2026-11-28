@@ -43,9 +43,9 @@ palette entry would put third-party code in the admin page.
 
 An addon cannot invent a frame, shape or tone; it picks one. A UI that meets a
 value it does not know must fall back to the plain look, not fail. The pure
-helpers live in `@camstack/types`, so a refusal reason (`outside`, `overlap`,
+helpers live in `@dominevo/types`, so a refusal reason (`outside`, `overlap`,
 `unknown-group`, `too-many`) is the same everywhere. A cap change ships with a
-force-publish of `@camstack/system` and `@camstack/server`.
+force-publish of `@dominevo/system` and `@dominevo/server`.
 
 ## Enforcement
 

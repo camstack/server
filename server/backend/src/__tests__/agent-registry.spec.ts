@@ -18,7 +18,7 @@ import { AgentRegistryService } from '../core/agent/agent-registry.service.js'
 import type { EventBusService } from '../core/events/event-bus.service.js'
 import type { MoleculerService } from '../core/moleculer/moleculer.service.js'
 import type { CapabilityService } from '../core/capability/capability.service.js'
-import type { SystemEvent } from '@camstack/types'
+import type { SystemEvent } from '@dominevo/types'
 
 interface CapturedEmits {
   readonly events: SystemEvent[]

@@ -1,4 +1,4 @@
-import { NavigationRuntimeStateSchema } from '@camstack/types'
+import { NavigationRuntimeStateSchema } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { NAV_COLD_START, navigationSlice } from '../devices/dreame-camera-device.js'
 

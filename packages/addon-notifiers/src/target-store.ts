@@ -12,7 +12,7 @@ import {
   notificationTargetKinds,
   type RecordsAccess,
   type TargetKind,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { notifierDescriptors } from './record-kinds.js'
 
 export type TargetStore = NotificationTargetStore

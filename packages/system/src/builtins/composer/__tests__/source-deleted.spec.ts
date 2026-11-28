@@ -14,7 +14,7 @@ import {
   ROOM_EXAMPLE_TEMPERATURE_SOURCES,
   ROOM_OCCUPANCY_WINDOW_MS,
   roomCompositionExample,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { ComposedDeviceHandle } from '../composed-device.js'
 import { Composer } from '../composer.js'

@@ -1,4 +1,4 @@
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { buildProviderZigbeeZ2mAdoptionProvider } from '../provider-zigbee-z2m-adoption.js'
 import { planZ2mDevice } from '../z2m-exposes.js'

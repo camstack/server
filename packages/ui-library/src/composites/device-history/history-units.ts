@@ -11,7 +11,7 @@ import {
   type ReadingQuantity,
   type RoleDisplayDefault,
   type UnitDimension,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { resolveSensorDisplay } from '../../lib/resolve-sensor-display'
 import type { TimePoint } from '../charts/chart-data'
 import type { UnitPreferences } from '../../lib/unit-preferences'

@@ -7,8 +7,8 @@
  * dispatch latency, and a census that merely took long produced no line at
  * all (81 of the 163 dispatches over 2 s in 12 h had nothing in their window).
  */
-import type { IScopedLogger, NodePinnedRequestOptions } from '@camstack/types'
-import { CAP_NODE_PIN_CONTEXT_KEY } from '@camstack/types'
+import type { IScopedLogger, NodePinnedRequestOptions } from '@dominevo/types'
+import { CAP_NODE_PIN_CONTEXT_KEY } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { RECONCILE_NODE_BUDGET_MS } from '../dispatch-timing.js'
 import { ReconcileController, type ReconcileControllerDeps } from '../reconcile-controller.js'

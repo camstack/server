@@ -15,7 +15,7 @@
  * naming each side's row count and newest updatedAt. A row holding a keychain marker minted under the group is refused too:
  * the keychain lives outside this database, so its ref cannot be moved from here.
  */
-import type { MigrationMeta } from '@camstack/types'
+import type { MigrationMeta } from '@dominevo/types'
 import type {
   HubSqlMigration,
   MigrationDatabase,

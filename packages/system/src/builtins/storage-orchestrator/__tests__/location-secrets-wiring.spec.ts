@@ -34,8 +34,8 @@ import type {
   IStorageProviderImpl,
   SettingsRecord,
   StorageLocationDeclaration,
-} from '@camstack/types'
-import { integrationInstancesCapability, REDACTED_SECRET, storageCapability } from '@camstack/types'
+} from '@dominevo/types'
+import { integrationInstancesCapability, REDACTED_SECRET, storageCapability } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { StorageOrchestratorAddon } from '../storage-orchestrator.addon.js'
 import { seededLocationRecords } from './support/seeded-location-records.js'

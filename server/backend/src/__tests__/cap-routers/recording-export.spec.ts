@@ -6,7 +6,7 @@
  *  - a missing provider surfaces PRECONDITION_FAILED
  */
 import { describe, it, expect } from 'vitest'
-import { type IRecordingExportProvider, type ExportRecord } from '@camstack/types'
+import { type IRecordingExportProvider, type ExportRecord } from '@dominevo/types'
 import { makeCtx, invokeProcedure, buildCapRouterForTest } from './harness.js'
 
 function makeRecord(over: Partial<ExportRecord> = {}): ExportRecord {

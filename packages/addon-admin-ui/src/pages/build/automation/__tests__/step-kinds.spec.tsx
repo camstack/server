@@ -12,7 +12,7 @@ import {
   type AutomationRunTrace,
   CurrentAutomationRecipeSchema,
   generateAutomationBlock,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'

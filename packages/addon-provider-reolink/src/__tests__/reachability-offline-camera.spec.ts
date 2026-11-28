@@ -3,7 +3,7 @@
  * verdicts become the normal DeviceOffline / DeviceOnline (once each), and the
  * firmware push keeps working exactly as before.
  */
-import { EventCategory } from '@camstack/types'
+import { EventCategory } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { ReolinkCamera } from '../reolink-camera.js'
 

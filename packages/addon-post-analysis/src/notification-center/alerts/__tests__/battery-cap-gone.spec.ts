@@ -13,7 +13,7 @@
  * The census is the production `batteryCapCensusOver`, fed the `getBindings`
  * entries a real answer carries.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { makeSilentLogger } from '../../../pipeline-analytics/__tests__/test-helpers.js'
 import type { NcAlertRow } from '../alert-episode.js'

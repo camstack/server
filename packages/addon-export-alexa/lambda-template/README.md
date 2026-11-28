@@ -1,19 +1,19 @@
-# CamStack Alexa Lambda — skill endpoint + token broker
+# Dominevo Alexa Lambda — skill endpoint + token broker
 
-One Lambda serves one Alexa Smart Home skill and every CamStack hub linked to
+One Lambda serves one Alexa Smart Home skill and every Dominevo hub linked to
 it. It routes each request to the right hub by the `hubUrl` claim the hub bakes
 into its OAuth tokens, and — since D753 — it is the **only** place the skill's
 Login With Amazon (LWA) client secret lives. Hubs never hold it: they receive
 short-lived Event Gateway tokens from this Lambda's **token broker**.
 
-The same code runs the built-in CamStack skill and any operator's own
+The same code runs the built-in Dominevo skill and any operator's own
 ("custom") skill. Each deployment uses its own secrets.
 
 ## What it does
 
 | Invocation | Action |
 | --- | --- |
-| `GET  <FUNCTION_URL>/authorize` | The hub-address step of account linking (below): a form in the CamStack page style (en/it), then — after checking the hub — a redirect to the hub's OAuth `/authorize`. |
+| `GET  <FUNCTION_URL>/authorize` | The hub-address step of account linking (below): a form in the Dominevo page style (en/it), then — after checking the hub — a redirect to the hub's OAuth `/authorize`. |
 | `POST <FUNCTION_URL>/token` | Checks the account-linking client id/secret, decodes the `hubUrl` claim, proxies the token request to the hub. |
 | Smart Home directive | Forwards to `${hubUrl}/addon/export-alexa/directive`, adding `X-CamStack-Broker: <broker origin>` when the broker is on. |
 | `Alexa.Authorization/AcceptGrant` | Exchanges the grant code at `api.amazon.com` **here**, stores the grant in DynamoDB, gives the hub a per-link broker credential (`POST /addon/export-alexa/oauth/broker-link`). |
@@ -33,9 +33,9 @@ and shows its error on the page.
 ### The hub-address step (`/authorize`, `authorize-page.js`)
 
 Alexa opens this URL in the user's browser; the Lambda cannot know the hub, so
-the operator types its public HTTPS address (CamStack shows it under
+the operator types its public HTTPS address (Dominevo shows it under
 Connectivity → Alexa → "Hub address to enter in the Alexa app"). The page is the
-CamStack page family — `page-style.js` is generated from the hub's page shell
+Dominevo page family — `page-style.js` is generated from the hub's page shell
 (`npx tsx scripts/gen-alexa-lambda-page-style.ts`; a spec fails when it drifts) —
 and runs no script. The address is **checked before the browser leaves**:
 
@@ -45,7 +45,7 @@ and runs no script. The address is **checked before the browser leaves**:
 | `local_address` | `localhost`, a private or tailnet IP, `.local` … — the Lambda runs in the cloud |
 | `unreachable` | no answer to `GET /api/oauth2/integrations` (6 s) |
 | `tls_error` | answered, but the certificate is not trusted by the Lambda's CA store |
-| `not_camstack` | answered, but not with a CamStack discovery document |
+| `not_camstack` | answered, but not with a Dominevo discovery document |
 | `integration_missing` / `hub_starting` | the hub does not serve `export-alexa` / is still registering it |
 
 A good hub gets a 302 to `<hub>/api/oauth2/authorize?…&integration=export-alexa`.
@@ -94,7 +94,7 @@ cd lambda-template && rm -f ../camstack-alexa-lambda.zip && zip -j ../camstack-a
 
 ## Deployment
 
-It ships in the published `@camstack/addon-export-alexa` npm package (`npm pack`
+It ships in the published `@dominevo/addon-export-alexa` npm package (`npm pack`
 it and take `package/lambda-template/`). Deploy it in the AWS region that serves
 your skill's locale: NA → `us-east-1`, EU/IN → `eu-west-1`, FE/AU → `us-west-2`.
 

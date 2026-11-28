@@ -2,7 +2,7 @@
  * Best-effort sniff of a custom model file or URL — prefill only.
  * Never invents a postprocessor (D208): decode stays operator-owned.
  */
-import type { ModelFormat } from '@camstack/types'
+import type { ModelFormat } from '@dominevo/types'
 import { translate } from '../i18n/index.js'
 
 export type ProbeCustomInput =

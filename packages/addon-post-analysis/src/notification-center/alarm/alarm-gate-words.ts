@@ -16,7 +16,7 @@
  * word.
  */
 
-import type { AlarmState } from '@camstack/types'
+import type { AlarmState } from '@dominevo/types'
 import type { NcDeviceStateLookup } from '../rule-engine.js'
 
 /** The states that belong to an armed mode without being it. */

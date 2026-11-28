@@ -12,7 +12,7 @@
  *                   wins a name both share; Amazon needs two or more modes, so
  *                   one mode alone publishes none.
  */
-import { DeviceFeature, FanControlStatusSchema } from '@camstack/types'
+import { DeviceFeature, FanControlStatusSchema } from '@dominevo/types'
 import type { AlexaCapability, AlexaFriendlyName } from '../types.js'
 import type { AdapterDescription, AdapterDevice, GenericProperty } from './types.js'
 

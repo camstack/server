@@ -14,7 +14,7 @@
  *  - an encode failure is its own reason, because it is the one failure that
  *    is not a timing problem.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import type { NativeCropLeaseFacts } from '../../session-decode/video-frame-generator.js'
 import { ParkedFrameStore } from '../../session-decode/parked-frame-store.js'

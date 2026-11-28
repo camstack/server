@@ -30,10 +30,10 @@ covers:
 > topics; every fan-out judgement per peer; before new instrumentation, the
 > unread counter that already exists.
 >
-> **Ship chains** (current: `@camstack/server` 1.2.190, `@camstack/system`
-> 1.2.155, `@camstack/addon-pipeline` 1.2.146): addon changes are
-> `camstack deploy packages/<addon>`; anything in `packages/system` or
-> `server/backend` travels only inside the published `@camstack/server`
+> **Ship chains** (current: `@dominevo/server` 1.2.190, `@dominevo/system`
+> 1.2.155, `@dominevo/addon-pipeline` 1.2.146): addon changes are
+> `dominevo deploy packages/<addon>`; anything in `packages/system` or
+> `server/backend` travels only inside the published `@dominevo/server`
 > closure — a **publish train**, live only when a containing server is
 > installed. Items P1b and P7 below are the train riders; batch them.
 
@@ -43,18 +43,18 @@ covers:
 
 | # | Item | Grade | Expected effect (arithmetic) | Confidence | Ship chain |
 | --- | --- | --- | --- | --- | --- |
-| P1 | The 236 kB responses to `pipeline-analytics` through hub-main | EXP → then fix at the caller | 536 MB/min at tonight's peak, 81 % of hub-main's outbound response bytes; the churn behind the 181–330 MB/min ArrayBuffer slope, the ~2-min reclaim cadence and its 555–869 ms stalls, and the one rssBudget crossing | mechanism high; method attribution pending | experiment: read-only / small; fix: `camstack deploy packages/addon-post-analysis` (likely) |
-| P2 | `oldestSegments` selects a full 32-hour page to delete two segments | FIX | −~250 KB/s of the recorder's 400 KB/s priced allocation (63 %); rounds 570–15 436 ms shrink ~16×; mirror staging ceiling 23 MB → ~KB today, **~600 MB → ~KB at 30 TB** | high | `camstack deploy packages/addon-pipeline` |
+| P1 | The 236 kB responses to `pipeline-analytics` through hub-main | EXP → then fix at the caller | 536 MB/min at tonight's peak, 81 % of hub-main's outbound response bytes; the churn behind the 181–330 MB/min ArrayBuffer slope, the ~2-min reclaim cadence and its 555–869 ms stalls, and the one rssBudget crossing | mechanism high; method attribution pending | experiment: read-only / small; fix: `dominevo deploy packages/addon-post-analysis` (likely) |
+| P2 | `oldestSegments` selects a full 32-hour page to delete two segments | FIX | −~250 KB/s of the recorder's 400 KB/s priced allocation (63 %); rounds 570–15 436 ms shrink ~16×; mirror staging ceiling 23 MB → ~KB today, **~600 MB → ~KB at 30 TB** | high | `dominevo deploy packages/addon-pipeline` |
 | P3 | Name the recorder's ~1.2 GB retainer (and with it the 2.0–2.6 s synchronous block) | EXP (snapshot, operator-armed) | unlocks ~1.2 GB on the fleet's largest JS heap and the recurring 2–3 s stalls on the recording path; nothing else on this list touches either | that it exists: high; what it is: zero | none (env flag + SIGUSR2, already gated) |
-| P4 | Stage 4 — retention reads leave the RAM index (correctness prerequisite) | FIX | prevents silent under-pruning the day age policies are set; removes the last two whole-device copy+sorts (`evict-select.ts:10`, `evict-select.ts:50`) | high (verified in source tonight) | `camstack deploy packages/addon-pipeline`; **gates the 30 TB retention policies** |
+| P4 | Stage 4 — retention reads leave the RAM index (correctness prerequisite) | FIX | prevents silent under-pruning the day age policies are set; removes the last two whole-device copy+sorts (`evict-select.ts:10`, `evict-select.ts:50`) | high (verified in source tonight) | `dominevo deploy packages/addon-pipeline`; **gates the 30 TB retention policies** |
 | P5 | sqlite-settings' native RSS: verify it is the configured mmap | EXP (one read) | expected outcome: item closes as "working as configured"; prevents a future false OVER RSS BUDGET hunt as the DB grows with the archive | high | read-only ssh |
-| P6 | `segmentAt` reports a gap over footage that exists (overlap) | FIX | correctness, operator-visible; zero memory | high | `camstack deploy packages/addon-pipeline` |
+| P6 | `segmentAt` reports a gap over footage that exists (overlap) | FIX | correctness, operator-visible; zero memory | high | `dominevo deploy packages/addon-pipeline` |
 | P7 | category→children index for the event plane | FIX, deliberately queued | −~5 300 decisions/s of the ~5 660 remaining (94 % waste post-R1); CPU value modest — sub-µs pattern checks, order 0.3–0.5 % of a core | high on mechanism | publish train (`packages/system`) |
 | P8 | hub-main's 44 k syscalls/s, ~95 % not frames | EXP | attribution only; no intervention proposed until named | medium | read-only host sample |
 | P9 | hub-main's ~1.5 GB live old_space | PARK | — | — | promotion condition below |
 | P10 | 24–48 h heartbeat read | EXP (zero code) | converts every single-boot conclusion into a daily-rhythm one | — | none |
 | P11 | Writer-restart baseline read before the array | EXP (zero code) | preserves the ability to attribute the storms to the disk | — | none |
-| P12 | Coalesce the recorder's hour persist | FIX, measure-first | −~3.6 GB/day of row rewrites into the checkpoint lottery (D96); unblocked by D287 | medium | `camstack deploy packages/addon-pipeline` |
+| P12 | Coalesce the recorder's hour persist | FIX, measure-first | −~3.6 GB/day of row rewrites into the checkpoint lottery (D96); unblocked by D287 | medium | `dominevo deploy packages/addon-pipeline` |
 
 Where this ranking disagrees with the operator's (1: 133 kB responses, 2:
 recorder synchronous block, 3: sqlite-settings native): **#1 agreed and now

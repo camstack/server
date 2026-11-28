@@ -10,7 +10,7 @@
  *  - auth enforcement (getters = protected, updateDeviceField = admin)
  */
 import { describe, it, expect, vi } from 'vitest'
-import type { IDeviceManagerProvider } from '@camstack/types'
+import type { IDeviceManagerProvider } from '@dominevo/types'
 import { makeCtx, invokeProcedure, buildCapRouterForTest } from './harness.js'
 
 /** The methods this spec's routes reach; the harness takes any provider object. */

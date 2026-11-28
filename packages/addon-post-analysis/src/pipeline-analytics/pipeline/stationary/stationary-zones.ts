@@ -14,7 +14,7 @@
  * dims, so a detached camera still resolves membership without a live frame.
  */
 
-import type { Zone } from '@camstack/types'
+import type { Zone } from '@dominevo/types'
 import { ZoneEngine } from '../zones/zone-engine.js'
 import type { StationaryBbox } from './stationary-types.js'
 

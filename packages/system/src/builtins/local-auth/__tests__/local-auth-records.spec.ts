@@ -1,14 +1,14 @@
 /**
  * Phase 6: local-auth stores read/write through ctx.records, not legacy tables.
  */
-import { createRecordsAccess } from '@camstack/types'
+import { createRecordsAccess } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { UserManager } from '../../../auth/user-manager.js'
 import { AuthManager } from '../../../auth/auth-manager.js'
 import { makeRecordsWorld } from '../../sqlite-storage/__tests__/support/records-world.js'
 import { localAuthRecordKinds } from '../record-kinds.js'
 import { makeStore } from './memory-settings-store.js'
-import type { SettingsStoreClient } from '@camstack/types'
+import type { SettingsStoreClient } from '@dominevo/types'
 
 function authManager(): AuthManager {
   return new AuthManager({

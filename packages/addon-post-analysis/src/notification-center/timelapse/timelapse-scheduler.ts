@@ -32,8 +32,8 @@
  * Every log line carries `tags: { deviceId }`.
  */
 
-import type { IScopedLogger, NcRuleTarget, TimelapseRule } from '@camstack/types'
-import { readTimelapseGeneratedAt } from '@camstack/types'
+import type { IScopedLogger, NcRuleTarget, TimelapseRule } from '@dominevo/types'
+import { readTimelapseGeneratedAt } from '@dominevo/types'
 import {
   genericDeviceName,
   resolveDeviceDisplayName,

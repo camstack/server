@@ -29,7 +29,7 @@ import {
   readCommandOrigin,
   readNodePin,
   withCapInputDefaults,
-} from '@camstack/types/addon'
+} from '@dominevo/types/addon'
 import { runWithCapCallContext } from '../cap-call-scope.js'
 import { liftRoutingHints } from '../transport/cap-routing-hints.js'
 import { stampCallerAddonId } from '../transport/cap-route-resolver.js'

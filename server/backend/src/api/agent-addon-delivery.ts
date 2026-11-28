@@ -1,11 +1,11 @@
-import type { AddonDeploySource } from '@camstack/server/system'
-import type { IScopedLogger } from '@camstack/types'
+import type { AddonDeploySource } from '@dominevo/server/system'
+import type { IScopedLogger } from '@dominevo/types'
 
 /**
  * Delivering an addon bundle to an agent — the single implementation.
  *
  * There used to be two. `propagateToAgents` (the hub-install broadcast) called
- * `$agent.deploy` **and** `$agent.reload`; `deployToAgent` (the `camstack deploy
+ * `$agent.deploy` **and** `$agent.reload`; `deployToAgent` (the `dominevo deploy
  * -n <node>` path) called only `$agent.deploy`. Both reported success. The
  * second one is a write-to-disk-only deploy: the tarball lands, the install
  * manifest bumps `updatedAt`, the CLI prints `✓ <node>: <pkg>@<version>` — and

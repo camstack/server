@@ -4,7 +4,7 @@
  * camera that silently starts working again is always eventually re-asked.
  */
 import { describe, it, expect } from 'vitest'
-import { BOOT_RECOVERY_BACKOFF_MS } from '@camstack/types'
+import { BOOT_RECOVERY_BACKOFF_MS } from '@dominevo/types'
 import {
   catalogPullRetryDelayMs,
   mayAttemptPolledCatalogPull,

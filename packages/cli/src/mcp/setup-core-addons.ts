@@ -18,7 +18,7 @@
  * (`turnProvider.getTurnServers` answers with them) — an instance's status is
  * enough to tell a relay is set up.
  */
-import type { HubClient } from '@camstack/develop'
+import type { HubClient } from '@dominevo/develop'
 import { z } from 'zod'
 import { manifestOf } from '../onboarding/context.js'
 import type { CoreAddonGroup, CoreAddonRef, UiLocation } from '../onboarding/manifest-schema.js'
@@ -41,7 +41,7 @@ export const CoreAddonsArgsShape = {
     .boolean()
     .optional()
     .describe(
-      'Whether CamStack will be opened away from home. Ask the person; leave it out until they answered.',
+      'Whether Dominevo will be opened away from home. Ask the person; leave it out until they answered.',
     ),
 } as const
 
@@ -162,7 +162,7 @@ function actionFor(
   }
   if (group.need === 'remote' && remoteAccess === null) {
     return {
-      text: `Ask the person whether they will open CamStack away from home, then call ${CORE_ADDONS_TOOL} again with remoteAccess set to their answer.`,
+      text: `Ask the person whether they will open Dominevo away from home, then call ${CORE_ADDONS_TOOL} again with remoteAccess set to their answer.`,
       tool: CORE_ADDONS_TOOL,
       args: { remoteAccess: true },
     }

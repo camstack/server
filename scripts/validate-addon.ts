@@ -9,7 +9,7 @@
  *   1. Manifest well-formed: `camstack.addons[]` each with id / name / entry.
  *   2. The declared `entry` and `icon` files exist on disk.
  *   3. Every declared `capabilities[].name` is a REAL capability —
- *      cross-checked against the `@camstack/types` capability set.
+ *      cross-checked against the `@dominevo/types` capability set.
  *   4. Code scan: every declared capability's name appears in the addon's
  *      built `dist/` bundle. A self-contained addon bundles its cap
  *      definitions, so a used cap's name string is always present; a
@@ -25,16 +25,16 @@
 import { readFileSync, existsSync, readdirSync } from 'node:fs'
 import { join, resolve, basename, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import * as camstackTypes from '@camstack/types'
+import * as camstackTypes from '@dominevo/types'
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 
 /** Deps every self-contained addon bundles (see AGENTS.md) — looked up
  *  across both `dependencies` and `devDependencies` (vite bundles them
- *  at build time, so they are commonly dev deps). Only `@camstack/types`
+ *  at build time, so they are commonly dev deps). Only `@dominevo/types`
  *  is universal; `zod` / `@trpc/*` are needed only by addons that ship
  *  schemas or tRPC surfaces, so they are not checked here. */
-const SELF_CONTAINED_DEPS = ['@camstack/types'] as const
+const SELF_CONTAINED_DEPS = ['@dominevo/types'] as const
 
 interface Finding {
   readonly level: 'error' | 'warn'
@@ -70,7 +70,7 @@ function asArray<T>(value: unknown): readonly T[] {
   return Array.isArray(value) ? (value as readonly T[]) : []
 }
 
-/** Collect every real capability name from `@camstack/types`. A cap
+/** Collect every real capability name from `@dominevo/types`. A cap
  *  definition is the only exported object carrying both a `name` and a
  *  `scope` string — schemas / enums / helpers never do. */
 function collectValidCapNames(): ReadonlySet<string> {
@@ -189,7 +189,7 @@ function validateAddon(addonDir: string, validCaps: ReadonlySet<string>): Findin
         continue
       }
       if (!validCaps.has(capName)) {
-        err(addonName, `declares capability '${capName}' — no such capability in @camstack/types`)
+        err(addonName, `declares capability '${capName}' — no such capability in @dominevo/types`)
         continue
       }
       if (dist.length > 0 && !dist.includes(`"${capName}"`) && !dist.includes(`'${capName}'`)) {
@@ -251,7 +251,7 @@ function main(): void {
 
   const validCaps = collectValidCapNames()
   if (validCaps.size === 0) {
-    console.error('validate-addon: could not collect capability names from @camstack/types')
+    console.error('validate-addon: could not collect capability names from @dominevo/types')
     process.exit(2)
   }
 

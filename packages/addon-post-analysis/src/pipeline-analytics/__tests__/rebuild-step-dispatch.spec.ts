@@ -14,7 +14,7 @@
  *   quietly reporting a clean run over nothing.
  */
 
-import type { RunStatelessStepInput, RunStatelessStepResult } from '@camstack/types'
+import type { RunStatelessStepInput, RunStatelessStepResult } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import type { RebuildSource } from '../embedding-rebuild.js'
 import { NodeRotation } from '../rebuild-node-rotation.js'

@@ -1,6 +1,6 @@
 import { Select } from '../primitives/select'
 import { useUiText, UiTrans } from '../contexts/ui-text'
-import { MODEL_PROVIDER_IDS, type ModelProviderId, type PipelineAddonSchema } from '@camstack/types'
+import { MODEL_PROVIDER_IDS, type ModelProviderId, type PipelineAddonSchema } from '@dominevo/types'
 import { useEffect, useMemo, useState, type JSX } from 'react'
 import { cn } from '../lib/cn'
 import { GroupedModelSelector } from './grouped-model-selector'
@@ -8,7 +8,7 @@ import { GroupedModelSelector } from './grouped-model-selector'
 export type ModelOption = PipelineAddonSchema['models'][number]
 
 const PROVIDER_LABEL: Readonly<Record<ModelProviderId, string>> = {
-  camstack: 'CamStack',
+  camstack: 'Dominevo',
   frigate: 'plus catalog',
   scrypted: 'plugin catalog',
   custom: 'Custom',
@@ -21,7 +21,7 @@ function providerOf(model: ModelOption): ModelProviderId {
 /**
  * Shared model picker — the ONE model-selection control across the app.
  *
- * Provider first (CamStack / plus catalog / plugin catalog / Custom), then inside that
+ * Provider first (Dominevo / plus catalog / plugin catalog / Custom), then inside that
  * catalog the grouped Family→Tier→Variant selector when entries declare
  * `group`, else a flat `<select>`. The persisted value stays the flat model
  * id. `value === ''` renders nothing selected (callers that support an

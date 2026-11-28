@@ -13,7 +13,7 @@
  *
  * Read-only. The install rules are the ones `setup_install_guide` serves.
  */
-import type { HubClient } from '@camstack/develop'
+import type { HubClient } from '@dominevo/develop'
 import { z } from 'zod'
 import type { McpContext } from './context.js'
 import {
@@ -83,7 +83,7 @@ const InferenceDevicesSchema = z.looseObject({
   ),
 })
 
-/** What the inference runtime (the `detection-pipeline` addon, package `@camstack/addon-pipeline`) can drive. */
+/** What the inference runtime (the `detection-pipeline` addon, package `@dominevo/addon-pipeline`) can drive. */
 interface Expectation {
   /** Inference device keys that mean "this accelerator is offered". */
   readonly deviceKeys: (key: string) => boolean
@@ -152,7 +152,7 @@ const EXPECTATIONS: { readonly [kind in ExpectedAccelerator]: Expectation } = {
     steps: [],
     unsupported: {
       extend:
-        '@camstack/addon-pipeline (the detection-pipeline addon): a vitisai execution-provider backend',
+        '@dominevo/addon-pipeline (the detection-pipeline addon): a vitisai execution-provider backend',
       why: 'The runtime maps no AMD XDNA backend yet; the table has no amd-npu column to measure either.',
     },
   },
@@ -183,7 +183,7 @@ const EXPECTATIONS: { readonly [kind in ExpectedAccelerator]: Expectation } = {
     probe: (hw) => hw.npu?.type === 'apple-ane',
     image: 'apple',
     steps: [
-      'The Neural Engine is reachable only from a process running natively on the Mac: run the CamStack desktop app or agent on macOS, not a container.',
+      'The Neural Engine is reachable only from a process running natively on the Mac: run the Dominevo desktop app or agent on macOS, not a container.',
     ],
     onlyOn: {
       platform: 'darwin',

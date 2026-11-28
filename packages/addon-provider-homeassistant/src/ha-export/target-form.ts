@@ -4,7 +4,7 @@
  * re-announces. The devices exported to it are not a form field: they are chosen per device or
  * in the Devices dialog of the target.
  */
-import { type ConfigUISchema, linkFieldDescriptor } from '@camstack/types'
+import { type ConfigUISchema, linkFieldDescriptor } from '@dominevo/types'
 import { HA_CONNECTION_LINK, MIN_RECONCILE_INTERVAL_SEC } from './target-records.js'
 
 const NS = 'provider-homeassistant:globalSettings'
@@ -17,7 +17,7 @@ export function buildTargetForm(): ConfigUISchema {
         title: 'Home Assistant target',
         titleKey: `${NS}.s_ha-export-target.title`,
         description:
-          'Where the export pushes devices. A target with no existing connection pushes nothing and keeps its devices. Export needs the CamStack custom component installed in Home Assistant (HACS).',
+          'Where the export pushes devices. A target with no existing connection pushes nothing and keeps its devices. Export needs the Dominevo custom component installed in Home Assistant (HACS).',
         descriptionKey: `${NS}.s_ha-export-target.description`,
         columns: 1,
         fields: [

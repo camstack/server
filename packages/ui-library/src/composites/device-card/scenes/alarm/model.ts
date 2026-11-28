@@ -1,4 +1,4 @@
-import type { AlarmArmMode } from '@camstack/types'
+import type { AlarmArmMode } from '@dominevo/types'
 import type { CardCommon, CardCommonActions } from '../../shell/model'
 
 export type { AlarmArmMode }

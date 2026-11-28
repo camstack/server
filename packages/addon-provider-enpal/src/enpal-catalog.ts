@@ -5,7 +5,7 @@ import {
   type NumericSensorStatus,
   type PowerMeterStatus,
   type ReadingQuantity,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { EnpalSnapshot } from './enpal-snapshot.js'
 import { toBase } from './enpal-units.js'
 

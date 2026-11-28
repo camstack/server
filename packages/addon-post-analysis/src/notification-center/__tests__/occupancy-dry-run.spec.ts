@@ -24,9 +24,9 @@
  * not contain, is exactly why a rule "never fires", and it is now a visible row
  * instead of an empty list.
  */
-import type { InMemoryRecords } from '@camstack/types'
-import type { CameraOccupancySnapshot, NcOccupancyCondition, NcRuleInput } from '@camstack/types'
-import { NcRuleInputSchema } from '@camstack/types'
+import type { InMemoryRecords } from '@dominevo/types'
+import type { CameraOccupancySnapshot, NcOccupancyCondition, NcRuleInput } from '@dominevo/types'
+import { NcRuleInputSchema } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import {
   type FakeSettingsStore,

@@ -1,5 +1,5 @@
 /**
- * An agent keeps its own `@camstack/server` closure current (2026-10-28): unpaired it follows
+ * An agent keeps its own `@dominevo/server` closure current (2026-10-28): unpaired it follows
  * npm `latest` (there is no hub), paired it follows the HUB's running version (never npm, so
  * there is no hub/agent skew). Never a downgrade; a failed read changes nothing and says why.
  */

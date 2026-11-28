@@ -10,7 +10,7 @@ import {
   TAG_COLOR_IDS,
   type TagColorId,
   type TagEntry,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { Check, Tag as TagGlyph } from 'lucide-react'
 import { type JSX, useEffect, useId, useState } from 'react'
 import { useUiText } from '../../contexts/ui-text'

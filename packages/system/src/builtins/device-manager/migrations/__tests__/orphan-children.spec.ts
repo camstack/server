@@ -1,4 +1,4 @@
-import { defineAddonMigrations } from '@camstack/types'
+import { defineAddonMigrations } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { ORPHAN_CHILDREN_MIGRATIONS } from '../index.js'
 import { type OrphanRow, orphansOf } from '../orphan-children.js'

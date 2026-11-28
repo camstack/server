@@ -1,4 +1,4 @@
-import { REDACTED_SECRET } from '@camstack/types'
+import { REDACTED_SECRET } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { isRedactedSecret, mergeSecretForSubmit, secretDisplayValue } from '../record-entry-secrets'
 

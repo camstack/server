@@ -1,4 +1,4 @@
-import type { RetrainFrame } from '@camstack/types'
+import type { RetrainFrame } from '@dominevo/types'
 
 /**
  * The address a frame-scoped retrain call takes: the frame's own camera, its

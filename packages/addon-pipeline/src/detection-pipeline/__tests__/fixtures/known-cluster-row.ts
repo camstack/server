@@ -7,7 +7,7 @@
  * something else (the capability gate, the node refusal) state the row they
  * assume with this, instead of relying on a default nobody answered.
  */
-import { DEFAULT_CLUSTER_STEP_MODELS } from '@camstack/types'
+import { DEFAULT_CLUSTER_STEP_MODELS } from '@dominevo/types'
 import { vi } from 'vitest'
 import { ClusterModelSource } from '../../../shared/cluster-model-source.js'
 

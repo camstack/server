@@ -34,7 +34,7 @@ describe('check-single-client-login', () => {
   })
 
   it('leaves the agent join token alone, only where it is marked', () => {
-    const line = 'HUB_TOKEN="$CAMSTACK_HUB_TOKEN" camstack agent --token "$HUB_TOKEN"'
+    const line = 'HUB_TOKEN="$CAMSTACK_HUB_TOKEN" dominevo agent --token "$HUB_TOKEN"'
     const marked = `${line}  # agent-join:line`
     expect(rules('scripts/dev-cluster.sh', marked)).toEqual([])
     expect(rules('scripts/dev-agent-only.sh', marked)).toEqual([])

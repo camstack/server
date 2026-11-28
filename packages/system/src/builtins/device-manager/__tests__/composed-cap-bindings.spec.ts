@@ -2,7 +2,7 @@
  * A composed cap (a composer `add` graft) is bound from boot by its persisted claim,
  * so an exporter sees one stable device shape across a hub or composer restart.
  */
-import { CapabilityRegistry, DeviceRegistry } from '@camstack/server/system'
+import { CapabilityRegistry, DeviceRegistry } from '@dominevo/server/system'
 import {
   type AddonContext,
   EventCategory,
@@ -10,14 +10,14 @@ import {
   type IEventBus,
   type IScopedLogger,
   type SystemEvent,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { makeRecordsAccessForOwner } from '../../sqlite-storage/__tests__/support/records-world.js'
 import { DeviceManagerAddon } from '../device-manager.addon.js'
 import { makeSettingsStoreApi } from './settings-store-api.js'
-import { COMPOSER_ADDON_ID, type DeviceBindingEntry, settleDeviceFeatures } from '@camstack/types'
+import { COMPOSER_ADDON_ID, type DeviceBindingEntry, settleDeviceFeatures } from '@dominevo/types'
 import { type Harness, registerCamera, setup as setupHarness } from './device-manager-harness.js'
-import type { AddonStoreRead } from '@camstack/types'
+import type { AddonStoreRead } from '@dominevo/types'
 import { seedDeviceRow } from './settings-store-api.js'
 
 function makeLogger(): IScopedLogger {

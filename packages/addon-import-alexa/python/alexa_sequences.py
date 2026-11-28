@@ -46,7 +46,7 @@ def build_announcement(target: EchoTarget, text: str, locale: str) -> dict:
         "content": [
             {
                 "locale": locale,
-                "display": {"title": "CamStack", "body": text},
+                "display": {"title": "Dominevo", "body": text},
                 "speak": {"type": "text", "value": text},
             }
         ],

@@ -1,5 +1,5 @@
 import { LogRingBuffer } from './log-ring-buffer.js'
-import type { LogEntry, LogFilter, LogLevel } from '@camstack/types'
+import type { LogEntry, LogFilter, LogLevel } from '@dominevo/types'
 
 /** Bucket key for entries that carry no resolvable `addonId` tag. */
 const NO_ADDON_KEY = ''

@@ -37,7 +37,7 @@ import type {
   IEventBus,
   IScopedLogger,
   SystemEvent,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 // ── Fakes ───────────────────────────────────────────────────────────────
 

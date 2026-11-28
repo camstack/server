@@ -10,7 +10,7 @@
  *     one-off keychain step reads that key), while a record is missing, and while a legacy
  *     password has no counterpart on its record.
  */
-import { type MigrationPlan, type MigrationProcedureResult, preconditionOf } from '@camstack/types'
+import { type MigrationPlan, type MigrationProcedureResult, preconditionOf } from '@dominevo/types'
 import { retiredCiphertextPaths } from '../retired-ciphertext.js'
 
 export const MQTT_BROKER_ADDON_ID = 'mqtt-broker'

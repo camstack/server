@@ -4,7 +4,7 @@
  * payload's step tree carries the operator's per-device model pin for the
  * chosen accelerator (and is untouched when there is no override).
  */
-import { CAMERA_TRIGGER } from '@camstack/types'
+import { CAMERA_TRIGGER } from '@dominevo/types'
 import type {
   CameraDetectionConfig,
   DeviceStepConfig,
@@ -12,7 +12,7 @@ import type {
   PipelineStepInputOutput,
   RunnerCameraConfig,
   RunnerLocalLoad,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 
 /**

@@ -63,13 +63,13 @@ import type {
   IDeviceManagerProvider,
   LinkedDevice,
   LinkedDevicesMode,
-} from '@camstack/types'
-import { DeviceType, StaleStampError } from '@camstack/types'
+} from '@dominevo/types'
+import { DeviceType, StaleStampError } from '@dominevo/types'
 import { DEVICE_BLOB_SAVES } from '../shared/serialise-per-key.js'
-// The pure linked-set rules live in `@camstack/types` so the hub's boot
+// The pure linked-set rules live in `@dominevo/types` so the hub's boot
 // backfill and the admin UI's per-room rebuild share ONE definition of what a
 // room contains — see `linked-device-resolve.ts`.
-import { expandContainer, legacyAutoLinkIds, type LinkCandidate } from '@camstack/types'
+import { expandContainer, legacyAutoLinkIds, type LinkCandidate } from '@dominevo/types'
 // Re-exported so the existing importers keep their one import site; the
 // DEFINITION moved, the surface did not.
 export { legacyAutoLinkIds, type LinkCandidate }

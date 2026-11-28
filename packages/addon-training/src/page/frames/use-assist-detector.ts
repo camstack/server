@@ -4,12 +4,12 @@
  * page; `resolveAssistDetector` collapses them and refuses to guess. The model
  * is the accelerator's — a camera carries none (D927).
  */
-import type { PipelineSchema } from '@camstack/types'
+import type { PipelineSchema } from '@dominevo/types'
 import {
   usePipelineExecutorGetSchema,
   usePipelineOrchestratorGetCameraStatuses,
   usePipelineOrchestratorGetNodeInferenceDevices,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useMemo } from 'react'
 import { type AssistDetector, resolveAssistDetector } from './lib/retrain-assist-defaults.js'
 

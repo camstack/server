@@ -1,5 +1,5 @@
 /**
- * Timeline & event types — shared between CamStack app and proxy.
+ * Timeline & event types — shared between Dominevo app and proxy.
  *
  * Names are unified: the proxy's naming convention is canonical.
  * The app re-exports aliases for backward compatibility where needed.

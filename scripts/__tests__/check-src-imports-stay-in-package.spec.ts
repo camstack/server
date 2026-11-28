@@ -30,7 +30,7 @@ describe('escapingImports', () => {
       "import { a } from './a.js'",
       "import { b } from '../b.js'",
       "import pkg from '../../package.json'",
-      "import { t } from '@camstack/types'",
+      "import { t } from '@dominevo/types'",
     ].join('\n')
     expect(escapingImports(FILE, code, PKG)).toEqual([])
   })

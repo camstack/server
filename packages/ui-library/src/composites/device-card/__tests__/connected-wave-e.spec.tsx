@@ -14,7 +14,7 @@ import {
   type NotifierStatus,
   type ScriptRunnerStatus,
   type UpdateStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { plugFixtures } from '../__fixtures__/plug'
@@ -265,7 +265,7 @@ describe('a notifier', () => {
     fireEvent.click(screen.getByTestId('dc-notifier-test'))
     await vi.waitFor(() =>
       expect(hub.notifier.send).toHaveBeenCalledWith(
-        expect.objectContaining({ title: 'CamStack' }),
+        expect.objectContaining({ title: 'Dominevo' }),
       ),
     )
   })

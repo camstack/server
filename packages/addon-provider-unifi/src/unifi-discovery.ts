@@ -4,7 +4,7 @@ import {
   powerMeterCapability,
   presenceCapability,
   workloadCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { UnifiClientSnapshot, UnifiInfraSnapshot } from './unifi-client-contract.js'
 import { hasPoePort } from './unifi-port-state.js'
 import { unifiDeviceTarget } from './unifi-device-kind.js'

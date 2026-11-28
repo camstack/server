@@ -28,7 +28,7 @@
  *   3. the liveness watchdog keeps its cadence even while convergence is stuck.
  */
 
-import type { RecordingConfig } from '@camstack/types'
+import type { RecordingConfig } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { specRoot } from './spec-root.js'
 

@@ -10,7 +10,7 @@
  *     directive's `correlationToken` and the `endpoint` (alexa-errorresponse:
  *     both required).
  */
-import type { AddonContext, IScopedLogger, TokenScope } from '@camstack/types'
+import type { AddonContext, IScopedLogger, TokenScope } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   type DirectiveRouterDeps,

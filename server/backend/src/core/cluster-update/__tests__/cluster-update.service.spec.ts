@@ -5,7 +5,7 @@ import type {
   IScopedLogger,
   ServerPackageStatus,
   ServerUpdateActionResult,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { ClusterUpdateService } from '../cluster-update.service.js'
 import type {
@@ -34,7 +34,7 @@ function logger(): IScopedLogger {
 
 function status(running: string, over: Partial<ServerPackageStatus> = {}): ServerPackageStatus {
   return {
-    packageName: '@camstack/server',
+    packageName: '@dominevo/server',
     runningVersion: running,
     nodeRuntimeVersion: '24.0.0',
     activeVersion: running,
@@ -137,7 +137,7 @@ function world(): World {
     },
     addonUpdates: [
       {
-        name: '@camstack/addon-x',
+        name: '@dominevo/addon-x',
         currentVersion: '1.0.0',
         latestVersion: '1.1.0',
       },
@@ -149,14 +149,14 @@ function world(): World {
     },
     installs: [
       {
-        packageName: '@camstack/addon-x',
+        packageName: '@dominevo/addon-x',
         nodeId: 'hub',
         isHub: true,
         isOnline: true,
         version: '1.0.0',
       },
       {
-        packageName: '@camstack/addon-x',
+        packageName: '@dominevo/addon-x',
         nodeId: 'agent-a',
         isHub: false,
         isOnline: true,
@@ -217,7 +217,7 @@ describe('ClusterUpdateService', () => {
       'apply:hub@2.0.0',
       'apply:agent-a@2.0.0',
       'apply:agent-b@2.0.0',
-      'addon:@camstack/addon-x@1.1.0',
+      'addon:@dominevo/addon-x@1.1.0',
     ])
     expect(job.steps.map((s) => `${s.kind}:${s.nodeId ?? ''}:${s.status}`)).toEqual([
       'backup::ok',
@@ -341,7 +341,7 @@ describe('ClusterUpdateService', () => {
     }
     const job = await run(w)
     expect(job.reason).toBe('addons-not-converged')
-    expect(job.steps.at(-1)?.detail).toContain('agent-a/@camstack/addon-x=1.0.0')
+    expect(job.steps.at(-1)?.detail).toContain('agent-a/@dominevo/addon-x=1.0.0')
   })
 
   it('resumes after the hub restart: verifies the hub then runs the agents', async () => {

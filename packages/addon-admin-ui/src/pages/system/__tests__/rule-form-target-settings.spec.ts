@@ -5,7 +5,7 @@
  * shows only its own fields, and an override the target cannot deliver is
  * never saved.
  */
-import type { Target, TargetKindCaps } from '@camstack/types'
+import type { Target, TargetKindCaps } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { buildRuleInput, emptyRuleForm } from '../notification-rules.helpers'
 import type { DeliveryKindRef } from '../rule-form-delivery'

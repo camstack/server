@@ -1,4 +1,4 @@
-import type { Integration, IntegrationTestConnectionResult } from '@camstack/types'
+import type { Integration, IntegrationTestConnectionResult } from '@dominevo/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { buildIntegrationsProvider } from '../../api/core/cap-providers'
 import { registerLikeTheHub, type SeedCreateInput, seedCreate } from './support/seed-create'

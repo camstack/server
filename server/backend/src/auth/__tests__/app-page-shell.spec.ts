@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { darkColors, defaultTheme, lightColors } from '@camstack/ui-library/theme/tokens'
+import { darkColors, defaultTheme, lightColors } from '@dominevo/ui-library/theme/tokens'
 import { describe, expect, it } from 'vitest'
 import { renderConsentPage } from '../../api/oauth2/consent-page.js'
 import { appConfirmPage, appConfirmRefusalPage, APP_CONFIRM_CSP } from '../app-confirm-page.js'

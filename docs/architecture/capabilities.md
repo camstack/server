@@ -28,7 +28,7 @@ last-verified: 2026-10-04
 # The capability system
 
 A capability is a named, typed contract. It is the **only** way one part of
-CamStack talks to another.
+Dominevo talks to another.
 
 Current inventory: [reference/capabilities.md](../reference/capabilities.md)
 (generated).
@@ -92,7 +92,7 @@ supplies the tRPC primitives and provider resolution to `buildCapRouters` in
 per live cap def. The codegen'd `server/backend/src/api/trpc/generated-cap-routers.ts`
 and `generated-cap-mounts.ts` are the AppRouter **TYPE** source of record only;
 their value is never called. That is why a capability change ships through
-`@camstack/types` + `@camstack/server/system` with no `@camstack/server` rebuild. Do not
+`@dominevo/types` + `@dominevo/server/system` with no `@dominevo/server` rebuild. Do not
 add a capability to the first track.
 
 There is a second reason not to. A hand-written core router has no entry in
@@ -124,10 +124,10 @@ inside an admin-only one, fails the build until the classification is updated.
    not scope/mode-derivable (`server-provided`, `hub-only`, `skip`); a
    `server-provided` capability also needs a factory in `buildServerProviders`.
 6. **Ship it**: a new or changed capability is a framework change. The hub reads
-   `ALL_CAPABILITY_DEFINITIONS` from **`@camstack/server/system`**, not `@camstack/types`
+   `ALL_CAPABILITY_DEFINITIONS` from **`@dominevo/server/system`**, not `@dominevo/types`
    (see the import comment in `server/backend/src/main.ts`), so the carrier in a
-   workspace checkout is `camstack deploy packages/system`. On a deployed hub the
-   framework upload is refused: it ships as a published `@camstack/server` closure
+   workspace checkout is `dominevo deploy packages/system`. On a deployed hub the
+   framework upload is refused: it ships as a published `@dominevo/server` closure
    ([update-and-release.md](update-and-release.md)).
 7. **Spec it** in `server/backend/src/__tests__/cap-routers/`.
 8. **Phrase it** in the cap itself

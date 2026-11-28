@@ -14,9 +14,9 @@
  * videos.
  */
 
-import type { Target } from '@camstack/types'
-import { DeviceType } from '@camstack/types'
-import type { DataColumn } from '@camstack/ui-library'
+import type { Target } from '@dominevo/types'
+import { DeviceType } from '@dominevo/types'
+import type { DataColumn } from '@dominevo/ui-library'
 import {
   Badge,
   Button,
@@ -28,7 +28,7 @@ import {
   Switch,
   useDeviceManagerListAll,
   useSystem,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { Film, FlaskConical, Plus } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'

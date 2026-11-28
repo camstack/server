@@ -2,7 +2,7 @@ import {
   buildNotificationTargetInstances,
   listNotificationTargets,
   NotificationTargetStore,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { makeRecordsAccessForOwner } from '../../sqlite-storage/__tests__/support/records-world.js'
 import { groupRecordKinds, groupTargetKind } from '../group-descriptor.js'

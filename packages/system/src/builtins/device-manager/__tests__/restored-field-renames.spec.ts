@@ -5,7 +5,7 @@
  * and a panel that demanded a PIN still demands one after the upgrade.
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { RuntimeStatePolicy } from '@camstack/types'
+import type { RuntimeStatePolicy } from '@dominevo/types'
 import { loadRuntimeState } from '../device-meta-actions.js'
 import type { ProviderContext } from '../device-provider-context.js'
 import { restoredPart } from '../runtime-state-persist-gate.js'

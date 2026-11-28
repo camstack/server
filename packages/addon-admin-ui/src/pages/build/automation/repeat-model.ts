@@ -9,7 +9,7 @@ import {
   REPEAT_COUNT_MAX,
   REPEAT_ITERATIONS_MAX,
   WAIT_MAX_SECONDS,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export type LoopBy = AutomationRepeatLoop['by']
 

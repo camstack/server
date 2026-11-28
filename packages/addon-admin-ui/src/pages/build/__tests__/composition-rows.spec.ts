@@ -4,7 +4,7 @@ import {
   compileHelper,
   type CoreBlock,
   type HelperSpec,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   buildCompositionRows,

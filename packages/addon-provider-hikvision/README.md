@@ -1,6 +1,6 @@
-# @camstack/addon-provider-hikvision
+# @dominevo/addon-provider-hikvision
 
-Hikvision ISAPI camera/NVR provider for CamStack. Speaks HTTP(S) ISAPI with HTTP Digest auth and hands RTSP URLs to the camstack stream-broker for video pull (no in-process video work).
+Hikvision ISAPI camera/NVR provider for Dominevo. Speaks HTTP(S) ISAPI with HTTP Digest auth and hands RTSP URLs to the camstack stream-broker for video pull (no in-process video work).
 
 ## v0.1 surface
 
@@ -38,7 +38,7 @@ The probe runs once per camera lifetime (after the first successful `publishToBr
 
 <!-- readme:generated:start (derived from the manifest; edit outside this block) -->
 
-Package `@camstack/addon-provider-hikvision` on npm.
+Package `@dominevo/addon-provider-hikvision` on npm.
 
 ## What it provides
 
@@ -71,13 +71,13 @@ Edit these from System, Addons, this addon, Settings (a device's own settings ar
 
 - Placement: hub-only.
 - Runtime dependencies installed with the addon: `onvif`, `werift`.
-- A CamStack hub. An agent is used only where the placement above allows it.
+- A Dominevo hub. An agent is used only where the placement above allows it.
 
 ## Documentation
 
-- [docs/addons/addon-provider-hikvision.md](https://github.com/camstack/server/blob/main/docs/addons/addon-provider-hikvision.md)
-- [docs/architecture/device-model.md](https://github.com/camstack/server/blob/main/docs/architecture/device-model.md)
-- [packages/addon-provider-hikvision/AGENTS.md](https://github.com/camstack/server/blob/main/packages/addon-provider-hikvision/AGENTS.md)
+- [docs/addons/addon-provider-hikvision.md](https://github.com/dominevo/server/blob/main/docs/addons/addon-provider-hikvision.md)
+- [docs/architecture/device-model.md](https://github.com/dominevo/server/blob/main/docs/architecture/device-model.md)
+- [packages/addon-provider-hikvision/AGENTS.md](https://github.com/dominevo/server/blob/main/packages/addon-provider-hikvision/AGENTS.md)
 
 See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
 

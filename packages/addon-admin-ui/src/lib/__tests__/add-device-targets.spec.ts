@@ -1,4 +1,4 @@
-import { integrationPageHref } from '@camstack/types'
+import { integrationPageHref } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { addDeviceUrl, computeAddDeviceTargets, setupIntegrationUrl } from '../add-device-targets'
 

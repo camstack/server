@@ -2,7 +2,7 @@ import type {
   FrameHandle,
   IScopedLogger,
   PipelineAnalyticsFaceGalleryChangedPayload,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { CopyFaceCropPreviewInput } from './copy-face-crop-preview.js'
 import type { LiveHierarchyCapture } from './ensure-track-hierarchy.js'
 import {

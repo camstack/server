@@ -24,7 +24,7 @@ import {
   StaleStampError,
   type IScopedLogger,
   type RecordKindHandle,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { KeyedSerialiser } from '../shared/serialise-per-key.js'
 import { type ActionLinksRowBody, type ActionRowBody, ActionRowBodySchema } from './record-kinds.js'
 

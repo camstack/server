@@ -10,7 +10,7 @@
  * store judges those as moving and logs nothing for them, so this line is the
  * only one that explains why a brief kept track left its cell untouched.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import {
   netDisplacementPx,
   SHORT_MOTIONLESS_MIN_LIFE_MS,

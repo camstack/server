@@ -3,8 +3,8 @@
  * catalog's `memberDeviceTypes` and `accept` caps. An incompatible device is
  * not rendered at all (not greyed out, not folded into a "not compatible" list).
  */
-import { groupTemplate, sourcePickForTemplate } from '@camstack/types'
-import type { HelperMember } from '@camstack/types'
+import { groupTemplate, sourcePickForTemplate } from '@dominevo/types'
+import type { HelperMember } from '@dominevo/types'
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { useState } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -49,8 +49,8 @@ const pickRequest = sourcePickForTemplate(template)
 
 const wireableByDevice = new Map<number, unknown>()
 
-vi.mock('@camstack/ui-library', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@camstack/ui-library')>()),
+vi.mock('@dominevo/ui-library', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@dominevo/ui-library')>()),
   useDeviceManagerListAll: () => ({ status: 'success', data: fleet }),
   useDeviceManagerGetWireableFields: (input: { deviceId: number }) =>
     wireableByDevice.has(input.deviceId)

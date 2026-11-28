@@ -117,7 +117,7 @@ Classification latency is now bounded by the camera count × inference time
 instead of being zero-or-dropped. A window can be emitted after the camera was
 detached (it was already queued). Anything that reads audio rows or frames and
 wants "was this heard?" must read `classifyOutcome`, not the absence of labels.
-`@camstack/types` changed (new schema, required field on
+`@dominevo/types` changed (new schema, required field on
 `AudioAnalysisResult`), so it must be published with the addons.
 
 ## Enforcement

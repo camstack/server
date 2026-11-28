@@ -22,7 +22,7 @@ import {
   resolveSecretMarkers,
   secretTreeFromPaths,
   transformSecretWrite,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export interface DeviceConfigSecretDeps {
   readonly ctx: AddonContext

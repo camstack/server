@@ -1,4 +1,4 @@
-import type { EventSource, SystemEvent, EventFilter, IEventBus } from '@camstack/types'
+import type { EventSource, SystemEvent, EventFilter, IEventBus } from '@dominevo/types'
 
 export type { EventSource, SystemEvent, EventFilter }
 

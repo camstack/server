@@ -9,7 +9,7 @@
  * config (`enabled: false, bands: []`).
  */
 import { describe, expect, it, vi } from 'vitest'
-import type { RecordingConfig } from '@camstack/types'
+import type { RecordingConfig } from '@dominevo/types'
 import {
   DEVICE_DECISION_SEED_CONFIG,
   seedDeviceDecisionRecording,

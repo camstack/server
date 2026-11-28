@@ -13,7 +13,7 @@ import type {
   LoginProxyResponseView,
   LoginProxyUpstream,
   LoginProxyVerdict,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describeUrlParams, formatUrlParams } from '../alexa-url-params.js'
 import { alexaRegionOptions } from '../alexa-region-options.js'
 import { mergeSetCookies, sanitizeAmazonCookie } from './cookies.js'

@@ -10,7 +10,7 @@ import {
   FACE_RESCORE_SECTION_ID,
   pickFaceRescoreIntervalMinutes,
   readFaceRescoreIntervalMinutes,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { buildGlobalSettingsSections } from '../settings-ui-schemas.js'
 
 describe('face rescore interval setting', () => {

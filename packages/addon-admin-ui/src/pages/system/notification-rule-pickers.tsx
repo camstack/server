@@ -28,7 +28,7 @@ import {
   Button,
   Checkbox,
   Input,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useQueries } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 

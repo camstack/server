@@ -43,7 +43,7 @@
  * walk — D148: never cancel from the ledger alone.
  */
 
-import type { IScopedLogger, SettingsStoreClient } from '@camstack/types'
+import type { IScopedLogger, SettingsStoreClient } from '@dominevo/types'
 import {
   declareDurableLegacyCollection,
   durableLegacyKind,

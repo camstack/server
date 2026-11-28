@@ -13,8 +13,8 @@ import type {
   DeviceIdentifiers,
   IScopedLogger,
   RawDeviceIdentifiers,
-} from '@camstack/types'
-import { IdentityCandidatesSchema, normaliseIdentifiers } from '@camstack/types'
+} from '@dominevo/types'
+import { IdentityCandidatesSchema, normaliseIdentifiers } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { DeviceIdentityIndex } from '../device-identity-index.js'
 import { DeviceRowStore, deviceRowBackendOf } from '../device-row-store.js'

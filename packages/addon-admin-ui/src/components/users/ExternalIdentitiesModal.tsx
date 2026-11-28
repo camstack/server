@@ -18,7 +18,7 @@ import {
   useConfirm,
   useUserManagementListExternalIdentities,
   useUserManagementUnlinkExternalIdentity,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Link2, Loader2, Unlink } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 

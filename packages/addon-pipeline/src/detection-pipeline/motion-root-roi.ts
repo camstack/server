@@ -40,7 +40,7 @@ import type {
   PipelineExecutionPlane,
   RootInputSource,
   RootInputSourceReason,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { ExecutableStep } from './pipeline/tree-builder.js'
 
 /**

@@ -62,10 +62,10 @@ export type FrameSource = AsyncGenerator<MediaFrame, void, unknown>
 export type FrameSourceFactory = () => FrameSource
 
 /**
- * Logger type — delegates to IScopedLogger from @camstack/types.
+ * Logger type — delegates to IScopedLogger from @dominevo/types.
  * Kept as a type alias for backward compatibility within the package.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 export type Logger = IScopedLogger
 

@@ -26,7 +26,7 @@
  * addon answers it with a full re-announce, bounded by
  * `ReachabilityReconciler`.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describePushFailure, type PushFailure, PushHttpError } from './push-failure.js'
 import type { HaCmps, HaDeviceBlock, PushMessage, StateUpdateMessage } from './types.js'
 
@@ -326,7 +326,7 @@ export class PushClient {
         failure = {
           kind: 'other',
           permanent: false,
-          text: 'HTTP 404 — Home Assistant has not registered the CamStack endpoint (yet); retrying',
+          text: 'HTTP 404 — Home Assistant has not registered the Dominevo endpoint (yet); retrying',
         }
       }
     } else {

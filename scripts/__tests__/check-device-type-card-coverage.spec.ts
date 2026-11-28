@@ -1,4 +1,4 @@
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import { CAP_NAMES } from '../../packages/types/src/generated/addon-cap-facts.js'
 import { describe, expect, it } from 'vitest'
 import { connectedCardKindOf } from '../../packages/ui-library/src/composites/device-card/connected/connected-card-kind.js'

@@ -22,7 +22,7 @@ import {
   isSecretFieldView,
   trainingProviderCapability,
   type SecretFieldView,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { randomUUID } from 'node:crypto'
 import { z } from 'zod'
 import {

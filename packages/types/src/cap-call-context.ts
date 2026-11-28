@@ -98,7 +98,7 @@ export function commandOrigin(
   claim: CommandOriginClaim,
   base?: { readonly context: Readonly<Record<string, string | CommandOriginClaim>> },
 ): CommandOriginRequestOptions {
-  return { context: { ...(base?.context ?? {}), [CAP_COMMAND_ORIGIN_CONTEXT_KEY]: claim } }
+  return { context: { ...base?.context, [CAP_COMMAND_ORIGIN_CONTEXT_KEY]: claim } }
 }
 
 /**
@@ -107,6 +107,8 @@ export function commandOrigin(
  */
 export function readCommandOrigin(context: unknown): CommandOriginClaim | undefined {
   if (context === null || typeof context !== 'object') return undefined
-  const parsed = CommandOriginClaimSchema.safeParse(Reflect.get(context, CAP_COMMAND_ORIGIN_CONTEXT_KEY))
+  const parsed = CommandOriginClaimSchema.safeParse(
+    Reflect.get(context, CAP_COMMAND_ORIGIN_CONTEXT_KEY),
+  )
   return parsed.success ? parsed.data : undefined
 }

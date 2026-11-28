@@ -14,7 +14,7 @@ import {
   type IScopedLogger,
   type MotionSource,
   type MotionTimelineSample,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   decideMotionSignal,
   motionEpisodeDurationMs,

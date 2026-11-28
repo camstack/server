@@ -11,7 +11,7 @@ import {
   resolveMethodAuth,
   type VehicleRefreshResult,
   vehicleCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { buildCapRouterForTest, invokeProcedure, makeCtx } from './harness.js'
 

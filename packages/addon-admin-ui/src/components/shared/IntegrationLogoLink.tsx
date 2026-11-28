@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { integrationDetailUrl } from '../../lib/integration-instance-selection'
 import { ProviderIcon } from './ProviderIcon'
-import { Button } from '@camstack/ui-library'
+import { Button } from '@dominevo/ui-library'
 
 /**
  * The integration logo on a device page, as the LINK it reads as. Clicking

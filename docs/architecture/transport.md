@@ -596,8 +596,8 @@ a secret. Nothing in the mesh uses UDP 4445 any more — close it in firewalls.
 
 ## Clients find a hub over mDNS, not the mesh channel (D838)
 
-D826 turned the mesh UDP announcement off on every hub, so `camstack login` and
-`camstack discover` no longer listen to it. The `local-network` builtin
+D826 turned the mesh UDP announcement off on every hub, so `dominevo login` and
+`dominevo discover` no longer listen to it. The `local-network` builtin
 advertises one `_camstack._tcp` mDNS service for the hub's HTTPS endpoint (what it
 carries and which address it names: [network](network.md#6-discovery-over-mdns-d838)).
 `hubId` is a public random id (`hub-<16 hex>`, `<dataDir>/tls/hub-identity.json`,
@@ -612,7 +612,7 @@ with each source and an "Enter an address…" entry). Agents never advertise it.
 **Container contract:** mDNS needs UDP 5353 multicast to reach the LAN, so it
 works with a dedicated container IP (Unraid br0 / macvlan) or host networking
 and NOT in Docker bridge mode. Without it the hub is simply not announced:
-`camstack login --server https://<host>:<port>` still works, and a hub the
+`dominevo login --server https://<host>:<port>` still works, and a hub the
 machine already knows is still offered. The `mdnsAdvertise` setting on the
 local-network addon turns the announcement off.
 
@@ -621,7 +621,7 @@ The agent's local UI uses the same browse (D839): `GET /api/agent/hubs-found`
 hubs plus the configured hub address, each probed on https. The hub address on
 that page is read-only; a paired agent that lost it adopts one only by the
 pinned-CA check above, and an operator re-pairs from the hub's Nodes page. The
-browse lives once in `@camstack/develop/hub-discovery`; the CLI imports the same
+browse lives once in `@dominevo/develop/hub-discovery`; the CLI imports the same
 module. An agent joins by being paired from that hub (D857). An agent updates an addon
 only by asking the hub to bring the package to the hub's version (D840): the
 hub's installed version is what each reconnect restores.
@@ -676,7 +676,7 @@ cross-node mesh, never UDS.
 It now holds pending chunks in a list and concatenates once per completed
 packet — 0.15 ms for that same 4 MiB / 64 KiB case, and FLAT across chunk
 sizes. The fix lives in `patches/moleculer+0.15.0.patch` because `moleculer` is
-**bundled** into `@camstack/server/system/dist/index.js` at build time, so the patch
+**bundled** into `@dominevo/server/system/dist/index.js` at build time, so the patch
 ships inside the published closure; it is not a runtime dependency on the hub
 and there is no `patches/` directory there. A new transporter was rejected —
 there are exactly two transports and a 25-line accumulator is not a reason to
@@ -685,7 +685,7 @@ add a third.
 Two things about that sentence cost a session
 ([D478](../decisions/adr-0478-a-patch-reaches-production-only-if-it-is-bundled-or-applied-in-the-closure.md)).
 It is TRUE — re-verified 2026-09-12 in the published
-`@camstack/server/system@1.2.224` tarball and in the live closure on hub and agent —
+`@dominevo/server/system@1.2.224` tarball and in the live closure on hub and agent —
 but the closure also carries an unpatched `node_modules/moleculer`, which one
 file requires for `Errors` alone and which frames nothing, so grepping THAT
 copy reads as a missing patch. And the marker has to be

@@ -20,7 +20,7 @@
  * `roleDisplayDefaults`, `locations` and `deviceBindings`. That row set is now
  * under a kilobyte.
  */
-import type { AddonContext, IDeviceRegistry } from '@camstack/types'
+import type { AddonContext, IDeviceRegistry } from '@dominevo/types'
 import type { AddonStore, PersistedDeviceMeta } from './device-meta-types.js'
 import { decodeAddonStore } from './device-meta-types.js'
 import type { DeviceRow, DeviceRowStore } from './device-row-store.js'

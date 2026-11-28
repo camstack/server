@@ -25,7 +25,7 @@
  * works in subtrees that haven't seeded the context.
  */
 import { useState } from 'react'
-import { DeviceIdentifiersSchema, type DeviceIdentifiers } from '@camstack/types'
+import { DeviceIdentifiersSchema, type DeviceIdentifiers } from '@dominevo/types'
 import {
   useDeviceId,
   useDeviceManagerGetBindings,
@@ -33,7 +33,7 @@ import {
   useDeviceManagerListIdentityLinks,
   useDeviceSnapshot,
   Button,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 
 import { CapabilityBadges } from '../../shared/CapabilityBadges'
 import { ProviderIcon } from '../../shared/ProviderIcon'

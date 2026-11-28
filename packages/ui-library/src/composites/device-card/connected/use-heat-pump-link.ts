@@ -4,7 +4,7 @@
  * `heat-pump-status` slice and the day's counters from ITS history. The two
  * meters are never mixed (D224): a linked system reads only the linked device.
  */
-import type { DeviceHistoryQueryManyItem } from '@camstack/types'
+import type { DeviceHistoryQueryManyItem } from '@dominevo/types'
 import { useMemo } from 'react'
 import { useTrpcClient } from '../../../contexts/system-context'
 import { useCoreBlocksGetCapLinks } from '../../../generated/system-hooks'

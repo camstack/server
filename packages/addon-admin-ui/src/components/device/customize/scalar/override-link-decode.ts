@@ -14,7 +14,7 @@ import type {
   CompositionFieldsFeature,
   CustomizeCatalogTarget,
   ScalarDecoded,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export function decodeLooseSourceLink(
   feature: CompositionFieldsFeature,

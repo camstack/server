@@ -6,7 +6,7 @@
  * "fix", so each test names the measured cost of the alternative.
  */
 
-import type { RtspEntryLike } from '@camstack/types'
+import type { RtspEntryLike } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 
 import { MAX_RECORDING_HEIGHT, pickRecordingSource } from '../recording-source.js'

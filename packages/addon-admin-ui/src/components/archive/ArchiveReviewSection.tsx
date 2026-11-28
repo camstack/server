@@ -44,8 +44,8 @@ import {
   VodPlaybackProvider,
   ZoneEditingProvider,
   type DayWindow,
-} from '@camstack/ui-library'
-import { RECORDING_SOURCE_CAMSTACK_ADDON, type CamProfile, type Clip } from '@camstack/types'
+} from '@dominevo/ui-library'
+import { RECORDING_SOURCE_CAMSTACK_ADDON, type CamProfile, type Clip } from '@dominevo/types'
 import { useCallback, useMemo, useState, type ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'

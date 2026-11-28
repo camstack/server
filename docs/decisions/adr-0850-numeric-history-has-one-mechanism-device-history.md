@@ -51,7 +51,7 @@ per-device opt-out owned by device-history; global retention raw 7 days, 5m
 - `pipelineAnalytics.readLongTermSeries` survives as a read of device-history, so
   the viewer does not change with the hub.
 - A producer that samples faster than once per 10 s per series must aggregate in
-  its own process (the pure bucket accumulator in `@camstack/types`); `record`
+  its own process (the pure bucket accumulator in `@dominevo/types`); `record`
   refuses a sustained higher rate.
 - Audio LEVEL-only rows become a series; the live `audio-metrics` slice and the
   notification level feed are unchanged. Level-only entries leave the event

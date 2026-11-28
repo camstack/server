@@ -5,8 +5,8 @@
  * gone with it.
  */
 import { z } from 'zod'
-import type { PipelineStepInputOutput } from '@camstack/types/addon'
-import { PipelineStepInputSchema } from '@camstack/types/addon'
+import type { PipelineStepInputOutput } from '@dominevo/types/addon'
+import { PipelineStepInputSchema } from '@dominevo/types/addon'
 
 // Re-export the underlying type so this file fully owns the public
 // surface of the schemas — keeps tsup's DTS portable.

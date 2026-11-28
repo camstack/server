@@ -2,7 +2,7 @@
  * A daily window as the operator edits it: the whole day, two times (a clock
  * time or a sun event with an offset each; the range may cross midnight, and
  * the input says so), or the Day / Night preset, plus the weekdays. The value
- * is a `TimeWindow` from `@camstack/types` and every change emits one the
+ * is a `TimeWindow` from `@dominevo/types` and every change emits one the
  * evaluator can read; what `TimeWindowSchema` refuses (an empty day list, an
  * offset past twelve hours) is emitted anyway and shown inline, so the caller
  * decides what to do with a draft that is not yet valid.
@@ -10,7 +10,7 @@
  * Sun times cannot be judged on a site without a location: `siteHasNoLocation`
  * disables the sun choices (and the Day / Night presets) with the reason.
  */
-import { TimeWindowSchema, type TimeWindow, type WeekdayKey } from '@camstack/types'
+import { TimeWindowSchema, type TimeWindow, type WeekdayKey } from '@dominevo/types'
 import { type ReactNode } from 'react'
 import { useUiText } from '../../contexts/ui-text.js'
 import { Button } from '../../primitives/button.js'

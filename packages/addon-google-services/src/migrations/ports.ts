@@ -3,7 +3,7 @@ import {
   type CalendarRecordPorts,
   type RecordKindHandle,
   type StoredKeyRead,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { GoogleBrokerStore } from '../google-broker-store.js'
 import { GoogleBrokerEntrySchema } from '../google-types.js'
 import type { CalendarIdsPorts } from './calendar-ids-to-brokers.js'

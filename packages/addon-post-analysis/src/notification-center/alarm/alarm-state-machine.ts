@@ -24,7 +24,7 @@ import {
   type AlarmArmMode,
   type AlarmState,
   NC_ALARM_DEFAULT_TRIGGERED_DURATION_SEC,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /**
  * What the panel does when a bounded `triggered` window ends.

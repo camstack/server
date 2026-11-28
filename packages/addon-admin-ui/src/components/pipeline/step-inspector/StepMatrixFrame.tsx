@@ -38,7 +38,7 @@ import {
   useIsMobile,
   useSearchFieldHotkey,
   Input,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useStepUrlSelection } from '../../../hooks/useStepUrlSelection'
 import { filterStepTree, flattenStepTree, type InspectorAccelerator } from './step-inspector-model'
 import { useTranslation } from 'react-i18next'

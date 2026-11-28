@@ -34,7 +34,7 @@
  * independently accumulated expectation over the same fixture.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { AnalyticsQueryFacade } from '../analytics-query-facade.js'
 import {

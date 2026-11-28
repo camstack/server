@@ -16,7 +16,7 @@ applies-to:
 
 ## Context
 
-Two decode-worker children were drawing 319% of the 522% of CPU CamStack took on
+Two decode-worker children were drawing 319% of the 522% of CPU Dominevo took on
 this host — 61% of everything — against a router under one core. In one hour:
 443 sessions, median 14 s, 277 cold forks.
 
@@ -46,11 +46,11 @@ on the broker side needed correcting.
 The unattributed cost was in the child's own boot. `decode-worker-child.ts` is
 its own vite build entry, but the bundler puts any module it SHARES with the
 addon's main entry into a common chunk. Two helpers — `native-lease-config.ts`
-and `lazy-sharp.ts` — value-imported `@camstack/types` for exactly four symbols
+and `lazy-sharp.ts` — value-imported `@dominevo/types` for exactly four symbols
 (`NativeLeaseSettingsSchema`, `NativeLeaseAdmissionSchema`,
 `DEFAULT_NATIVE_LEASE_SETTINGS`, and rollup's `__toESM` interop helper), and
 that dragged the 1.5 MB shared chunk — every capability's Zod schema, the
-detection model tables, the whole `@camstack/types` index — into the child.
+detection model tables, the whole `@dominevo/types` index — into the child.
 Measured on the hub, three runs each:
 
 |                                | before        | after       |
@@ -116,7 +116,7 @@ nothing else. The number to beat is 92 MB per idle worker.
 ## What it did, live
 
 Deployed to all three nodes (hub, agent-a, MacMiniAgent) on 2026-09-11
-as `@camstack/addon-pipeline@1.2.219`. `forkToFrameMs` from the hub's docker
+as `@dominevo/addon-pipeline@1.2.219`. `forkToFrameMs` from the hub's docker
 log, every node's sessions:
 
 | window                           | n   | p50     | p90      | p99      | mean    |
@@ -153,7 +153,7 @@ Container CPU sampled six times over the after window: 161-243%, against the
 `scripts/check-decode-worker-child-lean.ts`, wired into
 `.github/workflows/ci.yml`: it walks the relative-import graph from the child
 entry and fails on any non-type import of a package. Verified by disarming — a
-single value import of `@camstack/types` in `native-lease-knobs.ts` makes it
+single value import of `@dominevo/types` in `native-lease-knobs.ts` makes it
 exit 1 and name the line.
 
 Tests: `session-lease-on-start.spec.ts` (the knobs reach the child on `start`,

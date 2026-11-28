@@ -17,7 +17,7 @@
  * ladder below derives its tail from it and cannot hold a second opinion.
  */
 
-import type { MediaFile } from '@camstack/types'
+import type { MediaFile } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { makeTestMediaFile } from '../../__tests__/support/media-file.js'
 import { NcDispatcher, type NcSendInput, type NcTargetRef } from '../dispatcher.js'

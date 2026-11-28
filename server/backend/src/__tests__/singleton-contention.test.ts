@@ -18,11 +18,11 @@
 // contention scenario.
 //
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { CapabilityRegistry } from '@camstack/server/system'
-import type { IScopedLogger, CapabilityDeclaration } from '@camstack/types'
+import { CapabilityRegistry } from '@dominevo/server/system'
+import type { IScopedLogger, CapabilityDeclaration } from '@dominevo/types'
 import { MockAnalysisAddonA } from './fixtures/mock-analysis-addon-a'
 import { MockAnalysisAddonB } from './fixtures/mock-analysis-addon-b'
-import type { ICamstackAddon } from '@camstack/types'
+import type { ICamstackAddon } from '@dominevo/types'
 
 // --- Helpers ----------------------------------------------------------------
 

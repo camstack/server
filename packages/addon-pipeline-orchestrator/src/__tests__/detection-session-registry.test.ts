@@ -1,4 +1,4 @@
-import { CAMERA_TRIGGER } from '@camstack/types'
+import { CAMERA_TRIGGER } from '@dominevo/types'
 import { describe, it, expect, vi } from 'vitest'
 import { DetectionSessionRegistry } from '../detection-session-registry.js'
 

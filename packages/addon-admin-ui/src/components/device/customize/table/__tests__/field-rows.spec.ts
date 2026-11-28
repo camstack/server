@@ -1,5 +1,5 @@
-import type { CompositionFieldsCard, CompositionFieldsFeature } from '@camstack/types'
-import { compositionSourceKey } from '@camstack/types'
+import type { CompositionFieldsCard, CompositionFieldsFeature } from '@dominevo/types'
+import { compositionSourceKey } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   type FieldRow,

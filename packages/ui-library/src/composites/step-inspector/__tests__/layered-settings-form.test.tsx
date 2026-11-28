@@ -9,8 +9,8 @@
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, within } from '@testing-library/react'
-import type { ConfigField, PipelineAddonSchema } from '@camstack/types'
-import { modelBindingKey } from '@camstack/types'
+import type { ConfigField, PipelineAddonSchema } from '@dominevo/types'
+import { modelBindingKey } from '@dominevo/types'
 import { LayeredSettingsForm, type LayeredSettingsFormProps } from '../layered-settings-form'
 
 const V9 = 'yolov9m-320-int8'

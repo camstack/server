@@ -1,9 +1,9 @@
 // Cap-derived runtime VALUE symbols. With `bundleTypesMainEntry` (see
-// vite.config.ts), the bare `@camstack/types` entry is inlined into system's
+// vite.config.ts), the bare `@dominevo/types` entry is inlined into system's
 // dist, so these resolve to system's OWN bundled copy — one authoritative
-// instance. The hub imports them from `@camstack/server/system` so a
-// `camstack deploy packages/system` refreshes the capability surface with no
-// server image, and `@camstack/types` is never deployed to the hub.
+// instance. The hub imports them from `@dominevo/server/system` so a
+// `dominevo deploy packages/system` refreshes the capability surface with no
+// server image, and `@dominevo/types` is never deployed to the hub.
 export {
   ALL_CAPABILITY_DEFINITIONS,
   addonSettingsCapability,
@@ -13,13 +13,13 @@ export {
   isArrayOutputSchema,
   isCollectionArrayMethod,
   METHOD_ACCESS_MAP,
-} from '@camstack/types'
-export type { PlatformInfo } from '@camstack/types/node'
-// Infrastructure utilities live in `@camstack/types/node` since 2026-05
-// (lifted from `@camstack/server/system` to break the kernel ↔ core dependency
+} from '@dominevo/types'
+export type { PlatformInfo } from '@dominevo/types/node'
+// Infrastructure utilities live in `@dominevo/types/node` since 2026-05
+// (lifted from `@dominevo/server/system` to break the kernel ↔ core dependency
 // cycle, then moved off the root types entry so browser bundlers don't
 // traverse `node:fs`). Re-exported here for backward compatibility with
-// existing consumers (`@camstack/server`, addon dynamic imports).
+// existing consumers (`@dominevo/server`, addon dynamic imports).
 export {
   buildBinaryPath,
   downloadBinary,
@@ -33,7 +33,7 @@ export {
   installPythonPackages,
   installPythonRequirements,
   PYTHON_VERSION,
-} from '@camstack/types/node'
+} from '@dominevo/types/node'
 export type { DirectCallerOptions } from './addon/addon-api-factory.js'
 // Addon API Factory
 export { AddonApiFactory } from './addon/addon-api-factory.js'
@@ -481,8 +481,8 @@ export { PipelineValidator } from './pipeline/pipeline-validator.js'
 export type { PidStats } from './process/resource-monitor.js'
 // Process resource monitoring (kept — used by native-metrics and addon-registry)
 export { getPidStats, getSinglePidStats } from './process/resource-monitor.js'
-// AddonDepsManager moved to @camstack/server/system (was in @camstack/kernel) so addons can consume it via
-// `ctx.deps` without importing @camstack/server/system directly (the lint rule
+// AddonDepsManager moved to @dominevo/server/system (was in @dominevo/kernel) so addons can consume it via
+// `ctx.deps` without importing @dominevo/server/system directly (the lint rule
 // `no-restricted-imports` blocks that boundary).
 export { PythonEnvManager } from './python/python-env-manager.js'
 export type {
@@ -525,7 +525,7 @@ export type {
 } from './builtins/local-network/hub-mdns.js'
 
 // Platform scoring lives in `./builtins/platform-probe/` (promoted from
-// the standalone @camstack/addon-platform-probe-native package in Phase
+// the standalone @dominevo/addon-platform-probe-native package in Phase
 // B of the bundles refactor). Exposed as the per-node `platform-probe`
 // capability — inference addons consume `ctx.api.platformProbe.*`.
 
@@ -598,10 +598,10 @@ export {
   resolveNpmInvocation,
   runNpm,
 } from './kernel/deps/npm-command.js'
-// Kernel surface — absorbed 2026-06-22 (was @camstack/kernel). The kernel is the
+// Kernel surface — absorbed 2026-06-22 (was @dominevo/kernel). The kernel is the
 // addon dispatcher (loader, capability registry, config manager, restart
-// coordinator, transport). It now ships inside @camstack/server/system; consumers import
-// these from '@camstack/server/system'.
+// coordinator, transport). It now ships inside @dominevo/server/system; consumers import
+// these from '@dominevo/server/system'.
 export * from './kernel/index.js'
 
 /** The token a CHILD uses to say "this method is declared optional and this

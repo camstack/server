@@ -107,7 +107,7 @@ faces, per identity.
 
 - `scripts/check-cluster-model-scope.ts` (wired into CI) fails the build when the
   catalog's `modelScope: 'cluster'` declarations and the
-  `CLUSTER_MODEL_SCOPED_STEPS` registry in `@camstack/types` disagree — on
+  `CLUSTER_MODEL_SCOPED_STEPS` registry in `@dominevo/types` disagree — on
   membership, on the default, or on the option list, in BOTH directions. The
   registry exists because the orchestrator, post-analysis and admin-ui all need
   the set and may not import an addon; a hand-copied list that stops matching is

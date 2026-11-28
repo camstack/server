@@ -16,7 +16,7 @@
  * React shell around it.
  */
 
-import type { Target, TargetKind, TestResult } from '@camstack/types'
+import type { Target, TargetKind, TestResult } from '@dominevo/types'
 import {
   Badge,
   Button,
@@ -33,7 +33,7 @@ import {
   Textarea,
   Select,
   DurationInput,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useMutation } from '@tanstack/react-query'
 import { AlertCircle, CheckCircle, Loader2, Send } from 'lucide-react'
 import { useMemo, useState } from 'react'

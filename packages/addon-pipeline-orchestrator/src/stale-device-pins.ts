@@ -4,7 +4,7 @@
  * (`absent`). The session path ignores such a pin (said once); the Load
  * balancing tab lists it with a one-click clear. Never cleared here. Pure.
  */
-import type { StaleDevicePin } from '@camstack/types'
+import type { StaleDevicePin } from '@dominevo/types'
 
 export interface PinnedCamera {
   readonly deviceId: number

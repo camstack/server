@@ -9,7 +9,7 @@
  *
  * Each case composes the real chain: eligibility → election → attach resolve.
  */
-import type { InferenceDeviceDescriptor } from '@camstack/types'
+import type { InferenceDeviceDescriptor } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { resolveAttachPipeline, resolveAttachPipelineIfCatalogCached } from '../attach-pipeline.js'
 import type { AttachPipelineStore } from '../attach-pipeline.js'

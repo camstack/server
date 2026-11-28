@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import type { ICamstackAddon, AddonDeclaration, AddonContext } from '@camstack/types'
+import type { ICamstackAddon, AddonDeclaration, AddonContext } from '@dominevo/types'
 import { AddonLoader } from '../src/kernel/addon-loader'
 import { AddonEngineManager } from '../src/kernel/addon-engine-manager'
 

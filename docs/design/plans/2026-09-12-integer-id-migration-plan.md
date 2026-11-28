@@ -111,7 +111,7 @@ await this.captureMotionMarkerStill(deviceId, ev.id, ...)  // builds a media key
 A placeholder id is not enough: it would end up on the bus and inside the media keys. So
 `settingsStore.insert` / `dataStoreProvider.insert` must return the rowid
 (`better-sqlite3` already exposes it as `lastInsertRowid`) — which is a **capability
-signature**: codegen, and live only inside a published `@camstack/server`
+signature**: codegen, and live only inside a published `@dominevo/server`
 closure (D16).
 
 **Consequence for the order.** The migration is not "change a column type":

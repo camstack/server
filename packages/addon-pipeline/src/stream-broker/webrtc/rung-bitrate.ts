@@ -8,7 +8,7 @@
  * measured nothing — an unknown rate must never read as 0 kbps, which would
  * make every estimate look sufficient (D393).
  */
-import type { BrokerStats } from '@camstack/types'
+import type { BrokerStats } from '@dominevo/types'
 
 /** The slice of `BrokerStats` the estimate reads. */
 export type RungStats = Pick<BrokerStats, 'status' | 'bitrateKbps' | 'totalBytes' | 'uptimeMs'>

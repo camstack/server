@@ -1,7 +1,7 @@
 ---
 title: Phase 4 — a block declares a device — what was proven live, the blocker that stops it shipping, and the Phase 5 shape decision
 date: 2026-08-09
-status: Phase 4 PROVEN end-to-end on the live hub (device 1836, composed from two real sensors through the expression engine, surviving a restart by adoption). BOTH halves of the ownership fix are now built and tested — the contract half (`DeclaredDevicesSpec.integrationId`) and the host half (`core-blocks` owns one shared integration; `createIntegration` refuses a principal the reads would hide; a filtered-out read logs that it hid something) — see [D97](../decisions/adr-0097.md). Nothing is LIVE: it ships only in a `@camstack/server` closure. `int_0021` / `int_0022` remain, deliberately (§2). Phase 5's open question is decided: the shape is DERIVED from the registered caps, neither a code marker nor a record field.
+status: Phase 4 PROVEN end-to-end on the live hub (device 1836, composed from two real sensors through the expression engine, surviving a restart by adoption). BOTH halves of the ownership fix are now built and tested — the contract half (`DeclaredDevicesSpec.integrationId`) and the host half (`core-blocks` owns one shared integration; `createIntegration` refuses a principal the reads would hide; a filtered-out read logs that it hid something) — see [D97](../decisions/adr-0097.md). Nothing is LIVE: it ships only in a `@dominevo/server` closure. `int_0021` / `int_0022` remain, deliberately (§2). Phase 5's open question is decided: the shape is DERIVED from the registered caps, neither a code marker nor a record field.
 applies-to:
   - packages/types/src/device/declared-device.ts
   - packages/system/src/builtins/core-blocks/**
@@ -58,7 +58,7 @@ consume, so this is a gap in the evidence, not a known failure.
   another addon's. Nothing errors.
 - **`ctx.kernel.localNodeId` reads `hub/core-block-<uuid>`** — the forked-child
   suffix `declarationOwnerNodeId` already strips. Comparing it raw skips the hub.
-- A block resolves `@camstack/types` **and** `zod`; `BaseDevice`,
+- A block resolves `@dominevo/types` **and** `zod`; `BaseDevice`,
   `DeclaredDevices`, `evaluateExpressionSource`, `numericSensorCapability`,
   `scriptRunnerCapability` and `automationControlCapability` are all reachable
   from block source.
@@ -172,7 +172,7 @@ Every declarer hand-wires `getIntegration` / `createIntegration` /
 `updateIntegration` / `listOwnDevices` onto `ctx.api` (see
 `pipeline-analytics/index.ts` `declareAlarmPanel`). For a block that is where
 `ctx.addonId`-vs-`ctx.id` goes wrong silently. A single
-`declaredDevicePortsFrom(ctx)` factory in `@camstack/types` — returning
+`declaredDevicePortsFrom(ctx)` factory in `@dominevo/types` — returning
 `DeclaredDevicePorts`, pinning `ctx.id`, resolving the shared integration —
 removes the trap and de-duplicates the alarm panel's copy. Not built; the
 constructor guard added in §2.1 turns the mistake into a loud throw, which is a
@@ -220,12 +220,12 @@ writer; a hand-authored marker does not.
 
 1. ~~**Half two of the integration fix**~~ — DONE (§2.1), together with the
    create-side refusal and the suppression log ([D97](../decisions/adr-0097.md)).
-   It is not LIVE: it ships only in a `@camstack/server` closure.
+   It is not LIVE: it ships only in a `@dominevo/server` closure.
 2. **`int_0021` / `int_0022`** are left in place on purpose (§2.1). If they are
    ever to go, it needs a maintenance path for a `fixed` row whose declaring
    addon no longer exists — designed, not improvised, because the fixed guard
    firing late is what destroyed the alarm panel once.
-3. **`declaredDevicePortsFrom(ctx)`** in `@camstack/types`, and migrate
+3. **`declaredDevicePortsFrom(ctx)`** in `@dominevo/types`, and migrate
    `declareAlarmPanel` onto it — the duplicate wiring is where the
    `ctx.addonId` trap lives.
 4. **A worked composed-device example** shipped as a block template
@@ -247,8 +247,8 @@ writer; a hand-authored marker does not.
 
 Nothing here is live. In order:
 
-1. `@camstack/types`, `@camstack/system` and `server-backend` must all be
-   **published and installed as a `@camstack/server` closure** —
+1. `@dominevo/types`, `@dominevo/system` and `server-backend` must all be
+   **published and installed as a `@dominevo/server` closure** —
    `DeclaredDevicesSpec.integrationId` and the `DeclaredDevices` ports guard are
    in types, `core-blocks` and the `listAll` owner guard are in system, and
    `integration-visibility.ts` is in the backend. Per `update-and-release.md`
@@ -256,7 +256,7 @@ Nothing here is live. In order:
    (publish train → `applyServerUpdate`). `CORE_BLOCKS_ADDON_ID` was added to
    `core-blocks.cap.ts` but it is a plain constant — `npm run codegen` produced
    no drift, so no cap-router regeneration is involved.
-2. Nothing needs `camstack deploy` — no addon package changed, and
-   `camstack deploy` cannot ship framework packages on an image hub anyway.
+2. Nothing needs `dominevo deploy` — no addon package changed, and
+   `dominevo deploy` cannot ship framework packages on an image hub anyway.
 3. Block authoring itself needs no shipping at all, which is why Phase 4 could be
    proven before any of this.

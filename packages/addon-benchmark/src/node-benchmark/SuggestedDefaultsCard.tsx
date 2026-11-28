@@ -11,7 +11,7 @@ import type {
   ClusterDetectionDefaults,
   DetectionDefaultsPlan,
   DetectionDefaultsReason,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   type AddonPageProps,
   ConfirmActionButton,
@@ -21,7 +21,7 @@ import {
   SettingRow,
   Skeleton,
   TEXT_HINT,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { RotateCcw, Sparkles, Wand2 } from 'lucide-react'
 import { type ReactNode, useCallback, useEffect, useState } from 'react'
 import { useT } from '../i18n/index.js'

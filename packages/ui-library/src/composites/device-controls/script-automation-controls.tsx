@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { AlertTriangle, CircleStop, Play, Zap } from 'lucide-react'
-import type { AutomationControlStatus, ScriptRunnerStatus } from '@camstack/types'
+import type { AutomationControlStatus, ScriptRunnerStatus } from '@dominevo/types'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
 import { useDeviceCommand } from '../../hooks/use-device-command'
 import { useOneShotCommand } from '../../hooks/use-one-shot-command'

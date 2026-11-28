@@ -6,7 +6,7 @@
 import { createHash, randomUUID } from 'node:crypto'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
-import type { CustomModelDescriptor, ModelCatalogEntry, ModelFormat } from '@camstack/types'
+import type { CustomModelDescriptor, ModelCatalogEntry, ModelFormat } from '@dominevo/types'
 import {
   normalizePluginCatalogDrift,
   type PluginCatalogCatalogDrift,

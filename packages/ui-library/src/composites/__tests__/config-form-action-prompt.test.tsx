@@ -4,7 +4,7 @@
  * sends it as `input[param]` — a one-shot argument that never becomes a saved
  * setting. Cancelling the dialog runs nothing.
  */
-import type { ConfigField } from '@camstack/types'
+import type { ConfigField } from '@dominevo/types'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { ConfirmDialogProvider } from '../confirm-dialog'

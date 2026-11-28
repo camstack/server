@@ -19,10 +19,10 @@
  * step's PER-FORMAT default (tflite → the Coral SSD build), never to a bare
  * `defaultModelId` that may not ship the format at all.
  */
-import { type ModelFormat, OBJECT_DETECTION_STEP_ID, type StepDefinition } from '@camstack/types'
+import { type ModelFormat, OBJECT_DETECTION_STEP_ID, type StepDefinition } from '@dominevo/types'
 import { getDefaultModelForFormatFromDef, getStepDefinition } from './registry/step-definitions.js'
 
-/** The object-detection step id — the only slot this resolver applies to (owned by `@camstack/types`). */
+/** The object-detection step id — the only slot this resolver applies to (owned by `@dominevo/types`). */
 export { OBJECT_DETECTION_STEP_ID }
 
 /**

@@ -1,6 +1,6 @@
 /**
  * The hub-rendered confirmation page of a native app sign-in (D858):
- * "Sign in the CamStack app as <username>?".
+ * "Sign in the Dominevo app as <username>?".
  *
  * Same discipline as the passkey page (`app-passkey-page.ts`): plain HTML on the
  * shared shell (`app-page-shell.ts`, which owns the look and the style hash),

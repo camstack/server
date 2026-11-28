@@ -18,7 +18,7 @@ import type {
   TrainingGpuOption,
   TrainingPreset,
   TrainingSplitPlan,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { BaseModelSpec } from './base-models.js'
 
 export const HOLDOUT_CAMERA_THRESHOLD = 6

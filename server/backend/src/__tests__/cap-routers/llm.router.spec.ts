@@ -1,8 +1,8 @@
 /**
  * Codegen'd `llm` collection router spec (framework train — Tasks 1-4).
  *
- * NOTE: `buildCapRouterForTest` drives `buildCapRouters` from `@camstack/server/system`.
- * When this spec runs against a `@camstack/server/system` build that predates the `llm`
+ * NOTE: `buildCapRouterForTest` drives `buildCapRouters` from `@dominevo/server/system`.
+ * When this spec runs against a `@dominevo/server/system` build that predates the `llm`
  * cap (e.g. an isolated worktree whose shared node_modules still points at a
  * stale system dist), the router cannot be built. We detect that and skip the
  * body — the spec lights up automatically once the framework train (types +
@@ -10,7 +10,7 @@
  * `_meta.spec.ts` "every cap has a router spec" gate.
  */
 import { describe, it, expect } from 'vitest'
-import type { ILlmProvider } from '@camstack/types'
+import type { ILlmProvider } from '@dominevo/types'
 import { buildCapRouterForTest, invokeProcedure, makeCtx } from './harness.js'
 
 function llmRouterAvailable(): boolean {

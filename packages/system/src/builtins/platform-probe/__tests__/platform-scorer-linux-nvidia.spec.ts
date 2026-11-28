@@ -6,8 +6,8 @@
  */
 import { promisify } from 'node:util'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { IScopedLogger } from '@camstack/types'
-import { enumerateInferenceDevices } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
+import { enumerateInferenceDevices } from '@dominevo/types'
 
 const fakes = vi.hoisted(() => ({
   exec: async (_file: string, _args: readonly string[]): Promise<{ stdout: string }> => ({

@@ -14,7 +14,7 @@ applies-to:
 ## Context
 
 The security plan of 2026-10-09 (§1) measured the Moleculer mesh as the worst
-exposure in CamStack: risk 20 of 25. A host on the LAN that speaks Moleculer
+exposure in Dominevo: risk 20 of 25. A host on the LAN that speaks Moleculer
 TCP to port 6000 could:
 
 - call `$core-caps.repl.execute` — code execution in the hub — because every

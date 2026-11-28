@@ -4,12 +4,12 @@ import {
   type RecordKindHandle,
   makeInMemoryRecords,
   type NcConfirm,
-} from '@camstack/types'
-import { NcConfirmSchema } from '@camstack/types'
-import { prepareNotification } from '@camstack/types'
+} from '@dominevo/types'
+import { NcConfirmSchema } from '@dominevo/types'
+import { prepareNotification } from '@dominevo/types'
 import type { NcNotificationInput } from '../../dispatcher.js'
 import type { NcSystemEventSubject } from '../../rule-engine.js'
-import { NC_CONFIRM_DEFAULT_MAX_IMAGE_PX, NC_CONFIRM_DEFAULT_TIMEOUT_MS } from '@camstack/types'
+import { NC_CONFIRM_DEFAULT_MAX_IMAGE_PX, NC_CONFIRM_DEFAULT_TIMEOUT_MS } from '@dominevo/types'
 import { resolvePruneWindows } from '../../prune-windows.js'
 import { ncDurableRecordKinds } from '../../nc-durable-record-kinds.js'
 import { ncRecordKinds } from '../../record-kinds.js'

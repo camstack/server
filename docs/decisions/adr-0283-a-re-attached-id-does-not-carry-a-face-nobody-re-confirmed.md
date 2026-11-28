@@ -110,9 +110,9 @@ arrives, the face **is dropped at close and the drop is logged**.
   radius, and the compounding harm — gallery poisoning — flows through the held
   face, which this does stop.
 - `TrackerEmission` is declared in `sort-tracker.ts`, not as a widening of
-  `TrackedDetection` in `@camstack/types`. Producer and consumers are all inside
+  `TrackedDetection` in `@dominevo/types`. Producer and consumers are all inside
   `addon-post-analysis`, so **no framework publish train is required** — one
-  `camstack deploy packages/addon-post-analysis` carries the whole change.
+  `dominevo deploy packages/addon-post-analysis` carries the whole change.
 
 ## Enforcement
 

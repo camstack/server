@@ -17,7 +17,7 @@ import {
   makeAnalyticsRecords,
 } from '../../__tests__/fake-records.js'
 import { describe, it, expect, beforeEach } from 'vitest'
-import type { SettingsStoreClient } from '@camstack/types'
+import type { SettingsStoreClient } from '@dominevo/types'
 import {
   makeFakeSettingsStore,
   makeSilentLogger,

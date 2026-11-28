@@ -19,7 +19,7 @@
  *   - the layer is written / cleared per step and pruned when empty.
  */
 import { afterEach, describe, expect, it } from 'vitest'
-import { createDurableState, type DurableState } from '@camstack/types'
+import { createDurableState, type DurableState } from '@dominevo/types'
 import type { ZodType } from 'zod'
 import { applyDeviceProvisioning } from '../apply-device-provisioning.js'
 import PipelineOrchestratorAddon from '../index.js'

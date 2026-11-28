@@ -6,7 +6,7 @@
  * file and the platform are the node's), so a forgotten node's profiles are
  * REMOVED. Idempotent — a second call finds nothing and answers zero.
  */
-import type { INodeRemovalHookProvider, IScopedLogger, LlmProfile } from '@camstack/types'
+import type { INodeRemovalHookProvider, IScopedLogger, LlmProfile } from '@dominevo/types'
 import { AppleConnectionSchema } from './kinds/provider-config.js'
 import type { ProfileStore } from './profile-store.js'
 

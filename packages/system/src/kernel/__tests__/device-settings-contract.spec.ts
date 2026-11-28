@@ -4,7 +4,7 @@
  * proves it can fail: each disarm breaks the wiring the contract guards and
  * the matching check must go red.
  */
-import type { ISettingsStoreProvider } from '@camstack/types'
+import type { ISettingsStoreProvider } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import {
   CONTRACT,

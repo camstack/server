@@ -10,7 +10,7 @@
  * mover. Adding the no-lease `relocateMedia` twin next to it is the easiest
  * place in this codebase to accidentally loosen that check.
  */
-import type { AddonContext, IScopedLogger, LogExtras, LogTags } from '@camstack/types'
+import type { AddonContext, IScopedLogger, LogExtras, LogTags } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import PipelineAnalyticsAddon from '../index.js'
 import {

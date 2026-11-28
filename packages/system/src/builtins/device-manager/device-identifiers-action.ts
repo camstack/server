@@ -28,7 +28,7 @@ import {
   mergeIdentifiers,
   sameIdentifiers,
   type IDeviceManagerProvider,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { ProviderContext } from './device-provider-context.js'
 
 /** Why a `setIdentifiers` call was refused. */

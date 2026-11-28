@@ -6,7 +6,7 @@ import {
   type AutomationWaitUntilStep,
   WAIT_MAX_SECONDS,
   WAIT_UNTIL_TIMEOUT_MAX_S,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** Whole seconds inside the bounds the schema enforces; a value that is not a number is the minimum. */
 export function clampTimeout(seconds: number): number {

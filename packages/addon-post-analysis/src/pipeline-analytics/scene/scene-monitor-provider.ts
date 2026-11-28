@@ -51,7 +51,7 @@ import type {
   SceneMonitorStatusForDevice,
   SceneReference,
   SceneUncoveredPolicy,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   SCENE_DEFAULT_ANCHOR_THRESHOLD,
   SCENE_DEFAULT_CHECK_INTERVAL_SEC,
@@ -60,7 +60,7 @@ import {
   SCENE_DEFAULT_UNCOVERED_POLICY,
   SCENE_DIVERGED,
   SCENE_RESET_RECAPTURES,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { EmbeddingEncoderClient } from '../embedding/embedding-dispatcher.js'
 import { anchorFrame, cropSnapshotRoi } from './scene-crop.js'
 import type { SceneEngine, SceneEngineResult, SnapshotImage } from './scene-engine.js'

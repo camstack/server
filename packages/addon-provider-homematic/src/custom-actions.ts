@@ -1,4 +1,4 @@
-import { customAction, defineCustomActions } from '@camstack/types'
+import { customAction, defineCustomActions } from '@dominevo/types'
 import type { HmKeyEventDiagnosis } from 'nodehomematic'
 import { z } from 'zod'
 import {

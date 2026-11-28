@@ -71,7 +71,7 @@ generated API reference is missing from the map. Coverage is now 1164/1164.
 
 ## Consequences
 
-Until a `@camstack/server` carrying the `protected` change is installed, a
+Until a `@dominevo/server` carrying the `protected` change is installed, a
 non-admin's dot for a camera whose aggregate failed will read *unknown* rather
 than green. That is the point: the wrong answer is gone before the right one
 arrives.

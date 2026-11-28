@@ -1,10 +1,10 @@
 # Alexa
 
-Alexa device-import provider for CamStack — imports the smart-home devices in a user's Alexa account via the unofficial alexa-remote2 cookie/token client (the inverse of the Alexa exporter).
+Alexa device-import provider for Dominevo — imports the smart-home devices in a user's Alexa account via the unofficial alexa-remote2 cookie/token client (the inverse of the Alexa exporter).
 
 <!-- readme:generated:start (derived from the manifest; edit outside this block) -->
 
-Package `@camstack/addon-import-alexa` on npm.
+Package `@dominevo/addon-import-alexa` on npm.
 
 ## What it provides
 
@@ -23,12 +23,12 @@ Edit these from System, Addons, this addon, Settings (a device's own settings ar
 
 - Placement: default placement.
 - Python: Alexa installs `python/requirements.txt` into its own environment.
-- A CamStack hub. An agent is used only where the placement above allows it.
+- A Dominevo hub. An agent is used only where the placement above allows it.
 
 ## Documentation
 
-- [docs/addons/addon-import-alexa.md](https://github.com/camstack/server/blob/main/docs/addons/addon-import-alexa.md)
-- [packages/addon-import-alexa/AGENTS.md](https://github.com/camstack/server/blob/main/packages/addon-import-alexa/AGENTS.md)
+- [docs/addons/addon-import-alexa.md](https://github.com/dominevo/server/blob/main/docs/addons/addon-import-alexa.md)
+- [packages/addon-import-alexa/AGENTS.md](https://github.com/dominevo/server/blob/main/packages/addon-import-alexa/AGENTS.md)
 
 See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
 

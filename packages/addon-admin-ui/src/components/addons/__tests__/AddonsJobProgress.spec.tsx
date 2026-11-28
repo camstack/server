@@ -13,16 +13,16 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import type { LifecycleJob, LifecycleTask, TaskPhase } from '@camstack/types'
+import type { LifecycleJob, LifecycleTask, TaskPhase } from '@dominevo/types'
 
 // ---------------------------------------------------------------------------
-// Mock @camstack/ui-library BEFORE importing the module under test
+// Mock @dominevo/ui-library BEFORE importing the module under test
 // ---------------------------------------------------------------------------
 
 let mockActiveJobs: LifecycleJob[] = []
 let mockLiveJobMap: Map<string, { job: LifecycleJob }> = new Map()
 
-vi.mock('@camstack/ui-library', () => ({
+vi.mock('@dominevo/ui-library', () => ({
   useAddonsListJobs: () => ({ data: mockActiveJobs }),
   useEventStreamMap: () => ({
     map: mockLiveJobMap,
@@ -49,7 +49,7 @@ function task(overrides: Partial<LifecycleTask> = {}): LifecycleTask {
   return {
     taskId: 't-1',
     nodeId: 'hub',
-    packageName: '@camstack/addon-a',
+    packageName: '@dominevo/addon-a',
     fromVersion: '1.0.0',
     toVersion: '1.0.1',
     target: 'addon',
@@ -85,19 +85,19 @@ function job(overrides: Partial<LifecycleJob> = {}): LifecycleJob {
 describe('deriveTaskProgressByPackage', () => {
   it('keys progress by packageName — two concurrent jobs stay independent', () => {
     const jobs = [
-      job({ jobId: 'job-a', tasks: [task({ packageName: '@camstack/addon-a' })] }),
+      job({ jobId: 'job-a', tasks: [task({ packageName: '@dominevo/addon-a' })] }),
       job({
         jobId: 'job-b',
         createdAtMs: NOW - 9_000,
-        tasks: [task({ taskId: 't-2', packageName: '@camstack/addon-b', phase: 'fetching' })],
+        tasks: [task({ taskId: 't-2', packageName: '@dominevo/addon-b', phase: 'fetching' })],
       }),
     ]
     const map = deriveTaskProgressByPackage(jobs, NOW)
     expect(map.size).toBe(2)
-    expect(map.get('@camstack/addon-a')?.phase).toBe('applying')
-    expect(map.get('@camstack/addon-a')?.jobId).toBe('job-a')
-    expect(map.get('@camstack/addon-b')?.phase).toBe('fetching')
-    expect(map.get('@camstack/addon-b')?.jobId).toBe('job-b')
+    expect(map.get('@dominevo/addon-a')?.phase).toBe('applying')
+    expect(map.get('@dominevo/addon-a')?.jobId).toBe('job-a')
+    expect(map.get('@dominevo/addon-b')?.phase).toBe('fetching')
+    expect(map.get('@dominevo/addon-b')?.jobId).toBe('job-b')
   })
 
   it('one job completing does not remove the other package entry', () => {
@@ -106,17 +106,17 @@ describe('deriveTaskProgressByPackage', () => {
         jobId: 'job-a',
         state: 'completed',
         tasks: [
-          task({ packageName: '@camstack/addon-a', phase: 'done', finishedAtMs: NOW - 1_000 }),
+          task({ packageName: '@dominevo/addon-a', phase: 'done', finishedAtMs: NOW - 1_000 }),
         ],
       }),
       job({
         jobId: 'job-b',
-        tasks: [task({ taskId: 't-2', packageName: '@camstack/addon-b', phase: 'applying' })],
+        tasks: [task({ taskId: 't-2', packageName: '@dominevo/addon-b', phase: 'applying' })],
       }),
     ]
     const map = deriveTaskProgressByPackage(jobs, NOW)
-    expect(map.get('@camstack/addon-a')?.phase).toBe('done')
-    expect(map.get('@camstack/addon-b')?.phase).toBe('applying')
+    expect(map.get('@dominevo/addon-a')?.phase).toBe('done')
+    expect(map.get('@dominevo/addon-b')?.phase).toBe('applying')
   })
 
   it('drops terminal-job entries older than the visibility window', () => {
@@ -126,7 +126,7 @@ describe('deriveTaskProgressByPackage', () => {
         state: 'completed',
         tasks: [
           task({
-            packageName: '@camstack/addon-a',
+            packageName: '@dominevo/addon-a',
             phase: 'done',
             finishedAtMs: NOW - TERMINAL_VISIBILITY_MS - 1,
           }),
@@ -154,8 +154,8 @@ describe('deriveTaskProgressByPackage', () => {
       job({ jobId: 'job-new', createdAtMs: NOW - 5_000, tasks: [task({ phase: 'fetching' })] }),
     ]
     const map = deriveTaskProgressByPackage(jobs, NOW)
-    expect(map.get('@camstack/addon-a')?.jobId).toBe('job-new')
-    expect(map.get('@camstack/addon-a')?.phase).toBe('fetching')
+    expect(map.get('@dominevo/addon-a')?.jobId).toBe('job-new')
+    expect(map.get('@dominevo/addon-a')?.phase).toBe('fetching')
   })
 })
 
@@ -222,7 +222,7 @@ describe('useAddonJobProgress', () => {
     mockActiveJobs = [job({ jobId: 'job-seed', tasks: [task({ phase: 'applying' })] })]
     render(<Probe />)
     expect(screen.getByTestId('probe-entry').textContent).toBe(
-      '@camstack/addon-a:applying:job-seed',
+      '@dominevo/addon-a:applying:job-seed',
     )
   })
 
@@ -232,29 +232,29 @@ describe('useAddonJobProgress', () => {
       ['job-1', { job: job({ jobId: 'job-1', tasks: [task({ phase: 'applying' })] }) }],
     ])
     render(<Probe />)
-    expect(screen.getByTestId('probe-entry').textContent).toBe('@camstack/addon-a:applying:job-1')
+    expect(screen.getByTestId('probe-entry').textContent).toBe('@dominevo/addon-a:applying:job-1')
   })
 
   it('two concurrent live jobs render independent per-package progress', () => {
     mockLiveJobMap = new Map([
       [
         'job-a',
-        { job: job({ jobId: 'job-a', tasks: [task({ packageName: '@camstack/addon-a' })] }) },
+        { job: job({ jobId: 'job-a', tasks: [task({ packageName: '@dominevo/addon-a' })] }) },
       ],
       [
         'job-b',
         {
           job: job({
             jobId: 'job-b',
-            tasks: [task({ taskId: 't-2', packageName: '@camstack/addon-b', phase: 'fetching' })],
+            tasks: [task({ taskId: 't-2', packageName: '@dominevo/addon-b', phase: 'fetching' })],
           }),
         },
       ],
     ])
     render(<Probe />)
     const entries = screen.getAllByTestId('probe-entry').map((e) => e.textContent)
-    expect(entries).toContain('@camstack/addon-a:applying:job-a')
-    expect(entries).toContain('@camstack/addon-b:fetching:job-b')
+    expect(entries).toContain('@dominevo/addon-a:applying:job-a')
+    expect(entries).toContain('@dominevo/addon-b:fetching:job-b')
   })
 })
 
@@ -266,7 +266,7 @@ describe('AddonsJobProgress badge', () => {
   function progress(overrides: Partial<AddonTaskProgress> = {}): AddonTaskProgress {
     return {
       jobId: 'j',
-      packageName: '@camstack/addon-a',
+      packageName: '@dominevo/addon-a',
       phase: 'applying',
       fromVersion: '1.0.0',
       toVersion: '1.0.1',

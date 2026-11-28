@@ -6,7 +6,7 @@
  * materialised into extra argv at spawn — they never become a free-form
  * command (the profile still owns the binary).
  */
-import type { ConfigUISchema } from '@camstack/types'
+import type { ConfigUISchema } from '@dominevo/types'
 
 const GLANCES_PLUGINS = [
   { key: 'showCpu', plugin: 'cpu', label: 'CPU' },

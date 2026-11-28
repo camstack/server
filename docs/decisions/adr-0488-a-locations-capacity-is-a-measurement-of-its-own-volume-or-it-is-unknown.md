@@ -64,14 +64,14 @@ an unmeasurable volume degrades it to `100`% free and a `0` byte target, i.e.
 inert, exactly as an unstattable path already did.
 
 **Unknown is a missing denominator, not a missing numerator.** A row whose
-volume cannot be measured still reports what CamStack HOLDS there when a
+volume cannot be measured still reports what Dominevo HOLDS there when a
 provider measured it (`UnknownCapacityBar.owned`) — the SMB share's 1.6 GB is a
 fact we have.
 
 ## Consequences
 
 - `backups:smb` (and every future S3/SFTP/WebDAV location) now reads
-  `Capacity unknown · CamStack holds 1.6 GB` instead of a confident bar. That is
+  `Capacity unknown · Dominevo holds 1.6 GB` instead of a confident bar. That is
   the honest state until a provider can answer "how big is the remote volume" —
   which no storage-provider method currently asks. Adding that is the only way
   to get a real bar there; inventing one from a local path is not.

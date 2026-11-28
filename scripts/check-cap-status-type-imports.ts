@@ -8,7 +8,7 @@
  * of the file is `CAP_NAMES_WITH_STATUS` — a plain array of string literals that references no schema.
  *
  * A VALUE import here (`import { XStatusSchema } from '../capabilities/x.cap.js'`) drags EVERY status
- * cap-def zod schema into every runtime that touches the `@camstack/types` barrel (the barrel value-
+ * cap-def zod schema into every runtime that touches the `@dominevo/types` barrel (the barrel value-
  * exports `CAP_NAMES_WITH_STATUS` from this file), bloating each addon runner's heap for zero runtime
  * need. `generate-cap-status-types.ts` emits `import type` — this guard fails the build if that
  * regresses (hand-edit or codegen drift).

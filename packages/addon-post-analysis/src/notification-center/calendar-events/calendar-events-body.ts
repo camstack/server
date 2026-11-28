@@ -7,7 +7,7 @@
  * language the rest of the notification centre speaks.
  */
 
-import { calendarEventLocalSpan, type CalendarEvent } from '@camstack/types'
+import { calendarEventLocalSpan, type CalendarEvent } from '@dominevo/types'
 import { ncClockText } from '../clock-text.js'
 import type { NcTextCatalog } from '../text-catalog.js'
 

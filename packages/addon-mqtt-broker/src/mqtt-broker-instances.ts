@@ -1,6 +1,6 @@
 /**
  * The MQTT brokers as `integration-instances` (D1013): one instance per `brokers` record. An
- * external broker is a URL; an ONBOARD broker (`onboard: true` on the create form) is a CamStack
+ * external broker is a URL; an ONBOARD broker (`onboard: true` on the create form) is a Dominevo
  * `aedes` server on this hub: the create allocates its port (or honours the operator's) and the
  * addon spawns it from the record, the delete tears it down. Removing a broker an MQTT Discovery
  * integration still names is refused (D1012).
@@ -21,7 +21,7 @@ import {
   RecordIntegrationInstances,
   type RecordsAccess,
   isInstanceOn,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { type MqttBrokerBody, mqttBrokersEntryKind } from './broker-record-kinds.js'
 import { mqttBrokerUsers } from './mqtt-broker-users.js'
 import { buildOnboardEntry, isOnboardRequested, readOnboardPort } from './onboard-helpers.js'

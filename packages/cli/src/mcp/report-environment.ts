@@ -12,7 +12,7 @@
  * A value must also match a strict shape for its field (a version is digits,
  * letters, dots, plus and dash). One that does not is dropped as `unknown`.
  */
-import type { HubClient } from '@camstack/develop'
+import type { HubClient } from '@dominevo/develop'
 import { z } from 'zod'
 import type { McpContext } from './context.js'
 import { readQuery, type Read } from './ops-hub.js'

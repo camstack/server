@@ -26,7 +26,7 @@ import type {
   DeviceFeature,
   InferNativeProvider,
   RawStateResult,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   BaseDevice,
   createRuntimeStateBridge,
@@ -45,7 +45,7 @@ import {
   sirenPlayChoices,
   sirenTriggeredStatus,
   switchCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { buildRawState } from '../raw-state.js'
 import { assertAccessoryAbility } from './ability-guard.js'

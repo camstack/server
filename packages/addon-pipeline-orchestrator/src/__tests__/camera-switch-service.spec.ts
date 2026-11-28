@@ -15,8 +15,8 @@
  *    nothing reads is the failure the group exists to remove;
  *  - an unreadable source never renders a control defaulted to "on".
  */
-import type { RecordingConfig } from '@camstack/types'
-import { composeSwitchedOff } from '@camstack/types'
+import type { RecordingConfig } from '@dominevo/types'
+import { composeSwitchedOff } from '@dominevo/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { CameraSwitchService } from '../camera-switch-service.js'
 import { RepeatWarnSampler } from '../repeat-warn-sampler.js'

@@ -2,7 +2,7 @@
  * Homematic CCUs as typed records (planning#416, D1007): the rows-to-record migration moves each
  * integration's OWN connection and WebUI password into its record, and the reconciler reads the record.
  */
-import { makeInMemoryRecords, REDACTED_SECRET } from '@camstack/types'
+import { makeInMemoryRecords, REDACTED_SECRET } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { connectionFromSettings } from '../config.js'
 import {
@@ -255,20 +255,18 @@ describe('homematic testInstance', () => {
       onChanged: async () => undefined,
       tester,
     })
-    await engine.records
-      .kind(homematicConnectionsEntryKind)
-      .put(
-        {
-          id: 'int_0031',
-          data: homematicConnectionsEntryKind.schema.parse({
-            name: 'House',
-            host: '10.0.31.1',
-            username: 'u31',
-            password: 'pw-ok',
-          }),
-        },
-        { ifRev: 0 },
-      )
+    await engine.records.kind(homematicConnectionsEntryKind).put(
+      {
+        id: 'int_0031',
+        data: homematicConnectionsEntryKind.schema.parse({
+          name: 'House',
+          host: '10.0.31.1',
+          username: 'u31',
+          password: 'pw-ok',
+        }),
+      },
+      { ifRev: 0 },
+    )
     return { instances, seen }
   }
 

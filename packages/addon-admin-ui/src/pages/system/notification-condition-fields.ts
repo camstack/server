@@ -22,7 +22,7 @@
  * group it does not list is appended there rather than dropped.
  */
 
-import type { NcConditionDescriptor, NcConditions } from '@camstack/types'
+import type { NcConditionDescriptor, NcConditions } from '@dominevo/types'
 
 /** A camera the rule can be scoped to (the `deviceIdList` widget source). */
 export interface RuleCameraOption {
@@ -105,17 +105,17 @@ export type OccupancyKey = keyof typeof OCCUPANCY_KEYS
 export const isOccupancyKey: ConditionKeyGuard<OccupancyKey> = keyGuard(OCCUPANCY_KEYS)
 
 /**
- * The occupancy schema's own defaults — RE-EXPORTED from `@camstack/types`.
+ * The occupancy schema's own defaults — RE-EXPORTED from `@dominevo/types`.
  *
  * Both the WIDGET (what an untouched sub-field shows) and the CREATION PRESET
  * (what "New occupancy rule" seeds) have to author exactly these numbers, and
  * two copies of a default is how a preset starts writing a rule that does not
  * match what the editor then displays. The viewer authors the same preset, so
  * the numbers now live beside the kind model in
- * `@camstack/types` → `notification/rule-kinds.ts`, pinned there against
+ * `@dominevo/types` → `notification/rule-kinds.ts`, pinned there against
  * `NcOccupancyConditionSchema`'s own `.default(...)` clauses.
  */
-export { NC_OCCUPANCY_DEFAULTS } from '@camstack/types'
+export { NC_OCCUPANCY_DEFAULTS } from '@dominevo/types'
 
 const AUDIO_KEYS = { audio: true } as const
 export type AudioKey = keyof typeof AUDIO_KEYS

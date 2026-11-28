@@ -1,4 +1,4 @@
-import type { HvacMode } from '@camstack/types'
+import type { HvacMode } from '@dominevo/types'
 import type { ReactElement } from 'react'
 import { useTrpcClient } from '../../../contexts/system-context'
 import { useUiText } from '../../../contexts/ui-text'

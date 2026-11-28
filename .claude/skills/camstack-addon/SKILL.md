@@ -1,11 +1,11 @@
 ---
 name: camstack-addon
-description: Create or change a CamStack addon (plugin) — a device provider, notifier, storage or log destination, pipeline stage, exporter, a builtin, or any new `camstack.addons[]` manifest entry. Covers the silent wiring misses (vite entries, `super({})`), forked vs in-process behaviour, the two per-device settings stores, custom actions, device-page widgets, `camstack deploy` and its traps (installs, may not respawn, ships what is built), and how to prove the new code is the code running. Use for "new addon", "add a provider", "my addon change has no effect", "the addon is running but nothing happens".
+description: Create or change a Dominevo addon (plugin) — a device provider, notifier, storage or log destination, pipeline stage, exporter, a builtin, or any new `camstack.addons[]` manifest entry. Covers the silent wiring misses (vite entries, `super({})`), forked vs in-process behaviour, the two per-device settings stores, custom actions, device-page widgets, `dominevo deploy` and its traps (installs, may not respawn, ships what is built), and how to prove the new code is the code running. Use for "new addon", "add a provider", "my addon change has no effect", "the addon is running but nothing happens".
 ---
 
 # Addon (repository overlay)
 
-The canonical PUBLIC text of this skill is `packages/develop/skills/camstack-addon.md` (shipped with `@camstack/develop`; `camstack develop skill camstack-addon`). **Read it first** — it holds the procedure, the traps and the done-gate, and this file does not repeat it. Below is only what is true of THIS repository. `scripts/check-skill-pack-sync.ts` keeps the two from drifting.
+The canonical PUBLIC text of this skill is `packages/develop/skills/camstack-addon.md` (shipped with `@dominevo/develop`; `dominevo develop skill camstack-addon`). **Read it first** — it holds the procedure, the traps and the done-gate, and this file does not repeat it. Below is only what is true of THIS repository. `scripts/check-skill-pack-sync.ts` keeps the two from drifting.
 
 ## Repo workflow
 

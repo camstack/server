@@ -14,7 +14,7 @@ covers:
 
 # device-history
 
-Every numeric history in CamStack goes through the `device-history` addon and
+Every numeric history in Dominevo goes through the `device-history` addon and
 its store, `history.db` ([D850](../decisions/adr-0850-numeric-history-has-one-mechanism-device-history.md)).
 It is hub-only, runs in its own runner (never grouped, D29) and writes through
 the settings door with `database: 'history'`, so its work is served by the
@@ -22,7 +22,7 @@ the settings door with `database: 'history'`, so its work is served by the
 (D851, [storage-files.md](storage-files.md)).
 
 **Install state.** It ships as a protected system builtin inside
-`@camstack/server/system` (same closure as the hub kernel — no separate addon deploy).
+`@dominevo/server/system` (same closure as the hub kernel — no separate addon deploy).
 A hub without the builtin enabled has no `history.db` (the file is created by
 the first declaration that names it) and no behaviour change.
 
@@ -135,7 +135,7 @@ retention, or a bucket not aligned to 5 minutes).
 
 `recordBuckets` is an idempotent upsert keyed (series, bucketStart), written
 BEFORE the call returns, so a store failure reaches the producer, which
-re-queues (`BucketAccumulator` in `@camstack/types/history`, D58).
+re-queues (`BucketAccumulator` in `@dominevo/types/history`, D58).
 
 ## Rollups
 

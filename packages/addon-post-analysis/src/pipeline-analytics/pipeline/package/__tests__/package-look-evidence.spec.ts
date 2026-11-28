@@ -4,7 +4,7 @@
  * is judged against the package step's RAW boxes, and the camera's early
  * switch reaches the tracker.
  */
-import type { FrameResult } from '@camstack/types'
+import type { FrameResult } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { packageLookEvidence } from '../package-look-evidence.js'
 

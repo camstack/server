@@ -19,10 +19,10 @@ interface SeedOpts {
 }
 
 function seedWorkspacePackage(workspaceDir: string, opts: SeedOpts): string {
-  // findLocalPackage strips '@camstack/' and looks for {short-name},
+  // findLocalPackage strips '@dominevo/' and looks for {short-name},
   // 'addon-{short-name}', or the full name under workspaceDir. We use
   // the short name here to make the test pass through findLocalPackage.
-  const shortName = opts.name.replace('@camstack/', '')
+  const shortName = opts.name.replace('@dominevo/', '')
   const dir = path.join(workspaceDir, shortName)
   fs.mkdirSync(dir, { recursive: true })
 
@@ -80,7 +80,7 @@ describe('AddonInstaller.applyUpdate', () => {
 
     // Seed workspace with v1 of a test addon
     seedWorkspacePackage(workspaceDir, {
-      name: '@camstack/test-foo',
+      name: '@dominevo/test-foo',
       version: '1.0.0',
     })
 
@@ -100,7 +100,7 @@ describe('AddonInstaller.applyUpdate', () => {
       if (!fs.existsSync(source)) throw new Error(`Local source not found for ${pkg}`)
       return seam.installLocal(pkg, source)
     }
-    await seam.installLocal('@camstack/test-foo', path.join(workspaceDir, 'test-foo'))
+    await seam.installLocal('@dominevo/test-foo', path.join(workspaceDir, 'test-foo'))
   })
 
   afterEach(() => {
@@ -108,19 +108,19 @@ describe('AddonInstaller.applyUpdate', () => {
   })
 
   it('updates an installed addon to a newer local version', async () => {
-    expect(readInstalledVersion(addonsDir, '@camstack/test-foo')).toBe('1.0.0')
+    expect(readInstalledVersion(addonsDir, '@dominevo/test-foo')).toBe('1.0.0')
 
     // Bump workspace to v2
     fs.rmSync(path.join(workspaceDir, 'test-foo'), { recursive: true })
     seedWorkspacePackage(workspaceDir, {
-      name: '@camstack/test-foo',
+      name: '@dominevo/test-foo',
       version: '2.0.0',
     })
 
-    const result = await installer.applyUpdate('@camstack/test-foo')
-    expect(result.name).toBe('@camstack/test-foo')
+    const result = await installer.applyUpdate('@dominevo/test-foo')
+    expect(result.name).toBe('@dominevo/test-foo')
     expect(result.version).toBe('2.0.0')
-    expect(readInstalledVersion(addonsDir, '@camstack/test-foo')).toBe('2.0.0')
+    expect(readInstalledVersion(addonsDir, '@dominevo/test-foo')).toBe('2.0.0')
 
     // Backup directory exists with the old version
     expect(fs.existsSync(result.backupDir)).toBe(true)
@@ -128,7 +128,7 @@ describe('AddonInstaller.applyUpdate', () => {
     expect(fs.readFileSync(backupVersionFile, 'utf-8').trim()).toBe('1.0.0')
 
     // Manifest reflects new version + backup pointer
-    const entry = installer.manifest.get('@camstack/test-foo')
+    const entry = installer.manifest.get('@dominevo/test-foo')
     expect(entry?.version).toBe('2.0.0')
     expect(entry?.lastBackupDir).toBe(result.backupDir)
   })
@@ -140,28 +140,28 @@ describe('AddonInstaller.applyUpdate', () => {
   })
 
   it('refuses to update when install dir is gone', async () => {
-    fs.rmSync(path.join(addonsDir, '@camstack', 'test-foo'), {
+    fs.rmSync(path.join(addonsDir, '@dominevo', 'test-foo'), {
       recursive: true,
     })
-    await expect(installer.applyUpdate('@camstack/test-foo')).rejects.toThrow(
+    await expect(installer.applyUpdate('@dominevo/test-foo')).rejects.toThrow(
       /install dir.*missing/,
     )
   })
 
   it('rolls back to the previous version after install fails', async () => {
-    expect(readInstalledVersion(addonsDir, '@camstack/test-foo')).toBe('1.0.0')
+    expect(readInstalledVersion(addonsDir, '@dominevo/test-foo')).toBe('1.0.0')
 
     // Force the install to fail by removing the workspace source entirely
     // — findLocalPackage returns null → applyUpdate throws.
     fs.rmSync(path.join(workspaceDir, 'test-foo'), { recursive: true })
 
-    await expect(installer.applyUpdate('@camstack/test-foo')).rejects.toThrow(
+    await expect(installer.applyUpdate('@dominevo/test-foo')).rejects.toThrow(
       /Local source not found/,
     )
 
     // Old install restored from backup
-    expect(readInstalledVersion(addonsDir, '@camstack/test-foo')).toBe('1.0.0')
-    const entry = installer.manifest.get('@camstack/test-foo')
+    expect(readInstalledVersion(addonsDir, '@dominevo/test-foo')).toBe('1.0.0')
+    const entry = installer.manifest.get('@dominevo/test-foo')
     expect(entry?.version).toBe('1.0.0')
     expect(entry?.lastBackupDir).toBeUndefined()
   })
@@ -169,37 +169,37 @@ describe('AddonInstaller.applyUpdate', () => {
   it('rollbackAddon() restores the backup from the previous update', async () => {
     fs.rmSync(path.join(workspaceDir, 'test-foo'), { recursive: true })
     seedWorkspacePackage(workspaceDir, {
-      name: '@camstack/test-foo',
+      name: '@dominevo/test-foo',
       version: '2.0.0',
     })
-    await installer.applyUpdate('@camstack/test-foo')
-    expect(readInstalledVersion(addonsDir, '@camstack/test-foo')).toBe('2.0.0')
+    await installer.applyUpdate('@dominevo/test-foo')
+    expect(readInstalledVersion(addonsDir, '@dominevo/test-foo')).toBe('2.0.0')
 
-    const restored = await installer.rollbackAddon('@camstack/test-foo')
+    const restored = await installer.rollbackAddon('@dominevo/test-foo')
     expect(restored).toBe('1.0.0')
-    expect(readInstalledVersion(addonsDir, '@camstack/test-foo')).toBe('1.0.0')
+    expect(readInstalledVersion(addonsDir, '@dominevo/test-foo')).toBe('1.0.0')
 
-    const entry = installer.manifest.get('@camstack/test-foo')
+    const entry = installer.manifest.get('@dominevo/test-foo')
     expect(entry?.version).toBe('1.0.0')
     expect(entry?.lastBackupDir).toBeUndefined()
   })
 
   it('rollbackAddon() returns null when there is no backup', async () => {
-    const restored = await installer.rollbackAddon('@camstack/test-foo')
+    const restored = await installer.rollbackAddon('@dominevo/test-foo')
     expect(restored).toBeNull()
   })
 
   it('clearBackup() drops the backup directory and clears the pointer', async () => {
     fs.rmSync(path.join(workspaceDir, 'test-foo'), { recursive: true })
     seedWorkspacePackage(workspaceDir, {
-      name: '@camstack/test-foo',
+      name: '@dominevo/test-foo',
       version: '2.0.0',
     })
-    const { backupDir } = await installer.applyUpdate('@camstack/test-foo')
+    const { backupDir } = await installer.applyUpdate('@dominevo/test-foo')
     expect(fs.existsSync(backupDir)).toBe(true)
 
-    await installer.clearBackup('@camstack/test-foo')
+    await installer.clearBackup('@dominevo/test-foo')
     expect(fs.existsSync(backupDir)).toBe(false)
-    expect(installer.manifest.get('@camstack/test-foo')?.lastBackupDir).toBeUndefined()
+    expect(installer.manifest.get('@dominevo/test-foo')?.lastBackupDir).toBeUndefined()
   })
 })

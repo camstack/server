@@ -5,7 +5,7 @@
  * again with `motionSources: ['analyzer']`. Leaving the old map entry in
  * place makes every later `ensureMotionWatch` a no-op.
  */
-import { CAMERA_TRIGGER } from '@camstack/types'
+import { CAMERA_TRIGGER } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { MIN_SESSION_OPEN_MS } from '../session-dispatch-controller.js'
 import { makeHarness, NODE } from './session-dispatch-harness.js'

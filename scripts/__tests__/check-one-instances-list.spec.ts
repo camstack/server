@@ -13,7 +13,7 @@ const file = (p: string, text: string) => ({ path: UI + p, text })
 
 const STORAGE_PAGE = file(
   'pages/system/Storage.tsx',
-  "import { DataTable } from '@camstack/ui-library'\nconst upsert = useStorageUpsertLocation()\n",
+  "import { DataTable } from '@dominevo/ui-library'\nconst upsert = useStorageUpsertLocation()\n",
 )
 const LLM_EDITOR = file(
   'pages/system/AiProfileEditor.tsx',

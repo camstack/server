@@ -3,7 +3,7 @@
  * the operator ticks several candidates and one record is created per ticked value, each named
  * after its candidate. Editing a stored record keeps the single picker.
  */
-import type { ConfigField, ConfigSelectField, ConfigUISchema } from '@camstack/types'
+import type { ConfigField, ConfigSelectField, ConfigUISchema } from '@dominevo/types'
 
 /** The first top-level discovered select of the form that declares `pickManyOnCreate`, or null. */
 export function pickManyField(schema: ConfigUISchema | null | undefined): ConfigSelectField | null {

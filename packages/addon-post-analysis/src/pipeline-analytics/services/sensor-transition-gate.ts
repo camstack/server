@@ -33,7 +33,7 @@
  *
  * ## Why the predicate is imported and not written here
  *
- * `evaluateSensorEdge` (`@camstack/types`) is already THE edge predicate: the
+ * `evaluateSensorEdge` (`@dominevo/types`) is already THE edge predicate: the
  * recorder's sensor trigger feeds it (`addon-pipeline` `recorder/sensor-trigger.ts`)
  * and so does the orchestrator's camera-sensors bridge
  * (`addon-pipeline-orchestrator` `camera-sensors/source.ts`).
@@ -166,8 +166,8 @@ import {
   evaluateSensorEdge,
   isSourceCap,
   type SensorEdgeIgnoreReason,
-} from '@camstack/types'
-import { CAP_ADVANCE_FIELDS } from '@camstack/types/addon'
+} from '@dominevo/types'
+import { CAP_ADVANCE_FIELDS } from '@dominevo/types/addon'
 
 /**
  * Caps whose level is a string word rather than a boolean: cap → slice field.

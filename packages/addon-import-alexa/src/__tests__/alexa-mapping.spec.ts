@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import { mapAlexaCapabilitiesToCamStack } from '../alexa-domain-mapping.js'
 import { buildAlexaApplianceCandidate, mappableAppliance } from '../alexa-discovery.js'
 import { settingsToAlexaConnection, connectionToCredentials } from '../config.js'

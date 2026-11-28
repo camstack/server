@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
-import type { IScopedLogger } from '@camstack/types'
-import { HISTORY_BUCKET_MS } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
+import { HISTORY_BUCKET_MS } from '@dominevo/types'
 import {
   NodeStressHistoryProducer,
   type NodeStressHistoryClient,

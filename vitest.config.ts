@@ -7,12 +7,12 @@ import { vitestWorkers } from './vitest.workers'
 const repoRoot = path.dirname(fileURLToPath(import.meta.url))
 
 /**
- * One alias per subpath export of `@camstack/types`, read from its
+ * One alias per subpath export of `@dominevo/types`, read from its
  * package.json `exports` (the single source), most specific first.
  *
- * A string alias `@camstack/types` -> `dist/index.mjs` also matches the prefix
- * `@camstack/types/<sub>` and rewrites it to `dist/index.mjs/<sub>`, so a spec
- * importing `@camstack/types/node` (or `/client`, `/enums`, `/catalogs`) failed
+ * A string alias `@dominevo/types` -> `dist/index.mjs` also matches the prefix
+ * `@dominevo/types/<sub>` and rewrites it to `dist/index.mjs/<sub>`, so a spec
+ * importing `@dominevo/types/node` (or `/client`, `/enums`, `/catalogs`) failed
  * to LOAD with "Cannot find package" — it was never collected, which reads as
  * "no failures". Exact-match regexes make each subpath resolve to its own file.
  */
@@ -24,7 +24,7 @@ function typesAliases(): { find: RegExp; replacement: string }[] {
   const aliases: { find: RegExp; replacement: string }[] = []
   for (const [subpath, target] of Object.entries(pkg.exports)) {
     if (typeof target === 'string' || target.import === undefined) continue
-    const specifier = subpath === '.' ? '@camstack/types' : `@camstack/types/${subpath.slice(2)}`
+    const specifier = subpath === '.' ? '@dominevo/types' : `@dominevo/types/${subpath.slice(2)}`
     const escaped = specifier.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&')
     aliases.push({
       find: new RegExp(`^${escaped}$`),
@@ -40,9 +40,9 @@ export default defineConfig({
   resolve: {
     alias: [
       ...typesAliases(),
-      /** The desktop shell's alias for ONE source file of `@camstack/types` (see packages/desktop/vitest.config.ts); a root run has no other way to resolve it. */
+      /** The desktop shell's alias for ONE source file of `@dominevo/types` (see packages/desktop/vitest.config.ts); a root run has no other way to resolve it. */
       {
-        find: /^@camstack\/owner-only-file$/,
+        find: /^@dominevo\/owner-only-file$/,
         replacement: path.join(repoRoot, 'packages/types/src/util/owner-only-file.ts'),
       },
     ],

@@ -1,5 +1,5 @@
-import type { AddonSearchResult } from '@camstack/types'
-import { Badge, Button, useAddonsSearchAvailable } from '@camstack/ui-library'
+import type { AddonSearchResult } from '@dominevo/types'
+import { Badge, Button, useAddonsSearchAvailable } from '@dominevo/ui-library'
 import { Check, Download, Loader2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
@@ -17,14 +17,14 @@ export function NpmAddonRow({
   return (
     <div className="flex items-center gap-3 px-3 py-2 hover:bg-surface-hover transition-colors">
       <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center text-primary text-[9px] font-bold shrink-0">
-        {addon.name.replace('@camstack/addon-', '').charAt(0).toUpperCase()}
+        {addon.name.replace('@dominevo/addon-', '').charAt(0).toUpperCase()}
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-baseline gap-2 min-w-0">
           {/* Friendly name first — the scope/prefix truncated everything
               readable on narrow screens. */}
           <span className="text-[11px] font-semibold break-words">
-            {addon.name.replace(/^@camstack\/(addon-)?/, '')}
+            {addon.name.replace(/^@dominevo\/(addon-)?/, '')}
           </span>
           <span className="text-[10px] text-foreground-subtle shrink-0">v{addon.version}</span>
         </div>

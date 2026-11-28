@@ -4,10 +4,10 @@
  * an answer without a phone-reachable address says there is none. The link
  * shown and copied carries the hub origin and nothing else.
  */
-import { selectOption } from '@camstack/ui-library/testing'
+import { selectOption } from '@dominevo/ui-library/testing'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { ConnectionEndpoint } from '@camstack/types'
+import type { ConnectionEndpoint } from '@dominevo/types'
 import i18n from '../../../i18n'
 
 interface FakeQuery {
@@ -24,9 +24,9 @@ let query: FakeQuery
 let publicEndpoint: string | null | undefined
 const inputs: unknown[] = []
 
-vi.mock('@camstack/ui-library', async () => {
+vi.mock('@dominevo/ui-library', async () => {
   const actual =
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+    await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return {
     ...actual,
     useLocalNetworkGetConnectionEndpoints: (input: unknown) => {

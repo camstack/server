@@ -1,4 +1,4 @@
-import { type AutomationRunTrace, coreBlockAddonId, createRecordsAccess } from '@camstack/types'
+import { type AutomationRunTrace, coreBlockAddonId, createRecordsAccess } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { makeRecordsWorld } from '../../sqlite-storage/__tests__/support/records-world.js'
 import { coreBlocksRecordKinds } from '../record-kinds.js'

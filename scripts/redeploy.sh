@@ -8,8 +8,8 @@
 # `packages/<pkg>/dist` fresh, but it does NOT propagate that build to the
 # copies the hub loads from. Two distinct load models exist:
 #
-#   • @camstack/core + every addon-*  → loaded from a REAL COPY under
-#       <data>/addons/@camstack/<name>/   (core builtins via the addon
+#   • @dominevo/core + every addon-*  → loaded from a REAL COPY under
+#       <data>/addons/@dominevo/<name>/   (core builtins via the addon
 #       loader; forked addon runners via their deployed dir). The watcher
 #       never touches these → they go stale silently. This is the bug class
 #       that made local-network's mesh endpoint never appear.
@@ -22,8 +22,8 @@
 # and re-spawn forked addon runners — so this script touches main.ts once at
 # the end (tsx-watch picks it up).
 #
-# This is the on-demand counterpart to `camstack deploy` (which builds →
-# npm-pack → uploads a tarball the server unpacks). `camstack deploy` needs
+# This is the on-demand counterpart to `dominevo deploy` (which builds →
+# npm-pack → uploads a tarball the server unpacks). `dominevo deploy` needs
 # the server up + an admin token and is discouraged for in-process system
 # packages; this script is offline, uniform, and idempotent.
 #
@@ -45,7 +45,7 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO_ROOT"
 
 # The hub's data dir. Override with CAMSTACK_DEPLOY_ROOT for non-default layouts.
-DEPLOY_ROOT="${CAMSTACK_DEPLOY_ROOT:-$REPO_ROOT/server/backend/camstack-data/addons/@camstack}"
+DEPLOY_ROOT="${CAMSTACK_DEPLOY_ROOT:-$REPO_ROOT/server/backend/camstack-data/addons/@dominevo}"
 MAIN_TS="$REPO_ROOT/server/backend/src/main.ts"
 
 DO_BUILD=1
@@ -91,7 +91,7 @@ matches_selector() {
     # exact or suffix match on any identity, tolerant of the addon- prefix
     if [ "$sel" = "$folder" ] || [ "$sel" = "$name" ] || [ "$sel" = "$deployed" ] \
        || [ "addon-$sel" = "$folder" ] || [ "addon-$sel" = "$deployed" ] \
-       || [ "@camstack/$sel" = "$name" ]; then
+       || [ "@dominevo/$sel" = "$name" ]; then
       return 0
     fi
   done

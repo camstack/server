@@ -6,8 +6,8 @@
  */
 
 import { randomUUID } from 'node:crypto'
-import type { IScopedLogger } from '@camstack/types'
-import { EventCategory, errMsg, MOTION_CLOSE_AFTER_MS, nodePin } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
+import { EventCategory, errMsg, MOTION_CLOSE_AFTER_MS, nodePin } from '@dominevo/types'
 import type { MediaBlobStorage } from '../location-aware-media-storage.js'
 import { MediaRelocateEngine } from '../media-relocate-engine.js'
 import { MotionEpisodeTracker } from '../motion-episode-tracker.js'

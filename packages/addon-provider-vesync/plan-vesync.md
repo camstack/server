@@ -25,7 +25,7 @@ Modelled as a manually-created **account Hub** that adopts its purifiers as
 
 ## Mapping (existing caps only — nothing new needed)
 
-| Source | CamStack DeviceType | Cap(s) | Notes |
+| Source | Dominevo DeviceType | Cap(s) | Notes |
 |---|---|---|---|
 | VeSync account | `Hub` (`VeSyncAccountDevice`) | `device-discovery` | credentials live on the device (standalone mode) |
 | air purifier | `Fan` (`VeSyncPurifierDevice`) | `switch` + `fan-control` | on/off on `switch`; speed (`percentage`, `percentageStep 33.33`) + preset (`availablePresets ["sleep"]`) on `fan-control` |

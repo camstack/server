@@ -19,9 +19,9 @@
  * `as unknown as` below stands on, and the only one in this file.
  */
 
-import type { AddonContext, DeviceProxy } from '@camstack/types'
+import type { AddonContext, DeviceProxy } from '@dominevo/types'
 import type { HAPConnection } from '@homebridge/hap-nodejs'
-import { applianceExport, DeviceRole, DeviceType } from '@camstack/types'
+import { applianceExport, DeviceRole, DeviceType } from '@dominevo/types'
 import type { CharacteristicWarning } from '@homebridge/hap-nodejs'
 import { Categories, Characteristic, Service } from '@homebridge/hap-nodejs'
 import { describe, expect, it } from 'vitest'

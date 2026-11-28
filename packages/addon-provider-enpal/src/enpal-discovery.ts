@@ -3,7 +3,7 @@ import {
   type DiscoveredChildDevice,
   deviceAdminLinkCapability,
   gatewayDeviceName,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { availableSpecs, capsOfSpec, isSensorSpecId } from './enpal-catalog.js'
 import {
   ENPAL_BOX_ID,

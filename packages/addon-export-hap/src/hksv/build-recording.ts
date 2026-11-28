@@ -15,9 +15,9 @@
  * surface the operator's first question is always "why does 102 have it and 101
  * not?".
  */
-import type { CamProfile, IScopedLogger, RtspEntryLike } from '@camstack/types'
-import { defaultFfmpegSpawn } from '@camstack/types/node'
-import { CamProfileSchema } from '@camstack/types'
+import type { CamProfile, IScopedLogger, RtspEntryLike } from '@dominevo/types'
+import { defaultFfmpegSpawn } from '@dominevo/types/node'
+import { CamProfileSchema } from '@dominevo/types'
 import type { CameraRecordingOptions } from '@homebridge/hap-nodejs'
 
 import type { ProfileFpsMap } from '../mappers/builders/stream-fps.js'

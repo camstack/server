@@ -2,7 +2,7 @@ import {
   type IScopedLogger,
   makeInMemoryRecords,
   RecordSecretUnavailableError,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { ALEXA_INSTANCE_ID, alexaSkillStateKind, type SkillStateBody } from '../skill-records.js'
 import { SkillStateStore } from '../skill-state-store.js'

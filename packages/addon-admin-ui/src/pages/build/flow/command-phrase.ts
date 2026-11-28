@@ -3,8 +3,8 @@
  * action's vocabulary phrase with `{device}` and every open arg filled in —
  * "Open Kitchen blind to 40 %".
  */
-import { findVocabAction, REPEAT_ITEM_VAR, vocabularyActionsForDevice } from '@camstack/types'
-import type { ActionTarget, LooseVocabOpenArg, ResolvedVocabAction } from '@camstack/types'
+import { findVocabAction, REPEAT_ITEM_VAR, vocabularyActionsForDevice } from '@dominevo/types'
+import type { ActionTarget, LooseVocabOpenArg, ResolvedVocabAction } from '@dominevo/types'
 import { type CommandStep, matchCommand, splitPhrase, type StepArgValue } from './command-vocab'
 import { TRIGGER_DEVICE_VAR } from './command-vocab'
 

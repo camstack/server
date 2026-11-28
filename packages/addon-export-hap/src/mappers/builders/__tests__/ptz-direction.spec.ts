@@ -15,7 +15,7 @@
  * onvif).
  */
 
-import type { AddonContext, DeviceProxy } from '@camstack/types'
+import type { AddonContext, DeviceProxy } from '@dominevo/types'
 import { Accessory, Characteristic, uuid } from '@homebridge/hap-nodejs'
 import type { Service } from '@homebridge/hap-nodejs'
 import { describe, expect, it, vi } from 'vitest'

@@ -23,7 +23,7 @@ or "stay triggered" (`0`) — no auto-disarm. Hikvision sirens seeded
 
 ## Decision
 
-1. A rule gated on any `armed_*` word **auto-triggers** the CamStack
+1. A rule gated on any `armed_*` word **auto-triggers** the Dominevo
    `alarm-panel` on match (`ruleAutoTriggersAlarm`). It never actuates sirens.
    Explicit `onTrigger` bindings remain for extra actions; a second panel
    trigger while pending/triggered is already a no-op.

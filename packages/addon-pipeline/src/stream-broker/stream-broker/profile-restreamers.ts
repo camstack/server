@@ -4,7 +4,7 @@ import {
   makeSourceBrokerId,
   type CamProfile,
   type ProfileRtspEntry,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export interface ProfileRestreamerRegistration {
   readonly profileBrokerId: string

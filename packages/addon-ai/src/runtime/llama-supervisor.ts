@@ -11,7 +11,7 @@
  */
 import { type ChildProcess, spawn as nodeSpawn } from 'node:child_process'
 import { createServer } from 'node:net'
-import type { IScopedLogger, LlmRuntimeStatus } from '@camstack/types'
+import type { IScopedLogger, LlmRuntimeStatus } from '@dominevo/types'
 import { CrashPolicy, DEFAULT_CRASH_POLICY } from './crash-policy.js'
 
 export interface LlamaStartConfig {

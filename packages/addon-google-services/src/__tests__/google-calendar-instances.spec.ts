@@ -3,7 +3,7 @@ import {
   type IScopedLogger,
   makeInMemoryRecords,
   moveCalendarIdsToRecords,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import { googleBrokersEntryKind, googleCalendarsEntryKind } from '../broker-record-kinds.js'

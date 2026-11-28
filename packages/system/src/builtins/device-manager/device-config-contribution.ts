@@ -24,7 +24,7 @@ import {
   buildStreamParamsConfigSchema,
   parseStreamParamsFormPatch,
   STREAM_PROFILE_META,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type {
   ConfigUISchema,
   DayNightOptions,
@@ -37,7 +37,7 @@ import type {
   RecordingOnboardStatus,
   StreamProfile,
   StreamProfilePatch,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { buildDayNightConfigSchema, parseDayNightFormPatch } from './day-night-config-schema.js'
 import {
   buildImageSettingsConfigSchema,

@@ -31,8 +31,8 @@ import {
   buildCapRouters,
   type CapabilityRegistry,
   type CapRouterServices,
-} from '@camstack/server/system'
-import { type DeviceAdminLink, deviceAdminLinkCapability, resolveCapMount } from '@camstack/types'
+} from '@dominevo/server/system'
+import { type DeviceAdminLink, deviceAdminLinkCapability, resolveCapMount } from '@dominevo/types'
 import { TRPCError } from '@trpc/server'
 import { describe, expect, it } from 'vitest'
 import { requireDeviceScoped } from '../../api/trpc/cap-mount-helpers.js'

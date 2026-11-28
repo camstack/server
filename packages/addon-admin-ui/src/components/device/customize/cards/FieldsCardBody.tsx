@@ -2,8 +2,8 @@
  * One generic composition card: a row per field
  * (Current value / No override / + Add override).
  */
-import { runtimeFieldUnit, type CompositionFieldsCard } from '@camstack/types'
-import { Button } from '@camstack/ui-library'
+import { runtimeFieldUnit, type CompositionFieldsCard } from '@dominevo/types'
+import { Button } from '@dominevo/ui-library'
 import { type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { unfilledRequiredFields } from '../../../composition-editor/build-skeleton'

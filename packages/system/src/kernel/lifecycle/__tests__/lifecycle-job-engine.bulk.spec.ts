@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import type { LifecycleJob, LifecycleTask } from '@camstack/types'
+import type { LifecycleJob, LifecycleTask } from '@dominevo/types'
 import {
   LifecycleJobEngine,
   type ApplyAddonUpdateFn,
@@ -35,7 +35,7 @@ function makeFrameworkTask(overrides: Partial<LifecycleTask> = {}): LifecycleTas
     taskId: 'task-framework',
     target: 'framework',
     nodeId: 'hub',
-    packageName: '@camstack/server',
+    packageName: '@dominevo/server',
     fromVersion: '1.0.0',
     toVersion: '1.1.0',
     phase: 'queued',
@@ -112,7 +112,7 @@ describe('LifecycleJobEngine — bulk ordering', () => {
   }
 
   it('bounds fetch concurrency to fetchConcurrency (cap 3) for a 5-addon + framework bulk', async () => {
-    const addonTasks = ['a', 'b', 'c', 'd', 'e'].map((n) => makeAddonTask(`@camstack/addon-${n}`))
+    const addonTasks = ['a', 'b', 'c', 'd', 'e'].map((n) => makeAddonTask(`@dominevo/addon-${n}`))
     const job = makeBulkJob('job-bulk-1', [...addonTasks, makeFrameworkTask()])
     journal.createJob(job)
 
@@ -133,7 +133,7 @@ describe('LifecycleJobEngine — bulk ordering', () => {
   })
 
   it('applies addon tasks serially in original input order; framework task is skipped', async () => {
-    const addonTasks = ['a', 'b', 'c', 'd', 'e'].map((n) => makeAddonTask(`@camstack/addon-${n}`))
+    const addonTasks = ['a', 'b', 'c', 'd', 'e'].map((n) => makeAddonTask(`@dominevo/addon-${n}`))
     const job = makeBulkJob('job-bulk-2', [...addonTasks, makeFrameworkTask()])
     journal.createJob(job)
 
@@ -150,11 +150,11 @@ describe('LifecycleJobEngine — bulk ordering', () => {
 
     // all 5 applied in original order
     expect(applyOrder).toEqual([
-      '@camstack/addon-a',
-      '@camstack/addon-b',
-      '@camstack/addon-c',
-      '@camstack/addon-d',
-      '@camstack/addon-e',
+      '@dominevo/addon-a',
+      '@dominevo/addon-b',
+      '@dominevo/addon-c',
+      '@dominevo/addon-d',
+      '@dominevo/addon-e',
     ])
     // framework updates ship via applyServerUpdate — the engine skips them,
     // never applies them, so a swept framework target does not fail the job.
@@ -167,8 +167,8 @@ describe('LifecycleJobEngine — bulk ordering', () => {
   })
 
   it('isolates a mid-list fetch failure: other addons apply, framework skipped', async () => {
-    failFetchFor.add('@camstack/addon-c')
-    const addonTasks = ['a', 'b', 'c', 'd', 'e'].map((n) => makeAddonTask(`@camstack/addon-${n}`))
+    failFetchFor.add('@dominevo/addon-c')
+    const addonTasks = ['a', 'b', 'c', 'd', 'e'].map((n) => makeAddonTask(`@dominevo/addon-${n}`))
     const job = makeBulkJob('job-bulk-3', [...addonTasks, makeFrameworkTask()])
     journal.createJob(job)
 
@@ -185,14 +185,14 @@ describe('LifecycleJobEngine — bulk ordering', () => {
 
     // the failed-fetch task never applies
     expect(applyOrder).toEqual([
-      '@camstack/addon-a',
-      '@camstack/addon-b',
-      '@camstack/addon-d',
-      '@camstack/addon-e',
+      '@dominevo/addon-a',
+      '@dominevo/addon-b',
+      '@dominevo/addon-d',
+      '@dominevo/addon-e',
     ])
-    expect(applyOrder).not.toContain('@camstack/addon-c')
+    expect(applyOrder).not.toContain('@dominevo/addon-c')
 
-    const cTask = result.tasks.find((t) => t.packageName === '@camstack/addon-c')
+    const cTask = result.tasks.find((t) => t.packageName === '@dominevo/addon-c')
     expect(cTask?.phase).toBe('failed')
     expect(cTask?.error).toMatch(/fetch failed/)
     expect(cTask?.finishedAtMs).toBe(1000)
@@ -204,7 +204,7 @@ describe('LifecycleJobEngine — bulk ordering', () => {
   })
 
   it('single addon task: identical fetch→apply→done path (regression)', async () => {
-    const job = makeBulkJob('job-single', [makeAddonTask('@camstack/addon-only')])
+    const job = makeBulkJob('job-single', [makeAddonTask('@dominevo/addon-only')])
     journal.createJob(job)
 
     const engine = new LifecycleJobEngine({
@@ -221,12 +221,12 @@ describe('LifecycleJobEngine — bulk ordering', () => {
     expect(result.state).toBe('completed')
     expect(result.tasks[0]?.phase).toBe('done')
     expect(result.tasks[0]?.finishedAtMs).toBe(1000)
-    expect(applyOrder).toEqual(['@camstack/addon-only'])
+    expect(applyOrder).toEqual(['@dominevo/addon-only'])
     expect(maxLiveFetches).toBe(1)
   })
 
   it('addon-only bulk with no failures finalizes completed and cleans staging', async () => {
-    const addonTasks = ['a', 'b', 'c'].map((n) => makeAddonTask(`@camstack/addon-${n}`))
+    const addonTasks = ['a', 'b', 'c'].map((n) => makeAddonTask(`@dominevo/addon-${n}`))
     const job = makeBulkJob('job-bulk-clean', addonTasks)
     journal.createJob(job)
 

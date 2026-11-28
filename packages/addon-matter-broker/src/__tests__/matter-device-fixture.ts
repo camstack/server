@@ -3,7 +3,7 @@
  * context is a structural fake at the kernel boundary (the same shape the
  * climate spec uses), so the casts live here and nowhere in the product code.
  */
-import { DeviceType, type DeviceContext, type IDeviceRuntimeState } from '@camstack/types'
+import { DeviceType, type DeviceContext, type IDeviceRuntimeState } from '@dominevo/types'
 import { MatterEndpointDevice } from '../devices/matter-endpoint-device.js'
 
 export const FIXTURE_DEVICE_ID = 42

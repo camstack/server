@@ -41,8 +41,8 @@ const providers = vi.hoisted(() => {
   }
 })
 
-vi.mock('@camstack/ui-library', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@camstack/ui-library')>()),
+vi.mock('@dominevo/ui-library', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@dominevo/ui-library')>()),
   useIntegrationsGetAvailableTypes: () => ({
     data: providers.list,
     isLoading: false,
@@ -92,7 +92,7 @@ vi.mock('@camstack/ui-library', async (importOriginal) => ({
   },
 }))
 
-import { ConfirmDialogProvider } from '@camstack/ui-library'
+import { ConfirmDialogProvider } from '@dominevo/ui-library'
 import { IntegrationWizard } from '../IntegrationWizard'
 
 describe('IntegrationWizard create error', () => {

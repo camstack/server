@@ -14,8 +14,8 @@
  *   - Per-class summary across the rolling window (default 60s)
  */
 import { Activity, Mic, MicOff } from 'lucide-react'
-import type { AudioMetricsSnapshot, AudioClassSummary, DeviceProxy } from '@camstack/types'
-import { useDeviceState, useDeviceStateSlice, useSystem } from '@camstack/ui-library'
+import type { AudioMetricsSnapshot, AudioClassSummary, DeviceProxy } from '@dominevo/types'
+import { useDeviceState, useDeviceStateSlice, useSystem } from '@dominevo/ui-library'
 import { useT } from '../../i18n/index.js'
 
 /**

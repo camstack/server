@@ -39,7 +39,7 @@
  * sweeper is still told to keep its hands off.
  */
 
-import type { IScopedLogger, MediaFileRef } from '@camstack/types'
+import type { IScopedLogger, MediaFileRef } from '@dominevo/types'
 import type { MediaDeleteCount } from '../../pipeline-analytics/store/media-store.js'
 import { SUMMARY_MOSAIC_OWNER_KIND } from '../../pipeline-analytics/store/media-store.js'
 

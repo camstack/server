@@ -1,7 +1,7 @@
 /**
  * `useCapabilityPresence`, re-exported.
  *
- * The hook MOVED to `@camstack/ui-library`
+ * The hook MOVED to `@dominevo/ui-library`
  * (`src/hooks/use-capability-presence.ts`) when a ui-library widget needed it:
  * `host/clips-browser` is mounted by the framework from the cap's own
  * `deviceConfig.ui` declaration (D14) and lives in the library, so a presence
@@ -18,4 +18,4 @@ export {
   classifyCapability,
   useCapabilityPresence,
   type CapabilityPresence,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'

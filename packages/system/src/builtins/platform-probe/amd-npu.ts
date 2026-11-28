@@ -1,4 +1,4 @@
-import type { NpuInfo } from '@camstack/types'
+import type { NpuInfo } from '@dominevo/types'
 
 /**
  * Filesystem seam for AMD XDNA NPU detection. Sysfs under

@@ -12,8 +12,8 @@ import {
   type PaletteSwatch,
   type PaletteSwatchMap,
   type SetPaletteInput,
-} from '@camstack/types'
-import { Button, ConfigFormField, SectionCard } from '@camstack/ui-library'
+} from '@dominevo/types'
+import { Button, ConfigFormField, SectionCard } from '@dominevo/ui-library'
 import { PaletteLegend, SwatchDot, legendLabel, swatchHex } from './palette-legend'
 
 export interface PalettePresetChoice {
@@ -122,14 +122,14 @@ export function PaletteEditor({
         <p className="text-xs text-warning" role="status" data-testid="palette-unknown">
           {t(
             'pipeline.palette.unknown',
-            'The stored palette cannot be read ({{reason}}). Boxes use the bundled CamStack preset.',
+            'The stored palette cannot be read ({{reason}}). Boxes use the bundled Dominevo preset.',
             { reason: reason ?? '' },
           )}
         </p>
       )}
       {status === 'ready' && source === 'unconfigured' && (
         <p className="text-xs text-foreground-subtle">
-          {t('pipeline.palette.sourceUnconfigured', 'CamStack preset (cluster default)')}
+          {t('pipeline.palette.sourceUnconfigured', 'Dominevo preset (cluster default)')}
         </p>
       )}
       <SectionCard headingId="palette-presets" title={t('pipeline.palette.presets', 'Presets')}>

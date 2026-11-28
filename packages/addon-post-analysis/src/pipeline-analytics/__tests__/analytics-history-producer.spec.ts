@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
-import type { IScopedLogger } from '@camstack/types'
-import { HISTORY_BUCKET_MS } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
+import { HISTORY_BUCKET_MS } from '@dominevo/types'
 import {
   ANALYTICS_AUDIO_LEVEL_KEY,
   ANALYTICS_HISTORY_BUCKET_SERIES,

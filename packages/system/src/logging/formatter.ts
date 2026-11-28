@@ -25,7 +25,7 @@
  *   [hub/provider-rtsp]          71184  - 04/20/2026, 12:46:01 AM     WARN  [hall] probe failed {err="timeout"}
  *   [dev-agent-0/detection]      12345  - 04/20/2026, 12:47:15 AM     ERROR [cortile] no detector {codec=av1}
  */
-import type { LogEntry, LogTags } from '@camstack/types'
+import type { LogEntry, LogTags } from '@dominevo/types'
 
 // Emit ANSI colour codes when the runtime supports them. Heuristic
 // follows npm ecosystem convention so log-consumers can override:

@@ -15,7 +15,7 @@ import {
   type EmailImagePart,
   type PeerBytesOpenResult,
   type PeerBytesTicket,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { SmtpRelayBody } from './relay-record-kinds.js'
 
 /** The part of a nodemailer transporter the pool uses; tests supply a fake of exactly this. */

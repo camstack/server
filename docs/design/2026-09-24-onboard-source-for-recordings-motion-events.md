@@ -188,7 +188,7 @@ four. The brief listed four; the fifth is the one that does most of the work.
    diversi."* `ClipDerivation` is `'derived' | 'cap'` and exactly one of them
    fills the body, ever.
 5. **The two sources answer the SAME QUESTION in the same shape.** This is the
-   rule nobody wrote down, because clips never had to state it: a CamStack
+   rule nobody wrote down, because clips never had to state it: a Dominevo
    analytics visit and a Reolink SD-card file are both *"a playable time window
    on this camera, with a still and some labels"*. `ClipSchema` is one schema
    and both sources fill it. The picker is honest precisely because the choice
@@ -1088,7 +1088,7 @@ export const RecordingSourceAvailabilitySchema = z.object({
 
 export const RecordingSourceSchema = z.object({
   source: z.string(),                     // 'camstack' | 'native:reolink:onboard' | …
-  label: z.string(),                      // "CamStack recordings", "SD card"
+  label: z.string(),                      // "Dominevo recordings", "SD card"
   addonId: z.string().optional(),         // stamped by the dispatcher (D557 §4)
   availability: RecordingSourceAvailabilitySchema,
 })
@@ -1233,7 +1233,7 @@ function resolveRecordingSource(input): RecordingSourceChoice {
 There is no `?? sources[0]` and there is no place to put one: the function's
 last expression is the reserved id or a named absence. A camera where our
 recorder genuinely has nothing gets `ours-absent`, which the surface draws as
-"CamStack has no recordings for this camera" with the other sources offered as
+"Dominevo has no recordings for this camera" with the other sources offered as
 a CHOICE — never taken on the operator's behalf.
 
 **3. A stored pick that names a source the camera no longer has** falls back to
@@ -1444,7 +1444,7 @@ node is still on the old one, or the reverse. Concretely:
   and finds no device-scoped `recording` binding for cameras on that node →
   `listSources` returns rows for whatever onboard providers that camera has and
   **no `camstack` row**. The resolver returns `{ kind: 'ours-absent' }` (§12) and
-  the surface says "CamStack has no recordings for this camera" — wrong, but
+  the surface says "Dominevo has no recordings for this camera" — wrong, but
   NAMED, and it resolves the moment that node is deployed.
 - **Old hub, new node.** The node registers the collection; the old hub's
   `getSingleton('recording')` (`generated-cap-mounts.ts:1327`) finds nothing and
@@ -1453,8 +1453,8 @@ node is still on the old one, or the reverse. Concretely:
 - **Mixed viewer.** An old viewer build calls `recording.getStorageUsage`, now
   on `recording-archive`, and gets a 404/412 per §15.1. Also transient.
 
-Duration is the deploy's own: `camstack deploy packages/addon-pipeline` to the
-hub and to each agent node, plus a `@camstack/server` install for the framework
+Duration is the deploy's own: `dominevo deploy packages/addon-pipeline` to the
+hub and to each agent node, plus a `@dominevo/server` install for the framework
 half (`packages/types` travels inside the published server closure — a
 framework fix is not live until a server containing it is installed).
 

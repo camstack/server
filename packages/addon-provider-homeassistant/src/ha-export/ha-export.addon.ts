@@ -62,7 +62,7 @@ import {
   type ProviderRegistration,
   isInstanceOn,
   type CommandOriginRequestOptions,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { HA_PROVIDER_ADDON_ID, listHomeAssistantBrokers } from '../ha-broker-source.js'
 import { applyCameraFunctionWrite } from './camera-function-writes.js'
@@ -560,7 +560,7 @@ export class HaExportAddon extends BaseAddon<Record<string, never>> {
         method: 'POST',
         path: '/command',
         access: 'authenticated',
-        description: 'Home Assistant → CamStack command: {topic, value}',
+        description: 'Home Assistant → Dominevo command: {topic, value}',
         handler: async (request, reply) => {
           await this.handleCommandRoute(request.body, reply)
         },
@@ -1163,7 +1163,7 @@ export class HaExportAddon extends BaseAddon<Record<string, never>> {
     if (this.reconcileQueued) return
     this.reconcileQueued = true
     setTimeout(() => {
-      // not-a-state-poll: debounce of the export reconcile (CamStack to HA direction)
+      // not-a-state-poll: debounce of the export reconcile (Dominevo to HA direction)
       this.reconcileQueued = false
       void this.reconcile('structure-changed')
     }, 2_000)
@@ -3464,7 +3464,7 @@ export class HaExportAddon extends BaseAddon<Record<string, never>> {
             value: this.unclassified.length === 0 ? 'none' : this.unclassified.join(', '),
           },
         ],
-        note: 'CamStack pushes to the CamStack custom component in Home Assistant. Home Assistant never polls the hub for a value; when the heartbeat stops, every entity is marked unavailable.',
+        note: 'Dominevo pushes to the Dominevo custom component in Home Assistant. Home Assistant never polls the hub for a value; when the heartbeat stops, every entity is marked unavailable.',
       },
     }
   }
@@ -3473,7 +3473,7 @@ export class HaExportAddon extends BaseAddon<Record<string, never>> {
     this.stopTimer()
     const ms = this.book().reconcileIntervalSec() * 1000
     this.reconcileTimer = setInterval(() => void this.reconcile('periodic'), ms)
-    // not-a-state-poll: periodic export reconcile; writes CamStack devices to HA, reads no HA state
+    // not-a-state-poll: periodic export reconcile; writes Dominevo devices to HA, reads no HA state
   }
 
   private stopTimer(): void {

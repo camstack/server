@@ -6,8 +6,8 @@
  * Each branch of the fix has its own spec; the comment on each names the piece
  * that, reverted, makes it fail.
  */
-import type { InMemoryRecords } from '@camstack/types'
-import { createEvent, DeviceType, NcRuleInputSchema, type SystemEvent } from '@camstack/types'
+import type { InMemoryRecords } from '@dominevo/types'
+import { createEvent, DeviceType, NcRuleInputSchema, type SystemEvent } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { mergeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import type { NcDeviceIdentity } from '../device-directory.js'

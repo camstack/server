@@ -4,7 +4,7 @@
  * rowid alias, D473); creating one is single-flight per identity so two
  * concurrent first points of a series never insert it twice.
  */
-import type { DeviceHistorySubject } from '@camstack/types'
+import type { DeviceHistorySubject } from '@dominevo/types'
 import { HistoryStore, type MetricRecord, type SeriesRecord } from './history-store.js'
 
 export function subjectIdOf(subject: DeviceHistorySubject): string {

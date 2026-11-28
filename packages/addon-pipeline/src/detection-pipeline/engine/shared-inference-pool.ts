@@ -22,8 +22,8 @@ import type {
   IScopedLogger,
   PoolModelConfig,
   RawFrameFormat,
-} from '@camstack/types'
-import { edgetpuDelegateDevice } from '@camstack/types'
+} from '@dominevo/types'
+import { edgetpuDelegateDevice } from '@dominevo/types'
 import type { PoolDecodeSettings } from './pool-decode-settings.js'
 import {
   chargesDeviceBudget,
@@ -65,7 +65,7 @@ const PREFIX_LEN = 4 + 4 + 1 // total_len + req_id + msg_type
  * and NEGOTIATED per worker (D350): the effective version is
  * `min(ours, theirs)`, so a worker and a host at different versions — the
  * NORMAL state during a rolling deploy on this cluster, since framework code
- * ships in the `@camstack/server` closure and addons ship separately — always
+ * ships in the `@dominevo/server` closure and addons ship separately — always
  * agree on the layout without either side guessing.
  *
  *   v1 — the historical layout. No deadline on the wire; an abandoned request
@@ -2211,7 +2211,7 @@ export class SharedInferencePool {
     ]
 
     try {
-      const pkgPath = require.resolve('@camstack/addon-detection-pipeline/package.json')
+      const pkgPath = require.resolve('@dominevo/addon-detection-pipeline/package.json')
       candidates.unshift(path.join(path.dirname(pkgPath), 'python', 'inference_pool.py'))
     } catch {
       // Package not resolvable — use relative paths

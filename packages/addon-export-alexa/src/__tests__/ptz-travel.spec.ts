@@ -12,7 +12,7 @@
  * travel waits out the rest of each pulse before issuing the next, so both
  * kinds of driver produce back-to-back pulses rather than overlapping ones.
  */
-import type { AddonApi, AddonContext, IScopedLogger } from '@camstack/types'
+import type { AddonApi, AddonContext, IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 
 import { handlePtzDirection } from '../handlers/ptz-direction.js'

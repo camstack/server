@@ -27,7 +27,7 @@ import { NcRuleStore } from './rule-store.js'
 import { NcSceneStateCache } from './scene-state-cache.js'
 import { NcStillShelf } from './still-shelf.js'
 import { NcZoneOwnershipCache } from './zone-owner-cache.js'
-import type { CameraOccupancySnapshot, IScopedLogger } from '@camstack/types'
+import type { CameraOccupancySnapshot, IScopedLogger } from '@dominevo/types'
 import type { NotificationCenterDeps } from './index.js'
 
 /**

@@ -7,8 +7,8 @@
  * file only draws it.
  */
 
-import type { NcHistoryStatus, NcRule, NcRuleLastRuns } from '@camstack/types'
-import { Button, Tooltip, TooltipContent, TooltipTrigger, useSystem } from '@camstack/ui-library'
+import type { NcHistoryStatus, NcRule, NcRuleLastRuns } from '@dominevo/types'
+import { Button, Tooltip, TooltipContent, TooltipTrigger, useSystem } from '@dominevo/ui-library'
 import { useQuery } from '@tanstack/react-query'
 import { History } from 'lucide-react'
 import { formatRelativeTime } from '../../components/device/hero/format'

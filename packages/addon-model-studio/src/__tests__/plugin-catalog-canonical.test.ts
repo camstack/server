@@ -2,7 +2,7 @@
  * Format-neutral plugin catalog registry identity.
  */
 import { describe, expect, it } from 'vitest'
-import type { CustomModelDescriptor } from '@camstack/types'
+import type { CustomModelDescriptor } from '@dominevo/types'
 import {
   migratePluginCatalogCustomModels,
   preferredPluginCatalogTfliteEntry,

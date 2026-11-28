@@ -3,7 +3,7 @@
  * What a backup carries — selection → payload mapping, defaults, legacy rows,
  * presence (unknown is not absent), and the picker / badges / restore copy.
  */
-import type { DataStoreDatabase } from '@camstack/types'
+import type { DataStoreDatabase } from '@dominevo/types'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
@@ -13,8 +13,8 @@ const available = vi.hoisted(() => ({
     | undefined,
 }))
 
-vi.mock('@camstack/ui-library', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@camstack/ui-library')>()
+vi.mock('@dominevo/ui-library', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dominevo/ui-library')>()
   return { ...actual, useBackupListAvailableDatabases: () => ({ data: available.data }) }
 })
 

@@ -36,7 +36,7 @@ import type {
   StorageLocationDeclarer,
   StorageLocationMode,
   StorageLocationRef,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   isLocationEnabled,
   mayWriteToLocation,
@@ -44,8 +44,8 @@ import {
   resolveLocationMode,
   STORAGE_ACCESS_FALLBACK,
   withLocationMode,
-} from '@camstack/types'
-import { physicalRootOf } from '@camstack/types/node'
+} from '@dominevo/types'
+import { physicalRootOf } from '@dominevo/types/node'
 import type { ResolveRoot } from './location-root-collision.js'
 import { findRootCollision, rootCollisionMessage } from './location-root-collision.js'
 import type { ILocationStore } from './location-store.js'
@@ -154,7 +154,7 @@ function sessionKey(kind: StorageSessionKind, sessionId: string): string {
 /**
  * Bare node id for a raw kernel `localNodeId`. Forked children carry a
  * `<node>/<addon>` suffix; routing is per-NODE, so the addon segment is
- * dropped. (Mirrors `normalizeNodeId` in `@camstack/types/addon`, which is a
+ * dropped. (Mirrors `normalizeNodeId` in `@dominevo/types/addon`, which is a
  * leaf module not re-exported on any subpath this package can import.)
  */
 function bareNodeId(raw: string | undefined): string {

@@ -3,7 +3,7 @@
  * events for the selected calendars and enqueue one outbox row per target.
  */
 
-import type { CalendarEvent, IScopedLogger } from '@camstack/types'
+import type { CalendarEvent, IScopedLogger } from '@dominevo/types'
 import type { NcOutbox } from '../outbox.js'
 import type { NcTextCatalog } from '../text-catalog.js'
 import type { ClosedWindow } from '../timelapse/window-bounds.js'

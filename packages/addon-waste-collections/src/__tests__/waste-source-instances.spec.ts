@@ -3,7 +3,7 @@ import {
   isInstanceOn,
   makeInMemoryRecords,
   REDACTED_SECRET,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import catalogJson from '../catalog.json'
 import { WasteFetchTimeoutError, WasteProviderRejectedError } from '../fetch-source.js'

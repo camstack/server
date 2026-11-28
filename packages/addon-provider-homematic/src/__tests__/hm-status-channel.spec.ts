@@ -9,7 +9,7 @@
  * the status-channel branch; this fixture is the one that does.
  */
 
-import { type DeviceContext, DeviceType, type IDeviceRuntimeState } from '@camstack/types'
+import { type DeviceContext, DeviceType, type IDeviceRuntimeState } from '@dominevo/types'
 import type { HmDevice, Homematic, ValueChangedEvent } from 'nodehomematic'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { HmActuatorDevice } from '../devices/hm-actuator-device.js'

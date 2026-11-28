@@ -16,7 +16,7 @@ import {
   invalidClusterStepModelEntries,
   readClusterStepModels,
   type StoredKeyRead,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { decideClusterModelChoice } from '../cluster-model-choice.js'
 import PipelineOrchestratorAddon from '../index.js'
 import { enabledNodesFromBroker, makeFakeBroker, makeFakeContext } from './e2e-helpers.js'

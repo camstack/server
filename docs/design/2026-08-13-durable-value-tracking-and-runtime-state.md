@@ -421,7 +421,7 @@ Three corrections to the two-camera picture:
 | D96, 2026-08-09, same file | **1,118 rows** |
 | hub log, today | zero occurrences of `writeDeviceRuntimeState`, zero `settings write failed (device-runtime-state/...)` |
 | lifetimes covered | the count was 0 **before** and **after** a hub container restart that happened mid-measurement (uptime 15 min, `notification-center:liveness` visibly re-seeding 1 → 263 rows in the same window). So it is not a post-restart artefact, and the write path had 15 minutes of continuous 1 Hz slice churn to produce a row in |
-| deployed code | the running bundle's `writeDeviceRuntimeState`, `readDeviceRuntimeState` and `loadRuntimeState` were read out of `/opt/camstack-hub/.../@camstack/system/dist` and are byte-for-byte the design described in §2.1 — the write is not missing from the build |
+| deployed code | the running bundle's `writeDeviceRuntimeState`, `readDeviceRuntimeState` and `loadRuntimeState` were read out of `/opt/camstack-hub/.../@dominevo/system/dist` and are byte-for-byte the design described in §2.1 — the write is not missing from the build |
 
 Meanwhile the in-RAM mirror is fully populated and churning (§2.2), and
 `deviceManager.loadRuntimeState{101}` answers with eight live slices — i.e. the
@@ -543,7 +543,7 @@ with `ts`, generalised to the kernel gate.
 
 ---
 
-## 3. Home Assistant LTS, mapped onto CamStack
+## 3. Home Assistant LTS, mapped onto Dominevo
 
 ### 3.1 What HA does
 
@@ -559,7 +559,7 @@ HA keeps two tiers:
 The point of the split is that a chart over a year needs 105,120 five-minute
 rows, not 40 million state changes.
 
-### 3.2 What CamStack already has
+### 3.2 What Dominevo already has
 
 **We already have HA's short-term tier, and we did not call it that.**
 `pipeline-analytics:{motion,audio,object}-events` IS a per-camera state-change
@@ -572,7 +572,7 @@ aggregate primitive is `histogram` — **grouped COUNT only, no mean/min/max**. 
 LTS would need either a new aggregate on the door or (better) aggregation in RAM
 before the write.
 
-### 3.3 Which CamStack series earn an LTS row
+### 3.3 Which Dominevo series earn an LTS row
 
 | Series | Source today | Aggregate | Rows/day (5-min, 20 cameras) | Operator value |
 | --- | --- | --- | --- | --- |
@@ -693,7 +693,7 @@ under `__device-state`, one row per (device, cap). Nothing was lost, and the
 real cost was `1 + N` statements per flush instead of one upsert. Fixed by
 pointing the writer at the collection it is named for, with a legacy read
 fallback and a per-device migration. See §2.4 and **D131**.
-*Rode: a `@camstack/server` train (kernel/system).*
+*Rode: a `@dominevo/server` train (kernel/system).*
 
 **Phase 1 — make the existing snapshot cheap and honest.** Add a
 `durability: 'session' | 'restored'` marker to capabilities declaring
@@ -726,7 +726,7 @@ catalogue is the part that changed shape. It is a `@durable` comment annotation
 rendered into `docs/reference/storage.md` §3a, **not** a new
 `durable-state.md` — one generated storage page, because the annotation has to
 cover collections that will never sit on the primitive.
-*Rides: addon deploys (`camstack deploy addon-post-analysis`) for the movers;
+*Rides: addon deploys (`dominevo deploy addon-post-analysis`) for the movers;
 the primitive itself is copied byte-identically into each consuming addon, since
 addons never import each other.*
 *Guard (new): `scripts/check-durable-state-declared.ts` — every declared collection

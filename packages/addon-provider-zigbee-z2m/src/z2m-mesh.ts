@@ -15,8 +15,8 @@ import type {
   MeshRefreshResult,
   MeshRole,
   MeshTopology,
-} from '@camstack/types'
-import { errMsg } from '@camstack/types'
+} from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
 import type { Z2mBridgeInfo, Z2mDevice, Z2mNetworkMap } from './z2m-protocol.js'
 import type { Z2mHub } from './z2m-hub.js'
 import { Z2mNetworkMapSchema } from './z2m-protocol.js'

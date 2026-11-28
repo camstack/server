@@ -72,7 +72,7 @@ true before acting, and say it started before the process can die.**
    Cluster page. A loopback-only install loses the button, never the
    notification.
 6. **Fifteen minutes, not sixty.** Same window as the addon-update family. Past
-   it the plane says "expired — open CamStack", which is the D305 tap target
+   it the plane says "expired — open Dominevo", which is the D305 tap target
    the same notification already carries.
 7. **Authorisation is the signature, narrowed to OWNED targets.** Same
    blast-radius reasoning as D324: this button appears on EVERY

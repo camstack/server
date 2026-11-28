@@ -4,7 +4,7 @@
  * option each and the rail draws nothing. That re-render must keep the same
  * hooks (React #300 "Rendered fewer hooks than expected" on a phone).
  */
-import type { DeviceSearchFacets } from '@camstack/types'
+import type { DeviceSearchFacets } from '@dominevo/types'
 import { cleanup, render } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 

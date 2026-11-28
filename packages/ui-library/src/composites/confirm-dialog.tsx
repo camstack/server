@@ -15,7 +15,7 @@
  * So the fix is not "a password modal" — a second dialog component is the
  * defect, not the cure. The provider that already served every confirm in the
  * admin UI (and in the viewer, which documents its own copy as "deliberately
- * the same one `@camstack/ui-library` exposes to the admin UI") grew two more
+ * the same one `@dominevo/ui-library` exposes to the admin UI") grew two more
  * intents. One provider, one backdrop, one visual language, one set of
  * keyboard rules.
  *

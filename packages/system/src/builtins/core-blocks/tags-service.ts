@@ -32,7 +32,7 @@ import {
   tagIdFromKey,
   tagKey,
   userError,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   EntityNameTakenError,
   EntityNotFoundError,

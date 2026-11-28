@@ -3,7 +3,7 @@
  * `unknown`, never offline. Offline is concluded only once the integration's
  * first read settled; an event that never arrives cannot strand a device.
  */
-import type { IScopedLogger, StateRefreshPolicy } from '@camstack/types'
+import type { IScopedLogger, StateRefreshPolicy } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { StateRefreshPolicyRegistry } from '../../../kernel/state-refresh-policies.js'
 import { integrationGroupKey } from '../state-refresh-scheduler.js'

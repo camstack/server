@@ -7,10 +7,10 @@
  * the decision layer existed for a day before anything called it.
  */
 import { ncTable } from './support/nc-test-deps.js'
-import type { InMemoryRecords } from '@camstack/types'
-import type { ObjectEvent } from '@camstack/types'
+import type { InMemoryRecords } from '@dominevo/types'
+import type { ObjectEvent } from '@dominevo/types'
 import { makeTestObjectEvent } from '../../__tests__/support/events.js'
-import { NcRuleInputSchema } from '@camstack/types'
+import { NcRuleInputSchema } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   type FakeSettingsStore,

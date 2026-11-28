@@ -14,7 +14,7 @@ import {
   type TimedRunResult,
   type TimedRunStatus,
   type TimedRunUnit,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** How long after the last keystroke an edited duration is saved (once). */
 export const QUICK_RUN_SAVE_DEBOUNCE_MS = 600

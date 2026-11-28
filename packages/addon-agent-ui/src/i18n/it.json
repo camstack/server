@@ -7,12 +7,12 @@
     "saving": "Salvataggio…"
   },
   "crash": {
-    "title": "L'interfaccia dell'agente CamStack si è interrotta",
+    "title": "L'interfaccia dell'agente Dominevo si è interrotta",
     "body": "La dashboard ha incontrato un errore imprevisto durante la visualizzazione. L'agente continua a funzionare: riguarda solo l'interfaccia. Dettagli qui sotto (anche nel log dell'agente).",
-    "startFailed": "Impossibile avviare l'interfaccia dell'agente CamStack"
+    "startFailed": "Impossibile avviare l'interfaccia dell'agente Dominevo"
   },
   "dashboard": {
-    "defaultName": "Agente CamStack",
+    "defaultName": "Agente Dominevo",
     "unlocking": "Sblocco dall'hub in corso…",
     "unreachable": "Non raggiungibile",
     "hub": {

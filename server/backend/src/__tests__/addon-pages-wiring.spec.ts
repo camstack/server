@@ -5,13 +5,13 @@
 // BenchmarkAddon page registration, and AdminUIAddon capability provider.
 //
 
-import { CapabilityRegistry } from '@camstack/server/system'
+import { CapabilityRegistry } from '@dominevo/server/system'
 import {
   type AddonContext,
   type IScopedLogger,
   makeInMemoryRecords,
   type ProviderRegistration,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 
 // ---------------------------------------------------------------------------
@@ -38,7 +38,7 @@ type AdminUIAddonCtor = new () => AdminUIAddonInstance
 
 async function loadAdminUIAddon(): Promise<AdminUIAddonCtor | null> {
   try {
-    const mod = (await import('@camstack/addon-admin-ui/server/addon')) as {
+    const mod = (await import('@dominevo/addon-admin-ui/server/addon')) as {
       AdminUIAddon?: AdminUIAddonCtor
     }
     return mod.AdminUIAddon ?? null
@@ -61,7 +61,7 @@ function createMockLogger(): IScopedLogger {
 
 describe('Addon Pages Integration', () => {
   it('BenchmarkAddon registers addon-pages-source and provides its page list', async () => {
-    const { BenchmarkAddon } = await import('@camstack/addon-benchmark')
+    const { BenchmarkAddon } = await import('@dominevo/addon-benchmark')
     const addon = new BenchmarkAddon()
 
     // Addon has id directly — manifest is attached by AddonLoader at boot time
@@ -137,7 +137,7 @@ describe('Addon Pages Integration', () => {
   })
 
   it('AdminUIAddon provides admin-ui capability with static dir and version', async () => {
-    // Load `@camstack/addon-admin-ui/server/addon` lazily — the package exports
+    // Load `@dominevo/addon-admin-ui/server/addon` lazily — the package exports
     // a dist/server path that may not exist when the backend workspace is
     // built in isolation (admin-ui has its own Vite-based build). Wrapping the
     // dynamic import in a helper means the test can be typed cleanly without

@@ -1,5 +1,5 @@
 /** The cover page of the approved mockup: one card per role, the mockup's data. */
-import { DeviceRole } from '@camstack/types'
+import { DeviceRole } from '@dominevo/types'
 import { coverRoleSpec, type CoverCardModel, positionOf } from '../scenes/cover/model'
 import type { CardCommon, CardOrientation } from '../shell/model'
 import { mockupCommon } from './common'

@@ -80,7 +80,7 @@ that policy is scoped by ROLE and not by build.
 | viewer | **113 MB** | the app only |
 | hub | **508 MB** | plus 1.1 GB staged closure and a 116 MB Node runtime |
 
-The closure is `npm install --omit=dev @camstack/server`: every `addon-*`
+The closure is `npm install --omit=dev @dominevo/server`: every `addon-*`
 transitively, `addon-pipeline`'s python/wasm/swift assets, the native prebuilds
 (node-av, sharp, better-sqlite3) and the admin UI's monaco / module-federation.
 It is not waste to be trimmed — it is what a hub node genuinely weighs. Which

@@ -20,7 +20,7 @@
  *   to. No kind is "the" event of a summary — `data.stateSummary` says what
  *   the row is, and `{{eventKind}}` renders empty on it.
  */
-import { type NcRule, type NcStateSummarySplit, templateCarriesSummary } from '@camstack/types'
+import { type NcRule, type NcStateSummarySplit, templateCarriesSummary } from '@dominevo/types'
 import { NC_SYSTEM_DEVICE_ID, type NcRuleSubject } from '../rule-engine.js'
 import type { ClosedWindow } from '../timelapse/window-bounds.js'
 import {

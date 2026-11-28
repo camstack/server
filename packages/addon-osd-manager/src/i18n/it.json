@@ -14,7 +14,7 @@
       "static": "Testo fisso",
       "template": "Template del dispositivo"
     },
-    "noneHint": "Scrive un testo vuoto nell'overlay. L'associazione resta, così CamStack continua a gestire questo slot.",
+    "noneHint": "Scrive un testo vuoto nell'overlay. L'associazione resta, così Dominevo continua a gestire questo slot.",
     "text": "Testo",
     "namedTemplate": "Template con nome",
     "noTemplates": "Nessun template — creane uno nella scheda Template.",
@@ -115,7 +115,7 @@
     "save": "Salva",
     "readOnly": "sola lettura",
     "cameraOff": "telecamera spenta",
-    "ownedByCamera": "Questo slot appartiene alla telecamera e non può essere associato da CamStack.",
+    "ownedByCamera": "Questo slot appartiene alla telecamera e non può essere associato da Dominevo.",
     "currently": "Attualmente “{{text}}”."
   },
   "pick": {

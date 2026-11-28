@@ -22,7 +22,7 @@ import {
   makeAnalyticsRecords,
 } from '../../__tests__/fake-records.js'
 import { beforeEach, describe, expect, it } from 'vitest'
-import type { ObjectEvent } from '@camstack/types'
+import type { ObjectEvent } from '@dominevo/types'
 import {
   type FakeSettingsStore,
   makeFakeSettingsStore,

@@ -3,7 +3,7 @@ import {
   LowPowerSleepStatusSchema,
   lowPowerSleepCapability,
   type AddonApi,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { RecordingWakeDeps } from './battery-wake.js'
 import { withDeadline } from './with-deadline.js'
 

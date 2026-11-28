@@ -30,10 +30,10 @@
  * says exactly that rather than picking one of the two.
  */
 
-import type { MediaFileKind, MediaFileRef } from '@camstack/types'
+import type { MediaFileKind, MediaFileRef } from '@dominevo/types'
 import type { MediaProvenance } from '../store/media-store.js'
 import { RAW_CLASS_STEP_ID } from '../pipeline/label-utils.js'
-import { linkedStepOf } from '@camstack/types'
+import { linkedStepOf } from '@dominevo/types'
 
 /** A track is "short" below this — the pipeline rarely produces a full media set. */
 export const SHORT_TRACK_MS = 2_000

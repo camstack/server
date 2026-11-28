@@ -15,7 +15,7 @@ import {
   RecordSecretUnavailableError,
   RevConflictError,
   UnknownRecordKindError,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { describe, expect, it } from 'vitest'
 import {
@@ -167,7 +167,7 @@ describe('entries service', () => {
 
   it('refuses a kind that is not an entry kind or not declared', async () => {
     const { owner, service } = await setup()
-    const plain = (await import('@camstack/types')).defineRecordKinds({
+    const plain = (await import('@dominevo/types')).defineRecordKinds({
       plain: {
         schema: z.object({ v: z.number() }),
         class: 'config',

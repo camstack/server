@@ -12,7 +12,7 @@ import {
   type InferNativeProvider,
   type SwitchStatus,
   switchCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { vesyncPurifierSchema, type VeSyncSensorKind, type VeSyncToggleKind } from '../config.js'
 import type { VeSyncClient, VeSyncPurifierSnapshot } from '../vesync-client-contract.js'
 import { vesyncAccounts } from '../vesync-account-resolver.js'
@@ -46,7 +46,7 @@ interface AccessoryPlan {
 }
 
 /**
- * One VeSync air purifier as a CamStack {@link DeviceType.Fan} device. Registers TWO caps on itself:
+ * One VeSync air purifier as a Dominevo {@link DeviceType.Fan} device. Registers TWO caps on itself:
  *   - `switch`       — the main power on/off (per the `fan-control` cap doc, the
  *                      on/off state lives on `switch`, mirroring the Light pattern).
  *   - `fan-control`  — speed percentage + preset mode.

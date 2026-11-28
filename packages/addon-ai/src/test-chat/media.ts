@@ -11,7 +11,7 @@
  * two remedies apart. A test chat that answers "no image" with silence reads
  * exactly like a model that had nothing to say.
  */
-import type { IScopedLogger, LlmErrorCode, MediaFileKind } from '@camstack/types'
+import type { IScopedLogger, LlmErrorCode, MediaFileKind } from '@dominevo/types'
 import type { TestChatAttachment, TestChatImageRef, TestChatMessage } from './contract.js'
 
 /**

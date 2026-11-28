@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import type { DecodedFrame } from '@camstack/types'
+import type { DecodedFrame } from '@dominevo/types'
 import { LengthPrefixCodec } from '../codecs/length-prefix-codec.js'
 import {
   decodedFrameCodec,

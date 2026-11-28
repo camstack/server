@@ -7,14 +7,14 @@ import { createHash } from 'node:crypto'
 import { EventEmitter } from 'node:events'
 import { writeFile } from 'node:fs/promises'
 import type { IncomingMessage } from 'node:http'
-import type { PeerBytesHandlerResponse } from '@camstack/types'
+import type { PeerBytesHandlerResponse } from '@dominevo/types'
 import { Readable } from 'node:stream'
 import type {
   PeerBytesOfferOptions,
   PeerBytesOfferResult,
   PeerBytesOpenResult,
   PeerBytesTicket,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** Just enough of a `ServerResponse` for a producer handler to write a body into memory. */
 class CaptureResponse extends EventEmitter implements PeerBytesHandlerResponse {

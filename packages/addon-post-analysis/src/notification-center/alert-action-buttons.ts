@@ -9,7 +9,7 @@
  *
  *  - **`href` → an OPEN-URL action**, ABSOLUTE, on the `publicEndpoint` role
  *    (the dispatcher's `publicUrlBase`). Not `notificationTaps`: that role
- *    decides only where a TAP opens and defaults to the CamStack app link,
+ *    decides only where a TAP opens and defaults to the Dominevo app link,
  *    which is no hub address. An action button, an admin link and a hub route
  *    must resolve from outside the home network — exactly what D734 assigns
  *    to `publicEndpoint`. An `app` action (an admin-ui route) and a `server`
@@ -25,7 +25,7 @@
  * Pure: the mint and the label are injected.
  */
 
-import type { AlertEpisodeAction, NotificationAction } from '@camstack/types'
+import type { AlertEpisodeAction, NotificationAction } from '@dominevo/types'
 
 export const ALERT_OPEN_BUTTON_ID = 'alert-open'
 export const ALERT_INVOKE_BUTTON_ID = 'alert-invoke'

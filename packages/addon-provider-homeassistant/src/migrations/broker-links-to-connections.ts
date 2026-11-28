@@ -1,4 +1,4 @@
-import { brokerLinkPortsOver, type BrokerLinkPorts, type RecordsAccess } from '@camstack/types'
+import { brokerLinkPortsOver, type BrokerLinkPorts, type RecordsAccess } from '@dominevo/types'
 import { z } from 'zod'
 import { haBrokersEntryKind, haConnectionsEntryKind } from '../broker-record-kinds.js'
 

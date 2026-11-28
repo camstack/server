@@ -37,7 +37,7 @@
  * phantom alerts and a storm; this produces a real track, with real media, in
  * the zone the subject was actually in.
  */
-import type { FrameResult, ObjectDetection, Zone } from '@camstack/types'
+import type { FrameResult, ObjectDetection, Zone } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { FrameProcessor } from '../frame-processor.js'
 

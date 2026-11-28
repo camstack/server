@@ -14,8 +14,8 @@ interface ListState {
 }
 let listState: ListState = { data: undefined, error: null }
 
-vi.mock('@camstack/ui-library', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@camstack/ui-library')>()),
+vi.mock('@dominevo/ui-library', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@dominevo/ui-library')>()),
   useSchedulersList: () => ({ ...listState, refetch: vi.fn() }),
   useSchedulersGetStatus: () => ({ data: [], error: null }),
   useSchedulersGetTraces: () => ({ data: { traces: [], lastError: null }, error: null }),

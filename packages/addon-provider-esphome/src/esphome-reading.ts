@@ -1,4 +1,4 @@
-import { ingestReading, type IScopedLogger, type ReadingQuantity } from '@camstack/types'
+import { ingestReading, type IScopedLogger, type ReadingQuantity } from '@dominevo/types'
 
 /**
  * Convert one board sample into the quantity's base unit. A refusal publishes

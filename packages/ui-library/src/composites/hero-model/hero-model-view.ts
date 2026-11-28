@@ -11,7 +11,7 @@ import {
   type HeroState,
   type HeroText,
   type HeroTone,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { BadgeVariant } from '../../primitives/badge'
 import type { HeroSceneParams, SceneTile } from '../hero-scene'
 

@@ -35,7 +35,7 @@
  * which is event-driven and costs the cluster nothing.
  */
 
-import type { AgentLoadSummary, NodeInferenceDevice, PlacementStats } from '@camstack/types'
+import type { AgentLoadSummary, NodeInferenceDevice, PlacementStats } from '@dominevo/types'
 import {
   SECTION_BODY,
   SectionCard,
@@ -44,7 +44,7 @@ import {
   usePipelineOrchestratorGetAgentLoad,
   usePipelineOrchestratorListAgentSettings,
   useSystem,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { keepPreviousData, useQueries } from '@tanstack/react-query'
 import { getQueryKey } from '@trpc/react-query'
 import { Activity, AlertTriangle, Cpu, Gauge, WifiOff } from 'lucide-react'

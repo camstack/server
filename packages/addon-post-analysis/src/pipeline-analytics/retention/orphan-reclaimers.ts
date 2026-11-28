@@ -26,7 +26,7 @@
  * THROWS, and `scripts/check-orphan-reclaimers.ts` fails the build before it
  * can ever be reached at runtime.
  */
-import type { IScopedLogger, SettingsStoreClient } from '@camstack/types'
+import type { IScopedLogger, SettingsStoreClient } from '@dominevo/types'
 import { FACES_COLLECTION } from '../store/face-store.js'
 import { MEDIA_COLLECTION } from '../store/media-store.js'
 import { TRACK_ALIASES_COLLECTION } from '../store/track-alias-store.js'

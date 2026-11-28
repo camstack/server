@@ -1,5 +1,5 @@
 /**
- * `camstack login` / `logout` / `whoami` — local credential cache for
+ * `dominevo login` / `logout` / `whoami` — local credential cache for
  * the deploy / push commands.
  *
  * The CLI never persists the admin password. `login` caches the login JWT
@@ -34,7 +34,7 @@ import {
   loadSession,
   saveSession,
   type SessionFile,
-} from '@camstack/develop'
+} from '@dominevo/develop'
 import { describeHub, findHubs } from '../discovery/hub-finder.js'
 import { pickHub } from '../discovery/hub-picker.js'
 import { hubRequest } from '../http/hub-http.js'
@@ -325,7 +325,7 @@ async function askPasswordWithBack(): Promise<string | typeof BACK_SENTINEL> {
 }
 
 /**
- * `camstack login` — prompts for credentials, caches the login JWT locally.
+ * `dominevo login` — prompts for credentials, caches the login JWT locally.
  * Idempotent: re-running best-effort revokes the prior session (if present).
  *
  * Resolution chain for the server URL:
@@ -344,7 +344,7 @@ export async function loginCommand(opts: {
   password?: string
   tokenName?: string
 }): Promise<void> {
-  clack.intro('camstack login')
+  clack.intro('dominevo login')
 
   // Step machine: cycles until we have all three inputs without a back.
   type Step = 'server' | 'username' | 'password'
@@ -484,7 +484,7 @@ export async function logoutCommand(opts: { server: string }): Promise<void> {
     console.log(`[camstack] No active session for ${opts.server}.`)
     return
   }
-  clack.intro('camstack logout')
+  clack.intro('dominevo logout')
   const spinner = clack.spinner()
   spinner.start(`Revoking token on ${session.server}`)
   try {
@@ -521,7 +521,7 @@ export function formatSessionList(
     lines.push(`    last used: ${new Date(s.lastUsedAt ?? s.createdAt).toISOString()}`)
   }
   lines.push('Default: $CAMSTACK_SERVER if set, else the most recently used session.')
-  lines.push('Pick another with `camstack whoami --server <host>`.')
+  lines.push('Pick another with `dominevo whoami --server <host>`.')
   return lines.join('\n')
 }
 
@@ -583,7 +583,7 @@ export async function whoamiCommand(opts: { server?: string }): Promise<void> {
       // sees which session got invalidated.
       clearSession(session.server)
       console.error(`[camstack] ✗ Token rejected by server (revoked / expired).`)
-      console.error(`[camstack]   Local cache cleared. Run \`camstack login\` to issue a new one.`)
+      console.error(`[camstack]   Local cache cleared. Run \`dominevo login\` to issue a new one.`)
       process.exit(2)
     }
     if (!res.ok) {
@@ -615,7 +615,7 @@ export async function whoamiCommand(opts: { server?: string }): Promise<void> {
     const msg = err instanceof Error ? err.message : String(err)
     console.error(`[camstack] ⚠ Could not reach server: ${msg}`)
     console.error(
-      `[camstack]   The local cache may be stale. Try \`camstack login\` once the server is reachable.`,
+      `[camstack]   The local cache may be stale. Try \`dominevo login\` once the server is reachable.`,
     )
     process.exit(2)
   }

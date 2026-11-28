@@ -18,7 +18,7 @@ export const PALETTE_MIN_DELTA_E = 7
 
 /**
  * The live cursor and the heatmap handle sit next to each other as small
- * swatches. ΔE 7 still lets two olives read as one (the old CamStack pair
+ * swatches. ΔE 7 still lets two olives read as one (the old Dominevo pair
  * was 12.8 on the same hue). The global floor stays 7 — the presets' closest
  * pairs are 7.30, 7.49 and 7.01 — and these two marks must clear 20.
  */

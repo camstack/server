@@ -19,7 +19,7 @@ import {
   type RecordWhere,
   type RecordWhereValue,
   UnindexedFilterError,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   INDEX_KIND_AT,
   INDEX_KIND_DEVICE_AT,

@@ -37,7 +37,7 @@ import {
   errMsg,
   type IScopedLogger,
   type VacuumState,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   buildVacuumConsumableItems,
   VACUUM_TANK_PROPS,

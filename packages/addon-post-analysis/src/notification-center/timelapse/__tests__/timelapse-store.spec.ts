@@ -8,12 +8,12 @@
 import { ncRecordKinds } from '../../record-kinds.js'
 import { makeNcRecords, ncTable } from '../../__tests__/support/nc-test-deps.js'
 import { beforeEach, describe, expect, it } from 'vitest'
-import type { InMemoryRecords, TimelapseRuleInput, TimelapseRulePatch } from '@camstack/types'
+import type { InMemoryRecords, TimelapseRuleInput, TimelapseRulePatch } from '@dominevo/types'
 import {
   readTimelapseGeneratedAt,
   TimelapseRuleInputSchema,
   TimelapseRuleSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { makeSilentLogger } from '../../../pipeline-analytics/__tests__/test-helpers.js'
 import { TimelapseStore } from '../timelapse-store.js'
 

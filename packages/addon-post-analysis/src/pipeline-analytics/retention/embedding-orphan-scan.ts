@@ -52,7 +52,7 @@
  *    is reported as kept rather than counted as reclaimed.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { OrphanAuditMode, OrphanScopeStop } from './orphan-audit.js'
 
 /**

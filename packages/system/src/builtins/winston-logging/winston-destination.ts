@@ -7,7 +7,7 @@ import type {
   LogReadCapabilities,
   LogReadQuery,
   LogReadResult,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { formatLogLine } from '../../logging/formatter.js'
 import { LogFileReadClient, type LogFileReadClientOptions } from './log-file-read-client.js'
 
@@ -50,7 +50,7 @@ export class WinstonDestination implements ILogDestination {
 
     // Console: canonical single-line formatter — `_rendered` already
     // carries level-based ANSI colour codes (see `formatLogLine` in
-    // `@camstack/server/system/logging/formatter.ts`). Using Winston's colorize
+    // `@dominevo/server/system/logging/formatter.ts`). Using Winston's colorize
     // here would just decorate unused `info.level` and leave the
     // rendered line uncoloured.
     const consoleFormat = winston.format.printf((info) => {

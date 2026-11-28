@@ -17,7 +17,7 @@
  * call — the whole decode of one input packet completes before the method
  * returns.
  */
-import type { AudioPcmChunk, IScopedLogger, PcmSampleFormat } from '@camstack/types'
+import type { AudioPcmChunk, IScopedLogger, PcmSampleFormat } from '@dominevo/types'
 import type { NodeAvRuntime } from './nodeav-runtime-loader.js'
 import { type AudioPcmFormat } from './codec-catalog.js'
 import {

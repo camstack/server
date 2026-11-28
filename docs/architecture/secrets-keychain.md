@@ -34,7 +34,7 @@ covers:
 
 # Secrets and the keychain
 
-Every password, token and key CamStack holds lives in ONE place: the hub's
+Every password, token and key Dominevo holds lives in ONE place: the hub's
 keychain, encrypted. A settings blob, a device config, an integration's
 settings and a storage location hold a **marker** where the value used to be:
 
@@ -86,13 +86,13 @@ keychain stores strings. Hidden state an addon writes itself is declared in
   re-wraps one row.
 - **Master key** ([D788](../decisions/adr-0788-the-keychain-master-key-location-is-configuration-never-an-environment-variable.md)):
   the file `/run/secrets/camstack-master-key` when it exists (mounted by the
-  operator, read-only for CamStack; `.previous` beside it unlocks only) → the
+  operator, read-only for Dominevo; `.previous` beside it unlocks only) → the
   desktop app's OS keychain → `<dataDir>/.keychain/master.key`. Fixed paths
   ([D991](../decisions/adr-0991-the-external-keychain-key-is-a-fixed-mounted-path.md)),
   no config key, no env var. Rotating from Data → Secrets: default file →
   generates a new key; mounted file → re-wraps when a new mounted key is
   pending, else refuses naming the two paths. The default file is not in
-  CamStack's backups, but it IS in a whole-volume tar next to the database —
+  Dominevo's backups, but it IS in a whole-volume tar next to the database —
   the Secrets page says so.
 - **Locked is never empty.** `key-missing`, `wrong-key`,
   `key-file-unreadable`: every ref resolves `unavailable`, `put` refuses, and

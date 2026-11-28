@@ -31,8 +31,8 @@ let sourceNodeId: string | null = 'agent-a'
 /** The input the panel handed the read hook — the routing key must be in it. */
 let lastReadInput: unknown = null
 
-vi.mock('@camstack/ui-library', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@camstack/ui-library')>()),
+vi.mock('@dominevo/ui-library', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@dominevo/ui-library')>()),
   useDeviceProxy: () => null,
   useEventInvalidation: () => undefined,
   useEventStreamLatest: () => null,

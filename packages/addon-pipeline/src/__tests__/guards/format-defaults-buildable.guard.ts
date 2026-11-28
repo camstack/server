@@ -22,7 +22,7 @@
  * entry names a model in that step's catalog, and that model ships a build for
  * the entry's format.
  */
-import type { StepDefinition } from '@camstack/types'
+import type { StepDefinition } from '@dominevo/types'
 import {
   ALL_PIPELINE_STEPS,
   DORMANT_PIPELINE_STEPS,

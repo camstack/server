@@ -3,14 +3,14 @@
  * 2026-11-12): a hot and a cold temperature, a power reading, an open contact,
  * a text state, a humidity, and a wide one.
  */
-import type { HeroMeasurement } from '@camstack/types'
+import type { HeroMeasurement } from '@dominevo/types'
 import {
   contactMeasurement,
   humidityMeasurement,
   powerMeasurement,
   temperatureMeasurement,
   textMeasurement,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { measurementVisual, type SensorCardModel } from '../scenes/sensor/model'
 import type { CardBattery, CardOrientation } from '../shell/model'
 import { offline } from './common'

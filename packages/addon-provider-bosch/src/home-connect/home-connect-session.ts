@@ -1,4 +1,4 @@
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IScopedLogger } from '@dominevo/types'
 import type { HomeConnectDescriptionStore } from './home-connect-description-store.js'
 import {
   decodeHomeConnectValue,
@@ -13,7 +13,7 @@ import {
 } from './home-connect-message.js'
 import type { HomeConnectWire } from './home-connect-wire.js'
 
-const APP_NAME = 'CamStack'
+const APP_NAME = 'Dominevo'
 const APP_ID = 'camstack-hc'
 
 /** Max wait for appliance `/ei/initialValues` after the socket opens. */

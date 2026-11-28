@@ -32,7 +32,7 @@ import {
   type NodeBenchRunnerInput,
   PIPELINE_RAMP,
   type PipelineStepInputOutput,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   type CapacityDispatchOutcome,
   type CapacityRampStep,

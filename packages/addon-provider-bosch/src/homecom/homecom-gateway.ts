@@ -1,6 +1,6 @@
 import type { HomeComApiClient, HomeComSystemSnapshot } from './homecom-api-client.js'
 import type { HomeComHeatingCircuit } from './homecom-domain-mapping.js'
-import { gatewayDeviceName } from '@camstack/types'
+import { gatewayDeviceName } from '@dominevo/types'
 import { zoneNativeId } from './homecom-zone.js'
 
 export interface HomeComDiscoverableDevice {

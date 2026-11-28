@@ -13,7 +13,7 @@ import {
   NATIVE_LEASE_ADMISSION_KEY,
   NATIVE_LEASE_HOLD_KEY,
   NATIVE_LEASE_SCENE_BUDGET_KEY,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   NATIVE_LEASE_OWNER_ADDON_ID,

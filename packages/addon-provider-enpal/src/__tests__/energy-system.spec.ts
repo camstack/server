@@ -11,7 +11,7 @@ import {
   energySystemSelfConsumptionPct,
   type IDeviceRuntimeState,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { EnpalEnergySystemDevice } from '../devices/enpal-energy-system-device.js'
 import {

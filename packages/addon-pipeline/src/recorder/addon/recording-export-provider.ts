@@ -18,12 +18,12 @@ import type {
   ExportRecord,
   IRecordingExportProvider,
   IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   clipExportFailure,
   RECORDING_EXPORT_MAX_READ_BYTES,
   resolveCreateExportSubject,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   EXPORT_CLIP_CATALOG_LIMIT,
   type ExportClipCatalog,
@@ -36,7 +36,7 @@ import {
   upsertExport,
   type RecordingExportsState,
 } from './export-store.js'
-import { userError } from '@camstack/types'
+import { userError } from '@dominevo/types'
 
 /** Minimal engine surface the provider drives (satisfied by {@link ExportEngine}). */
 export interface ExportEngineHandle {

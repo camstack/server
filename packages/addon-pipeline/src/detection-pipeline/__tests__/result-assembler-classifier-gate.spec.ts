@@ -1,4 +1,4 @@
-import type { StepOutput } from '@camstack/types'
+import type { StepOutput } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { makeInferenceEngineStub } from '../../__tests__/support/inference-engine-stub.js'
 import { makeClassifierStepDefinition } from '../../__tests__/support/step-definition.js'

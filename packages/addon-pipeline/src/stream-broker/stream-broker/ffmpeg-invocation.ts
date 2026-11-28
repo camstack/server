@@ -6,16 +6,16 @@
  * `webrtc/session.ts`, knew nothing about hardware encoders or `-threads` and
  * served the derived feeder and the WebRTC transcode leg; the two disagreed in
  * the direction that costs CPU. Both are gone. The single builder now lives in
- * `@camstack/types` (`ffmpeg/invocation.ts`), because three separate ADDONS
+ * `@dominevo/types` (`ffmpeg/invocation.ts`), because three separate ADDONS
  * need it and addons may never import each other.
  *
  * What remains here is broker-specific TRANSLATION: the `system-config`
  * `ffmpeg` section, the `hwAccel` setting vocabulary, and the mapping from a
  * probed hardware-encoder set onto an encoder id. None of it emits an argument.
  */
-import type { HardwareEncoders, AudioCodecTarget, IScopedLogger } from '@camstack/types'
-export type { FfmpegSpawnFn } from '@camstack/types/node'
-export { defaultFfmpegSpawn } from '@camstack/types/node'
+import type { HardwareEncoders, AudioCodecTarget, IScopedLogger } from '@dominevo/types'
+export type { FfmpegSpawnFn } from '@dominevo/types/node'
+export { defaultFfmpegSpawn } from '@dominevo/types/node'
 import {
   buildFfmpegArgs as buildSharedFfmpegArgs,
   AUDIO_PRESETS,
@@ -24,7 +24,7 @@ import {
   type FfmpegAudioSidecar,
   type FfmpegVideoEncoderId,
   type FfmpegHwEncodeDevice,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /**
  * The `system-config` `ffmpeg.hwAccel` (or per-source-stream) decode preference.
@@ -317,7 +317,7 @@ export function localHardwareEncoders(backend: string | null): HardwareEncoders 
 /**
  * Translate the broker's transcode request into the shared
  * {@link FfmpegInvocation}. Emits no arguments itself — `buildFfmpegArgs` from
- * `@camstack/types` does that, and it is the only thing that may.
+ * `@dominevo/types` does that, and it is the only thing that may.
  *
  * One broker-specific decision lives here: the broker scales with an EXACT
  * filter (`scale=W:H`), because its callers have already picked a source

@@ -9,7 +9,7 @@
  * window the OTHER retired key still carried was dropped or kept at the
  * cleared key's value.
  */
-import { makeInMemoryRecords } from '@camstack/types'
+import { makeInMemoryRecords } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import { ncRecordKinds } from '../record-kinds.js'

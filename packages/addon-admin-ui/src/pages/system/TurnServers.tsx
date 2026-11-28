@@ -15,20 +15,20 @@ import { InstancesTable } from '../../components/instances/InstancesTable'
 export function TurnServersPage(): ReactElement {
   const { t } = useTranslation()
   return (
-      <InstancesTable
-        functionCap="turn-provider"
-        icon={Network}
-        title={t('system.turnServers.turnServers', 'TURN Servers')}
-        subtitle={t(
-          'system.turnServers.iceServersUsedForWebrtc',
-          'ICE servers used for WebRTC NAT traversal. Multiple providers can coexist — the WebRTC layer concatenates servers from all enabled providers per session.',
-        )}
-        emptyTitle={t('system.turnServers.noTurnProvidersInstalled', 'No TURN providers installed')}
-        emptyDescription={t(
-          'system.turnServers.installATurnAddonE',
-          'Install a TURN addon (e.g. @camstack/addon-cloudflare) to enable WebRTC behind restrictive NATs.',
-        )}
-        addLabel={t('system.turnServers.addProvider', 'Add provider')}
-      />
+    <InstancesTable
+      functionCap="turn-provider"
+      icon={Network}
+      title={t('system.turnServers.turnServers', 'TURN Servers')}
+      subtitle={t(
+        'system.turnServers.iceServersUsedForWebrtc',
+        'ICE servers used for WebRTC NAT traversal. Multiple providers can coexist — the WebRTC layer concatenates servers from all enabled providers per session.',
+      )}
+      emptyTitle={t('system.turnServers.noTurnProvidersInstalled', 'No TURN providers installed')}
+      emptyDescription={t(
+        'system.turnServers.installATurnAddonE',
+        'Install a TURN addon (e.g. @dominevo/addon-cloudflare) to enable WebRTC behind restrictive NATs.',
+      )}
+      addLabel={t('system.turnServers.addProvider', 'Add provider')}
+    />
   )
 }

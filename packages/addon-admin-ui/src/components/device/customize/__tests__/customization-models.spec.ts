@@ -3,7 +3,7 @@ import {
   type CompositionFieldsFeature,
   type CompositionView,
   DeviceType,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { compositionEditorPath, customizePath } from '../../../../lib/customization-routes'
 import { currentComposition, resolveCustomization } from '../customization-read'

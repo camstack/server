@@ -3,7 +3,7 @@ import {
   DerivedSourceRefSchema,
   type GetStreamWithCodecInput,
   type VideoCodecTarget,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { DerivedSourceRef, ProfileName } from './cycle-check.js'
 
 export type { DerivedSourceRef, ProfileName }
@@ -12,7 +12,7 @@ export { DerivedSourceRefSchema }
 
 /**
  * The `getStreamWithCodec` cap input. Reused (not duplicated) from
- * `@camstack/types` — the derived feeder resolves a source's broker RTSP
+ * `@dominevo/types` — the derived feeder resolves a source's broker RTSP
  * loopback through the SAME read API the recorder/webrtc-transcode use.
  */
 export type GetStreamWithCodecRequest = GetStreamWithCodecInput

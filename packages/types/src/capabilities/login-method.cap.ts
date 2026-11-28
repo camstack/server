@@ -137,7 +137,7 @@ export const loginMethodCapability = {
     /** List the sign-in methods this provider offers on the login page. */
     getLoginMethods: method(z.void(), z.array(LoginMethodContributionSchema).readonly()),
   },
-  /** BIG PLAN 2: declarative mount hint — read by `@camstack/server/system` `buildCapRouters`. */
+  /** BIG PLAN 2: declarative mount hint — read by `@dominevo/server/system` `buildCapRouters`. */
   mount: { kind: 'skip' },
   vocabulary: { notOperatorFacing: NOT_A_DEVICE.IDENTITY },
 } as const satisfies CapabilityDefinition

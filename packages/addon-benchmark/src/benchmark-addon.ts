@@ -14,8 +14,8 @@ import type {
   AddonPageDeclaration,
   FrameResult,
   IAddonPageProvider,
-} from '@camstack/types'
-import { BaseAddon, addonPagesSourceCapability, appSourceCapability } from '@camstack/types/addon'
+} from '@dominevo/types'
+import { BaseAddon, addonPagesSourceCapability, appSourceCapability } from '@dominevo/types/addon'
 import type { z } from 'zod'
 import { createBenchmarkAppSourceProvider } from './app-source.js'
 import { benchmarkActions, type BenchmarkActions } from './benchmark-actions.js'

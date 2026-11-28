@@ -11,8 +11,8 @@
  * A read that fails, or an absent cap, changes nothing (D49): it is not a
  * state, so it is never compared and never pushed.
  */
-import type { IScopedLogger } from '@camstack/types'
-import { errMsg } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
 import { z } from 'zod'
 import { GENERIC_STATE_CAPS } from '../endpoints/adapters/index.js'
 import { parseCameraEndpointId } from '../handlers/endpoint-id.js'

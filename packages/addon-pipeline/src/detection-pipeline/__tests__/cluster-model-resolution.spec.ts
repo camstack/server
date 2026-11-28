@@ -7,7 +7,7 @@
  * on which of the three verdicts came out, not on "it produced something".
  */
 import { describe, expect, it } from 'vitest'
-import type { StepDefinition } from '@camstack/types'
+import type { StepDefinition } from '@dominevo/types'
 import { makeModelCatalogEntry } from '../../__tests__/support/model-catalog-entry.js'
 import { resolveClusterStepModel } from '../cluster-model-resolution.js'
 

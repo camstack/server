@@ -1,18 +1,18 @@
 /**
  * The bare specifiers an ESM addon may leave unbundled and expect the HOST
  * framework to provide. Self-contained addons (the standard) inline
- * @camstack/types, @camstack/sdk, zod, @trpc/* — so for them only
- * @camstack/server/system survives as genuinely host-provided. Framework-mode (legacy)
+ * @dominevo/types, @dominevo/sdk, zod, @trpc/* — so for them only
+ * @dominevo/server/system survives as genuinely host-provided. Framework-mode (legacy)
  * addons additionally leave the types/sdk/zod/trpc set external. Listing the
  * full union here lets one resolver hook serve both modes: for a self-contained
  * addon the extra entries simply never appear as live imports.
  */
 export const HOST_EXTERNAL_SPECIFIERS: readonly string[] = [
-  '@camstack/server/system',
-  // `@camstack/shm-ring` is gone (D763): the package was deleted, and no
+  '@dominevo/server/system',
+  // `@dominevo/shm-ring` is gone (D763): the package was deleted, and no
   // published addon version imports it.
-  '@camstack/types',
-  '@camstack/sdk',
+  '@dominevo/types',
+  '@dominevo/sdk',
   'zod',
   '@trpc/server',
   '@trpc/client',
@@ -21,7 +21,7 @@ export const HOST_EXTERNAL_SPECIFIERS: readonly string[] = [
   // resolved from the host framework's node_modules so addons need no local
   // node_modules after a tarball-extract swap.
   // NOTE: better-sqlite3 is deliberately NOT host-external. No addon imports it
-  // — it is used only by @camstack/server/system's sqlite-storage builtin (hub
+  // — it is used only by @dominevo/server/system's sqlite-storage builtin (hub
   // process), whose module already lives in the framework dir and resolves it
   // there natively. Leaving it out means a stray `import 'better-sqlite3'` from
   // an ADDON fails to resolve instead of being silently redirected, enforcing
@@ -29,7 +29,7 @@ export const HOST_EXTERNAL_SPECIFIERS: readonly string[] = [
   'sharp',
   'node-av',
   // node-pty: the terminal addon's real native pty (`.node`). Declared on
-  // @camstack/server so the framework closure carries it; addons resolve it here
+  // @dominevo/server so the framework closure carries it; addons resolve it here
   // instead of a per-addon install (which never happened — it is an
   // optionalDependency the stripper drops — so this is the ONLY way it resolves).
   'node-pty',

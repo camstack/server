@@ -42,7 +42,7 @@ import {
   type TrackRelation,
   TrackRelationKindSchema,
   TrackSideSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import type { Tape } from './tape-codec.js'
 import type { TapeBox, TapePlane } from './tape-schema.js'

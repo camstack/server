@@ -15,7 +15,7 @@ import {
   fieldReads,
   type SourceReading,
   toExpressionValue,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { readPath } from '../device/customize/source-picker-model'
 import i18n from '../../i18n/index'
 

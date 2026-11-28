@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { DeviceFeature } from '@camstack/types'
+import { DeviceFeature } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { effectiveProbeFlags, withPersistedProbe } from '../accessory-probe-flags'
 import { deriveReolinkCameraFeatures } from '../device-features'

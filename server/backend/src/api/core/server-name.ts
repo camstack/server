@@ -13,10 +13,10 @@
  */
 
 import os from 'node:os'
-import type { IScopedLogger, ServerNameInfo } from '@camstack/types'
-import { errMsg, resolveServerName, SERVER_NAME_SETTING_KEY } from '@camstack/types'
-import type { CapabilityRegistry } from '@camstack/server/system'
-import type { ISettingsStoreProvider } from '@camstack/types'
+import type { IScopedLogger, ServerNameInfo } from '@dominevo/types'
+import { errMsg, resolveServerName, SERVER_NAME_SETTING_KEY } from '@dominevo/types'
+import type { CapabilityRegistry } from '@dominevo/server/system'
+import type { ISettingsStoreProvider } from '@dominevo/types'
 import type { SettingsStoreGateway } from './site-location.js'
 
 const SYSTEM_SETTINGS_COLLECTION = 'system-settings'

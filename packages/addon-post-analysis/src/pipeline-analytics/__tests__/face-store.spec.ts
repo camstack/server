@@ -1,6 +1,6 @@
 import { FACE_ARCFACE_INDEX } from '../store/embedding-vector-index.js'
 import { describe, it, expect, beforeEach } from 'vitest'
-import type { IScopedLogger, LogExtras } from '@camstack/types'
+import type { IScopedLogger, LogExtras } from '@dominevo/types'
 import {
   FaceStore,
   FACE_SWEEP_PAGE,

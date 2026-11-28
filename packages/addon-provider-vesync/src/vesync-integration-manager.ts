@@ -3,7 +3,7 @@ import {
   errMsg,
   type IScopedLogger,
   type StateRefreshReason,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { vesyncRefreshPolicy, type VeSyncConnectionConfig } from './config.js'
 import {
   type VeSyncClient,
@@ -32,7 +32,7 @@ export type VeSyncAccountStatus = 'connected' | 'disconnected' | 'connecting' | 
 export interface VeSyncCommand {
   /** The VeSync `cid` the command drives. */
   readonly nativeId: string
-  /** The CamStack device the command came from — every log line about it is tagged with it. */
+  /** The Dominevo device the command came from — every log line about it is tagged with it. */
   readonly deviceId: number
   /** What is sent, for the log (`setPower(on)`, `setFanSpeed(67)` …). */
   readonly name: string
@@ -43,7 +43,7 @@ export interface VeSyncCommand {
 export interface VeSyncRefreshTarget {
   /** The VeSync `cid` to read. */
   readonly nativeId: string
-  /** The CamStack device the read is for — the log tag. */
+  /** The Dominevo device the read is for — the log tag. */
   readonly deviceId: number
 }
 

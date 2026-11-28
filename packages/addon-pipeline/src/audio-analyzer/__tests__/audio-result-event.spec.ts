@@ -30,7 +30,7 @@ import type {
   AudioResult,
   DecodedAudioChunkWire,
   IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { AudioDeviceAttachments } from '../audio-device-attachments.js'

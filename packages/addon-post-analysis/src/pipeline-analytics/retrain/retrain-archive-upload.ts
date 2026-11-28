@@ -9,7 +9,7 @@
  */
 import { request as httpRequest, type ClientRequest, type IncomingMessage } from 'node:http'
 import { request as httpsRequest } from 'node:https'
-import type { RetrainArchiveTarget } from '@camstack/types'
+import type { RetrainArchiveTarget } from '@dominevo/types'
 import type { RetrainArchiveSink } from './retrain-archive-writer.js'
 
 export interface RetrainUpload {

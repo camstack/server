@@ -13,7 +13,7 @@ applies-to:
 ## Context
 
 D478 made the `werift` patch reach production by shipping it inside
-`@camstack/server` and applying it from that package's `postinstall`, inside the
+`@dominevo/server` and applying it from that package's `postinstall`, inside the
 staged closure. The reasoning was written down as: *"the closure install passes
 no `--ignore-scripts`"*. That sentence was true and it was not the question.
 
@@ -38,7 +38,7 @@ it — found **two** independent faults, either of which alone breaks the closur
 
    ```
    npm warn install-scripts 7 packages had install scripts blocked because they
-   npm warn install-scripts   @camstack/server@1.2.277 (postinstall: …)
+   npm warn install-scripts   @dominevo/server@1.2.277 (postinstall: …)
    npm warn install-scripts   better-sqlite3@12.11.1 (install: …)
    ```
 

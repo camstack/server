@@ -44,7 +44,7 @@ describe('triggers', () => {
 
   it('imports nothing a block cannot resolve', () => {
     const imports = [...GEN.matchAll(/from '([^']+)'/g)].map((m) => m[1])
-    expect(imports.sort()).toEqual(['@camstack/types', '@camstack/types'])
+    expect(imports.sort()).toEqual(['@dominevo/types', '@dominevo/types'])
   })
 
   it('subscribes to the event bus for a device-event trigger', () => {
@@ -200,7 +200,7 @@ describe('actions', () => {
       },
     })
     const body = g.slice(g.indexOf('async function actuateTarget'))
-    expect(g).toMatch(/import \{[^}]*\bvocabCall\b[^}]*\} from '@camstack\/types'/)
+    expect(g).toMatch(/import \{[^}]*\bvocabCall\b[^}]*\} from '@dominevo\/types'/)
     expect(body).toContain('vocabCall(actionId, args)')
     const steps = g.slice(g.indexOf('async function runActions'))
     expect(steps).not.toContain('"lock-control"')

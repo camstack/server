@@ -31,7 +31,7 @@ interface SeedOpts {
 }
 
 function seedWorkspacePackage(workspaceDir: string, opts: SeedOpts): string {
-  const shortName = opts.name.replace('@camstack/', '')
+  const shortName = opts.name.replace('@dominevo/', '')
   const dir = path.join(workspaceDir, shortName)
   fs.mkdirSync(dir, { recursive: true })
   fs.writeFileSync(
@@ -63,7 +63,7 @@ function seedWorkspacePackage(workspaceDir: string, opts: SeedOpts): string {
   return dir
 }
 
-const PKG = '@camstack/test-foo'
+const PKG = '@dominevo/test-foo'
 
 describe('AddonInstaller — .backups retention', () => {
   let tmpRoot: string
@@ -216,7 +216,7 @@ describe('AddonInstaller — .backups retention', () => {
     installer.manifest.upsert(PKG, {
       version: '1.0.0',
       source: 'local',
-      lastBackupDir: path.join(backupsRoot, '..', '@camstack', 'test-foo'),
+      lastBackupDir: path.join(backupsRoot, '..', '@dominevo', 'test-foo'),
     })
 
     await installer.clearBackup(PKG)

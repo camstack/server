@@ -13,7 +13,7 @@ import {
   type MotionRawState,
   type MotionRawBox,
   type DetectionState,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 
 export type {
   DeviceDetections,

@@ -14,9 +14,9 @@ import {
   ConsoleDestination,
   listHeldInstalls,
   setHuggingFaceReachabilityObserver,
-} from '@camstack/server/system'
-import type { ILocalNetworkProvider, ISettingsStoreProvider } from '@camstack/types'
-import { EventCategory, memoizePinnedFfmpeg, ServerPackageStatusSchema } from '@camstack/types'
+} from '@dominevo/server/system'
+import type { ILocalNetworkProvider, ISettingsStoreProvider } from '@dominevo/types'
+import { EventCategory, memoizePinnedFfmpeg, ServerPackageStatusSchema } from '@dominevo/types'
 import type { FastifyInstance } from 'fastify'
 import Fastify from 'fastify'
 import { buildHubHttpSource } from './api/addon-upload'
@@ -328,7 +328,7 @@ export async function bootManual(opts: BootOptions): Promise<BootedApp> {
   // calling `packPackage` — `npm pack <name>@<version>` — so the back-fill
   // repaired a node by installing the REGISTRY's build of a version over the
   // one an operator had just deployed. Same name, same version, different
-  // bundle: every `camstack deploy … -n agent-a` on 2026-08-07 was
+  // bundle: every `dominevo deploy … -n agent-a` on 2026-08-07 was
   // reverted ~1.5s later and read as a stale dist. See `packInstalledPackage`.
   // Delivery is an RPC pair, never an event (D8/D11).
   const backfillLogger = loggingService.createLogger('agent-backfill')

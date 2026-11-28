@@ -3,7 +3,7 @@
  * picker suggests first. A suggestion is a presentation, never a link (D356):
  * nothing here picks a device — the operator does, in the shared picker.
  */
-import { compositionSourceKey, type CompositionSourceRef, DeviceType } from '@camstack/types'
+import { compositionSourceKey, type CompositionSourceRef, DeviceType } from '@dominevo/types'
 import {
   type AssignmentCandidate,
   type CandidateDevice,

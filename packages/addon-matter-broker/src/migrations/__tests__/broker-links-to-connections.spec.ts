@@ -1,4 +1,4 @@
-import { makeInMemoryRecords, moveBrokerLinksToConnections } from '@camstack/types'
+import { makeInMemoryRecords, moveBrokerLinksToConnections } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { matterBrokersEntryKind, matterConnectionsEntryKind } from '../../broker-record-kinds.js'
 import { matterBrokerLinkPorts } from '../broker-links-to-connections.js'

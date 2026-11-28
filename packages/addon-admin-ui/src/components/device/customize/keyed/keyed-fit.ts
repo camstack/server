@@ -11,7 +11,7 @@ import {
   type CustomizeCatalogField,
   type CustomizeCatalogSource,
   type CustomizeCatalogTarget,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { DeviceSnapshot, WireableCatalog } from '../source-picker-model'
 import { readPath } from '../source-picker-model'
 import {

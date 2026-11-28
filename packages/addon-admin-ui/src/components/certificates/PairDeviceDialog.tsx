@@ -14,7 +14,7 @@ import {
   QrCode,
   Select,
   trpc,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { AlertTriangle, Loader2, Smartphone } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 
@@ -94,7 +94,7 @@ export function PairDeviceDialog({
           <p className="text-[11px] text-foreground-subtle">
             {t(
               'certificates.pairDeviceDialog.createsAOneTimeCode',
-              'Creates a one-time code for a phone you hold. Scan it with the CamStack app on that phone; the phone then stays signed in as the chosen user until you revoke it.',
+              'Creates a one-time code for a phone you hold. Scan it with the Dominevo app on that phone; the phone then stays signed in as the chosen user until you revoke it.',
             )}
           </p>
           <FormField label={t('certificates.pairDeviceDialog.user', 'User')} required>
@@ -158,7 +158,7 @@ function IssuedCode({ enrollUrl, expiresAt, hubKnown, onRestart }: IssuedCodePro
           <p className="text-[11px] text-foreground-subtle">
             {t(
               'certificates.pairDeviceDialog.openTheCamstackAppOn',
-              'Open the CamStack app on the phone and scan this code. It works once.',
+              'Open the Dominevo app on the phone and scan this code. It works once.',
             )}
           </p>
           <div

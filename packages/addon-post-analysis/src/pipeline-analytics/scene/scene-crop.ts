@@ -17,7 +17,7 @@
  *     plausible cosine. The anchor is what tells those two apart.
  */
 
-import type { MaskRectShape } from '@camstack/types'
+import type { MaskRectShape } from '@dominevo/types'
 import sharp from 'sharp'
 
 /** Whole-frame anchor edge length. Small on purpose — the anchor answers "is

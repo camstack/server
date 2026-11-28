@@ -1,4 +1,4 @@
-import type { IScopedLogger, LogExtras } from '@camstack/types'
+import type { IScopedLogger, LogExtras } from '@dominevo/types'
 import { type Mock, vi } from 'vitest'
 
 type LogFn = (message: string, extras?: LogExtras) => void

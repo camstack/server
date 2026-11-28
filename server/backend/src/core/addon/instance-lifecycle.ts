@@ -15,7 +15,7 @@
  * only from the addon it names. Delete has one caller of {@link deleteRegisteredInstance}: the
  * provider's `deleteInstance` (`integrations` has no delete method).
  */
-import { IntegrationRegistry } from '@camstack/server/system'
+import { IntegrationRegistry } from '@dominevo/server/system'
 import type {
   IIntegrationInstancesProvider,
   IIntegrationRegistry,
@@ -25,8 +25,8 @@ import type {
   IntegrationRole,
   IntegrationTestConnectionStatus,
   IScopedLogger,
-} from '@camstack/types'
-import { bareAddonId, EventCategory, errMsg, SERVICE_INSTANCE_INFO_KEY } from '@camstack/types'
+} from '@dominevo/types'
+import { bareAddonId, EventCategory, errMsg, SERVICE_INSTANCE_INFO_KEY } from '@dominevo/types'
 import { TRPCError } from '@trpc/server'
 import { planDeleteTimeStamps } from '../../boot/integration-id-backfill'
 import { bringsDevices, describedRoleOf } from '../../api/core/integration-role'

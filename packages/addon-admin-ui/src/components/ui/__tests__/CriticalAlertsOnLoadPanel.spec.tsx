@@ -18,7 +18,7 @@ const { state } = vi.hoisted(() => ({
   },
 }))
 
-vi.mock('@camstack/ui-library', () => ({
+vi.mock('@dominevo/ui-library', () => ({
   Button: (props: { children?: string; onClick?: () => void }) =>
     createElement('button', { type: 'button', onClick: props.onClick }, props.children),
   IconButton: (props: { 'data-testid'?: string; 'aria-label'?: string; onClick?: () => void }) =>

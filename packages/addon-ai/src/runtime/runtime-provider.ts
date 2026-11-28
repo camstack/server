@@ -22,8 +22,8 @@ import type {
   ManagedModelRef,
   ManagedRuntimeConfig,
   ModelCatalogEntry,
-} from '@camstack/types'
-import { LlmTimeoutDefaults } from '@camstack/types'
+} from '@dominevo/types'
+import { LlmTimeoutDefaults } from '@dominevo/types'
 import type { LlmClient } from '../client/llm-client.js'
 import type { AppleFmBackend } from './apple/afm-backend.js'
 import { CancelRegistry } from './cancel-registry.js'

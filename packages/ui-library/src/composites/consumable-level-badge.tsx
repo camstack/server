@@ -16,7 +16,7 @@ import {
   consumableKindOf,
   type ConsumableLevel as CapConsumableLevel,
   ConsumableLevelSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { Badge, type BadgeSize, type BadgeVariant } from '../primitives/badge'
 import { useUiText, type UiTextFn } from '../contexts/ui-text'
 

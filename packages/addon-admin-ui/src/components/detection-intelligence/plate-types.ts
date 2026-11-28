@@ -1,7 +1,7 @@
 /**
  * Local mirrors of the `plate-gallery` capability schema, shared across the
  * plates/vehicles detection-intelligence components. Kept local (not imported
- * from `@camstack/types`) to match the existing face-gallery convention in this
+ * from `@dominevo/types`) to match the existing face-gallery convention in this
  * folder and to keep the admin bundle free of a cross-package type import.
  */
 import type { PixelBox } from './face-bbox.js'

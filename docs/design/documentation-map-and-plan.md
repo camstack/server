@@ -112,9 +112,9 @@ session is the argument of §3, not a flaw in it.
 
 | Subject | Code | Documented in camstack-server? |
 | --- | --- | --- |
-| Viewer app | `camstack/` submodule (`github.com/camstack/viewer.git`), 642 files / ~102k lines | Partially — two scrub specs in `docs/design/` target it explicitly, plus `camstack/CLAUDE.md`. No page describes the app itself. |
+| Viewer app | `camstack/` submodule (`github.com/dominevo/viewer.git`), 642 files / ~102k lines | Partially — two scrub specs in `docs/design/` target it explicitly, plus `camstack/CLAUDE.md`. No page describes the app itself. |
 | Home Assistant component | separate repo `homeassistant-component` (44 py / ~8.6k lines) | Yes — `docs/design/ecosystem-export-plan.md`, `docs/design/2026-08-08-ha-oauth-onboarding.md`, `docs/decisions/adr-0140.md` |
-| Public user docs | separate repo `github.com/camstack/docs` | Named in `docs/README.md`, out of scope here |
+| Public user docs | separate repo `github.com/dominevo/docs` | Named in `docs/README.md`, out of scope here |
 
 ### 1.5 Defects found during the census
 

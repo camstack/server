@@ -1,4 +1,4 @@
-import type { IIntegrationInstancesProvider, IntegrationInstance } from '@camstack/types'
+import type { IIntegrationInstancesProvider, IntegrationInstance } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { instancesOfSection, kindsFor } from '../integration-instances-provider.js'
 

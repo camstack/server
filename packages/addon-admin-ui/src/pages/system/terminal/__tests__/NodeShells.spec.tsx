@@ -19,7 +19,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 expect.extend(jestDomMatchers)
 
-import type { CapabilityRegistryAnswer } from '@camstack/ui-library'
+import type { CapabilityRegistryAnswer } from '@dominevo/ui-library'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 
@@ -74,9 +74,9 @@ vi.mock('../TerminalNodeSettings', () => ({
   ),
 }))
 
-vi.mock('@camstack/ui-library', async () => {
+vi.mock('@dominevo/ui-library', async () => {
   const actual =
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+    await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return {
     ...actual,
     useCapabilityNodePresence: () => ({

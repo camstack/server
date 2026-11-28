@@ -4,7 +4,7 @@ import {
   getDefaultModelForFormatFromDef,
   getStepDefinition,
 } from '../registry/step-definitions.js'
-import type { ModelFormat } from '@camstack/types'
+import type { ModelFormat } from '@dominevo/types'
 
 /**
  * G1: getDefaultModelForFormat must honor the step's DECLARED default

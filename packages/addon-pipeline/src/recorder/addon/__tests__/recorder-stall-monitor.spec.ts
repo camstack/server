@@ -19,7 +19,7 @@
  * a finding.
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { AddonContext, IEventBus, LogExtras } from '@camstack/types'
+import type { AddonContext, IEventBus, LogExtras } from '@dominevo/types'
 import RecorderV2Addon from '../index.js'
 
 interface CapturedLog {

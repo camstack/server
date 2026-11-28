@@ -2,13 +2,13 @@
  * The cluster palette editor refuses a table the hub would refuse (D939).
  */
 import { fireEvent, render, screen } from '@testing-library/react'
-import { DISPLAY_PRESETS } from '@camstack/types'
+import { DISPLAY_PRESETS } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { PaletteEditor } from '../palette-editor'
 
 function camstack() {
   const row = DISPLAY_PRESETS.find((preset) => preset.id === 'camstack')
-  if (row === undefined) throw new Error('CamStack preset missing')
+  if (row === undefined) throw new Error('Dominevo preset missing')
   return row
 }
 
@@ -25,7 +25,7 @@ describe('PaletteEditor', () => {
         onApply={vi.fn()}
       />,
     )
-    expect(screen.getByText('CamStack preset (cluster default)')).toBeInTheDocument()
+    expect(screen.getByText('Dominevo preset (cluster default)')).toBeInTheDocument()
     expect(screen.getByTestId('palette-verdict')).toHaveTextContent(
       'Every colour is distinct on both themes.',
     )
@@ -82,6 +82,6 @@ describe('PaletteEditor', () => {
     expect(screen.getByTestId('palette-unknown').textContent).toContain(
       'stored palette is unreadable',
     )
-    expect(screen.getByTestId('palette-unknown').textContent).toContain('bundled CamStack preset')
+    expect(screen.getByTestId('palette-unknown').textContent).toContain('bundled Dominevo preset')
   })
 })

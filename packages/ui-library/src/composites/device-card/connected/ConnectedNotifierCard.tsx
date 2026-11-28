@@ -37,8 +37,8 @@ export function ConnectedNotifierCard({
         onTest: () => {
           Promise.resolve(
             cap.send({
-              title: 'CamStack', // i18n-ignore: the product name, sent as the notification title
-              body: t('uiLibrary.deviceCard.notifier.testBody', 'Test notification from CamStack.'),
+              title: 'Dominevo', // i18n-ignore: the product name, sent as the notification title
+              body: t('uiLibrary.deviceCard.notifier.testBody', 'Test notification from Dominevo.'),
             }),
           ).then(card.succeed, card.fail)
         },

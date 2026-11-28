@@ -14,7 +14,7 @@ import {
   type AppleFmAvailability,
   AppleFmAvailabilitySchema,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { HelperOutcome, HelperRequestOptions } from './afm-helper.js'
 import { type AfmProbeRequest, AfmProbeReplySchema } from './afm-protocol.js'
 

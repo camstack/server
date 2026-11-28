@@ -3,8 +3,8 @@
  * advice: Apply fills the editable fields, Save stays the only write. An
  * unanswered query is "…", never an absent proposal.
  */
-import type { RunningThresholdProposal } from '@camstack/types'
-import { Button } from '@camstack/ui-library'
+import type { RunningThresholdProposal } from '@dominevo/types'
+import { Button } from '@dominevo/ui-library'
 import type { TFunction } from 'i18next'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'

@@ -11,7 +11,7 @@ export interface ReplSessionContext {
   readonly variables: Record<string, unknown>
 }
 
-import type { ReplResult } from '@camstack/types'
+import type { ReplResult } from '@dominevo/types'
 export type { ReplResult }
 
 export interface IReplEngine {

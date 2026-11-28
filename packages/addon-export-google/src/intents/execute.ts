@@ -9,7 +9,7 @@
  * reason with `tags: { deviceId }`. A command Google reports as "sorry, that
  * didn't work" with nothing in the hub log is unanswerable.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 import type { ActionSceneExports } from '../action-scenes.js'
 import { parseActionSceneId } from '../action-scenes.js'

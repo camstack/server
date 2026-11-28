@@ -11,7 +11,7 @@
  * itself is tested: a fake that "notes" an outcome nothing ever writes would
  * pass while the wire lied.
  */
-import type { AddonContext } from '@camstack/types'
+import type { AddonContext } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 
 import type { HksvBuildOutcome } from '../../hksv/build-outcome.js'

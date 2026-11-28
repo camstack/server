@@ -30,8 +30,8 @@ import type {
   RelocateJob,
   StorageLocation,
   StorageMigrationJob,
-} from '@camstack/types'
-import { createDurableState, type DurableState, StorageMigrationJobSchema } from '@camstack/types'
+} from '@dominevo/types'
+import { createDurableState, type DurableState, StorageMigrationJobSchema } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import type { AddonSettingsView } from '../../../kernel/config-manager.js'
 import { ConfigManager } from '../../../kernel/config-manager.js'

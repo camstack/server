@@ -28,7 +28,7 @@ import {
   VEHICLE_EVIDENCE_POLICY,
   type StationaryObservation,
 } from '../stationary-evidence.js'
-import type { TrackState } from '@camstack/types'
+import type { TrackState } from '@dominevo/types'
 import { StationaryEvidenceLedger } from '../stationary-evidence-ledger.js'
 import type { StationaryBbox } from '../stationary-types.js'
 

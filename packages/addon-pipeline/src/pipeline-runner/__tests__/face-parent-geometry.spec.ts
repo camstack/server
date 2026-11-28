@@ -15,8 +15,8 @@ import type {
   FrameResult,
   ObjectDetection,
   PipelineStepInputOutput,
-} from '@camstack/types'
-import { DEFAULT_DETAIL_CROP_CONVENTION } from '@camstack/types'
+} from '@dominevo/types'
+import { DEFAULT_DETAIL_CROP_CONVENTION } from '@dominevo/types'
 import { type CropSource, type DetailSubtreeDeps, runDetailSubtree } from '../detail-subtree.js'
 import {
   type FaceOutsideParentDrop,

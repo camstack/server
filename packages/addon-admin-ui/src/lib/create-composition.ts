@@ -1,4 +1,4 @@
-import { useCoreBlocksCreateComposition } from '@camstack/ui-library'
+import { useCoreBlocksCreateComposition } from '@dominevo/ui-library'
 
 /**
  * The one door through which the admin UI creates a composed device (D1004).

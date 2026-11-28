@@ -12,7 +12,7 @@
  * escaped and never break framing.
  */
 import type { IncomingHttpHeaders, IncomingMessage, ServerResponse } from 'node:http'
-import { CALLER_USERNAME_HEADER, type DataPlaneHandler } from '@camstack/types'
+import { CALLER_USERNAME_HEADER, type DataPlaneHandler } from '@dominevo/types'
 import { ServerShellRefusedError } from './server-shell.js'
 import type { TerminalSessionManager } from './terminal-session-manager.js'
 

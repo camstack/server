@@ -10,7 +10,7 @@
  * nothing.
  */
 import { describe, expect, it } from 'vitest'
-import type { DetectionCatalogClassMap, ModelCatalogEntry } from '@camstack/types'
+import type { DetectionCatalogClassMap, ModelCatalogEntry } from '@dominevo/types'
 import { makeModelCatalogEntry } from '../../__tests__/support/model-catalog-entry.js'
 import { getStep, getStepDefinition } from '../registry/step-definitions.js'
 import {
@@ -39,7 +39,7 @@ function fieldByKey(fields: readonly { key?: string }[], key: string) {
   if (!f) throw new Error(`field ${key} not in schema`)
   return f as {
     key: string
-    modelApplicability?: import('@camstack/types').ConfigFieldModelApplicability
+    modelApplicability?: import('@dominevo/types').ConfigFieldModelApplicability
   }
 }
 

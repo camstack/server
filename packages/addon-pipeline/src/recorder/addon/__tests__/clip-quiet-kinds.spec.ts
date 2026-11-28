@@ -35,7 +35,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { applyQuietKinds, AUDIO_QUIET_MS, MOTION_QUIET_MS } from '../clip-quiet-kinds.js'
-import type { Clip } from '@camstack/types'
+import type { Clip } from '@dominevo/types'
 
 const MIN = 60_000
 

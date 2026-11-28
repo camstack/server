@@ -53,7 +53,7 @@ Considered and rejected:
 ## Decision
 
 **A mode's delay is its own value if it sets one, else the global value** —
-`resolveModeDelays` (`notification/alarm-settings.ts` in `@camstack/types`) is
+`resolveModeDelays` (`notification/alarm-settings.ts` in `@dominevo/types`) is
 the only implementation, used by the engine and by both clients. **A delay is
 read at the transition that schedules its instant, from the mode that
 transition is about:** the exit delay at arm, from the mode being armed; the

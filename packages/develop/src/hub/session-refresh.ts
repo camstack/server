@@ -2,11 +2,11 @@
  * The one way a tool gets a USABLE credential: `resolveCredentials` picks the
  * token, this module makes sure it is still good.
  *
- *  - A cached `camstack login` session whose access token has expired (or has
+ *  - A cached `dominevo login` session whose access token has expired (or has
  *    < 60 s left) is renewed over HTTP with its refresh token
  *    (`auth.refreshSession`), the rotation is saved, and the caller carries on.
  *    A refusal (or nothing to renew with) is a {@link MissingCredentialsError}
- *    that says to run `camstack login`.
+ *    that says to run `dominevo login`.
  *  - The permission tier is read from the token's CLAIMS; a token with no
  *    readable claims is classified by asking the hub (`whoami`), never by its
  *    prefix.

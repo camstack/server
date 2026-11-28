@@ -31,7 +31,7 @@ persisted device row. Its keys are closed: `mac` (several), `serial`
 or `derived`) and `readAt`. How much a key proves is a function of the key
 (`identifierStrength`: hardware keys strong, network names weak) and is never
 stored. Values are normalised once, by `normaliseIdentifiers` (in
-`@camstack/types`, re-exported by `@camstack/sdk`); a malformed or placeholder
+`@dominevo/types`, re-exported by `@dominevo/sdk`); a malformed or placeholder
 value is refused and logged with the device tag, never stored.
 
 There is one writer: the provider that owns the device, through

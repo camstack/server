@@ -8,7 +8,7 @@
  * recorder walked and cached every hour since 1970 to answer it (11.9 M Map
  * keys, the OOM of 2026-09-28).
  */
-import type { IScopedLogger, RecordingStorageUsage } from '@camstack/types'
+import type { IScopedLogger, RecordingStorageUsage } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { sweepTracklessRoots } from '../trackless-root-sweep.js'
 import {

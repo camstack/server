@@ -16,7 +16,7 @@ import {
   type InstanceSource,
   instancesOfCap,
   type MigrationProcedureResult,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   EMAIL_SENDER_KEY,
   LEGACY_SMTP_ADDON_KEY,

@@ -79,7 +79,7 @@ dispatch by name and charged alone; the root and the other steps run. A
    the runner's own function, imported, not a copy. It prunes the subtree
    whole, at its top.
 3. **"Can this format run this step" has ONE answer, and it ignores legacy
-   builds.** `stepModelRunsOnFormat` (`@camstack/types`,
+   builds.** `stepModelRunsOnFormat` (`@dominevo/types`,
    `pipeline/step-format-runnable.ts`; fix round 1): true when the model the
    step NAMES ships the build, or when a NON-legacy model does. A legacy stub
    counts only when it is explicitly pinned. This is
@@ -97,8 +97,8 @@ dispatch by name and charged alone; the root and the other steps run. A
      model. Its catalog (`PipelineModelOptionSchema`) already carries
      `legacy`, and `getSchema` omits legacy models anyway, so the schema
      needed no change.
-   It lives in the bare `@camstack/types` entry, which both addons bundle
-   (`self-contained` externals), so it travels with a `camstack deploy`.
+   It lives in the bare `@dominevo/types` entry, which both addons bundle
+   (`self-contained` externals), so it travels with a `dominevo deploy`.
 4. **Per-step failure, and this is the choice between the two options: load
    per step, fail per step, drop the step, keep the dispatch.**
    `loadDispatchModels` loads each step needing a load as its own set, through
@@ -252,18 +252,18 @@ watch.
 
 ```bash
 # 1. The incident's signature. Expect 0 of each.
-ssh unraid 'docker logs --since 1h CamStack 2>&1 | grep -c "has no tflite format"'
-ssh unraid 'docker logs --since 1h CamStack 2>&1 | grep "runInference failed" | grep -c "edgetpu:usb"'
+ssh unraid 'docker logs --since 1h Dominevo 2>&1 | grep -c "has no tflite format"'
+ssh unraid 'docker logs --since 1h Dominevo 2>&1 | grep "runInference failed" | grep -c "edgetpu:usb"'
 # 2. Which cameras are on the Coral, and that their faces left it. Expect one
 #    "not loaded on the elected pool" line per Coral camera (steps include
 #    face-detection), and one "enrichment step runs on another device" per
 #    (camera, step, target).
-ssh unraid 'docker logs --since 1h CamStack 2>&1 | sed "s/\x1b\[[0-9;]*m//g" | grep -E "detail steps not loaded on the elected pool|enrichment step runs on another device" | tail -40'
+ssh unraid 'docker logs --since 1h Dominevo 2>&1 | sed "s/\x1b\[[0-9;]*m//g" | grep -E "detail steps not loaded on the elected pool|enrichment step runs on another device" | tail -40'
 # 3. What the Coral pool loaded. Expect only ssd-mobilenet-v2-coco-edgetpu.
-ssh unraid 'docker logs --since 1h CamStack 2>&1 | sed "s/\x1b\[[0-9;]*m//g" | grep "Loading step variant" | grep "edgetpu:usb" | grep -oE "modelId=[^ ]+" | sort | uniq -c'
+ssh unraid 'docker logs --since 1h Dominevo 2>&1 | sed "s/\x1b\[[0-9;]*m//g" | grep "Loading step variant" | grep "edgetpu:usb" | grep -oE "modelId=[^ ]+" | sort | uniq -c'
 # 4. Any step dropped by name, and whether a root was ever lost. Expect none;
 #    a step-dropped line is one per (camera, model, state change), never per frame.
-ssh unraid 'docker logs --since 1h CamStack 2>&1 | sed "s/\x1b\[[0-9;]*m//g" | grep "model load for dispatch failed" | grep -oE "(\[[^]]*\]).*(outcome=[a-z-]+)" | tail -20'
+ssh unraid 'docker logs --since 1h Dominevo 2>&1 | sed "s/\x1b\[[0-9;]*m//g" | grep "model load for dispatch failed" | grep -oE "(\[[^]]*\]).*(outcome=[a-z-]+)" | tail -20'
 ```
 
 Expected on a healthy hour: counts 0 and 0 in (1); (3) shows only the SSD on

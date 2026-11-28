@@ -7,11 +7,11 @@ import {
   type InstalledAddonDir,
 } from '../core/addon/prune-misplaced-addons.js'
 
-const ROOT = '/data/addons/@camstack'
+const ROOT = '/data/addons/@dominevo'
 
 function installed(over: Partial<InstalledAddonDir> = {}): InstalledAddonDir {
   return {
-    packageName: '@camstack/addon-agent-ui',
+    packageName: '@dominevo/addon-agent-ui',
     dir: path.join(ROOT, 'addon-agent-ui'),
     placement: 'agent-only',
     ...over,
@@ -25,7 +25,7 @@ describe('deciding what to prune', () => {
     // FAILED forever on a node where it cannot run.
     const d = decidePrune([installed()], 'hub')
     expect(d).toHaveLength(1)
-    expect(d[0]?.packageName).toBe('@camstack/addon-agent-ui')
+    expect(d[0]?.packageName).toBe('@dominevo/addon-agent-ui')
   })
 
   it('leaves hub-only and any-node addons alone', () => {
@@ -71,7 +71,7 @@ describe('applying the prune', () => {
     const log = logger()
     const rm = vi.fn()
     const removed = prunePlacementLeftovers(decidePrune([installed()], 'hub'), ROOT, log, rm)
-    expect(removed).toEqual(['@camstack/addon-agent-ui'])
+    expect(removed).toEqual(['@dominevo/addon-agent-ui'])
     expect(rm).toHaveBeenCalledWith(path.join(ROOT, 'addon-agent-ui'))
     // A directory vanishing at boot must never be discovered by noticing it is
     // gone.

@@ -4,7 +4,7 @@
  * Every item is a consumable reading: wear parts judged at the rule's threshold,
  * supply and waste judged on the provider's verdict (held like a float switch).
  */
-import { consumableFormOf, type ConsumableForm, type ConsumableKind } from '@camstack/types'
+import { consumableFormOf, type ConsumableForm, type ConsumableKind } from '@dominevo/types'
 import type { NcConsumableItemReading } from '../event-intake.js'
 
 /** One item as the slice carries it, before parsing. */

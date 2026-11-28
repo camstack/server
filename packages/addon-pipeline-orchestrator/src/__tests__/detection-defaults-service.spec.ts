@@ -1,4 +1,4 @@
-import type { ClusterDetectionDefaults, HardwareInfo, NodeInferenceDevices } from '@camstack/types'
+import type { ClusterDetectionDefaults, HardwareInfo, NodeInferenceDevices } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   DetectionDefaultsService,

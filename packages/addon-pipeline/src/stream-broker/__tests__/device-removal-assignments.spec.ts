@@ -10,8 +10,8 @@
  * deleted ids came back at every boot.
  */
 
-import type { AddonApi, EventFilter, IEventBus, IScopedLogger, SystemEvent } from '@camstack/types'
-import { EventCategory } from '@camstack/types'
+import type { AddonApi, EventFilter, IEventBus, IScopedLogger, SystemEvent } from '@dominevo/types'
+import { EventCategory } from '@dominevo/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { retractRemovedDevice, subscribeDeviceRemoval } from '../device-removal.js'
 import { StreamBrokerManager } from '../stream-broker/stream-broker-manager'

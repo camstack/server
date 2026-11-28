@@ -1,4 +1,4 @@
-import { makeInMemoryRecords, REDACTED_SECRET } from '@camstack/types'
+import { makeInMemoryRecords, REDACTED_SECRET } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import type { KiaConfig } from '../config.js'
 import { KiaBridgeError } from '../kia-bridge.js'

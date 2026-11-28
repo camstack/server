@@ -22,8 +22,8 @@ import type {
   ObjectDetection,
   Zone,
   ZoneRule,
-} from '@camstack/types'
-import { evaluateZoneRules } from '@camstack/types'
+} from '@dominevo/types'
+import { evaluateZoneRules } from '@dominevo/types'
 
 export function applyZoneRuleGate(
   result: FrameResult,

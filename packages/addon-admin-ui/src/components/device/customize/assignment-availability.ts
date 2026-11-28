@@ -16,7 +16,7 @@ import {
   DeviceType,
   type CustomizeCatalog,
   type CustomizeCatalogTarget,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 import type { Known } from './known'
 import i18n from '../../../i18n/index'

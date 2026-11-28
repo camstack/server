@@ -11,7 +11,7 @@ import {
   entryBody,
   type RecordsAccess,
   RecordIntegrationInstances,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { z } from 'zod'
 
 /** Checked against the schema by its annotation: a drifted field fails the typecheck. */

@@ -1,4 +1,4 @@
-import type { AddonMigration } from '@camstack/types'
+import type { AddonMigration } from '@dominevo/types'
 import { normaliseProfileRows, type ProfileRowsPorts } from './profile-rows.js'
 
 export type { ProfileRowsPorts, ProfileRowState } from './profile-rows.js'

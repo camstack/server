@@ -8,7 +8,7 @@
  * It is deliberately free of value imports: the file reader runs it inside a
  * bare worker thread.
  */
-import type { LogLevel, LogReadQuery } from '@camstack/types'
+import type { LogLevel, LogReadQuery } from '@dominevo/types'
 
 const LEVEL_RANK: Readonly<Record<LogLevel, number>> = { debug: 0, info: 1, warn: 2, error: 3 }
 

@@ -43,14 +43,14 @@ import {
   usePipelineOrchestratorForgetInferenceDevice,
   usePipelineOrchestratorGetNodeInferenceDevices,
   usePipelineOrchestratorSetAgentInferenceDevices,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import type {
   DeviceStepConfig,
   EffectiveNodeShare,
   NodeInferenceDevice,
   PlacementNodeStats,
   ShareSource,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   ChevronRight,
   CircuitBoard,

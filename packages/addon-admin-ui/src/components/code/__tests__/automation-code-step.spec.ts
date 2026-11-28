@@ -1,4 +1,4 @@
-import { AutomationActionSchema, generateAutomationBlock } from '@camstack/types'
+import { AutomationActionSchema, generateAutomationBlock } from '@dominevo/types'
 import ts from 'typescript'
 import { describe, expect, it } from 'vitest'
 import { newAction } from '../../../pages/build/automation/recipe-parts'
@@ -39,7 +39,7 @@ describe('automation code step', () => {
 
   it('declares ctx as the block AddonContext and vars as the run bag, after the hub libs', () => {
     expect(STEP_AMBIENT_LIB.content).toContain(
-      "declare const ctx: import('@camstack/types').AddonContext",
+      "declare const ctx: import('@dominevo/types').AddonContext",
     )
     expect(STEP_AMBIENT_LIB.content).toContain('declare const vars: Record<string, unknown>')
     const hub = { filePath: 'file:///node_modules/x/index.d.ts', content: '' }

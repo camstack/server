@@ -18,8 +18,8 @@ function query<T>(data: T) {
   return { data, isLoading: false, isError: false, error: null }
 }
 
-vi.mock('@camstack/ui-library', async () => {
-  const real = await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+vi.mock('@dominevo/ui-library', async () => {
+  const real = await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   const mutation = { mutate: vi.fn(), mutateAsync: vi.fn(), isPending: false, isError: false }
   return {
     ...real,

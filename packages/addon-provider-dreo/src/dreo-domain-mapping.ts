@@ -1,7 +1,7 @@
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 
 /**
- * The CamStack-supported Dreo device kinds, derived from the model prefix. Anything outside this set is
+ * The Dominevo-supported Dreo device kinds, derived from the model prefix. Anything outside this set is
  * `unsupported` and skipped during discovery / adoption.
  *
  * - `fan` — tower fans + air circulators, ceiling fans and evaporative coolers. Mapped to `fan-control` + `switch`.
@@ -32,7 +32,7 @@ const MODEL_PREFIXES: readonly (readonly [string, DreoDeviceKind])[] = [
 ]
 
 /**
- * Classify a Dreo cloud `model` string into a supported CamStack device kind by its prefix.
+ * Classify a Dreo cloud `model` string into a supported Dominevo device kind by its prefix.
  * Pure.
  *
  * NOTE: `ac` (portable AC) and `dehumidifier` are intentionally `unsupported`
@@ -46,7 +46,7 @@ export function classifyDreoModel(model: string): DreoDeviceKind {
   return 'unsupported'
 }
 
-/** The CamStack {@link DeviceType} for a supported Dreo kind. */
+/** The Dominevo {@link DeviceType} for a supported Dreo kind. */
 export function deviceTypeForKind(kind: Exclude<DreoDeviceKind, 'unsupported'>): DeviceType {
   switch (kind) {
     case 'fan':

@@ -32,7 +32,7 @@ import {
   type IScopedLogger,
   resolveCoreBlockFiles,
   type UnreleasedClaim,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   blockAddonId,
   blockIdFromAddonId,

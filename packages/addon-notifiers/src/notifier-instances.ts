@@ -10,7 +10,7 @@ import type {
   ProbeTargetConfigResult,
   SendResult,
   TargetKind,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { NotifierAdapter } from './adapters/adapter.js'
 import type { DraftTestInput } from './provider.js'
 

@@ -118,7 +118,7 @@ beside a summary are refused on both save routes.
   user whose grant is narrower than the installation must not receive the
   names of devices they cannot open.
 - **A new cap field and method** — `systemEventDelivery` on the rule and
-  `notificationRules.previewStateSummary` (admin). An older `@camstack/server`
+  `notificationRules.previewStateSummary` (admin). An older `@dominevo/server`
   closure strips the field at save (the rule stays instant) and has no preview
   method, which the admin's preview names as "update the server first".
 - **The summary vocabulary is held back from the SERVED template catalog**

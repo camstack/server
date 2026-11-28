@@ -2,7 +2,7 @@
  * The live diff: the same classification the server saves, run on the editor
  * state — a box turns "adjusted" when it is moved, "removed" when it is deleted.
  */
-import type { RetrainAnnotation, RetrainOrigin, RetrainPipelineBox } from '@camstack/types'
+import type { RetrainAnnotation, RetrainOrigin, RetrainPipelineBox } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { deleteBox, seedEditor, updateBox } from '../lib/retrain-editor.js'
 import { BOX_DIFF_KINDS, diffKindOf, liveReview } from '../lib/retrain-live-review.js'

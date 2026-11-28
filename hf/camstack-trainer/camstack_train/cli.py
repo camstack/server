@@ -22,7 +22,7 @@ from .spec import job_key_of, load_job
 
 
 def _parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="camstack_train", description="CamStack detector trainer")
+    parser = argparse.ArgumentParser(prog="camstack_train", description="Dominevo detector trainer")
     sub = parser.add_subparsers(dest="command", required=True)
     run = sub.add_parser("run", help="run one training job")
     run.add_argument("--job", type=Path, required=True)

@@ -4,7 +4,7 @@
  * This is where arithmetic between two device fields lives, and it is the ONLY
  * place it lives — a catalog leaf compares one field to one constant, and
  * anything past that is this. The engine behind it is the bounded one in
- * `@camstack/types/expression`: a parsed AST with hard step and node limits, no
+ * `@dominevo/types/expression`: a parsed AST with hard step and node limits, no
  * member access and no loops. Nothing here evaluates anything.
  *
  * **Two binding kinds are offered, not three.** The source vocabulary also has
@@ -18,8 +18,8 @@
  * different device.
  */
 
-import type { ExpressionBindingSource, ExpressionLeaf } from '@camstack/types'
-import { Button, ExpressionInput, Input, Select } from '@camstack/ui-library'
+import type { ExpressionBindingSource, ExpressionLeaf } from '@dominevo/types'
+import { Button, ExpressionInput, Input, Select } from '@dominevo/ui-library'
 import { Plus, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { AutomationDevice } from './automation-data'

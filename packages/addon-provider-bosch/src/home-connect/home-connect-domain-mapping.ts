@@ -7,8 +7,8 @@ import type {
   DishwasherProgram,
   DishwasherStatus,
   DishwasherValue,
-} from '@camstack/types'
-import { DishwasherOperationStateSchema } from '@camstack/types'
+} from '@dominevo/types'
+import { DishwasherOperationStateSchema } from '@dominevo/types'
 import type {
   HomeConnectDescriptionStore,
   HomeConnectEntityView,

@@ -14,7 +14,7 @@
  *  1. the doomed round trip does not happen at all, and
  *  2. a refusal-by-age is DISTINGUISHABLE in the log from a real miss.
  */
-import type { FrameHandle } from '@camstack/types'
+import type { FrameHandle } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import PipelineRunnerAddon from '../index.js'
 import { NATIVE_CROP_LEASE_MAX_AGE_MS } from '../../session-decode/native-crop-lease-age.js'

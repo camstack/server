@@ -24,8 +24,8 @@
 import { createRequire } from 'node:module'
 import path from 'node:path'
 import { Worker } from 'node:worker_threads'
-import type { IScopedLogger } from '@camstack/types'
-import { errMsg } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
 import {
   type CheckpointReport,
   isWorkerMessage,
@@ -89,7 +89,7 @@ export type WorkerFactory = (workerData: WalCheckpointWorkerData) => CheckpointW
  */
 export function defaultWorkerPath(): string {
   const require_ = createRequire(import.meta.url)
-  const packageRoot = path.dirname(require_.resolve('@camstack/server/system/package.json'))
+  const packageRoot = path.dirname(require_.resolve('@dominevo/server/system/package.json'))
   return path.join(packageRoot, 'dist', 'wal-checkpoint-worker.js')
 }
 

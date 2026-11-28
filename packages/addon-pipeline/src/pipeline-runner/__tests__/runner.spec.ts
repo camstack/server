@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- test file: vi.fn() mocks need narrow casts to match callback signatures */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment -- test file: same as above */
 
-import type { DecodedFrame, FrameHandle, FrameResult } from '@camstack/types'
+import type { DecodedFrame, FrameHandle, FrameResult } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { DetectionStreamHandler, RunnerConfig } from '../runner.js'
 import { PipelineRunner } from '../runner.js'
@@ -462,7 +462,7 @@ describe('PipelineRunner — phase machine', () => {
       motionCooldownMs: 5_000,
     })
 
-    const regions: import('@camstack/types').MotionRegion[] = [
+    const regions: import('@dominevo/types').MotionRegion[] = [
       {
         bbox: { x: 0, y: 0, w: 0.1, h: 0.1 },
         pixelCount: 42,
@@ -606,7 +606,7 @@ describe('PipelineRunner — phase machine', () => {
 
   it('surfaces detection-queue drops in the pipeline stats line (per-interval delta)', () => {
     const info = vi.fn()
-    const logger: import('@camstack/types').IScopedLogger = {
+    const logger: import('@dominevo/types').IScopedLogger = {
       debug: vi.fn(),
       info,
       warn: vi.fn(),
@@ -647,7 +647,7 @@ describe('PipelineRunner — phase machine', () => {
 
   it('unregisterCamera detaches the drop source from the stats line', () => {
     const info = vi.fn()
-    const logger: import('@camstack/types').IScopedLogger = {
+    const logger: import('@dominevo/types').IScopedLogger = {
       debug: vi.fn(),
       info,
       warn: vi.fn(),

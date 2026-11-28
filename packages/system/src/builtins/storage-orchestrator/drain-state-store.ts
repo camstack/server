@@ -7,7 +7,7 @@
  * saying why. So the cap, the drain start and the observed growth are persisted
  * on every sweep, as `drain-state` records.
  */
-import type { RecordKindHandle, RecordsAccess } from '@camstack/types'
+import type { RecordKindHandle, RecordsAccess } from '@dominevo/types'
 import { readAllRows } from '../../records/read-all-rows.js'
 import type { DrainState } from './drain-ratchet.js'
 import { storageOrchestratorRecordKinds, type StorageDrainStateBody } from './record-kinds.js'

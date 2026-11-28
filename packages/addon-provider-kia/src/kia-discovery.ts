@@ -1,5 +1,5 @@
-import type { DiscoveredChildDevice } from '@camstack/types'
-import { DeviceType } from '@camstack/types'
+import type { DiscoveredChildDevice } from '@dominevo/types'
+import { DeviceType } from '@dominevo/types'
 
 /** One vehicle of a Kia account as discovery and adoption see it. */
 export interface KiaDiscoverable {
@@ -12,7 +12,7 @@ export interface KiaDiscoverable {
 
 export interface BuildKiaCandidatesInput {
   readonly vehicles: readonly KiaDiscoverable[]
-  /** Kia cloud vehicle id to the adopted CamStack device id. */
+  /** Kia cloud vehicle id to the adopted Dominevo device id. */
   readonly adopted: ReadonlyMap<string, number>
 }
 

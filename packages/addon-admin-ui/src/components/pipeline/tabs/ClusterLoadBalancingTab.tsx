@@ -28,7 +28,7 @@ import type {
   EffectiveShares,
   PlacementStats,
   SuggestSharesResult,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   Badge,
   Button,
@@ -51,7 +51,7 @@ import {
   usePipelineOrchestratorSetPipelineDevicePin,
   usePipelineOrchestratorSetShareSource,
   usePipelineOrchestratorSuggestShares,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { keepPreviousData, useQueryClient } from '@tanstack/react-query'
 import { Cpu, Lightbulb, PinOff, Scale, Sparkles, Zap } from 'lucide-react'
 import { useMemo, useState } from 'react'

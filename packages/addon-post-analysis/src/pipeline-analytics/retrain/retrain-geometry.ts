@@ -19,7 +19,7 @@
  * model that a subject ends where the crop ends.
  */
 
-import type { NativeCropBbox } from '@camstack/types'
+import type { NativeCropBbox } from '@dominevo/types'
 
 /** A normalised rectangle in some image's own space. */
 export type NormRect = NativeCropBbox

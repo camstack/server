@@ -3,7 +3,7 @@
  * made; an empty freeze and an empty holdout mean "the orchestrator decides"
  * (null), never 0 or []; a provider change takes that provider's own defaults.
  */
-import type { TrainingProviderDescriptor } from '@camstack/types'
+import type { TrainingProviderDescriptor } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { defaultBaseModel, EMPTY_FORM, requestOf, withProvider } from '../plan-form.js'
 

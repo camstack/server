@@ -24,7 +24,7 @@ import {
   DeviceManagerAddon,
   DeviceRegistry,
   SqliteSettingsBackend,
-} from '@camstack/server/system'
+} from '@dominevo/server/system'
 import type {
   AddonContext,
   ConfigUISchemaWithValues,
@@ -32,8 +32,8 @@ import type {
   IEventBus,
   IScopedLogger,
   ProviderRegistration,
-} from '@camstack/types'
-import { snapshotCapability } from '@camstack/types'
+} from '@dominevo/types'
+import { snapshotCapability } from '@dominevo/types'
 import { makeRecordsAccessForOwner } from '../../../../packages/system/src/builtins/sqlite-storage/__tests__/support/records-world.js'
 import { describe, expect, it, vi } from 'vitest'
 

@@ -79,7 +79,7 @@ import type {
   PipelineInferenceResultPayload,
   RunnerCameraConfig,
   Unsubscribe,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   createEvent,
   EventCategory,
@@ -92,7 +92,7 @@ import {
   SHARE_SOURCE_SETTING_KEY,
   type SessionPlacementPolicy,
   type ShareSource,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { ZodType } from 'zod'
 import { AgentLoadService } from './agent-load-service.js'
 import { selectAudioCamStream } from './audio-stream-selection.js'

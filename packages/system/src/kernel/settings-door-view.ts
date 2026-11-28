@@ -12,7 +12,7 @@
  * `"<addonId>.<key>"`, runtime state in `device-runtime-state`), not the
  * forked-runner namespaced tables. Device-manager still lives here.
  */
-import type { ISettingsStoreProvider, StoredKeyRead } from '@camstack/types'
+import type { ISettingsStoreProvider, StoredKeyRead } from '@dominevo/types'
 import { createAddonSettingsStore } from './addon-settings-store.js'
 import { createDeviceSettingsResolver } from './device-settings-resolver.js'
 import { createDeviceSettingsStore, readDeviceOrThrow } from './device-settings-store.js'

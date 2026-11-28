@@ -30,7 +30,7 @@
  *    `confirmed: false`). A constant `confirmed: true` alone cannot fail while L1
  *    emits confirmed tracklets only — the pin is on what is emitted.
  */
-import type { BoundingBox, SpatialDetection } from '@camstack/types'
+import type { BoundingBox, SpatialDetection } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { sequentialTrackIdMinter } from '../../track-id.js'
 import { LINK_WINDOW_MS } from '../constants.js'

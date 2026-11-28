@@ -3,7 +3,7 @@
  * credentials are entered: the destination field is a select that discovers,
  * and it names the credential fields it needs.
  */
-import type { ConfigField } from '@camstack/types'
+import type { ConfigField } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { buildNotifierAdapters } from '../adapters/registry.js'
 

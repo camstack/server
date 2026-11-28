@@ -1,6 +1,6 @@
 /**
  * getTypeDefs resolution — pins the failure that served the image-seed
- * `@camstack/types` (no `optionsFrom`) while the live data-root closure had
+ * `@dominevo/types` (no `optionsFrom`) while the live data-root closure had
  * the current contract. `createRequire(import.meta.url)` must win over
  * `process.cwd()`.
  */
@@ -24,12 +24,12 @@ describe('resolveTypesDist', () => {
     vi.restoreAllMocks()
   })
 
-  it('resolves @camstack/types next to this module, not via process.cwd()', async () => {
+  it('resolves @dominevo/types next to this module, not via process.cwd()', async () => {
     // A cwd that looks like the hub image seed: has a types package, but it is
     // NOT the one this workspace loaded. If resolution prefers cwd, we get
     // this fake — the production bug.
     const fakeCwd = await fs.mkdtemp(path.join(os.tmpdir(), 'block-typedefs-cwd-'))
-    const fakeTypes = path.join(fakeCwd, 'node_modules', '@camstack', 'types', 'dist')
+    const fakeTypes = path.join(fakeCwd, 'node_modules', '@dominevo', 'types', 'dist')
     await fs.mkdir(fakeTypes, { recursive: true })
     await fs.writeFile(path.join(fakeTypes, 'index.d.ts'), 'export type FromCwd = true\n')
 
@@ -58,7 +58,7 @@ describe('loadBlockTypeDefs', () => {
     const libs = await loadBlockTypeDefs(silentLogger as never)
     const paths = libs.map((l) => l.filePath)
 
-    expect(paths.some((p) => p.startsWith('file:///node_modules/@camstack/types/'))).toBe(true)
+    expect(paths.some((p) => p.startsWith('file:///node_modules/@dominevo/types/'))).toBe(true)
     expect(paths.some((p) => p.includes('config-ui.d.ts'))).toBe(true)
     expect(
       libs.some((l) => l.filePath.includes('config-ui.d.ts') && l.content.includes('optionsFrom')),

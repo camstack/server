@@ -1,9 +1,9 @@
-import { selectOption } from '@camstack/ui-library/testing'
+import { selectOption } from '@dominevo/ui-library/testing'
 import { fireEvent, render, screen } from '@testing-library/react'
-import { HotkeyProvider } from '@camstack/ui-library'
+import { HotkeyProvider } from '@dominevo/ui-library'
 import { describe, expect, it, vi } from 'vitest'
 import '../../../i18n'
-import { copyOfPreset, RemoteGrid } from '@camstack/ui-library'
+import { copyOfPreset, RemoteGrid } from '@dominevo/ui-library'
 import { TemplateEditorDialog } from '../TemplateEditorDialog'
 
 const NEW_DRAFT = {

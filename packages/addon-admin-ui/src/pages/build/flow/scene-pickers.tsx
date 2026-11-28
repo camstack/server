@@ -10,7 +10,7 @@ import {
   deviceIdsOf,
   pickedFromDeviceIds,
   useZonesListZones,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 import type { AutomationDevice } from '../automation/automation-data'
 import { CAMERA_TYPES } from './build-device-filters'

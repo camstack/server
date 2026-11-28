@@ -1,4 +1,4 @@
-import { MAX_CLIP_EVENT_IDS, VISIT_MERGE_GAP_MS } from '@camstack/types'
+import { MAX_CLIP_EVENT_IDS, VISIT_MERGE_GAP_MS } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { clusterFootageVisits, VISIT_EVENT_ID, visitsToClips } from '../videoclip-visits.js'
 import { clipIdFor } from '../videoclips-provider.js'

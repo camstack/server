@@ -8,7 +8,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { CalendarIndex, hourSegmentsFromIndex, localDayStart } from '../calendar-index.js'
 import { RecordingIndex } from '../../recording-index.js'
 import type { SegmentRow } from '../../types.js'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 const noopLogger = {
   info: vi.fn(),

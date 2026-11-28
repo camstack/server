@@ -23,7 +23,7 @@
  * and a sub-floor box on a parked car beside a passing one is exactly the hop
  * D410 refuses a held box.
  */
-import type { BoundingBox, DiscardedDetection, SpatialDetection } from '@camstack/types'
+import type { BoundingBox, DiscardedDetection, SpatialDetection } from '@dominevo/types'
 import { LINGERING_CLASSES } from '../tracker-v2/constants.js'
 
 export const LOW_SCORE_CONTINUATION_FLOOR_DEFAULT = 0.35

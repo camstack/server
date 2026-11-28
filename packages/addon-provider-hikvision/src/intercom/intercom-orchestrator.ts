@@ -25,7 +25,7 @@
  * their own copy because cross-addon imports are forbidden.
  */
 
-import type { IntercomAbility, IScopedLogger } from '@camstack/types'
+import type { IntercomAbility, IScopedLogger } from '@dominevo/types'
 
 /**
  * Why an intercom session ended. Threaded through `stop()` and surfaced

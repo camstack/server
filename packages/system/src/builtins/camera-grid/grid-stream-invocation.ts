@@ -2,7 +2,7 @@
  * The composite's ffmpeg plan: N decodes, ONE composition, ONE encode, in ONE
  * child.
  *
- * This file composes the SHARED builder in `@camstack/types`
+ * This file composes the SHARED builder in `@dominevo/types`
  * (`ffmpeg/invocation.ts`) — it deliberately builds no argv of its own. The
  * repo has already shipped two argv builders that disagreed about hardware,
  * and `scripts/check-ffmpeg-primitive.ts` exists to refuse a third.
@@ -18,7 +18,7 @@ import type {
   FfmpegInvocation,
   FfmpegVideoEncodePlan,
   FfmpegVideoEncoderId,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { GRID_WIRE_CONTAINER } from './grid-wire-format.js'
 import { buildGridFilterGraph, type GridLayout } from './grid-filter-graph.js'
 
@@ -69,7 +69,7 @@ const PRESET = 'veryfast'
  */
 const TUNE = 'zerolatency'
 
-/** yuv420p: the only pixel format every consumer of a CamStack profile reads. */
+/** yuv420p: the only pixel format every consumer of a Dominevo profile reads. */
 const PIXEL_FORMAT = 'yuv420p'
 
 /**

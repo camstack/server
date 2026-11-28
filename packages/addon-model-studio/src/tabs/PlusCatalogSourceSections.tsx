@@ -13,8 +13,8 @@
  * — saved through the SAME addon setting (one authority, D62).
  */
 import { useCallback, useEffect, useState } from 'react'
-import type { AddonPageProps } from '@camstack/ui-library'
-import type { ModelFormat, PostprocessorType } from '@camstack/types'
+import type { AddonPageProps } from '@dominevo/ui-library'
+import type { ModelFormat, PostprocessorType } from '@dominevo/types'
 import {
   plusCatalogPlusListModels,
   plusCatalogPlusStatus,
@@ -42,7 +42,7 @@ import {
 } from '../components/DisplayNameField.js'
 import { PlusCatalogBrowser } from './PlusCatalogBrowser.js'
 import { Trans, useT } from '../i18n/index.js'
-import { Button, Input, Select } from '@camstack/ui-library'
+import { Button, Input, Select } from '@dominevo/ui-library'
 
 type Trpc = AddonPageProps['trpc']
 

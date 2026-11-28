@@ -10,7 +10,7 @@
  *
  * Telemetry in, never a gate (D8): a throw here costs the hold, never the call.
  */
-import { type CommandHoldOptions, type IScopedLogger, resolveCommandHold } from '@camstack/types'
+import { type CommandHoldOptions, type IScopedLogger, resolveCommandHold } from '@dominevo/types'
 import { getCommandObserverRegistry } from '../../kernel/command-observation.js'
 import { getCommandHoldOverrideRegistry } from '../../kernel/command-hold-overrides.js'
 import type { DeviceStateMirror } from './device-state-mirror.js'

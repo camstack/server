@@ -45,7 +45,7 @@ import {
   ROOM_OCCUPANCY_WINDOW_MS,
   roomCompositionExample,
   type SystemEvent,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { CapabilityRegistry } from '../../../kernel/capability-registry.js'
 import { DeviceRegistry } from '../../../kernel/device-registry.js'

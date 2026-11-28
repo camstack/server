@@ -7,7 +7,7 @@
  */
 import { describe, expect, it } from 'vitest'
 import { defined } from '../../../__tests__/support/vitest-mock.js'
-import type { ObjectDetection } from '@camstack/types'
+import type { ObjectDetection } from '@dominevo/types'
 import { iou, buildEventChildCrops, type PixelBox } from '../event-child-crops.js'
 
 // ---------------------------------------------------------------------------

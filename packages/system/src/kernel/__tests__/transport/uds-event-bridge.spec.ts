@@ -22,7 +22,7 @@
  *      caused remote bridges to wrongly skip fanning clean events.
  */
 
-import type { EventFilter, IEventBus, SystemEvent } from '@camstack/types'
+import type { EventFilter, IEventBus, SystemEvent } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { SubscriberEntry } from '../../moleculer/event-bus-core.js'
 import {

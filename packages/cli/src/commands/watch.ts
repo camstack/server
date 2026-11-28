@@ -1,5 +1,5 @@
 /**
- * `camstack watch [path]` — deploy + tail server-side logs of the
+ * `dominevo watch [path]` — deploy + tail server-side logs of the
  * deployed addon. The CLI uses the scoped-token route-prefix scope
  * `/trpc/addons.getLogs` to poll the tRPC endpoint every 2 seconds
  * and prints new entries since the last cursor.
@@ -22,7 +22,7 @@ import {
   touchSession,
   resolveFreshCredentials,
   withAuthHint,
-} from '@camstack/develop'
+} from '@dominevo/develop'
 import { cliHubTransport } from '../http/hub-transport.js'
 import { deployAddon, resolveAddonPathInteractive, type DeployOptions } from './deploy.js'
 import { hubRequest } from '../http/hub-http.js'
@@ -124,7 +124,7 @@ export async function runWatch(args: readonly string[]): Promise<void> {
   const serverUrl = creds.server
   const token = creds.token
   if (!serverUrl) {
-    throw new Error('No hub server known. Pass --server, or run `camstack login` first.')
+    throw new Error('No hub server known. Pass --server, or run `dominevo login` first.')
   }
   const nodeId = typeof values.node === 'string' ? values.node : undefined
   const cluster = values.cluster === true
@@ -138,7 +138,7 @@ export async function runWatch(args: readonly string[]): Promise<void> {
     ...(typeof values['build-script'] === 'string' ? { buildScript: values['build-script'] } : {}),
   }
 
-  clack.intro('camstack watch')
+  clack.intro('dominevo watch')
 
   // Resolve the addon path early so we know what addonId to subscribe to.
   const resolvedPath = await resolveAddonPathInteractive(addonArg)
@@ -160,7 +160,7 @@ export async function runWatch(args: readonly string[]): Promise<void> {
   let stop = false
   const shutdown = (): void => {
     stop = true
-    console.log('\n[camstack watch] Stopped.')
+    console.log('\n[dominevo watch] Stopped.')
     process.exit(0)
   }
   process.on('SIGINT', shutdown)
@@ -213,7 +213,7 @@ export async function runWatch(args: readonly string[]): Promise<void> {
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
-      console.error(`[camstack watch] poll error: ${msg}`)
+      console.error(`[dominevo watch] poll error: ${msg}`)
     }
     await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS))
   }

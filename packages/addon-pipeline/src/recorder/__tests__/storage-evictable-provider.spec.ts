@@ -7,7 +7,7 @@
  * up as a different QUESTION rather than as an identical total.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { RecordingIndex } from '../recording-index.js'
 import { segmentRelPath } from '../segment-path.js'

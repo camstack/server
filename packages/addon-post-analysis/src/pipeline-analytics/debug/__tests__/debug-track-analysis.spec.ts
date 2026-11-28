@@ -9,7 +9,7 @@
  *  2. **A live track is not judged on what it has not finished doing.** Every
  *     closed-only rule is asserted twice: firing when closed, silent when open.
  */
-import type { MediaFileInfo } from '@camstack/types'
+import type { MediaFileInfo } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   analyseDebugTrack,

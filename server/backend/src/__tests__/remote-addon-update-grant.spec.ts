@@ -3,7 +3,7 @@
  * OWN node, to the version the hub itself has installed, and every decision is
  * audited. Two real brokers share a fake transporter; the router is synthetic.
  */
-import { CORE_CAP_SERVICE_NAME } from '@camstack/server/system'
+import { CORE_CAP_SERVICE_NAME } from '@dominevo/server/system'
 import { ServiceBroker } from 'moleculer'
 import { afterEach, describe, expect, it } from 'vitest'
 import { z } from 'zod'
@@ -16,7 +16,7 @@ import {
 import { protectedProcedure, trpcRouter } from '../api/trpc/trpc.middleware.js'
 import type { AppRouter } from '../api/trpc/trpc.router.js'
 
-const HUB_VERSIONS: Readonly<Record<string, string>> = { '@camstack/addon-a': '1.2.0' }
+const HUB_VERSIONS: Readonly<Record<string, string>> = { '@dominevo/addon-a': '1.2.0' }
 
 function harness() {
   const updates: unknown[] = []
@@ -45,7 +45,7 @@ describe('authorizeRemoteUpdatePackage', () => {
     const h = harness()
     return authorizeRemoteUpdatePackage(caller, input, h.grant).then((d) => ({ d, h }))
   }
-  const own = { name: '@camstack/addon-a', version: '1.2.0', nodeId: 'agent-1' }
+  const own = { name: '@dominevo/addon-a', version: '1.2.0', nodeId: 'agent-1' }
 
   it('allows the caller own node at the hub version, and audits it', async () => {
     const { d, h } = await run('agent-1', own)
@@ -72,10 +72,10 @@ describe('authorizeRemoteUpdatePackage', () => {
   })
 
   it('refuses a package the hub does not install, and an incomplete request', async () => {
-    expect((await run('agent-1', { ...own, name: '@camstack/other' })).d.reason).toContain(
+    expect((await run('agent-1', { ...own, name: '@dominevo/other' })).d.reason).toContain(
       'does not install',
     )
-    expect((await run('agent-1', { name: '@camstack/addon-a', nodeId: 'agent-1' })).d.allowed).toBe(
+    expect((await run('agent-1', { name: '@dominevo/addon-a', nodeId: 'agent-1' })).d.allowed).toBe(
       false,
     )
   })
@@ -115,7 +115,7 @@ describe('$core-caps addons.updatePackage from a node', () => {
     return { hub, agent, ...h }
   }
   const action = `${CORE_CAP_SERVICE_NAME}.addons.updatePackage`
-  const own = { name: '@camstack/addon-a', version: '1.2.0', nodeId: 'agent-1' }
+  const own = { name: '@dominevo/addon-a', version: '1.2.0', nodeId: 'agent-1' }
 
   it('runs the update for the caller own node at the hub version', async () => {
     const c = await cluster(true)

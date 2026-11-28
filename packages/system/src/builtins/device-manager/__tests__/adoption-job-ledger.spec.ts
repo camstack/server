@@ -3,7 +3,7 @@
  * job when one starts, reports `{done, total, unit: 'candidates'}`, ends it with the engine's
  * terminal state, and answers the ledger's `job-source` questions.
  */
-import type { IScopedLogger, JobRegisterInput, JobUpdateInput } from '@camstack/types'
+import type { IScopedLogger, JobRegisterInput, JobUpdateInput } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   AdoptionJobEngine,

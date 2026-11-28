@@ -5,7 +5,7 @@
  * node settings (`local-network` capability, `node` scope). The HTTPS certificate lives under Identity → Certificates.
  */
 import { Link } from 'react-router-dom'
-import { AddonScopedSettingsForm, STACK_GAP, useSystem } from '@camstack/ui-library'
+import { AddonScopedSettingsForm, STACK_GAP, useSystem } from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 import { useInvalidateAddonSettings } from '../../hooks/useInvalidateAddonSettings'
 import { AdminPage } from '../../components/AdminPage'

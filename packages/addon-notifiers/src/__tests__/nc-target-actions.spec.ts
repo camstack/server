@@ -1,9 +1,9 @@
 /**
  * The `nc.*` action the Notification Center viewer still calls: the add form's kind catalogue.
  * A user's own targets go through `integration-instances` (notification-targets-scoped.spec.ts
- * in @camstack/types holds those guarantees).
+ * in @dominevo/types holds those guarantees).
  */
-import type { TargetKind } from '@camstack/types'
+import type { TargetKind } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { makeNcTargetHandlers, ncTargetActions } from '../nc-target-actions.js'
 

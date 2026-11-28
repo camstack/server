@@ -6,8 +6,8 @@
  * Disarm: revert FormBuilder batch onChangeMany — only sslKey survives.
  */
 // @vitest-environment jsdom
-import type { ConfigUISchema } from '@camstack/types'
-import { ConfirmDialogProvider } from '@camstack/ui-library'
+import type { ConfigUISchema } from '@dominevo/types'
+import { ConfirmDialogProvider } from '@dominevo/ui-library'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'

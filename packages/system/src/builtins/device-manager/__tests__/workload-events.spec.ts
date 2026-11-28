@@ -4,7 +4,7 @@
  * stopped / crashed / recovered follow from the transitions.
  */
 import { describe, expect, it } from 'vitest'
-import { EventCategory, runtimeStatePolicyFor } from '@camstack/types'
+import { EventCategory, runtimeStatePolicyFor } from '@dominevo/types'
 import { harness, type Harness } from './mirror-harness.js'
 
 const WORKLOAD_CATEGORIES: ReadonlySet<string> = new Set([

@@ -1,4 +1,4 @@
-import type { RetentionKnob } from '@camstack/types'
+import type { RetentionKnob } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { groupKnobs, judgeKnobValue, writeCallFor } from '../retention-model'
 

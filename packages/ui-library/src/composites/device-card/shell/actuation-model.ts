@@ -9,7 +9,7 @@ import {
   type TransitionActor,
   type TransitionRowOutcome,
   type TransitionValue,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** How many transitions one page of the card asks for. */
 export const ACTUATION_PAGE_SIZE = 30

@@ -10,8 +10,8 @@ import { AdminPage } from '../components/AdminPage'
 import { CompositionBlockEditor } from '../components/composition-editor/CompositionBlockEditor'
 import { EDITOR_SHELL_SURFACE } from '../components/composition-editor/editor-surface'
 import { BUILD_CUSTOM_DEVICE_PATH, customizePath } from '../lib/customization-routes'
-import { coreBlockComposition } from '@camstack/types'
-import { Button, useCoreBlocksGetComposition } from '@camstack/ui-library'
+import { coreBlockComposition } from '@dominevo/types'
+import { Button, useCoreBlocksGetComposition } from '@dominevo/ui-library'
 
 const NEW_BLOCK_SEGMENT = 'new'
 

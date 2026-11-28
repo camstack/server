@@ -1,7 +1,7 @@
 /**
  * The result of planning part of a composition, and the two helpers every
  * planner builds it with. Internal to the composition module — NOT in the
- * barrel (`problem`/`refused` are too generic a name for `@camstack/types`).
+ * barrel (`problem`/`refused` are too generic a name for `@dominevo/types`).
  */
 import type {
   CompositionFeaturePlan,

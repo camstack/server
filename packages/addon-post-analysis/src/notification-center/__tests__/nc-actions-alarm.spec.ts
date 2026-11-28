@@ -17,7 +17,7 @@
  */
 
 import { ncRecordKinds } from '../record-kinds.js'
-import { DeviceType, type IScopedLogger, NcRuleInputSchema } from '@camstack/types'
+import { DeviceType, type IScopedLogger, NcRuleInputSchema } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import type { NcAlarmOpening } from '../alarm/alarm-openings.js'

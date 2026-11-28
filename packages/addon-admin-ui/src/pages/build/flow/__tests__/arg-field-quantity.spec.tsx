@@ -3,7 +3,7 @@
  * converted into the picked unit, and a typed number is emitted as the stored
  * number plus the picked unit.
  */
-import type { LooseVocabOpenArg } from '@camstack/types'
+import type { LooseVocabOpenArg } from '@dominevo/types'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { ArgField } from '../ArgField'

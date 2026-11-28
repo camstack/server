@@ -21,7 +21,7 @@
  */
 import { execFile, spawn, type ChildProcessWithoutNullStreams } from 'node:child_process'
 import { promisify } from 'node:util'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { scrubSecret, withAuthKeyFile } from '../auth-key-file'
 
 const execFileP = promisify(execFile)

@@ -484,7 +484,7 @@ export interface IKernelStreamProbe {
    * Run ffprobe on an RTSP / HTTP stream URL and return the raw
    * metadata. Use this when you need the width/height/codec/fps data
    * for profile classification. `classifyStream` / `classifyStreams`
-   * in `@camstack/types` turn the metadata into a `StreamQuality`.
+   * in `@dominevo/types` turn the metadata into a `StreamQuality`.
    */
   readonly probe: (
     url: string,
@@ -501,7 +501,7 @@ export interface IKernelStreamProbe {
 
 /**
  * Minimal structural shape of a cluster-message-broker (Moleculer in the
- * current implementation). Captured in @camstack/types so cluster-aware
+ * current implementation). Captured in @dominevo/types so cluster-aware
  * addons can consume it without pulling a moleculer dependency.
  *
  * Add new methods sparingly — every addition becomes a contract the broker
@@ -601,7 +601,7 @@ export interface AddonContext<TConfig = Record<string, unknown>> {
      * `this.clusterSettings(...)`, `this.resolveGlobalStore()` (the raw
      * per-node view), or `this.state<T>()` (durable JSON blob). Enforced by the
      * `no-raw-addon-store` biome guard over the addon source tree; the
-     * sanctioned `BaseAddon` wrappers (in `@camstack/types`) and the
+     * sanctioned `BaseAddon` wrappers (in `@dominevo/types`) and the
      * allowlisted engine-cascade holdouts are the only callers.
      */
     readAddonStore(): Promise<Record<string, unknown>>
@@ -747,7 +747,7 @@ export interface AddonContext<TConfig = Record<string, unknown>> {
    * `ctx.deps.ensureBinary(...)` / `ensureFfmpeg()` / `ensurePython()` to
    * materialise per-addon runtime deps under the shared `data/deps` tree.
    * Injected by the addon host so addons never import the concrete
-   * implementation from `@camstack/server/system` directly.
+   * implementation from `@dominevo/server/system` directly.
    */
   readonly deps: IAddonDepsManager
 
@@ -1217,8 +1217,8 @@ export interface AddonDeclaration {
   readonly entry?: string
   /**
    * Human-readable name — the label every addon list renders. Say what the
-   * addon IS ("Admin UI", "Recorder"); no "CamStack " prefix, it carries no
-   * information inside a CamStack install and eats list width.
+   * addon IS ("Admin UI", "Recorder"); no "Dominevo " prefix, it carries no
+   * information inside a Dominevo install and eats list width.
    */
   readonly name?: string
   /**
@@ -1240,7 +1240,7 @@ export interface AddonDeclaration {
   readonly color?: string
   /**
    * Coarse grouping for the Cluster topology view. Free-form string;
-   * see `category-resolver.ts` in `@camstack/addon-admin-ui` for the
+   * see `category-resolver.ts` in `@dominevo/addon-admin-ui` for the
    * recognised values + their colours. Absence → falls into the
    * `'system'` bucket. Optional; manifests can ignore this field
    * unless they want to be grouped explicitly.
@@ -1485,7 +1485,7 @@ export interface AddonSystemDependencyPackages {
 export interface AddonPackageManifest {
   /**
    * Human-readable package name for UI display (e.g., "Pipeline", "Core").
-   * No "CamStack " prefix — inside a CamStack install it carries no
+   * No "Dominevo " prefix — inside a Dominevo install it carries no
    * information and only eats the width of every list that renders it.
    */
   readonly displayName?: string
@@ -1506,15 +1506,15 @@ export interface AddonPackageManifest {
    * regular addon installer.
    *
    * Mutually-exclusive with `addons[]` in concept but not in code:
-   * `@camstack/server/system` is both a system package AND ships builtin addons,
+   * `@dominevo/server/system` is both a system package AND ships builtin addons,
    * so both fields can coexist on it.
    */
   readonly system?: boolean
   readonly addons: readonly AddonDeclaration[]
   /**
    * Optional bundle metadata for npm packages that ship multiple addon
-   * entries (e.g., `@camstack/addon-pipeline` with 7 entries,
-   * `@camstack/addon-remote-storage` with 3 entries). When set, the
+   * entries (e.g., `@dominevo/addon-pipeline` with 7 entries,
+   * `@dominevo/addon-remote-storage` with 3 entries). When set, the
    * Addons admin UI renders the entries as collapsible children under a
    * single bundle card. The npm package boundary IS the install/update
    * unit — operator-facing actions (Install, Update, Uninstall) act on
@@ -1700,10 +1700,10 @@ export interface AddonExecution {
    */
   readonly rssBudgetMb?: number
   /**
-   * `@camstack/server/system` builtin ONLY: run this builtin in its OWN forked runner
+   * `@dominevo/server/system` builtin ONLY: run this builtin in its OWN forked runner
    * instead of in-process on the hub root.
    *
-   * The hub drops `@camstack/server/system` builtins from the runner plan because the
+   * The hub drops `@dominevo/server/system` builtins from the runner plan because the
    * infrastructure ones (storage, settings, logging, device-manager) must be
    * resident in the process every runner depends on. That is a reason to keep
    * THOSE in-process — not a property of the package. A builtin that owns
@@ -1714,7 +1714,7 @@ export interface AddonExecution {
    * it is planned, spawned, restarted and route-mounted exactly like any other
    * forked addon, and `resolveRunnerId` still owns its runner id (D2 — one
    * addon, one process). Nothing else changes: the manifest entry keeps its
-   * `entry` path inside the `@camstack/server/system` closure, and the runner loads it
+   * `entry` path inside the `@dominevo/server/system` closure, and the runner loads it
    * from there.
    *
    * Ignored for non-system packages — they already fork.
@@ -1795,7 +1795,7 @@ export function resolveAddonPlacement(decl: Pick<AddonDeclaration, 'execution'>)
 }
 
 /**
- * True when a `@camstack/server/system` builtin opted out of the in-process rule and
+ * True when a `@dominevo/server/system` builtin opted out of the in-process rule and
  * must be planned as a forked runner (`execution.isolate`).
  *
  * ONE predicate, because the hub asks this question in three places that must
@@ -1824,7 +1824,7 @@ export interface RunnerAddonPlacement {
  * id (the addon runs on its own dedicated runner) or a co-location
  * group name (every addon under that key shares one runner). Computed
  * by `AddonRegistryService.buildAddonGroupPlan` and fed to
- * `initializeAddonGroup`. `@camstack/server/system` builtins are absent — they
+ * `initializeAddonGroup`. `@dominevo/server/system` builtins are absent — they
  * stay in-process on the hub.
  */
 export type RunnerPlan = ReadonlyMap<string, readonly RunnerAddonPlacement[]>

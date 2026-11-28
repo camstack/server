@@ -6,7 +6,7 @@ import type {
   IIntegrationInstancesProvider,
   IntegrationInstance,
   IntegrationInstanceKind,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { resolveInstancesOfCap } from '../instances-of-cap.js'
 

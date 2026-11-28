@@ -1,4 +1,4 @@
-import type { RunDetailSubtreeResult } from '@camstack/types'
+import type { RunDetailSubtreeResult } from '@dominevo/types'
 
 /** Minimal face-detection detail row for stubbed `runDetailSubtree`. */
 export function makeFaceDetailSubtreeResult(

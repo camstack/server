@@ -12,7 +12,7 @@ import type {
   NcRuleActions,
   NcRuleNotificationButton,
   NotificationActionIcon,
-} from '@camstack/types'
+} from '@dominevo/types'
 import i18n from '../../i18n/index'
 
 export type NcHookKey = 'onActivation' | 'onDeactivation' | 'onTrigger' | 'onTriggerOff'

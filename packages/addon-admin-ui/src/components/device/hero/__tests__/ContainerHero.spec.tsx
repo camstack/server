@@ -29,7 +29,7 @@ vi.mock('../../../../hooks/useDevice', () => ({
   useDeviceChildren: () => childrenResult.current,
 }))
 
-vi.mock('@camstack/ui-library', () => ({
+vi.mock('@dominevo/ui-library', () => ({
   useSystem: () => ({ trpcClient: {} }),
   ContainerPrimaryHero: ({ children }: { children: readonly { id: number }[] }): ReactNode => (
     <div data-testid="primary-hero" data-child-count={children.length} />

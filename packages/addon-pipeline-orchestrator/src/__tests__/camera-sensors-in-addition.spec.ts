@@ -11,7 +11,7 @@
  * `CameraSensorsController` (fake ports), `wireOrchestratorSubscriptions` on a
  * local bus, and the real `SessionDispatchController` behind block 9b.
  */
-import type { CameraSensorsConfig, MotionTriggeredBy } from '@camstack/types'
+import type { CameraSensorsConfig, MotionTriggeredBy } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { DEFAULT_MAX_SESSION_HOLD_MS, MIN_SESSION_OPEN_MS } from '../session-dispatch-controller.js'
 import {

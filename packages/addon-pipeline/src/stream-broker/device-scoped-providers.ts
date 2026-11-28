@@ -1,4 +1,4 @@
-import { makeSourceBrokerId, rankStreams } from '@camstack/types'
+import { makeSourceBrokerId, rankStreams } from '@dominevo/types'
 import type {
   CameraStream,
   ProfileSlot,
@@ -15,7 +15,7 @@ import type {
   PickStreamRequirements,
   StreamCodec,
   BrokerConsumerAttribution,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { StreamBrokerManager } from './stream-broker/stream-broker-manager.js'
 import { withSourceResolution } from './encode-profile-resolver.js'
 import { WEBRTC_FALLBACK_PROFILE } from './webrtc/webrtc-fallback-profile.js'

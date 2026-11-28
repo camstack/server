@@ -11,7 +11,7 @@
  * the delivery log; a refused render returns `refused`, and the caller falls
  * back to the catalog sentence rather than losing the notification.
  */
-import type { DeviceTemplateRender } from '@camstack/types'
+import type { DeviceTemplateRender } from '@dominevo/types'
 import { escapeLiteralMarkup } from './render-template.js'
 
 /** The hub's renderer, as a dependency. */

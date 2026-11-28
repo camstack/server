@@ -6,7 +6,7 @@
  * descriptor value that DIFFERS from the default and follows it through the
  * mint, the claim, and the re-mint on refresh.
  */
-import type { TokenScope } from '@camstack/types'
+import type { TokenScope } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { createOauthGrants, DEFAULT_REFRESH_TTL_SEC } from '../oauth-grants.js'
 import type { OauthSession } from '../oauth-session-manager.js'

@@ -4,7 +4,7 @@
  * keeps its network part (it explains a setup), any other address is dropped,
  * and a home directory loses the user name.
  */
-import { redactToolArgs, scrubSecrets } from '@camstack/develop'
+import { redactToolArgs, scrubSecrets } from '@dominevo/develop'
 
 const IPV4 = /\b(?:\d{1,3}\.){3}\d{1,3}\b/g
 // Four or more colons (a clock time has two), or a compressed `::` between hex groups.

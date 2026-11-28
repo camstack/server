@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import type { Track } from '@camstack/types'
+import type { Track } from '@dominevo/types'
 import { rankKeyEvents, type PeakLookup } from '../pipeline/key-event-query.js'
 
 const peakLookup: PeakLookup = () =>

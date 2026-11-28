@@ -7,9 +7,9 @@
  * either, including after this process restarts and has only the ledger. No
  * announcement, or one older than the window: the ordinary hold-off, unchanged.
  */
-import type { InMemoryRecords } from '@camstack/types'
+import type { InMemoryRecords } from '@dominevo/types'
 import { ncTable, makeNcRecords } from './support/nc-test-deps.js'
-import { createEvent, NcRuleInputSchema, type SystemEvent } from '@camstack/types'
+import { createEvent, NcRuleInputSchema, type SystemEvent } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import { NotificationCenter } from '../index.js'
@@ -99,7 +99,7 @@ function announceUpdate(): SystemEvent {
     {
       kind: 'framework-update',
       requestedAt: 1,
-      packageName: '@camstack/server',
+      packageName: '@dominevo/server',
       fromVersion: '1.2.499',
       toVersion: '1.2.500',
       nodeId: NODE,

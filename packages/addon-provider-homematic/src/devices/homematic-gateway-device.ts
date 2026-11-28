@@ -8,7 +8,7 @@ import {
   errMsg,
   type ErrorStatus,
   type InferNativeProvider,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { homematicGatewayDeviceSchema } from '../config.js'
 import { homematicFacades } from '../homematic-facade-resolver.js'
 import {

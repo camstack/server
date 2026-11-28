@@ -1,5 +1,5 @@
-import type { CameraSensorMode } from '@camstack/types'
-import { SOURCE_CAP_CHANGED_AT_FIELD } from '@camstack/types'
+import type { CameraSensorMode } from '@dominevo/types'
+import { SOURCE_CAP_CHANGED_AT_FIELD } from '@dominevo/types'
 import type { EventShape } from '../event/event-fit'
 import { pulseFieldFits } from '../event/event-fit'
 import type { PickerDevice, WireableCatalog } from '../source-picker-model'

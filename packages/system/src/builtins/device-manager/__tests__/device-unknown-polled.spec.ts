@@ -6,7 +6,7 @@
  * was notified. The first read that ANSWERED, the first state report or the
  * bound (120 s) releases the hold; a real first offline is still applied.
  */
-import type { IScopedLogger, StateRefreshPolicy } from '@camstack/types'
+import type { IScopedLogger, StateRefreshPolicy } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { StateRefreshPolicyRegistry } from '../../../kernel/state-refresh-policies.js'
 import { FULL_PUSH_FIRST_REPORT_BOUND_MS } from '../state-refresh-scheduler.js'

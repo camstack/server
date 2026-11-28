@@ -4,12 +4,12 @@
  *
  * "The disk is 80% full" and "we hold 12% of it" are different decisions. The
  * hub's SSD carries `recordingsLow`, `eventMedia` and artifacts together; a
- * full volume there may be nothing to do with CamStack at all.
+ * full volume there may be nothing to do with Dominevo at all.
  *
  * ## Where the figure comes from, and where it does NOT exist
  *
  * `storage.listLocations` stamps `capacity` (the VOLUME's total/free) and
- * carries no per-location CamStack usage. The one measured figure available to
+ * carries no per-location Dominevo usage. The one measured figure available to
  * a UI is `recording.getStorageUsage().locations[]`: one row per PHYSICAL
  * volume, whose `usedBytes` is "bytes of recordings stored on this volume (all
  * aliases)" — exactly a share-of-the-volume figure, and exactly what
@@ -53,7 +53,7 @@ function idsOf(row: UsageRowFacts): readonly string[] {
 }
 
 /**
- * Bytes CamStack holds on this location's volume, or `null` when there is no
+ * Bytes Dominevo holds on this location's volume, or `null` when there is no
  * measured figure — an unmeasurable class, a volume no row covers, or a
  * payload a hub's baked router stripped.
  */

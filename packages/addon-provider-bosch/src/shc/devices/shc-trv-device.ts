@@ -7,7 +7,7 @@ import {
   type HeatingValveStatus,
   type InferNativeProvider,
   type TemperatureSensorStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type {
   ShcBatteryLevelState,
   ShcTemperatureLevelState,

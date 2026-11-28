@@ -6,9 +6,9 @@ import {
   defineAddonMigrations,
   integrationRowsPortsOver,
   makeInMemoryRecords,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import { buildVeSyncCandidates } from '../vesync-discovery.js'
 import {
   buildVeSyncInstances,

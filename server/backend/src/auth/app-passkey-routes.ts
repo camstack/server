@@ -19,7 +19,7 @@ import {
   appFlowLocation,
   type IUserPasskeysProvider,
   parseAppFlowRequest,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { FastifyInstance, FastifyReply } from 'fastify'
 import { z } from 'zod'
 import type { AppConfirmations } from './app-confirmations.js'

@@ -15,7 +15,7 @@
  * The row's {@link InstalledUsage} follows from them; only `idle` and `unused`
  * files can be removed. No React, no tRPC — `installed-inventory.test.ts`.
  */
-import { acceleratorShortLabel } from '@camstack/ui-library'
+import { acceleratorShortLabel } from '@dominevo/ui-library'
 import type {
   ClusterStepModels,
   CustomModelDescriptor,
@@ -24,8 +24,8 @@ import type {
   ModelProviderId,
   NodeInferenceDevice,
   RootStepSupply,
-} from '@camstack/types'
-import { inferModelProvider, isClusterScopedStep } from '@camstack/types'
+} from '@dominevo/types'
+import { inferModelProvider, isClusterScopedStep } from '@dominevo/types'
 import { resolveModelDisplayName } from '../display-name.js'
 import { acceleratorsRunningModel } from './installed-activation.js'
 import {

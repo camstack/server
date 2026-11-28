@@ -29,8 +29,8 @@
  * after the config write succeeded — a seed that never landed has never been
  * seen by anyone, so retrying it at the next boot takes nothing away.
  */
-import type { IScopedLogger, RecordingConfig } from '@camstack/types'
-import { errMsg } from '@camstack/types'
+import type { IScopedLogger, RecordingConfig } from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
 
 /**
  * THE config the provider seeds: recording ON, decided by the device.

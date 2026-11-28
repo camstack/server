@@ -55,7 +55,7 @@
 
 import { toSlug } from './topics.js'
 import type { CatalogStreamChoice, HaPlatform } from './types.js'
-import type { WebrtcStreamTarget } from '@camstack/types'
+import type { WebrtcStreamTarget } from '@dominevo/types'
 
 /** Profile slots, in the order an operator reads them. */
 export const CAMERA_PROFILE_ORDER: readonly string[] = ['high', 'mid', 'low']

@@ -3,7 +3,7 @@
  * the quantity's base unit (D944 §4). A display preference (default metric)
  * or an operator override picks the label; the value is converted to match.
  */
-import type { DeviceDisplayOverride, ReadingQuantity, RoleDisplayDefault } from '@camstack/types'
+import type { DeviceDisplayOverride, ReadingQuantity, RoleDisplayDefault } from '@dominevo/types'
 import {
   DEFAULT_DISPLAY_PREFERENCE,
   baseUnitOf,
@@ -13,7 +13,7 @@ import {
   normalizeUnit,
   tryConvertUnit,
   type DisplayPreference,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { formatNumeric } from './format-numeric'
 import { preferenceForQuantity, type UnitPreferences } from './unit-preferences'
 

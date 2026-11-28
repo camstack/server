@@ -7,7 +7,7 @@
  * What the devices offer is unknown until their bindings answer: the select
  * then offers nothing rather than claiming the devices can do nothing (D315).
  */
-import type { ActionTarget, AutomationCommandStep } from '@camstack/types'
+import type { ActionTarget, AutomationCommandStep } from '@dominevo/types'
 import {
   type DeviceActionEditorProps,
   type DeviceActionEntryLabel,
@@ -15,7 +15,7 @@ import {
   Select,
   useActionTargetLabel,
   useDeviceNameIndex,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 import { useDevicesBoundCaps } from '../../../components/device-do-action/use-device-bound-caps'
 import {

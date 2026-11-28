@@ -25,8 +25,8 @@ import type {
   ManagedModelCatalogEntry,
   ManagedModelRef,
   ManagedRuntimeConfig,
-} from '@camstack/types'
-import { LlmProfileSchema } from '@camstack/types'
+} from '@dominevo/types'
+import { LlmProfileSchema } from '@dominevo/types'
 import {
   isIdentityConsumer,
   type AppleNodeView,
@@ -632,7 +632,7 @@ export function buildLlmProvider(deps: LlmProviderDeps): LlmProviderParts {
      * them to a red toast with no candidate list and no override.
      */
     resolveModelRef: async ({ ref, maxBytes }) => {
-      // Anonymous: CamStack never sends a Hugging Face credential.
+      // Anonymous: Dominevo never sends a Hugging Face credential.
       const outcome = await resolveHfReference(ref, {
         ...(maxBytes !== undefined ? { maxBytes } : {}),
       })

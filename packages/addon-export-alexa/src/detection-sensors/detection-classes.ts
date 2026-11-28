@@ -1,7 +1,7 @@
 /**
  * Which detection sensors a camera gets (R1, D772): the classes its pipeline
  * can emit, from `pipelineAnalytics.listEventKinds` — the same answer the
- * viewer's timeline lanes use, so the Alexa sensors and the CamStack lanes
+ * viewer's timeline lanes use, so the Alexa sensors and the Dominevo lanes
  * never disagree about what a camera detects.
  *
  * A class that DISAPPEARS from that answer is removed only when it has been
@@ -13,8 +13,8 @@
  * read to agree). A class that APPEARS is added at once. A read that throws
  * changes nothing.
  */
-import type { IScopedLogger } from '@camstack/types'
-import { errMsg } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
 import { DETECTION_SENSOR_CLASSES, type DetectionSensorClass } from '../handlers/endpoint-id.js'
 import { detectionClassOf } from './detection-tracker.js'
 

@@ -31,7 +31,7 @@ import {
   deviceAdminLinkCapability,
   type DeviceContext,
   type InferNativeProvider,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { unifiControllers } from './unifi-node-resolver.js'
 
 /** The two fields of the controller connection this module reads. */

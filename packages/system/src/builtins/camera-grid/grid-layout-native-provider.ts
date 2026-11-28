@@ -29,7 +29,7 @@ import {
   type GridLayoutPatch,
   type GridLayoutView,
   type ICameraGridLayoutSettingsProvider,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { buildGridDeviceSchema } from './grid-device-settings.js'
 
 /** What the provider needs from the running addon — nothing more. */

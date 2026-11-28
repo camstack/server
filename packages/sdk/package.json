@@ -1,14 +1,14 @@
 {
-  "name": "@camstack/sdk",
-  "version": "1.2.160",
+  "name": "@dominevo/sdk",
+  "version": "0.1.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/camstack/server.git",
+    "url": "https://github.com/dominevo/server.git",
     "directory": "packages/sdk"
   },
   "homepage": "https://camstack-docs.zentik.app",
   "bugs": {
-    "url": "https://github.com/camstack/server/issues"
+    "url": "https://github.com/dominevo/server/issues"
   },
   "type": "module",
   "main": "dist/index.cjs",
@@ -41,10 +41,10 @@
     "superjson": "^2.2.6"
   },
   "peerDependencies": {
-    "@camstack/types": ">=1.2.306"
+    "@dominevo/types": ">=0.1.0"
   },
   "devDependencies": {
-    "@camstack/types": "*",
+    "@dominevo/types": "0.1.0",
     "@trpc/client": "^11.16.0",
     "@trpc/server": "^11.16.0",
     "@types/node": "^24",
@@ -55,7 +55,7 @@
   },
   "nx": {
     "implicitDependencies": [
-      "@camstack/types"
+      "@dominevo/types"
     ]
   }
 }

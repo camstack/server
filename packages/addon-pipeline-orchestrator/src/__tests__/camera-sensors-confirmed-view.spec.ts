@@ -4,7 +4,7 @@
  * `DeviceStateChanged` event carries `confirmed` while a hold changes the
  * slice, and the hub's motion slice is read in its confirmed view.
  */
-import type { AddonApi } from '@camstack/types'
+import type { AddonApi } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { hubMotionSliceStore } from '../camera-sensors/motion-slice-hub.js'
 import { reportedSensorSlice } from '../camera-sensors/sensor-state-event.js'

@@ -22,7 +22,7 @@ import {
   type IDataStoreProvider,
   type MutationFilter,
   settingsStoreCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { createDataStoreDispatch } from '../data-store-dispatch.js'
 

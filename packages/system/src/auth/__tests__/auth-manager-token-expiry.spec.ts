@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import * as jwt from 'jsonwebtoken'
-import type { IScopedLogger, TokenPayload } from '@camstack/types'
-import { DEFAULT_TOKEN_EXPIRY } from '@camstack/types'
+import type { IScopedLogger, TokenPayload } from '@dominevo/types'
+import { DEFAULT_TOKEN_EXPIRY } from '@dominevo/types'
 import { AuthManager, type AuthConfigReader } from '../auth-manager.js'
 import { staticJwtSigningKey } from '../jwt-signing-key.js'
 

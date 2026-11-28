@@ -1,6 +1,6 @@
 /// <reference types="@testing-library/jest-dom" />
 
-import { ConfirmDialogProvider, trpc } from '@camstack/ui-library'
+import { ConfirmDialogProvider, trpc } from '@dominevo/ui-library'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 /**
  * StorageMigrationSection — the presence gate, at the TRANSPORT.

@@ -1,6 +1,6 @@
 import { homedir } from 'node:os'
-import type { ProviderRegistration } from '@camstack/types'
-import { BaseAddon, filesystemBrowseCapability, storageProviderCapability } from '@camstack/types'
+import type { ProviderRegistration } from '@dominevo/types'
+import { BaseAddon, filesystemBrowseCapability, storageProviderCapability } from '@dominevo/types'
 import { FilesystemBrowseProvider } from './filesystem-browse-provider.js'
 import { FilesystemStorageProvider } from './filesystem-storage-provider.js'
 

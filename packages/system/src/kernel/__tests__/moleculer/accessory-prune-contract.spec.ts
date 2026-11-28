@@ -14,8 +14,8 @@ import type {
   IDevice,
   IEventBus,
   IScopedLogger,
-} from '@camstack/types'
-import { accessoryChildrenComplete, accessoryChildrenUnknown } from '@camstack/types'
+} from '@dominevo/types'
+import { accessoryChildrenComplete, accessoryChildrenUnknown } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { CapabilityRegistry } from '../../capability-registry.js'
 import { DeviceRegistry } from '../../device-registry.js'

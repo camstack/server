@@ -1,4 +1,4 @@
-import type { AddonMigration } from '@camstack/types'
+import type { AddonMigration } from '@dominevo/types'
 import { planDropBrokersKey, verifyBrokersAreRecords } from './brokers-to-records.js'
 import {
   type ClientAclMigrationPorts,

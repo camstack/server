@@ -14,7 +14,7 @@
  * The `device.unregistered` event is deliberately not used: it is telemetry and
  * may be dropped, and a provider that restarts emits it for devices that come back.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { HistoryStore } from '../store/history-store.js'
 import type { SeriesRegistry } from '../store/series-registry.js'
 import { DAY_MS } from '../time/bucket-time.js'

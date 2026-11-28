@@ -11,7 +11,7 @@
  *
  * Memory only, like the holds themselves: a restart re-registers every cap.
  */
-import type { CommandHoldOptions } from '@camstack/types'
+import type { CommandHoldOptions } from '@dominevo/types'
 import type { ChildCapDescriptor } from './transport/child-cap-protocol.js'
 
 /** One device cap's options, as a source reports them. */

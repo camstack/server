@@ -14,7 +14,7 @@
  * runner respawn): a tower past its crash budget (`failedModels`) and a model
  * whose requirements can never be met (`failedRequirements`).
  */
-import type { EmbeddingFailedRequirement } from '@camstack/types'
+import type { EmbeddingFailedRequirement } from '@dominevo/types'
 import type { CrashBudget, FailedModel } from './crash-budget.js'
 import type { RequirementsGate } from './model-requirements.js'
 

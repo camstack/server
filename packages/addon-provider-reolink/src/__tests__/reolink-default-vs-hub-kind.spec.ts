@@ -3,8 +3,8 @@
  * one record: the default holds a name and the camera mailbox link and offers no Test; a hub holds
  * its connection, offers Test and never carries the mailbox link.
  */
-import type { ConfigField, ConfigUISchema } from '@camstack/types'
-import { makeInMemoryRecords } from '@camstack/types'
+import type { ConfigField, ConfigUISchema } from '@dominevo/types'
+import { makeInMemoryRecords } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   buildReolinkInstances,

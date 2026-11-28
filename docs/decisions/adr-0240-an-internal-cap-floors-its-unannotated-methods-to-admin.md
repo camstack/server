@@ -34,7 +34,7 @@ defaulted to `'protected'` and was reachable on the AppRouter by any
 authenticated (non-admin) session: mint a token with `isAdmin: true`, redeem
 it, become admin. An audit of the 22 `internal: true` caps found this pattern
 on **45 procedures across 13 caps** — every one closed by adding an explicit
-`auth: 'admin'` annotation and shipping `@camstack/server@1.2.170`.
+`auth: 'admin'` annotation and shipping `@dominevo/server@1.2.170`.
 
 That closed the exposure that existed TODAY. It did nothing for the next cap.
 A new `internal` cap, or a new method on an existing one, that omits `auth`

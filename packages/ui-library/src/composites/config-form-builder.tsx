@@ -1,5 +1,5 @@
 import { useRef, useState, type JSX } from 'react'
-import type { ConfigUISchema, ConfigSection, ConfigField, FieldProbeResult } from '@camstack/types'
+import type { ConfigUISchema, ConfigSection, ConfigField, FieldProbeResult } from '@dominevo/types'
 import { ConfigFormField, isFieldVisible } from './config-form-field'
 import { DisclosureChevron } from '../primitives/disclosure-chevron'
 import type { ProbeState } from './config-form-field'

@@ -13,8 +13,8 @@ import {
   SectionCard,
   SettingRow,
   trpc,
-} from '@camstack/ui-library'
-import type { RetentionKnob } from '@camstack/types'
+} from '@dominevo/ui-library'
+import type { RetentionKnob } from '@dominevo/types'
 import { Loader2, Timer } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'

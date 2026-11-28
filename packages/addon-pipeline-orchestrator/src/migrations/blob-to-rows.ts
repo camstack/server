@@ -15,7 +15,7 @@
  * a no-op. A read that fails throws, and nothing is written. A map whose shape is not a map of
  * objects throws too: copying part of it would leave the readers with a half-moved store.
  */
-import { type MigrationPlan, preconditionOf } from '@camstack/types'
+import { type MigrationPlan, preconditionOf } from '@dominevo/types'
 import { ADDON_SETTINGS_TABLE, type DropKeysPorts } from './drop-keys.js'
 
 /** The per-device settings table: one row per field, id `<addonId>:<deviceId>.<field>`. */

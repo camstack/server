@@ -4,7 +4,7 @@
  * it); transport churn and an asleep car are not.
  */
 
-import { IntegrationSessionReporter, type SessionLossReason } from '@camstack/types'
+import { IntegrationSessionReporter, type SessionLossReason } from '@dominevo/types'
 import { KiaBridgeError } from './kia-bridge.js'
 
 export function classifyKiaSessionError(err: unknown): SessionLossReason | null {

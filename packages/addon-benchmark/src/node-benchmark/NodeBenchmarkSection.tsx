@@ -13,7 +13,7 @@ import type {
   NodeBenchmarkPreflight,
   NodeBenchmarkResultView,
   NodeBenchmarkStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   type AddonPageProps,
   Button,
@@ -29,7 +29,7 @@ import {
   TEXT_HINT,
   Select,
   Input,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Activity, Cpu, Gauge, ListChecks, Play, Square, Trash2 } from 'lucide-react'
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
 import { useT } from '../i18n/index.js'

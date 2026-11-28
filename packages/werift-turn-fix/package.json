@@ -1,6 +1,6 @@
 {
-  "name": "@camstack/werift-turn-fix",
-  "version": "0.0.0",
+  "name": "@dominevo/werift-turn-fix",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
   "description": "Automated acceptance test scaffold for verifying the werift TURN/NAT relay bug and its patch",

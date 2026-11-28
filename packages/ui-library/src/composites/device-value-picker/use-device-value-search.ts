@@ -1,4 +1,4 @@
-import type { DeviceSearchInput, DeviceSearchItem, DeviceSearchResult } from '@camstack/types'
+import type { DeviceSearchInput, DeviceSearchItem, DeviceSearchResult } from '@dominevo/types'
 import { useEffect, useMemo, useState } from 'react'
 import { useDeviceManagerSearch } from '../../generated/system-hooks'
 import { trpc } from '../../trpc-react'

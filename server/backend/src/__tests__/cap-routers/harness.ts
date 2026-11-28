@@ -11,8 +11,8 @@
  * `system-info.router.spec.ts` for a usage example.
  */
 import { TRPCError } from '@trpc/server'
-import { buildCapRouters, type CapRouterServices } from '@camstack/server/system'
-import { kebabToCamel } from '@camstack/types'
+import { buildCapRouters, type CapRouterServices } from '@dominevo/server/system'
+import { kebabToCamel } from '@dominevo/types'
 import type { TrpcContext, AuthenticatedAgent } from '../../api/trpc/trpc.context.js'
 import { createCapRouterPrimitives } from '../../api/trpc/cap-router-runtime.js'
 
@@ -81,7 +81,7 @@ type MethodBag = Readonly<Record<string, (input?: unknown) => unknown>>
 
 /**
  * Build a single capability's tRPC router via the LIVE runtime builder
- * (`@camstack/server/system` `buildCapRouters`) with a mock provider — the
+ * (`@dominevo/server/system` `buildCapRouters`) with a mock provider — the
  * drop-in replacement for the retired codegen `createCapRouter_<Cap>`
  * value factories. Tests now exercise the EXACT router the running hub
  * builds (structural output pass-through, `mount`-driven resolution),

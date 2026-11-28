@@ -16,7 +16,7 @@ import {
  * KLF-200 wire positions run 0x0000..0xC800 and 0 means FULLY OPEN, for a
  * window opener as much as for a roller shutter (the vendor library inverts
  * the window type only to present "100 % = open"; HA reads
- * `100 - position_percent` for every cover). CamStack's `cover` cap is
+ * `100 - position_percent` for every cover). Dominevo's `cover` cap is
  * 0 = closed .. 100 = open, so the mapping is the same for every actuator.
  */
 describe('position mapping', () => {

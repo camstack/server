@@ -111,9 +111,9 @@ to the D964 redirect, which sends the bound remote role. Rules:
 
 `validate-forward.ts` (static, in `planComposition`) and
 `forwardSourceProblems` (with the sources read) refuse a wrong composition at
-save time, covered by `forward-commands.spec.ts` in `@camstack/types`. The
+save time, covered by `forward-commands.spec.ts` in `@dominevo/types`. The
 runtime is covered by `forward-commands.spec.ts`,
 `actuator-groups.spec.ts` and `forward-device.e2e.spec.ts` in
-`@camstack/system`.
+`@dominevo/system`.
 
 > **Amended by [D1034](adr-1034-a-fan-oscillation-axis-is-part-of-fan-control-linked-by-hand-and-judged-by-its-live-kind.md), 2026-11-11.** The forward refusal vocabulary (`source-gone`, `source-unknown`, `source-call-failed`) also names the source of a write that a Customize `replace` link forwards on an EXISTING device.

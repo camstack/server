@@ -8,7 +8,7 @@
  * frame to say it was history at all, so the only thing a consumer could do
  * with it was push it into the latest-only live queue.
  */
-import type { DecodedFrame, IScopedLogger } from '@camstack/types'
+import type { DecodedFrame, IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import type { ForkedChildLike } from '../session-decode-coordinator.js'
 import { startSessionDecodePump } from '../session-decode-pump.js'

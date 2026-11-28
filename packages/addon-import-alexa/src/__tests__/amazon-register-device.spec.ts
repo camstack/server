@@ -22,7 +22,7 @@ describe('device registration', () => {
     })
     expect(body.cookies.domain).toBe('.amazon.it')
     expect(body.user_context_map).toEqual({ frc: 'FRC' })
-    expect(body.registration_data.app_name).toBe('CamStack')
+    expect(body.registration_data.app_name).toBe('Dominevo')
     expect(body.requested_token_type).toEqual(['bearer', 'mac_dms', 'website_cookies'])
   })
 

@@ -11,7 +11,7 @@ import {
   normalizeCoreBlockWrite,
   resolveCoreBlockFiles,
   type ConfigUISchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { materializeBlock } from '../block-package.js'
 import { BlockSettingsStore } from '../block-settings-store.js'
@@ -189,7 +189,7 @@ describe('BlockSettingsStore prefs patch', () => {
 
 describe('getBlockSettings hydration contract', () => {
   it('hydrateSchema fills values from the stored rows', async () => {
-    const { hydrateSchema } = await import('@camstack/types')
+    const { hydrateSchema } = await import('@dominevo/types')
     const schema: ConfigUISchema = {
       sections: [
         {

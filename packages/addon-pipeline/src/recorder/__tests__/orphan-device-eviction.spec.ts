@@ -15,7 +15,7 @@
  * here — every orphan row in these fixtures is NEWER than the live camera's.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { type DeviceRegistryRead, ORPHAN_CONFIRMATIONS_REQUIRED } from '../orphan-device-lane.js'
 import { RecordingIndex } from '../recording-index.js'

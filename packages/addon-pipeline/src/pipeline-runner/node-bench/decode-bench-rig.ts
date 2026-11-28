@@ -23,7 +23,7 @@
  * each arrived against its own media clock, the errors, and the decode backend
  * the worker named.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import {
   createSessionDecodeCoordinator,
   type ForkedChildLike,

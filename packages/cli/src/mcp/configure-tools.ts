@@ -11,7 +11,7 @@ import {
   type GatedResult,
   type GatedToolSpec,
   type HubClient,
-} from '@camstack/develop'
+} from '@dominevo/develop'
 import { text } from './tool-result.js'
 import { z } from 'zod'
 import { registerConfigureP3bTools } from './configure-p3b.js'
@@ -96,7 +96,7 @@ export async function renameDevice(
 export function registerConfigureTools(server: McpServer, ctx: McpContext): void {
   server.tool(
     RENAME_DEVICE_TOOL,
-    'Rename a device. Two steps: call without confirm_token for a preview and a one-shot token, then call again with the SAME arguments and that token to apply. Needs an admin `camstack login` session.',
+    'Rename a device. Two steps: call without confirm_token for a preview and a one-shot token, then call again with the SAME arguments and that token to apply. Needs an admin `dominevo login` session.',
     {
       deviceId: z.number().int(),
       name: z.string().min(1),

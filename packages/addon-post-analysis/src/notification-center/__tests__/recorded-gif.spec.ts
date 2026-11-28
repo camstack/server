@@ -2,8 +2,8 @@
  * The recorded gif (D682): derived from the recorded clip's bytes with the
  * broker's own filter chain, on the pinned ffmpeg, and every miss named.
  */
-import type { IScopedLogger } from '@camstack/types'
-import { gifFilterComplex } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
+import { gifFilterComplex } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import { NC_GIF_FPS, NC_GIF_MAX_WIDTH, NC_GIF_SPEED } from '../event-media/event-media-service.js'

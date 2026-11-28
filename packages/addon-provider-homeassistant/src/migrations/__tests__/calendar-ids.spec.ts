@@ -3,7 +3,7 @@
  * setting is dropped after a read-back. Real SQLite for the addon settings, an in-memory
  * integrations api for the instances, through the production port binding.
  */
-import type { FlattenRowPorts } from '@camstack/types'
+import type { FlattenRowPorts } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { NO_CALENDAR_PORTS, NO_LINK_PORTS, NO_NOTIFY_PORTS } from '../../__tests__/no-link-ports.js'
 import { fakeIntegrations } from '../../__tests__/fake-integrations.js'

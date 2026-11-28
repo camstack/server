@@ -30,7 +30,7 @@ import {
   useDeviceManagerDiscoverProvider,
   useDeviceManagerListAll,
   useDeviceManagerProviderDiscoveryParamsSchema,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { AlertTriangle, Check, Download, Loader2, Radar, RefreshCw } from 'lucide-react'
 import { type ReactElement, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'

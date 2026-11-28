@@ -3,12 +3,12 @@ import {
   type DeviceContext,
   type InferNativeProvider,
   type SwitchStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { HaBaseChildDevice } from '../ha-base-child-device.js'
 import type { HaEntityState } from '../ha-types.js'
 
 /**
- * HA-backed CamStack switch device. Materialised on adoption of any
+ * HA-backed Dominevo switch device. Materialised on adoption of any
  * HA entity whose `mappedTo.capabilities` contains `switch` — covers
  * the `switch.*`, `input_boolean.*` domains and `fan.*` parents that
  * register `switch + fan-control` (the switch cap component lives

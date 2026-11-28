@@ -11,7 +11,7 @@ import {
   ServerUpdateActionResultSchema,
   type IBackupProvider,
   type IClusterUpdateProvider,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { AddonPackageService } from '../../core/addon/addon-package.service.js'
 import { SYSTEM_PACKAGE } from '../../core/addon/addon-package.service.js'
 import type { AddonRegistryService } from '../../core/addon/addon-registry.service.js'

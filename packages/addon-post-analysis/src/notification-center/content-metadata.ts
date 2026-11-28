@@ -8,7 +8,7 @@ import {
   NOTIFICATION_META_EVENT_KIND,
   NOTIFICATION_META_RULE_ID,
   type NotificationEventKind,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { NcOutboxEntry } from './outbox.js'
 
 /** The event kind of an outbox row, from the delivery it was enqueued under and what its subject holds. */

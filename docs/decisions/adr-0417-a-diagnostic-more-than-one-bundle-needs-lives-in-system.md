@@ -1,6 +1,6 @@
 ---
 id: D417
-title: A diagnostic more than one bundle needs lives in @camstack/system — one home, and the deploy order is closure first
+title: A diagnostic more than one bundle needs lives in @dominevo/system — one home, and the deploy order is closure first
 status: accepted
 date: 2026-09-09
 supersedes:
@@ -19,7 +19,7 @@ applies-to:
 `startEventLoopStallMonitor` was written for `detection-pipeline` (the
 2026-08-01/02 fleet stall) and reused by `recorder`, whose field comment
 recorded the reasoning at the time: **not promoted**, because both callers ship
-in `@camstack/addon-pipeline` and moving it to `@camstack/system` would be "a
+in `@dominevo/addon-pipeline` and moving it to `@dominevo/system` would be "a
 refactor with a slower ship chain, not a measurement". That was correct for two
 callers in one bundle.
 
@@ -42,9 +42,9 @@ knew.
 
 ## Decision
 
-A diagnostic that more than one bundle needs lives in `@camstack/system` and has
+A diagnostic that more than one bundle needs lives in `@dominevo/system` and has
 exactly ONE implementation. An ADDON reaches it through the
-`@camstack/system/addon-utils` subpath — never the barrel, which drags the whole
+`@dominevo/system/addon-utils` subpath — never the barrel, which drags the whole
 kernel and every builtin (~64MB of heap) into a forked runner and is refused by
 `biome-plugins/no-system-barrel-in-addons.grit`; hub-main, which is the
 framework, imports it from the root. Copying one into an addon bundle to keep
@@ -57,20 +57,20 @@ type), or it cannot be re-exported from `addon-utils` at all.
 
 ## Consequences
 
-`@camstack/system` is **external to every addon bundle** (`BARE_SYSTEM_EXTERNAL`
+`@dominevo/system` is **external to every addon bundle** (`BARE_SYSTEM_EXTERNAL`
 in `tools/build/vite-lib.preset.ts`), so an addon that imports this resolves it
 from the installed server closure, not from its own `dist`. That makes the
 deploy order load-bearing:
 
-1. install the `@camstack/server` closure that carries the export, then
-2. `camstack deploy` the addons.
+1. install the `@dominevo/server` closure that carries the export, then
+2. `dominevo deploy` the addons.
 
 Deployed the other way round, `addon-pipeline` and `addon-post-analysis` fail to
 load the missing named export and the runner crash-loops until the
 `CrashSupervisor` marks it `failed`. The cost is real and is the price of one
 home; it is not a reason to copy.
 
-Also: a diagnostic promoted to `@camstack/system` now ships on the closure
+Also: a diagnostic promoted to `@dominevo/system` now ships on the closure
 cadence, so its next fix reaches a running hub more slowly than an addon fix
 would. Accept that for diagnostics. It is not an argument for putting
 production logic there.

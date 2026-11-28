@@ -15,7 +15,7 @@
  * convention live in `kind.ts` so the orchestrators can share them without
  * importing this registry.
  */
-import type { AddonContext } from '@camstack/types'
+import type { AddonContext } from '@dominevo/types'
 
 import { buildCameraAccessory } from './camera-accessory.js'
 import { buildGenericAccessory } from './generic-accessory.js'

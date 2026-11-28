@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { DeviceType, type AddonContext, type IDevice } from '@camstack/types'
+import { DeviceType, type AddonContext, type IDevice } from '@dominevo/types'
 import { HaProviderAddon } from '../addon.js'
 import { HaEventBusDevice, type HaBusEvent } from '../devices/ha-event-bus-device.js'
 

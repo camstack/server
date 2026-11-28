@@ -107,7 +107,7 @@ D458 changed moleculer's quadratic TCP reassembly and closed with: *"This has
 not been measured on the hub and this record does not claim it. The measurement
 that will settle it is now on the line: `gcMajPerMin` before and after."* The
 patched `Parser` is confirmed live in the installed closure
-(`@camstack/system/dist/index.js`, chunk-list accumulator, `Buffer.concat` once
+(`@dominevo/system/dist/index.js`, chunk-list accumulator, `Buffer.concat` once
 per completed packet). Against D456's figures for the same process:
 
 | | D456 (before) | 2026-09-12 (after) |
@@ -173,9 +173,9 @@ not know, because nothing reports it.
 
 ## Consequences
 
-- **This does not ship with `camstack deploy`.** `process-cpu-census.ts` and
-  `heap-watch.ts` are `@camstack/system`, so both ride one published
-  `@camstack/server` closure (D16). Until that lands, every process keeps
+- **This does not ship with `dominevo deploy`.** `process-cpu-census.ts` and
+  `heap-watch.ts` are `@dominevo/system`, so both ride one published
+  `@dominevo/server` closure (D16). Until that lands, every process keeps
   reporting a GC cost 14–28x too small.
 - **Cost, per LINE and not per probe:** one `process.cpuUsage()` (~1 µs) plus a
   readdir and ~11 small `/proc` reads. Once a minute on hub-main, once every

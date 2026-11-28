@@ -15,7 +15,7 @@ import {
   type IAddonPageProvider,
   type ITrainingOrchestrator,
   trainingCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { corpusPort, datasetPort, pinPort, providerPort, registryPort } from './api-ports.js'
 import { createDiskArtifacts } from './artifact-staging.js'
 import { BASE_MODELS, publicBaseModel } from './base-models.js'

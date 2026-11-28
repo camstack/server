@@ -99,7 +99,7 @@ export const StorageLocationSchema = z.object({
    *  volume is remote/unreachable. The single capacity truth every UI reads. */
   capacity: z.object({ totalBytes: z.number(), availableBytes: z.number() }).nullable().optional(),
   /**
-   * How much of that volume CamStack ITSELF holds on this location (D388) —
+   * How much of that volume Dominevo ITSELF holds on this location (D388) —
    * COMPUTED at read time from the `storage-occupancy` providers' own figures,
    * never persisted, never a filesystem walk.
    *

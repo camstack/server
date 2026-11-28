@@ -6,7 +6,7 @@
  * route called `addonBridge.reloadPackages()` which rebuilt the global
  * AddonLoader (`AddonBridge.Reloaded count=45`). That swap knocked
  * every isolated group-runner's IPC channel offline — a single
- * `camstack deploy` produced `Group-runner hub/<X> disconnected` for
+ * `dominevo deploy` produced `Group-runner hub/<X> disconnected` for
  * 6+ unrelated addons. The fix dropped the redundant reloadPackages;
  * `addonRegistry.loadNewAddons()` alone does a non-destructive diff.
  *
@@ -37,7 +37,7 @@ const REPO_PACKAGES_DIR = resolve(fileURLToPath(import.meta.url), '..', '..', '.
 const E2E_LIVE = process.env['CAMSTACK_E2E_LIVE'] === '1'
 const desc = E2E_LIVE ? describe : describe.skip
 
-const PACKAGE_NAME = '@camstack/e2e-fixture-noop'
+const PACKAGE_NAME = '@dominevo/e2e-fixture-noop'
 const ADDON_ID = 'e2e-fixture-noop'
 const HUB_PORT = 4556
 

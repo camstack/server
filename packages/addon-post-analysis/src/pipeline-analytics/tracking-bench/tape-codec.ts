@@ -19,7 +19,7 @@
 import { readFile } from 'node:fs/promises'
 import { promisify } from 'node:util'
 import { gunzip, gzip, gzipSync } from 'node:zlib'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { z } from 'zod'
 import {
   parseTapeRecord,

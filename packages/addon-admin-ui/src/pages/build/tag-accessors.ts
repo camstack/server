@@ -3,7 +3,7 @@
  * Module-level so the references are stable: `TaggedDataTable` keys its memos
  * on them.
  */
-import type { ActionEntry, CoreBlock, Scheduler, TemplateRecord } from '@camstack/types'
+import type { ActionEntry, CoreBlock, Scheduler, TemplateRecord } from '@dominevo/types'
 
 export const blockTags = (block: CoreBlock): readonly string[] | undefined => block.tags
 export const blockSearchText = (block: CoreBlock): readonly string[] => [block.name]

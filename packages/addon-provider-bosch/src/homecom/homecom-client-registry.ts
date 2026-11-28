@@ -1,4 +1,4 @@
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IScopedLogger } from '@dominevo/types'
 import { type HomeComConfig, sameHomeComConnection } from './config.js'
 import { homeComConnections } from './homecom-gateway.js'
 import { HomeComIntegrationManager, type HomeComBrokerInfo } from './homecom-integration-manager.js'

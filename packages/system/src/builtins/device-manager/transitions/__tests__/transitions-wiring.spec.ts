@@ -4,7 +4,7 @@ import type {
   DeviceCommandSettledEvent,
   DeviceTransition,
   IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   __resetCommandObserverRegistryForTests,
   getCommandObserverRegistry,

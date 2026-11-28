@@ -10,7 +10,7 @@ import {
   type ObjectDetection,
   type PipelineEngineChoice,
   type PipelineStepInputOutput,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { getStepDefinition } from '../../detection-pipeline/registry/step-definitions.js'
 import { deriveDetailSteps } from '../index.js'
@@ -167,7 +167,7 @@ describe('planRootSupplies', () => {
     expect(plan.states.get('animal-classifier')).toMatchObject({ intent: false, effective: false })
   })
 
-  it('root switch CamStack → plus catalog → plugin catalog → back keeps the intent and the model', () => {
+  it('root switch Dominevo → plus catalog → plugin catalog → back keeps the intent and the model', () => {
     const settings = { useRootModel: true }
     const roots = ['yolo26n', PLUS.id, PLUGIN_ROOT.id, 'yolo26n']
     const effective = roots.map(

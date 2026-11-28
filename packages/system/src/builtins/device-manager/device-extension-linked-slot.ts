@@ -31,14 +31,14 @@ import type {
   ExtensionSetResult,
   ExtensionSlotSource,
   ExtensionSlotValueOf,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   createDeviceExtensionProvider,
   defineExtensionSlotProvider,
   DeviceType,
   type IDeviceExtensionProvider,
   StaleStampError,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   applyLinkedDevicesPatch,
   LINK_CANDIDATE_PROJECTION,

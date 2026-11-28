@@ -1,6 +1,6 @@
 # Tracked in camstack/server as hf/camstack-trainer/Dockerfile; edit it there, not on the Hub.
 #
-# The CamStack trainer image. Two builders read this file:
+# The Dominevo trainer image. Two builders read this file:
 #   - `docker build --platform linux/amd64 --build-arg TRAINER_REVISION=<sha> .` (any registry);
 #   - the hub's Modal provider, which builds it WITHOUT a build context:
 #     FROM becomes `images.fromRegistry(...)` and every other line one

@@ -13,8 +13,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { CameraStreamsProvider, WebrtcSessionProvider } from '../device-scoped-providers.js'
 import { StreamBrokerManager } from '../stream-broker/stream-broker-manager.js'
-import type { AddonApi, IScopedLogger, WebrtcClientHints } from '@camstack/types'
-import { nodePin } from '@camstack/types'
+import type { AddonApi, IScopedLogger, WebrtcClientHints } from '@dominevo/types'
+import { nodePin } from '@dominevo/types'
 import { WEBRTC_FALLBACK_PROFILE } from '../webrtc/webrtc-fallback-profile.js'
 import type { IStreamBrokerWithSourceProvider } from '../webrtc/remote-encoded-source-broker.js'
 

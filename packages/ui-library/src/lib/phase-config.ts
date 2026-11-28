@@ -11,7 +11,7 @@
  *   `import { [cfg.icon] } from 'lucide-react'`
  * or use the provided `PhaseIcon` component from `./phase-icon.tsx`.
  */
-import type { CameraPhase } from '@camstack/types'
+import type { CameraPhase } from '@dominevo/types'
 import { defaultUiText, type UiTextFn } from '../contexts/ui-text'
 
 export interface PhaseVisual {

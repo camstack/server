@@ -20,9 +20,9 @@
  * which path closes it. A close that arrives too early is DEFERRED to the
  * deadline, not dropped.
  */
-import { CAMERA_TRIGGER } from '@camstack/types'
+import { CAMERA_TRIGGER } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { CameraDetectionConfig, IScopedLogger, LogTags } from '@camstack/types'
+import type { CameraDetectionConfig, IScopedLogger, LogTags } from '@dominevo/types'
 import { decideSessionClose } from '../dispatch-reconcile.js'
 import {
   MIN_SESSION_OPEN_MS,

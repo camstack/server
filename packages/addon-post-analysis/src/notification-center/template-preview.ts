@@ -14,7 +14,7 @@ import {
   templateVarsFor,
   type NcTemplatePreview,
   type NcTemplatePreviewInput,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { ncClockText } from './clock-text.js'
 import { renderTemplate, templatePlaceholders } from './render-template.js'
 import type { NcTextCatalog } from './text-catalog.js'

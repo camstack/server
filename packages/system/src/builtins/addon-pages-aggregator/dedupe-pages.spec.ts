@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import type { AddonPageInfo } from '@camstack/types'
+import type { AddonPageInfo } from '@dominevo/types'
 import { dedupePages } from './dedupe-pages.js'
 
 /**

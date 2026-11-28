@@ -11,7 +11,7 @@
  * exists here, and `provider-config.ts` is what validates it on save — read the
  * two together.
  */
-import type { ConfigUISchema, LlmProfileField, LlmProfileKindDescriptor } from '@camstack/types'
+import type { ConfigUISchema, LlmProfileField, LlmProfileKindDescriptor } from '@dominevo/types'
 import { APPLE_SYSTEM_MODEL } from '../runtime/apple/afm-protocol.js'
 import type { HttpKind } from './http-connection.js'
 

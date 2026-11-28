@@ -47,13 +47,13 @@ function published(
 
 describe('buildAddonUpdateEntries', () => {
   const installed: readonly InstalledAddonPackage[] = [
-    { packageName: '@camstack/addon-pipeline', installedVersion: '1.0.4' },
+    { packageName: '@dominevo/addon-pipeline', installedVersion: '1.0.4' },
   ]
 
   it('flags a package whose published version is strictly newer', () => {
     const [entry] = buildAddonUpdateEntries(
       installed,
-      published([['@camstack/addon-pipeline', { latestVersion: '1.0.9', error: null }]]),
+      published([['@dominevo/addon-pipeline', { latestVersion: '1.0.9', error: null }]]),
     )
     expect(entry?.updateAvailable).toBe(true)
     expect(entry?.latestVersion).toBe('1.0.9')
@@ -63,17 +63,17 @@ describe('buildAddonUpdateEntries', () => {
   it('does not flag an identical version', () => {
     const [entry] = buildAddonUpdateEntries(
       installed,
-      published([['@camstack/addon-pipeline', { latestVersion: '1.0.4', error: null }]]),
+      published([['@dominevo/addon-pipeline', { latestVersion: '1.0.4', error: null }]]),
     )
     expect(entry?.updateAvailable).toBe(false)
   })
 
   it('does not flag a node running a build AHEAD of npm (a hub deploy)', () => {
-    // `camstack deploy` ships versions that were never published. Telling the
+    // `dominevo deploy` ships versions that were never published. Telling the
     // operator such a node is "behind" would invite a downgrade.
     const [entry] = buildAddonUpdateEntries(
       installed,
-      published([['@camstack/addon-pipeline', { latestVersion: '1.0.2', error: null }]]),
+      published([['@dominevo/addon-pipeline', { latestVersion: '1.0.2', error: null }]]),
     )
     expect(entry?.updateAvailable).toBe(false)
   })
@@ -82,7 +82,7 @@ describe('buildAddonUpdateEntries', () => {
     const [entry] = buildAddonUpdateEntries(
       installed,
       published([
-        ['@camstack/addon-pipeline', { latestVersion: null, error: 'registry GET → 404' }],
+        ['@dominevo/addon-pipeline', { latestVersion: null, error: 'registry GET → 404' }],
       ]),
     )
     expect(entry?.updateAvailable).toBe(false)
@@ -92,8 +92,8 @@ describe('buildAddonUpdateEntries', () => {
 
   it('carries a null installed version through without claiming an update', () => {
     const [entry] = buildAddonUpdateEntries(
-      [{ packageName: '@camstack/addon-x', installedVersion: null }],
-      published([['@camstack/addon-x', { latestVersion: '2.0.0', error: null }]]),
+      [{ packageName: '@dominevo/addon-x', installedVersion: null }],
+      published([['@dominevo/addon-x', { latestVersion: '2.0.0', error: null }]]),
     )
     expect(entry?.updateAvailable).toBe(false)
   })
@@ -102,14 +102,14 @@ describe('buildAddonUpdateEntries', () => {
 describe('readInstalledAddonPackages', () => {
   it('reads scoped package dirs by their npm package name, sorted', () => {
     const root = makeAddonsDir([
-      { dir: '@camstack/addon-pipeline', name: '@camstack/addon-pipeline', version: '1.0.4' },
-      { dir: '@camstack/server', name: '@camstack/server', version: '1.2.61' },
+      { dir: '@dominevo/addon-pipeline', name: '@dominevo/addon-pipeline', version: '1.0.4' },
+      { dir: '@dominevo/server', name: '@dominevo/server', version: '1.2.61' },
     ])
     expect(readInstalledAddonPackages(root)).toEqual([
-      { packageName: '@camstack/addon-pipeline', installedVersion: '1.0.4' },
+      { packageName: '@dominevo/addon-pipeline', installedVersion: '1.0.4' },
       // Included on purpose: on an agent this is the ONLY copy of the builtin
       // infra, so it is exactly what a misaligned node must be able to see.
-      { packageName: '@camstack/server', installedVersion: '1.2.61' },
+      { packageName: '@dominevo/server', installedVersion: '1.2.61' },
     ])
   })
 
@@ -127,10 +127,10 @@ describe('readInstalledAddonPackages', () => {
 describe('resolvePublishedVersion', () => {
   it('returns dist-tags.latest', async () => {
     const result = await resolvePublishedVersion(
-      '@camstack/x',
+      '@dominevo/x',
       'https://reg.test/',
       async (url) => {
-        expect(url).toBe('https://reg.test/@camstack%2Fx')
+        expect(url).toBe('https://reg.test/@dominevo%2Fx')
         return { ok: true, status: 200, json: async () => ({ 'dist-tags': { latest: '3.1.0' } }) }
       },
     )

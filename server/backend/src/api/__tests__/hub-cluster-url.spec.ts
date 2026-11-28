@@ -2,7 +2,7 @@ import {
   AUTOMATIC_HUB_ADDRESS_FLAGS,
   type ConnectionEndpoint,
   resolveHubAddressRoles,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { buildHubHttpSource } from '../addon-upload.js'
 import {

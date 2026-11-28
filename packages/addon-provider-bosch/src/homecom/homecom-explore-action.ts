@@ -1,4 +1,4 @@
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { ExploreResourcesInput, ExploreResourcesOutput } from './custom-actions.js'
 import type { HomeComApiClient, HomeComSystemSnapshot } from './homecom-api-client.js'
 import { exploreHomeComResources } from './homecom-resource-explorer.js'

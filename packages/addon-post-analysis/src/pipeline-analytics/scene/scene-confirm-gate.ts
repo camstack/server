@@ -36,11 +36,11 @@
  * is a thing nobody can keep true.
  */
 
-import type { SceneConfirm } from '@camstack/types'
+import type { SceneConfirm } from '@dominevo/types'
 import {
   SCENE_CONFIRM_DEFAULT_MAX_IMAGE_PX,
   SCENE_CONFIRM_DEFAULT_TIMEOUT_MS,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { LlmVisionJudge, type VisionJudgeDeps } from '../../shared/llm-vision/vision-judge.js'
 

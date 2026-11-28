@@ -85,7 +85,7 @@ the name.
   2. Tags, per owner (plan, one transaction each: `core-blocks`,
      `device-manager`, the notification center): each adds `tagIds` to its own
      records and KEEPS the names. The id of a tag is derived from its key by one
-     pure function in `@camstack/types`, so three owners mint the same id without
+     pure function in `@dominevo/types`, so three owners mint the same id without
      reading each other.
   3. `core-blocks/…-tags-as-records` (procedure, `dependsOn` the three plans of
      step 2, idempotent): writes one `tags` record per name in use or styled,

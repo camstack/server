@@ -1,4 +1,4 @@
-import { DeviceType, type HeroMeasurement } from '@camstack/types'
+import { DeviceType, type HeroMeasurement } from '@dominevo/types'
 import { type ReactElement, type ReactNode, useEffect } from 'react'
 import { useUiText } from '../../../contexts/ui-text'
 import { MeasuredPieCard } from './MeasuredPieCard'

@@ -154,7 +154,7 @@ export const CcuDeviceRowSchema = z.object({
   configPending: z.boolean().nullable(),
   sabotage: z.boolean().nullable(),
   /**
-   * CamStack device id when this CCU device is adopted as a container.
+   * Dominevo device id when this CCU device is adopted as a container.
    * `null` when it is not adopted — the page then has nowhere to link.
    */
   deviceId: z.number().int().nullable().default(null),
@@ -380,11 +380,11 @@ export type CcuLinksResult = z.infer<typeof CcuLinksResultSchema>
 
 // ── Programs ───────────────────────────────────────────────────────────────
 
-/** A channel a program's conditions use, named from CamStack when the device is adopted. */
+/** A channel a program's conditions use, named from Dominevo when the device is adopted. */
 export const ProgramChannelSchema = z.object({
   address: z.string(),
   channelName: z.string().nullable(),
-  /** CamStack device name when the channel's device is adopted, otherwise the CCU name. */
+  /** Dominevo device name when the channel's device is adopted, otherwise the CCU name. */
   deviceName: z.string().nullable(),
   deviceId: z.number().int().nullable(),
 })
@@ -397,7 +397,7 @@ export const CcuProgramSchema = z.object({
   internal: z.boolean(),
   /** Epoch milliseconds. `null` when the CCU has no last run, or the run is epoch 0. */
   lastRunMs: z.number().nullable(),
-  /** The name is the key-event program CamStack creates (`CamStack: … events`). */
+  /** The name is the key-event program Dominevo creates (`Dominevo: … events`). */
   createdByCamstack: z.boolean(),
   channels: z.array(ProgramChannelSchema),
 })
@@ -576,7 +576,7 @@ export const SetValueInputSchema = IntegrationRefSchema.extend({
   channel: z.string().min(1),
   parameter: z.string().min(1),
   value: ConfigValueSchema,
-  /** The CamStack device the write was made from, for the log line's tag. */
+  /** The Dominevo device the write was made from, for the log line's tag. */
   deviceId: z.number().int().optional(),
   confirmed: ConfirmedSchema,
 })
@@ -594,7 +594,7 @@ export type CcuFault = z.infer<typeof CcuFaultSchema>
 export const CcuFaultRowSchema = z.object({
   address: z.string(),
   name: z.string().nullable(),
-  /** CamStack device id when the CCU device is adopted. */
+  /** Dominevo device id when the CCU device is adopted. */
   deviceId: z.number().int().nullable(),
   severity: z.enum(['error', 'warning']),
   code: z.string(),

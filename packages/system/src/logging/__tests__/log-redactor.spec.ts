@@ -1,4 +1,4 @@
-import { clearKnownSecrets, registerKnownSecret } from '@camstack/types'
+import { clearKnownSecrets, registerKnownSecret } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import { LogManager } from '../log-manager.js'
 import { redactLogEntry, redactLogMeta, redactLogText } from '../log-redactor.js'

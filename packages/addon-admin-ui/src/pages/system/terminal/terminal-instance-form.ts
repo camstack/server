@@ -1,4 +1,4 @@
-import type { ConfigUISchema } from '@camstack/types'
+import type { ConfigUISchema } from '@dominevo/types'
 
 export interface SpawnDraft {
   readonly executable: string

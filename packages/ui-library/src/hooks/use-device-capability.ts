@@ -23,7 +23,7 @@
  *   })
  *   if (available) await cap.setState({ on: !slice.on })
  */
-import type { DeviceProxy, DeviceStatus, SliceHandle } from '@camstack/types'
+import type { DeviceProxy, DeviceStatus, SliceHandle } from '@dominevo/types'
 import { useDeviceProxy, useDeviceStateSlice, type UseDeviceProxyTrpc } from './use-device-proxy'
 
 export interface UseDeviceCapabilityOptions<TCap, TSlice> {

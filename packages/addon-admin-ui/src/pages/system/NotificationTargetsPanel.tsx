@@ -5,9 +5,9 @@
  * instance list shares. This page adds only what is specific to a target: who owns it, and the
  * test panel that sends a sample the kind can honour.
  */
-import { notificationTargetKindOf, type Target } from '@camstack/types'
-import { IconButton, Badge, Skeleton, useInstancesOfCap, useSystem } from '@camstack/ui-library'
-import type { DataColumn, LinkableInstance } from '@camstack/ui-library'
+import { notificationTargetKindOf, type Target } from '@dominevo/types'
+import { IconButton, Badge, Skeleton, useInstancesOfCap, useSystem } from '@dominevo/ui-library'
+import type { DataColumn, LinkableInstance } from '@dominevo/ui-library'
 import { useQuery } from '@tanstack/react-query'
 import { Bell, Send } from 'lucide-react'
 import { useCallback, useState, type ReactElement } from 'react'

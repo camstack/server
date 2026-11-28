@@ -18,7 +18,7 @@ import {
   REMOVE_LEAF,
   recordSecretRef,
   RECORD_ID_MAX_LENGTH,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)

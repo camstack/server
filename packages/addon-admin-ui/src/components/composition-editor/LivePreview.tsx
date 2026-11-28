@@ -12,8 +12,8 @@ import {
   compositionSliceKey,
   compositionSourceKey,
   fieldReads,
-} from '@camstack/types'
-import { useDeviceCapSlice, useDeviceManagerListAll, useSystem } from '@camstack/ui-library'
+} from '@dominevo/types'
+import { useDeviceCapSlice, useDeviceManagerListAll, useSystem } from '@dominevo/ui-library'
 import { type ReactNode, useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { devicesByRef } from '../device/customize/device-refs'

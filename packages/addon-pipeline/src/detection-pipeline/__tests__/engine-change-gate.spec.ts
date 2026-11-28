@@ -31,13 +31,13 @@
  *     touches the network.
  */
 
-import type { IScopedLogger, ModelCatalogEntry, PipelineEngineChoice } from '@camstack/types'
+import type { IScopedLogger, ModelCatalogEntry, PipelineEngineChoice } from '@dominevo/types'
 import { describe, expect, it, afterEach } from 'vitest'
 import { DetectionPipelineProvider } from '../provider.js'
 import { collectZeroBuildIssues } from '../step-resolution.js'
 import { resolveDefaultDetectionModel } from '../default-detection-model.js'
 import { getStepDefinition } from '../registry/step-definitions.js'
-import type { StepDefinition } from '@camstack/types'
+import type { StepDefinition } from '@dominevo/types'
 
 // ---------------------------------------------------------------------------
 // Test doubles (mirror engine-auto-resolve.spec.ts / engine-catalog-gate.spec.ts)

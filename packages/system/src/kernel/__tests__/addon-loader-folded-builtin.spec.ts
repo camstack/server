@@ -1,9 +1,9 @@
 /**
  * A package folded into the framework must not come back from the addons dir.
  *
- * `device-history` was a standalone package (`@camstack/addon-device-history`)
- * until it was folded into `@camstack/server/system` (2026-10-20). Every node that had
- * installed it still held `/data/addons/@camstack/addon-device-history@0.1.4`,
+ * `device-history` was a standalone package (`@dominevo/addon-device-history`)
+ * until it was folded into `@dominevo/server/system` (2026-10-20). Every node that had
+ * installed it still held `/data/addons/@dominevo/addon-device-history@0.1.4`,
  * and the hub loads the closure's builtins FIRST and the addons dir AFTER — so
  * the stale package's `device-history` silently replaced the builtin of the
  * same id. Prod and the dev hub both ran 0.1.4: no `queryMany`, a node read
@@ -18,7 +18,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import type { IScopedLogger, LogExtras } from '@camstack/types'
+import type { IScopedLogger, LogExtras } from '@dominevo/types'
 import { AddonLoader } from '../addon-loader.js'
 
 interface Line {
@@ -74,30 +74,30 @@ describe('an addon id folded into the framework', () => {
   it('stays the framework builtin when a stale package of another name declares it', async () => {
     const warns: Line[] = []
     const loader = new AddonLoader(recordingLogger(warns))
-    const closure = writePackage('closure-system', '@camstack/server', '1.2.459', 'builtin')
+    const closure = writePackage('closure-system', '@dominevo/server', '1.2.459', 'builtin')
     const addonsDir = path.join(tmpRoot, 'addons')
-    fs.mkdirSync(path.join(addonsDir, '@camstack'), { recursive: true })
+    fs.mkdirSync(path.join(addonsDir, '@dominevo'), { recursive: true })
     fs.renameSync(
-      writePackage('stale', '@camstack/addon-device-history', '0.1.4', 'stale'),
-      path.join(addonsDir, '@camstack', 'addon-device-history'),
+      writePackage('stale', '@dominevo/addon-device-history', '0.1.4', 'stale'),
+      path.join(addonsDir, '@dominevo', 'addon-device-history'),
     )
 
     // The hub's boot order: closure builtins first, then the addons dir.
     await loader.loadFromAddonDir(closure)
-    await loader.loadFromDirectory(addonsDir, ['@camstack/server'])
+    await loader.loadFromDirectory(addonsDir, ['@dominevo/server'])
 
     const registered = loader.listAddons().find((a) => a.declaration.id === 'device-history')
-    expect(registered?.packageName).toBe('@camstack/server')
+    expect(registered?.packageName).toBe('@dominevo/server')
     expect(registered?.packageVersion).toBe('1.2.459')
     const shadow = warns.find((w) => w.message.includes('already provided by'))
     expect(shadow?.extras.tags?.['addonId']).toBe('device-history')
-    expect(JSON.stringify(shadow?.extras.meta)).toContain('@camstack/addon-device-history')
+    expect(JSON.stringify(shadow?.extras.meta)).toContain('@dominevo/addon-device-history')
   })
 
   it('a reload of the SAME package still replaces it', async () => {
     const loader = new AddonLoader()
-    await loader.loadFromAddonDir(writePackage('v1', '@camstack/server', '1.2.458', 'old'))
-    await loader.loadFromAddonDir(writePackage('v2', '@camstack/server', '1.2.459', 'new'))
+    await loader.loadFromAddonDir(writePackage('v1', '@dominevo/server', '1.2.458', 'old'))
+    await loader.loadFromAddonDir(writePackage('v2', '@dominevo/server', '1.2.459', 'new'))
     const registered = loader.listAddons().find((a) => a.declaration.id === 'device-history')
     expect(registered?.packageVersion).toBe('1.2.459')
   })

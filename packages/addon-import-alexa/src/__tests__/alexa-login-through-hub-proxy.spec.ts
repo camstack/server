@@ -1,7 +1,7 @@
 import { createServer, type Server } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { VendorLoginProxy } from '@camstack/types'
+import { VendorLoginProxy } from '@dominevo/types'
 import { AlexaProxyLoginManager } from '../alexa-proxy-login-manager.js'
 import {
   FIXTURE_SECRETS,
@@ -154,7 +154,7 @@ describe('the Amazon login through the hub login proxy', () => {
     expect(captured?.cookieData).toMatchObject({
       refreshToken: 'FIXTURE-REFRESH-TOKEN',
       dataVersion: 2,
-      deviceAppName: 'CamStack',
+      deviceAppName: 'Dominevo',
     })
 
     const register = amazon.callsTo('POST api.amazon.it/auth/register')[0]

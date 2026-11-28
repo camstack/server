@@ -26,7 +26,7 @@ import type {
   PreparedAttachment,
   PreparedNotification,
   TargetKind,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { MultipartPart, HttpNotifierAdapter, TargetConfig } from './adapter.js'
 
 const MESSAGES_URL = 'https://api.pushover.net/1/messages.json'

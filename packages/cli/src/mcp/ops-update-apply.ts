@@ -17,7 +17,7 @@ import {
   type GatedResult,
   type GatedToolSpec,
   type HubClient,
-} from '@camstack/develop'
+} from '@dominevo/develop'
 import {
   ClusterUpdateJobSchema,
   ClusterUpdatePlanSchema,
@@ -25,7 +25,7 @@ import {
   type ClusterUpdateJob,
   type ClusterUpdateOptions,
   type ClusterUpdatePlan,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { McpContext } from './context.js'
 import { noSessionResult, readQuery, reasonOf, type NoSessionResult } from './ops-hub.js'
 import { readNodeStatus, readTopology, wrapperVerdict } from './ops-update-model.js'
@@ -59,7 +59,7 @@ export interface UpdateApplyDeps {
   readonly entryPath?: string
 }
 
-/** How the job is followed; shared with `camstack cluster-update`. */
+/** How the job is followed; shared with `dominevo cluster-update`. */
 export interface FollowTiming {
   readonly sleep: (ms: number) => Promise<void>
   readonly now: () => number

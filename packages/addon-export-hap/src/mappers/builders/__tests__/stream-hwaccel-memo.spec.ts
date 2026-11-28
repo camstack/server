@@ -13,7 +13,7 @@
  *    the session, HomeKit told NOBODY. The next session re-picked the same
  *    corpse and paid the same two-second death.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 
 import {

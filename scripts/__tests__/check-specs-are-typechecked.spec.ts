@@ -124,7 +124,7 @@ describe('the spec config may not weaken the production check it now owns', () =
     expect(
       judgeSpecTypecheck({
         ...base,
-        name: '@camstack/addon-pipeline',
+        name: '@dominevo/addon-pipeline',
         typecheckScript: 'tsc --noEmit -p tsconfig.spec.json',
         specConfigOptions: { rootDir: '../..' },
       }),
@@ -147,13 +147,13 @@ describe('ambient declarations in test files', () => {
     const src = [
       '/// <reference types="@testing-library/jest-dom" />',
       "declare module 'vitest' {",
-      "declare module '@camstack/types'",
+      "declare module '@dominevo/types'",
       'declare global {',
     ].join('\n')
     expect(ambientDeclarationsIn('a.spec.ts', src).map((d) => `${d.kind}:${d.target}`)).toEqual([
       'reference-types:@testing-library/jest-dom',
       'module:vitest',
-      'module:@camstack/types',
+      'module:@dominevo/types',
       'global:',
     ])
   })
@@ -161,16 +161,16 @@ describe('ambient declarations in test files', () => {
   it('allows matcher typing, refuses a module override and a global', () => {
     const decls = ambientDeclarationsIn(
       'a.spec.ts',
-      "/// <reference types=\"@testing-library/jest-dom\" />\ndeclare module 'vitest' {\ndeclare module '@camstack/types'\ndeclare global {",
+      "/// <reference types=\"@testing-library/jest-dom\" />\ndeclare module 'vitest' {\ndeclare module '@dominevo/types'\ndeclare global {",
     )
     expect(judgeAmbientDeclarations('@x/a', decls, new Set())).toHaveLength(2)
   })
 
   it('allows the backend shim only while production does not import the module', () => {
-    const decls = ambientDeclarationsIn('s.ts', "declare module '@camstack/addon-benchmark'")
-    expect(judgeAmbientDeclarations('@camstack/server', decls, new Set())).toEqual([])
+    const decls = ambientDeclarationsIn('s.ts', "declare module '@dominevo/addon-benchmark'")
+    expect(judgeAmbientDeclarations('@dominevo/server', decls, new Set())).toEqual([])
     expect(
-      judgeAmbientDeclarations('@camstack/server', decls, new Set(['@camstack/addon-benchmark'])),
+      judgeAmbientDeclarations('@dominevo/server', decls, new Set(['@dominevo/addon-benchmark'])),
     ).toHaveLength(1)
   })
 })

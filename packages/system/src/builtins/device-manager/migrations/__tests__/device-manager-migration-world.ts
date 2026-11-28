@@ -9,7 +9,7 @@ import {
   type MigrationMeta,
   type MigrationPlan,
   type RecordsAccess,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type Database from 'better-sqlite3'
 import { makeRecordsWorld } from '../../../sqlite-storage/__tests__/support/records-world.js'
 import {

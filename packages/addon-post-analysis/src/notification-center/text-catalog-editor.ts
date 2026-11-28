@@ -23,7 +23,7 @@
  * override-wins property is the one Phase 1 promised and nothing exercised.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { NcLanguage, NcTextBundle, NcTextCatalog } from './text-catalog.js'
 import type { NcTextCatalogStore } from './text-catalog-store.js'
 import {

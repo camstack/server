@@ -1,4 +1,4 @@
-import { makeInMemoryRecords } from '@camstack/types'
+import { makeInMemoryRecords } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { matterBrokersEntryKind, matterConnectionsEntryKind } from '../broker-record-kinds.js'
 import { buildMatterInstances } from '../matter-instances.js'

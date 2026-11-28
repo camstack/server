@@ -40,7 +40,7 @@ import type {
   PipelineAnalyticsTrackLifecyclePayload,
   Track,
   TrackEnvelope,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { MediaCaptureAggregate } from '../media-capture-log.js'
 import type { EventOwnedMediaIds } from '../store/event-store.js'
 import { type MediaProvenance, mediaProvenanceRank } from '../store/media-store.js'

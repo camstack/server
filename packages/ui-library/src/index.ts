@@ -118,4 +118,4 @@ export const PrivacyMaskSettings: LazyExoticComponent<ComponentType<CapSettingsC
       default: m.PrivacyMaskSettings,
     })),
   )
-// Select spec helpers live on the '@camstack/ui-library/testing' subpath only: they import `act`, which the host's shared react does not provide.
+// Select spec helpers live on the '@dominevo/ui-library/testing' subpath only: they import `act`, which the host's shared react does not provide.

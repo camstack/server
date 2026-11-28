@@ -8,7 +8,7 @@ import {
   type FanPreset,
   mediaPlayerExtensionCommands,
   type RemoteConfig,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
@@ -31,8 +31,8 @@ const setPresets = vi.fn(
 const updateBlock = vi.fn(async (_input: unknown) => ({}))
 const blockView = vi.hoisted((): { current: unknown } => ({ current: null }))
 
-vi.mock('@camstack/ui-library', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@camstack/ui-library')>()
+vi.mock('@dominevo/ui-library', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dominevo/ui-library')>()
   return {
     ...actual,
     trpc: {

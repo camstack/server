@@ -10,7 +10,7 @@
  * lose the infrared one, with nothing on screen to say so.
  */
 
-import type { SceneMonitor, SceneReference } from '@camstack/types'
+import type { SceneMonitor, SceneReference } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { groupReferences, totalReferences } from '../cap-settings/SceneReferenceGallery'
 

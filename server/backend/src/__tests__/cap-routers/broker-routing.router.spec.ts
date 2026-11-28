@@ -10,7 +10,7 @@
  * The brokers themselves are listed through `integration-instances`, not here.
  */
 import { describe, it, expect } from 'vitest'
-import type { IBrokerProvider } from '@camstack/types'
+import type { IBrokerProvider } from '@dominevo/types'
 import { makeCtx, invokeProcedure, buildCapRouterForTest } from './harness.js'
 
 /** A mock `broker` provider that owns a fixed id set and answers null for any other id. */

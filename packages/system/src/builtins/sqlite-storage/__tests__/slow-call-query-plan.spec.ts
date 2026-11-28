@@ -16,7 +16,7 @@
 import { promises as fs } from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import { SqliteSettingsBackend } from '../sqlite-settings-backend.js'
 

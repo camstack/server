@@ -46,7 +46,7 @@
  * is refused on every frame, and an unthrottled diagnostic line is the same
  * storm written to a different file.
  */
-import type { FrameResult, ObjectDetection, Zone } from '@camstack/types'
+import type { FrameResult, ObjectDetection, Zone } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { ZoneRefusalObservation } from '../frame-processor.js'
 import { FrameProcessor } from '../frame-processor.js'

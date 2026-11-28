@@ -3188,7 +3188,7 @@
       "kind": "constant",
       "area": "composites",
       "file": "packages/ui-library/src/composites/detection-colors.ts",
-      "summary": "Fixed colours for known classes, from the bundled CamStack preset. Kept for callers that read the map directly."
+      "summary": "Fixed colours for known classes, from the bundled Dominevo preset. Kept for callers that read the map directly."
     },
     {
       "name": "classifyAddressScope",
@@ -7972,7 +7972,7 @@
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/display-palette-context.tsx",
-      "summary": "The cluster palette, when a host has read `display-palette` (D939). No provider, a pending read, or an unknown store all paint the bundled CamStack preset. Only `ready` replaces it. Callers that must say the store was…",
+      "summary": "The cluster palette, when a host has read `display-palette` (D939). No provider, a pending read, or an unknown store all paint the bundled Dominevo preset. Only `ready` replaces it. Callers that must say the store was…",
       "props": [
         {
           "name": "value",
@@ -9127,7 +9127,7 @@
       "kind": "constant",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-meta.ts",
-      "summary": "The glyphs the admin draws on FIRST PAINT, synchronously — every icon the shared device resolver (`DEVICE_TYPE_ICON` / `DEVICE_ROLE_ICON` in `@camstack/types`) can return, which the type makes exhaustive. Everything e…"
+      "summary": "The glyphs the admin draws on FIRST PAINT, synchronously — every icon the shared device resolver (`DEVICE_TYPE_ICON` / `DEVICE_ROLE_ICON` in `@dominevo/types`) can return, which the type makes exhaustive. Everything e…"
     },
     {
       "name": "fieldAccepts",
@@ -13067,7 +13067,7 @@
       "kind": "function",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-mesh/device-mesh-model.ts",
-      "summary": "Merge two reads of one network. A node is the same node when it is the same CamStack device (or the same peer key of a device-less peer); the newer per-node read wins. Node keys are provider-scoped, so an incoming key…"
+      "summary": "Merge two reads of one network. A node is the same node when it is the same Dominevo device (or the same peer key of a device-less peer); the newer per-node read wins. Node keys are provider-scoped, so an incoming key…"
     },
     {
       "name": "meshNodeHref",
@@ -13422,7 +13422,7 @@
       "kind": "function",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-mesh/device-mesh-model.ts",
-      "summary": "Does the network list this CamStack device as one of its nodes?"
+      "summary": "Does the network list this Dominevo device as one of its nodes?"
     },
     {
       "name": "NetworkLinkBadge",
@@ -16248,7 +16248,7 @@
       "kind": "function",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-controls/control-registry.tsx",
-      "summary": "Runtime-string-safe lookup: a device row's `type` crosses the wire as a plain string. The type→control-kind DECISION is single-sourced in `@camstack/types` (`resolveDeviceControlKind`, null for an unrecognised type); …"
+      "summary": "Runtime-string-safe lookup: a device row's `type` crosses the wire as a plain string. The type→control-kind DECISION is single-sourced in `@dominevo/types` (`resolveDeviceControlKind`, null for an unrecognised type); …"
     },
     {
       "name": "resolveDeviceIntegration",
@@ -20626,7 +20626,7 @@
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/time-window-input/TimeSpecInput.tsx",
-      "summary": "One moment of the day, as data: a clock time, a sun event plus or minus an offset, or (only when the caller allows it) one local date and time. The value is a `TimeSpec` from `@camstack/types`; nothing is converted.",
+      "summary": "One moment of the day, as data: a clock time, a sun event plus or minus an offset, or (only when the caller allows it) one local date and time. The value is a `TimeSpec` from `@dominevo/types`; nothing is converted.",
       "props": [
         {
           "name": "value",
@@ -21312,7 +21312,7 @@
       "kind": "hook",
       "area": "composites",
       "file": "packages/ui-library/src/composites/display-palette-context.tsx",
-      "summary": "The cluster palette, when a host has read `display-palette` (D939). No provider, a pending read, or an unknown store all paint the bundled CamStack preset. Only `ready` replaces it. Callers that must say the store was…"
+      "summary": "The cluster palette, when a host has read `display-palette` (D939). No provider, a pending read, or an unknown store all paint the bundled Dominevo preset. Only `ready` replaces it. Callers that must say the store was…"
     },
     {
       "name": "useClipLaneClips",
@@ -21648,7 +21648,7 @@
       "kind": "hook",
       "area": "composites",
       "file": "packages/ui-library/src/composites/display-palette-context.tsx",
-      "summary": "The cluster palette, when a host has read `display-palette` (D939). No provider, a pending read, or an unknown store all paint the bundled CamStack preset. Only `ready` replaces it. Callers that must say the store was…"
+      "summary": "The cluster palette, when a host has read `display-palette` (D939). No provider, a pending read, or an unknown store all paint the bundled Dominevo preset. Only `ready` replaces it. Callers that must say the store was…"
     },
     {
       "name": "useDomainChoices",

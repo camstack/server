@@ -8,7 +8,7 @@
  * the intent logic is exercised for real — including the branches that DROP a
  * device, which are the ones that matter.
  */
-import { type AddonApi, type IScopedLogger, switchRefusesSetState } from '@camstack/types'
+import { type AddonApi, type IScopedLogger, switchRefusesSetState } from '@dominevo/types'
 import { dispatchCapCall, readCapStatus, type GooglePrincipal } from './google-home/cap-dispatch.js'
 import type { ExportableDeviceFacts } from './google-home/device-model.js'
 import type { CapCall, CapStatusRead } from './google-home/trait-catalog.js'

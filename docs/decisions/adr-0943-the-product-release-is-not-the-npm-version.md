@@ -15,11 +15,11 @@ applies-to:
 
 ## Context
 
-One number used to name three different things: the npm packages (`@camstack/server`
+One number used to name three different things: the npm packages (`@dominevo/server`
 and the rest, on 1.2.x), the container image tags, and the desktop app. Cutting
 a release meant tagging whatever `server/backend/package.json` had just been
 published, and `verify-release-npm` refused to build unless `latest` equalled
-that tag. The desktop app pinned `@camstack/server@${VERSION}` while the image
+that tag. The desktop app pinned `@dominevo/server@${VERSION}` while the image
 installed `@latest`, so the two artifacts diverged whenever the tag and the
 dist-tag did not match.
 
@@ -31,12 +31,12 @@ own 1.0.x line.
 ## Decision
 
 `vX.Y.Z` is the product version. It restarts at **0.1.0**, is labelled **beta**
-while the major is 0 (`CamStack 0.1.0 beta`), and moves on its own
+while the major is 0 (`Dominevo 0.1.0 beta`), and moves on its own
 (`product-version.json`, and the same number in `packages/desktop/package.json`).
-`@camstack/*` stay on 1.2.x. The viewer app stays on 1.0.x and this release
+`@dominevo/*` stay on 1.2.x. The viewer app stays on 1.0.x and this release
 does not build it.
 
-The image and the desktop app both install `@camstack/server@latest` at build
+The image and the desktop app both install `@dominevo/server@latest` at build
 time. The job records that closure as the image label
 `io.camstack.server.version` and as a line in the release notes. Image tags stay
 accel-prefixed (`intel-X.Y.Z`, `amd-X.Y.Z`, `intel-latest`, `amd-latest`): a bare

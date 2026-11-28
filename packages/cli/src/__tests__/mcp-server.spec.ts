@@ -8,7 +8,7 @@ import {
   type ConnectOutcome,
   type HubClient,
   type HubHttpMethod,
-} from '@camstack/develop'
+} from '@dominevo/develop'
 import type { McpContext } from '../mcp/context.js'
 import { createPublicServer } from '../mcp/server.js'
 import type { Toolset } from '../mcp/toolsets.js'
@@ -49,7 +49,7 @@ function connected(client: HubClient, tier: 'admin' | 'protected' = 'admin'): Co
       tls: {},
       client,
       adminHint: tier === 'admin' ? null : 'log in as admin',
-      loginCommand: 'camstack login',
+      loginCommand: 'dominevo login',
     },
   }
 }
@@ -58,7 +58,7 @@ const NO_SESSION: ConnectOutcome = {
   ok: false,
   reason: 'no-session',
   message: 'no usable hub session',
-  action: 'run `camstack login <host>` in a terminal',
+  action: 'run `dominevo login <host>` in a terminal',
 }
 
 function context(hub: ConnectOutcome, audit: AuditRecord[] = []): McpContext {
@@ -124,7 +124,7 @@ const OPS_TOOLS = [
   'version_check',
 ]
 
-describe('camstack mcp — toolset selection', () => {
+describe('dominevo mcp — toolset selection', () => {
   const ctx = context(NO_SESSION)
 
   it('serves setup, ops, configure and support by default, and no develop tools', async () => {
@@ -207,7 +207,7 @@ describe('camstack mcp — toolset selection', () => {
   })
 })
 
-describe('camstack mcp — hub-less and session behaviour', () => {
+describe('dominevo mcp — hub-less and session behaviour', () => {
   it('setup_about needs no hub: versions and host kinds', async () => {
     const client = await connect(['setup'], context(NO_SESSION))
     const body = firstText(await client.callTool({ name: 'setup_about', arguments: {} }))
@@ -228,18 +228,18 @@ describe('camstack mcp — hub-less and session behaviour', () => {
     expect(body).toMatch(/"imageTag": "(intel|amd)-latest"|"nativeApp": "/)
   })
 
-  it('without a session a hub tool answers "run camstack login" as an isError result', async () => {
+  it('without a session a hub tool answers "run dominevo login" as an isError result', async () => {
     const client = await connect(['ops', 'configure'], context(NO_SESSION))
     const who = await client.callTool({ name: 'ops_whoami', arguments: {} })
     expect(who.isError).toBe(true)
     expect(firstText(who)).toContain('"status": "no-session"')
-    expect(firstText(who)).toContain('camstack login')
+    expect(firstText(who)).toContain('dominevo login')
     const rename = await client.callTool({
       name: 'configure_rename_device',
       arguments: { deviceId: 7, name: 'Porch' },
     })
     expect(rename.isError).toBe(true)
-    expect(firstText(rename)).toContain('camstack login')
+    expect(firstText(rename)).toContain('dominevo login')
   })
 
   it('ops_whoami names the hub and never prints the credential', async () => {
@@ -251,7 +251,7 @@ describe('camstack mcp — hub-less and session behaviour', () => {
   })
 })
 
-describe('camstack mcp — configure writes are two-step through the gate', () => {
+describe('dominevo mcp — configure writes are two-step through the gate', () => {
   async function rename(
     mcp: Client,
     args: { deviceId: number; name: string; confirm_token?: string },

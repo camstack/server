@@ -2,7 +2,7 @@
  * "+ Step" asks for the KIND first: it adds nothing, and so opens no device
  * modal, until a kind is chosen. A step can be switched off without deleting it.
  */
-import type { AutomationAction } from '@camstack/types'
+import type { AutomationAction } from '@dominevo/types'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { useState } from 'react'

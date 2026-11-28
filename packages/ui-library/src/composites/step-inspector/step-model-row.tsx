@@ -4,7 +4,7 @@
  * that opens in place. A model is per accelerator by nature: formats differ.
  */
 import { type ReactNode, type JSX } from 'react'
-import type { PipelineAddonSchema } from '@camstack/types'
+import type { PipelineAddonSchema } from '@dominevo/types'
 import { cn } from '../../lib/cn'
 import { useUiText } from '../../contexts/ui-text'
 import { BTN_COMPACT, LIST_ROW } from '../../lib/responsive'

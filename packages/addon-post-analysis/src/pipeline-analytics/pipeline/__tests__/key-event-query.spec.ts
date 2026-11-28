@@ -3,7 +3,7 @@
  * compute-on-read for legacy rows, and empty input.
  */
 import { describe, it, expect } from 'vitest'
-import type { Track } from '@camstack/types'
+import type { Track } from '@dominevo/types'
 import { rankKeyEvents, type PeakLookup } from '../key-event-query.js'
 
 function track(partial: Partial<Track> & { trackId: string }): Track {

@@ -39,7 +39,7 @@ The operator never used them.
 ## Decision
 
 Pipeline templates do not exist. Both caps lose their four template methods,
-the template schemas and types are deleted from `@camstack/types`, the
+the template schemas and types are deleted from `@dominevo/types`, the
 orchestrator's store handle and the executor's key handling go, the Cluster →
 Templates tab goes (a stale `?ctab=templates` link lands on Assignments), and
 `PipelineBuilder` no longer renders a template bar. A camera's pipeline is the

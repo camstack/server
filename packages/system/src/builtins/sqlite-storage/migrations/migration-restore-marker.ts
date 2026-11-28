@@ -1,7 +1,7 @@
 /**
  * Writes the marker the launcher reads to promote a pre-migration snapshot
  * (`server/backend/src/pre-migration-restore.ts`). The launcher has no
- * `@camstack/*` imports, so the contract is a plain JSON file, written here with
+ * `@dominevo/*` imports, so the contract is a plain JSON file, written here with
  * paths relative to the data dir. Requests accumulate: a second restore for
  * another database must not erase the first.
  */

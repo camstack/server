@@ -5,7 +5,7 @@ import {
   type LifecycleJob,
   type LifecycleTask,
   type TaskLogEntry,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 interface JobIndexFile {
   readonly version: 1

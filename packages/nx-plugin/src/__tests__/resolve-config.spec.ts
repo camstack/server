@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { resolveDeployConfig } from '../lib/resolve-config.js'
 
 /**
- * The deploy credential is the `camstack login` session and nothing else
+ * The deploy credential is the `dominevo login` session and nothing else
  * (D1101): no executor token, no $CAMSTACK_TOKEN, no ~/.camstackrc.
  */
 const SERVER = 'https://hub.example.test:4443'
@@ -36,14 +36,14 @@ describe('resolveDeployConfig', () => {
     })
   })
 
-  it('ignores $CAMSTACK_TOKEN and an executor token: with no session it names camstack login', () => {
+  it('ignores $CAMSTACK_TOKEN and an executor token: with no session it names dominevo login', () => {
     expect(() =>
       resolveDeployConfig({
         server: SERVER,
         env: { CAMSTACK_TOKEN: 'from-env' },
         sessionDir: dir,
       }),
-    ).toThrow(/camstack login/)
+    ).toThrow(/dominevo login/)
   })
 
   it('takes the address from $CAMSTACK_SERVER, else the most recent session', () => {

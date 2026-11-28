@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { DeviceHistoryQueryManyEntry, DeviceHistoryQueryResult } from '@camstack/types'
+import type { DeviceHistoryQueryManyEntry, DeviceHistoryQueryResult } from '@dominevo/types'
 import {
   decodeSeriesRef,
   encodeSeriesRef,

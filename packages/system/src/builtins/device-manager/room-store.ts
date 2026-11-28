@@ -12,7 +12,7 @@ import {
   type RecordsAccess,
   type RoomBody,
   type ZoneBody,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { NamedEntityStore } from '../../records/named-entity-store.js'
 import { deviceManagerRecordKinds } from './record-kinds.js'
 

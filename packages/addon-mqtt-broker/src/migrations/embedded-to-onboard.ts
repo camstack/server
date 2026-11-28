@@ -12,7 +12,7 @@
  *     password the legacy key held. `embeddedClients` / `embeddedAcl` are not flat broker keys
  *     and stay.
  */
-import { type MigrationPlan, type MigrationProcedureResult, preconditionOf } from '@camstack/types'
+import { type MigrationPlan, type MigrationProcedureResult, preconditionOf } from '@dominevo/types'
 import { ADDON_SETTINGS_TABLE, MQTT_BROKER_ADDON_ID } from './brokers-to-records.js'
 import type { MqttBrokerMigrationPorts } from './brokers-to-records.js'
 

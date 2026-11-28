@@ -15,7 +15,7 @@
  * a section whose rows are all hidden is not drawn at all. Pure: the addon
  * passes its config in.
  */
-import type { ConfigCondition, ConfigField, ConfigSection } from '@camstack/types'
+import type { ConfigCondition, ConfigField, ConfigSection } from '@dominevo/types'
 import { buildLinkStatusContent } from './link-status.js'
 import type { LinkedAccount, LwaTokenEntry } from './types.js'
 
@@ -56,13 +56,13 @@ export interface AlexaInstanceFormInput {
 }
 
 /** Where an operator asks to be added as a beta tester of the public skill. */
-const ALEXA_BETA_REQUEST_URL = 'https://github.com/camstack/server/discussions/1'
+const ALEXA_BETA_REQUEST_URL = 'https://github.com/dominevo/server/discussions/1'
 /** The public skill's beta invitation link; it enables the skill only for an invited account. */
 const ALEXA_BETA_INVITE_URL =
   'https://skills-store.amazon.com/deeplink/tvt/7d4560de3556e17ce433ccca91d0ca3ac5540e94f8f15910f9c72b9c6fc9498a2267ee8ae84f120b34a2574b7a1e88abcdacf96beb4e6d5054d43a7e3ba12fafa0e88f42a12641dc5ddf51b2f64beeb85c90631a225c3558b074eab492b7d2844528ac07e47202d058cda70dd70b401b'
 
 const CONNECTION_DESCRIPTION = [
-  'Public skill (default): enable the "CamStack" skill in the Alexa app and link your account. No Amazon developer setup is needed.',
+  'Public skill (default): enable the "Dominevo" skill in the Alexa app and link your account. No Amazon developer setup is needed.',
   `The public skill is a beta: first request access in ${ALEXA_BETA_REQUEST_URL} with the e-mail of your Amazon account. Once you are invited, use the "Enable the skill" link below on a device signed in to that account.`,
   "Custom skill: enter your skill id and deploy the skill Lambda from this addon's lambda-template in your own AWS account.",
   "Either way the skill's Lambda keeps the Amazon credentials (in a custom skill, in your SSM Parameter Store); this hub holds none. It receives short-lived event tokens from the Lambda's token broker with a credential unique to this link.",
@@ -77,9 +77,9 @@ function connectionSection(input: AlexaInstanceFormInput): ConfigSection {
       key: 'skillMode',
       label: 'Alexa skill',
       description:
-        'Public: the built-in CamStack skill. Custom: your own skill and your own copy of the skill Lambda.',
+        'Public: the built-in Dominevo skill. Custom: your own skill and your own copy of the skill Lambda.',
       options: [
-        { value: 'public', label: 'Public (built-in CamStack skill)' },
+        { value: 'public', label: 'Public (built-in Dominevo skill)' },
         { value: 'custom', label: 'Custom skill' },
       ],
       default: defaults.skillMode,

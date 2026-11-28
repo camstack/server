@@ -9,7 +9,7 @@
  * reachability via spies.
  */
 
-import type { AddonContext, IScopedLogger, TokenScope } from '@camstack/types'
+import type { AddonContext, IScopedLogger, TokenScope } from '@dominevo/types'
 import { describe, expect, it, type MockedFunction, vi } from 'vitest'
 import {
   type DirectiveRouterDeps,

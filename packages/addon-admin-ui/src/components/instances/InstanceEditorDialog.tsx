@@ -17,7 +17,7 @@ import {
   hydrateSchema,
   type IntegrationInstance,
   type IntegrationInstanceDescription,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   Button,
   ConfigFormBuilder,
@@ -25,7 +25,7 @@ import {
   ItemFormDialog,
   pickedValues,
   useSystem,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link2, Loader2 } from 'lucide-react'
 import {

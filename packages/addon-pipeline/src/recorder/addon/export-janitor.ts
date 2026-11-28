@@ -6,7 +6,7 @@
  * injected file-remove + clock, so they are unit-testable and fs-error tolerant
  * (a failing unlink never blocks the sweep of the other rows).
  */
-import type { ExportRecord } from '@camstack/types'
+import type { ExportRecord } from '@dominevo/types'
 import { listExportsFor, patchExport, type RecordingExportsState } from './export-store.js'
 
 export interface ExportJanitorDeps {

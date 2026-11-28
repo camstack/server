@@ -10,7 +10,7 @@
  * it is KEPT, never silently dropped, and the bar says how many such rows the
  * zone or identity filter did not check (`uncheckedRows`).
  */
-import type { DensityPoint } from '@camstack/ui-library'
+import type { DensityPoint } from '@dominevo/ui-library'
 import type { KeyEventRow } from '../detection-intelligence/key-events-merge'
 
 export type IdentityFilter = 'any' | 'face' | 'plate'

@@ -13,7 +13,7 @@ import {
   type IdentityLink,
   type IdentityLinksRead,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { CompositionChangedError, IDENTITY_LINKS_USER_ID } from '../composition-api.js'
 import { LinkContributionReconciler, MAX_HOST_ATTEMPTS } from '../link-contributions.js'

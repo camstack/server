@@ -24,7 +24,7 @@ import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 //
 // The `addons` surface ships rich runtime objects (manifests, addon
 // declarations, package metadata) whose precise shapes already live in
-// `@camstack/types/interfaces`. We deliberately keep the cap schemas
+// `@dominevo/types/interfaces`. We deliberately keep the cap schemas
 // loose — `z.record(z.string(), z.unknown())` plus a few well-known
 // fields — so admin-ui consumers can keep using the existing
 // `AddonListItem` interface via cast, and so we don't risk inflating
@@ -48,14 +48,14 @@ const ManifestShapeSchema = z.object({
   // either kebab-case strings (legacy form) or `CapabilityDeclaration`
   // objects. The cap output schema deliberately keeps it as
   // `readonly unknown[]` so admin-ui consumers cast to the canonical
-  // `AddonListItem` (from `@camstack/types`) before reading fields.
+  // `AddonListItem` (from `@dominevo/types`) before reading fields.
   capabilities: z.array(z.unknown()).readonly().optional(),
   packageName: z.string(),
   packageVersion: z.string(),
   packageDisplayName: z.string().optional(),
   /**
    * Bundle metadata when the npm package ships multiple addon entries
-   * (mirror of `AddonPackageManifest.bundle` in @camstack/types). When
+   * (mirror of `AddonPackageManifest.bundle` in @dominevo/types). When
    * present, the admin UI groups all entries with the same packageName
    * under a collapsible bundle card. Single-entry packages omit this.
    */
@@ -737,7 +737,7 @@ export const addonsCapability = {
       { kind: 'subscription' },
     ),
   },
-  /** BIG PLAN 2: declarative mount hint — read by `@camstack/server/system` `buildCapRouters`. */
+  /** BIG PLAN 2: declarative mount hint — read by `@dominevo/server/system` `buildCapRouters`. */
   mount: { kind: 'server-provided' },
   vocabulary: { notOperatorFacing: NOT_A_DEVICE.ADDON_ADMIN },
 } as const satisfies CapabilityDefinition

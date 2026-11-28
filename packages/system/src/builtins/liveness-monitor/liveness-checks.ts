@@ -20,7 +20,7 @@
  * outage can be replayed in a test.
  */
 
-import type { RecordingStatus } from '@camstack/types'
+import type { RecordingStatus } from '@dominevo/types'
 
 /** The recording mode a camera is running under, as `recording.getStatus` reports it. */
 export type RecordingActiveMode = RecordingStatus['activeMode']

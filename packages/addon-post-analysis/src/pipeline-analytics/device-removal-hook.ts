@@ -18,7 +18,7 @@ import type {
   IDeviceRemovalHookProvider,
   IScopedLogger,
   TrackCascadeCounts,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export interface AnalyticsRemovalDeps {
   readonly logger: IScopedLogger

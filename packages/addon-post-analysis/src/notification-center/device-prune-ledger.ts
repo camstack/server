@@ -13,7 +13,7 @@
  *    anywhere reads as a bug.
  *
  * Why not a `disabledReason` on the rule row: `NcRuleSchema` and
- * `TimelapseRuleSchema` live in `@camstack/types` and `fromRecord` drops
+ * `TimelapseRuleSchema` live in `@dominevo/types` and `fromRecord` drops
  * unknown keys, so a new field would need a framework release before it
  * survived a load. This side table ships with the addon.
  *
@@ -27,7 +27,7 @@
  * done here and handed to the ledger through `stage` / `evict`.
  */
 
-import type { IScopedLogger, RecordKindHandle } from '@camstack/types'
+import type { IScopedLogger, RecordKindHandle } from '@dominevo/types'
 import { z } from 'zod'
 import { DurableLedger, type DurableLedgerSpec } from '../durable/durable-ledger.js'
 import type { DurableLedgerBody } from '../durable/durable-record-body.js'

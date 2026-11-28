@@ -4,7 +4,7 @@
  * It is also the camera's raw ~1 Hz push, so the default "All" view leaves it out
  * (the bridge's `MotionOnMotionChanged` is the one an operator scans).
  */
-import { EventCategory } from '@camstack/types'
+import { EventCategory } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { DEFAULT_EVENT_CATEGORIES, summarizeEvent } from '../event-stream'
 

@@ -6,7 +6,7 @@
  *   2. `$CAMSTACK_HUB_URL`
  *   3. `$CAMSTACK_SERVER`           (the CLI's name for the same thing)
  *   4. `<workspace>/scratchpad/.hub-url`  (gitignored, one line)
- *   5. the cached `camstack login` session's server
+ *   5. the cached `dominevo login` session's server
  *
  * Sources 1-4 are operator-typed, so each goes through `normalizeHubAddress`
  * (`192.0.2.20` -> `https://192.0.2.20:4443`); a malformed value throws a

@@ -8,7 +8,7 @@
  * and left in the other three. One map, keyed by icon NAME (never a kind id).
  */
 
-import type { LlmProfileKindDescriptor, LlmRuntimeNode } from '@camstack/types'
+import type { LlmProfileKindDescriptor, LlmRuntimeNode } from '@dominevo/types'
 import { Bot, Cloud, Cpu, Plug } from 'lucide-react'
 import { describe, expect, it } from 'vitest'
 import {

@@ -10,8 +10,8 @@ import type {
   RetrainAssistProfile,
   RetrainFrame,
   RetrainLlmAssistResult,
-} from '@camstack/types'
-import { selectOption } from '@camstack/ui-library/testing'
+} from '@dominevo/types'
+import { selectOption } from '@dominevo/ui-library/testing'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { seedEditor } from '../lib/retrain-editor'
@@ -105,9 +105,9 @@ const llmCall = vi.fn(
   }),
 )
 
-vi.mock('@camstack/ui-library', async () => {
+vi.mock('@dominevo/ui-library', async () => {
   const actual =
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+    await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return {
     ...actual,
     usePipelineAnalyticsListRetrainAssistProfiles: () => ({ data: profiles, isError: false }),

@@ -1,5 +1,5 @@
-import { errMsg } from '@camstack/types'
-import type { LogTags } from '@camstack/types'
+import { errMsg } from '@dominevo/types'
+import type { LogTags } from '@dominevo/types'
 import type { ServiceBroker } from 'moleculer'
 
 interface LogEntry {
@@ -22,7 +22,7 @@ interface LogEntry {
  * lifecycle messages (connected / disconnected / call-failed) must NOT
  * be routed through a hub-forwarding logger — that would recurse (the
  * log transport logging about itself through itself). The reference
- * `HubForwarderDestination` in `@camstack/server/system` solves the same problem
+ * `HubForwarderDestination` in `@dominevo/server/system` solves the same problem
  * with an injected `statusLogger` that is wired to a non-forwarding
  * destination. `HubLogForwarder` has no such injection point and is
  * currently unused in the tree (exported only), so its status writes

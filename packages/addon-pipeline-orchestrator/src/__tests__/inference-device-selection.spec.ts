@@ -8,7 +8,7 @@
  * fully enabled, available, uncapped, unpinned NPU sit idle indefinitely while
  * every session went to the iGPU.
  */
-import { CAMERA_TRIGGER } from '@camstack/types'
+import { CAMERA_TRIGGER } from '@dominevo/types'
 import type {
   CameraDetectionConfig,
   IScopedLogger,
@@ -16,7 +16,7 @@ import type {
   RunnerCameraConfig,
   RunnerDeviceLoad,
   RunnerLocalLoad,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { RoundRobinInferenceDeviceRotation } from '../device-balancer.js'
 import {

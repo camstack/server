@@ -1,5 +1,5 @@
 /**
- * CamStack agent spawn fixture for E2E tests.
+ * Dominevo agent spawn fixture for E2E tests.
  *
  * Spawns the agent runtime (`packages/agent/dist/cli.js`) as a child
  * process with an isolated data dir + a unique node id, configured

@@ -39,13 +39,13 @@ import type {
   RelocateFootageInput,
   RelocateJob,
   RelocateResidue,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   errMsg,
   hydrateSchema,
   RECORDING_TIMELINE_BATCH_MAX,
   startMoverUnderClearance,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   type GopRange,
   type RangeReadable,
@@ -109,7 +109,7 @@ import type { LedgerWalkReconciler } from './ledger-walk-reconcile.js'
 import { locationMayBeWritten, requireReadableLocation } from './location-resolve.js'
 import { planRebalance, type RebalanceHeadroom } from './rebalance-plan.js'
 import type { RecordingsLocation } from './roots.js'
-import { userError } from '@camstack/types'
+import { userError } from '@dominevo/types'
 
 /**
  * What the operator-armed rebalance weighs footage against: the placement plan

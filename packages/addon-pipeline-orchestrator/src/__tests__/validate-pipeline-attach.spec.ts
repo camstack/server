@@ -15,8 +15,8 @@
  * attachOn path end to end.
  */
 import { afterEach, describe, expect, it } from 'vitest'
-import { readNodePin } from '@camstack/types'
-import type { CameraDetectionConfig, IScopedLogger, PipelineSchema } from '@camstack/types'
+import { readNodePin } from '@dominevo/types'
+import type { CameraDetectionConfig, IScopedLogger, PipelineSchema } from '@dominevo/types'
 import PipelineOrchestratorAddon from '../index.js'
 import {
   makeFakeBroker,

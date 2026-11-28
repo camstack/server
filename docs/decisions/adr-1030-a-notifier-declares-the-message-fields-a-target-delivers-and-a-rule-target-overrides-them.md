@@ -33,7 +33,7 @@ text to the phones at night" needed two rules that drifted apart.
 
 The **notifier** declares what a target delivers, once, on its kind:
 `TargetKindCaps.text = { title, body }` (absent = both, every kind declared
-before this record). `deliverableFields(caps)` in `@camstack/types` is the one
+before this record). `deliverableFields(caps)` in `@dominevo/types` is the one
 reading of that declaration into fields (`title`, `body`, `attachments`,
 `actions`, `priority`, `sound`, `clickUrl`) — the dispatcher, the degrade
 engine, the admin editor and the viewer read it, nothing names a service.

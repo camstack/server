@@ -2,7 +2,7 @@ import type {
   CompositionFieldKind,
   CompositionFieldSource,
   CompositionSourceRef,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { DeviceSnapshot, PickerDevice, WireableCatalog } from './source-picker-model'
 import { pickerFieldRows } from './source-picker-model'
 

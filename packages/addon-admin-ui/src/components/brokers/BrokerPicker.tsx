@@ -17,7 +17,7 @@ import {
   selectableBrokers,
   useBrokerInstances,
   type BrokerInstance,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { InstanceCreateDialog } from '../instances/InstanceCreateDialog'
 
 const STATE_VARIANT: Record<BrokerInstance['state'], 'success' | 'default' | 'danger'> = {

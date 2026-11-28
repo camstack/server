@@ -11,7 +11,7 @@ import {
   type DeviceContext,
   DeviceType,
   type IDeviceRuntimeState,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { dreameFacades } from '../dreame-gateway.js'
 import { DreameContainerDevice } from '../devices/dreame-container-device.js'

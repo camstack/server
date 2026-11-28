@@ -42,7 +42,7 @@
  * is the same lie in a smaller font. That case is `unknown`.
  */
 import path from 'node:path'
-import type { StorageLocation } from '@camstack/types'
+import type { StorageLocation } from '@dominevo/types'
 import type { ProviderLocality } from './access-guards.js'
 
 /** The three `statfs` fields capacity is derived from (`node:fs` StatsFs). */

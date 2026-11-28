@@ -30,8 +30,8 @@ import type {
   TimelapseRuleInput,
   TimelapseRulePatch,
   TimelapseTemplate,
-} from '@camstack/types'
-import { TimelapseRuleInputSchema, TimelapseRuleSchema } from '@camstack/types'
+} from '@dominevo/types'
+import { TimelapseRuleInputSchema, TimelapseRuleSchema } from '@dominevo/types'
 import { randomUUID } from 'node:crypto'
 import { ncRecordKinds, type TimelapseRuleBody } from '../record-kinds.js'
 import { type NcRereadResult, rereadRecordRow } from '../durable-reread.js'

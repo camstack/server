@@ -23,7 +23,7 @@ The cascade decides from the graph. On 2026-10-26 run 40374002262 a change
 to one ui-library field and the admin Integrations grid published
 admin-ui, ui-library and the server — and also agent-ui, benchmark,
 model-studio, osd-manager and training, none of which contain that field.
-Earlier `@camstack/types` edits bumped dozens of addons the same way. The
+Earlier `@dominevo/types` edits bumped dozens of addons the same way. The
 copy those addons hold did not change. The version did, and every node
 treated it as an update.
 
@@ -35,12 +35,12 @@ the bytes.
 ## Decision
 
 A package whose own files changed is published. `force_packages` and
-`include_dependents=true` keep that meaning. `@camstack/server` is published
+`include_dependents=true` keep that meaning. `@dominevo/server` is published
 when anything in its pinned closure is published.
 
 A package selected only because it bundles another package's source is a
 candidate. After the build, hash what `npm pack` would ship — the file list
-and the bytes, with the package version, `@camstack/*` versions, absolute
+and the bytes, with the package version, `@dominevo/*` versions, absolute
 build paths, vite content-hash filenames, and a bare host-provided
 `@module-federation/runtime` import normalised — and hash the
 tarball already on the registry the same way. Equal: drop the candidate,

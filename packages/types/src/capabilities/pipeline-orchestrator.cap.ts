@@ -298,7 +298,7 @@ const IngestOwnerSchema = z.object({
 //
 // Consumers now read per-device settings directly via the kernel
 // helper `resolveAddonSettings(schema, global, device)` from
-// `@camstack/types`, using the standard
+// `@dominevo/types`, using the standard
 // `AddonRegistryService.getAddonConfigSchema` +
 // `ConfigService.getAddonConfig` / `getAddonDevice` pair. There is no
 // alias cap method on the orchestrator — the 3-level resolver is the

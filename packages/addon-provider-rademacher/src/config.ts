@@ -1,4 +1,4 @@
-import type { ConfigUISchema } from '@camstack/types'
+import type { ConfigUISchema } from '@dominevo/types'
 import { z } from 'zod'
 
 /**
@@ -64,7 +64,7 @@ const rademacherDeviceBase = z.object({
   nativeId: z.string().min(1),
 })
 
-/** The hub box itself ({@link import('@camstack/types').DeviceType.Gateway}). */
+/** The hub box itself ({@link import('@dominevo/types').DeviceType.Gateway}). */
 export const rademacherGatewayDeviceSchema = rademacherDeviceBase
 export type RademacherGatewayDeviceConfig = z.infer<typeof rademacherGatewayDeviceSchema>
 

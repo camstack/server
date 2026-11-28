@@ -1,5 +1,5 @@
 import { PetkitAuthError } from '@apocaliss92/nodepetkit'
-import { errMsg, type IConnectionProbe, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IConnectionProbe, type IScopedLogger } from '@dominevo/types'
 import { petkitConfigSchema } from './config.js'
 import type { PetkitFacadeFactory } from './petkit-integration-manager.js'
 

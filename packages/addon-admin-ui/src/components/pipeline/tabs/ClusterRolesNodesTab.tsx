@@ -22,7 +22,7 @@ import {
   useClusterNodes,
   usePipelineOrchestratorListAgentSettings,
   usePipelineOrchestratorSetAgentCapabilities,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { effectiveCapabilitySettings } from '../lib/node-enablement'
 import {
   ANALYTICS_ADDON_ID,

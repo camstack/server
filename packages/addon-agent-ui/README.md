@@ -4,7 +4,7 @@ Agent UI — lightweight status dashboard served by every agent node.
 
 <!-- readme:generated:start (derived from the manifest; edit outside this block) -->
 
-Package `@camstack/addon-agent-ui` on npm.
+Package `@dominevo/addon-agent-ui` on npm.
 
 ## What it provides
 
@@ -14,11 +14,11 @@ Package `@camstack/addon-agent-ui` on npm.
 ## Requirements
 
 - Placement: agent-only.
-- A CamStack hub. An agent is used only where the placement above allows it.
+- A Dominevo hub. An agent is used only where the placement above allows it.
 
 ## Documentation
 
-- [packages/addon-agent-ui/AGENTS.md](https://github.com/camstack/server/blob/main/packages/addon-agent-ui/AGENTS.md)
+- [packages/addon-agent-ui/AGENTS.md](https://github.com/dominevo/server/blob/main/packages/addon-agent-ui/AGENTS.md)
 
 See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
 

@@ -6,7 +6,7 @@ import {
   gatewayDeviceName,
   type IDeviceAdoptionProvider,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { ECOWITT_SYSTEM } from './config.js'
 import { ECOWITT_GATEWAY_DEVICE_KIND } from './devices/ecowitt-gateway-device.js'
 import {

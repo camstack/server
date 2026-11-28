@@ -9,8 +9,8 @@ import type {
   NodeProcess,
   ProviderRegistration,
   ReadinessScope,
-} from '@camstack/types'
-import { BaseAddon, createEvent, EventCategory, metricsProviderCapability } from '@camstack/types'
+} from '@dominevo/types'
+import { BaseAddon, createEvent, EventCategory, metricsProviderCapability } from '@dominevo/types'
 
 /** The hub's node id — `isHub` below is the same test; device-history lives there. */
 const HUB_NODE_ID = 'hub'
@@ -111,7 +111,7 @@ function coarsenResourcesSnapshot(snapshot: unknown): string {
 }
 
 // Shape of the ProcessInfo returned by the kernel `$process.list` Moleculer action.
-// Not imported from @camstack/server/system — core cannot depend on kernel. Keep the shape
+// Not imported from @dominevo/server/system — core cannot depend on kernel. Keep the shape
 // minimal + narrow the state field at the boundary.
 interface KernelProcessInfo {
   readonly pid: number
@@ -557,7 +557,7 @@ export default class NativeMetricsAddon extends BaseAddon<NativeMetricsConfig> {
    * (nulling `ctx`) while the agent goes on to stop its other addons and the
    * broker — so the tick resumed with no context, its catch block reached for
    * `this.ctx.logger`, threw again, and the rejection of the timer callback
-   * killed `docker stop CamStack-Agent` with exit code 1 (agent-a,
+   * killed `docker stop Dominevo-Agent` with exit code 1 (agent-a,
    * 2026-10-07 04:22Z). The ticks themselves now capture their context once
    * and stand down when it is gone; this wrapper is the backstop.
    *

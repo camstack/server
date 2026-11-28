@@ -13,8 +13,8 @@ import {
   usePipelineOrchestratorSetClusterStepMode,
   usePipelineOrchestratorSetDeviceStepEnabled,
   usePipelineOrchestratorSetNodeStepEnabled,
-} from '@camstack/ui-library'
-import type { StepClusterMode } from '@camstack/types'
+} from '@dominevo/ui-library'
+import type { StepClusterMode } from '@dominevo/types'
 import type { StepSwitchRow } from './step-switches-model'
 
 const POLL_MS = 15_000

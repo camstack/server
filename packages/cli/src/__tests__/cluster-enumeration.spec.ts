@@ -5,7 +5,7 @@ import { join } from 'node:path'
 /**
  * `--cluster` must never quietly deploy to fewer nodes than it claims.
  *
- * On 2026-08-02 `camstack deploy --cluster` printed "no online agents found,
+ * On 2026-08-02 `dominevo deploy --cluster` printed "no online agents found,
  * pushing to hub only" while `agent-a` was alive, logging, and happily
  * accepting the same tarball via `-n agent-a`. The cause was not the
  * agent:

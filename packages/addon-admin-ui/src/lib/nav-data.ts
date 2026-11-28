@@ -5,7 +5,7 @@
  * and cannot drift (D1096). An icon is a lucide NAME here; `nav-items.ts` maps
  * it to the component.
  */
-import type { AppNavSection } from '@camstack/types'
+import type { AppNavSection } from '@dominevo/types'
 import { SYSTEM_PAGE_PATH } from './system-page-url'
 
 export type NavSectionKey = 'top' | 'detection' | 'cluster' | 'administration'

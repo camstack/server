@@ -3,7 +3,7 @@
  * `integrations` capability (the old home of the two flags, read by the migrations only), the
  * retired `ha-export-links` kind and the `ha-export-targets` kind the links move into.
  */
-import { RevConflictError, type RecordKindHandle, type SecretsAccess } from '@camstack/types'
+import { RevConflictError, type RecordKindHandle, type SecretsAccess } from '@dominevo/types'
 import {
   type HaLegacyRowsApi,
   haInstanceSettingsPortsOver,

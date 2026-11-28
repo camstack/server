@@ -19,7 +19,7 @@
 
 import { createWyzeRfc4571Server } from '@apocaliss92/wyze-bridge-js'
 import type { WyzeCamera, WyzeRfc4571Server } from '@apocaliss92/wyze-bridge-js'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 export interface WyzeStreamServerDeps {
   readonly logger: IScopedLogger

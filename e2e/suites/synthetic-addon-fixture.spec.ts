@@ -93,13 +93,13 @@ describe('synthetic-addon fixture', () => {
   })
 
   it('allows scoped-name override so multiple fixtures can coexist in one verdaccio', () => {
-    const a = buildSyntheticAddon({ name: '@camstack/e2e-fixture-alpha', version: '1.0.0' })
-    const b = buildSyntheticAddon({ name: '@camstack/e2e-fixture-beta', version: '1.0.0' })
+    const a = buildSyntheticAddon({ name: '@dominevo/e2e-fixture-alpha', version: '1.0.0' })
+    const b = buildSyntheticAddon({ name: '@dominevo/e2e-fixture-beta', version: '1.0.0' })
     dirsToCleanup.push(a.dir, b.dir)
 
     const pkgA = JSON.parse(readFileSync(join(a.dir, 'package.json'), 'utf-8')) as { name: string }
     const pkgB = JSON.parse(readFileSync(join(b.dir, 'package.json'), 'utf-8')) as { name: string }
-    expect(pkgA.name).toBe('@camstack/e2e-fixture-alpha')
-    expect(pkgB.name).toBe('@camstack/e2e-fixture-beta')
+    expect(pkgA.name).toBe('@dominevo/e2e-fixture-alpha')
+    expect(pkgB.name).toBe('@dominevo/e2e-fixture-beta')
   })
 })

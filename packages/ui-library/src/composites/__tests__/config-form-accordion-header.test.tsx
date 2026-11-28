@@ -3,7 +3,7 @@
  * An accordion section header is a real button with aria-expanded, and its
  * marker is the shared DisclosureChevron (an svg), never a text glyph.
  */
-import type { ConfigUISchema } from '@camstack/types'
+import type { ConfigUISchema } from '@dominevo/types'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { ConfigFormBuilder } from '../config-form-builder.js'

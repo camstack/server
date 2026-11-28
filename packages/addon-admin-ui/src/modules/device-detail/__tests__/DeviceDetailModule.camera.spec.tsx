@@ -1,5 +1,5 @@
-import { DeviceFeature, DeviceType } from '@camstack/types'
-import type { SystemTrpcClient } from '@camstack/ui-library'
+import { DeviceFeature, DeviceType } from '@dominevo/types'
+import type { SystemTrpcClient } from '@dominevo/ui-library'
 import { render, screen } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { describe, expect, it, vi } from 'vitest'
@@ -13,8 +13,8 @@ interface SceneProps {
 
 // The camera card and the hero stand in as probes: the spec is about WHICH
 // body the module routes a device to, and what it hands the camera's scene.
-vi.mock('@camstack/ui-library', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@camstack/ui-library')>()
+vi.mock('@dominevo/ui-library', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dominevo/ui-library')>()
   return {
     ...actual,
     ConnectedCameraCard: ({ scene }: { readonly scene: ReactNode }) => (

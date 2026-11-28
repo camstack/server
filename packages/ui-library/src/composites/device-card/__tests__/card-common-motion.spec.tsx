@@ -4,7 +4,7 @@
  * data exists only when the device binds `motion-trigger`, implements
  * `setMotionTrigger` and its slice answered; the toggle action sends once.
  */
-import type { MotionTriggerRuntimeState } from '@camstack/types'
+import type { MotionTriggerRuntimeState } from '@dominevo/types'
 import { act, cleanup, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useCardCommon } from '../connected/use-card-common'

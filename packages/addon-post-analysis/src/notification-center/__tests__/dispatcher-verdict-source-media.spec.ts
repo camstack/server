@@ -4,7 +4,7 @@
  * It is bookkeeping: it never travels with the attachment.
  */
 
-import type { MediaFile } from '@camstack/types'
+import type { MediaFile } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { makeTestMediaFile } from '../../__tests__/support/media-file.js'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
@@ -79,7 +79,10 @@ async function deliver(files: readonly MediaFile[]) {
 
 describe('the verdict buttons are minted with the frame the picture came from', () => {
   it('freezes the stored row the shipped still was rendered from', async () => {
-    const { sends, minted } = await deliver([file('firstFrame', 7, T0 - 100), file('keyFrame', 4242, T0 + 50)])
+    const { sends, minted } = await deliver([
+      file('firstFrame', 7, T0 - 100),
+      file('keyFrame', 4242, T0 + 50),
+    ])
     expect(sends[0]?.notification.attachments?.[0]?.name).toBe('keyFrame.jpg')
     expect(minted).toHaveLength(1)
     expect(minted[0]?.sourceMedia).toEqual({ mediaId: 4242, kind: 'keyFrame' })

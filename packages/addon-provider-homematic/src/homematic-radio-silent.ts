@@ -1,4 +1,4 @@
-import type { ErrorStatus } from '@camstack/types'
+import type { ErrorStatus } from '@dominevo/types'
 import type { HmDevice, ValueChangedEvent } from 'nodehomematic'
 import { RADIO_SILENT_FAULT, ruleReading } from './homematic-fault-mapping.js'
 import {

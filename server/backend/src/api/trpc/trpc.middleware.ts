@@ -1,10 +1,10 @@
-import { getCatalogRegistry } from '@camstack/server/system'
+import { getCatalogRegistry } from '@dominevo/server/system'
 import {
   capabilityScopesOf,
   DEFAULT_CATALOG_LANG,
   localizeConfigTree,
   viewerScopeOf,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { enforcedScopesOf } from './device-access.js'
 import { logPersonWithoutViewer } from './person-without-viewer.js'
 import { initTRPC, TRPCError } from '@trpc/server'

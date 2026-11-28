@@ -16,7 +16,7 @@ import type {
   FrameInput,
   FrameResult,
   PipelineStepInput,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /**
  * Typed accessor for the two private entry points the dispatch tests

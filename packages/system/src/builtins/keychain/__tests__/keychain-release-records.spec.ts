@@ -6,7 +6,7 @@
 import { promises as fsp } from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import { recordSecretRef } from '@camstack/types'
+import { recordSecretRef } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { buildKeySourceCandidates } from '../key-sources.js'
 import { KeychainService } from '../keychain-service.js'

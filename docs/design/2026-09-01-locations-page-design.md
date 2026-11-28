@@ -98,7 +98,7 @@ One card per registered room, **compact list always visible**:
 
 ### 3. Table of unassigned devices
 
-The shared `DataTable` (`@camstack/ui-library`, the `columns` / `rows` /
+The shared `DataTable` (`@dominevo/ui-library`, the `columns` / `rows` /
 `rowKey` / `mobileMode` / `emptyMessage` API already used throughout the admin-ui), **not**
 a `<ul>`.
 

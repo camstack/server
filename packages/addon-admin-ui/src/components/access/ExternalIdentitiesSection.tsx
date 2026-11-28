@@ -13,7 +13,7 @@ import {
   useConfirm,
   useUserManagementListUsers,
   useUserManagementUnlinkExternalIdentity,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Fingerprint, Unlink } from 'lucide-react'
 import { useMemo, useState, type ReactNode } from 'react'
 
@@ -90,7 +90,7 @@ export function ExternalIdentitiesSection(): ReactNode {
       icon={Fingerprint}
       description={t(
         'access.externalIdentitiesSection.externalAccountsSingleSignOn',
-        'External accounts (single sign-on) each user linked to their CamStack account. Only the owner can link one, from their profile; an admin can remove it.',
+        'External accounts (single sign-on) each user linked to their Dominevo account. Only the owner can link one, from their profile; an admin can remove it.',
       )}
     >
       <CredentialTable

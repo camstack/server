@@ -13,7 +13,7 @@
  * the hole. The x axis is wall time.
  */
 import { useMemo } from 'react'
-import { TimeSeriesChart, type TimeSeriesDef, type AxisScale } from '@camstack/ui-library'
+import { TimeSeriesChart, type TimeSeriesDef, type AxisScale } from '@dominevo/ui-library'
 
 /** Plot height: two charts sit side by side in a runner card. */
 const LOAD_CHART_HEIGHT = 96

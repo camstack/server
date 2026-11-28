@@ -1,5 +1,5 @@
 import { existsSync, readFileSync, statSync } from 'node:fs'
-import { MutationGate, scrubValue } from '@camstack/develop'
+import { MutationGate, scrubValue } from '@dominevo/develop'
 import { describe, expect, it } from 'vitest'
 import type { McpContext } from '../mcp/context.js'
 import { CRITICAL_ADDONS } from '../mcp/report-environment.js'
@@ -116,7 +116,7 @@ function fakeGh(authCode = 0, createCode = 0) {
       return createCode === 0
         ? {
             code: 0,
-            stdout: 'https://github.com/camstack/server/issues/901\n',
+            stdout: 'https://github.com/dominevo/server/issues/901\n',
             stderr: '',
           }
         : { code: createCode, stdout: '', stderr: 'boom' }
@@ -467,7 +467,7 @@ describe('report_issue: the review gate', () => {
     expect((await reportIssue(ctx, gh.deps, ARGS, d.token, NOW)).status).toBe('refused')
   })
 
-  it('files with gh -R camstack/server, a 0600 body file, and the text that was shown', async () => {
+  it('files with gh -R dominevo/server, a 0600 body file, and the text that was shown', async () => {
     const { ctx } = ctxOf()
     const gh = fakeGh()
     const d = dry(await reportIssue(ctx, gh.deps, ARGS, undefined, NOW))
@@ -476,13 +476,13 @@ describe('report_issue: the review gate', () => {
       status: 'executed',
       result: {
         outcome: 'created',
-        url: 'https://github.com/camstack/server/issues/901',
-        repo: 'camstack/server',
+        url: 'https://github.com/dominevo/server/issues/901',
+        repo: 'dominevo/server',
       },
     })
     const create = gh.calls.find((c) => c.args[0] === 'issue')
     expect(create?.args.slice(0, 3)).toEqual(['issue', 'create', '-R'])
-    expect(create?.args[3]).toBe('camstack/server')
+    expect(create?.args[3]).toBe('dominevo/server')
     expect(create?.bodyMode).toBe(0o600)
     expect(d.markdown.endsWith(create?.body ?? '#')).toBe(true)
     // single use
@@ -529,7 +529,7 @@ describe('report_issue: without gh', () => {
       result: { outcome: 'link', truncated: false },
     })
     const url = r.status === 'executed' && r.result.outcome === 'link' ? r.result.url : ''
-    expect(url.startsWith('https://github.com/camstack/server/issues/new?title=')).toBe(true)
+    expect(url.startsWith('https://github.com/dominevo/server/issues/new?title=')).toBe(true)
     expect(gh.calls.some((c) => c.args[0] === 'issue')).toBe(false)
   })
 
@@ -547,7 +547,7 @@ describe('report_issue: without gh', () => {
   it('cuts a long body to a safe link length, on whole escapes, and says so', () => {
     const body = Array.from({ length: 400 }, (_, i) => `line ${String(i)} é ✓ & more`).join('\n')
     const { url, truncated } = prefilledIssueUrl({
-      repo: 'camstack/server',
+      repo: 'dominevo/server',
       title: 'T',
       body,
     })

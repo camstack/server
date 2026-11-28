@@ -1,7 +1,7 @@
 /**
  * Mesh mTLS constants (Release A — plan 2026-10-09-mesh-mtls-plan).
  */
-import { buildSecretRef } from '@camstack/types'
+import { buildSecretRef } from '@dominevo/types'
 
 /** Same owner as the JWT signing key (D797). */
 const SYSTEM_SECRET_OWNER = 'system'

@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ScrollText, Terminal, Bell, Move, Mic, Database, RotateCw } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { FloatingPanel, useIsMobile } from '@camstack/ui-library'
+import { FloatingPanel, useIsMobile } from '@dominevo/ui-library'
 import {
   LogsPanelContent,
   ReplPanelContent,

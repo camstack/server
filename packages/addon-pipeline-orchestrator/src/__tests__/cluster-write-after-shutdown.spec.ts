@@ -2,7 +2,7 @@
  * A scoped cluster write that lands after shutdown (the controllers are gone) is a no-op: there
  * is nothing left to re-derive, and the write must not throw into its caller.
  */
-import type { ScopedSettingsScope } from '@camstack/types'
+import type { ScopedSettingsScope } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import PipelineOrchestratorAddon from '../index.js'
 

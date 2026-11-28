@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DeviceType, resolveContainerPrimaryChild } from '@camstack/types'
+import { DeviceType, resolveContainerPrimaryChild } from '@dominevo/types'
 import type { HmCustomEntity, HmDevice } from 'nodehomematic'
 import { deriveHmEntitySpecs } from '../devices/hm-entity-spec.js'
 import { hmPrimaryChildKeys, preferenceToStamp } from '../devices/hm-primary-child.js'

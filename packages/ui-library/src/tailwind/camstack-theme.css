@@ -55,7 +55,7 @@
   --color-chart-series-g: #008300;
   --color-chart-series-h: #e66767;
 
-  /* Operator tag colours (D1054) — the tag-colour enum in @camstack/types. They
+  /* Operator tag colours (D1054) — the tag-colour enum in @dominevo/types. They
      follow the validated chart palette per theme, so a tag never introduces a hue
      the system does not already have. Drawn as a tint plus coloured text. */
   --color-tag-a: var(--color-chart-series-a);

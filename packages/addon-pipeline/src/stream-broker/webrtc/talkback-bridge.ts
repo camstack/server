@@ -19,8 +19,8 @@
  *  - a failed open or push drops back to idle so the next frame retries;
  *  - `close()` ends the talk session exactly once.
  */
-import type { IScopedLogger } from '@camstack/types'
-import { errMsg } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
 import type { AudioCodec } from './types.js'
 
 /** The slice of `ctx.api.intercom` the bridge drives. */

@@ -4,7 +4,7 @@
  * what the number means. The shell owns the rest — the state corner ("HOT ·
  * 2 min ago ›") opens the history, the top line names the integration.
  */
-import type { HeroMeasurement, HeroMeasurementQuantity, HeroModel, IconKey } from '@camstack/types'
+import type { HeroMeasurement, HeroMeasurementQuantity, HeroModel, IconKey } from '@dominevo/types'
 import type { SceneSpeed, SceneVisual } from '../../../hero-scene/types'
 import type { CardCommon, CardState } from '../../shell/model'
 

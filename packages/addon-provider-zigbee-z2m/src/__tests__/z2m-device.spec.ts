@@ -3,7 +3,7 @@ import {
   DeviceType,
   EventCategory,
   type IDeviceRuntimeState,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ZigbeeDevice } from '../z2m-device.js'
 import { planZ2mDevice } from '../z2m-exposes.js'

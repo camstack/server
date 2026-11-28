@@ -20,8 +20,8 @@
  * render an unreachable camera exactly like a camera with nothing parked, which
  * is a definite claim nobody made.
  */
-import type { StationaryObject } from '@camstack/types'
-import { useSystem } from '@camstack/ui-library'
+import type { StationaryObject } from '@dominevo/types'
+import { useSystem } from '@dominevo/ui-library'
 import { useQuery } from '@tanstack/react-query'
 
 const POLL_MS = 15_000

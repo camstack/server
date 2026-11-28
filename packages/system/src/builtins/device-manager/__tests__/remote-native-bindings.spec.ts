@@ -8,7 +8,7 @@
  * which process owns the IDevice.
  */
 
-import { DeviceRegistry } from '@camstack/server/system'
+import { DeviceRegistry } from '@dominevo/server/system'
 import {
   type AddonContext,
   EventCategory,
@@ -17,7 +17,7 @@ import {
   type IEventBus,
   type IScopedLogger,
   type SystemEvent,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { makeRecordsAccessForOwner } from '../../sqlite-storage/__tests__/support/records-world.js'
 import { DeviceManagerAddon } from '../device-manager.addon.js'

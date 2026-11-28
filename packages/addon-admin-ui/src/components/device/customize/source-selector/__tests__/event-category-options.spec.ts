@@ -2,7 +2,7 @@
  * The events a "device event" trigger offers are the ones the cap vocabulary
  * declares for the picked device — never the whole EventCategory enum.
  */
-import { EventCategory } from '@camstack/types'
+import { EventCategory } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   declaredEventOptions,

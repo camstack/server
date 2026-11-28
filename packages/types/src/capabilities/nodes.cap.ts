@@ -54,7 +54,7 @@ const TopologyCategorySchema = z.object({
 })
 
 /**
- * The node's runtime-updatable ROOT package (`@camstack/server` — the single
+ * The node's runtime-updatable ROOT package (`@dominevo/server` — the single
  * root package for every node role) as reported by its `registerNode`
  * manifest — version visibility for the Server management surface. Nullable:
  * offline rows and nodes that never reported one.
@@ -312,7 +312,7 @@ export const nodesCapability = {
       { kind: 'mutation', auth: 'admin' },
     ),
   },
-  /** BIG PLAN 2: declarative mount hint — read by `@camstack/server/system` `buildCapRouters`. */
+  /** BIG PLAN 2: declarative mount hint — read by `@dominevo/server/system` `buildCapRouters`. */
   mount: { kind: 'server-provided' },
   vocabulary: { notOperatorFacing: NOT_A_DEVICE.CLUSTER },
 } as const satisfies CapabilityDefinition

@@ -2,7 +2,7 @@
  * The instance registry loads an instance's links BEFORE serving it: a SYNC that arrives while the
  * read is still in flight must wait for it, or it would write an empty ledger over the real one.
  */
-import { makeInMemoryRecords } from '@camstack/types'
+import { makeInMemoryRecords } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { ActionSceneExports } from '../action-scenes.js'
 import {

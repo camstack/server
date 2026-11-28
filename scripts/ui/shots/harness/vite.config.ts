@@ -241,23 +241,23 @@ export default defineConfig({
         find: /^@module-federation\/runtime$/,
         replacement: path.join(HERE, 'stubs/mf-runtime.ts'),
       },
-      { find: /^@camstack\/sdk$/, replacement: path.join(PACKAGES, 'sdk/src/index.ts') },
+      { find: /^@dominevo\/sdk$/, replacement: path.join(PACKAGES, 'sdk/src/index.ts') },
       {
-        find: /^@camstack\/ui-library$/,
+        find: /^@dominevo\/ui-library$/,
         replacement: path.join(PACKAGES, 'ui-library/src/index.ts'),
       },
       {
-        find: /^@camstack\/ui-library\/(.*)$/,
+        find: /^@dominevo\/ui-library\/(.*)$/,
         replacement: path.join(PACKAGES, 'ui-library/src/$1'),
       },
       {
-        find: /^@camstack\/types\/client$/,
+        find: /^@dominevo\/types\/client$/,
         replacement: path.join(PACKAGES, 'types/src/client.ts'),
       },
-      { find: /^@camstack\/types\/enums$/, replacement: path.join(PACKAGES, 'types/src/enums.ts') },
-      { find: /^@camstack\/types$/, replacement: path.join(PACKAGES, 'types/src/index.ts') },
+      { find: /^@dominevo\/types\/enums$/, replacement: path.join(PACKAGES, 'types/src/enums.ts') },
+      { find: /^@dominevo\/types$/, replacement: path.join(PACKAGES, 'types/src/index.ts') },
       {
-        find: /^@camstack\/types\/device-template-catalogue$/,
+        find: /^@dominevo\/types\/device-template-catalogue$/,
         replacement: path.join(PACKAGES, 'types/src/device-template-catalogue.ts'),
       },
       // A types module hashes at load time; the browser has no node:crypto.

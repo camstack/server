@@ -86,7 +86,7 @@ product is a package icon, three steps and "refill" wording.
   old Dreame addon sees no tanks until the Dreame addon is deployed.
 - `ConsumablesPanel`, `WidgetPanel` (controlled `open`) and
   `usePersistedDisclosure` are ui-library changes: the section only collapses
-  once a `@camstack/server` carrying that library is installed.
+  once a `@dominevo/server` carrying that library is installed.
 - On desktop the hero slot grows to fit the hero and the section (a cap on
   its height clipped the section behind the Logs block); the Logs block keeps
   a minimum height and the left column scrolls when both do not fit.

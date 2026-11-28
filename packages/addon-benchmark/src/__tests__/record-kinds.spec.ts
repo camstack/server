@@ -1,4 +1,4 @@
-import { makeInMemoryRecords } from '@camstack/types'
+import { makeInMemoryRecords } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { EvalRunBody, EvalSampleBody } from '../benchmark-schemas.js'
 import { benchmarkRecordKinds } from '../record-kinds.js'

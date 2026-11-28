@@ -6,7 +6,7 @@
  * fails instead of looping. The password never travels here: `connect` names a 0600 file.
  */
 import { type ChildProcess, spawn } from 'node:child_process'
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IScopedLogger } from '@dominevo/types'
 import {
   type UnifiWorkerPush,
   type UnifiWorkerRequest,

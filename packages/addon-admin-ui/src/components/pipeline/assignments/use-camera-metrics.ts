@@ -4,7 +4,7 @@
  * snapshot for 10 s drops out: a stopped session must not keep its last fps.
  */
 import { useEffect, useState } from 'react'
-import { useLiveEvent } from '@camstack/ui-library'
+import { useLiveEvent } from '@dominevo/ui-library'
 
 export interface CameraMetricsSnapshot {
   readonly deviceId: number

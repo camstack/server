@@ -63,7 +63,7 @@ the conclusion — moment unknown`, `tags: { deviceId }`.
 from that cut.** The recorded follow-up now serves `mediaGif` as well as
 `mediaClip`: ONE `recordingExport` cut (`recorded-clip.ts`, unchanged), the gif
 derived from its bytes (`recorded-gif.ts`) with the SAME filter chain the
-broker applies to a ring cut — which therefore moved to `@camstack/types`
+broker applies to a ring cut — which therefore moved to `@dominevo/types`
 (`ffmpeg/gif-derive.ts`), because two addons may not import each other and two
 copies would be two gifs. Delivered as a follow-up with the same tag, gif first,
 video second when asked for. A moment the recordings cannot serve ships **no**
@@ -105,7 +105,7 @@ recordings — the exact gif this record removes.
 - The ring side is unchanged: a fallen-back pick-up re-read while the ring
   still holds its conclusion (a reconcile within seconds) is cut from the ring
   as before — logged by the unknown-moment line.
-- `@camstack/types` gained `gifFilterComplex`, `gifFromMp4Args` (with an
+- `@dominevo/types` gained `gifFilterComplex`, `gifFromMp4Args` (with an
   optional `input` path), `gifDeriveSpeed` and `ffmpegRate`; the broker's
   `gif-from-mp4.ts` and `prebuffer-clip.ts` re-export them unchanged.
 

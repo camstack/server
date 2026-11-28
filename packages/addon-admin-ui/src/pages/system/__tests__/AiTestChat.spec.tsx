@@ -16,10 +16,10 @@
  *  5. **Nothing is persisted.**
  */
 
-import { selectOption, waitForSelectRows } from '@camstack/ui-library/testing'
-import type { DeviceInfo } from '@camstack/types'
-import type { LinkableInstance } from '@camstack/ui-library'
-import { DeviceType } from '@camstack/types'
+import { selectOption, waitForSelectRows } from '@dominevo/ui-library/testing'
+import type { DeviceInfo } from '@dominevo/types'
+import type { LinkableInstance } from '@dominevo/ui-library'
+import { DeviceType } from '@dominevo/types'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -132,8 +132,8 @@ const listAllHook = vi.fn(
     fleetListResult(FLEET_ROWS),
 )
 
-vi.mock('@camstack/ui-library', async () => {
-  const real = await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+vi.mock('@dominevo/ui-library', async () => {
+  const real = await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return {
     ...real,
     useDeviceManagerListAll: (input?: FleetListInput, options?: FleetListOptions) =>

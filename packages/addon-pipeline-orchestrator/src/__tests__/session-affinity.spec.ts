@@ -6,7 +6,7 @@
  * session of the turn holder — and the cumulative split still follows the
  * shares.
  */
-import type { RunnerLocalLoad } from '@camstack/types'
+import type { RunnerLocalLoad } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { pickInferenceDevice, selectedDeviceKey } from '../device-balancer.js'
 import { SessionAffinityMemory, SESSION_AFFINITY_TTL_MS } from '../session-affinity.js'

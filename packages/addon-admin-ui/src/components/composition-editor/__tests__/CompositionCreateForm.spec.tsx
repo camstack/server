@@ -2,7 +2,7 @@
  * The empty create form does not wear Incomplete. Save lands on the new
  * device's Customize tab when the persisted list already names it.
  */
-import { selectOptionValues } from '@camstack/ui-library/testing'
+import { selectOptionValues } from '@dominevo/ui-library/testing'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
@@ -17,8 +17,8 @@ vi.mock('react-router-dom', async (importOriginal) => {
   return { ...actual, useNavigate: () => navigate }
 })
 
-vi.mock('@camstack/ui-library', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@camstack/ui-library')>()
+vi.mock('@dominevo/ui-library', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dominevo/ui-library')>()
   const row = { id: 4700, stableId: 'composed-blk-new', name: 'New sensor' }
   return {
     ...actual,

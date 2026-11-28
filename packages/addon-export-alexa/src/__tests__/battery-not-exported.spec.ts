@@ -9,7 +9,7 @@
  * was a 202 the cloud discarded (D76's failure class), and an undeclared-
  * interface capability risks the whole endpoint.
  */
-import { EventCategory } from '@camstack/types'
+import { EventCategory } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { buildEndpointsForExposedDevice } from '../handlers/discovery.js'
 import { LwaEventGateway, type LwaEventGatewayDeps } from '../lwa-event-gateway.js'

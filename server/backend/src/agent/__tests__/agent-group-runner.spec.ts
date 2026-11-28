@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import {
   isGroupRunnerAddon,
   ensureGroupRunner,
@@ -63,7 +63,7 @@ function candidate(over: Partial<GroupCandidate> = {}): GroupCandidate {
     addonId: 'a1',
     addonDir: '/data/addons/a1',
     version: '1.0.0',
-    packageName: '@camstack/a1',
+    packageName: '@dominevo/a1',
     packageVersion: '1.0.0',
     capabilities: ['cap-x'],
     ...over,
@@ -79,7 +79,7 @@ function writePkg(content: unknown): string {
 describe('readPackageManifestAddons', () => {
   it('reads camstack.addons declarations without importing the entry module', () => {
     const dir = writePkg({
-      name: '@camstack/addon-pipeline',
+      name: '@dominevo/addon-pipeline',
       version: '1.0.4',
       camstack: {
         addons: [
@@ -98,7 +98,7 @@ describe('readPackageManifestAddons', () => {
     })
     const m = readPackageManifestAddons(dir)
     expect(m).not.toBeNull()
-    expect(m?.packageName).toBe('@camstack/addon-pipeline')
+    expect(m?.packageName).toBe('@dominevo/addon-pipeline')
     expect(m?.packageVersion).toBe('1.0.4')
     expect(m?.declarations.map((d) => d.id)).toEqual(['pipeline-runner', 'recorder'])
     // The parsed declarations feed the placement helpers directly.
@@ -107,7 +107,7 @@ describe('readPackageManifestAddons', () => {
 
   it('skips malformed entries (no string id) and returns null on missing/empty manifest', () => {
     const dir = writePkg({
-      name: '@camstack/x',
+      name: '@dominevo/x',
       version: '2.0.0',
       camstack: { addons: [{ id: 'ok' }, { noId: true }, 42, null] },
     })
@@ -115,7 +115,7 @@ describe('readPackageManifestAddons', () => {
 
     expect(readPackageManifestAddons('/nonexistent/dir/xyz')).toBeNull()
     expect(
-      readPackageManifestAddons(writePkg({ name: '@camstack/empty', version: '1.0.0' })),
+      readPackageManifestAddons(writePkg({ name: '@dominevo/empty', version: '1.0.0' })),
     ).toBeNull()
   })
 })

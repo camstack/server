@@ -18,7 +18,7 @@ title: Run-down — the hub load, what remains and in what order
 
 ```
 host          load 22.66 on 20 cores
-CamStack      522 % CPU (5.2 cores)   17.9 GiB / 32
+Dominevo      522 % CPU (5.2 cores)   17.9 GiB / 32
   of which    319 %  two decode-worker-child   ← the 61 %
               81 %   hub-main
 plugin catalog      ~142 % (1.4 cores)
@@ -39,7 +39,7 @@ loopP99       22 ms (was 593)
 | **D452** | synchronous fork of `native-metrics` · sqlite levers · pass over the leftovers | Sonnet |
 | **D453** | remove the park · zygote for the decode workers | Opus |
 
-## Ready in `main`, waiting for a published `@camstack/server`
+## Ready in `main`, waiting for a published `@dominevo/server`
 
 D437 shell identity · D446 queue measurement · D447 download pump ·
 **D448 raw-forward** · D449 flag removal.
@@ -238,7 +238,7 @@ is not real dBFS**. The second is legitimate; silence is not.
 ### 8. Remove the seeding image entirely — **operator's decision**
 
 Today the shell (docker image, electron app) carries a **seed baked in**:
-a `@camstack/server` closure frozen at build time. `applyServerUpdate`
+a `@dominevo/server` closure frozen at build time. `applyServerUpdate`
 updates the code but **never touches the image**, so the seed drifts —
 measured on 2026-09-11: code `1.2.270`, seed `1.2.200`, `imageContract:
 behind-patch`. Starter, entrypoint and boot fallback remain the old ones, and

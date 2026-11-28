@@ -25,7 +25,7 @@
  * only the entries that answered produces a smaller number that is
  * indistinguishable, on a chart, from a complete one.
  */
-import type { LoadContributionAttribution, LoadContributionRole } from '@camstack/types'
+import type { LoadContributionAttribution, LoadContributionRole } from '@dominevo/types'
 
 /**
  * One reported entry, as it arrives from `system.getLoadContributions`.

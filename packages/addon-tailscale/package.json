@@ -1,7 +1,7 @@
 {
-  "name": "@camstack/addon-tailscale",
-  "version": "1.2.157",
-  "description": "Tailscale bundle for CamStack — joins the host to a tailnet (client) and exposes the hub via Serve/Funnel (ingress). Multi-entry npm package shipping 2 addons under a single bundle.",
+  "name": "@dominevo/addon-tailscale",
+  "version": "0.1.0",
+  "description": "Tailscale bundle for Dominevo — joins the host to a tailnet (client) and exposes the hub via Serve/Funnel (ingress). Multi-entry npm package shipping 2 addons under a single bundle.",
   "keywords": [
     "camstack",
     "addon",
@@ -16,12 +16,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/camstack/server.git",
+    "url": "https://github.com/dominevo/server.git",
     "directory": "packages/addon-tailscale"
   },
   "homepage": "https://camstack-docs.zentik.app",
   "bugs": {
-    "url": "https://github.com/camstack/server/issues"
+    "url": "https://github.com/dominevo/server/issues"
   },
   "main": "./dist/client/index.js",
   "exports": {
@@ -71,7 +71,7 @@
         "category": "networking",
         "name": "Tailscale Funnel",
         "version": "1.0.0",
-        "description": "Exposes the CamStack hub on the tailnet (Serve) or the public internet (Funnel). Requires the Tailscale addon to be installed and joined first.",
+        "description": "Exposes the Dominevo hub on the tailnet (Serve) or the public internet (Funnel). Requires the Tailscale addon to be installed and joined first.",
         "entry": "./dist/ingress/tailscale-ingress.addon.js",
         "execution": {
           "placement": "hub-only",
@@ -87,7 +87,7 @@
       }
     ],
     "requires": {
-      "server": ">=1.2.968"
+      "server": ">=0.1.0"
     }
   },
   "files": [
@@ -105,10 +105,10 @@
     "publish:npm": "npm publish --access public"
   },
   "peerDependencies": {
-    "@camstack/types": "*"
+    "@dominevo/types": "0.1.0"
   },
   "devDependencies": {
-    "@camstack/types": "*",
+    "@dominevo/types": "0.1.0",
     "tsx": "^4.0.0",
     "typescript": "~6.0.3",
     "vite": "^8.0.11"

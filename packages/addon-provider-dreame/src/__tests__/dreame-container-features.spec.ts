@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { DeviceFeature } from '@camstack/types'
+import { DeviceFeature } from '@dominevo/types'
 import {
   deriveContainerFeatures,
   mowerSupportsMap,

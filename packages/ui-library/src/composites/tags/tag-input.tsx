@@ -8,7 +8,7 @@
  * persists it; only the style is written from here, because a style belongs to
  * the tag, not to the record.
  */
-import { sameTag, TAG_NAME_MAX_LENGTH, TAGS_PER_RECORD_MAX } from '@camstack/types'
+import { sameTag, TAG_NAME_MAX_LENGTH, TAGS_PER_RECORD_MAX } from '@dominevo/types'
 import { Palette, Plus } from 'lucide-react'
 import { type JSX, type KeyboardEvent, useId, useMemo, useState } from 'react'
 import { useUiText } from '../../contexts/ui-text'

@@ -16,7 +16,7 @@
  * so a save that does not actually persist cannot pass.
  */
 import { recordingsLocationOfMode } from '../roots.js'
-import type { IScopedLogger, RecordingConfig } from '@camstack/types'
+import type { IScopedLogger, RecordingConfig } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { RecordingIndex } from '../../recording-index.js'
 import type { SegmentStore } from '../../segment-store.js'

@@ -1,4 +1,4 @@
-import type { DecodedAudioChunk } from '@camstack/types'
+import type { DecodedAudioChunk } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   AudioCodecSession,

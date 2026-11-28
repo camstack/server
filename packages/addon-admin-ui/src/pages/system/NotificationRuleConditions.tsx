@@ -8,7 +8,7 @@
  * an untouched condition stays unrestricted (and a previously-authored one is
  * preserved on edit).
  *
- * WHICH CONDITIONS ARE OFFERED AT ALL is `@camstack/types` → `rule-kinds.ts`, and the
+ * WHICH CONDITIONS ARE OFFERED AT ALL is `@dominevo/types` → `rule-kinds.ts`, and the
  * answer is `delivery` × `kind`. A condition that does not apply is NOT
  * rendered: it used to be drawn greyed-out with a "not for this trigger" badge,
  * which put a dozen dead rows above the two fields an occupancy rule actually
@@ -58,7 +58,7 @@ import type {
   NcSchedule,
   NcTaxonomy,
   TaxonomyOption,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   conditionVisibleForKind,
   eventKindLabel,
@@ -68,14 +68,14 @@ import {
   sensorTransitionMeaning,
   sensorTransitionNeverFires,
   systemFamilyOfKind,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   DurationInput,
   Select,
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Info } from 'lucide-react'
 import type { TFunction } from 'i18next'
 import { useMemo } from 'react'

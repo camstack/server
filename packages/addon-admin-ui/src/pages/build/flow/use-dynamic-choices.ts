@@ -13,8 +13,8 @@ import {
   type DynamicOfferAnswerOf,
   type LooseVocabActionGate,
   type ResolvedVocabAction,
-} from '@camstack/types'
-import { useSystem } from '@camstack/ui-library'
+} from '@dominevo/types'
+import { useSystem } from '@dominevo/ui-library'
 import { useQueries, useQuery } from '@tanstack/react-query'
 import {
   capRouterKey,

@@ -8,7 +8,7 @@
  * that does not select settings is a snapshots-only archive.
  * `docs/architecture/backups.md` → "Which databases, and how often".
  */
-import type { DataStoreDatabase } from '@camstack/types'
+import type { DataStoreDatabase } from '@dominevo/types'
 import i18n from '../../i18n/index'
 
 interface DatabaseOption {

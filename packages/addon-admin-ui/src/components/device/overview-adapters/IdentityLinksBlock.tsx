@@ -12,7 +12,7 @@ import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import type { IdentityLink, IdentityLinkDecision } from '@camstack/types'
+import type { IdentityLink, IdentityLinkDecision } from '@dominevo/types'
 import {
   Button,
   ConfirmActionButton,
@@ -23,7 +23,7 @@ import {
   useDeviceManagerListIdentityLinks,
   useDeviceManagerRelinkIdentity,
   useDeviceManagerUnlinkIdentity,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { devicePath } from '../../../lib/customization-routes'
 import { InfoRow } from './shared/overview-primitives'
 

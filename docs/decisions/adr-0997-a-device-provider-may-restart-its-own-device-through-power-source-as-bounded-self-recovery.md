@@ -14,7 +14,7 @@ applies-to:
 and pressed restart. A KLF-200 gateway wedges after a session is closed with the
 house status monitor on (it refuses the next TLS handshake, then ECONNREFUSED,
 until it reboots on its own hours later). The operator was power-cycling its
-plug with Home Assistant automations, outside CamStack, which knew nothing of
+plug with Home Assistant automations, outside Dominevo, which knew nothing of
 the outage.
 
 Tried first: a "Power switch" setting on the Velux integration. Rejected: the

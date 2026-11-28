@@ -1,4 +1,4 @@
-import type { EnergySystemStatus } from '@camstack/types'
+import type { EnergySystemStatus } from '@dominevo/types'
 import { type ReactElement, useState } from 'react'
 import { useOptionalSystem, useTrpcClient } from '../../../contexts/system-context'
 import { useUiText } from '../../../contexts/ui-text'

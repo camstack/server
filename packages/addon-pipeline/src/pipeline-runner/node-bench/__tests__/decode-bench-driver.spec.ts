@@ -9,7 +9,7 @@ import {
   type NodeBenchDecodeCell,
   NodeBenchRunnerInputSchema,
   type NodeDecodeProfile,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { VirtualClock } from '../../capacity/__tests__/virtual-clock.js'
 import {

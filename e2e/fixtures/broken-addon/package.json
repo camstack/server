@@ -1,5 +1,5 @@
 {
-  "name": "@camstack/addon-broken-fixture",
+  "name": "@dominevo/addon-broken-fixture",
   "version": "0.0.1",
   "private": true,
   "description": "Deliberately-broken addon used by the e2e/addon-failure suite. Throws at module load to verify the AddonLoader surfaces the failure (Fix #7) and the picker filter excludes it (Fix #10).",

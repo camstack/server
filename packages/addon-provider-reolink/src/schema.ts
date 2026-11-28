@@ -83,7 +83,7 @@ export type ReolinkSocketDebugFlag = z.infer<typeof ReolinkSocketDebugFlagSchema
  * Persisted shape of one stream profile's encoder OPTION list.
  *
  * Kept structurally identical to `StreamProfileOptionsSchema` in
- * `@camstack/types` (the `stream-params` cap) so the same
+ * `@dominevo/types` (the `stream-params` cap) so the same
  * `mapEncStreamOptionsToProfileOptions` helper feeds both the cap's
  * live `getOptions` AND the persisted `deviceCache.encOptionsSnapshot`
  * that the editable Stream settings section reads synchronously.
@@ -305,7 +305,7 @@ export const reolinkCameraSchema = z.object({
       /**
        * Per-profile encoder OPTION lists from `getEncOptions` (the
        * advertised resolution / codec / framerate / bitrate sets).
-       * Structurally a `StreamParamsOptions` from `@camstack/types` —
+       * Structurally a `StreamParamsOptions` from `@dominevo/types` —
        * persisted so the camera driver's `getSettingsUISchema()` can
        * render the editable Stream section synchronously without an
        * async round-trip. Refreshed by the same probe that fills
@@ -774,7 +774,7 @@ export const reolinkCameraSchema = z.object({
   // The camera is the only authority (D62/D224-shape) — the form's `osd*`
   // patch keys are written straight to the camera via a read-modify-write
   // `setOsd` (cmd_id 25) and re-read into `deviceCache.osdSnapshot`; a
-  // stored copy here shadowed the camera forever after one CamStack write.
+  // stored copy here shadowed the camera forever after one Dominevo write.
   // Legacy stored values are stripped by this schema on the next re-parse.
   /**
    * Audio output volume — pushed via `setAudioCfg` (cmd_id=265,

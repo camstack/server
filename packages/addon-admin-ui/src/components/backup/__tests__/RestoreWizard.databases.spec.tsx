@@ -4,7 +4,7 @@
  * snapshots-only) archive says it does NOT touch configuration and is restored
  * whole, with no file-location whitelist.
  */
-import type { DataStoreDatabase } from '@camstack/types'
+import type { DataStoreDatabase } from '@dominevo/types'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -21,8 +21,8 @@ let archives: Archive[] = []
 let manifestLocations: string[] = []
 const mutate = vi.fn()
 
-vi.mock('@camstack/ui-library', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@camstack/ui-library')>()
+vi.mock('@dominevo/ui-library', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dominevo/ui-library')>()
   return {
     ...actual,
     useBackupListDestinations: () => ({

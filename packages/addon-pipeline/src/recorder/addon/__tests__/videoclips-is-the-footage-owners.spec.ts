@@ -1,5 +1,5 @@
 /**
- * The CamStack clip source is DECLARED and REGISTERED by the addon that owns
+ * The Dominevo clip source is DECLARED and REGISTERED by the addon that owns
  * the footage (D560).
  *
  * A clip from this source is a time WINDOW over recorded segments — the
@@ -20,7 +20,7 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { describe, expect, it, vi } from 'vitest'
-import type { LogExtras } from '@camstack/types'
+import type { LogExtras } from '@dominevo/types'
 import {
   createRecorderVideoclipsProvider,
   type VideoclipsWiringLogger,

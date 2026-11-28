@@ -9,7 +9,7 @@ import type {
   CameraSwitchId,
   HealthFinding,
   HealthFindingKind,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** The slice of a CameraStatus the health rows read. */
 export type HealthStatusFacts = Pick<

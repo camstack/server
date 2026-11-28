@@ -11,7 +11,7 @@
  * never retract one, and until a full read lands this session the accessory
  * answer is `unknown` (spawns, never prunes).
  */
-import type { AccessoryChildSpec } from '@camstack/types'
+import type { AccessoryChildSpec } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   abilityReadQuality,

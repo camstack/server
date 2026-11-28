@@ -6,7 +6,7 @@
  * SUPPRESSES one and drops the `ignore-certificate-errors` switch. Only the
  * exact strings `'agent'` and `'viewer'` select those roles; ANY other value —
  * a legacy store with no `role` key, a typo, corrupt JSON, `undefined` — falls
- * back to `'hub'` (the default, matching `@camstack/server`'s `resolveNodeRole`,
+ * back to `'hub'` (the default, matching `@dominevo/server`'s `resolveNodeRole`,
  * where an empty `CAMSTACK_ROLE` is a hub). Kept dependency-free for unit
  * testing.
  */

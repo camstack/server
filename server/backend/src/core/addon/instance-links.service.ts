@@ -11,7 +11,7 @@ import {
   type IIntegrationInstancesProvider,
   type InstanceUserFinder,
   type IntegrationInstanceLink,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { isIntegrationInstancesProvider } from './integration-instances-provider.js'
 
 export const INTEGRATION_INSTANCES_CAP = 'integration-instances'

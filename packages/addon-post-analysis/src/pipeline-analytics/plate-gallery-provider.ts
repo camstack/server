@@ -18,7 +18,7 @@ import {
   type Vehicle,
   type VehicleSampleInfo,
   userError,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { type GalleryMediaRow, toGalleryMediaRow } from './gallery-media-row.js'
 import { resolveIncludeCrops } from './include-crops-default.js'
 import { applyTrackLabelCandidate } from './pipeline/apply-track-label.js'

@@ -29,7 +29,7 @@ import type {
   NcSystemEventCondition,
   NcSystemEventFamily,
   NcSystemEventKind,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   DeviceErrorSeveritySchema,
   DeviceType,
@@ -43,7 +43,7 @@ import {
   systemEventClassKinds,
   systemEventClassOf,
   systemEventFilterAppliesToAnyKind,
-} from '@camstack/types'
+} from '@dominevo/types'
 import i18n from '../../i18n/index'
 
 /** One selectable system-event kind. */
@@ -168,7 +168,7 @@ export interface NcSystemEventFilterVisibility {
  * predicates, in the viewer as a second copy of them, and NOT AT ALL in the
  * engine — which applied every filter to every kind and failed nine of the
  * operator's eleven selected kinds closed. There is now one statement of it
- * (`systemEventFilterApplies` in `@camstack/types`), the engine reads it, and
+ * (`systemEventFilterApplies` in `@dominevo/types`), the engine reads it, and
  * `scripts/check-nc-system-filter-scope.ts` refuses a future hand-rolled copy.
  *
  * A filter that cannot narrow the selected kinds is HIDDEN rather than shown

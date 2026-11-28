@@ -6,7 +6,7 @@
  * The TXT record carries only public facts (node id, version, pairing state, and
  * a leaf fingerprint once paired) — finding an agent grants nothing.
  */
-import { AGENT_MDNS_QUERY_NAME, AGENT_MDNS_TXT_KEYS } from '@camstack/types'
+import { AGENT_MDNS_QUERY_NAME, AGENT_MDNS_TXT_KEYS } from '@dominevo/types'
 import {
   createRealMdnsSocket,
   type BrowseOptions,

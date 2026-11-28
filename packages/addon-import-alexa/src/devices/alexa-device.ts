@@ -17,7 +17,7 @@ import {
   type DeviceFeature,
   type InferNativeProvider,
   type LockControlStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { alexaAccounts, alexaCommands } from '../alexa-gateway.js'
 import type { AlexaCap } from '../alexa-domain-mapping.js'
 import {
@@ -64,7 +64,7 @@ const KNOWN_CAPS: ReadonlySet<AlexaCap> = new Set<AlexaCap>([
 ])
 
 /**
- * One imported Alexa smart-home appliance as a flat CamStack device. Registers
+ * One imported Alexa smart-home appliance as a flat Dominevo device. Registers
  * the typed caps derived from the appliance's Alexa capability interfaces and
  * routes outbound commands to the live account through the {@link alexaCommands}
  * sink. Mirrors the Matter endpoint device (flat, not a container).

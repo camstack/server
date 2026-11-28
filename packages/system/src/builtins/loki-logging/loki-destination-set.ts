@@ -13,7 +13,7 @@ import type {
   LogReadCapabilities,
   LogReadQuery,
   LogReadResult,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   LokiDestination,
   type LokiConfig,

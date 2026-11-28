@@ -17,7 +17,7 @@ const seed = {
   amazonPage: 'amazon.it',
   deviceId: 'DEV',
   macDms: { adp_token: 'FIXTURE-ADP-TOKEN' },
-  deviceAppName: 'CamStack',
+  deviceAppName: 'Dominevo',
   frc: 'FRC',
   'map-md': 'MAPMD',
 } as const
@@ -97,7 +97,7 @@ describe('token and cookie exchange primitives', () => {
         amazonPage: 'amazon.it',
         refreshToken: 'RT',
         loginCookie: 'a=b',
-        deviceAppName: 'CamStack',
+        deviceAppName: 'Dominevo',
         acceptLanguage: 'it-IT',
       },
       amazon.http,
@@ -114,7 +114,7 @@ describe('token and cookie exchange primitives', () => {
       {
         amazonPage: 'amazon.it',
         refreshToken: 'RT',
-        deviceAppName: 'CamStack',
+        deviceAppName: 'Dominevo',
         acceptLanguage: 'en-US',
       },
       amazon.http,
@@ -145,7 +145,7 @@ describe('completing a registration', () => {
     )
     expect(blob).toMatchObject({
       amazonPage: 'amazon.it',
-      deviceAppName: 'CamStack',
+      deviceAppName: 'Dominevo',
       refreshToken: 'FIXTURE-REFRESH-TOKEN',
       dataVersion: 2,
     })

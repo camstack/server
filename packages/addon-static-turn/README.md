@@ -1,10 +1,10 @@
 # Static / coturn TURN
 
-Static / self-hosted (coturn) TURN provider for CamStack.
+Static / self-hosted (coturn) TURN provider for Dominevo.
 
 <!-- readme:generated:start (derived from the manifest; edit outside this block) -->
 
-Package `@camstack/addon-static-turn` on npm.
+Package `@dominevo/addon-static-turn` on npm.
 
 ## What it provides
 
@@ -22,7 +22,7 @@ Edit these from System, Addons, this addon, Settings (a device's own settings ar
 ## Requirements
 
 - Placement: hub-only (runner group `net-access`).
-- A CamStack hub. An agent is used only where the placement above allows it.
+- A Dominevo hub. An agent is used only where the placement above allows it.
 
 See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
 

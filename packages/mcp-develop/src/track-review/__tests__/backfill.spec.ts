@@ -1,4 +1,4 @@
-import { HubRpcError } from '@camstack/develop'
+import { HubRpcError } from '@dominevo/develop'
 import { describe, expect, it } from 'vitest'
 import { backfillOrigins, planFrameBackfill, reconstructOrigin } from '../backfill.js'
 import type { RetrainAnnotation } from '../hub-api.js'

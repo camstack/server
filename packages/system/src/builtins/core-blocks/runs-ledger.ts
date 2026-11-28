@@ -27,7 +27,7 @@ import {
   type OnForHold,
   MAX_TRACE_KEEP,
   type RecordKindHandle,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { RunsRowBody } from './record-kinds.js'
 
 export const AUTOMATION_OWNER_PREFIX = 'automation:'

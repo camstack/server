@@ -14,7 +14,7 @@ import type {
   CamStreamDescriptor,
   EncodeProfile,
   IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const feederArgs: { args: readonly string[] | null } = { args: null }

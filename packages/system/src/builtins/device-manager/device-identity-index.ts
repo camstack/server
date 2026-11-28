@@ -38,7 +38,7 @@ import {
   type IdentityLinkKind,
   type IdentityLinkSide,
   type IdentityMatchedKey,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { PersistedDeviceMeta } from './device-meta-types.js'
 import type { DeviceRegistrationRow, DeviceRow, DeviceRowPatch } from './device-row-store.js'
 

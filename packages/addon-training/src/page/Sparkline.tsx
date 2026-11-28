@@ -3,8 +3,8 @@
  * Colour is the `primary` token.
  */
 import { useMemo } from 'react'
-import type { TrainingProgressPoint } from '@camstack/types'
-import { Sparkline as ChartSparkline, type SparklinePoint } from '@camstack/ui-library'
+import type { TrainingProgressPoint } from '@dominevo/types'
+import { Sparkline as ChartSparkline, type SparklinePoint } from '@dominevo/ui-library'
 import { useT } from '../i18n/index.js'
 
 export interface SparklineProps {

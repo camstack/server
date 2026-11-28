@@ -3,7 +3,7 @@ import {
   powerMeterCapability,
   type PowerMeterStatus,
   type ReadingQuantity,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { HaContainerEntityConfig } from './ha-container-reconcile.js'
 
 /**

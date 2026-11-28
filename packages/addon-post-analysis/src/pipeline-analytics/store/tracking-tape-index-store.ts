@@ -12,7 +12,7 @@
  * short `setBenchPinned`, a crash — is completed, never left as pins without
  * an index or an index without pins.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { EventLedgerCollection } from './event-ledger-collection.js'
 import { z } from 'zod'
 import { TapeLightingSchema } from '../tracking-bench/tape-schema.js'

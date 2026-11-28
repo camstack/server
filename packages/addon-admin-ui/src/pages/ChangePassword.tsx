@@ -1,4 +1,4 @@
-import { useSystem, useThemeMode, Button, Input } from '@camstack/ui-library'
+import { useSystem, useThemeMode, Button, Input } from '@dominevo/ui-library'
 import { Eye, EyeOff } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -102,7 +102,7 @@ export function ChangePasswordPage() {
                 ? hubPath('/brand/logo-horizontal-light.svg')
                 : hubPath('/brand/logo-horizontal-dark.svg')
             }
-            alt={t('changePassword.camstackAdmin', 'CamStack Admin')}
+            alt={t('changePassword.camstackAdmin', 'Dominevo Admin')}
             className="h-12"
           />
         </div>

@@ -18,14 +18,14 @@ applies-to:
 ## Context
 
 The CLI minted a narrow `cst_` scoped token after every login and treated
-admin deploy/update as a separate `camstack login --admin` path that wrote a
+admin deploy/update as a separate `dominevo login --admin` path that wrote a
 `csa_` file the credential chain auto-loaded. Operators had two credentials,
 two mental models, and MCP gates that only recognised `csa_` as admin tier
 even when the login JWT already carried `isAdmin: true`.
 
 ## Decision
 
-`camstack login` caches the login JWT from `auth.login` (including after TOTP).
+`dominevo login` caches the login JWT from `auth.login` (including after TOTP).
 Whether deploy and server update are allowed follows the logged-in user. The
 credential chain is `--token`, `--token-file`, `$CAMSTACK_TOKEN`, then the
 cached session — never an auto-read admin-token file. Local tier hints treat
@@ -42,11 +42,11 @@ presented explicitly.
 
 Legacy `~/.camstack/<host>.admin-token` files are ignored: not used for
 authentication, and (since 2026-10-21) not even for hub discovery. Operators run
-`camstack login <host>` with an admin account once; the session is refreshed
+`dominevo login <host>` with an admin account once; the session is refreshed
 automatically and every tool uses it.
 
 ## Enforcement
 
 Tests in `packages/develop/src/hub/__tests__/session-refresh.spec.ts` and
-`mcp-dev` `ops-admin-hint.spec.ts` (planning repo); `camstack login --admin`
+`mcp-dev` `ops-admin-hint.spec.ts` (planning repo); `dominevo login --admin`
 must error in `packages/cli/src/cli.ts`.

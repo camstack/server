@@ -1,4 +1,4 @@
-import { InstanceSwitchesUnreadError } from '@camstack/types'
+import { InstanceSwitchesUnreadError } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { rehydrateSwitchesOnHubConnect } from '../hub-connect-switches.js'
 

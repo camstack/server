@@ -30,7 +30,7 @@
  *    rather than hanging on a producer that no longer exists.
  *
  * Two consumers: `EgressTranscodeManager.acquireFragments` (the broker, for a
- * future CamStack clip source — roadmap 4b half 2) and `HksvFragmentSource` in
+ * future Dominevo clip source — roadmap 4b half 2) and `HksvFragmentSource` in
  * `addon-export-hap`. It stays unreachable from `acquireEgressTranscode`'s
  * request schema on purpose (see `egressTransportFromRequest`): a plane is a
  * live object, so an off-node caller could not use one anyway.

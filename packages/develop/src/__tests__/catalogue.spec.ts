@@ -18,14 +18,14 @@ describe('catalogue against this workspace', () => {
   it('lists addon packages including smtp-nodemailer', () => {
     const pkgs = listAddonPackages(root)
     expect(pkgs.length).toBeGreaterThan(10)
-    const smtp = pkgs.find((p) => p.packageName === '@camstack/addon-smtp-nodemailer')
+    const smtp = pkgs.find((p) => p.packageName === '@dominevo/addon-smtp-nodemailer')
     expect(smtp).toBeDefined()
     expect(smtp?.addons.some((a) => a.id === 'smtp-nodemailer')).toBe(true)
   })
 
   it('resolves an addon by short id', () => {
     const pkg = findAddonPackage(root, 'smtp-nodemailer')
-    expect(pkg?.packageName).toBe('@camstack/addon-smtp-nodemailer')
+    expect(pkg?.packageName).toBe('@dominevo/addon-smtp-nodemailer')
   })
 
   it('lists capabilities from *.cap.ts sources', () => {
@@ -61,7 +61,7 @@ describe('integration examples', () => {
     expect(ids).toContain(inRepo)
     expect(ids).toContain(pub)
     const publicHit = hits.find((h) => h.example.id === pub)
-    expect(publicHit?.example.repository).toBe('camstack/addon-examples')
+    expect(publicHit?.example.repository).toBe('dominevo/addon-examples')
     // A public example is not penalised for being absent from this checkout.
     expect(publicHit?.rationale).not.toContain('missing')
     expect(

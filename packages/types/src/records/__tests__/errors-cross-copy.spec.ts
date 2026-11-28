@@ -13,7 +13,7 @@ function foreignRecordsError(code: string): Error {
   return Object.assign(foreign, { code, [Symbol.for('camstack.records-error')]: true })
 }
 
-describe('records errors across copies of @camstack/types', () => {
+describe('records errors across copies of @dominevo/types', () => {
   it('a foreign rev-conflict is a RevConflictError and a RecordsError, not another subclass', () => {
     const foreign = foreignRecordsError('rev-conflict')
     expect(foreign instanceof RevConflictError).toBe(true)
@@ -33,6 +33,8 @@ describe('records errors across copies of @camstack/types', () => {
     expect(own instanceof RevConflictError).toBe(true)
     expect(own instanceof RecordsError).toBe(true)
     expect(own instanceof RecordTooLargeError).toBe(false)
-    expect(asRecordsError(foreignRecordsError('declaration-refused')) instanceof DeclarationRefusedError).toBe(true)
+    expect(
+      asRecordsError(foreignRecordsError('declaration-refused')) instanceof DeclarationRefusedError,
+    ).toBe(true)
   })
 })

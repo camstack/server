@@ -47,8 +47,8 @@ vi.mock('../PairingDialog', () => ({
     ),
 }))
 
-vi.mock('@camstack/ui-library', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@camstack/ui-library')>()),
+vi.mock('@dominevo/ui-library', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@dominevo/ui-library')>()),
   useConfirm: () => async (options: unknown) => {
     confirmSpy(options)
     return confirmAnswer

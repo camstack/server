@@ -12,7 +12,7 @@ import {
   deriveFeatureProvenance,
   implementedMethodsOf,
   valveCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { ComposedDevice } from '../composed-device.js'
 

@@ -1,9 +1,9 @@
 /**
  * The one place a bearer principal is classified and matched against a
  * `TokenScope` set. Pure — no I/O, no registry, no logger — so the kernel,
- * `server/backend` and any ADDON can share it. It lives in `@camstack/types`
+ * `server/backend` and any ADDON can share it. It lives in `@dominevo/types`
  * for exactly that reason: `scopesAllowDeviceCap` used to live in
- * `@camstack/server/system`, which addons may not import, so `addon-export-alexa`
+ * `@dominevo/server/system`, which addons may not import, so `addon-export-alexa`
  * hand-copied it into `directive-router.ts` and said so in a comment twice.
  * One vector, one derivation.
  *

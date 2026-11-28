@@ -79,13 +79,13 @@ not data loss beyond what already shipped — and both editors already send
 `clear` only when it is non-empty, so a call against a current hub that
 clears nothing is byte-identical to the old wire shape.
 
-`addon-post-analysis` builds self-contained and INLINES `@camstack/types`, so
+`addon-post-analysis` builds self-contained and INLINES `@dominevo/types`, so
 its own `NcRuleUpdateInputSchema` (the `nc.updateRule` action validates with
 it) is always the one it was built with — deploying the addon first breaks
 nothing at load. The coupling is the hub's cap-router INPUT validation:
 `notificationRules.updateRule` is validated against the copy of
-`@camstack/types` that `@camstack/system` inlines (`bundleTypesMainEntry`), so
-the `@camstack/server` release carrying the schema must be installed before a
+`@dominevo/types` that `@dominevo/system` inlines (`bundleTypesMainEntry`), so
+the `@dominevo/server` release carrying the schema must be installed before a
 caller sends `clear` through the cap route — until then the router is the
 older one described above.
 

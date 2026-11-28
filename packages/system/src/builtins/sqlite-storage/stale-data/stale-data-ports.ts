@@ -4,7 +4,7 @@
  * addon declares), the record catalog through the engine, the stored settings
  * through the backend this addon owns.
  */
-import type { AddonApi, IScopedLogger } from '@camstack/types'
+import type { AddonApi, IScopedLogger } from '@dominevo/types'
 import type { RecordsProvider } from '../records/records-provider.js'
 import type { SqliteSettingsBackend } from '../sqlite-settings-backend.js'
 import type { StaleDataPorts } from './stale-data-audit.js'

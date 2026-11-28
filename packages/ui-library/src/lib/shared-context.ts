@@ -2,7 +2,7 @@
  * Cross-bundle React Context sharing.
  *
  * Addon page bundles (benchmark, etc.) ship their own bundled copy of
- * `@camstack/ui-library`. Without sharing, each bundle calls
+ * `@dominevo/ui-library`. Without sharing, each bundle calls
  * `createContext()` and gets a fresh Context instance — so when the
  * bundle's hook reads from this Context, it doesn't match the host
  * admin-ui's <Provider> tree, and `useContext()` returns the default

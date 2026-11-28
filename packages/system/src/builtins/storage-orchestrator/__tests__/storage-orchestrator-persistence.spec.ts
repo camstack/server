@@ -8,7 +8,7 @@
  * the addon's boot path once Task 7 lands.
  */
 
-import type { IScopedLogger, StorageLocation } from '@camstack/types'
+import type { IScopedLogger, StorageLocation } from '@dominevo/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ILocationStore } from '../location-store.js'
 import { StorageOrchestratorService } from '../storage-orchestrator.service.js'

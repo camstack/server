@@ -117,9 +117,9 @@ let capturedUpdateOpts: UpdateMutationOpts | null = null
 // Module mocks — declared before any import of the page
 // ---------------------------------------------------------------------------
 
-vi.mock('@camstack/ui-library', async () => {
+vi.mock('@dominevo/ui-library', async () => {
   const actual =
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+    await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return {
     FileInput: actual.FileInput,
     Textarea: actual.Textarea,
@@ -185,7 +185,7 @@ vi.mock('@camstack/ui-library', async () => {
     useAddonsGetVersions: () => ({ data: [], isLoading: false, isError: false }),
     useAddonsGetPackageDocs: () => ({
       data: {
-        name: '@camstack/addon-tailscale',
+        name: '@dominevo/addon-tailscale',
         version: '1.2.3',
         readme: { status: 'ok', markdown: '# Tailscale\n\nConnects the hub.' },
         changelog: { status: 'missing' },
@@ -359,7 +359,7 @@ describe('Addons page — "Update all" engine job + layout', () => {
   it('handleUpdateAll calls startJob with real-addon targets only (system excluded)', async () => {
     mockUpdates = [
       {
-        name: '@camstack/addon-a',
+        name: '@dominevo/addon-a',
         currentVersion: '1.0.0',
         latestVersion: '1.0.1',
         isSystem: false,
@@ -367,7 +367,7 @@ describe('Addons page — "Update all" engine job + layout', () => {
         requiresRestart: false,
       },
       {
-        name: '@camstack/types',
+        name: '@dominevo/types',
         currentVersion: '0.1.38',
         latestVersion: '0.1.40',
         isSystem: true,
@@ -384,11 +384,11 @@ describe('Addons page — "Update all" engine job + layout', () => {
       fireEvent.click(updateAllBtn)
     })
 
-    // Only the real addon is batched; the system package (@camstack/types)
+    // Only the real addon is batched; the system package (@dominevo/types)
     // is filtered out of the bulk targets.
     expect(mockStartJob).toHaveBeenCalledWith({
       kind: 'update',
-      targets: [{ name: '@camstack/addon-a', version: '1.0.1' }],
+      targets: [{ name: '@dominevo/addon-a', version: '1.0.1' }],
       nodeIds: ['hub'],
     })
   })
@@ -400,7 +400,7 @@ describe('Addons page — "Update all" engine job + layout', () => {
     expect(screen.queryByRole('button', { name: /update all/i })).toBeNull()
   })
 
-  // 3. Layout: framework/system packages (@camstack/server/system, types, sdk,
+  // 3. Layout: framework/system packages (@dominevo/server/system, types, sdk,
   //    shm-ring, ui-library) are HIDDEN from the Addons page (phase 4) — they
   //    ride inside the node root package and are managed from Server
   //    management. Real addons stay listed.
@@ -410,7 +410,7 @@ describe('Addons page — "Update all" engine job + layout', () => {
       manifest: {
         id,
         name: id,
-        packageName: `@camstack/${id}`,
+        packageName: `@dominevo/${id}`,
         version: '1.0.0',
         packageVersion: '1.0.0',
         capabilities: noCapabilities,
@@ -433,8 +433,8 @@ describe('Addons page — "Update all" engine job + layout', () => {
       {
         manifest: {
           id: 'addon-a',
-          name: '@camstack/addon-a',
-          packageName: '@camstack/addon-a',
+          name: '@dominevo/addon-a',
+          packageName: '@dominevo/addon-a',
           version: '1.0.0',
           packageVersion: '1.0.0',
           capabilities: [],
@@ -446,7 +446,7 @@ describe('Addons page — "Update all" engine job + layout', () => {
         manifest: {
           id: 'system-builtin',
           name: 'System',
-          packageName: '@camstack/server',
+          packageName: '@dominevo/server',
           version: '1.0.2',
           packageVersion: '1.0.2',
           capabilities: [],
@@ -458,10 +458,10 @@ describe('Addons page — "Update all" engine job + layout', () => {
     renderPage()
 
     // Regular addon renders…
-    expect(screen.getByText('@camstack/addon-a')).toBeTruthy()
-    // …the framework package (@camstack/server/system) is filtered out entirely — no
+    expect(screen.getByText('@dominevo/addon-a')).toBeTruthy()
+    // …the framework package (@dominevo/server/system) is filtered out entirely — no
     // card, and none of the old "System" badge / restart-on-update tooltip.
-    expect(screen.queryByText((content) => content.includes('@camstack/server'))).toBeNull()
+    expect(screen.queryByText((content) => content.includes('@dominevo/server'))).toBeNull()
     expect(screen.queryByTitle(/updating restarts the hub/i)).toBeNull()
   })
 
@@ -470,7 +470,7 @@ describe('Addons page — "Update all" engine job + layout', () => {
     // SystemPackagesSection renders "System packages" in its SectionFrame header
     mockFrameworkPackages = [
       {
-        packageName: '@camstack/types',
+        packageName: '@dominevo/types',
         currentVersion: '0.1.38',
         latestVersion: null,
         hasUpdate: false,
@@ -499,7 +499,7 @@ describe('Addons page — a server-too-old hold opens the cluster update', () =>
     mockLastRestart = null
     mockUpdates = [
       {
-        name: '@camstack/addon-a',
+        name: '@dominevo/addon-a',
         currentVersion: '1.0.0',
         latestVersion: '2.0.0',
         isSystem: false,
@@ -513,7 +513,7 @@ describe('Addons page — a server-too-old hold opens the cluster update', () =>
         manifest: {
           id: 'addon-a',
           name: 'Addon A',
-          packageName: '@camstack/addon-a',
+          packageName: '@dominevo/addon-a',
           version: '1.0.0',
           packageVersion: '1.0.0',
           capabilities: [],
@@ -536,7 +536,7 @@ describe('Addons page — a server-too-old hold opens the cluster update', () =>
 function twoAddonsWithUpdates() {
   mockUpdates = [
     {
-      name: '@camstack/addon-a',
+      name: '@dominevo/addon-a',
       currentVersion: '1.0.0',
       latestVersion: '1.0.1',
       isSystem: false,
@@ -544,7 +544,7 @@ function twoAddonsWithUpdates() {
       requiresRestart: false,
     },
     {
-      name: '@camstack/addon-b',
+      name: '@dominevo/addon-b',
       currentVersion: '2.0.0',
       latestVersion: '2.0.1',
       isSystem: false,
@@ -556,8 +556,8 @@ function twoAddonsWithUpdates() {
     {
       manifest: {
         id: 'addon-a',
-        name: '@camstack/addon-a',
-        packageName: '@camstack/addon-a',
+        name: '@dominevo/addon-a',
+        packageName: '@dominevo/addon-a',
         version: '1.0.0',
         packageVersion: '1.0.0',
         capabilities: [],
@@ -568,8 +568,8 @@ function twoAddonsWithUpdates() {
     {
       manifest: {
         id: 'addon-b',
-        name: '@camstack/addon-b',
-        packageName: '@camstack/addon-b',
+        name: '@dominevo/addon-b',
+        packageName: '@dominevo/addon-b',
         version: '2.0.0',
         packageVersion: '2.0.0',
         capabilities: [],
@@ -611,7 +611,7 @@ describe('Addons page — concurrent per-addon update progress (F4)', () => {
 
     // First addon finishes — the second keeps its progress.
     await act(async () => {
-      capturedUpdateOpts?.onSuccess?.({ success: true }, { name: '@camstack/addon-a' })
+      capturedUpdateOpts?.onSuccess?.({ success: true }, { name: '@dominevo/addon-a' })
     })
     expect(screen.getAllByText('Updating…').length).toBe(1)
   })
@@ -631,11 +631,11 @@ describe('Addons page — concurrent per-addon update progress (F4)', () => {
     await act(async () => {
       capturedUpdateOpts?.onSuccess?.(
         { success: false, error: 'npm registry 404' },
-        { name: '@camstack/addon-b' },
+        { name: '@dominevo/addon-b' },
       )
     })
 
-    expect(screen.getByText(/failed to update @camstack\/addon-b/i)).toBeTruthy()
+    expect(screen.getByText(/failed to update @dominevo\/addon-b/i)).toBeTruthy()
     expect(screen.getByText(/npm registry 404/i)).toBeTruthy()
     // Addon A is still updating.
     expect(screen.getAllByText('Updating…').length).toBe(1)
@@ -671,8 +671,8 @@ describe('Addons page — concurrent per-addon update progress (F4)', () => {
       ],
     })
     mockLiveJobMap = new Map([
-      ['job-a', { job: mkJob('job-a', '@camstack/addon-a', 'applying') }],
-      ['job-b', { job: mkJob('job-b', '@camstack/addon-b', 'fetching') }],
+      ['job-a', { job: mkJob('job-a', '@dominevo/addon-a', 'applying') }],
+      ['job-b', { job: mkJob('job-b', '@dominevo/addon-b', 'fetching') }],
     ])
     renderPage()
 
@@ -771,7 +771,7 @@ describe('Addons page — the node in the URL is the node on screen', () => {
         manifest: {
           id: 'stream-broker',
           name: 'Stream broker',
-          packageName: '@camstack/addon-stream-broker',
+          packageName: '@dominevo/addon-stream-broker',
           version: '2.3.4',
           packageVersion: '2.3.4',
           capabilities: [],
@@ -865,7 +865,7 @@ describe('Addons page — placement banner + list filters (task 8)', () => {
         manifest: {
           id: 'stream-broker',
           name: 'Stream broker',
-          packageName: '@camstack/addon-stream-broker',
+          packageName: '@dominevo/addon-stream-broker',
           version: '1.0.0',
           packageVersion: '1.0.0',
           capabilities: [],
@@ -882,7 +882,7 @@ describe('Addons page — placement banner + list filters (task 8)', () => {
   it('Updatable filter hides packages without an available update', async () => {
     mockUpdates = [
       {
-        name: '@camstack/addon-a',
+        name: '@dominevo/addon-a',
         currentVersion: '1.0.0',
         latestVersion: '1.0.1',
         isSystem: false,
@@ -894,8 +894,8 @@ describe('Addons page — placement banner + list filters (task 8)', () => {
       {
         manifest: {
           id: 'addon-a',
-          name: '@camstack/addon-a',
-          packageName: '@camstack/addon-a',
+          name: '@dominevo/addon-a',
+          packageName: '@dominevo/addon-a',
           version: '1.0.0',
           packageVersion: '1.0.0',
           capabilities: [],
@@ -907,8 +907,8 @@ describe('Addons page — placement banner + list filters (task 8)', () => {
       {
         manifest: {
           id: 'addon-b',
-          name: '@camstack/addon-b',
-          packageName: '@camstack/addon-b',
+          name: '@dominevo/addon-b',
+          packageName: '@dominevo/addon-b',
           version: '2.0.0',
           packageVersion: '2.0.0',
           capabilities: [],
@@ -919,15 +919,15 @@ describe('Addons page — placement banner + list filters (task 8)', () => {
       },
     ]
     renderPage()
-    expect(screen.getByText('@camstack/addon-a')).toBeTruthy()
-    expect(screen.getByText('@camstack/addon-b')).toBeTruthy()
+    expect(screen.getByText('@dominevo/addon-a')).toBeTruthy()
+    expect(screen.getByText('@dominevo/addon-b')).toBeTruthy()
 
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: /^updatable$/i }))
     })
 
-    expect(screen.getByText('@camstack/addon-a')).toBeTruthy()
-    expect(screen.queryByText('@camstack/addon-b')).toBeNull()
+    expect(screen.getByText('@dominevo/addon-a')).toBeTruthy()
+    expect(screen.queryByText('@dominevo/addon-b')).toBeNull()
   })
 
   it('source dev filter shows only installSource local packages', async () => {
@@ -936,7 +936,7 @@ describe('Addons page — placement banner + list filters (task 8)', () => {
         manifest: {
           id: 'npm-pkg',
           name: 'Npm addon',
-          packageName: '@camstack/addon-npm',
+          packageName: '@dominevo/addon-npm',
           version: '1.0.0',
           packageVersion: '1.0.0',
           capabilities: [],
@@ -949,7 +949,7 @@ describe('Addons page — placement banner + list filters (task 8)', () => {
         manifest: {
           id: 'dev-pkg',
           name: 'Dev addon',
-          packageName: '@camstack/addon-dev',
+          packageName: '@dominevo/addon-dev',
           version: '1.0.0',
           packageVersion: '1.0.0',
           capabilities: [],
@@ -960,15 +960,15 @@ describe('Addons page — placement banner + list filters (task 8)', () => {
       },
     ]
     renderPage()
-    expect(screen.getByText('@camstack/addon-npm')).toBeTruthy()
-    expect(screen.getByText('@camstack/addon-dev')).toBeTruthy()
+    expect(screen.getByText('@dominevo/addon-npm')).toBeTruthy()
+    expect(screen.getByText('@dominevo/addon-dev')).toBeTruthy()
 
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: /^dev$/i }))
     })
 
-    expect(screen.queryByText('@camstack/addon-npm')).toBeNull()
-    expect(screen.getByText('@camstack/addon-dev')).toBeTruthy()
+    expect(screen.queryByText('@dominevo/addon-npm')).toBeNull()
+    expect(screen.getByText('@dominevo/addon-dev')).toBeTruthy()
   })
 
   it('source npm filter shows only non-local packages', async () => {
@@ -977,7 +977,7 @@ describe('Addons page — placement banner + list filters (task 8)', () => {
         manifest: {
           id: 'npm-pkg',
           name: 'Npm addon',
-          packageName: '@camstack/addon-npm',
+          packageName: '@dominevo/addon-npm',
           version: '1.0.0',
           packageVersion: '1.0.0',
           capabilities: [],
@@ -990,7 +990,7 @@ describe('Addons page — placement banner + list filters (task 8)', () => {
         manifest: {
           id: 'dev-pkg',
           name: 'Dev addon',
-          packageName: '@camstack/addon-dev',
+          packageName: '@dominevo/addon-dev',
           version: '1.0.0',
           packageVersion: '1.0.0',
           capabilities: [],
@@ -1006,8 +1006,8 @@ describe('Addons page — placement banner + list filters (task 8)', () => {
       fireEvent.click(screen.getByRole('button', { name: /^npm$/i }))
     })
 
-    expect(screen.getByText('@camstack/addon-npm')).toBeTruthy()
-    expect(screen.queryByText('@camstack/addon-dev')).toBeNull()
+    expect(screen.getByText('@dominevo/addon-npm')).toBeTruthy()
+    expect(screen.queryByText('@dominevo/addon-dev')).toBeNull()
   })
 
   it('source filter is exclusive — npm and Dev cannot both stay pressed', async () => {
@@ -1016,7 +1016,7 @@ describe('Addons page — placement banner + list filters (task 8)', () => {
         manifest: {
           id: 'npm-pkg',
           name: 'Npm addon',
-          packageName: '@camstack/addon-npm',
+          packageName: '@dominevo/addon-npm',
           version: '1.0.0',
           packageVersion: '1.0.0',
           capabilities: [],
@@ -1029,7 +1029,7 @@ describe('Addons page — placement banner + list filters (task 8)', () => {
         manifest: {
           id: 'dev-pkg',
           name: 'Dev addon',
-          packageName: '@camstack/addon-dev',
+          packageName: '@dominevo/addon-dev',
           version: '1.0.0',
           packageVersion: '1.0.0',
           capabilities: [],
@@ -1051,8 +1051,8 @@ describe('Addons page — placement banner + list filters (task 8)', () => {
     })
     expect(screen.getByRole('button', { name: /^npm$/i })).toHaveAttribute('aria-pressed', 'false')
     expect(screen.getByRole('button', { name: /^dev$/i })).toHaveAttribute('aria-pressed', 'true')
-    expect(screen.queryByText('@camstack/addon-npm')).toBeNull()
-    expect(screen.getByText('@camstack/addon-dev')).toBeTruthy()
+    expect(screen.queryByText('@dominevo/addon-npm')).toBeNull()
+    expect(screen.getByText('@dominevo/addon-dev')).toBeTruthy()
   })
 
   it('filters stay applied after switching node (URL-backed)', () => {
@@ -1081,7 +1081,7 @@ describe('Addons page — placement banner + list filters (task 8)', () => {
         manifest: {
           id: 'npm-pkg',
           name: 'Npm addon',
-          packageName: '@camstack/addon-npm',
+          packageName: '@dominevo/addon-npm',
           version: '1.0.0',
           packageVersion: '1.0.0',
           capabilities: [],
@@ -1095,7 +1095,7 @@ describe('Addons page — placement banner + list filters (task 8)', () => {
         manifest: {
           id: 'dev-pkg',
           name: 'Dev addon',
-          packageName: '@camstack/addon-dev',
+          packageName: '@dominevo/addon-dev',
           version: '1.0.0',
           packageVersion: '1.0.0',
           capabilities: [],
@@ -1108,7 +1108,7 @@ describe('Addons page — placement banner + list filters (task 8)', () => {
     ]
     mockUpdates = [
       {
-        name: '@camstack/addon-npm',
+        name: '@dominevo/addon-npm',
         currentVersion: '1.0.0',
         latestVersion: '1.0.1',
         isSystem: false,
@@ -1127,14 +1127,14 @@ describe('Addons page — placement banner + list filters (task 8)', () => {
       'true',
     )
     expect(screen.getByRole('button', { name: /^npm$/i })).toHaveAttribute('aria-pressed', 'true')
-    expect(screen.getByText('@camstack/addon-npm')).toBeTruthy()
-    expect(screen.queryByText('@camstack/addon-dev')).toBeNull()
+    expect(screen.getByText('@dominevo/addon-npm')).toBeTruthy()
+    expect(screen.queryByText('@dominevo/addon-dev')).toBeNull()
   })
 })
 
 describe('Addons page — ?capability= offers uninstalled addons (D860)', () => {
   const tailscale = {
-    name: '@camstack/addon-tailscale',
+    name: '@dominevo/addon-tailscale',
     version: '1.2.3',
     description: 'Tailnet client',
     keywords: [],
@@ -1183,7 +1183,7 @@ describe('Addons page — ?capability= offers uninstalled addons (D860)', () => 
     if (confirm === undefined) throw new Error('install confirm missing')
     fireEvent.click(confirm)
     expect(mockInstall).toHaveBeenCalledWith({
-      packageName: '@camstack/addon-tailscale',
+      packageName: '@dominevo/addon-tailscale',
       version: '1.2.3',
     })
   })

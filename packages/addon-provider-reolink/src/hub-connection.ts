@@ -1,4 +1,4 @@
-import { type ConfigUISchema, isSecretMarkerLike } from '@camstack/types'
+import { type ConfigUISchema, isSecretMarkerLike } from '@dominevo/types'
 import { z } from 'zod'
 import { ReolinkSocketDebugFlagSchema } from './schema.js'
 

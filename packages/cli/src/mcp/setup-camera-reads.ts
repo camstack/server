@@ -4,7 +4,7 @@
  * status, trimmed to the fields those tools use. Every schema is loose (a newer
  * hub may add fields); a failed read is a reason, never an empty answer.
  */
-import type { HubClient } from '@camstack/develop'
+import type { HubClient } from '@dominevo/develop'
 import { z } from 'zod'
 import { readQuery, type Read } from './ops-hub.js'
 

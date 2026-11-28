@@ -1,4 +1,4 @@
-import { RemoteLayoutPayloadSchema, type RemoteLayoutPayload } from '@camstack/types'
+import { RemoteLayoutPayloadSchema, type RemoteLayoutPayload } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   addButton,

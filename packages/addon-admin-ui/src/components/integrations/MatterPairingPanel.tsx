@@ -16,7 +16,7 @@ import {
   useBrokerGetState,
   useBrokerInstances,
   useBrokerPublish,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Loader2 } from 'lucide-react'
 
 /** The broker kind this dialog commissions into (this dialog IS the Matter flow). */

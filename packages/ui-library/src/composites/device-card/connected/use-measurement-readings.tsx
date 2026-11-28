@@ -1,4 +1,4 @@
-import { isNotReported } from '@camstack/types'
+import { isNotReported } from '@dominevo/types'
 import { useState } from 'react'
 import { useUiText } from '../../../contexts/ui-text'
 import { useUnitPreferences } from '../../../contexts/unit-preferences'

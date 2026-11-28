@@ -3,7 +3,7 @@
 Connects to an EXISTING Zigbee2MQTT server over its frontend WebSocket
 (`ws[s]://host:port/api[?token=]`, envelope `{ topic, payload }`). One integration
 instance = one server (`host`, `port`, `tls`, `token` as a `password` field in the keychain).
-One CamStack device per Zigbee device, keyed by `ieee_address`; `friendly_name` is only the
+One Dominevo device per Zigbee device, keyed by `ieee_address`; `friendly_name` is only the
 label and the `<friendly_name>/set` topic, resolved at the moment of a command so a rename is
 followed. Independent of `provider-mqtt-ha`: no migration, no dedupe.
 
@@ -22,5 +22,5 @@ followed. Independent of `provider-mqtt-ha`: no migration, no dedupe.
 <!-- camstack-skills-pointer:begin — written by `npx tsx scripts/skills/gen-skill-pointers.ts`; edit the generator, not this block -->
 Follow the skill; do not reconstruct the procedure (any agent can open the file):
 
-- A new or changed addon or manifest entry; `camstack deploy` → `camstack-addon` (`.claude/skills/camstack-addon/SKILL.md`)
+- A new or changed addon or manifest entry; `dominevo deploy` → `camstack-addon` (`.claude/skills/camstack-addon/SKILL.md`)
 <!-- camstack-skills-pointer:end -->

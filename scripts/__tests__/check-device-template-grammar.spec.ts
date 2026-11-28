@@ -15,10 +15,10 @@ describe('check-device-template-grammar', () => {
   })
 
   it('keeps the types barrel out of the worker as a value', () => {
-    expect(barrelViolations('w.ts', "import { A } from '@camstack/types'")).toHaveLength(1)
-    expect(barrelViolations('w.ts', "import type { A } from '@camstack/types'")).toEqual([])
+    expect(barrelViolations('w.ts', "import { A } from '@dominevo/types'")).toHaveLength(1)
+    expect(barrelViolations('w.ts', "import type { A } from '@dominevo/types'")).toEqual([])
     expect(
-      barrelViolations('w.ts', "import { tryConvertUnit } from '@camstack/types/units-lean'"),
+      barrelViolations('w.ts', "import { tryConvertUnit } from '@dominevo/types/units-lean'"),
     ).toEqual([])
   })
 })

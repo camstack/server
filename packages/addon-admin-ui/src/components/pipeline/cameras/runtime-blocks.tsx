@@ -14,17 +14,17 @@
  * its numbers in the danger color so the stall is visible inside the block
  * as well as in the card-level problem banner.
  */
-import { getPhaseVisual, PhaseIcon, useUiText } from '@camstack/ui-library'
+import { getPhaseVisual, PhaseIcon, useUiText } from '@dominevo/ui-library'
 import type {
   CameraBrokerStatus,
   CameraDecoderStatus,
   CameraDetectionStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { LiveDetectionMetrics } from './use-cameras-overview'
 import { CardBlock, Chip, KVRow, StageInactive } from './card-primitives'
 import type { ChipTone } from './card-primitives'
 import { useTranslation } from 'react-i18next'
-import { formatNumeric } from '@camstack/ui-library'
+import { formatNumeric } from '@dominevo/ui-library'
 
 // ---------------------------------------------------------------------------
 // Detection

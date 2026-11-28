@@ -18,7 +18,7 @@
  * Emits a transition per `(camera, class)` only when presence changes; the
  * Alexa-facing hold (≥ 30 s DETECTED before NOT_DETECTED) is the gateway's.
  */
-import { COCO_TO_MACRO } from '@camstack/types'
+import { COCO_TO_MACRO } from '@dominevo/types'
 import type { DetectionSensorClass } from '../handlers/endpoint-id.js'
 import { DETECTION_SENSOR_CLASSES } from '../handlers/endpoint-id.js'
 

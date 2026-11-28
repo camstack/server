@@ -40,7 +40,7 @@ import { captureCoalesceKey, type CaptureScheduler } from '../runtime/capture-sc
 import type { TrackFrameTarget, TrackSnapshotTarget } from '../services/event-media-dispatcher.js'
 import { evaluatePeriodicSnapshot } from '../snapshot-movement-gate.js'
 import type { TrackStore } from '../store/track-store.js'
-import type { AddonContext, FrameHandle, ParkedFrameKind } from '@camstack/types'
+import type { AddonContext, FrameHandle, ParkedFrameKind } from '@dominevo/types'
 import type { FrameMediaCapture } from './frame-media-capture.js'
 
 /** Rolling `lastFrame` cadence — deliberately DENSER than the 5s snapshot

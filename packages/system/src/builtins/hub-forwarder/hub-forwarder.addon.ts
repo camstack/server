@@ -1,5 +1,5 @@
-import type { ProviderRegistration } from '@camstack/types'
-import { BaseAddon, logDestinationCapability } from '@camstack/types'
+import type { ProviderRegistration } from '@dominevo/types'
+import { BaseAddon, logDestinationCapability } from '@dominevo/types'
 import { HubForwarderDestination } from './hub-forwarder-destination.js'
 
 /**

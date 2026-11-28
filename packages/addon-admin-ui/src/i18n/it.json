@@ -208,9 +208,9 @@
       "addMesh": "Aggiungi mesh",
       "status": "Stato",
       "meshNetworks2": "Reti mesh",
-      "privateVpnMeshesThatConnect": "Mesh VPN private che collegano CamStack ai tuoi altri dispositivi (Tailscale, Headscale, …). Ogni provider può anche esporre questo hub pubblicamente tramite il suo ingress (Tailscale Funnel).",
+      "privateVpnMeshesThatConnect": "Mesh VPN private che collegano Dominevo ai tuoi altri dispositivi (Tailscale, Headscale, …). Ogni provider può anche esporre questo hub pubblicamente tramite il suo ingress (Tailscale Funnel).",
       "noMeshNetworkProvidersInstalled": "Nessun provider di rete mesh installato",
-      "installAMeshAddonE": "Installa un addon mesh (es. @camstack/addon-tailscale) per unire questo hub a una mesh VPN privata.",
+      "installAMeshAddonE": "Installa un addon mesh (es. @dominevo/addon-tailscale) per unire questo hub a una mesh VPN privata.",
       "joined": "Unito",
       "notJoined": "Non unito",
       "disconnect": "Disconnetti",
@@ -1009,7 +1009,7 @@
       "remoteAccess2": "Accesso remoto",
       "publicFacingTunnelsThatExpose": "Tunnel pubblici che espongono questo hub a internet (Cloudflare Tunnel, ngrok, …).",
       "noRemoteAccessProvidersInstalled": "Nessun provider di accesso remoto installato",
-      "installATunnelAddonE": "Installa un addon tunnel (es. @camstack/addon-cloudflare) per esporre pubblicamente questo hub.",
+      "installATunnelAddonE": "Installa un addon tunnel (es. @dominevo/addon-cloudflare) per esporre pubblicamente questo hub.",
       "connected": "Connesso",
       "disconnected": "Disconnesso",
       "stop": "Ferma",
@@ -1052,7 +1052,7 @@
       "turnServers": "Server TURN",
       "iceServersUsedForWebrtc": "Server ICE usati per l'attraversamento NAT di WebRTC. Più provider possono coesistere — il livello WebRTC concatena, per ogni sessione, i server di tutti i provider abilitati.",
       "noTurnProvidersInstalled": "Nessun provider TURN installato",
-      "installATurnAddonE": "Installa un addon TURN (es. @camstack/addon-cloudflare) per abilitare WebRTC dietro NAT restrittivi.",
+      "installATurnAddonE": "Installa un addon TURN (es. @dominevo/addon-cloudflare) per abilitare WebRTC dietro NAT restrittivi.",
       "combinedIceServerListAll": "Elenco combinato dei server ICE — tutti i provider abilitati",
       "noServersFromEnabledProviders": "Nessun server dai provider abilitati."
     },
@@ -1225,7 +1225,7 @@
       "kindOfSystemRule": "Tipo di regola di sistema",
       "oneRuleAnswersOneQuestion": "Una regola risponde a una domanda: sui dispositivi, sull'installazione o sull'allarme. Cambiarla riparte da un elenco eventi vuoto.",
       "alarmPictures": "— quando una regola fa scattare l'allarme, questa notifica porta le immagini di quella regola.",
-      "hubOutdated": "Il server di questo hub è precedente alle soglie dei consumabili per regola e agli avvisi dei serbatoi: scarta la soglia di una regola al salvataggio (la regola giudica poi al {{percent}}%) e rifiuta gli eventi dei serbatoi. Aggiorna prima il server (@camstack/server) su ogni nodo.",
+      "hubOutdated": "Il server di questo hub è precedente alle soglie dei consumabili per regola e agli avvisi dei serbatoi: scarta la soglia di una regola al salvataggio (la regola giudica poi al {{percent}}%) e rifiuta gli eventi dei serbatoi. Aggiorna prima il server (@dominevo/server) su ogni nodo.",
       "faultCodes": "Codici di guasto",
       "faultCodesEmpty": "Nessun codice di guasto dichiarato: scrivine uno, o lascia vuoto per qualsiasi guasto.",
       "faultCodePlaceholder": "Codice di guasto… (vuoto = qualsiasi guasto)",
@@ -1328,9 +1328,9 @@
       "title": "Provider di training",
       "backToTraining": "Torna a Training",
       "accounts": "Account cloud",
-      "accountsSubtitle": "Account GPU-cloud che eseguono i job di training. Ogni account ha il proprio token, GPU, limite di costo e regione; le credenziali restano nel keychain di CamStack.",
+      "accountsSubtitle": "Account GPU-cloud che eseguono i job di training. Ogni account ha il proprio token, GPU, limite di costo e regione; le credenziali restano nel keychain di Dominevo.",
       "noProviders": "Nessun provider di training installato",
-      "noProvidersDescription": "Installa un addon provider di training (ad esempio @camstack/addon-training) per addestrare sul tuo account GPU-cloud.",
+      "noProvidersDescription": "Installa un addon provider di training (ad esempio @dominevo/addon-training) per addestrare sul tuo account GPU-cloud.",
       "addAccount": "Aggiungi account"
     },
     "bootstrapForm": {
@@ -1657,7 +1657,7 @@
   },
   "pages": {
     "viewer": {
-      "frameTitle": "Viewer CamStack",
+      "frameTitle": "Viewer Dominevo",
       "underMountTitle": "Il viewer non può essere mostrato attraverso questo relay",
       "underMountBody": "Questa admin UI è servita sotto {{mount}}. L’app viewer funziona solo all’indirizzo proprio dell’hub — aprila lì, in una nuova scheda."
     },
@@ -1912,7 +1912,7 @@
       "phase": {
         "discovering": "Ricerca del dispositivo",
         "pase": "Apertura di una sessione sicura",
-        "commissioning": "Aggiunta a CamStack",
+        "commissioning": "Aggiunta a Dominevo",
         "done": "Aggiunto"
       },
       "broker": "Fabric Matter",
@@ -3562,12 +3562,12 @@
   },
   "connectPhone": {
     "title": "Collega un telefono",
-    "description": "Inquadra il codice con il telefono per aprire l'app CamStack (o il viewer web) su questo hub. Il link contiene solo l'indirizzo dell'hub — nessun token, nessuna credenziale.",
-    "signInHint": "L'app poi accede con il login abituale: password (e codice TOTP, se attivo) oppure \"Accedi con CamStack\".",
+    "description": "Inquadra il codice con il telefono per aprire l'app Dominevo (o il viewer web) su questo hub. Il link contiene solo l'indirizzo dell'hub — nessun token, nessuna credenziale.",
+    "signInHint": "L'app poi accede con il login abituale: password (e codice TOTP, se attivo) oppure \"Accedi con Dominevo\".",
     "addressLabel": "Indirizzo dell'hub per il telefono",
     "copyLink": "Copia link",
     "linkLabel": "Link di collegamento",
-    "qrAlt": "Codice QR che apre l'app CamStack su questo hub",
+    "qrAlt": "Codice QR che apre l'app Dominevo su questo hub",
     "loading": "Lettura degli indirizzi di questo hub…",
     "error": "Impossibile leggere gli indirizzi di questo hub: {{message}}",
     "retry": "Riprova",
@@ -3602,7 +3602,7 @@
     },
     "locationCapacityBar": {
       "capacityUnknown": "Capacità sconosciuta",
-      "capacityUnknownCamstackHolds": "Capacità sconosciuta · CamStack occupa {{owned}}"
+      "capacityUnknownCamstackHolds": "Capacità sconosciuta · Dominevo occupa {{owned}}"
     },
     "locationDiscardControl": {
       "discardLeftoversOn": "Scartare gli avanzi su \"{{displayName}}\"?",
@@ -3974,13 +3974,13 @@
       "custom": "Personalizzata",
       "presets": "Preimpostazioni",
       "pending": "Lettura della tavolozza del cluster…",
-      "unknown": "La tavolozza salvata non si legge ({{reason}}). I riquadri usano la preimpostazione CamStack inclusa.",
+      "unknown": "La tavolozza salvata non si legge ({{reason}}). I riquadri usano la preimpostazione Dominevo inclusa.",
       "valid": "Ogni colore è distinto su entrambi i temi.",
       "invalid": "Questa tavolozza è rifiutata: {{reason}}",
       "save": "Salva la tavolozza personalizzata",
       "preview": "Segni della timeline",
       "subclasses": "Sottoclassi",
-      "sourceUnconfigured": "Preimpostazione CamStack (predefinita del cluster)"
+      "sourceUnconfigured": "Preimpostazione Dominevo (predefinita del cluster)"
     },
     "stepSwitches": {
       "reason": {
@@ -5277,7 +5277,7 @@
       "whatToBackUp": "Cosa salvare nel backup"
     },
     "backupEncryptionCard": {
-      "thisKeyIsShownOnly": "Questa chiave viene mostrata una sola volta. CamStack non la conserva — né l'hub, né il suo database, né i suoi backup. Senza di essa un backup cifrato non può essere ripristinato da nessuno, te compreso. Salvala in un password manager o stampala, lontano da questo server.",
+      "thisKeyIsShownOnly": "Questa chiave viene mostrata una sola volta. Dominevo non la conserva — né l'hub, né il suo database, né i suoi backup. Senza di essa un backup cifrato non può essere ripristinato da nessuno, te compreso. Salvala in un password manager o stampala, lontano da questo server.",
       "copied": "Copiato",
       "downloadAsFile": "Scarica come file",
       "iHaveStoredThisKey": "Ho conservato questa chiave in un posto sicuro, fuori da questo server.",
@@ -5687,7 +5687,7 @@
       "removeSignInLink": "Rimuovi collegamento di accesso",
       "willNoLongerBeAble": "\"{{ownerName}}\" non potrà più accedere con questo account {{kind}}.",
       "signInLinks": "Collegamenti di accesso",
-      "externalAccountsSingleSignOn": "Account esterni (accesso unico) che ogni utente ha collegato al proprio account CamStack. Solo il proprietario può collegarne uno, dal suo profilo; un amministratore può rimuoverlo."
+      "externalAccountsSingleSignOn": "Account esterni (accesso unico) che ogni utente ha collegato al proprio account Dominevo. Solo il proprietario può collegarne uno, dal suo profilo; un amministratore può rimuoverlo."
     },
     "nouns": {
       "shareLink_one": "link di condivisione",
@@ -6100,8 +6100,8 @@
     "couldNotPrepareTheSign": "Impossibile preparare il passaggio dell'accesso. Hai effettuato l'accesso: riprova qui sotto.",
     "preparingAOneTimeSign": "Preparazione di un codice di accesso monouso…",
     "ifTheAppDoesNot": "Se l'app non si apre da sola, tocca qui sotto (il codice scade tra 60 s).",
-    "openCamstack": "Apri CamStack",
-    "camstackAdmin": "CamStack Admin",
+    "openCamstack": "Apri Dominevo",
+    "camstackAdmin": "Dominevo Admin",
     "username": "Nome utente",
     "password": "Password",
     "logIn": "Accedi",
@@ -6116,7 +6116,7 @@
     "backToUsernamePassword": "Torna a nome utente + password",
     "signInTo": "Accedi a <b>{{name}}</b>",
     "finishSigningInAs": "Completa l'accesso come <mono>{{username}}</mono>.",
-    "version": "CamStack v{{version}}",
+    "version": "Dominevo v{{version}}",
     "primaryMethods": {
       "loadFailed": "Impossibile caricare un metodo di accesso — ricarica la pagina per riprovare."
     }
@@ -6238,7 +6238,7 @@
       "noValueCanBeRead": "Nessun valore può essere letto o memorizzato. Se la chiave master è persa per sempre, Reimposta archivia tutti i valori memorizzati e avvia una nuova keychain; ogni campo segreto risulterà quindi “non impostato”.",
       "withoutACopyOfThe": "Senza una copia della chiave master, i valori memorizzati non possono essere recuperati.",
       "theKeychainUnlockedWithA": "La keychain è stata sbloccata con una chiave precedente. Ruota per passare a quella configurata.",
-      "backupKeyFile": "I backup di CamStack lasciano fuori la chiave, ma un backup dell'intera directory dati (un tar di appdata) porta con sé entrambe. Monta il file della chiave in <code>/run/secrets/camstack-master-key</code>, fuori dal volume dati, conserva la vecchia in <code>/run/secrets/camstack-master-key.previous</code>, riavvia, poi ruota.",
+      "backupKeyFile": "I backup di Dominevo lasciano fuori la chiave, ma un backup dell'intera directory dati (un tar di appdata) porta con sé entrambe. Monta il file della chiave in <code>/run/secrets/camstack-master-key</code>, fuori dal volume dati, conserva la vecchia in <code>/run/secrets/camstack-master-key.previous</code>, riavvia, poi ruota.",
       "resetByTrigger": "il file trigger RESET_KEYCHAIN",
       "resetByAdmin": "un admin ({{actor}})",
       "resetDetail": "Reimpostato il {{when}} da {{by}}. {{archived}} valore/i memorizzato/i sono stati archiviati — illeggibili senza la chiave principale persa. Tutti sono stati disconnessi una volta."
@@ -6366,14 +6366,14 @@
       "loading": "Caricamento..."
     },
     "appLayout": {
-      "camstackAdmin": "CamStack Admin",
+      "camstackAdmin": "Dominevo Admin",
       "expandSidebar": "Espandi la barra laterale",
       "collapseSidebar": "Comprimi la barra laterale",
       "logout": "Esci",
       "user": "Utente",
       "adminUiV": "admin-ui v{{__APP_VERSION__}}",
       "openMenu": "Apri il menu",
-      "camstack": "CamStack",
+      "camstack": "Dominevo",
       "debugLayers": "Livelli di debug",
       "debugLayersOn": "Livelli di debug: attivi"
     }
@@ -6517,7 +6517,7 @@
       "blankHint": "Parti da un trigger e passi vuoti.",
       "body": "Automazione",
       "builtIn": "Integrato",
-      "builtInHint": "Fornito con CamStack e in sola lettura. Duplicalo per ottenere una copia modificabile.",
+      "builtInHint": "Fornito con Dominevo e in sola lettura. Duplicalo per ottenere una copia modificabile.",
       "choose": "Scegli…",
       "convert": "Converti in automazione libera",
       "convertMessage": "{{name}} continua a funzionare così com'è, ma non segue più il template.",
@@ -7145,7 +7145,7 @@
     "goToDevices": "Vai ai Dispositivi"
   },
   "changePassword": {
-    "camstackAdmin": "CamStack Admin",
+    "camstackAdmin": "Dominevo Admin",
     "setANewPassword": "Imposta una nuova password",
     "youMustRotateTheSeed": "Devi cambiare la password iniziale prima di continuare.",
     "chooseANewPasswordFor": "Scegli una nuova password per il tuo account.",
@@ -7371,13 +7371,13 @@
     "backToSignIn": "Torna all'accesso"
   },
   "oauthLanding": {
-    "brand": "CamStack",
+    "brand": "Dominevo",
     "errorTitle": "Accesso non completato",
     "successTitle": "Accesso eseguito",
-    "successBody": "L’account è collegato. Ritorno a CamStack…",
+    "successBody": "L’account è collegato. Ritorno a Dominevo…",
     "signedOutTitle": "Disconnesso",
     "signedOutBody": "L’account è stato scollegato da questo hub.",
-    "back": "Torna a CamStack",
+    "back": "Torna a Dominevo",
     "close": "Chiudi questa finestra",
     "reason": {
       "access_denied": "L’accesso è stato negato, quindi non è stato collegato nulla.",
@@ -7386,10 +7386,10 @@
       "unknown_broker": "Quella connessione non esiste più. Aggiungila di nuovo, poi accedi.",
       "not_configured": "Alla connessione mancano ID client o segreto. Compilali, salva, poi accedi.",
       "exchange_failed": "Il provider non ha accettato l’accesso. Controlla ID client e segreto, poi riprova.",
-      "no_refresh_token": "Il provider non ha restituito un accesso di lunga durata. Rimuovi CamStack dalle app collegate dell’account, poi accedi di nuovo.",
+      "no_refresh_token": "Il provider non ha restituito un accesso di lunga durata. Rimuovi Dominevo dalle app collegate dell’account, poi accedi di nuovo.",
       "unavailable": "L’hub sta ancora avviando questa integrazione. Attendi un momento e riprova.",
       "unknown": "Qualcosa è andato storto. Riprova tra un momento.",
-      "no_authorization_code": "Il provider ha concluso l'accesso senza concedere l'autorizzazione a CamStack. Riavvia l'accesso dall'inizio."
+      "no_authorization_code": "Il provider ha concluso l'accesso senza concedere l'autorizzazione a Dominevo. Riavvia l'accesso dall'inizio."
     },
     "cliLoginTitle": "Terminale connesso",
     "cliLoginBody": "Torna al terminale: completa l'accesso da solo."
@@ -7758,13 +7758,13 @@
       "pairADevice": "Associa un dispositivo",
       "createPairingCode": "Crea codice di associazione",
       "done": "Fatto",
-      "createsAOneTimeCode": "Crea un codice monouso per un telefono che hai in mano. Inquadralo con l'app CamStack su quel telefono; il telefono resta poi connesso come l'utente scelto finché non lo revochi.",
+      "createsAOneTimeCode": "Crea un codice monouso per un telefono che hai in mano. Inquadralo con l'app Dominevo su quel telefono; il telefono resta poi connesso come l'utente scelto finché non lo revochi.",
       "user": "Utente",
       "deviceName": "Nome del dispositivo",
       "howThisPhoneIsListed": "Come appare questo telefono nell'elenco, ad es. iPhone di Anna.",
       "annaSIphone": "iPhone di Anna",
       "enrollmentQrCode": "Codice QR di registrazione",
-      "openTheCamstackAppOn": "Apri l'app CamStack sul telefono e inquadra questo codice. Funziona una sola volta.",
+      "openTheCamstackAppOn": "Apri l'app Dominevo sul telefono e inquadra questo codice. Funziona una sola volta.",
       "expiredCreateANewCode": "Scaduto: crea un nuovo codice",
       "expiresIn": "Scade tra {{label}}",
       "theHubCouldNotName": "L'hub non ha potuto indicare un indirizzo per questo link, quindi l'app deve già conoscerlo.",
@@ -8522,7 +8522,7 @@
       "motionClip": "Movimento ({{count}})",
       "audioClip": "Audio",
       "recorderUnavailable": "Registratore non disponibile: il servizio di registrazione potrebbe non essere in esecuzione su questo nodo.",
-      "availabilityUnreadable": "Non è stato possibile interrogare CamStack sulle registrazioni di questa telecamera: questa barra non mostra nulla, il che non equivale ad assenza di filmati.",
+      "availabilityUnreadable": "Non è stato possibile interrogare Dominevo sulle registrazioni di questa telecamera: questa barra non mostra nulla, il che non equivale ad assenza di filmati.",
       "hlsMode": "Modalità HLS",
       "resumeTitle": "Riprendi la riproduzione",
       "pauseTitle": "Metti in pausa la riproduzione",
@@ -9181,7 +9181,7 @@
       "listFailed": "Impossibile leggere l'elenco delle clip",
       "silentSources_one": "Una sorgente non ha contribuito con nulla a questo elenco",
       "silentSources_other": "{{count}} sorgenti non hanno contribuito con nulla a questo elenco",
-      "intro": "Tutte le sorgenti di questa telecamera, affiancate: le registrazioni di CamStack e ciò che la telecamera o un'esportazione conserva per conto proprio. Una sorgente è elencata perché esiste, non perché è stata attivata qui; scegli le sorgenti per restringere la vista.",
+      "intro": "Tutte le sorgenti di questa telecamera, affiancate: le registrazioni di Dominevo e ciò che la telecamera o un'esportazione conserva per conto proprio. Una sorgente è elencata perché esiste, non perché è stata attivata qui; scegli le sorgenti per restringere la vista.",
       "periodHint": "L'elenco segue il periodo selezionato nella barra temporale qui sotto, il controllo della sezione registrazioni. Riduci lo zoom per ampliarlo, trascina o scegli un giorno per spostarlo, clicca una barra di densità per restringerlo a quella finestra.",
       "unknownMessage": "Il registro delle capability non è raggiungibile, quindi non si sa se questa telecamera abbia sorgenti di clip: non significa che manchino.",
       "absentDescription": "Non è installato nulla in grado di elencare le clip archiviate di una telecamera.",
@@ -11196,7 +11196,7 @@
         "queued": "In coda",
         "ready": "Pronto",
         "test": "Invia prova",
-        "testBody": "Notifica di prova da CamStack."
+        "testBody": "Notifica di prova da Dominevo."
       },
       "script": {
         "idle": "Pronto",
@@ -11743,7 +11743,7 @@
       "roleCoordinator": "Coordinatore",
       "roleUnknown": "Sconosciuto",
       "nodeDetail": "Nodo: {{label}}",
-      "peerOnly": "Questo nodo è nella rete ma non è stato aggiunto da CamStack, quindi sono noti solo i suoi collegamenti.",
+      "peerOnly": "Questo nodo è nella rete ma non è stato aggiunto da Dominevo, quindi sono noti solo i suoi collegamenti.",
       "extAddress": "Indirizzo",
       "child": "Figlio",
       "yes": "Sì",
@@ -12223,13 +12223,13 @@
     },
     "addressTableModel": {
       "appConnectionsTitle": "Connessioni delle app",
-      "appConnectionsHelp": "Indirizzi che le app CamStack provano per connettersi; puoi sceglierne diversi. Automatico: indirizzi LAN più il tunnel pubblico. Ogni indirizzo LAN ha anche una riga HTTPS (la porta sicura dell'hub): un telefono che si fida del certificato locale dell'hub la usa, gli altri la saltano; deselezionala per smettere di proporla.",
+      "appConnectionsHelp": "Indirizzi che le app Dominevo provano per connettersi; puoi sceglierne diversi. Automatico: indirizzi LAN più il tunnel pubblico. Ogni indirizzo LAN ha anche una riga HTTPS (la porta sicura dell'hub): un telefono che si fida del certificato locale dell'hub la usa, gli altri la saltano; deselezionala per smettere di proporla.",
       "notificationTapsTitle": "Tocco sulle notifiche",
-      "notificationTapsHelp": "Solo dove si apre toccando una notifica; un solo indirizzo. Automatico: il link dell'app CamStack (apre l'app se installata, altrimenti l'app web).",
+      "notificationTapsHelp": "Solo dove si apre toccando una notifica; un solo indirizzo. Automatico: il link dell'app Dominevo (apre l'app se installata, altrimenti l'app web).",
       "publicEndpointTitle": "Endpoint pubblico",
       "publicEndpointHelp": "Ogni link che deve funzionare fuori casa: accesso, single sign-on e collegamento account, passkey, e i pulsanti, gli allegati e i link admin nelle notifiche; un solo indirizzo. Automatico: il tuo tunnel pubblico, poi Tailscale, poi la LAN. Cambiarlo invalida le passkey registrate.",
       "internalTitle": "Interno",
-      "internalHelp": "Da dove le altre macchine CamStack e i dispositivi LAN scaricano addon, modelli e media; un solo indirizzo. Automatico: l'indirizzo LAN dell'hub."
+      "internalHelp": "Da dove le altre macchine Dominevo e i dispositivi LAN scaricano addon, modelli e media; un solo indirizzo. Automatico: l'indirizzo LAN dell'hub."
     },
     "alarmNonblocking": {
       "refusedNoName": "Non inserito: l'hub ha rifiutato senza nominare un dispositivo aperto.",
@@ -12430,13 +12430,13 @@
     },
     "ssoReturn": {
       "signInFallback": "accesso",
-      "notLinked": "Questo account {{provider}} non è collegato a nessun utente CamStack. Accedi normalmente e collegalo dal tuo profilo.",
+      "notLinked": "Questo account {{provider}} non è collegato a nessun utente Dominevo. Accedi normalmente e collegalo dal tuo profilo.",
       "state": "Impossibile completare qui questo accesso: è stato avviato in un altro browser o è già stato usato. Riavvialo da questa pagina.",
       "link": {
         "expired": "La richiesta di collegamento è scaduta o è già stata usata. Premi di nuovo Collega.",
         "provider": "L'accesso si è concluso presso un provider diverso da quello scelto. Premi di nuovo Collega.",
-        "session": "L'accesso non si è concluso nella sessione del browser che lo ha avviato. Accedi qui a CamStack e premi di nuovo Collega.",
-        "conflict": "Quell'account di accesso è già collegato a un altro utente CamStack.",
+        "session": "L'accesso non si è concluso nella sessione del browser che lo ha avviato. Accedi qui a Dominevo e premi di nuovo Collega.",
+        "conflict": "Quell'account di accesso è già collegato a un altro utente Dominevo.",
         "state": "Impossibile associare l'accesso a questo browser, oppure è già stato usato. Premi di nuovo Collega.",
         "failed": "Collegamento dell'account di accesso non riuscito. Riprova."
       }
@@ -12584,23 +12584,23 @@
     },
     "locationCapacityBar": {
       "unknownSummary": "Capacità sconosciuta: da qui nessuno ha misurato questo volume. Una condivisione remota, una posizione su un altro nodo o un mount che non ha risposto.",
-      "unknownSummaryOwned": "Capacità sconosciuta: da qui nessuno ha misurato questo volume. Una condivisione remota, una posizione su un altro nodo o un mount che non ha risposto. CamStack occupa {{size}} qui.",
+      "unknownSummaryOwned": "Capacità sconosciuta: da qui nessuno ha misurato questo volume. Una condivisione remota, una posizione su un altro nodo o un mount che non ha risposto. Dominevo occupa {{size}} qui.",
       "reserveKept": "{{size}} tenuti liberi",
       "ownedOfRecordings": "{{size}} di registrazioni ({{percent}})",
-      "capDrain": "{{size}} di obiettivo di svuotamento (gestito da CamStack)",
-      "capCap": "{{size}} di limite (gestito da CamStack)",
+      "capDrain": "{{size}} di obiettivo di svuotamento (gestito da Dominevo)",
+      "capCap": "{{size}} di limite (gestito da Dominevo)",
       "summaryFree": "{{free}} liberi su {{total}} ({{percent}} liberi)",
-      "summaryOwned": "CamStack occupa {{owned}}",
+      "summaryOwned": "Dominevo occupa {{owned}}",
       "summaryReserveShort": "{{reserve}}: in questo momento c’è meno spazio libero, i dati più vecchi qui vengono eliminati",
       "summaryCapBelow": "{{cap}}: già sotto ciò che è memorizzato qui, i dati più vecchi vengono eliminati",
       "legendKeptFree": "Tenuto libero",
-      "legendCamstack": "CamStack",
+      "legendCamstack": "Dominevo",
       "legendUsed": "Usato",
       "legendOtherData": "Altri dati",
       "legendFree": "Libero",
       "legendDrainTarget": "Obiettivo di svuotamento",
       "legendCap": "Limite",
-      "legendCapValue": "{{size}} · gestito da CamStack"
+      "legendCapValue": "{{size}} · gestito da Dominevo"
     },
     "locationMode": {
       "activeLabel": "Attiva",
@@ -12618,7 +12618,7 @@
       "targetDefault": "{{percent}}% del volume (il valore predefinito)",
       "targetGb": "{{value}} GB",
       "targetPercent": "{{value}}% del volume",
-      "helpText": "CamStack tiene liberi {{target}} su questo disco. Man mano che si riempie, i dati PIÙ VECCHI qui memorizzati vengono eliminati per mantenere quello spazio libero; se non si riesce più a mantenerlo, i nuovi dati vanno in un’altra posizione dello stesso tipo invece di riempire il disco. Lascia vuoto il valore per usare quello predefinito ({{percent}}%)."
+      "helpText": "Dominevo tiene liberi {{target}} su questo disco. Man mano che si riempie, i dati PIÙ VECCHI qui memorizzati vengono eliminati per mantenere quello spazio libero; se non si riesce più a mantenerlo, i nuovi dati vanno in un’altra posizione dello stesso tipo invece di riempire il disco. Lascia vuoto il valore per usare quello predefinito ({{percent}}%)."
     },
     "keychainNotices": {
       "lockedKeyMissing": "impossibile caricare alcuna chiave master",
@@ -14058,9 +14058,9 @@
     "ageMinutes": "{{count}} min fa",
     "deny": "Nega",
     "approve": "Approva",
-    "brand": "CamStack",
+    "brand": "Dominevo",
     "deniedBody": "L'accesso è stato negato. Il terminale resta disconnesso.",
-    "back": "Torna a CamStack",
+    "back": "Torna a Dominevo",
     "pendingTitle": "Accessi da terminale in attesa",
     "notMe": "Non sono io",
     "pendingHint": "Per approvarne uno, apri la pagina di approvazione e scrivi il codice mostrato dal terminale.",

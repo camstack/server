@@ -34,7 +34,7 @@ Three things were left that described a design no longer running:
   selector was removed. So it never registered `decoder`. Its `audio-codec`
   provider was the inactive side of a singleton whose active provider was
   `decoder-nodeav` on every node. It still ran a runner on every node.
-- **`@camstack/shm-ring`.** It had left the closure with
+- **`@dominevo/shm-ring`.** It had left the closure with
   [D184](adr-0184-the-closure-carries-no-package-nothing-imports.md). It stayed
   a host-external, a closure-provided cleanup entry, a vite external, an nx
   implicit dependency of addon-pipeline, a Checks prebuild step and a prebuild
@@ -70,7 +70,7 @@ and the load view) and `reprobeHwaccel`. `decoder-nodeav` is its only provider
 and also the node's `audio-codec`. Nothing in the cluster decodes video except
 the runner's session-decode worker.
 
-`decoder-ffmpeg` and `@camstack/shm-ring` are deleted from the repository with
+`decoder-ffmpeg` and `@dominevo/shm-ring` are deleted from the repository with
 everything that existed only to build, publish, prebuild or resolve them.
 `EventCategory.PipelineAgentHwaccelChanged` (no emitter; its last subscriber was
 the D762 rotation) is removed with them. A capability, package or event that
@@ -106,7 +106,7 @@ made D762's dead fields read as measurements.
   unpublish.
 - An older hub receiving a newer `decoder-nodeav` is fine: the provider only
   shrank. A newer hub calling an older `decoder-nodeav` is fine too: `getInfo`
-  only lost optional fields. Cap and router ship together in `@camstack/server`.
+  only lost optional fields. Cap and router ship together in `@dominevo/server`.
 - `reprobeHwaccel` keeps its vaapi-above-qsv ranking in
   `packages/addon-decoder-nodeav/src/decode-hwaccel-rank.ts`. It is a copy of
   the broker's ranking in `packages/addon-pipeline/src/shared/ffmpeg-decode-args.ts`,
@@ -121,4 +121,4 @@ schema is exported; the hwaccel-changed event exists; or `packages/shm-ring` or 
 `packages/addon-decoder-ffmpeg` reappears. `decoder-nodeav-per-node-settings.spec.ts` <!-- drift-ok: the guard asserts these stay deleted -->
 fails if the addon grows a session method back. The method-tier guard fails on
 any new decoder method until it is recorded, and `host-externals.spec.ts` fails
-if `@camstack/shm-ring` returns to the host-external list.
+if `@dominevo/shm-ring` returns to the host-external list.

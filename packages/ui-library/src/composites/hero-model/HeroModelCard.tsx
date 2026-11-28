@@ -7,7 +7,7 @@ import {
   type HeroRow,
   type HeroTimedRunSlot,
   heroArgsWithValue,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { Minus, Plus } from 'lucide-react'
 import { Fragment, type ReactNode, useEffect, useState } from 'react'
 import { useUnitPreferences } from '../../contexts/unit-preferences'

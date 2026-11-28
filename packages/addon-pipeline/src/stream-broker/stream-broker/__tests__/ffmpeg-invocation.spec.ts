@@ -1,6 +1,6 @@
 /**
  * The broker's ffmpeg ADAPTER. It no longer contains a builder — the argv comes
- * from the ONE builder in `@camstack/types` (`ffmpeg/invocation.ts`), and this
+ * from the ONE builder in `@dominevo/types` (`ffmpeg/invocation.ts`), and this
  * module only translates the broker's vocabulary into it.
  *
  * The assertions below are unchanged from when the builder lived here: they now
@@ -10,7 +10,7 @@
  * ffmpeg-invocation.spec.ts`.
  */
 import { describe, it, expect } from 'vitest'
-import type { HardwareEncoders, FfmpegSink, FfmpegAudioSidecar } from '@camstack/types'
+import type { HardwareEncoders, FfmpegSink, FfmpegAudioSidecar } from '@dominevo/types'
 import {
   hwAccelSettingToPrefer,
   classifyDecodeHwAccel,

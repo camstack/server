@@ -16,7 +16,7 @@
  *  - always compute (drop the `enabled` check): the disabled test fails,
  *    because `computeAppearanceDescriptor` IS called.
  */
-import type { FrameResult, ObjectDetection } from '@camstack/types'
+import type { FrameResult, ObjectDetection } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { attachAppearanceDescriptors, attachAppearanceIfEnabled } from '../appearance-attach.js'
 import type { RgbView } from '../appearance-descriptor.js'

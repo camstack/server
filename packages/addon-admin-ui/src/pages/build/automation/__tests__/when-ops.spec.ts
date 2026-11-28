@@ -1,4 +1,4 @@
-import type { AutomationLeaf, AutomationRecipe } from '@camstack/types'
+import type { AutomationLeaf, AutomationRecipe } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { EMPTY_RECIPE } from '../recipe-parts'
 import {

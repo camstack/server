@@ -4,7 +4,7 @@ import {
   DeviceType,
   type IDeviceRuntimeState,
   snapshotCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { installTerminalCameraRelay, TerminalCameraDevice } from '../terminal-camera-device.js'
 import type { TerminalCameraRelay } from '../terminal-camera-relay.js'

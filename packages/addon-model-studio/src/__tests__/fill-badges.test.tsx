@@ -5,7 +5,7 @@
  */
 import { afterEach, describe, expect, it } from 'vitest'
 import { cleanup, render, screen } from '@testing-library/react'
-import { COCO_80_LABELS, COCO_TO_MACRO, rootSuppliesOf } from '@camstack/types'
+import { COCO_80_LABELS, COCO_TO_MACRO, rootSuppliesOf } from '@dominevo/types'
 import { FillBadges } from '../components/FillBadges.js'
 
 afterEach(cleanup)

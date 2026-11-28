@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { DaylightSettings } from '@camstack/types'
+import type { DaylightSettings } from '@dominevo/types'
 import { draftOfSettings, pendingChanges, settingsOfDraft } from '../daylight-draft'
 
 const SENSOR: DaylightSettings = {

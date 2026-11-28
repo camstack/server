@@ -15,7 +15,7 @@
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import { DATABASE_SNAPSHOT_SUFFIX } from '@camstack/types'
+import { DATABASE_SNAPSHOT_SUFFIX } from '@dominevo/types'
 import Database from 'better-sqlite3'
 import * as tar from 'tar'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'

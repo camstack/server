@@ -2,7 +2,7 @@
  * Tailscale Ingress addon — manages `tailscale serve` (in-tailnet
  * HTTPS) and `tailscale funnel` (public HTTPS) ingresses.
  *
- * Depends on `@camstack/addon-tailscale-client` being installed and
+ * Depends on `@dominevo/addon-tailscale-client` being installed and
  * the host being joined to a tailnet. The mesh readiness check goes
  * through the `mesh-network` cap so we don't have to import the client
  * package directly.
@@ -28,7 +28,7 @@ import {
   networkAccessCapability,
   type InferProvider,
   type ProviderRegistration,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 type NetworkAccessProvider = InferProvider<typeof networkAccessCapability>
 import { randomUUID } from 'node:crypto'
@@ -475,7 +475,7 @@ export class TailscaleIngressAddon extends BaseAddon<TailscaleIngressConfig> {
       status = await this.fetchMeshStatus({ addonId: 'tailscale-client' })
     } catch (err) {
       throw new Error(
-        'tailscale-ingress: tailscale-client provider not registered — install + start the @camstack/addon-tailscale-client addon first.',
+        'tailscale-ingress: tailscale-client provider not registered — install + start the @dominevo/addon-tailscale-client addon first.',
         { cause: err },
       )
     }

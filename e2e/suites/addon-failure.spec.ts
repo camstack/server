@@ -15,7 +15,7 @@
  *   5. Uninstall succeeds without error — operator can recover.
  *
  * The fixture is staged onto the hub's data dir directly (cp -R into
- * `<dataDir>/addons/@camstack/addon-broken-fixture/`) BEFORE hub spawn,
+ * `<dataDir>/addons/@dominevo/addon-broken-fixture/`) BEFORE hub spawn,
  * so the AddonInstaller sees it on first scan.
  */
 import * as fs from 'node:fs'
@@ -44,7 +44,7 @@ const __dirname = path.dirname(__filename)
 // bundled closure instead of pulling them from npm (same as addon-update-on-agent).
 const REPO_PACKAGES_DIR = path.resolve(__dirname, '..', '..', 'packages')
 const FIXTURE_PACKAGE_DIR = path.resolve(__dirname, '..', 'fixtures', 'broken-addon')
-const FIXTURE_PACKAGE_NAME = '@camstack/addon-broken-fixture'
+const FIXTURE_PACKAGE_NAME = '@dominevo/addon-broken-fixture'
 const FIXTURE_ADDON_ID = 'broken-addon'
 
 let dataDir: TestDataDir | null = null
@@ -55,7 +55,7 @@ const E2E_LIVE = process.env['CAMSTACK_E2E_LIVE'] === '1'
 const desc = E2E_LIVE ? describe : describe.skip
 
 function stageBrokenAddon(targetDataDir: string): void {
-  const target = path.join(targetDataDir, 'addons', '@camstack', 'addon-broken-fixture')
+  const target = path.join(targetDataDir, 'addons', '@dominevo', 'addon-broken-fixture')
   fs.mkdirSync(target, { recursive: true })
   // Shallow copy — fixture is 3 files, no node_modules.
   for (const entry of fs.readdirSync(FIXTURE_PACKAGE_DIR)) {

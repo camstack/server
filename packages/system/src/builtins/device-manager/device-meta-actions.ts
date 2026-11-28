@@ -25,7 +25,7 @@ import {
   composedBlockIdOf,
   renameCompositionBlock,
 } from '../core-blocks/rename-composition-block.js'
-import type { AddonContext } from '@camstack/types'
+import type { AddonContext } from '@dominevo/types'
 import {
   type DeviceBindingEntry,
   type DeviceCapDisplayOverride,
@@ -39,8 +39,8 @@ import {
   reconcileReportedFeatures,
   type RoleDisplayDefault,
   settleDeviceFeatures,
-} from '@camstack/types'
-import { canonicalDeviceFingerprint } from '@camstack/types/node'
+} from '@dominevo/types'
+import { canonicalDeviceFingerprint } from '@dominevo/types/node'
 import { clearDeviceSettings } from '../../kernel/device-settings-store.js'
 import {
   freeAliasFor,

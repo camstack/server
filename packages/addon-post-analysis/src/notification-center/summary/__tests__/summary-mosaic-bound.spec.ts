@@ -12,7 +12,7 @@
  * goes through the delete that confirms its blob.
  */
 import { describe, expect, it } from 'vitest'
-import type { MediaFileRef } from '@camstack/types'
+import type { MediaFileRef } from '@dominevo/types'
 import { makeLogRecorder } from '../../../pipeline-analytics/__tests__/test-helpers.js'
 import {
   isWriterBoundedOwnerKind,

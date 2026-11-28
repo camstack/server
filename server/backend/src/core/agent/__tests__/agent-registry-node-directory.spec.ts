@@ -7,7 +7,7 @@
  * `complete: false` (D315).
  */
 import { describe, expect, it } from 'vitest'
-import { createRecordsAccess, type IScopedLogger, type RecordsTransport } from '@camstack/types'
+import { createRecordsAccess, type IScopedLogger, type RecordsTransport } from '@dominevo/types'
 import { clusterAgentRecordKinds } from '../../../../../../packages/system/src/builtins/cluster-agent/record-kinds.js'
 import { makeRecordsWorld } from '../../../../../../packages/system/src/builtins/sqlite-storage/__tests__/support/records-world.js'
 import { AgentRegistryService } from '../agent-registry.service.js'

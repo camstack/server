@@ -4,7 +4,7 @@
  * host is on Nodes → General. The shared `DataTable` scrolls sideways on a
  * phone rather than turning into cards.
  */
-import { DataTable, type DataColumn, Switch } from '@camstack/ui-library'
+import { DataTable, type DataColumn, Switch } from '@dominevo/ui-library'
 import {
   CAPABILITY_META,
   capabilityValue,

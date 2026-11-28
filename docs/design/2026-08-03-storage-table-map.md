@@ -190,7 +190,7 @@ like this is worse than a hole, because it reads as fact.
 
 | Marker | Means |
 | --- | --- |
-| **[measured]** | Read off the live hub (`root@<hub-ip>`, container `CamStack`, `/data/addons-data/sqlite-settings/camstack.db`) on 2026-08-03, read-only, via `better-sqlite3` opened with `readonly: true`. Row counts, `dbstat` byte sizes, `sqlite_master` DDL, `EXPLAIN QUERY PLAN` output, `AVG(LENGTH(blob))`, value distributions. |
+| **[measured]** | Read off the live hub (`root@<hub-ip>`, container `Dominevo`, `/data/addons-data/sqlite-settings/camstack.db`) on 2026-08-03, read-only, via `better-sqlite3` opened with `readonly: true`. Row counts, `dbstat` byte sizes, `sqlite_master` DDL, `EXPLAIN QUERY PLAN` output, `AVG(LENGTH(blob))`, value distributions. |
 | **[source]** | Read out of a source file at the cited `file:line`. Zod schema, TS type, SQL string, call site. |
 | **[undetermined]** | Could not be established. Stated as a hole, never filled with something plausible. |
 
@@ -331,7 +331,7 @@ will ever read.** The real list is §7.4.
 | `page_count` | 70,792 |
 | `freelist_count` | **22,106 pages = 86 MiB, 31% of the file, reclaimable by one `VACUUM`** |
 | `mmap_size` | **0** — memory-mapped I/O is off |
-| `cache_size` | `-16000` (16 MiB). Not set by CamStack; this is not the SQLite default (`-2000`), so something in the closure sets it — **[undetermined]** where. |
+| `cache_size` | `-16000` (16 MiB). Not set by Dominevo; this is not the SQLite default (`-2000`), so something in the closure sets it — **[undetermined]** where. |
 | `auto_vacuum` | `0` (none) |
 | `user_version` | **0** — there is no schema version, and therefore no migration ledger |
 | `foreign_keys` | `ON` (`sqlite-settings-backend.ts:100`) — but **no table declares a foreign key**, so it is inert |
@@ -1333,7 +1333,7 @@ Worth recording as a guard that already works:
 `better-sqlite3` **out** of the host-external list, with a test that asserts it
 (`packages/system/src/kernel/__tests__/host-externals.spec.ts:33`), so a stray
 `import 'better-sqlite3'` in an addon fails to *resolve* at runtime. The
-enforcement problem is inside `@camstack/system`, not in the addons.
+enforcement problem is inside `@dominevo/system`, not in the addons.
 
 ---
 
@@ -1355,7 +1355,7 @@ does four things beyond that:
 It is **Phase-1 infra with `required: true`**
 (`packages/system/src/kernel/infra-capabilities.ts:22`) — boot aborts if it
 fails — and it carries the `better-sqlite3` native dependency
-(`packages/system/package.json:321`), which is why `@camstack/system` is an
+(`packages/system/package.json:321`), which is why `@dominevo/system` is an
 addon-bundle external at all.
 
 **The provider object** carries **33 methods**, of which the cap declares 10:
@@ -1610,7 +1610,7 @@ re-measure before anything above:
 - **`VACUUM` once** — reclaims **86 MiB** of the 277 MiB file **[measured]**.
 - **`ANALYZE`** — **[measured]** `sqlite_stat1` is absent, so every plan above is chosen without statistics. Then `PRAGMA optimize` on a schedule.
 - **Consider `mmap_size`** — **[measured]** it is `0`. On a 277 MiB database with a 112 k-row hot table this is worth an A/B.
-- **Establish where `cache_size = -16000` comes from** — **[undetermined]**; it is not SQLite's default and CamStack never sets it.
+- **Establish where `cache_size = -16000` comes from** — **[undetermined]**; it is not SQLite's default and Dominevo never sets it.
 
 ### 7.6 Phase 5 — one capability in front of the data
 

@@ -16,8 +16,8 @@ const T0 = '2026-08-16T13:00:59.261Z'
 const line = (iso: string, msg: string): string => `${iso} ${msg}`
 
 const BOOT_1_2_125 = [
-  line('2026-08-16T13:00:59.494Z', '[entrypoint] starting @camstack/server@1.2.125'),
-  line('2026-08-16T13:01:09.943Z', 'CamStack server listening'),
+  line('2026-08-16T13:00:59.494Z', '[entrypoint] starting @dominevo/server@1.2.125'),
+  line('2026-08-16T13:01:09.943Z', 'Dominevo server listening'),
   line('2026-08-16T13:01:12.240Z', 'recorder addon started (continuous write path active)'),
   line('2026-08-16T13:01:13.569Z', 'First keyframe'),
   line('2026-08-16T13:03:41.000Z', 'recorder: full-archive index walk deferred'),
@@ -70,7 +70,7 @@ describe('parseBootKpis', () => {
     const kpis = parseBootKpis(
       [
         '{"timestamp":"2026-08-16T13:00:59.494Z","message":"[entrypoint] starting"}',
-        '{"timestamp":"2026-08-16T13:01:09.943Z","message":"CamStack server listening"}',
+        '{"timestamp":"2026-08-16T13:01:09.943Z","message":"Dominevo server listening"}',
       ].join('\n'),
     )
     expectMs(kpis, 'apiMs', 10_449, 50)

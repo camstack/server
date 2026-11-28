@@ -16,7 +16,7 @@ applies-to:
 
 ## Context
 
-The `analytics` clip source — "CamStack recordings", the one every camera on
+The `analytics` clip source — "Dominevo recordings", the one every camera on
 this fleet has — was registered by `pipeline-analytics`. It composes two
 things: the recorder's continuous segments (`recording.getAvailability`,
 `recording.getPlaybackManifest`) and the analytics event log. It lived with the

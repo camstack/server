@@ -2,7 +2,7 @@
  * The instance descriptor and the addon agree on the Test action: the descriptor offers it AND
  * the `test` hook runs the Dreo sign-in check with the stored account merged under the edited form.
  */
-import { makeInMemoryRecords, REDACTED_SECRET } from '@camstack/types'
+import { makeInMemoryRecords, REDACTED_SECRET } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { buildDreoConnectionTestProvider } from '../dreo-connection-test.js'
 import { buildDreoInstances, dreoConnectionsEntryKind, dreoRecordKinds } from '../dreo-instances.js'

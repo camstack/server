@@ -8,8 +8,8 @@ import { SYSTEM_EXTRA_EXTERNALS } from './vite.shared.ts'
  * matches tsup's prior behavior (emitting DTS for all 23 entries
  * OOM'd the TS compiler on CI runners with ~7GB heap).
  *
- * Consumers always import from `@camstack/server/system` (root), not
- * `@camstack/server/system/builtins/<x>`, so the missing builtin .d.ts files
+ * Consumers always import from `@dominevo/server/system` (root), not
+ * `@dominevo/server/system/builtins/<x>`, so the missing builtin .d.ts files
  * are invisible to typed callers.
  */
 const base = buildLibPreset({
@@ -73,7 +73,7 @@ const base = buildLibPreset({
       'src/builtins/device-manager/device-manager.addon.ts',
     'builtins/local-auth/index': 'src/builtins/local-auth/index.ts',
     'builtins/local-auth/local-auth.addon': 'src/builtins/local-auth/local-auth.addon.ts',
-    // Promoted from @camstack/addon-platform-probe-native (Phase B).
+    // Promoted from @dominevo/addon-platform-probe-native (Phase B).
     'builtins/platform-probe/index': 'src/builtins/platform-probe/index.ts',
     // Hub-only — host interface enumeration + SDK connection-endpoint
     // ranking. See packages/types/src/capabilities/local-network.cap.ts.
@@ -118,15 +118,15 @@ const base = buildLibPreset({
     // a wall-time budget. Top-level for the same reason as the others;
     // `device-template/template-renderer.ts` resolves it as
     // `<package root>/dist/device-template-worker.js`. It imports nunjucks,
-    // `@camstack/types/units-lean` and its own protocol, nothing from the kernel.
+    // `@dominevo/types/units-lean` and its own protocol, nothing from the kernel.
     'device-template-worker': 'src/builtins/device-manager/device-template/template-worker.ts',
   },
   externals: 'framework',
-  // Bundle the BARE `@camstack/types` entry into system's dist (subpaths stay
+  // Bundle the BARE `@dominevo/types` entry into system's dist (subpaths stay
   // external) so the hub sources its cap-derived runtime symbols
-  // (ALL_CAPABILITY_DEFINITIONS, METHOD_ACCESS_MAP, …) from `@camstack/server/system`.
-  // `camstack deploy packages/system` then refreshes the hub's capability
-  // surface with no new server image, and `@camstack/types` is never deployed
+  // (ALL_CAPABILITY_DEFINITIONS, METHOD_ACCESS_MAP, …) from `@dominevo/server/system`.
+  // `dominevo deploy packages/system` then refreshes the hub's capability
+  // surface with no new server image, and `@dominevo/types` is never deployed
   // to the hub. See tools/build/vite-lib.preset.ts.
   bundleTypesMainEntry: true,
   extraExternals: SYSTEM_EXTRA_EXTERNALS,
@@ -141,7 +141,7 @@ const base = buildLibPreset({
  * is a multi-entry build and rolldown shares chunks between entries however
  * `manualChunks` is set: the runner used to `require()` the same
  * `child-cap-dispatch-*` / `custom-action-registry-*` chunks the hub does, so
- * ANY hub-only module that touched the `@camstack/types` barrel (inlined here
+ * ANY hub-only module that touched the `@dominevo/types` barrel (inlined here
  * by `bundleTypesMainEntry`) could land in a chunk the runner then loaded -
  * 2.4 MB, ~2,500 schema calls, ~90-115 MB of private heap in EVERY forked
  * runner (52 on the live hub). In its own build the runner file holds only
@@ -150,7 +150,7 @@ const base = buildLibPreset({
  * Rules that keep it so:
  *   - a new forked-child entry (anything `process-service` forks) gets its own
  *     `vite.<name>.config.ts` run by the `build` script, never a line in `entries`;
- *   - the runner's import graph uses `@camstack/types/addon` (or `/node`,
+ *   - the runner's import graph uses `@dominevo/types/addon` (or `/node`,
  *     `/enums`), never the bare barrel: `scripts/check-runner-barrel-free.ts`
  *     reads the source, `scripts/check-runner-dist-barrel-free.ts` reads the
  *     BUILT file and measures the heap (it runs in ci.yml after the build).

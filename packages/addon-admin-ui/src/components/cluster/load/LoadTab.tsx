@@ -42,7 +42,7 @@ import { useTranslation } from 'react-i18next'
 import { AlertTriangle, Search, X } from 'lucide-react'
 import { formatBytes } from '../../../lib/format-size'
 import { SingleLineChart, StackedCpuChart } from './LoadChart'
-import { gapThresholdMs, useSearchFieldHotkey, Button, Input } from '@camstack/ui-library'
+import { gapThresholdMs, useSearchFieldHotkey, Button, Input } from '@dominevo/ui-library'
 import { ROOT_BUCKET_KEY, UNATTRIBUTED_BUCKET_KEY, type LoadSeries } from './load-series'
 import {
   DEFAULT_LOAD_SORT,
@@ -52,7 +52,7 @@ import {
 } from './load-card-filter'
 import { useNodeLoadSeries } from './use-node-load-series'
 import { CameraLoadPanel } from './CameraLoadPanel'
-import { formatNumeric } from '@camstack/ui-library'
+import { formatNumeric } from '@dominevo/ui-library'
 
 interface LoadTabProps {
   readonly nodeId: string

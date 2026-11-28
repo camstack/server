@@ -5,7 +5,7 @@ import {
   type PowerMeterStatus,
   type DeviceRole,
   type ReadingQuantity,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { HaBaseChildDevice } from '../ha-base-child-device.js'
 import { takeReading } from '../ha-reading.js'
 import type { HaEntityState } from '../ha-types.js'
@@ -21,10 +21,10 @@ const COLD_START: PowerMeterStatus = { lastFetchedAt: 0 }
  *
  * A real multi-metric appliance (Aqara plug, Shelly) typically
  * exposes ONE HA device with 3-4 sensor entities. Each entity becomes
- * a separate CamStack child here, each with its own power-meter cap
+ * a separate Dominevo child here, each with its own power-meter cap
  * populating one field. UI consumers aggregate across the parent's
  * accessories. Future enhancement: collapse same-device sensors into
- * ONE multi-cap CamStack accessory; out of scope for Phase F5.
+ * ONE multi-cap Dominevo accessory; out of scope for Phase F5.
  *
  * Maps HA device_class to slice field:
  *   - `power`  → watts

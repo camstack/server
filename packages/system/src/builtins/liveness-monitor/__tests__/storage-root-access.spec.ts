@@ -16,7 +16,7 @@ import {
   type IScopedLogger,
   type StorageLocation,
   type SystemEvent,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterAll, describe, expect, it, vi } from 'vitest'
 import { isLivenessFindingId, type LivenessFinding } from '../liveness-checks.js'
 import { LivenessReporter } from '../liveness-reporter.js'

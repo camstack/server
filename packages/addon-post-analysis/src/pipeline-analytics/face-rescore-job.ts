@@ -40,7 +40,7 @@
  * so the store is busy at most about a third of the run. The dot products run in
  * this process between the awaits.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { createHash } from 'node:crypto'
 import {
   buildFaceRescoreReport,

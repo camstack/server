@@ -13,7 +13,7 @@ import type {
   PoolModelConfig,
   ModelFormat,
   ModelCatalogEntry,
-} from '@camstack/types'
+} from '@dominevo/types'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { z } from 'zod'

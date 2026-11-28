@@ -17,7 +17,7 @@
  * admin-ui used.
  */
 import { useQuery } from '@tanstack/react-query'
-import { resolveHydratedFieldValue } from '@camstack/types'
+import { resolveHydratedFieldValue } from '@dominevo/types'
 import { Activity, Cpu, Eye, Gauge, Video, Volume2 } from 'lucide-react'
 import {
   GRID_QUICK_STATS,
@@ -30,7 +30,7 @@ import {
   useSystem,
   type WidgetProps,
   useUiText,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useT } from '../i18n/index.js'
 
 export function PipelineQuickStats(props: WidgetProps) {

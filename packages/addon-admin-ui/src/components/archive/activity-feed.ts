@@ -3,7 +3,7 @@
  * the health digest's findings, one list, newest first, filtered by camera,
  * function and severity.
  */
-import type { HealthFinding, OpsLogEntry } from '@camstack/types'
+import type { HealthFinding, OpsLogEntry } from '@dominevo/types'
 
 export type ActivitySeverity = 'info' | 'warning' | 'critical'
 export type ActivityFunction = 'recording' | 'events' | 'detection' | 'motion' | 'other'

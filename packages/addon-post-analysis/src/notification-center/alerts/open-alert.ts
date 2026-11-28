@@ -1,7 +1,7 @@
 /**
  * An OPEN alert episode, as the STATE SUMMARY reads it (D647).
  */
-import type { ConsumableForm, IScopedLogger } from '@camstack/types'
+import type { ConsumableForm, IScopedLogger } from '@dominevo/types'
 import type { NcDeviceIdentity } from '../device-directory.js'
 import {
   incomingFromConsumableBand,

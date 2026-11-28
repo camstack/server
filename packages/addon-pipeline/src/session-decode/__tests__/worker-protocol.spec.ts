@@ -186,7 +186,7 @@ describe('worker protocol guards', () => {
 //
 // A child that resolved its knobs from the environment at module load was a
 // child bound to the configuration it was BORN with — which a pre-forked
-// (zygote) worker cannot be. And it needed `@camstack/types` (the Zod schemas)
+// (zygote) worker cannot be. And it needed `@dominevo/types` (the Zod schemas)
 // inside the child to do it, which cost every fork ~130 ms and ~140 MB before
 // the first packet. The parent resolves; the child receives.
 const LEASE = {

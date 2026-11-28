@@ -1,8 +1,8 @@
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import type { AddonDeploySource } from '@camstack/server/system'
-import { describeUnmet, type IScopedLogger, type UnmetRequirement } from '@camstack/types'
+import type { AddonDeploySource } from '@dominevo/server/system'
+import { describeUnmet, type IScopedLogger, type UnmetRequirement } from '@dominevo/types'
 import type { FastifyInstance, FastifyReply } from 'fastify'
 import type { AddonPackageService } from '../core/addon/addon-package.service'
 import { isFrameworkPackage } from '../core/addon/addon-package.service.js'
@@ -110,7 +110,7 @@ export function buildHubHttpSource(
 
 /** What the upload route tells the agent registry (D982). */
 export interface UploadConvergence {
-  /** The `@camstack/server` version the node last reported; `null` when it never did. */
+  /** The `@dominevo/server` version the node last reported; `null` when it never did. */
   nodeServerVersion?(nodeId: string): string | null
   noteExplicitDelivery(nodeId: string, packageName: string): Promise<void>
   requestConvergence(trigger: 'hub-change'): Promise<void>
@@ -177,9 +177,9 @@ export async function registerAddonUploadRoute(
     // small tarball (whole body in one chunk, already parsed) and silently
     // returned `undefined` for a large one.
     //
-    // Cost, 2026-08-07: every `camstack deploy packages/addon-pipeline -n
+    // Cost, 2026-08-07: every `dominevo deploy packages/addon-pipeline -n
     // agent-a` — a 4.9 MB tarball — read `nodeId = null` and took the HUB
-    // branch. The CLI printed `✓ agent-a: @camstack/addon-pipeline@1.2.43`
+    // branch. The CLI printed `✓ agent-a: @dominevo/addon-pipeline@1.2.43`
     // (the label it INTENDED, never the target the hub used) and the named agent
     // was never addressed at all. It reproduced 4× and was diagnosed as a stale
     // dist. Reading the fields after the drain is the fix here; the CLI also
@@ -442,7 +442,7 @@ async function installToHub(
       })
     }
 
-    // Framework / system packages (`camstack.system: true`, e.g. @camstack/server/system)
+    // Framework / system packages (`camstack.system: true`, e.g. @dominevo/server/system)
     // ship hub builtins (sqlite-settings, filesystem-storage, …) that CANNOT be
     // hot-reloaded in place — an in-process `restartAddon` leaves them
     // uninitialized ("SqliteSettingsBackend not initialized"), breaking auth +
@@ -452,12 +452,12 @@ async function installToHub(
     if (isFrameworkPackage(result.name)) {
       // Framework live-sync is GONE (superseded by the runtime-updatable root
       // package — the hub main + its framework deps now update as ONE
-      // `@camstack/server` closure via the `server-management` cap).
+      // `@dominevo/server` closure via the `server-management` cap).
       //
       // Dev loop compatibility: in a workspace checkout the hub resolves the
       // framework straight from `packages/<pkg>/dist`, which the CLI rebuilt
       // BEFORE uploading — a plain restart loads the new code, no mirror
-      // needed. `camstack deploy packages/system` therefore keeps working in
+      // needed. `dominevo deploy packages/system` therefore keeps working in
       // dev unchanged.
       const workspaceRoot = detectWorkspaceRoot(__dirname)
       if (workspaceRoot !== null) {
@@ -488,7 +488,7 @@ async function installToHub(
         version: result.version,
         error:
           'Framework packages no longer live-update via upload on a deployed hub. ' +
-          'Update the @camstack/server root package instead (Server management → Update, ' +
+          'Update the @dominevo/server root package instead (Server management → Update, ' +
           'or the server-management.applyServerUpdate cap method).',
       })
     }
@@ -501,7 +501,7 @@ async function installToHub(
     // a brand-new `AddonLoader` and replaced the global, which knocked
     // every isolated group-runner's IPC channel offline (visible as
     // `Group-runner hub/<X>-isolated disconnected` for 6+ addons after
-    // a single `camstack deploy`). `loadNewAddons` alone is enough.
+    // a single `dominevo deploy`). `loadNewAddons` alone is enough.
     const loadResult = await addonRegistry.loadNewAddons()
 
     // Hot-update + cluster propagation are FIRE-AND-FORGET. The upload
@@ -568,7 +568,7 @@ async function installToHub(
 }
 
 /**
- * `camstack deploy <pkg> -n <nodeId>` — install on ONE named agent.
+ * `dominevo deploy <pkg> -n <nodeId>` — install on ONE named agent.
  *
  * Goes through the same `deliverAddonToAgent` as the cluster propagation. It
  * did not, once: this branch called `$agent.deploy` and returned success

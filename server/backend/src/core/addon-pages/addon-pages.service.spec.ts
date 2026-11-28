@@ -9,7 +9,7 @@ import { AddonPagesService } from './addon-pages.service'
 import type { CapabilityService } from '../capability/capability.service'
 import type { LoggingService } from '../logging/logging.service'
 import type { ConfigService } from '../config/config.service'
-import type { IAddonPageProvider, AddonPageDeclaration, IScopedLogger } from '@camstack/types'
+import type { IAddonPageProvider, AddonPageDeclaration, IScopedLogger } from '@dominevo/types'
 
 function createMockLogger(): IScopedLogger {
   return {

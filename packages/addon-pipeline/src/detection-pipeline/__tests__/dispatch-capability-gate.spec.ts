@@ -16,7 +16,7 @@
  *      frame) and the error names the model, its available formats, and the
  *      engines tried.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { assumeKnownClusterRowIsDefaults } from './fixtures/known-cluster-row.js'
 import { DetectionPipelineProvider } from '../provider.js'

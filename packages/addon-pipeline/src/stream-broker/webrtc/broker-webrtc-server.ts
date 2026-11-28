@@ -26,7 +26,7 @@ import type {
   WebrtcLadderDecision,
   WebrtcSessionDebug,
   WebrtcClientHints,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { isViewerConsumerKind, type ViewerCounts } from '../live-viewers.js'
 import {
   CAM_PROFILE_ORDER,
@@ -34,7 +34,7 @@ import {
   makeSourceBrokerId,
   TRANSCODE_DOWN_MAX_BITRATE_KBPS,
   TRANSCODE_DOWN_MAX_HEIGHT,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { AdaptiveSession, type IceServerEntry, type IceCandidatePayload } from './session.js'
 import { BrokerLingerRegistry } from './broker-linger-registry.js'
 import {
@@ -818,7 +818,7 @@ const FRAME_DROP_LOG_INTERVAL_MS = 30_000
  * reduced shape actually reaches the wire. Pure — returns a new profile,
  * never mutates `base`.
  *
- * The two ceilings come from `@camstack/types` and not from a pair of local
+ * The two ceilings come from `@dominevo/types` and not from a pair of local
  * constants: D67 collapsed five sets of encode numbers in four packages
  * precisely because nobody could diff them, and this file held one of them.
  *
@@ -1109,7 +1109,7 @@ export class BrokerWebrtcServer {
    * The manager injects one calling its own methods directly. The call is
    * IN-PROCESS on purpose: `classifyCapRoute` would serve an unpinned cap call
    * hub-in-process anyway, and going out through tRPC would additionally depend
-   * on the installed `@camstack/server/system` carrying the D67 method. Without this
+   * on the installed `@dominevo/server/system` carrying the D67 method. Without this
    * wiring a session that needs a transcode says so and closes — it never falls
    * back to spawning an ffmpeg of its own.
    */

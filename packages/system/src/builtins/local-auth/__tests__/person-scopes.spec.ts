@@ -4,7 +4,7 @@
  * to tokens, and there is no conversion (D900).
  */
 import { describe, expect, it } from 'vitest'
-import type { UserScope } from '@camstack/types'
+import type { UserScope } from '@dominevo/types'
 import { assertPersonScopes } from '../person-scopes.js'
 
 const VIEWER: UserScope = { type: 'viewer', allow: '*', block: [], features: [] }

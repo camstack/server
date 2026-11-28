@@ -66,7 +66,7 @@ const trpcClient = {
   },
 }
 
-vi.mock('@camstack/ui-library', () => ({
+vi.mock('@dominevo/ui-library', () => ({
   useSystem: () => ({ trpcClient }),
 }))
 

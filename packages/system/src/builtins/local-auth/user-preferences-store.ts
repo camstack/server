@@ -20,7 +20,7 @@ import {
   type PreferencesPutOutput,
   type RecordKindHandle,
   type RecordRow,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { type UserPreferenceBody, userPreferenceRecordId } from './preferences-record-kinds.js'
 
 export type PreferencesLimitReason = 'value-too-large' | 'too-many-namespaces'

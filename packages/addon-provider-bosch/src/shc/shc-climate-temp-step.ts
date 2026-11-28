@@ -1,4 +1,4 @@
-import type { ClimateControlStatus } from '@camstack/types'
+import type { ClimateControlStatus } from '@dominevo/types'
 
 /** Override mapper default tempStep when the device config carries a positive step. */
 export function applyPersistedClimateTempStep(

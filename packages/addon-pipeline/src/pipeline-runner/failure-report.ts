@@ -32,8 +32,8 @@
  * same rule `load-contribution` states for a measurement nobody made.
  */
 
-import { FailureCounters } from '@camstack/types'
-import type { FailureCounterSample } from '@camstack/types'
+import { FailureCounters } from '@dominevo/types'
+import type { FailureCounterSample } from '@dominevo/types'
 
 /** One bounded inference deadline per admitted detection frame. */
 export const FAMILY_INFERENCE = 'inference'

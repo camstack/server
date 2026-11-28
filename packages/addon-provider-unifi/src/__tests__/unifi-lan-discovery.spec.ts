@@ -1,4 +1,4 @@
-import { DeviceType, type DiscoveryHit } from '@camstack/types'
+import { DeviceType, type DiscoveryHit } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   isUnifiConsoleReply,

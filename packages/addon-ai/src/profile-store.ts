@@ -28,7 +28,7 @@ import {
   REDACTED_SECRET,
   isInstanceOn,
   recordInstanceSwitch,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { secretFieldOf } from './kinds/provider-config.js'
 import { migrateProfileBody } from './profile-migration.js'
 import { aiRecordKinds, type LlmMetaBody, type LlmProfileBody } from './record-kinds.js'

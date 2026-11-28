@@ -1,4 +1,4 @@
-import type { AppDeclaration, AppInfo, AppNavSection, IAppSourceProvider } from '@camstack/types'
+import type { AppDeclaration, AppInfo, AppNavSection, IAppSourceProvider } from '@dominevo/types'
 import { settleSourcesWithTimeout } from '../shared/settle-sources.js'
 
 /** Per-source ceiling: one dead provider must not stall the shell's app list. */

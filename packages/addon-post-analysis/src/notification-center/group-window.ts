@@ -15,8 +15,8 @@
  * read (D49): the pending map the outbox already holds is the whole input.
  */
 
-import { groupWithinSecOf, type NcRule } from '@camstack/types'
-import type { IScopedLogger } from '@camstack/types'
+import { groupWithinSecOf, type NcRule } from '@dominevo/types'
+import type { IScopedLogger } from '@dominevo/types'
 import {
   groupWindowMemberIds,
   groupWindowRecordId,

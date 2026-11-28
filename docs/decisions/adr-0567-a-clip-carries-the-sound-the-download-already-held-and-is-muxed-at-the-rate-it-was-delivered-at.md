@@ -103,7 +103,7 @@ bound; the flag says what that number is WORTH.
 
 ## Consequences
 
-- **`@camstack/addon-provider-reolink` pins `@apocaliss92/nodelink-js@^0.7.10`**
+- **`@dominevo/addon-provider-reolink` pins `@apocaliss92/nodelink-js@^0.7.10`**
   and will not work against 0.7.9: `ClipDownloadResult` now requires `audio`
   and the four new `stats` fields, and the narrow interface in
   `clip-catalog.ts` is the one place a library shape change shows up as a

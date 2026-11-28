@@ -23,9 +23,9 @@ import type {
   SettingsUpdateInput,
   SettingsUpsertInput,
   TableSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { CompositeKeyError } from './placement-errors.js'
-import { asJsonObject, nodeIdOfScopedKey, parseJsonUnknown } from '@camstack/types'
+import { asJsonObject, nodeIdOfScopedKey, parseJsonUnknown } from '@dominevo/types'
 import Database from 'better-sqlite3'
 import { ANALYZE_DELAY_MS, runAnalyzeIfMissing } from './analyze-stats.js'
 import {
@@ -365,7 +365,7 @@ export class SqliteSettingsBackend implements ISettingsBackend {
    *
    * Keyed by FINGERPRINT, not by name, and that is the whole point. An addon
    * declares its schema at every boot, but the backend lives in hub-main,
-   * which outlives an addon respawn: `camstack deploy` restarts the addon
+   * which outlives an addon respawn: `dominevo deploy` restarts the addon
    * runner and NOT hub-main. A name-only memo therefore made the second
    * declaration of a table a no-op FOREVER — a redeployed addon whose schema
    * had gained a column never got the `ALTER TABLE … ADD COLUMN`, and, because
@@ -1381,7 +1381,7 @@ export class SqliteSettingsBackend implements ISettingsBackend {
       readonly booleanColumns: ReadonlySet<string>
       readonly keyColumns: readonly string[]
     },
-    filter: import('@camstack/types').QueryFilter | undefined,
+    filter: import('@dominevo/types').QueryFilter | undefined,
     projection?: readonly string[],
   ): Promise<readonly SettingsRecord<T>[]> {
     // KV-shape detection: a single `data` JSON-blob column. Canonical

@@ -2,7 +2,7 @@ import {
   DEFAULT_NATIVE_LEASE_SETTINGS,
   type IScopedLogger,
   type NativeLeaseSettingsOverride,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /**
  * A held slot in the node's live-decode-worker budget. Released exactly once,

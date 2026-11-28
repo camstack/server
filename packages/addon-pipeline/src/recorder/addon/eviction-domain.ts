@@ -20,8 +20,8 @@
  * mode for a data-loss guard.
  */
 import { realpathSync } from 'node:fs'
-import type { RealpathSync } from '@camstack/types/node'
-import { physicalRootOf } from '@camstack/types/node'
+import type { RealpathSync } from '@dominevo/types/node'
+import { physicalRootOf } from '@dominevo/types/node'
 import type { RecordingsLocation } from './roots.js'
 
 export type { RealpathSync }

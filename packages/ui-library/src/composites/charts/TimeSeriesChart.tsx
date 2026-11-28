@@ -11,7 +11,7 @@
  * for the cross-device History page, where the reader chose the series.
  */
 import { useCallback, useMemo, useRef, useState, type JSX, type ReactNode } from 'react'
-import type { DisplayPreference } from '@camstack/types'
+import type { DisplayPreference } from '@dominevo/types'
 import type uPlot from 'uplot'
 import { useUiText } from '../../contexts/ui-text'
 import { ChartFrame, ChartPlaceholder, type ChartLegendEntry } from './chart-frame'

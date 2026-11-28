@@ -11,13 +11,13 @@
 
 ## 1. Why remove shm-ring
 
-`@camstack/shm-ring` is the last **host-external NATIVE** package in the addon
+`@dominevo/shm-ring` is the last **host-external NATIVE** package in the addon
 data plane. That single fact drives three concrete problems:
 
 1. **It broke the Mac mini runners outright** — the native ESM import is
    unresolvable in the Electron-agent framework closure (see and the
    `project_two_plane_pipeline_live` memory: the agent's boot-plan could not
-   resolve the framework dir, and the native `@camstack/shm-ring` import is the
+   resolve the framework dir, and the native `@dominevo/shm-ring` import is the
    kind of host-external that does not survive a data-root/seed mismatch).
 2. **It blocks npm publishes** — shm-ring needs a native prebuild workflow that
    was never built (`project_release_checkpoint_v1153`: "shm-ring needs a
@@ -149,7 +149,7 @@ change** → this ships as a live addon deploy, not a framework train.
 
 > Alternative considered — a clean new `pipelineRunner.getFrame({handle})` cap.
 > Rejected for the FIRST cut only because a cap-surface addition rides the
-> framework/applyServerUpdate train (live `camstack deploy packages/system` is
+> framework/applyServerUpdate train (live `dominevo deploy packages/system` is
 > rejected on release-image hubs — `project_framework_livesync_disabled_on_image_hub`),
 > which blocks the live addon-deploy validation loop this work needs. If a later
 > release batches framework changes, promoting the full-frame path to a dedicated
@@ -164,7 +164,7 @@ Post-analysis `resolveFrame` collapses to a single call routed by
   (unchanged).
 
 Same-node this routes in-process / over UDS (cheap); cross-node over Moleculer.
-`FrameRingReaderCache` and the `@camstack/shm-ring` import are deleted from
+`FrameRingReaderCache` and the `@dominevo/shm-ring` import are deleted from
 post-analysis entirely. `decoder.getFrame` is no longer called.
 
 ### 3c. CB5 passthrough removed → inline pixels
@@ -214,7 +214,7 @@ This matters for **version-skew tolerance**:
   serves it. ✅ (getNativeCrop predates this work.)
 
 **Deploy order to minimize skew:** runner + decoder + post-analysis together
-(one `camstack deploy` batch). Cross-node agents on older addons keep working on
+(one `dominevo deploy` batch). Cross-node agents on older addons keep working on
 their own shm locally; only their emitted handles are resolved by the hub via
 `getNativeCrop` on the AGENT (which the old agent still serves) — so a mixed
 cluster degrades gracefully to "media from updated nodes only".
@@ -224,18 +224,18 @@ cluster degrades gracefully to "media from updated nodes only".
 | Slice | Scope | Cap change? | Deploy |
 |---|---|---|---|
 | **A** | Runner `RetainedFrameStore` (RAM) + `getNativeCrop` full-frame branch; retention-sink → RAM; keep emitting handles | no | addon |
-| **B** | Post-analysis: `resolveFrame`/dispatchers → `getNativeCrop` full-frame; drop `FrameRingReaderCache` + `@camstack/shm-ring` | no | addon |
+| **B** | Post-analysis: `resolveFrame`/dispatchers → `getNativeCrop` full-frame; drop `FrameRingReaderCache` + `@dominevo/shm-ring` | no | addon |
 | **C** | Remove CB5 passthrough: runner always inline pixels; delete `resolveFrameHandle` + shm from detection-pipeline + motion-wasm | no | addon |
 | **D** | Delete legacy shared-poller (`frame-handle-poller`, `resolve-polled-frame`, `foreign-handle-throttle`, `RemoteSourcePlane`, `shm-retention-purge`, `useSessionDecode` setting, `frame-queue` if shm-only) | no | addon |
 | **E** | Decoder addons: delete `frame-ring-sink`, `shm-orphan-purge`, `frameSink:'shm'` mode | no | addon |
-| **F** | Drop `@camstack/shm-ring` from every addon `package.json`; keep it in the repo + host-externals for old-addon compat | no | addon |
+| **F** | Drop `@dominevo/shm-ring` from every addon `package.json`; keep it in the repo + host-externals for old-addon compat | no | addon |
 
 **Follow-up (framework/system train — NOT in this batch):**
 - Remove dormant cap methods `decoder.getFrame` / `getShmStats` / `pullHandles`,
   `streamBroker.subscribeFrames` / `pullFrameHandles` (codegen + generated
   routers), and optionally promote full-frame retrieval to a dedicated
   `pipelineRunner.getFrame` cap.
-- Remove `@camstack/shm-ring` from `packages/system` host-externals
+- Remove `@dominevo/shm-ring` from `packages/system` host-externals
   (`host-externals.ts`) — a system-package change, ships on a release image, and
   only safe once no deployed addon still imports it. **Do NOT touch
   `packages/system` in this batch** (per brief).
@@ -271,7 +271,7 @@ cluster degrades gracefully to "media from updated nodes only".
     re-encoded raw→JPEG for the Python pool anyway, so this also removes a
     decode+re-encode). A co-location attempt via `execution.group: 'detection'`
  then appeared to be a no-op on the deployed hub: a hot
-    `camstack deploy` respawns each runner from its CAPTURED `runnerAddons`
+    `dominevo deploy` respawns each runner from its CAPTURED `runnerAddons`
     (`$process.restart`), so a group manifest deployed onto runners that were
     spawned solo at the previous boot never regroups without a full reboot — and
     the deployed image's runners predated the group manifest. (The boot plan

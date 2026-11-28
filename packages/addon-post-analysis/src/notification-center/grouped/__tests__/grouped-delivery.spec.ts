@@ -6,7 +6,7 @@
  * synthetic group of one (C11), the no-track plain route (C17) and the alias read order.
  */
 
-import { type NcRule, NcRuleSchema } from '@camstack/types'
+import { type NcRule, NcRuleSchema } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { type LoggedLine, makeLogRecorder } from '../../__tests__/grouped-harness.js'
 import { evaluateRule, NC_RECOGNITION_CONDITIONS, type NcRuleSubject } from '../../rule-engine.js'

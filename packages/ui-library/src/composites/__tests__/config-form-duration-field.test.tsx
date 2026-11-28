@@ -3,7 +3,7 @@
  * `type: 'duration'` settings field — the schema-driven form renders the
  * shared `<DurationInput>` and stores ONE number in the declared unit.
  */
-import type { ConfigField } from '@camstack/types'
+import type { ConfigField } from '@dominevo/types'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { FormField } from '../config-form-field'

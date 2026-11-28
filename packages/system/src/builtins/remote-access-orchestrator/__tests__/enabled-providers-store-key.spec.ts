@@ -3,7 +3,7 @@
  * the key every earlier build wrote through `updateGlobalSettings`. A set an old build stored is
  * extended, not replaced, and a write lands under the same key.
  */
-import { fakeAddonContext } from '@camstack/types/testing'
+import { fakeAddonContext } from '@dominevo/types/testing'
 import { describe, expect, it } from 'vitest'
 import { RemoteAccessOrchestratorAddon } from '../remote-access-orchestrator.addon.js'
 

@@ -57,9 +57,9 @@ and nothing else: the dispatcher's `reportedAnnotatedFallbacks` and
 `event-media-dispatcher.ts`'s `${eventId}:${kind}` display-fallback memo.
 
 **AUTOINCREMENT was considered first and not taken.** It removes the cause, for
-every consumer at once. It also needs a framework change (`@camstack/system`'s
+every consumer at once. It also needs a framework change (`@dominevo/system`'s
 declared-schema path cannot express it, and a framework fix is not live until a
-`@camstack/server` carrying it is installed), and SQLite cannot add it to an
+`@dominevo/server` carrying it is installed), and SQLite cannot add it to an
 existing table: every event table — millions of rows — would have to be rebuilt,
 on the settings store's synchronous thread that D447 already measured blocking
 the whole cluster's configuration reads. D474 decided against an in-process

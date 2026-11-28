@@ -59,7 +59,7 @@
  * orchestrator write, and the runner is then the only writer. There are no
  * timers: a census is asked for by an event, never by a clock (D3).
  */
-import type { IScopedLogger, RunnerLocalLoad } from '@camstack/types'
+import type { IScopedLogger, RunnerLocalLoad } from '@dominevo/types'
 
 /** One node of a census: what it answered, or `null` when the read failed or timed out. */
 export interface RunnerLoadAnswer {

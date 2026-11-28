@@ -3,7 +3,7 @@ import {
   type OauthLandingOutcome,
   type OauthLandingReason,
   userError,
-} from '@camstack/types'
+} from '@dominevo/types'
 /**
  * Google — hub-only broker kind `google` + calendar-source + Gmail smtp.
  * One OAuth account = one broker entry; feature caps aggregate connected brokers.
@@ -28,7 +28,7 @@ import {
   type ICalendarSourceProvider,
   type ISmtpProvider,
   type RecordsAccess,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { randomBytes } from 'node:crypto'
 import { z } from 'zod'
 import { GoogleBrokerRegistry, brokerEntryToSettings } from './google-broker-registry.js'
@@ -563,7 +563,7 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
       if (!tokens.refresh_token && (!prev.refreshToken || prev.needsReauth)) {
         throw new GoogleCallbackError(
           'no_refresh_token',
-          'Google did not return a refresh_token. Revoke CamStack access in Google Account → Security and retry with prompt=consent.',
+          'Google did not return a refresh_token. Revoke Dominevo access in Google Account → Security and retry with prompt=consent.',
         )
       }
       const applied = applyTokenResponse(
@@ -627,7 +627,7 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
   }
 
   /**
-   * Every OAuth completion ends in CamStack: a redirect to the admin-ui
+   * Every OAuth completion ends in Dominevo: a redirect to the admin-ui
    * completion page (`/sso-complete`) on the hub's public address (the
    * `local-network` palette role), carrying a status and a reason CODE — never
    * a token, a code or an error message. The page hands a popup's outcome to

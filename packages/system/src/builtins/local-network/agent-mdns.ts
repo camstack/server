@@ -15,8 +15,8 @@
  * The responder is injected, exactly as for the hub's own advertisement
  * (`hub-mdns.ts`); the real one is `createCiaoPublisher()`.
  */
-import type { IScopedLogger } from '@camstack/types'
-import { AGENT_MDNS_SERVICE_TYPE, AGENT_MDNS_TXT_KEYS } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
+import { AGENT_MDNS_SERVICE_TYPE, AGENT_MDNS_TXT_KEYS } from '@dominevo/types'
 import type { AgentPairingState } from '../../kernel/moleculer/mesh-mtls/pairing/pairing-protocol.js'
 import type { HubMdnsAnnouncement, HubMdnsHandle, HubMdnsPublisher } from './hub-mdns.js'
 

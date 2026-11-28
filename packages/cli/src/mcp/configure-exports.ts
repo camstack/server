@@ -9,7 +9,7 @@
  * off goes through the exporter's own `exposeDevice` / `unexposeDevice`.
  */
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
-import { type DryRunOutcome, type GatedToolSpec, type HubClient } from '@camstack/develop'
+import { type DryRunOutcome, type GatedToolSpec, type HubClient } from '@dominevo/develop'
 import { text } from './tool-result.js'
 import { z } from 'zod'
 import {
@@ -208,17 +208,17 @@ export async function exportSet(
 
 /** The Home Assistant guide: plain text, no hub access, nothing to leak. */
 export const HA_GUIDE: readonly string[] = [
-  'Showing CamStack cameras in Home Assistant',
+  'Showing Dominevo cameras in Home Assistant',
   '',
-  '1. In CamStack, open Integrations and enable the Home Assistant export (the exporter addon). configure_exports shows whether it is installed and linked, and configure_export_set chooses which cameras it shows.',
+  '1. In Dominevo, open Integrations and enable the Home Assistant export (the exporter addon). configure_exports shows whether it is installed and linked, and configure_export_set chooses which cameras it shows.',
   '2. Pair it from the exporter page in the admin UI. The pairing details are shown there only; this tool never prints them.',
-  '3. In Home Assistant, the CamStack integration appears under Settings > Devices & services once it is linked; add it and pick the cameras.',
+  '3. In Home Assistant, the Dominevo integration appears under Settings > Devices & services once it is linked; add it and pick the cameras.',
   '',
   'Getting the Home Assistant side installed:',
-  '- A custom integration is normally installed through HACS (Home Assistant Community Store): add the CamStack repository as a custom repository, download it, restart Home Assistant, then add the integration.',
-  '- How CamStack is distributed through HACS may change (a custom repository today, possibly the default HACS list later). Check the current Home Assistant and HACS documentation for the exact steps before relying on the ones above.',
+  '- A custom integration is normally installed through HACS (Home Assistant Community Store): add the Dominevo repository as a custom repository, download it, restart Home Assistant, then add the integration.',
+  '- How Dominevo is distributed through HACS may change (a custom repository today, possibly the default HACS list later). Check the current Home Assistant and HACS documentation for the exact steps before relying on the ones above.',
   '',
-  'If a camera does not show up: confirm the exporter reports a linked state, the camera is shown to it, and Home Assistant can reach the hub address CamStack advertises for app connections (Network page).',
+  'If a camera does not show up: confirm the exporter reports a linked state, the camera is shown to it, and Home Assistant can reach the hub address Dominevo advertises for app connections (Network page).',
 ]
 
 export function registerExportTools(server: McpServer, ctx: McpContext): void {
@@ -231,7 +231,7 @@ export function registerExportTools(server: McpServer, ctx: McpContext): void {
   )
   server.tool(
     EXPORT_SET_TOOL,
-    "Show or hide one camera in one exporter, through the exporter's own cap. Two steps: call without confirm_token for a preview and a one-shot token, then call again with the SAME arguments and that token. Needs an admin `camstack login` session.",
+    "Show or hide one camera in one exporter, through the exporter's own cap. Two steps: call without confirm_token for a preview and a one-shot token, then call again with the SAME arguments and that token. Needs an admin `dominevo login` session.",
     {
       addonId: z.string().min(1),
       deviceId: z.number().int().nonnegative(),
@@ -243,7 +243,7 @@ export function registerExportTools(server: McpServer, ctx: McpContext): void {
   )
   server.tool(
     'configure_ha_guide',
-    'Read-only guide for showing CamStack cameras in Home Assistant, including the HACS route. Needs no hub.',
+    'Read-only guide for showing Dominevo cameras in Home Assistant, including the HACS route. Needs no hub.',
     {},
     async (): Promise<ToolTextResult> => text({ status: 'ok', guide: HA_GUIDE }),
   )

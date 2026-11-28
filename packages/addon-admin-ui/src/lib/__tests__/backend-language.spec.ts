@@ -6,7 +6,7 @@ const mocks = vi.hoisted(() => ({
   i18n: { language: 'it' },
 }))
 
-vi.mock('@camstack/sdk', () => ({ createSystem: mocks.createSystem }))
+vi.mock('@dominevo/sdk', () => ({ createSystem: mocks.createSystem }))
 vi.mock('../connection-health', () => ({ reportSdkConnectionState: vi.fn() }))
 vi.mock('../../i18n', () => ({ default: mocks.i18n }))
 vi.mock('../admin-session', () => ({

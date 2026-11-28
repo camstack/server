@@ -3,7 +3,7 @@
  * the camera status, so the card cannot call a sensor healthy that the bridge
  * drops (final review M-2, M-3).
  */
-import type { CameraSensorsStatus } from '@camstack/types'
+import type { CameraSensorsStatus } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { notForwardedReason, withForwarding } from '../camera-sensors/forwarding.js'
 

@@ -17,7 +17,7 @@
  * target, which is exactly the schema default an absent field produces.
  * Every behavior is therefore identical to today until the knob is populated.
  */
-import type { RunnerFrameSource } from '@camstack/types'
+import type { RunnerFrameSource } from '@dominevo/types'
 
 /**
  * The set of nodes allowed to run the REMOTE-SOURCE leg — every decode-enabled

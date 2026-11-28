@@ -78,11 +78,11 @@ auth, event ledgers. Orphan drop of old tables = D872 after 14 d (or operator
 | 1 training/jobs | **done** (.50 + prod; owner `training`; 0 rows) |
 | 2–6 ai/* | **done** (.50 + prod; kinds owned by **`ml`** — AI’s `execution.group`; usage 2225 verified) |
 | 7–11 analytics/* | **done** (.50 + prod; owner `pipeline-analytics`; hub-only `declare` — agents have no records; migrations 2 + sweep 1 + face-rescore 1 + viewer-settings 1) |
-| 12–15 orchestrator/* | **done** (.50 + prod; owner `pipeline-orchestrator`; runs 8 + benchmarks 21; `@camstack/addon-pipeline-orchestrator@1.2.600` — bump above closure stamp or upload is overwritten; always `-s` the target hub) |
-| 16 HA ha-notification-targets | **done** (.50 + prod; 0 rows; `@camstack/addon-provider-homeassistant@1.2.600`) |
-| 17 notifiers notification-targets | **done** (.50 + prod; 5 rows; owner `notifiers`; `@camstack/addon-notifiers@1.2.600`) |
-| 18–24 NC/* | **done** (.50 + prod; owner `pipeline-analytics`; texts 1 + calendar 1 + summary 1 + timelapse 3 + rules 18; `@camstack/addon-post-analysis@1.2.600`) |
-| 25–26 recorder | **done** (.50 + prod; owner `recorder`; exports 138 + ops-log 503; `@camstack/addon-pipeline@1.2.600` hub+agents) |
+| 12–15 orchestrator/* | **done** (.50 + prod; owner `pipeline-orchestrator`; runs 8 + benchmarks 21; `@dominevo/addon-pipeline-orchestrator@1.2.600` — bump above closure stamp or upload is overwritten; always `-s` the target hub) |
+| 16 HA ha-notification-targets | **done** (.50 + prod; 0 rows; `@dominevo/addon-provider-homeassistant@1.2.600`) |
+| 17 notifiers notification-targets | **done** (.50 + prod; 5 rows; owner `notifiers`; `@dominevo/addon-notifiers@1.2.600`) |
+| 18–24 NC/* | **done** (.50 + prod; owner `pipeline-analytics`; texts 1 + calendar 1 + summary 1 + timelapse 3 + rules 18; `@dominevo/addon-post-analysis@1.2.600`) |
+| 25–26 recorder | **done** (.50 + prod; owner `recorder`; exports 138 + ops-log 503; `@dominevo/addon-pipeline@1.2.600` hub+agents) |
 
 **Lesson (AI):** a grouped runner stamps `callerAddonId` as the runner id
 (`local-child-registry`), so `adoptRecords` / mappers must use that owner, not

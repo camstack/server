@@ -4,7 +4,7 @@
  * raw key list. A device with no saved layout gets a built-in preset, and a
  * raw code stored on the command never becomes the key's name.
  */
-import type { RemoteLayoutPayload } from '@camstack/types'
+import type { RemoteLayoutPayload } from '@dominevo/types'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { layoutForRemoteCommands } from '../../remote'

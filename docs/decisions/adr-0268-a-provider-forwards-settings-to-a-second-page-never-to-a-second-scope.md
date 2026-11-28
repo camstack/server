@@ -52,11 +52,11 @@ tRPC parses every cap response through it
 (`server/backend/src/api/trpc/generated-cap-routers.ts:375`), and Zod 4 strips
 unknown keys — verified directly, not assumed. A new key therefore reaches the
 browser only after a `*.cap.ts` edit, `npm run codegen`, **and** a
-`@camstack/server` publish train. The declaration would have been inert on
+`@dominevo/server` publish train. The declaration would have been inert on
 exactly the cluster it was written for.
 
-**A shared `INTEGRATION_SURFACE_TAB` constant exported from `@camstack/types` —
-rejected for the same class of reason.** `@camstack/types` is a framework
+**A shared `INTEGRATION_SURFACE_TAB` constant exported from `@dominevo/types` —
+rejected for the same class of reason.** `@dominevo/types` is a framework
 external for addon bundles (`tools/build/vite-lib.preset.ts:38`), so a provider
 importing the symbol would resolve it against the hub's *installed* framework
 and get `undefined` until a publish shipped.

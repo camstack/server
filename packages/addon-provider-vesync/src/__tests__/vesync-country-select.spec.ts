@@ -3,7 +3,7 @@
  * parse with the same schema the record and the connection use, and "Not set" must keep the
  * blank = not set meaning.
  */
-import type { ConfigField, ConfigSelectField } from '@camstack/types'
+import type { ConfigField, ConfigSelectField } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { buildConnectionFormSchema, vesyncCountryCodeSchema } from '../config.js'
 

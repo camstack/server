@@ -14,7 +14,7 @@ import type {
   AudioEncodeSessionConfig,
   AudioEncodedChunk,
   AudioCodecInfo,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 // Session-bound methods accept an optional `nodeId` so callers can pin
 // every call to the node that owns the session. The generated cap router

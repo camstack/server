@@ -16,7 +16,7 @@ applies-to:
 
 ## Context
 
-A metered plug reached CamStack as a switch and, next to it, a power sensor, an
+A metered plug reached Dominevo as a switch and, next to it, a power sensor, an
 energy sensor, a voltage sensor and a current sensor, each its own device with
 its own `power-meter` cap holding one field. The operator saw six rows for one
 object, could not tell which sensor belonged to which load, and the cap's
@@ -72,7 +72,7 @@ with no hint that the right answer sat in the same container.
 - A cap with several scalar targets pays one card per reading on Customize.
 - Giving `volts` and `amps` a `label` puts them in `CAP_RUNTIME_FIELD_UNITS`
   (D944: unlabelled quantities are readings, not convert-unit sources).
-- A live hub needs `@camstack/system` and `@camstack/server` published (cap
+- A live hub needs `@dominevo/system` and `@dominevo/server` published (cap
   change), then the Home Assistant addon and the admin UI deployed.
 
 ## Enforcement

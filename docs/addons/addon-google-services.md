@@ -96,7 +96,7 @@ transition. A successful OAuth callback clears the flag and resolves the alert.
 
 - Connect **requires** `brokerId` — start without it returns 400.
 - Google omits `refresh_token` on a second consent without revoke — the addon
-  refuses and tells the operator to revoke CamStack in Google Account security
+  refuses and tells the operator to revoke Dominevo in Google Account security
   and reconnect.
 - Optional `calendarFilter` (comma-separated Google calendar ids) is per
   broker; empty means all readable calendars for that account.

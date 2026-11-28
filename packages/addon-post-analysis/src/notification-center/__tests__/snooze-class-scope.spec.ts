@@ -11,7 +11,7 @@
  * delivered), so "the gate is off" can never make the file pass.
  */
 
-import type { NcSnooze } from '@camstack/types'
+import type { NcSnooze } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { activeSnoozeFor, isSnoozed, type SnoozeQuery } from '../snooze-policy.js'
 

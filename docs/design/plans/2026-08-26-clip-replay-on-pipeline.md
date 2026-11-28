@@ -49,7 +49,7 @@ The rules of `CLAUDE.md` apply. In addition, verbatim:
 - **A branch that silently throws work away logs it.** A skipped frame, a node
   that refuses, a run interrupted by the budget: one line each.
 - **Addons do not import each other.** `ctx.api` is the only layer. Framework
-  packages (`@camstack/types`, `@camstack/system`) are not addons and are
+  packages (`@dominevo/types`, `@dominevo/system`) are not addons and are
   imported freely.
 - **`npm run codegen` after every touch to a `*.cap.ts`.**
 - **A green test is not proof.** After every fix, DISARM the fix and confirm the
@@ -215,7 +215,7 @@ same, one level lower.
 
 `applyZoneRuleGate` (`packages/addon-pipeline/src/detection-pipeline/zone-gate.ts:28`)
 sits in another addon and **is not imported**. But the pure part,
-`evaluateZoneRules`, is in `@camstack/types` and is what both banks already use.
+`evaluateZoneRules`, is in `@dominevo/types` and is what both banks already use.
 `FrameProcessor` does the detection-stage zone filter inside itself
 (`ZoneEngine`), so for the replay the zones enter as a **constructor parameter**,
 not as a second engine.
@@ -372,13 +372,13 @@ The pre-flight already exists and is node-pinned: `pipelineExecutor.validatePipe
 
 **Interfaces:**
 - Produces: `readPreflight(result: PipelineValidationResult): ReplayPreflightVerdict`
-- Consumes: `PipelineValidationResult` from `@camstack/types`
+- Consumes: `PipelineValidationResult` from `@dominevo/types`
 
 - [ ] **Step 1 — write the failing test.**
 
 ```ts
 import { describe, it, expect } from 'vitest'
-import type { PipelineValidationResult } from '@camstack/types'
+import type { PipelineValidationResult } from '@dominevo/types'
 import { readPreflight } from '../replay-plan.js'
 
 const base: PipelineValidationResult = {
@@ -739,7 +739,7 @@ never invented.
 
 ```ts
 import { describe, it, expect } from 'vitest'
-import type { CameraPipelineConfig } from '@camstack/types'
+import type { CameraPipelineConfig } from '@dominevo/types'
 import { buildReplayPlan } from '../replay-plan.js'
 
 const base: CameraPipelineConfig = {

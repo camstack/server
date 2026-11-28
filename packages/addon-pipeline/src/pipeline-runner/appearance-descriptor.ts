@@ -15,7 +15,7 @@ import {
   type AppearanceBlockName,
   type AppearanceDescriptor,
   type ObjectDetection,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export interface RgbView {
   readonly data: Uint8Array

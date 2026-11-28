@@ -8,7 +8,7 @@
  * root-supply floors, copied onto the fine-tune because nothing has measured
  * the fine-tune's own yet.
  */
-import type { TrainingBaseModel } from '@camstack/types'
+import type { TrainingBaseModel } from '@dominevo/types'
 
 const HF_MODELS = 'https://huggingface.co/camstack/camstack-models/resolve/main'
 

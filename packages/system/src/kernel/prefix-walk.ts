@@ -4,7 +4,7 @@
  * `settings-door-view.ts` so the device store module does not import the view
  * that imports it.
  */
-import type { ISettingsStoreProvider } from '@camstack/types'
+import type { ISettingsStoreProvider } from '@dominevo/types'
 import { prefixRange } from '../builtins/sqlite-storage/prefix-range.js'
 
 function isRecord(value: unknown): value is Record<string, unknown> {

@@ -7,7 +7,7 @@ import {
   readDesktopAppState,
   serverRootDir,
   writeDesktopInstallRequest,
-} from '@camstack/node-root'
+} from '@dominevo/node-root'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { UpdateState } from '../auto-updater'
 import { takeInstallRequest, watchInstallRequests } from '../desktop-install-request'

@@ -22,8 +22,8 @@
  * fires, and they are now rows an operator can read instead of an empty list.
  */
 
-import type { CameraOccupancySnapshot, NcOccupancyCondition } from '@camstack/types'
-import { DETECTION_MACRO_CLASSES, isDetectionMacroClass } from '@camstack/types'
+import type { CameraOccupancySnapshot, NcOccupancyCondition } from '@dominevo/types'
+import { DETECTION_MACRO_CLASSES, isDetectionMacroClass } from '@dominevo/types'
 import { occupancyThreshold, resolveOccupancyScope } from './occupancy-watcher.js'
 import { type NcRuleSubject, subjectFromOccupancyEvent } from './rule-engine.js'
 

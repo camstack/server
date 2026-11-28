@@ -14,8 +14,8 @@
  *      exact-category subscribers only their own.
  */
 
-import type { SystemEvent } from '@camstack/types'
-import { EventCategory } from '@camstack/types'
+import type { SystemEvent } from '@dominevo/types'
+import { EventCategory } from '@dominevo/types'
 import { ServiceBroker } from 'moleculer'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { getBrokerEventBus, registerEventBusService } from '../../moleculer/event-bus.js'

@@ -108,7 +108,7 @@ that cut a region, because `frame: 'cropped'` would resolve nothing and
   whether the media LANDED, never on a proxy for elapsed time (D58).
 - **No train.** Nothing here touches `packages/types`: `NcMediaPolicy` already
   carried every field, so a sound rule authored with `attach: 'best'` validates
-  against the installed server closure today. `camstack deploy` of
+  against the installed server closure today. `dominevo deploy` of
   `addon-post-analysis` and `addon-admin-ui` is the whole delivery.
 
 ## Enforcement

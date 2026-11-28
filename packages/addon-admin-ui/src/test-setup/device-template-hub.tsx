@@ -4,8 +4,8 @@
  * so the field's own `deviceManager.*` reads reach an answer. The library's
  * hooks sit behind its own bundle, which a `vi.mock` of the package never reaches.
  */
-import { System } from '@camstack/sdk'
-import { SystemProvider, trpc } from '@camstack/ui-library'
+import { System } from '@dominevo/sdk'
+import { SystemProvider, trpc } from '@dominevo/ui-library'
 import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query'
 import type { TRPCLink } from '@trpc/client'
 import type { AnyRouter } from '@trpc/server'

@@ -58,7 +58,7 @@ export const deviceCredentialsCapability = {
     /**
      * Mint a one-shot enrollment code for `userId` and a device name: 128-bit
      * random, single use, 10 minutes, kept only as a hash. Returns the code
-     * once, with the `camstack://enroll?hub=…&code=…` link a QR carries.
+     * once, with the `dominevo://enroll?hub=…&code=…` link a QR carries.
      * `caller` (the admin) is recorded in the audit trail.
      */
     startEnrollment: method(

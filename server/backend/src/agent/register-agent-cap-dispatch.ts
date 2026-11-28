@@ -12,7 +12,7 @@ import type {
   HubLocalChildDispatcher,
   InProcessProviderLookup,
   LocalChildRegistryLogger,
-} from '@camstack/server/system'
+} from '@dominevo/server/system'
 import { createAgentCapDispatchService } from './agent-cap-dispatch-service.js'
 
 // ---------------------------------------------------------------------------

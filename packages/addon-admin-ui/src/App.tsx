@@ -13,7 +13,7 @@ import {
   SystemProvider,
   ThemeProvider,
   WidgetRegistryProvider,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactElement, ReactNode } from 'react'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'

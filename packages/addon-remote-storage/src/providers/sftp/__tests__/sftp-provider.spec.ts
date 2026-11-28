@@ -11,7 +11,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { EventEmitter } from 'node:events'
 import type { Client, ConnectConfig, SFTPWrapper, FileEntry } from 'ssh2'
-import type { IScopedLogger, StorageLocation, LogExtras, LogTags } from '@camstack/types'
+import type { IScopedLogger, StorageLocation, LogExtras, LogTags } from '@dominevo/types'
 import { SftpStorageProvider } from '../sftp-provider.js'
 
 const noopLogger: IScopedLogger = {

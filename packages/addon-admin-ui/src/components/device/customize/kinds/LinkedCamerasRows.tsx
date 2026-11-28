@@ -13,7 +13,7 @@
  * survive untouched. A camera whose write succeeded leaves the draft; one that
  * failed stays in it with its reason.
  */
-import type { DeviceInfo } from '@camstack/types'
+import type { DeviceInfo } from '@dominevo/types'
 import {
   deviceTypeMetaOf,
   IconButton,
@@ -21,7 +21,7 @@ import {
   useDeviceExtensionSetSlot,
   useDeviceManagerGetLinkedDevicesBatch,
   useUiText,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { X } from 'lucide-react'
 import { type ReactNode, useRef, useState } from 'react'

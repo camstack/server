@@ -30,7 +30,7 @@
  */
 import * as fs from 'node:fs'
 import * as path from 'node:path'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import {
   ensureNativePrebuilds,
   hasDotNode,

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { Volume2, VolumeX, RefreshCw, WifiOff } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { Button } from '@camstack/ui-library'
+import { Button } from '@dominevo/ui-library'
 
 export interface WebRtcPlayerProps {
   serverUrl: string

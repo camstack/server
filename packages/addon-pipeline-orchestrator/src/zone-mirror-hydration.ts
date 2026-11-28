@@ -26,8 +26,8 @@
  * nothing is CPU-bound and no unit depends on another.
  */
 
-import type { AddonApi, IScopedLogger } from '@camstack/types'
-import { errMsg } from '@camstack/types'
+import type { AddonApi, IScopedLogger } from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
 
 import { mapWithConcurrency } from './lane-pool.js'
 import type { ZoneMirrorHydration } from './zones-provider.js'

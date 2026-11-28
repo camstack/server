@@ -3,7 +3,7 @@ import {
   errMsg,
   type IScopedLogger,
   type RawDeviceIdentifiers,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { findEquipment, metadataOf } from '../enpal-equipment.js'
 import type { EnpalSnapshot } from '../enpal-snapshot.js'
 

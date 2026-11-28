@@ -1,5 +1,5 @@
 import { randomBytes } from 'node:crypto'
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IScopedLogger } from '@dominevo/types'
 import {
   AlexaDeviceCodeSession,
   type AlexaDeviceCodeSessionOptions,

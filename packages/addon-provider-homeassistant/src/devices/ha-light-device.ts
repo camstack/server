@@ -7,12 +7,12 @@ import {
   type SwitchStatus,
   type BrightnessStatus,
   type ColorStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { HaBaseChildDevice } from '../ha-base-child-device.js'
 import type { HaEntityState } from '../ha-types.js'
 
 /**
- * HA-backed light device. Hosts up to three caps in one CamStack
+ * HA-backed light device. Hosts up to three caps in one Dominevo
  * device, mirroring how HA models a `light.*` entity:
  *   - `switch` (always)  — on/off via `light.turn_on` / `light.turn_off`
  *   - `brightness` (conditional)  — via `brightness_pct` service-data

@@ -3,7 +3,7 @@ import {
   type IIntegrationInstancesProvider,
   type IntegrationInstance,
   type IntegrationInstanceDescription,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   guardInstanceDeletes,

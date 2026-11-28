@@ -1,7 +1,7 @@
 {
-  "name": "@camstack/addon-provider-velux",
-  "version": "0.2.177",
-  "description": "Velux KLF-200 integration for CamStack — the gateway, local-gateway windows (with rain sensor) and shutter covers (positional, no tilt)",
+  "name": "@dominevo/addon-provider-velux",
+  "version": "0.1.0",
+  "description": "Velux KLF-200 integration for Dominevo — the gateway, local-gateway windows (with rain sensor) and shutter covers (positional, no tilt)",
   "keywords": [
     "camstack",
     "addon",
@@ -15,12 +15,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/camstack/server.git",
+    "url": "https://github.com/dominevo/server.git",
     "directory": "packages/addon-provider-velux"
   },
   "homepage": "https://camstack-docs.zentik.app",
   "bugs": {
-    "url": "https://github.com/camstack/server/issues"
+    "url": "https://github.com/dominevo/server/issues"
   },
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -63,7 +63,7 @@
       }
     ],
     "requires": {
-      "server": ">=1.2.968"
+      "server": ">=0.1.0"
     }
   },
   "files": [
@@ -81,7 +81,7 @@
     "publish:npm": "npm publish --access public"
   },
   "devDependencies": {
-    "@camstack/types": "*",
+    "@dominevo/types": "0.1.0",
     "klf-200-api": "^8.0.0",
     "typescript": "~6.0.3",
     "vite": "^8.0.11",

@@ -20,7 +20,7 @@
  *  - (D683 Task 18, T16 L5) drop `gapDistance` from the `totalDistance` rule:
  *    "the distance walked across the gap…" fails.
  */
-import type { SettingsStoreClient } from '@camstack/types'
+import type { SettingsStoreClient } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { probeMoved } from '../pipeline/stationary/promotion-plan.js'
 import { TRACK_MERGE_KEYS, TRACK_MERGE_RULES, mergeActiveTracks } from '../store/track-merge.js'

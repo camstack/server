@@ -29,7 +29,7 @@
  * binding together whenever one layer writes both — which every writer here
  * does.
  *
- * Lives in the bare `@camstack/types` entry, which every addon bundles, so the
+ * Lives in the bare `@dominevo/types` entry, which every addon bundles, so the
  * runner (`addon-pipeline`) and the editors (`ui-library`, `addon-admin-ui`)
  * apply the same rule.
  */

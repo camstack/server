@@ -1,8 +1,8 @@
-import { DEVICE_TEMPLATE_FILTERS, DEVICE_TEMPLATE_MAX_LENGTH } from '@camstack/types'
+import { DEVICE_TEMPLATE_FILTERS, DEVICE_TEMPLATE_MAX_LENGTH } from '@dominevo/types'
 import {
   deviceTemplateCallableBounds,
   deviceTemplateFilterMaxParams,
-} from '@camstack/types/device-template-catalogue'
+} from '@dominevo/types/device-template-catalogue'
 import { describe, expect, it } from 'vitest'
 import { nunjucksNodeFields } from '../nunjucks-internals.js'
 import { analyzeTemplate, NODE_POLICY } from '../template-grammar.js'

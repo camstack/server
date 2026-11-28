@@ -13,7 +13,7 @@
  * Idempotent. A failed read throws so the hub retries; nothing is ever deleted
  * from an unanswered read (D49). The hub is never forgotten.
  */
-import type { INodeRemovalHookProvider, IScopedLogger } from '@camstack/types'
+import type { INodeRemovalHookProvider, IScopedLogger } from '@dominevo/types'
 import { PREFERRED_AGENT_SETTING } from './placement-service.js'
 import { AUDIO_NODE_SETTING } from './audio-subscription-controller.js'
 

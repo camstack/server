@@ -12,7 +12,7 @@
  * and the browser holds the stored value only after an explicit, audited
  * reveal through the host.
  */
-import { type ConfigField, SECRET_CLEAR } from '@camstack/types'
+import { type ConfigField, SECRET_CLEAR } from '@dominevo/types'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { FormField } from '../config-form-field'

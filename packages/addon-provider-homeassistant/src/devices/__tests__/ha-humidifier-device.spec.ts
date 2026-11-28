@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { DeviceType, type IDeviceRuntimeState } from '@camstack/types'
+import { DeviceType, type IDeviceRuntimeState } from '@dominevo/types'
 import { HaHumidifierDevice } from '../ha-humidifier-device.js'
 import type { HaEntityState } from '../../ha-types.js'
 
@@ -7,7 +7,7 @@ function buildCtx(
   entityId: string,
   publishMutate = vi.fn(async () => null),
 ): {
-  ctx: import('@camstack/types').DeviceContext
+  ctx: import('@dominevo/types').DeviceContext
   setCapStateCalls: Array<Record<string, unknown>>
 } {
   let runtimeStateRef: IDeviceRuntimeState | null = null
@@ -93,12 +93,12 @@ function buildCtx(
       addContext: vi.fn(),
       with: vi.fn(),
     },
-  } as unknown as import('@camstack/types').DeviceContext
+  } as unknown as import('@dominevo/types').DeviceContext
 
   return { ctx, setCapStateCalls }
 }
 
-function getProvider(ctx: import('@camstack/types').DeviceContext): {
+function getProvider(ctx: import('@dominevo/types').DeviceContext): {
   setOn: (i: { deviceId: number; on: boolean }) => Promise<void>
   setTargetHumidity: (i: { deviceId: number; humidity: number }) => Promise<void>
   setMode: (i: { deviceId: number; mode: string }) => Promise<void>

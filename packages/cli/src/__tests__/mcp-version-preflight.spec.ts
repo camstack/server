@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js'
-import { MutationGate, type ConnectOutcome } from '@camstack/develop'
+import { MutationGate, type ConnectOutcome } from '@dominevo/develop'
 import type { McpContext } from '../mcp/context.js'
 import { createPublicServer } from '../mcp/server.js'
 import type { VersionProbe } from '../mcp/version-probe.js'
@@ -10,7 +10,7 @@ const NO_SESSION: ConnectOutcome = {
   ok: false,
   reason: 'no-session',
   message: 'no usable hub session',
-  action: 'run `camstack login <host>` in a terminal',
+  action: 'run `dominevo login <host>` in a terminal',
 }
 
 const CTX: McpContext = {
@@ -88,7 +88,7 @@ describe('version preflight', () => {
     const out = texts(await call(h))
     expect(out).toHaveLength(2)
     expect(out[0]).toBe(
-      '⚠ CamStack versions: server 1.2.700 → 1.2.714 · 3 addons outdated (auth, reolink, hikvision) · CLI/MCP 1.2.212 → 1.2.230 — run ops_update_check / ops_update_apply.',
+      '⚠ Dominevo versions: server 1.2.700 → 1.2.714 · 3 addons outdated (auth, reolink, hikvision) · CLI/MCP 1.2.212 → 1.2.230 — run ops_update_check / ops_update_apply.',
     )
     expect(out[1]).toBe('real answer')
   })
@@ -111,7 +111,7 @@ describe('version preflight', () => {
     await call(h)
     h.clock.now += 14 * 60_000
     const second = texts(await call(h))
-    expect(second[0]).toContain('CamStack versions')
+    expect(second[0]).toContain('Dominevo versions')
     expect(h.probeCalls()).toBe(1)
     h.clock.now += 2 * 60_000
     await call(h)
@@ -126,8 +126,8 @@ describe('version preflight', () => {
     release(OUTDATED)
     const [x, y] = await both
     expect(h.probeCalls()).toBe(1)
-    expect(texts(x)[0]).toContain('CamStack versions')
-    expect(texts(y)[0]).toContain('CamStack versions')
+    expect(texts(x)[0]).toContain('Dominevo versions')
+    expect(texts(y)[0]).toContain('Dominevo versions')
   })
 
   it('a probe failure says so once per session, then stays silent', async () => {
@@ -160,7 +160,7 @@ describe('version preflight', () => {
     release(OUTDATED)
     await new Promise((r) => setTimeout(r, 20))
     const second = texts(await call(h))
-    expect(second[0]).toContain('CamStack versions')
+    expect(second[0]).toContain('Dominevo versions')
     expect(h.probeCalls()).toBe(1)
   })
 
@@ -195,7 +195,7 @@ describe('version preflight', () => {
     const h = await harness(async () => OUTDATED)
     const r = await h.client.callTool({ name: 'ops_whoami', arguments: {} })
     expect(r.isError).toBe(true)
-    expect(texts(r)[0]).toContain('CamStack versions')
+    expect(texts(r)[0]).toContain('Dominevo versions')
     expect(texts(r)[1]).toContain('no-session')
   })
 })

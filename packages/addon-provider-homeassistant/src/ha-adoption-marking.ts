@@ -10,7 +10,7 @@ export interface AdoptionRegistryDevice {
   readonly haDeviceId: string | null
 }
 
-/** haDeviceId to the CamStack id of the top-level device that adopted it. */
+/** haDeviceId to the Dominevo id of the top-level device that adopted it. */
 export function adoptedDeviceIdsByHaDevice(
   devices: readonly AdoptionRegistryDevice[],
 ): Map<string, number> {

@@ -1,4 +1,4 @@
-import type { ErrorStatus } from '@camstack/types'
+import type { ErrorStatus } from '@dominevo/types'
 import type { HmDevice } from 'nodehomematic'
 import { maintenanceChannel } from './ccu/ccu-device-rows.js'
 import { faultSince } from './ccu/ccu-faults-actions.js'

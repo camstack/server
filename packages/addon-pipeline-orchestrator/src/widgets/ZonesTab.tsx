@@ -22,7 +22,7 @@
  * per zone × per class).
  */
 import { useCallback, useMemo, useState } from 'react'
-import type { Zone as CapZone, DeviceProxy } from '@camstack/types'
+import type { Zone as CapZone, DeviceProxy } from '@dominevo/types'
 import {
   useDeviceProxy,
   useDeviceStateSlice,
@@ -36,7 +36,7 @@ import {
   GRID_GAP,
   TEXT_SECTION_LABEL,
   TEXT_HINT,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Trans, useT } from '../i18n/index.js'
 import { ZoneList } from './zone-editor/ZoneList'
 import { ZoneForm } from './zone-editor/ZoneForm'

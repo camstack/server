@@ -1,4 +1,4 @@
-import type { SystemEvent } from '@camstack/types'
+import type { SystemEvent } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type {
   CapCallMessage,

@@ -1,6 +1,6 @@
 /**
  * No Hugging Face token is ever read from the environment (operator rule: no
- * secret travels through env). The CamStack model repos are public, so a
+ * secret travels through env). The Dominevo model repos are public, so a
  * download to huggingface.co carries no Authorization header — even when a
  * stray `HF_TOKEN` / `HUGGING_FACE_HUB_TOKEN` is set on the host.
  */
@@ -45,6 +45,6 @@ describe('model downloader — no Hugging Face token from the environment', () =
     )
     expect(seen).toHaveLength(1)
     expect(seen[0]?.['Authorization']).toBeUndefined()
-    expect(seen[0]?.['User-Agent']).toBe('CamStack/1.0')
+    expect(seen[0]?.['User-Agent']).toBe('Dominevo/1.0')
   })
 })

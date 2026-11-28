@@ -38,7 +38,7 @@ import type {
   RelocateFootageClass,
   RelocateFootageInput,
   RelocateJob,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { physicalRootKey } from './addon/eviction-domain.js'
 import type { RecordingsLocation } from './addon/roots.js'
 import { locationMayBeWritten, locationMode } from './addon/roots.js'

@@ -16,7 +16,7 @@ import {
   CLIP_STILL_REASON_CODE_HEADER,
   CLIP_STILL_REASON_HEADER,
   CLIP_STREAM_TRANSPORT_HEADER,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { createHttpClipStreamOpener } from '../clip-stream-http'
 import type { ClipIncompleteReport, ClipStreamHandlers } from '../clip-stream-feeder'
 

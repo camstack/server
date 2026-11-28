@@ -17,7 +17,7 @@ import {
   DialogTitle,
   ErrorBox,
   trpc,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Loader2 } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'

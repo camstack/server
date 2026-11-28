@@ -54,10 +54,10 @@ session), it is not SSD at all — and that re-scopes the hardware question:
   10–14 ms.** A whole cold seek ≈ **~50 ms on spinning rust.**
 - The same instant, 10 s averages: the reference NVR's write load (~11.7 MB/s
   aggregate) holds each pool member at **~5–7 % util** (ZFS txg batching,
-  160 KB avg requests, four arms). CamStack's comparable write load
+  160 KB avg requests, four arms). Dominevo's comparable write load
   (9.3 MB/s, 64 w/s) holds the single sdl at **94.6 % util with
   f_await 1 814 ms**.
-- CamStack cold reads sampled in the same minute: 57–71 ms — when they land
+- Dominevo cold reads sampled in the same minute: 57–71 ms — when they land
   in a gap. The field p50 of 531 ms and the 9.2 s max are the same reads
   landing behind a write burst or an SMR/btrfs flush on the one arm that
   takes everything.

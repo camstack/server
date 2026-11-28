@@ -1,4 +1,4 @@
-import { DeviceRole, DeviceType, type TimedRunStatus } from '@camstack/types'
+import { DeviceRole, DeviceType, type TimedRunStatus } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { TimedRunRowBody } from '../record-kinds.js'
 import {

@@ -1,4 +1,4 @@
-import type { IScopedLogger, NodeBenchmarkPlanInput, NodeBenchmarkPreflight } from '@camstack/types'
+import type { IScopedLogger, NodeBenchmarkPlanInput, NodeBenchmarkPreflight } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   AutoBenchmarkScheduler,

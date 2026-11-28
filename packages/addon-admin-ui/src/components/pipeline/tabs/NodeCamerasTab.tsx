@@ -2,7 +2,7 @@
  * node → Assignments: the node's live load, and the cameras that run on it
  * right now with the roles each holds here (`NodeCameraAssignmentsTable`).
  */
-import { useClusterNodes } from '@camstack/ui-library'
+import { useClusterNodes } from '@dominevo/ui-library'
 import { LiveLoadPanel } from '../LiveLoadPanel'
 import { NodeCameraAssignmentsTable } from '../NodeCameraAssignmentsTable'
 import { useTranslation } from 'react-i18next'

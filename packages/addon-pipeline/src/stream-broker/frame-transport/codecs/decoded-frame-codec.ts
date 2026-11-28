@@ -26,7 +26,7 @@
  * — a worker built before a new format is added would still send the
  * old code over the wire.
  */
-import type { DecodedFrame } from '@camstack/types'
+import type { DecodedFrame } from '@dominevo/types'
 import { LengthPrefixCodec } from './length-prefix-codec.js'
 
 const HEADER_BYTES = 20

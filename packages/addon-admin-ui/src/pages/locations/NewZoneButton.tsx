@@ -2,7 +2,7 @@
  * `+ New zone` — the ONE creation entry point for zones, rendered in the page
  * header. Same open-on-click pattern as `NewLocationButton`.
  */
-import { Button, Input } from '@camstack/ui-library'
+import { Button, Input } from '@dominevo/ui-library'
 import { Plus, X } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'

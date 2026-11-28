@@ -10,13 +10,13 @@ import {
   type CompositionSourceRef,
   type DeviceInfo,
   DeviceType,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   Badge,
   ErrorBox,
   useCapabilityPresence,
   useDeviceManagerGetDevice,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { AssignmentFacts } from './assignment-availability'

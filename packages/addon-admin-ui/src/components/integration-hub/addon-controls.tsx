@@ -13,7 +13,7 @@ import {
   TooltipTrigger,
   useConfirm,
   useAddonsRestartAddon,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 
 /**

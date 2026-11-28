@@ -3,7 +3,7 @@
  * in a table colours its chips without each row asking the registry itself.
  * Absent provider = no entries: chips fall back to the name-derived colour.
  */
-import type { TagEntry } from '@camstack/types'
+import type { TagEntry } from '@dominevo/types'
 import { createContext, type Provider, useContext } from 'react'
 
 const TagEntriesContext = createContext<readonly TagEntry[] | undefined>(undefined)

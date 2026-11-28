@@ -5,7 +5,7 @@
  * declares `battery`. While the provider holds no native binding at all the
  * episode stays open, however many ticks pass.
  */
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import { batteryCapCensusOver, type NcDeviceBindingsFacts } from '../alerts/battery-cap-census.js'

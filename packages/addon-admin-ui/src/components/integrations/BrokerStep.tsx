@@ -9,7 +9,7 @@
 import { useState } from 'react'
 import { ChevronLeft } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { Button } from '@camstack/ui-library'
+import { Button } from '@dominevo/ui-library'
 import { BrokerPicker } from '../brokers/BrokerPicker'
 
 export interface BrokerStepProps {

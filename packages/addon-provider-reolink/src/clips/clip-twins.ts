@@ -17,7 +17,7 @@
  * operator cannot see.
  */
 
-import type { CamProfile } from '@camstack/types'
+import type { CamProfile } from '@dominevo/types'
 
 /** The library's `RecordingFile`, narrowed to what pairing reads. */
 export interface TwinCandidate {

@@ -1,5 +1,5 @@
-import { DeviceType } from '@camstack/types'
-import { RunningStatusLine, useDeviceState, useSystem } from '@camstack/ui-library'
+import { DeviceType } from '@dominevo/types'
+import { RunningStatusLine, useDeviceState, useSystem } from '@dominevo/ui-library'
 import type { ReactElement } from 'react'
 import { ContainerHero } from './ContainerHero'
 import { ControlHero } from './ControlHero'

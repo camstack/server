@@ -125,11 +125,11 @@ default.
 | M6 | `scripts/check-device-scoped-wrapper-mounts.ts` (landed 2026-09-20) | Fails when any cap with `scope: 'device'` + `kind: 'wrapper'` resolves to mount kind `singleton`. Wired into `.github/workflows/ci.yml`. Modelled on `scripts/check-clip-crop-single-owner.ts`. **Prefer a guard to a paragraph** — this defect survived two documents that described it correctly. |
 
 No method signature changes, so **no SDK regeneration and no viewer release are
-required by M1–M6**. The `@camstack/types` + `@camstack/system` change ships on
+required by M1–M6**. The `@dominevo/types` + `@dominevo/system` change ships on
 the framework train (`docs/architecture/update-and-release.md`);
 `resolveCapMount` is read at router build time, so the behaviour arrives with the
 framework, while the regenerated type file lands with the next
-`@camstack/server`.
+`@dominevo/server`.
 
 ### 2.3 The regression risk, stated
 
@@ -643,11 +643,11 @@ depends on a later one.
 | **P7** *(gated, not scheduled)* | `mode: 'collection'` + the bindings-scoped fan-out + `addonId` dispatch on `getClipPlayback` — and only once a SECOND provider exists. | Out of scope here. §2 is its prerequisite; [`2026-08-08-videoclips-timeline.md`](2026-08-08-videoclips-timeline.md) §§3–4 is its design. |
 
 Deployment reminders that have cost real time before: an edit under
-`packages/<addon>/src` is not running until `camstack deploy` copies it into
-`<dataDir>/addons/`; a `@camstack/types` / `@camstack/system` change is not live
+`packages/<addon>/src` is not running until `dominevo deploy` copies it into
+`<dataDir>/addons/`; a `@dominevo/types` / `@dominevo/system` change is not live
 until a framework train carries it; a viewer change is not live until
 `npm run update:patch` (OTA) **and** `npm run build:orchestrator` +
-`camstack deploy packages/addon-pipeline-orchestrator` for the `/viewer` copy.
+`dominevo deploy packages/addon-pipeline-orchestrator` for the `/viewer` copy.
 
 ---
 

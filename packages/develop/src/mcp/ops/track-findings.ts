@@ -1,5 +1,5 @@
 /**
- * Per-track audit rules — pure, shared by the operator MCP and `camstack mcp`.
+ * Per-track audit rules — pure, shared by the operator MCP and `dominevo mcp`.
  *
  * Aggregate percentages of missing media MISS the defects an operator sees;
  * this inspects EVERY track (trajectory, media rows, timing, enrichment) and

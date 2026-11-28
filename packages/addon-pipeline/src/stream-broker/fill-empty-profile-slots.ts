@@ -5,7 +5,7 @@
  * natives — otherwise the camera stays dark until someone clicks the
  * dropdowns again (618 / 1438).
  */
-import { CAM_PROFILE_ORDER, type CamProfile } from '@camstack/types'
+import { CAM_PROFILE_ORDER, type CamProfile } from '@dominevo/types'
 
 export function fillEmptyProfileSlots(
   current: Partial<Record<CamProfile, string>>,

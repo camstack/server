@@ -5,8 +5,8 @@
  * dependency is read through the deps object.
  */
 
-import type { AddonContext, IScopedLogger, Zone } from '@camstack/types'
-import { EventCategory } from '@camstack/types'
+import type { AddonContext, IScopedLogger, Zone } from '@dominevo/types'
+import { EventCategory } from '@dominevo/types'
 import { NotificationCenter } from '../../notification-center/index.js'
 import { AudioMetricsProvider } from '../audio-metrics-provider.js'
 import { StationaryObjectRegistry } from '../pipeline/stationary/stationary-registry.js'

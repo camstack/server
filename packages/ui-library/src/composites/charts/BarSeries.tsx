@@ -9,7 +9,7 @@
  * and every bucket is also a real button for keyboard and screen readers.
  */
 import { useCallback, useMemo, useRef, useState, type JSX, type ReactNode } from 'react'
-import type { DisplayPreference } from '@camstack/types'
+import type { DisplayPreference } from '@dominevo/types'
 import type uPlot from 'uplot'
 import { useUiText } from '../../contexts/ui-text'
 import { cn } from '../../lib/cn'

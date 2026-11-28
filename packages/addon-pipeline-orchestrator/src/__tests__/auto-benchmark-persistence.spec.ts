@@ -4,7 +4,7 @@
  * after a respawn, because attempts and spacing lived in memory. The stored
  * blob is round-tripped through JSON, as the settings store does.
  */
-import type { IScopedLogger, NodeBenchmarkPlanInput } from '@camstack/types'
+import type { IScopedLogger, NodeBenchmarkPlanInput } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   AutoBenchmarkScheduler,

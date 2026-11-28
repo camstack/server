@@ -9,7 +9,7 @@ import {
   VacuumControlStatusSchema,
   ValveStatusSchema,
   WaterHeaterStatusSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { LEGACY_SUPPORT } from '../component-support.js'
 import { buildDerivedPlan, CAP_ENTITY_MAP } from '../entity-catalog.js'

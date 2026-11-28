@@ -20,10 +20,10 @@ abandoned `@marsaud/smb2` (last publish 2022-06-12), untested on Node 24, with
 no upstream.
 
 `smbclient` is on the Unraid host at `/usr/bin/smbclient` and **absent from the
-CamStack container** (`which smbclient` → nothing; `mount.cifs` likewise). So
+Dominevo container** (`which smbclient` → nothing; `mount.cifs` likewise). So
 the binary has to arrive somehow. The first plan was a Dockerfile line, which
 means an image rebuild and a container recreate — a materially heavier ship
-chain than `camstack deploy`, for one addon's dependency.
+chain than `dominevo deploy`, for one addon's dependency.
 
 The operator's own plugin does it differently: `installDependencies()`
 (`~/Documents/Git/`the reference plugin`:243`, called from its
@@ -32,7 +32,7 @@ startup path at `:230`) runs `apt-get install -y smbclient` on Linux,
 "not supported yet" otherwise, and wraps the whole thing in a try/catch that
 logs rather than throws.
 
-That works, and it raises the question this record answers. CamStack already
+That works, and it raises the question this record answers. Dominevo already
 has a mechanism for "this addon needs something installed, satisfy it before it
 initialises": `camstack.addons[].python.requirements` →
 `installManifestPythonDeps`, called from `addon-runner.ts` immediately before
@@ -84,10 +84,10 @@ guard (D296, lock 3).
 
 **Ship chain.** No Dockerfile change, no image rebuild, no container recreate.
 The mechanism is `packages/system` + `packages/types`, so it is a publish
-train; the SMB provider itself is `camstack deploy
+train; the SMB provider itself is `dominevo deploy
 packages/addon-remote-storage`.
 
-**The container runs as root** (`docker exec CamStack id` → uid 0), so
+**The container runs as root** (`docker exec Dominevo id` → uid 0), so
 `apt-get` works. An unprivileged deployment gets the warn path and a provider
 that refuses — which is the honest outcome, not a silent one.
 

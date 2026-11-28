@@ -16,7 +16,7 @@
  * PEM. "Unknown" usage is never offered for deletion: absence is claimed only
  * from a read that answered.
  */
-import type { KeychainAdminSecret } from '@camstack/types'
+import type { KeychainAdminSecret } from '@dominevo/types'
 import {
   Tabs,
   TabsContent,
@@ -28,7 +28,7 @@ import {
   useKeychainAdminResetReport,
   useKeychainAdminReveal,
   useKeychainAdminStatus,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { KeyRound } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'

@@ -5,7 +5,7 @@
  * `window.__uiShotsMissing` — the runner reports them per shot.
  */
 import { fakeSystemClient } from '@admin/modules/device-detail/__tests__/fake-system-client'
-import type { SystemTrpcClient } from '@camstack/ui-library'
+import type { SystemTrpcClient } from '@dominevo/ui-library'
 import { resolveFixture } from '../fixtures-runtime'
 
 declare global {

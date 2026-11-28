@@ -55,13 +55,13 @@ import type {
   IScopedLogger,
   IVideoclipsProvider,
   PeerBytesTicket,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   CLIP_PLAYBACK_OPTIONS,
   clipExportFailure,
   VIDEOCLIPS_MAX_OFFER_BYTES,
   VIDEOCLIPS_MAX_READ_BYTES,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 import { AMCREST_ADDON_ID } from '../schema.js'
 import { CLIP_SOURCE_ONBOARD, clipKeyOf, mintClipId, parseClipId } from './clip-identity.js'

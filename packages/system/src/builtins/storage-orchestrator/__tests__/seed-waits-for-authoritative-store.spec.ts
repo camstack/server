@@ -12,8 +12,8 @@ import type {
   IStorageProviderImpl,
   StorageLocation,
   StorageLocationDeclaration,
-} from '@camstack/types'
-import { createRecordsAccess, createSecretsAccess } from '@camstack/types'
+} from '@dominevo/types'
+import { createRecordsAccess, createSecretsAccess } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   makeFakeKeychain,

@@ -16,8 +16,8 @@
  * default backend. These tests still cover only the settings surface
  * (`probedBestHwaccel` scoping), not the decode path.
  */
-import { BaseAddon, EventCategory } from '@camstack/types'
-import type { ConfigFieldWithValue, ConfigUISchemaWithValues } from '@camstack/types'
+import { BaseAddon, EventCategory } from '@dominevo/types'
+import type { ConfigFieldWithValue, ConfigUISchemaWithValues } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import DecoderNodeAvAddon from '../addon/index.js'
 

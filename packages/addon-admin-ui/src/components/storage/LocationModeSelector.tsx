@@ -28,7 +28,7 @@ import {
   locationModeChoice,
 } from './location-mode'
 import { useTranslation } from 'react-i18next'
-import { Button } from '@camstack/ui-library'
+import { Button } from '@dominevo/ui-library'
 
 const MODE_ICON: Readonly<Record<LocationMode, typeof Power>> = {
   active: Power,

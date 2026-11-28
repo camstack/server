@@ -15,7 +15,7 @@ import type {
   FrameHandle,
   IScopedLogger,
   RunDetailSubtreeResult,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   composeDetailSteps,
   TrackDetailDispatcher,

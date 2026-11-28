@@ -1,4 +1,4 @@
-import type { FrameViewCrop, FrameViewSpec } from '@camstack/types'
+import type { FrameViewCrop, FrameViewSpec } from '@dominevo/types'
 import { FRAME_VIEW_PAYLOAD_POLICY } from '../session-decode/frame-view-payload.js'
 
 export interface RootModelView {

@@ -1,4 +1,4 @@
-import type { SirenDurationRange, SirenOptions, SirenStatus } from '@camstack/types'
+import type { SirenDurationRange, SirenOptions, SirenStatus } from '@dominevo/types'
 import type { SwitchTimerActions, SwitchTimerModel } from '../../parts/switch-timer-model'
 import type { CardCommon, CardCommonActions } from '../../shell/model'
 

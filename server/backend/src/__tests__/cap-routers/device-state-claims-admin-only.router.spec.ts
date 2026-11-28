@@ -9,7 +9,7 @@
  * read/write methods keep their `protected` tier and are pinned here too, so a
  * widening is a diff; `getCapSlice` never answers the native shadow.
  */
-import type { CapabilityDefinition } from '@camstack/types'
+import type { CapabilityDefinition } from '@dominevo/types'
 import {
   ACCESS_ROLES,
   buildRoleScopes,
@@ -17,7 +17,7 @@ import {
   deviceStateCapability,
   resolveMethodAuth,
   type TokenScope,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { buildCapRouterForTest, invokeProcedure, makeCtx } from './harness.js'
 

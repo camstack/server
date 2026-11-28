@@ -47,7 +47,7 @@ export function gateQuery(index: ApiIndex, methodPath: string, tier: CredentialT
   if (method.auth === 'admin' && tier !== 'admin') {
     return {
       allowed: false,
-      reason: `${methodPath} is admin-tier and this credential is not admin-scoped. Log in with an admin account via \`camstack login\`.`,
+      reason: `${methodPath} is admin-tier and this credential is not admin-scoped. Log in with an admin account via \`dominevo login\`.`,
     }
   }
   return { allowed: true, method }

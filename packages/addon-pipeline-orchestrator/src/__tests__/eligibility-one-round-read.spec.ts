@@ -9,7 +9,7 @@
  * round. The refresher now asks for `one-round`: the read settles within one
  * round, fails (so the memo keeps its last answer), and warns nothing.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import PipelineOrchestratorAddon from '../index.js'
 import {

@@ -22,7 +22,7 @@ import {
   type ConnectionEndpoint,
   type IScopedLogger,
   resolveHubAddressRoles,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { FastifyInstance } from 'fastify'
 import Fastify from 'fastify'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -349,7 +349,7 @@ describe('POST /api/addons/upload', () => {
   })
 
   it('restarts the server (not an in-process reload) when a framework package is deployed', async () => {
-    // @camstack/system ships hub builtins that can't hot-reload in place — the
+    // @dominevo/system ships hub builtins that can't hot-reload in place — the
     // upload path must call restartServer() and SKIP the per-addon restartAddon.
     const tmpRoot = await import('node:fs/promises').then((fsp) =>
       fsp.mkdtemp('/tmp/camstack-upload-fw-'),
@@ -357,14 +357,14 @@ describe('POST /api/addons/upload', () => {
     const previous = process.env['CAMSTACK_DATA']
     process.env['CAMSTACK_DATA'] = tmpRoot
     const fsSync = await import('node:fs')
-    fsSync.mkdirSync(`${tmpRoot}/addons/@camstack/system`, { recursive: true })
+    fsSync.mkdirSync(`${tmpRoot}/addons/@dominevo/system`, { recursive: true })
 
     try {
       const restartServer = vi.fn((_requestedBy?: string) => {})
       const restartAddon = vi.fn(async (_id: string) => ({ success: true }))
       const registry = {
         listAddons: vi.fn(() => [
-          { manifest: { id: 'sqlite-settings', packageName: '@camstack/server' } },
+          { manifest: { id: 'sqlite-settings', packageName: '@dominevo/server' } },
         ]),
         loadNewAddons: vi.fn(async () => ({ loaded: [] as string[], failed: [] as string[] })),
         restartAddon,
@@ -374,7 +374,7 @@ describe('POST /api/addons/upload', () => {
 
       fastify = await makeServer({
         auth: makeAuth('admin'),
-        bridge: makeAddonBridge({ name: '@camstack/server', version: '9.9.9' }),
+        bridge: makeAddonBridge({ name: '@dominevo/server', version: '9.9.9' }),
         moleculer: makeMoleculer(vi.fn()),
         addonRegistry: registry,
         addonPackageService: pkgSvc,
@@ -389,7 +389,7 @@ describe('POST /api/addons/upload', () => {
         payload: buildMultipart(TGZ_BOUNDARY, {
           file: {
             filename: 'camstack-core-9.9.9.tgz',
-            content: buildValidTarball({ name: '@camstack/server', version: '9.9.9' }),
+            content: buildValidTarball({ name: '@dominevo/server', version: '9.9.9' }),
           },
         }),
       })
@@ -687,7 +687,7 @@ describe('POST /api/addons/upload', () => {
  * `data.fields` is the plugin's live busboy body: a field that trails the file
  * part is not in it when `request.file()` resolves. With `fastify.inject` and a
  * single-buffer payload the whole body is parsed at once, so every existing
- * test passed — and a 4.9 MB `camstack deploy -n agent-a` on the real hub
+ * test passed — and a 4.9 MB `dominevo deploy -n agent-a` on the real hub
  * read `nodeId = null`, took the HUB branch and never addressed the agent. It
  * reproduced 4× on 2026-08-07 and was diagnosed as a stale dist on a node that
  * had never been sent anything.

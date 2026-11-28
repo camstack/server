@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import { parseDiscoveryConfigPayload } from '../mqtt-ha-discovery-parser.js'
 import type { MqttHaDiscoveredEntity } from '../mqtt-ha-discovery-types.js'
 import { groupEntitiesByDevice } from '../mqtt-ha-device-grouping.js'

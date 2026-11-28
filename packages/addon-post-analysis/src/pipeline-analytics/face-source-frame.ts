@@ -28,7 +28,7 @@
  * 3 of 1 606 frames on the live hub and cost an ownership graph; it was
  * dropped (fix round 1).
  */
-import type { FrameHandle, IScopedLogger } from '@camstack/types'
+import type { FrameHandle, IScopedLogger } from '@dominevo/types'
 import type { FaceSourceStats } from './face-source-stats.js'
 
 /** A pixel-space rectangle. */

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DeviceRole, DeviceType } from '@camstack/types'
+import { DeviceRole, DeviceType } from '@dominevo/types'
 import type { MqttHaCap } from '../mqtt-ha-domain-mapping.js'
 import { planMqttHaDevice } from '../mqtt-ha-domain-mapping.js'
 import {

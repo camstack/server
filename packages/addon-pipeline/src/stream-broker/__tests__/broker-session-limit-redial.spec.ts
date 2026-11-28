@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { IScopedLogger, StreamSource } from '@camstack/types'
+import type { IScopedLogger, StreamSource } from '@dominevo/types'
 import { StreamBroker } from '../stream-broker/stream-broker'
 
 /**

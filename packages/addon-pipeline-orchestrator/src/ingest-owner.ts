@@ -1,4 +1,4 @@
-import type { IngestOwner } from '@camstack/types'
+import type { IngestOwner } from '@dominevo/types'
 
 interface ClusterRolesLike {
   readonly ingestNode: string

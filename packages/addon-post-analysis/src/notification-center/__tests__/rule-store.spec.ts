@@ -6,9 +6,9 @@
 import { ncRecordKinds } from '../record-kinds.js'
 import { makeNcRecords, ncTable } from './support/nc-test-deps.js'
 import { describe, it, expect, beforeEach } from 'vitest'
-import type { NcRuleInput } from '@camstack/types'
-import { NcRuleInputSchema } from '@camstack/types'
-import type { InMemoryRecords } from '@camstack/types'
+import type { NcRuleInput } from '@dominevo/types'
+import { NcRuleInputSchema } from '@dominevo/types'
+import type { InMemoryRecords } from '@dominevo/types'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import { NcRuleStore } from '../rule-store.js'
 

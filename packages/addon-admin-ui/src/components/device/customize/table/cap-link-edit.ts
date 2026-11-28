@@ -9,8 +9,8 @@ import {
   type CompositionCapLinkFeature,
   type CompositionSourceRef,
   type CustomizeCapLink,
-} from '@camstack/types'
-import type { CapLinkCellState } from '@camstack/ui-library'
+} from '@dominevo/types'
+import type { CapLinkCellState } from '@dominevo/ui-library'
 
 export interface OfferedCapLink {
   readonly cap: string

@@ -32,7 +32,7 @@ import {
   usePlateGalleryRemoveVehicleSample,
   usePlateGalleryRenameVehicle,
   type DataColumn,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { Car, Loader2, Pencil, Plus, Trash2, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'

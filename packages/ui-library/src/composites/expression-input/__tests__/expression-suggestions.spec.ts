@@ -1,4 +1,4 @@
-import { EXPRESSION_BUILTIN_NAMES } from '@camstack/types'
+import { EXPRESSION_BUILTIN_NAMES } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   applySuggestion,

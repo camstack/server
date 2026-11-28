@@ -5,7 +5,7 @@
  *
  * Marker contract is owned by `SystemBackupService.scheduleRestoreMarker`
  * (`packages/system/src/builtins/system-backup`) — read inline here so the
- * launcher stays free of `@camstack/*` runtime imports. Schema:
+ * launcher stays free of `@dominevo/*` runtime imports. Schema:
  *   { archivePath: string, requestedAt: number, source: string, locations?: string[] }
  *
  * After the extraction, SQLite databases get their own step

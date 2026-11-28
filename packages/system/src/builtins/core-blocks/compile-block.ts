@@ -24,7 +24,7 @@ import {
   type CoreBlockCompileResult,
   DEFAULT_CORE_BLOCK_ENTRY,
   resolveCoreBlockEntry,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** The esbuild surface this needs — injected so the compile is testable and so
  *  the kernel does not hard-depend on a bundler at import time. */

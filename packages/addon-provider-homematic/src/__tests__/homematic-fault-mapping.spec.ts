@@ -2,7 +2,7 @@
  * The CCU's faults as `error` cap readings: the WatchDog system variables of the
  * box, and the MAINTENANCE service flags of a device. Pure mapping, no session.
  */
-import { ERROR_STATUS_COLD } from '@camstack/types'
+import { ERROR_STATUS_COLD } from '@dominevo/types'
 import type { HmSysVar, HmValue } from 'nodehomematic'
 import { describe, expect, it } from 'vitest'
 import {

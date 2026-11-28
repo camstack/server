@@ -13,8 +13,8 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
-} from '@camstack/ui-library'
-import { DeviceType } from '@camstack/types'
+} from '@dominevo/ui-library'
+import { DeviceType } from '@dominevo/types'
 import { Camera } from 'lucide-react'
 import { useCallback, type ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'

@@ -4,7 +4,7 @@ import {
   type OsdSlotBinding,
   OsdSlotBindingSchema,
   type OsdStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { BindingsHandle, OsdDeviceBindings } from '../bindings-store.js'
 import { EMPTY_BINDINGS } from '../bindings-store.js'

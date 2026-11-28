@@ -1,5 +1,5 @@
 {
-  "pkg": "@camstack/ui-library",
+  "pkg": "@dominevo/ui-library",
   "globalName": "CamstackUI",
   "shape": "package",
   "projectId": "8a1583ff-a118-4193-b711-aebf37282de4",

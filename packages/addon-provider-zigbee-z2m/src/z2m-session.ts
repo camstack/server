@@ -8,7 +8,7 @@
  * operator can change, so the table is the only place a name is turned into an address, and a state
  * that arrives before the table is held until the table says whose it is.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import {
   Z2mAvailabilitySchema,
   Z2mBridgeInfoSchema,

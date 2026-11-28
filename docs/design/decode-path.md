@@ -16,19 +16,19 @@
 > The broker's frame-handle plane (`FrameHandlePlane`, `subscribeFrames`) was
 > removed on 2026-10-08 ([D762](../decisions/adr-0762-the-stream-broker-has-no-frame-plane.md)):
 > the broker decodes nothing. The same day the `decoder` cap lost its session
-> surface, and `decoder-ffmpeg` and `@camstack/shm-ring` were deleted
+> surface, and `decoder-ffmpeg` and `@dominevo/shm-ring` were deleted
 > ([D763](../decisions/adr-0763-the-decoder-cap-is-a-hwaccel-answer-and-shm-ring-and-decoder-ffmpeg-are-deleted.md)):
 > nothing decodes video except the session-decode worker.
 
 > **Detection data plane (2026-08-23).** The live path is a **native decode
-> worker** inside `@camstack/addon-pipeline` session-decode. It publishes a
+> worker** inside `@dominevo/addon-pipeline` session-decode. It publishes a
 > **process-local `frameRef`**. Co-located `pipeline-executor` resolves
 > **content-sized views** (JPEG by policy) from `LocalFrameRegistry`.
 > Detection retention is **on-demand** after a positive result. Shared memory
 > is **not** this plane: the shm ring, the handle poller, and
 > `frameSink:'shm'` as a video selector are gone from the default path, and
 > the broker's `FrameHandlePlane` is deleted (D762), and the
-> `@camstack/shm-ring` package itself is deleted (D763). Historical one-process
+> `@dominevo/shm-ring` package itself is deleted (D763). Historical one-process
 > design:
 > [`2026-07-16-shm-removal-one-process-design.md`](./2026-07-16-shm-removal-one-process-design.md).
 
@@ -110,7 +110,7 @@ This is the path Task 2–4 shipped. It is **not** shm, **not** a poller, and
 3. **Content-sized views.** After the tree/model is known,
    `resolveRootFrameViewSpec` asks for the **content** rectangle, not a
    padded square:
-   - CamStack default preprocess `letterbox` → `fit: 'contain'`, 16:9
+   - Dominevo default preprocess `letterbox` → `fit: 'contain'`, 16:9
      content (a 320 model on 16:9 is 320×180).
    - The reference NVR catalog (and any `preprocessMode !== 'letterbox'`) →
      `fit: 'stretch'` to the model's square (catalog pin: **resize 320**).
@@ -658,7 +658,7 @@ and logs the effective values plus their source once per session, tagged with
 
 Until D453 the CHILD resolved them, at module load, from `*_SETTING` env vars
 the fork wrote. That needed the Zod schemas inside the child bundle, which
-dragged the whole 1.5 MB `@camstack/types` chunk in with them: **~170 ms and
+dragged the whole 1.5 MB `@dominevo/types` chunk in with them: **~170 ms and
 ~99 MB of heap on every fork**, measured on the hub, ~277 cold forks an hour.
 `scripts/check-decode-worker-child-lean.ts` fails CI if any module reachable
 from the child entry value-imports a package again. A decode-worker fork now
@@ -713,7 +713,7 @@ FLOW problem (wrong args / undecodable input), not missing hardware.
 ## Change log
 
 - 2026-10-08: the `decoder` cap's session surface is removed and
-  `decoder-ffmpeg` and `@camstack/shm-ring` are deleted (D763). The cap is
+  `decoder-ffmpeg` and `@dominevo/shm-ring` are deleted (D763). The cap is
   `getInfo` + `reprobeHwaccel` on `decoder-nodeav`; push-mode sessions, the
   ffmpeg hwaccel cascade with GOP replay and the shm ring went with them. On the
   live cluster `decoder.listActiveSessions` was `[]` on every node.

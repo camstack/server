@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { generateSync } from 'otplib'
 import { TotpManager } from '../totp-manager.js'
-import { isSecretMarker, type SettingsStoreClient } from '@camstack/types'
+import { isSecretMarker, type SettingsStoreClient } from '@dominevo/types'
 import { TotpSecretStorageUnavailableError, TotpSecretUnavailableError } from '../totp-manager.js'
 import { makeFakeKeychain, type FakeKeychain } from './fake-keychain.js'
 
@@ -92,9 +92,9 @@ describe('TotpManager', () => {
     it('returns a base32 secret + otpauth:// URL', async () => {
       const { secret, otpauthUrl } = await mgr.setup('u-1', 'alice')
       expect(secret).toMatch(/^[A-Z2-7]+$/) // RFC 4648 base32
-      expect(otpauthUrl).toMatch(/^otpauth:\/\/totp\/CamStack:alice\?/)
+      expect(otpauthUrl).toMatch(/^otpauth:\/\/totp\/Dominevo:alice\?/)
       expect(otpauthUrl).toContain(`secret=${secret}`)
-      expect(otpauthUrl).toContain('issuer=CamStack')
+      expect(otpauthUrl).toContain('issuer=Dominevo')
     })
 
     it('persists a pending row (confirmedAt = null)', async () => {

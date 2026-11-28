@@ -1,11 +1,11 @@
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IScopedLogger } from '@dominevo/types'
 import type {
   AdoptionFilter,
   AdoptionStatus,
   DeviceType,
   DiscoveredChildDevice,
   IDeviceAdoptionProvider,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { planHomeComAdoption, type HomeComAdoptedRow } from './homecom-adoption-plan.js'
 import { buildHomeComCandidates, homeComDeviceType } from './homecom-discovery.js'
 import type { HomeComDiscoverableDevice } from './homecom-gateway.js'

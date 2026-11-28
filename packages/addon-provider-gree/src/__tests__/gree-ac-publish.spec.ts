@@ -4,7 +4,7 @@
  * real one as phantom device transitions after every boot.
  */
 import type { AcDevice } from '@apocaliss92/nodegree'
-import { type DeviceContext, DeviceType, type IDeviceRuntimeState } from '@camstack/types'
+import { type DeviceContext, DeviceType, type IDeviceRuntimeState } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { GreeAcDevice } from '../devices/gree-ac-device.js'
 import { greeConnections } from '../gree-gateway.js'

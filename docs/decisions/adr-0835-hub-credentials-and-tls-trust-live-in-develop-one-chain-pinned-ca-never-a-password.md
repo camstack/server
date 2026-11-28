@@ -1,6 +1,6 @@
 ---
 id: D835
-title: Hub credentials and TLS trust live in @camstack/develop — one chain for the CLI, hub.mjs and the ops MCP; a pinned CA, never a password or a certificate bypass
+title: Hub credentials and TLS trust live in @dominevo/develop — one chain for the CLI, hub.mjs and the ops MCP; a pinned CA, never a password or a certificate bypass
 status: superseded
 date: 2026-10-13
 supersedes:
@@ -25,28 +25,28 @@ P2) needed a fourth. Copying the CLI chain would have made four; extending
 `hub.mjs` would have kept a password and a certificate bypass in the tooling that
 the repo's own rules forbid (D797, D816).
 
-Two homes were possible for the shared code: `@camstack/sdk/node` and
-`@camstack/develop`. The CLI already depends on `@camstack/develop` and the MCP
-does too; `@camstack/sdk` is a framework package that ships inside the server
+Two homes were possible for the shared code: `@dominevo/sdk/node` and
+`@dominevo/develop`. The CLI already depends on `@dominevo/develop` and the MCP
+does too; `@dominevo/sdk` is a framework package that ships inside the server
 closure and would have needed a new dependency from the CLI, whose point is to
 stay near zero dependencies.
 
 ## Decision
 
-Hub access is one module set in `@camstack/develop` (`packages/develop/src/hub`):
+Hub access is one module set in `@dominevo/develop` (`packages/develop/src/hub`):
 
 - **Update (2026-10-21): one token format.** The admin-token file and
   `$CAMSTACK_ADMIN_TOKEN_FILE` are gone from the chain, and the tier no longer comes
   from a `csa_` prefix: the chain is `--token`/`--token-file` (explicit overrides),
-  `$CAMSTACK_TOKEN`, then the `camstack login` session, which is refreshed
+  `$CAMSTACK_TOKEN`, then the `dominevo login` session, which is refreshed
   automatically (`auth.refreshSession`; a 401 refreshes once and retries once). The
   tier is read from the token's claims, or from `whoami` for an opaque token. Run
-  `camstack login <host>` once; every tool uses that session. The text below is the
+  `dominevo login <host>` once; every tool uses that session. The text below is the
   original decision.
 - **One credential chain**, first hit wins: `--token-file`, then the admin token
   file (a `csa_` token, D816, `~/.camstack/<host>.admin-token` or the path in
   `$CAMSTACK_ADMIN_TOKEN_FILE`), then (CLI only) `$CAMSTACK_TOKEN`, then the
-  `camstack login` session in `~/.camstack/<host>.json`. **There is no password
+  `dominevo login` session in `~/.camstack/<host>.json`. **There is no password
   input anywhere in the chain.** The MCP passes an environment without
   `$CAMSTACK_TOKEN`: no secret travels through the environment (D783).
 - **The credential carries a tier**: `admin` only for a `csa_` token, otherwise
@@ -67,16 +67,16 @@ Hub access is one module set in `@camstack/develop` (`packages/develop/src/hub`)
 
 ## Consequences
 
-- The CLI imports its chain from `@camstack/develop`; `packages/cli` no longer
+- The CLI imports its chain from `@dominevo/develop`; `packages/cli` no longer
   owns `credentials.ts` or the session cache. A breaking change to the chain is
-  now a `@camstack/develop` release.
-- A `camstack login` session is scoped to the addons capability
+  now a `@dominevo/develop` release.
+- A `dominevo login` session is scoped to the addons capability
   (`capability:addons[view,create]`), so it reads only `addons.*` routes
   (measured against the live hub on 2026-10-13: `addons.listCapabilityProviders`
   answered, `system.info` was refused). Anything else a diagnostic needs wants an
   admin token. This is the real boundary of "the cached session for protected
   reads"; widening the login scope is a separate decision.
-- `hub.mjs` needs `@camstack/develop` built once. Skills that said `hub.mjs
+- `hub.mjs` needs `@dominevo/develop` built once. Skills that said `hub.mjs
   login` now say to save an admin token.
 - Other scripts that read `scratchpad/.tok` themselves (`bench-detector-latency-column`,
   `pause-restore`, two evaluators, the keychain migration) still skip TLS

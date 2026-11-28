@@ -5,7 +5,7 @@ import {
   type InferNativeProvider,
   type TemperatureSensorStatus,
   temperatureSensorCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import type { GreeExtras } from '../gree-extras.js'
 import { greeConnections } from '../gree-gateway.js'

@@ -6,7 +6,7 @@ import { ButtonGroup } from '../parts/ButtonGroup'
 import { CardButton } from '../parts/CardButton'
 import { CardIcon } from '../parts/CardIcon'
 import { CardGatingProvider, useCardGating } from './gating'
-import type { ConsumableLevel } from '@camstack/types'
+import type { ConsumableLevel } from '@dominevo/types'
 import type { UiTextFn } from '../../../contexts/ui-text'
 import {
   ConsumableLevelBadge,

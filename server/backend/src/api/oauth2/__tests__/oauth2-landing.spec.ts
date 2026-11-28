@@ -1,11 +1,11 @@
 /**
  * A browser that lands on a refused `/api/oauth2/authorize` (a wrong link, an
  * integration that is not up yet, a redirect target the integration does not
- * admit) is sent to the CamStack completion page with a reason CODE, not left
+ * admit) is sent to the Dominevo completion page with a reason CODE, not left
  * on a bare JSON body. A machine caller keeps the JSON it always got.
  */
 import cookie from '@fastify/cookie'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import Fastify, { type FastifyInstance } from 'fastify'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { SESSION_COOKIE } from '../../../auth/session-cookie.js'

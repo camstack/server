@@ -18,7 +18,7 @@
  *
  * No local resolver wired → software (null / static options only).
  */
-import type { AddonApi, HwAccelResolution, IKernelHwAccel, IScopedLogger } from '@camstack/types'
+import type { AddonApi, HwAccelResolution, IKernelHwAccel, IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { StreamBrokerManager } from '../stream-broker/stream-broker-manager.js'
 import { TranscodePipelineManager } from '../stream-broker/transcode-pipeline.js'

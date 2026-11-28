@@ -2,7 +2,7 @@
  * The modal that edits a composed device or helper: the shared card editor in
  * a full-height dialog. The Build page and a device's Customize tab both open it.
  */
-import { ItemFormDialog } from '@camstack/ui-library'
+import { ItemFormDialog } from '@dominevo/ui-library'
 import { Boxes } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'

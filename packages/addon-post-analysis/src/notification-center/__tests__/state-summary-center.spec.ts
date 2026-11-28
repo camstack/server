@@ -5,8 +5,8 @@
  * outbox — rendered with the rule's own template — and a restart does not
  * send it again.
  */
-import type { InMemoryRecords } from '@camstack/types'
-import { DeviceType, NcRuleInputSchema, scheduleForSendTimes } from '@camstack/types'
+import type { InMemoryRecords } from '@dominevo/types'
+import { DeviceType, NcRuleInputSchema, scheduleForSendTimes } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import type { NcTargetRef } from '../dispatcher.js'
@@ -300,7 +300,7 @@ describe('a scheduled state summary, through the centre', () => {
       })
     updates([
       {
-        packageName: '@camstack/addon-recorder',
+        packageName: '@dominevo/addon-recorder',
         currentVersion: '1',
         latestVersion: '2',
         nodeId: 'hub',

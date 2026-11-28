@@ -110,7 +110,7 @@ The `decoder` cap decodes nothing either: its session surface (`createSession`,
 removed, so the cap is `getInfo` + `reprobeHwaccel` — a node's decode-hwaccel
 answer, read pinned to that node by the egress transcode, HomeKit and the load
 view. `decoder-nodeav` is its only provider; the ffmpeg-subprocess
-`decoder-ffmpeg` addon and the `@camstack/shm-ring` package were deleted
+`decoder-ffmpeg` addon and the `@dominevo/shm-ring` package were deleted
 ([D763](../decisions/adr-0763-the-decoder-cap-is-a-hwaccel-answer-and-shm-ring-and-decoder-ffmpeg-are-deleted.md)).
 Neither is a host-external any more.
 
@@ -138,7 +138,7 @@ feeding the same handler; remove it after 2026-12-15.
 `packages/addon-pipeline/src/stream-broker/` does RTSP read, pre-buffer, WebRTC and
 RTSP restream.
 
-**On-demand pull lifecycle.** Every PULL source — one where CamStack opens the
+**On-demand pull lifecycle.** Every PULL source — one where Dominevo opens the
 connection TO the camera — dials only when at least one consumer is attached. The
 set is a single list, `isLazyDialSource` in
 `stream-broker/stream-broker/lazy-dial-sources.ts`: `rtsp`, `rtmp`, `rfc4571`,
@@ -367,7 +367,7 @@ was already AU-aware (one mark per AU) and is unchanged.
 of its own** ([D67](../decisions/adr-0067.md), [D69](../decisions/adr-0069.md)).
 `streamBroker.acquireEgressTranscode` is THE ffmpeg primitive: a structured
 encode plan in, a dialable RTSP url plus a refcounted `pipelineKey` out, with
-the argv from the one builder in `@camstack/types` and decode hardware from the
+the argv from the one builder in `@dominevo/types` and decode hardware from the
 decoder addon's per-node probe. Four properties, each of which is the fix for
 something that happened:
 
@@ -477,9 +477,9 @@ reaches only a subscription whose `accept` named that format
 (`AudioSubscribeOptions.accept`, the D448 negotiation shape), so a consumer
 from an older bundle is served exactly what it always was — `AudioChunkPlane`
 expands for it, once per fanout, shared by every subscriber that needs it.
-`expandAudioChunkToF32le` in `@camstack/types` is the ONE place a coded window
+`expandAudioChunkToF32le` in `@dominevo/types` is the ONE place a coded window
 becomes floats; both addons bundle the bare entry, so the lever ships with
-`camstack deploy`. `AudioWindowAccumulator` declares `accept: ['pcmu','pcma']`
+`dominevo deploy`. `AudioWindowAccumulator` declares `accept: ['pcmu','pcma']`
 and expands at FLUSH, so the analyzer cap's `AudioChunkInput` is unchanged and
 stays f32le — which is what makes this safe while the analyzer runs on three
 nodes. Measured: the expansion costs 11.6 µs per one-second window per camera

@@ -1,5 +1,5 @@
 /** The four-state live value of one field (spec U12): the first read decides answered/failed, pushes keep it live. */
-import { useDeviceCapSlice, useDeviceStateGetCapSlice, useSystem } from '@camstack/ui-library'
+import { useDeviceCapSlice, useDeviceStateGetCapSlice, useSystem } from '@dominevo/ui-library'
 import { type LiveValue, type LiveValueTarget, liveValueOf } from './live-value'
 
 const NO_DEVICE = 0

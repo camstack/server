@@ -11,7 +11,7 @@
  * pragmatic path until the shared lib lands.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { IntercomWebrtcPeer } from './intercom-orchestrator.js'
 
 interface WeriftRtpPacket {

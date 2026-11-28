@@ -8,7 +8,7 @@ import type {
   InferNativeProvider,
   NativeCapOptions,
   StateRefreshPolicy,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   RADEMACHER_MIN_REFRESH_INTERVAL_MS,

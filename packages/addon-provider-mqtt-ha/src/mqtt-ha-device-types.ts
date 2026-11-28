@@ -1,4 +1,4 @@
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 
 /**
  * Every device type this addon can persist, and therefore must be able to

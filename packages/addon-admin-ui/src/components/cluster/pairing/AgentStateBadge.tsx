@@ -1,5 +1,5 @@
 /** The pairing state of a discovered agent, with whether it is connected to the mesh. */
-import { Badge } from '@camstack/ui-library'
+import { Badge } from '@dominevo/ui-library'
 import type { ReactNode } from 'react'
 
 import { AGENT_STATE_LABEL, type AgentPairState } from './pairing-model'

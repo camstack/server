@@ -12,7 +12,7 @@
  *   or empty read) — keeps its last value and its claim: `starting`, naming
  *   the field and why (D49, fix round 2). Released wins: it is the harder fact.
  */
-import type { ComposerBlockVerdict, CompositionFieldState } from '@camstack/types'
+import type { ComposerBlockVerdict, CompositionFieldState } from '@dominevo/types'
 
 function isUnfilledProblemLine(line: string): boolean {
   return line.includes('is required and has no source')

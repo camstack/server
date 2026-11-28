@@ -20,7 +20,7 @@ import type {
   PipelineAnalyticsFaceGalleryChangedPayload,
   RecordKindHandle,
   RecordsAccess,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { FaceGalleryProvider } from '../face-gallery-provider.js'
 import { compareFaces, type FaceSortOrder, resolveFaceSort, sortFaces } from '../store/face-sort.js'

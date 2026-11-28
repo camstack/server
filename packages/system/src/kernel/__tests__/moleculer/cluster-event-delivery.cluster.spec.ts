@@ -34,7 +34,7 @@ import {
   getBrokerEventBus,
   registerEventBusService,
 } from '../../moleculer/addon-context-factory.js'
-import type { AddonDeclaration, SystemEvent } from '@camstack/types'
+import type { AddonDeclaration, SystemEvent } from '@dominevo/types'
 
 // ── Helpers ────────────────────────────────────────────────────────────
 

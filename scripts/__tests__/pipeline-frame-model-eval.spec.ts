@@ -141,7 +141,7 @@ describe('pipeline frame model evaluation pure helpers', () => {
     expect(cases[1]?.scenarios).toEqual(['common-letterbox'])
   })
 
-  it('maps plugin catalog macro classes while leaving CamStack COCO targets unchanged', () => {
+  it('maps plugin catalog macro classes while leaving Dominevo COCO targets unchanged', () => {
     expect(resolveTargetLabel('scrypted-yolov9c-relu-test', 'cat')).toBe('animal')
     expect(resolveTargetLabel('scrypted-yolov9c-relu-test', 'bird')).toBe('animal')
     expect(resolveTargetLabel('yolov9m-320', 'cat')).toBe('cat')

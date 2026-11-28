@@ -3,7 +3,7 @@
  * The intake freezes only the bare name and the device type; a label frozen
  * there would keep the intake's language for every line of the burst.
  */
-import { DeviceType, NcRuleInputSchema, NcRuleSchema } from '@camstack/types'
+import { DeviceType, NcRuleInputSchema, NcRuleSchema } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { groupWindowSubject } from '../group-window-summary.js'
 import type { NcOutboxEntry } from '../outbox.js'

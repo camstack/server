@@ -6,7 +6,7 @@ import {
   type ChildLayout,
   type ChildLayoutEntry,
   type EnumSensorDateTimeFormat,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { HaDiscoveredDevice, HaEntityCategory } from './ha-discovery-types.js'
 import { foldMeterEntities, type MeterEntities } from './ha-meter-fold.js'
 
@@ -103,7 +103,7 @@ export function parseContainerEntities(raw: unknown): HaContainerEntityConfig[] 
 /**
  * Build the Container `entities[]` config from a freshly-fetched HA device.
  * Single source of truth shared by the adoption path and reconcile so the two
- * always agree on the persisted shape. Entities with no CamStack mapping are
+ * always agree on the persisted shape. Entities with no Dominevo mapping are
  * skipped (the adoption path skips them too).
  */
 export function buildContainerEntities(haDevice: HaDiscoveredDevice): HaContainerEntityConfig[] {

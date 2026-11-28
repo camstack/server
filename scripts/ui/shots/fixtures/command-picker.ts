@@ -3,7 +3,7 @@
  * feeder, and the bindings those devices offer. `deviceManager.search` honours
  * `requires.actions` the same way the server does (vocabulary action ids).
  */
-import { vocabularyActionsForDevice } from '@camstack/types'
+import { vocabularyActionsForDevice } from '@dominevo/types'
 import { defineFixtures } from './_define'
 
 interface FleetDevice {

@@ -1,8 +1,8 @@
-# CamStack agent on Proxmox (AMD image). Installed by install-camstack-proxmox.sh
+# Dominevo agent on Proxmox (AMD image). Installed by install-camstack-proxmox.sh
 # into /opt/camstack/docker-compose.yml inside the LXC.
 services:
   camstack:
-    image: ghcr.io/camstack/camstack:amd-latest
+    image: ghcr.io/dominevo/dominevo:amd-latest
     container_name: camstack-agent
     restart: unless-stopped
     network_mode: host

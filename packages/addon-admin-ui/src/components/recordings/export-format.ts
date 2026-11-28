@@ -5,7 +5,7 @@
  * and the seed-plus-live-events merge are unit-testable without mounting the
  * React tree or stubbing the tRPC provider.
  */
-import type { ExportOptions, ExportRecord } from '@camstack/types'
+import type { ExportOptions, ExportRecord } from '@dominevo/types'
 import i18n from '../../i18n/index'
 
 /** Live event payloads emitted by the render engine, keyed by export id. */

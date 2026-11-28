@@ -15,7 +15,7 @@
  * pure CAPACITY bound; corrected and vehicle-enrolled reads are exempt.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { TrackCascadeLeafCount } from '../pipeline/delete-track-cascade.js'
 import type { TrackFusionLeafCount, TrackFusionRequest } from '../pipeline/track-fusion-leaf.js'
 import type { EventLedgerCollection } from './event-ledger-collection.js'

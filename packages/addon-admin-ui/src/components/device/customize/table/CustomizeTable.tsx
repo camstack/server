@@ -6,7 +6,7 @@
  * ScalarOverrideDialog; an event, a list or an extension opens its own editor
  * (D315: unread applicability is said, never read as "nothing to add").
  */
-import { CAP_CUSTOMIZE_CATALOG, type CustomizeCatalog, type DeviceInfo } from '@camstack/types'
+import { CAP_CUSTOMIZE_CATALOG, type CustomizeCatalog, type DeviceInfo } from '@dominevo/types'
 import {
   Button,
   type DataColumn,
@@ -22,7 +22,7 @@ import {
   deviceTypeMetaOf,
   useDataTableFilter,
   useUiText,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Pencil, SlidersHorizontal } from 'lucide-react'
 import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'

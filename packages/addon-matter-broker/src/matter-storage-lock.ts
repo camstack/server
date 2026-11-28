@@ -16,7 +16,7 @@
  */
 import { mkdir, readFile, rename, stat, unlink, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IScopedLogger } from '@dominevo/types'
 
 const LOCK_FILE = 'matter.lock'
 const PID_FILE = 'matter.pid'

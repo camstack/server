@@ -13,7 +13,7 @@
  * destination, the one function worth recalling. The HomeKit export draws the
  * same line (`addon-export-hap` `mappers/builders/ptz.ts`).
  */
-import type { PtzPresetFunction } from '@camstack/types'
+import type { PtzPresetFunction } from '@dominevo/types'
 
 const RECALLABLE_FUNCTIONS: ReadonlySet<PtzPresetFunction> = new Set<PtzPresetFunction>(['home'])
 

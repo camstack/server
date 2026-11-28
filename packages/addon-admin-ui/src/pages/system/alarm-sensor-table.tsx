@@ -26,7 +26,7 @@
  *    ("Removed"), so it can be switched off the list.
  */
 
-import type { AlarmArmMode } from '@camstack/types'
+import type { AlarmArmMode } from '@dominevo/types'
 import {
   Badge,
   Button,
@@ -35,7 +35,7 @@ import {
   Switch,
   useDeviceLabelById,
   useUiText,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { adminUiText } from '../../i18n/ui-text-bridge'
 import { Loader2 } from 'lucide-react'
 import type { ComponentProps, ReactElement } from 'react'

@@ -1,8 +1,8 @@
-import { buttonCapability, type DeviceContext, type InferNativeProvider } from '@camstack/types'
+import { buttonCapability, type DeviceContext, type InferNativeProvider } from '@dominevo/types'
 import { HaBaseChildDevice } from '../ha-base-child-device.js'
 
 /**
- * HA-backed CamStack button device. Materialised on adoption of any
+ * HA-backed Dominevo button device. Materialised on adoption of any
  * HA entity whose `mappedTo.capabilities` contains `button` — covers
  * the `button.*`, `input_button.*` and `scene.*` domains.
  *

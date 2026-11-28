@@ -8,7 +8,7 @@ import type {
   IScopedLogger,
   ProviderRegistration,
   SystemEvent,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import DetectionPipelineAddon from '../index.js'
 import type { RuntimeEnv } from '../runtimes.js'

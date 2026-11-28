@@ -42,7 +42,7 @@ import {
   type PowerMeterStatus,
   type RawStateResult,
   type ReadingQuantity,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   decodeBoolean,
   decodeClimate,

@@ -39,14 +39,14 @@ describe('legacy integration rows: who may read them', () => {
         JSON.stringify({ camstack: { addons } }),
       )
     }
-    write('@camstack/provider-ha', [
+    write('@dominevo/provider-ha', [
       { id: OWNER, execution: { placement: 'hub-only' } },
       {
         id: SIBLING,
         execution: { placement: 'hub-only', group: 'integrations' },
       },
     ])
-    write('@camstack/other', [
+    write('@dominevo/other', [
       {
         id: FOREIGN_SAME_RUNNER,
         execution: { placement: 'hub-only', group: 'integrations' },

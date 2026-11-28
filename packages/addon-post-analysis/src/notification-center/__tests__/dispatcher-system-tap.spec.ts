@@ -7,7 +7,7 @@
  * authored `clickUrl` still wins. Both had to be true before any of these
  * links existed on a phone, and neither is visible from the pure test.
  */
-import type { MediaFile } from '@camstack/types'
+import type { MediaFile } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import { NcDispatcher, type NcSendInput, type NcTargetRef } from '../dispatcher.js'

@@ -4,7 +4,7 @@
  * window before the notification existed, and the gif shipped dropped
  * ("footage window expired while queued", device 615, 2026-10-30).
  */
-import type { ObjectEvent } from '@camstack/types'
+import type { ObjectEvent } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createNoopLogger } from '../../../embedding-encoder/shared/noop-logger.js'
 import { PACKAGE_DROP_DEFAULTS } from '../../package-settings.js'

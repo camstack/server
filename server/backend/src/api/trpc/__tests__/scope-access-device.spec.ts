@@ -32,8 +32,8 @@
  *   - device 20 (standalone Light in "Garden", NOT granted)
  */
 
-import type { DeviceSelector, MethodAccess, TokenScope } from '@camstack/types'
-import { DeviceType } from '@camstack/types'
+import type { DeviceSelector, MethodAccess, TokenScope } from '@dominevo/types'
+import { DeviceType } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { checkScopeAccess, type DeviceScopeLookup } from '../scope-access.js'
 

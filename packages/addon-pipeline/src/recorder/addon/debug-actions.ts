@@ -2,13 +2,13 @@
  * `debug.storeCensus` — arm / read the recorder's row-store call-site census
  * (`store/read-census.ts`) over `api.addons.custom`.
  *
- * Ships with a plain `camstack deploy packages/addon-pipeline` (a custom
+ * Ships with a plain `dominevo deploy packages/addon-pipeline` (a custom
  * action, not a capability — no framework train). Admin-only: the census
  * exposes source-line call sites, which is an implementation detail, not
  * operator-facing information.
  */
 import { z } from 'zod'
-import { customAction, defineCustomActions, type IScopedLogger } from '@camstack/types'
+import { customAction, defineCustomActions, type IScopedLogger } from '@dominevo/types'
 import { CENSUS_MAX_WINDOW_MS, logCensus, type StoreReadCensus } from './store/read-census.js'
 
 /** How many call sites one census read may return. */

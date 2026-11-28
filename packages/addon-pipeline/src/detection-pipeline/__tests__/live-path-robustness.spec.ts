@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { resolveInputSteps } from '../step-resolution.js'
 import { getDefaultModelForFormat, getStepDefinition } from '../registry/step-definitions.js'
-import type { PipelineStepInput } from '@camstack/types'
+import type { PipelineStepInput } from '@dominevo/types'
 
 // `resolveInputSteps` is the pure seam behind the LIVE per-camera dispatch
 // path (`DetectionPipelineProvider.inputStepsToPipelineSteps`), which runs

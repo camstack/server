@@ -15,7 +15,7 @@ import {
   type InitialDeviceMeta,
   type IScopedLogger,
   powerMeterCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { settingsToConnection, UNRAID_SYSTEM } from '../config.js'
 import {

@@ -9,7 +9,7 @@ import {
   DeviceFeature,
   DeviceType,
   type IDeviceRuntimeState,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { VeluxCoverDevice } from '../devices/velux-cover-device.js'
 

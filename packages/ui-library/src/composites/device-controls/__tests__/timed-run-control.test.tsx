@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, cleanup } from '@testing-library/react'
-import { DeviceRole, DeviceType, timedRunLimitOf, type TimedRunLimit } from '@camstack/types'
+import { DeviceRole, DeviceType, timedRunLimitOf, type TimedRunLimit } from '@dominevo/types'
 import { TimedRunControl, formatCountdown, maxInUnit } from '../timed-run-control'
 
 const runFor = vi.fn()

@@ -3,8 +3,8 @@
  * in the browser by the one parser and never stored: only the bindings it
  * produces reach the config, and the operator applies them explicitly.
  */
-import type { SmartIrDraft } from '@camstack/types'
-import { Button, FormField, FileInput, Textarea } from '@camstack/ui-library'
+import type { SmartIrDraft } from '@dominevo/types'
+import { Button, FormField, FileInput, Textarea } from '@dominevo/ui-library'
 import { FileUp } from 'lucide-react'
 import { type ChangeEvent, type ReactNode, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'

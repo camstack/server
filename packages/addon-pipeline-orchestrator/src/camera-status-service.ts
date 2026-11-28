@@ -47,8 +47,8 @@ import type {
   ProfileSlot,
   RecordingStorageMode,
   RunnerCameraConfig,
-} from '@camstack/types'
-import { composeSwitchedOff, nodePin, RecordingStorageModeSchema } from '@camstack/types'
+} from '@dominevo/types'
+import { composeSwitchedOff, nodePin, RecordingStorageModeSchema } from '@dominevo/types'
 import {
   type AssignmentPinFlags,
   type AssignmentReasons,

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { type ClimateAction, type ClimateControlStatus, DeviceRole } from '@camstack/types'
+import { type ClimateAction, type ClimateControlStatus, DeviceRole } from '@dominevo/types'
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { CLIMATE_FIXTURES } from '../__fixtures__/climate'

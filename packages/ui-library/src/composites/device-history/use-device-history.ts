@@ -10,7 +10,7 @@ import type {
   DeviceHistoryQueryManyEntry,
   DeviceHistoryQueryManyItem,
   DeviceHistorySeriesInfo,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { useTrpcClient } from '../../contexts/system-context'

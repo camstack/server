@@ -20,7 +20,7 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import type { DataPlaneHandler, IScopedLogger } from '@camstack/types'
+import type { DataPlaneHandler, IScopedLogger } from '@dominevo/types'
 
 export const RETRAIN_FRAME_PREFIX = 'retrain-frame'
 

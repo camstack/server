@@ -11,7 +11,7 @@ import {
   type LlmProfile,
   type MigrationOwnerResult,
   recordSecretRef,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { migrateProfileBody } from '../profile-migration.js'
 import { ADDON_MIGRATIONS, PROFILE_RAW_KEYS_TO_KEYCHAIN_ID } from '../migrations/index.js'

@@ -5,7 +5,7 @@ import { z } from 'zod'
  *
  * ## Why this exists
  *
- * `adopt({childNativeIds: [...]})` materialises one CamStack device per
+ * `adopt({childNativeIds: [...]})` materialises one Dominevo device per
  * candidate PLUS every accessory child, and the whole array shares ONE UDS
  * request deadline (60s). Measured on the live hub against Home Assistant:
  * each device the kernel creates costs ~450 ms — `devices.create` pre-seeds

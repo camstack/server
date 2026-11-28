@@ -5,7 +5,7 @@
  * exact ids and `prefix.*` patterns) so a view survives a reload and can be
  * shared; no parameter means the stream's default set.
  */
-import { EventStream } from '@camstack/ui-library'
+import { EventStream } from '@dominevo/ui-library'
 import { useCallback, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { AdminPage } from '../../components/AdminPage'

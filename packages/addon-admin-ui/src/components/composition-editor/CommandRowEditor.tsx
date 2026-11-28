@@ -11,8 +11,8 @@ import {
   type CompositionFieldsFeature,
   type CompositionForwardCommand,
   type CompositionProblem,
-} from '@camstack/types'
-import { Button, Select } from '@camstack/ui-library'
+} from '@dominevo/types'
+import { Button, Select } from '@dominevo/ui-library'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'

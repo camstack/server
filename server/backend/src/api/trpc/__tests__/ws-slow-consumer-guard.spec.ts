@@ -44,7 +44,7 @@ function fakeSocket(): FakeSocket {
 
 const facts: WsConnectionFacts = {
   ip: '192.168.10.230',
-  userAgent: 'CamStack Viewer/1.0.483 (iOS)',
+  userAgent: 'Dominevo Viewer/1.0.483 (iOS)',
   bytesRead: () => 160_000,
   bytesWritten: () => 90_000_000,
 }

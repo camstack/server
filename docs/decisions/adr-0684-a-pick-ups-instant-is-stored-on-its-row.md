@@ -68,7 +68,7 @@ happens.
   moment-unknown`).
 - The field travels on every object-event read, including the cap output the
   timeline receives. Additive and optional, so an older consumer ignores it.
-- `@camstack/types` changed (schema field). `addon-post-analysis` bundles it, so
+- `@dominevo/types` changed (schema field). `addon-post-analysis` bundles it, so
   the two ship together; no other addon reads the field.
 - The column is not indexed: nothing selects by it.
 

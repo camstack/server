@@ -40,7 +40,7 @@ import {
   type IDeviceRemovalHookProvider,
   type IRetentionSourceProvider,
   type ProviderRegistration,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { randomUUID } from 'node:crypto'
 import { parseConfirmedStateChanged } from '../shared/device-state-changed.js'
 import type { SnapshotMap } from './capture/capture-engine.js'

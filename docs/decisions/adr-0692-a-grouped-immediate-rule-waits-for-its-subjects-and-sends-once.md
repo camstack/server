@@ -327,7 +327,7 @@ while its track is still unrecognised for it.
 - **Clip ring.** A grouped rule with a gif or clip asks the clip ring for `groupingSec` more
   seconds, capped at 60.
 - **Ship order and older clients.**
-  - Ship order: `@camstack/types` and the server closure first, then the addon and the admin
+  - Ship order: `@dominevo/types` and the server closure first, then the addon and the admin
     UI, then the viewer.
   - An older viewer shows a grouped rule as plain Immediate. Saving from it keeps
     `groupingSec`, because `updateRule` merges.

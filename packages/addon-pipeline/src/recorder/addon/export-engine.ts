@@ -29,7 +29,7 @@ import type {
   ExportRecord,
   IScopedLogger,
   PinnedFfmpegResolver,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   clipExportFailure,
   type ClipExportFailure,
@@ -38,7 +38,7 @@ import {
   exportSubjectOf,
   RECORDING_EXPORT_MAX_READ_BYTES,
   VIDEOCLIPS_MAX_OFFER_BYTES,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   type DenseRangeMapReport,
   type ExportSegmentTiming,
@@ -609,7 +609,7 @@ export class ExportEngine {
                 provider: subject.provider,
                 detail: answer.detail,
                 inlineBound: RECORDING_EXPORT_MAX_READ_BYTES,
-                hint: `camstack deploy ${subject.provider}`,
+                hint: `dominevo deploy ${subject.provider}`,
               },
             },
           )

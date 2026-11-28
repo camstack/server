@@ -3,7 +3,7 @@
  * dictionary.
  *
  * Before this, `EventKindFilter` built its tree from the static
- * `EVENT_TAXONOMY` in `@camstack/types` — every camera was offered all 53
+ * `EVENT_TAXONOMY` in `@dominevo/types` — every camera was offered all 53
  * kinds, including `package-delivered` on cameras with no package zone and
  * `doorbell` on cameras with no doorbell. On the live cluster the real
  * per-camera vocabularies range from 1 kind (105: motion only) to 53 (101:
@@ -14,7 +14,7 @@
  * the cameras the operator is looking at.
  */
 import { describe, it, expect } from 'vitest'
-import type { EventKindDescriptor, EventKindsForDevice } from '@camstack/types'
+import type { EventKindDescriptor, EventKindsForDevice } from '@dominevo/types'
 import { buildKindGroups, kindsInScope, searchableMacros } from '../event-kind-vocabulary.js'
 
 // ── Fixtures ────────────────────────────────────────────────────────

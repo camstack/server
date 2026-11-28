@@ -3,7 +3,7 @@
  * generated client, never a hand-written interface (a hand-written copy keeps
  * compiling after a method is removed and fails at runtime).
  */
-import type { SettingsStoreClient } from '@camstack/types'
+import type { SettingsStoreClient } from '@dominevo/types'
 
 export type HistoryDoor = Pick<
   SettingsStoreClient,

@@ -3,7 +3,7 @@
  * requested at modal open), and "Started by" names the caller of a run:
  * pending is a skeleton, an id that does not resolve says "unknown (id)".
  */
-import type { AutomationRunTrace } from '@camstack/types'
+import type { AutomationRunTrace } from '@dominevo/types'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
@@ -41,8 +41,8 @@ function actionTrace(blockId: string | null): AutomationRunTrace {
   }
 }
 
-vi.mock('@camstack/ui-library', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@camstack/ui-library')>()),
+vi.mock('@dominevo/ui-library', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@dominevo/ui-library')>()),
   useActionsGetTraces: () => {
     calls.traces += 1
     return { data: { traces: [actionTrace('blk-1')] }, error: null }

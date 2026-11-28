@@ -65,7 +65,7 @@ contents, its typing and how consumers resolve it still holds.
 - The map is generated: editing `generated/cap-vocabulary.ts` is drift, and a
   hand-written entry anywhere is refused.
 - A cap change that touches only wording is still a cap change: it ships as a
-  `@camstack/server` publish like any other framework data.
+  `@dominevo/server` publish like any other framework data.
 - Picker order is a number on each device cap (families by thousand); two
   caps declaring one order are refused by the generator.
 

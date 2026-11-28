@@ -14,15 +14,15 @@
  * provide" — a deterministic proof that routing happened.
  */
 import { describe, expect, it } from 'vitest'
-import { CapabilityRegistry } from '@camstack/server/system'
-import type { RegisterNodeParams } from '@camstack/server/system'
+import { CapabilityRegistry } from '@dominevo/server/system'
+import type { RegisterNodeParams } from '@dominevo/server/system'
 import {
   batteryCapability,
   type IScopedLogger,
   type DeviceCall,
   type DeviceCallAnswer,
   type SystemEvent,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { MoleculerService } from '../core/moleculer/moleculer.service.js'
 import type { EventBusService } from '../core/events/event-bus.service.js'
 import type { ConfigService } from '../core/config/config.service.js'

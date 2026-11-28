@@ -19,7 +19,7 @@
  * `face-detection` has no slider and its pool floor takes no operator input, so
  * after D662 nobody but the model sets the face floor.
  */
-import type { ModelCatalogEntry, StepDefinition } from '@camstack/types'
+import type { ModelCatalogEntry, StepDefinition } from '@dominevo/types'
 
 /** The step fields this module reads — narrowed so a test needs no full definition. */
 export type ConfidenceBearingStep = Pick<StepDefinition, 'defaultConfidence'>

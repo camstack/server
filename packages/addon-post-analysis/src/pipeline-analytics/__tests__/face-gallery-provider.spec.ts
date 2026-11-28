@@ -8,7 +8,7 @@ import { FACE_ARCFACE_INDEX, IDENTITY_ARCFACE_INDEX } from '../store/embedding-v
  * Task 6: listRecentFaces, getFaceByTrack, getFaceMedia, assignFace, unassignFace.
  */
 
-import type { PipelineAnalyticsFaceGalleryChangedPayload } from '@camstack/types'
+import type { PipelineAnalyticsFaceGalleryChangedPayload } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { FaceGalleryProvider } from '../face-gallery-provider.js'
 import { SCRFD_V2_ALIGNMENT_SINCE_MS } from '../face-alignment-version.js'

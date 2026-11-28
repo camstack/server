@@ -9,7 +9,7 @@ import {
   integrationInstancesCapability,
   makeInMemoryRecords,
   type SecretsAccess,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { wasteSourcePortsOver } from '../migrations/ports.js'
 import { WasteCollectionsAddon } from '../waste-collections.addon.js'

@@ -13,7 +13,7 @@
  * IR. It is never resolved at the selection time, which is when the operator
  * clicked, not when the camera saw.
  */
-import type { SceneCondition } from '@camstack/types'
+import type { SceneCondition } from '@dominevo/types'
 import {
   type ConditionSource,
   type Coordinates,

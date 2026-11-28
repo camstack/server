@@ -9,7 +9,7 @@
  * hidden, active devices by default, a Revoke button per row). No bulk bar: it
  * is the caller's own short list, and the server has no bulk call for it.
  */
-import { trpc, useConfirm } from '@camstack/ui-library'
+import { trpc, useConfirm } from '@dominevo/ui-library'
 import { Ban, Smartphone } from 'lucide-react'
 import { useMemo, useState, type ReactNode } from 'react'
 

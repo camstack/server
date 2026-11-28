@@ -26,7 +26,7 @@ import {
   SYNTHETIC_SNAPSHOT_MAX_HEIGHT,
   SYNTHETIC_SNAPSHOT_MAX_WIDTH,
 } from '../../shared/frame/downscale-full-frame.js'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { decideMotionStill, type MotionStillReason } from './motion-marker-policy.js'
 import type { SnapshotClient } from './synthetic-track.js'
 

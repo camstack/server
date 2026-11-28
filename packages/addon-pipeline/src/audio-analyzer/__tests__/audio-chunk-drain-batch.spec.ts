@@ -15,7 +15,7 @@
  * The rule that makes the cadence safe for any producer: a pull that comes back
  * FULL is not a drain, it is a backlog — pull again immediately, under a bound.
  */
-import type { AddonApi, DecodedAudioChunkWire, IScopedLogger } from '@camstack/types'
+import type { AddonApi, DecodedAudioChunkWire, IScopedLogger } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { PULL_MAX_COUNT, startAudioChunkPoller } from '../audio-chunk-poller.js'

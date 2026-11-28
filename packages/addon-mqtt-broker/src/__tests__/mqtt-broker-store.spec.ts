@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { MqttExternalBrokerEntrySchema } from '../mqtt-external-broker-entry.js'
 import { MqttBrokerStore } from '../mqtt-broker-store.js'
-import { makeInMemoryRecords } from '@camstack/types'
+import { makeInMemoryRecords } from '@dominevo/types'
 import { mqttBrokersEntryKind } from '../broker-record-kinds.js'
 
 async function makeMqttRecords() {

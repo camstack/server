@@ -1,11 +1,11 @@
 import { z } from 'zod'
-import { errMsg } from '@camstack/types'
+import { errMsg } from '@dominevo/types'
 import type {
   AddonHttpReply,
   AddonHttpRequest,
   IAddonHttpRoute,
   IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { AlexaProxyLoginManager } from './alexa-proxy-login-manager.js'
 import type { AlexaDeviceCodeManager } from './alexa-device-code-manager.js'
 import { capturedToCookieString } from './alexa-proxy-login-manager.js'

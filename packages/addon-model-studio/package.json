@@ -1,7 +1,7 @@
 {
-  "name": "@camstack/addon-model-studio",
-  "version": "1.1.350",
-  "description": "Custom detection model registry, conversion & distribution for CamStack",
+  "name": "@dominevo/addon-model-studio",
+  "version": "0.1.0",
+  "description": "Custom detection model registry, conversion & distribution for Dominevo",
   "keywords": [
     "camstack",
     "addon",
@@ -13,12 +13,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/camstack/server.git",
+    "url": "https://github.com/dominevo/server.git",
     "directory": "packages/addon-model-studio"
   },
   "homepage": "https://camstack-docs.zentik.app",
   "bugs": {
-    "url": "https://github.com/camstack/server/issues"
+    "url": "https://github.com/dominevo/server/issues"
   },
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -80,9 +80,9 @@
       }
     ],
     "requires": {
-      "server": ">=1.2.968",
+      "server": ">=0.1.0",
       "addons": {
-        "@camstack/addon-admin-ui": ">=1.2.760"
+        "@dominevo/addon-admin-ui": ">=0.1.0"
       }
     }
   },
@@ -104,13 +104,13 @@
     "publish:npm": "npm publish --access public"
   },
   "peerDependencies": {
-    "@camstack/types": "*",
+    "@dominevo/types": "0.1.0",
     "react": ">=18",
     "react-dom": ">=18"
   },
   "devDependencies": {
-    "@camstack/types": "*",
-    "@camstack/ui-library": "*",
+    "@dominevo/types": "0.1.0",
+    "@dominevo/ui-library": "0.1.0",
     "@module-federation/runtime": "^2.4.0",
     "@module-federation/vite": "^1.16.9",
     "@tailwindcss/vite": "^4.2.0",
@@ -128,7 +128,7 @@
   "dependencies": {},
   "nx": {
     "implicitDependencies": [
-      "@camstack/server-framework"
+      "@dominevo/server-framework"
     ]
   }
 }

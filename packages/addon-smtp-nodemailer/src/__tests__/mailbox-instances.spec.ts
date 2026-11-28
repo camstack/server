@@ -1,4 +1,4 @@
-import { InstanceInUseError, makeInMemoryRecords } from '@camstack/types'
+import { InstanceInUseError, makeInMemoryRecords } from '@dominevo/types'
 import { createServer } from 'node:net'
 import { describe, expect, it } from 'vitest'
 import { buildMailboxInstances } from '../mailbox-instances.js'

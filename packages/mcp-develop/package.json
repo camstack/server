@@ -1,7 +1,7 @@
 {
-  "name": "@camstack/mcp-develop",
-  "version": "0.1.33",
-  "description": "Library behind `camstack mcp --toolsets develop`: registers the addon-author tools (catalogue, scaffold, validate, find_example, track review) on an MCP server. The standalone server binary is retired.",
+  "name": "@dominevo/mcp-develop",
+  "version": "0.1.0",
+  "description": "Library behind `dominevo mcp --toolsets develop`: registers the addon-author tools (catalogue, scaffold, validate, find_example, track review) on an MCP server. The standalone server binary is retired.",
   "keywords": [
     "camstack",
     "mcp",
@@ -11,12 +11,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/camstack/server.git",
+    "url": "https://github.com/dominevo/server.git",
     "directory": "packages/mcp-develop"
   },
   "homepage": "https://camstack-docs.zentik.app",
   "bugs": {
-    "url": "https://github.com/camstack/server/issues"
+    "url": "https://github.com/dominevo/server/issues"
   },
   "type": "module",
   "main": "./dist/index.js",
@@ -43,8 +43,8 @@
     "node": ">=24"
   },
   "dependencies": {
-    "@camstack/develop": "*",
-    "@camstack/types": "*",
+    "@dominevo/develop": "0.1.0",
+    "@dominevo/types": "0.1.0",
     "@modelcontextprotocol/sdk": "^1.32.0",
     "zod": "^4.3.6"
   },

@@ -7,7 +7,7 @@
  * dead hour is skipped and the night still ships.
  */
 
-import type { ExportDense } from '@camstack/types'
+import type { ExportDense } from '@dominevo/types'
 import type { ExportConcatSegment } from './export-ffmpeg-args.js'
 
 /** One hour of concatenated footage — not one hour of wall clock. */

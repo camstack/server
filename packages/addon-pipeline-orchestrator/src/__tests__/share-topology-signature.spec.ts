@@ -1,4 +1,4 @@
-import { DEFAULT_SHARE_SOURCE, isAutomaticShareSource } from '@camstack/types'
+import { DEFAULT_SHARE_SOURCE, isAutomaticShareSource } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { probedDeviceSignature, shareTopologySignature } from '../load-balancing/share-inputs.js'
 import type { LiveDeviceRow } from '../load-balancing/share-inputs.js'

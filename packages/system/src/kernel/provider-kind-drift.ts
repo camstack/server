@@ -7,7 +7,7 @@
  * still sets a hint and it disagrees with the cap definition, the kernel
  * logs this warning — the cap definition always wins.
  */
-import type { CapabilityDefinition } from '@camstack/types'
+import type { CapabilityDefinition } from '@dominevo/types'
 
 /** The deprecated runtime metadata hint carried on a `ProviderRegistration`. */
 export type ProviderKindHint = {

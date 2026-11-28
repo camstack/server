@@ -12,7 +12,7 @@
  * the admin shell to construct + dispose the singleton. React-side
  * consumers should always go through `useSystem()`.
  */
-import { createSystem, type System } from '@camstack/sdk'
+import { createSystem, type System } from '@dominevo/sdk'
 import i18n from '../i18n'
 import { sessionKeeper } from './admin-session'
 import { reportSdkConnectionState } from './connection-health'

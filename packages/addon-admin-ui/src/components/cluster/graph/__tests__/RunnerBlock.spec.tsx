@@ -7,9 +7,9 @@ import { RunnerBlock } from '../RunnerBlock'
 // Shared spy so we can assert on mutateAsync calls across tests
 const mutateAsyncSpy = vi.fn().mockResolvedValue({ success: true })
 
-vi.mock('@camstack/ui-library', async () => {
+vi.mock('@dominevo/ui-library', async () => {
   const actual =
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+    await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return {
     Button: actual.Button,
     formatNumeric: actual.formatNumeric,

@@ -9,7 +9,7 @@ import {
   SECRET_CLEAR,
   type SecretFieldView,
   toSecretFieldView,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { HomeComConnectionBody } from './homecom-instances.js'
 import type { HomeComFinishedSignIn } from './homecom-sign-in.js'
 

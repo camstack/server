@@ -247,7 +247,7 @@
     "opDone": "Downloaded {{format}} to {{nodeId}}",
     "loading": "Loading catalog…",
     "noModels": "No models",
-    "noCamstackModels": "No CamStack models for this step.",
+    "noCamstackModels": "No Dominevo models for this step.",
     "sourceAria": "Catalog source"
   },
   "inventory": {

@@ -1,4 +1,4 @@
-import type { ExposureMode } from '@camstack/types'
+import type { ExposureMode } from '@dominevo/types'
 
 /**
  * Reolink's `InputAdvanceCfg.Exposure.mode` (Baichuan cmdId 25/26, via

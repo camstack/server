@@ -12,8 +12,8 @@
  * "Unavailable" and is never offered for deletion: absence is claimed only
  * from a read that answered.
  */
-import type { KeychainAdminSecret, KeychainSecretUsage } from '@camstack/types'
-import { Badge, Button, DataTable, type DataColumn, TABLE_SCROLL_MAX_H } from '@camstack/ui-library'
+import type { KeychainAdminSecret, KeychainSecretUsage } from '@dominevo/types'
+import { Badge, Button, DataTable, type DataColumn, TABLE_SCROLL_MAX_H } from '@dominevo/ui-library'
 import { Eye, Puzzle, Server, Trash2 } from 'lucide-react'
 import { AddonAssetIcon } from '../../shared/AddonAssetIcon'
 import { formatWhen } from './format'

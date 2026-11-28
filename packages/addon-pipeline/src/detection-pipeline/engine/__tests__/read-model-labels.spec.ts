@@ -3,7 +3,7 @@ import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 import { readModelLabels } from '../engine-factory.js'
-import type { ModelCatalogEntry } from '@camstack/types'
+import type { ModelCatalogEntry } from '@dominevo/types'
 
 /** Minimal entry — `readModelLabels` reads only `extraFiles`. */
 function entryWithLabels(filename: string | null): ModelCatalogEntry {

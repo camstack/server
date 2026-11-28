@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DeviceType, heatPumpInstantCop, HeatPumpStatusSchema } from '@camstack/types'
+import { DeviceType, heatPumpInstantCop, HeatPumpStatusSchema } from '@dominevo/types'
 import {
   circuitControlTypeWrite,
   circuitIdentitiesFrom,

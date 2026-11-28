@@ -20,7 +20,7 @@
  * camera holding a standing attach, and it keeps the rest of `startDetection`
  * inert so the assertion is about the flag and nothing else.
  */
-import type { CameraDetectionConfig } from '@camstack/types'
+import type { CameraDetectionConfig } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import PipelineOrchestratorAddon from '../index.js'
 import {

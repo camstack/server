@@ -30,8 +30,8 @@ import {
   validateScopes,
   useUiText,
   Checkbox,
-} from '@camstack/ui-library'
-import { type CredentialScope, DeviceType, type TokenScope } from '@camstack/types'
+} from '@dominevo/ui-library'
+import { type CredentialScope, DeviceType, type TokenScope } from '@dominevo/types'
 
 import { useAuth } from '../../contexts/auth-context'
 import { Trans, useTranslation } from 'react-i18next'

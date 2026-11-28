@@ -16,7 +16,7 @@
  *
  * Pure. Every input is a parameter.
  */
-import { gbToBytes } from '@camstack/types'
+import { gbToBytes } from '@dominevo/types'
 
 /** statfs of the location's volume, when this node could take it. */
 export interface LocationVolumeCapacity {

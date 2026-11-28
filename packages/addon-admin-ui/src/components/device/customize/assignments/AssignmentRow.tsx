@@ -6,7 +6,7 @@
  * Density is the device page's list row (`LIST_ROW`, `text-xs`, a `sm`
  * IconButton) — the same rhythm as the Bindings table and the Overview cards.
  */
-import { IconButton, LIST_ROW } from '@camstack/ui-library'
+import { IconButton, LIST_ROW } from '@dominevo/ui-library'
 import { X } from 'lucide-react'
 import type { ReactNode } from 'react'
 import type { LiveValueDisplay, LiveValueTarget } from './live-value'

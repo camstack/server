@@ -20,7 +20,7 @@
  * Calls the vanilla tRPC client off `useSystem().trpcClient` (the
  * `PathBrowser.tsx` / `backend.ts` precedent) rather than a generated hook.
  */
-import { useSystem } from '@camstack/ui-library'
+import { useSystem } from '@dominevo/ui-library'
 import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { type KeyEventRow, mergeKeyEvents, sortKeyEvents } from './key-events-merge.js'

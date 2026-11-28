@@ -8,7 +8,7 @@ import type {
   NodeBenchmarkPreflight,
   NodeBenchmarkResultView,
   NodeBenchmarkRun,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   formatDuration,

@@ -1,6 +1,6 @@
-# @camstack/addon-provider-esphome
+# @dominevo/addon-provider-esphome
 
-ESPHome device-provider addon for CamStack. It speaks the board's native API (Noise-encrypted or plain) with `esphome-client` and turns a board into one container device with a child per entity.
+ESPHome device-provider addon for Dominevo. It speaks the board's native API (Noise-encrypted or plain) with `esphome-client` and turns a board into one container device with a child per entity.
 
 ## What it does
 
@@ -12,7 +12,7 @@ ESPHome device-provider addon for CamStack. It speaks the board's native API (No
 
 A board is one container device. Its entities become children:
 
-| ESPHome entity | CamStack child |
+| ESPHome entity | Dominevo child |
 | --- | --- |
 | switch | switch |
 | light | switch + brightness (colour is not mapped yet) |
@@ -45,16 +45,16 @@ In the board's ESPHome YAML under `api: encryption: key:`. In the ESPHome dashbo
 - Entities of an ESPHome sub-device (firmware 2025.7 and later) are not separated from the board's own.
 - Firmware older than 2024.4 is untested.
 - A board allows only a few simultaneous API clients (ESP8266 especially); Home Assistant holds one of them.
-- Two controllers can write the same relay; CamStack follows the state the board reports.
+- Two controllers can write the same relay; Dominevo follows the state the board reports.
 
 ## Requirements
 
-- Peer packages already on the node: `@camstack/types`, `zod`.
-- A CamStack hub. This addon does not run on an agent.
+- Peer packages already on the node: `@dominevo/types`, `zod`.
+- A Dominevo hub. This addon does not run on an agent.
 
 <!-- readme:generated:start (derived from the manifest; edit outside this block) -->
 
-Package `@camstack/addon-provider-esphome` on npm.
+Package `@dominevo/addon-provider-esphome` on npm.
 
 ## What it provides
 
@@ -64,12 +64,12 @@ Package `@camstack/addon-provider-esphome` on npm.
 ## Requirements
 
 - Placement: hub-only.
-- A CamStack hub. An agent is used only where the placement above allows it.
+- A Dominevo hub. An agent is used only where the placement above allows it.
 
 ## Documentation
 
-- [docs/addons/addon-provider-esphome.md](https://github.com/camstack/server/blob/main/docs/addons/addon-provider-esphome.md)
-- [docs/architecture/device-model.md](https://github.com/camstack/server/blob/main/docs/architecture/device-model.md)
+- [docs/addons/addon-provider-esphome.md](https://github.com/dominevo/server/blob/main/docs/addons/addon-provider-esphome.md)
+- [docs/architecture/device-model.md](https://github.com/dominevo/server/blob/main/docs/architecture/device-model.md)
 
 See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
 

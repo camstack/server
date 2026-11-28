@@ -11,7 +11,7 @@
  * the round trip (step -> command + values -> step) is testable.
  */
 
-import { REPEAT_ITEM_VAR } from '@camstack/types'
+import { REPEAT_ITEM_VAR } from '@dominevo/types'
 import type {
   ActionTarget,
   AutomationAction,
@@ -20,7 +20,7 @@ import type {
   ReadingQuantity,
   ResolvedVocabAction,
   VocabLocale,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export type CommandStep = Extract<AutomationAction, { kind: 'command' }>
 

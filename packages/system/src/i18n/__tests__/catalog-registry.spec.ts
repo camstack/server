@@ -67,8 +67,8 @@ describe('CatalogRegistry', () => {
 
 describe('catalogNamespaceOf', () => {
   it('names a package by its short name', () => {
-    expect(catalogNamespaceOf('@camstack/addon-provider-reolink')).toBe('provider-reolink')
-    expect(catalogNamespaceOf('@camstack/server')).toBe('server')
+    expect(catalogNamespaceOf('@dominevo/addon-provider-reolink')).toBe('provider-reolink')
+    expect(catalogNamespaceOf('@dominevo/server')).toBe('server')
   })
 })
 

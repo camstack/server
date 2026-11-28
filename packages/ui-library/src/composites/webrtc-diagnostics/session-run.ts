@@ -11,7 +11,7 @@
  *
  * Every number in the report is `null` until something measured it (D393).
  */
-import type { WebrtcSessionDebug } from '@camstack/types'
+import type { WebrtcSessionDebug } from '@dominevo/types'
 import { defaultUiText, type UiTextFn } from '../../contexts/ui-text'
 import type { StreamDebugSample, WebrtcDebugStats } from '../stream-debug/webrtc-debug-stats'
 import {

@@ -2,8 +2,8 @@
  * Node-stress long-term statistics via device-history (D850, LTS P4).
  */
 
-import type { DeviceHistoryIngestResult, IScopedLogger } from '@camstack/types'
-import { BucketAccumulator, type ClosedHistoryBucket } from '@camstack/types'
+import type { DeviceHistoryIngestResult, IScopedLogger } from '@dominevo/types'
+import { BucketAccumulator, type ClosedHistoryBucket } from '@dominevo/types'
 import type { NodeStressSignals } from './node-stress.js'
 
 export type NodeStressHistorySeries =
@@ -51,7 +51,7 @@ export interface NodeStressHistoryClient {
   }>
 }
 
-import type { AddonApi } from '@camstack/types'
+import type { AddonApi } from '@dominevo/types'
 
 export function nodeStressHistoryClient(api: AddonApi['deviceHistory']): NodeStressHistoryClient {
   return {

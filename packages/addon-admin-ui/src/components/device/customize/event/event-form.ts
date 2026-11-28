@@ -10,7 +10,7 @@ import {
   compilePulseOverride,
   compileSpanOverride,
   type SpanCompiled,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export interface PulseFormSource {
   readonly addonId: string

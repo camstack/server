@@ -134,8 +134,8 @@ about NOW is never rationed by a budget that exists for something else.**
   bites on its one delayed retry, and fix 1 removes the case that produced a
   stale mirror in the first place.
 - `packages/system` is untouched. `resolveSnapshotState` was innocent, and this
-  ships on two SHORT trains — `camstack deploy packages/addon-provider-reolink`
-  and a Viewer OTA — instead of the `@camstack/server` publish-and-install one.
+  ships on two SHORT trains — `dominevo deploy packages/addon-provider-reolink`
+  and a Viewer OTA — instead of the `@dominevo/server` publish-and-install one.
 - A camera whose tile was off screen is named on its first poll back, so the
   demand set briefly costs one extra row per returning tile. It costs no
   capture: the hub only captures for a target with no `stateReason`, and such a

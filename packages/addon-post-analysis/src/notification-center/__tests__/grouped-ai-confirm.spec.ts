@@ -15,7 +15,7 @@
  *
  * The rows the dispatcher cases deliver are the ones the REAL centre closes and persists.
  */
-import type { MediaFile } from '@camstack/types'
+import type { MediaFile } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import {

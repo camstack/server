@@ -31,7 +31,7 @@ import {
   vectorDimFromBase64,
   type VectorFilter,
   type VectorMetadata,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { ClipModelRegistry, ClipVectorSpace } from '../../shared/clip/clip-model-registry.js'
 import type { TrackCascadeLeafCount } from '../pipeline/delete-track-cascade.js'
 import type { TrackFusionLeafCount, TrackFusionRequest } from '../pipeline/track-fusion-leaf.js'

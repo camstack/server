@@ -11,8 +11,8 @@ import {
   LoginSessionManager,
   staticJwtSigningKey,
   type UserManagementInternal,
-} from '@camstack/server/system'
-import type { SettingsStoreClient, TokenScope } from '@camstack/types'
+} from '@dominevo/server/system'
+import type { SettingsStoreClient, TokenScope } from '@dominevo/types'
 import { fakeSecrets } from './device-test-kit.js'
 import { AuthService } from '../../core/auth/auth.service.js'
 import { createSessionTokenCheck, sessionBackingFrom } from '../hub-sessions.js'

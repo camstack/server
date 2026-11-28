@@ -13,7 +13,7 @@
 import { selectOptionValues } from '../../testing/select-option'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { render, screen, cleanup } from '@testing-library/react'
-import type { PipelineAddonSchema, DeviceStepConfig } from '@camstack/types'
+import type { PipelineAddonSchema, DeviceStepConfig } from '@dominevo/types'
 import { AgentStepEditor } from '../agent-step-editor'
 
 const PACKAGE_ADDON: PipelineAddonSchema = {

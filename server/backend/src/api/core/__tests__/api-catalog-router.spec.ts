@@ -23,8 +23,8 @@ import {
   publicProcedure,
   trpcRouter,
 } from '../../trpc/trpc.middleware.js'
-import type { ApiCatalogEntry, CredentialScope } from '@camstack/types'
-import { METHOD_DESCRIPTIONS } from '@camstack/types'
+import type { ApiCatalogEntry, CredentialScope } from '@dominevo/types'
+import { METHOD_DESCRIPTIONS } from '@dominevo/types'
 import { callableBy, createApiCatalogRouter } from '../api-catalog.router.js'
 
 const admin: AuthenticatedAgent = {

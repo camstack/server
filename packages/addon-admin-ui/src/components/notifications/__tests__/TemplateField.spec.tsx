@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { useState } from 'react'
 import { describe, expect, it } from 'vitest'
-import type { NcTemplateVarDescriptor } from '@camstack/types'
+import type { NcTemplateVarDescriptor } from '@dominevo/types'
 import { renderWithTemplateHub } from '../../../test-setup/device-template-hub'
 import { TemplateField } from '../TemplateField'
 

@@ -17,7 +17,7 @@
  * sets true after ANY kill() so `!child.killed` never fires → leaked ffmpeg).
  */
 import { spawn } from 'node:child_process'
-import { errMsg } from '@camstack/types'
+import { errMsg } from '@dominevo/types'
 
 /** Hard ceiling for one fragment conversion; a ~4 s GOP transcodes in well
  *  under this even on a slow agent. Prevents a wedged ffmpeg from leaking. */

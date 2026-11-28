@@ -47,7 +47,7 @@ import {
   IrTransmitterCard,
   SensorCard,
   type IrTransmitterCardActions,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { applianceFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/appliance'
 import {
   CLIMATE_EXTRA_FIXTURES,

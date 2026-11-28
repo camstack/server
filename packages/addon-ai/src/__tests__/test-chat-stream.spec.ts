@@ -26,7 +26,7 @@
  *     discipline — it is the only durable trace a test call leaves.
  */
 
-import type { LlmProfile } from '@camstack/types'
+import type { LlmProfile } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import type { TestChatRequest } from '../test-chat/contract.js'
 import { type TestChatEvent, TestChatRequestSchema } from '../test-chat/contract.js'

@@ -32,7 +32,7 @@ import {
   type NodeBenchProgress,
   type NodeBenchRunnerInput,
   type NodeDecodeProfile,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { CapacityStallWindow } from '../capacity/capacity-runner.js'
 import { PIPELINE_CPU_MAX_PCT, PIPELINE_RAM_FREE_MIN_PCT } from './node-bench-driver.js'
 

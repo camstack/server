@@ -21,7 +21,7 @@
 import { describe, it, expect } from 'vitest'
 import { DetectionCoverageCache } from '../runtime/detection-coverage-cache.js'
 import { makeSilentLogger } from './test-helpers.js'
-import { DETECTION_PIPELINE_CAP_NAME, type AddonApi } from '@camstack/types'
+import { DETECTION_PIPELINE_CAP_NAME, type AddonApi } from '@dominevo/types'
 
 interface BindingEntry {
   readonly capName: string

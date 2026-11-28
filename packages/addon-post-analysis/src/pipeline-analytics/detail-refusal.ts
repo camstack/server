@@ -4,7 +4,7 @@
  *
  * The refusal crosses the wire as an ERROR whose message carries a marker,
  * not as a result field: the cap output schema
- * (`@camstack/types` `pipeline-runner.cap.ts` → `z.object({ details
+ * (`@dominevo/types` `pipeline-runner.cap.ts` → `z.object({ details
  * }).nullable()`) is parsed on the hub route and Zod strips unknown keys, so a
  * refusal field cannot survive without a types + codegen + server-train
  * change. Error messages DO survive the route (tRPC carries `error.message`;

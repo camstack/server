@@ -33,7 +33,7 @@ import {
   clipExportFailureOf,
   type IVideoclipsProvider,
   VIDEOCLIPS_MAX_READ_BYTES,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { resolveCameraUid } from '../clips/clip-addressing.js'
 import { CLIP_WAKE_TIMEOUT_MS, createClipService } from '../clips/clip-service.js'

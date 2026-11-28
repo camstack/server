@@ -1,8 +1,8 @@
 /**
  * Record kinds owned by backup-orchestrator (phase 4 — hub-main).
  */
-import type { RecordKindHandle, RecordsAccess } from '@camstack/types'
-import { DataStoreDatabaseSchema, defineRecordKinds, type DefinedRecordKind } from '@camstack/types'
+import type { RecordKindHandle, RecordsAccess } from '@dominevo/types'
+import { DataStoreDatabaseSchema, defineRecordKinds, type DefinedRecordKind } from '@dominevo/types'
 import { z } from 'zod'
 import type { IsolatedRecordKinds } from '../records-isolated.js'
 

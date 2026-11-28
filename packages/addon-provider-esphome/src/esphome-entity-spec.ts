@@ -1,6 +1,6 @@
 import type { EspEntity } from './esphome-link.js'
 
-/** What a board entity becomes in CamStack. One plan = one child device. */
+/** What a board entity becomes in Dominevo. One plan = one child device. */
 export type ChildKind =
   | 'switch'
   | 'light'

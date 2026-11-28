@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { DeviceType, deviceStateRefreshCapability, type SwitchStatus } from '@camstack/types'
+import { DeviceType, deviceStateRefreshCapability, type SwitchStatus } from '@dominevo/types'
 import { EspActuatorDevice } from '../devices/esp-actuator-device.js'
 import { childConfigFor } from '../esphome-child-spec.js'
 import { planBoard } from '../esphome-entity-spec.js'

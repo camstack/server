@@ -1,4 +1,4 @@
-import type { IntegrationSessionSink, IScopedLogger } from '@camstack/types'
+import type { IntegrationSessionSink, IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { connectionFromSettings, type KiaConfig } from '../config.js'
 import { KiaBridgeError } from '../kia-bridge.js'

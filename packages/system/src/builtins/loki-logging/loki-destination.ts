@@ -31,7 +31,7 @@ import type {
   LogReadCapabilities,
   LogReadQuery,
   LogReadResult,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { buildPushBody, parseExtraLabels, type LokiPushBody } from './loki-payload.js'
 import { parseQueryRange, readLokiBackward, type LokiRangeQuery } from './loki-read.js'
 
@@ -283,7 +283,7 @@ export class LokiDestination implements ILogDestination {
       timestamp: new Date(),
       level: 'info',
       scope: 'loki-logging',
-      message: 'CamStack connection test',
+      message: 'Dominevo connection test',
     }
     const body = buildPushBody([probe], {
       job: config.job,

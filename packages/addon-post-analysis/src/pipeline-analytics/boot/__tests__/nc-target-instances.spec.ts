@@ -13,7 +13,7 @@ import {
   NotificationTargetStore,
   notificationTargetKinds,
   type TargetKind,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { NcDispatcher } from '../../../notification-center/dispatcher.js'
 import type { NcOutboxEntry } from '../../../notification-center/outbox.js'

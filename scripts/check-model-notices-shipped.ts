@@ -7,7 +7,7 @@
  * ## The failure this catches
  *
  * Apache-2.0 §4, MIT, CC BY, the Apple AMLR agreement and the Llama 3.2 licence
- * all ask for the notice to travel WITH the thing distributed. CamStack's
+ * all ask for the notice to travel WITH the thing distributed. Dominevo's
  * weights are fetched by code in these packages; the npm tarball and the
  * Docker image are what users receive. npm only auto-includes README/LICENSE,
  * so a notice that is not in `files` silently never ships. A copy that drifts

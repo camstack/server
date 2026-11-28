@@ -18,7 +18,7 @@ import {
   type IScopedLogger,
   type StorageLocation,
   settingsStoreCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import * as tar from 'tar'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { CapabilityRegistry } from '../../../kernel/capability-registry.js'

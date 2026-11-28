@@ -31,7 +31,7 @@ import type {
   RelocateJob,
   StorageLocation,
   StorageMigrationJob,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { ILocationStore } from '../location-store.js'
 import {

@@ -33,8 +33,8 @@
  * Reading NEVER drains.
  */
 
-import type { FailureCounterSample } from '@camstack/types'
-import { FailureCounters } from '@camstack/types'
+import type { FailureCounterSample } from '@dominevo/types'
+import { FailureCounters } from '@dominevo/types'
 
 /** One `pushTalkAudio` call against an open talk session. */
 export const FAMILY_INTERCOM_TALK = 'intercom-talk'

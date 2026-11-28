@@ -3,7 +3,7 @@
  * ledger query, and the shell mounts it only while the tab is open: nothing is
  * requested at modal open.
  */
-import { useActionsGetTraces, useCoreBlocksGetTraces } from '@camstack/ui-library'
+import { useActionsGetTraces, useCoreBlocksGetTraces } from '@dominevo/ui-library'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { QuickRunList } from '../QuickParts'

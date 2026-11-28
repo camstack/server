@@ -4,7 +4,7 @@
  * `WorkerRequest.lease` is REQUIRED (D453) — a `start` that names no knobs is a
  * configuration nobody decided — so every fake that drives the coordinator or
  * the pump has to supply one. This is the shipped default set, spelled out
- * rather than imported from `@camstack/types`, so a test that cares about a
+ * rather than imported from `@dominevo/types`, so a test that cares about a
  * particular knob overrides the field it cares about and a test that does not
  * is reading the same numbers production ships.
  */

@@ -2,7 +2,7 @@
  * The VIEWER product's setup window: one field, the hub's address.
  *
  * There is no role picker, because there is no role to pick — this build ships
- * without the `@camstack/server` closure and can only ever watch a hub
+ * without the `@dominevo/server` closure and can only ever watch a hub
  * (ADR-0402). Anything else on this page would be a choice the product cannot
  * honour.
  *
@@ -21,7 +21,7 @@ import { setupDocument } from './setup-document'
 export function renderViewerSetup(hubUrl: string): string {
   return setupDocument({
     submitLabel: 'Save and connect',
-    body: `<h1>Connect to your CamStack hub</h1>
+    body: `<h1>Connect to your Dominevo hub</h1>
 <p class="sub">This app watches a hub you already run. Tell it where that hub is.</p>
 
 <label class="field" for="viewerHub">Hub address</label>
@@ -30,7 +30,7 @@ export function renderViewerSetup(hubUrl: string): string {
   The full address of the hub, including the port when it is not the default —
   for example <code>https://192.168.10.9:4443</code>, or
   <code>https://camstack.example.com</code> when the hub is reachable through a
-  tunnel. CamStack does not search the network for hubs: type the address the
+  tunnel. Dominevo does not search the network for hubs: type the address the
   hub's admin UI shows.
 </div>`,
     script: `  const viewerHubInput = document.getElementById('viewerHub');

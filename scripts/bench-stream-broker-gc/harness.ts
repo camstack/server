@@ -18,7 +18,7 @@
 import fs from 'node:fs'
 import net from 'node:net'
 import { constants, PerformanceObserver } from 'node:perf_hooks'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { RtspSession } from '../../packages/addon-pipeline/src/stream-broker/rtsp/rtsp-session.ts'
 import { StreamBroker } from '../../packages/addon-pipeline/src/stream-broker/stream-broker/stream-broker.ts'
 

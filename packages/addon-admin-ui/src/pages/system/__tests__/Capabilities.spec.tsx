@@ -9,7 +9,7 @@ import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
-import type { CapabilityInfo } from '@camstack/types'
+import type { CapabilityInfo } from '@dominevo/types'
 
 // ---------------------------------------------------------------------------
 // Mock the live tRPC client behind `useSystem()`
@@ -43,9 +43,9 @@ interface ErrorBoxProps {
   readonly onRetry?: () => void
 }
 
-vi.mock('@camstack/ui-library', async () => {
+vi.mock('@dominevo/ui-library', async () => {
   const actual =
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+    await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return {
     Button: actual.Button,
     Input: actual.Input,

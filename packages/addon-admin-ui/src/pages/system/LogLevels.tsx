@@ -49,8 +49,8 @@ import {
   Button,
   Input,
   Select,
-} from '@camstack/ui-library'
-import type { LoggingLevelLayer, LogLevel } from '@camstack/types'
+} from '@dominevo/ui-library'
+import type { LoggingLevelLayer, LogLevel } from '@dominevo/types'
 import { AdminPage } from '../../components/AdminPage'
 
 const LEVELS: readonly LogLevel[] = ['debug', 'info', 'warn', 'error']

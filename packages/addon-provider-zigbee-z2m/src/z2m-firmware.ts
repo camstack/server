@@ -3,8 +3,8 @@
  * An update runs for minutes and Zigbee2MQTT answers the request only when it is over, so a start
  * answers once the server has accepted it; a refusal that arrives inside the window is thrown.
  */
-import type { IScopedLogger, UpdateStatus } from '@camstack/types'
-import { errMsg } from '@camstack/types'
+import type { IScopedLogger, UpdateStatus } from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
 import type { Z2mHub } from './z2m-hub.js'
 import { type Z2mUpdateState, Z2mUpdateStateSchema } from './z2m-protocol.js'
 import type { Z2mSession } from './z2m-session.js'

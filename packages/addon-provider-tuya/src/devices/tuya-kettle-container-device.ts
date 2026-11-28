@@ -3,7 +3,7 @@ import {
   type DeviceContext,
   DeviceType,
   type IDevice,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { DEFAULT_KETTLE_DP_MAP, DEFAULT_KETTLE_TARGET_OPTIONS } from '../tuya-dp-mapping.js'
 import { tuyaDeviceConfigSchema } from './tuya-base-device.js'

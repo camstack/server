@@ -3,7 +3,7 @@
  * devices; the role says which, and a persisted row is rebuilt with the right
  * class although the two now share a type.
  */
-import { DeviceRole, DeviceType } from '@camstack/types'
+import { DeviceRole, DeviceType } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { deviceTypeForShcKind, shcClimateRole, shcClimateRowKind } from '../shc-domain-mapping.js'
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { DeviceType, type IDeviceRuntimeState } from '@camstack/types'
+import { DeviceType, type IDeviceRuntimeState } from '@dominevo/types'
 import { HaUpdateDevice } from '../ha-update-device.js'
 import type { HaEntityState } from '../../ha-types.js'
 
@@ -7,7 +7,7 @@ function buildUpdateCtx(
   entityId: string,
   publishMutate = vi.fn(async () => null),
 ): {
-  ctx: import('@camstack/types').DeviceContext
+  ctx: import('@dominevo/types').DeviceContext
   setCapStateCalls: Array<Record<string, unknown>>
 } {
   let runtimeStateRef: IDeviceRuntimeState | null = null
@@ -93,12 +93,12 @@ function buildUpdateCtx(
       addContext: vi.fn(),
       with: vi.fn(),
     },
-  } as unknown as import('@camstack/types').DeviceContext
+  } as unknown as import('@dominevo/types').DeviceContext
 
   return { ctx, setCapStateCalls }
 }
 
-function getUpdateProvider(ctx: import('@camstack/types').DeviceContext): {
+function getUpdateProvider(ctx: import('@dominevo/types').DeviceContext): {
   installUpdate: (i: { deviceId: number }) => Promise<void>
 } {
   const registerNativeCap = ctx.registerNativeCap as ReturnType<typeof vi.fn>

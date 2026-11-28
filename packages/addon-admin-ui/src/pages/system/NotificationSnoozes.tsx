@@ -19,8 +19,8 @@
  * silenced" is an answer; a missing card is not.
  */
 
-import type { NcRule, NcSnooze } from '@camstack/types'
-import { Badge, Button, Card, useSystem } from '@camstack/ui-library'
+import type { NcRule, NcSnooze } from '@dominevo/types'
+import { Badge, Button, Card, useSystem } from '@dominevo/ui-library'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { BellOff } from 'lucide-react'
 import { useMemo } from 'react'

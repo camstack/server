@@ -8,7 +8,7 @@ import {
   makeInMemoryRecords,
   type IdentityLinkEventPayload,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { IdentityLinkCandidate, IdentityLinkCandidates } from '../device-identity-index.js'
 import { IdentityLinkReconciler } from '../identity-link-reconciler.js'

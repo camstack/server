@@ -8,7 +8,7 @@ Branch: `main` (commit lands 2026-09-06 morning; publish follows). Record: `docs
   restored, event `onStatusChanged`. Slice:
   `{ type: 'wifi'|'ethernet'|'cellular'|'unknown', signalPercent: number|null, rssiDbm?, ssid?, lastUpdated }`.
   `unknown` = not read yet (never a default wire); `signalPercent: null` = not known / not applicable (wire).
-  Normalisers exported from `@camstack/types`: `signalPercentFromRssi(dBm)` (-100..-50 → 0..100),
+  Normalisers exported from `@dominevo/types`: `signalPercentFromRssi(dBm)` (-100..-50 → 0..100),
   `signalPercentFromBars(bars, maxBars)`. Seed with `NETWORK_LINK_UNKNOWN`.
 - Consumers already wired off the slice: HA export (`link` + `signal` diagnostic sensors), ui-library
   `useDeviceNetworkLink` + `NetworkLinkBadge` (device list pill, DeviceDetail header), viewer badge (card

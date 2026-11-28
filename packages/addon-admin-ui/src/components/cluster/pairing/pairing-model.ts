@@ -5,7 +5,7 @@
  * is a function of the answered data: the dialog phase, the countdown and the
  * labels. Nothing is guessed while a query is still pending (D315).
  */
-import type { AddonApi } from '@camstack/types'
+import type { AddonApi } from '@dominevo/types'
 
 type PairingApi = AddonApi['agentPairing']
 

@@ -62,13 +62,13 @@ function copyPackagePatchScope(sourceRoot: string, destRoot: string, entry: Patc
 }
 
 /**
- * Build `<tmp>/node_modules/{@camstack/server/{scripts,dist/closure-patches},<pkg>}`
+ * Build `<tmp>/node_modules/{@dominevo/server/{scripts,dist/closure-patches},<pkg>}`
  * — the layout the applier sees when npm runs it inside a staging closure.
  */
 function stageClosure(entry: PatchEntry, installedDir: string): string {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'closure-postinstall-'))
   made.push(dir)
-  const server = path.join(dir, 'node_modules', '@camstack', 'server')
+  const server = path.join(dir, 'node_modules', '@dominevo', 'server')
   fs.mkdirSync(path.join(server, 'scripts'), { recursive: true })
   fs.mkdirSync(path.join(server, 'dist', 'closure-patches'), { recursive: true })
   fs.copyFileSync(APPLIER, path.join(server, 'scripts', 'closure-postinstall.mjs'))
@@ -91,7 +91,7 @@ function runApplier(closureDir: string): string {
       path.join(
         closureDir,
         'node_modules',
-        '@camstack',
+        '@dominevo',
         'server',
         'scripts',
         'closure-postinstall.mjs',
@@ -192,7 +192,7 @@ describe.each(CASES)('closure patch %s', (_name, entry) => {
   it('leaves the closure alone when the package is not installed there', () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'closure-empty-'))
     made.push(dir)
-    const server = path.join(dir, 'node_modules', '@camstack', 'server')
+    const server = path.join(dir, 'node_modules', '@dominevo', 'server')
     fs.mkdirSync(path.join(server, 'scripts'), { recursive: true })
     fs.mkdirSync(path.join(server, 'dist', 'closure-patches'), { recursive: true })
     fs.copyFileSync(APPLIER, path.join(server, 'scripts', 'closure-postinstall.mjs'))

@@ -13,7 +13,7 @@ import type {
   LogExtras,
   NcAlarmSettings,
   NcAlarmSettingsPatch,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import { NcDeviceDirectory, type NcDeviceIdentity } from '../device-directory.js'
 import { NcDeviceMuteStore } from '../device-mute-store.js'

@@ -36,7 +36,7 @@
  *
  * No hub address lives in this file. The hub is `CAMSTACK_HUB_URL`, or the
  * gitignored `scratchpad/.hub`; with neither, `--live` refuses by name. The
- * token is the operator's `camstack login` session through the shared resolver
+ * token is the operator's `dominevo login` session through the shared resolver
  * (`scripts/hub/credentials.mjs`), and nothing else. The hub serves a self-signed certificate, so the
  * connection skips verification exactly as hub.mjs does, but scoped to this
  * script's own dispatcher rather than the whole process.

@@ -9,7 +9,7 @@ import type {
   OsdNamedTemplate,
   OsdSlotBinding,
   OsdStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { EMPTY_BINDINGS, type BindingsHandle, type OsdDeviceBindings } from '../bindings-store.js'
 import type { BoundIndexHandle } from '../bound-index.js'

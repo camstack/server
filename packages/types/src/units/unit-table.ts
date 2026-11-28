@@ -1,6 +1,6 @@
 /**
  * Unit-of-measurement conversion table — the single source of truth shared by
- * the render path (`resolveSensorDisplay` in `@camstack/ui-library`) and the
+ * the render path (`resolveSensorDisplay` in `@dominevo/ui-library`) and the
  * future Stage-X expression engine's `convert()` builtin.
  *
  * Every unit maps to a `UnitSpec` describing the LINEAR transform to its
@@ -23,7 +23,7 @@
  * conversion stays refused.
  */
 
-/** The physical dimensions CamStack surfaces across HA + Ecowitt + vendors. */
+/** The physical dimensions Dominevo surfaces across HA + Ecowitt + vendors. */
 export type UnitDimension =
   | 'temperature'
   | 'pressure'

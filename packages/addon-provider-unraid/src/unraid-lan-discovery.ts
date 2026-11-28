@@ -3,7 +3,7 @@ import {
   type DiscoveryCandidate,
   type DiscoveryHit,
   type DiscoveryMode,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /**
  * LAN discovery of an Unraid server: its GraphQL endpoint answers the introspection question

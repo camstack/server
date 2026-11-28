@@ -54,7 +54,7 @@ Three ways out were weighed:
    business knowing it, and it is wrong the day a third source appears.
 2. **Add `addonId` to `ClipSourceSchema` and re-key the deny set by SOURCE.**
    This is the right end state, and it is what D556 would have written had this
-   surface existed. It is a `@camstack/types` + `@camstack/system` +
+   surface existed. It is a `@dominevo/types` + `@dominevo/system` +
    `server/backend` change — a framework train — and slice 4's brief scopes the
    cap file to its `deviceConfig.ui` declaration alone. Deferred, not declined.
 3. **Filter the view, persist nothing.** What shipped.
@@ -246,7 +246,7 @@ having established that the switch should exist. The operator's reasoning is
 better than the one this record and D556 were built on: *a source is there
 because of a configuration that lives somewhere else.* HKSV exists if the camera
 is exported to HomeKit. The Reolink source exists because Reolink is that
-camera's provider. CamStack's is always there. Each of those is already an
+camera's provider. Dominevo's is always there. Each of those is already an
 authority, on its own surface, and none of them is a question a clips list gets
 to answer. A per-source on/off here is therefore a second knob over somebody
 else's decision — which is D62's failure, arrived at from a direction D62 does

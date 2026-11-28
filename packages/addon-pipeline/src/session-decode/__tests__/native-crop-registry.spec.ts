@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import type { FrameHandle } from '@camstack/types'
+import type { FrameHandle } from '@dominevo/types'
 import { NativeCropRegistry } from '../native-crop-registry.js'
 import { mkNativeCropRequester } from '../../__tests__/support/native-crop-requester.js'
 

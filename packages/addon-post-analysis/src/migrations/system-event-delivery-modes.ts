@@ -21,7 +21,7 @@ import {
   type MigrationProcedureResult,
   type RecordKindHandle,
   withSystemEventModes,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { RuleBody } from '../notification-center/record-kinds.js'
 import { rewriteKind } from './device-template-var.js'
 

@@ -20,7 +20,7 @@
  * message ever carries the key: it travels in a header only, and every message
  * is scrubbed of it besides.
  */
-import type { LlmListModelsResult, LlmModelInfo } from '@camstack/types'
+import type { LlmListModelsResult, LlmModelInfo } from '@dominevo/types'
 import { z } from 'zod'
 import {
   apiKeyOf,

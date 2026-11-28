@@ -9,7 +9,7 @@
  * one where the acquire raced the close.
  */
 import { describe, expect, it, vi } from 'vitest'
-import type { EncodedPacket } from '@camstack/types'
+import type { EncodedPacket } from '@dominevo/types'
 
 import { AdaptiveSession } from '../session.js'
 import { asLogger, type FrameSource, type MediaFrame } from '../types.js'

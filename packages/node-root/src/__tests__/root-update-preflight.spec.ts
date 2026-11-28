@@ -5,7 +5,7 @@
  * unmigrated store. The update was accepted, swapped and restarted, and the
  * addons stayed down for four hours. The engine now asks BEFORE staging.
  */
-import type { RunnerBootCheck, UpdateBlocker } from '@camstack/types'
+import type { RunnerBootCheck, UpdateBlocker } from '@dominevo/types'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
@@ -28,7 +28,7 @@ beforeEach(() => {
   fs.mkdirSync(path.join(tmp, 'data'), { recursive: true })
   fs.writeFileSync(
     path.join(tmp, 'pkg.json'),
-    JSON.stringify({ name: '@camstack/server', version: '1.2.500' }),
+    JSON.stringify({ name: '@dominevo/server', version: '1.2.500' }),
   )
   npmCalls = []
   restarts = []

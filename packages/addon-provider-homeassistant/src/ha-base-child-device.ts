@@ -8,7 +8,7 @@ import {
   type DeviceRole,
   type IScopedLogger,
   type RawStateResult,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { haSourceSchemaFields } from './ha-device-source.js'
 import { attachAccessoriesCap, type AccessoriesCapHandle } from './ha-accessories-cap.js'
 import { HaEntityStateSchema, type HaEntityState } from './ha-types.js'
@@ -28,7 +28,7 @@ export const haChildDeviceSchema = z.object({ ...haSourceSchemaFields })
 export type HaChildDeviceConfig = z.infer<typeof haChildDeviceSchema>
 
 /**
- * Abstract base for every HA-entity-backed CamStack accessory device.
+ * Abstract base for every HA-entity-backed Dominevo accessory device.
  *
  * Owns the wiring that's identical across every domain:
  *   - subscribes to the typed event-bus on `broker.message` events

@@ -1,5 +1,5 @@
 /**
- * From a host inventory to what CamStack will use and what to pass. Every
+ * From a host inventory to what Dominevo will use and what to pass. Every
  * entry is backed by the image and the server's probes:
  *  - Intel GPU: the `intel` image (iHD VAAPI/QSV decode, OpenVINO GPU), `/dev/dri`.
  *  - Intel NPU: OpenVINO NPU in the `intel` image, `/dev/accel`.
@@ -186,7 +186,7 @@ export function listAccelerators(inv: HostInventory): readonly DetectedAccelerat
         status: 'detected-not-used',
         hostPaths: [],
         visibleHere: accel.visible,
-        note: 'Detected by CamStack, but it has no inference runtime yet.',
+        note: 'Detected by Dominevo, but it has no inference runtime yet.',
       })
     }
   }
@@ -227,7 +227,7 @@ export function listAccelerators(inv: HostInventory): readonly DetectedAccelerat
       status: 'unsupported',
       hostPaths: [],
       visibleHere: true,
-      note: 'Hailo: not supported by CamStack.',
+      note: 'Hailo: not supported by Dominevo.',
     })
   }
   return out

@@ -14,7 +14,7 @@ import {
   type CompositionSourceRef,
   mergeScalarTarget,
   removeScalarTarget,
-} from '@camstack/types'
+} from '@dominevo/types'
 import i18n from '../../../i18n/index'
 import type { CustomizationState } from './customization-read'
 

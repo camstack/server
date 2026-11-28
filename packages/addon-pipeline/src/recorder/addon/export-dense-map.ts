@@ -36,7 +36,7 @@
  *  - **The mapping never grows the list**, so it can never push a caller that
  *    respected `EXPORT_DENSE_MAX_RANGES` past the ceiling.
  */
-import type { ExportDenseRange, ExportOptions } from '@camstack/types'
+import type { ExportDenseRange, ExportOptions } from '@dominevo/types'
 
 /**
  * One playlist entry's WALL placement — what ffmpeg's `t` is assembled from.

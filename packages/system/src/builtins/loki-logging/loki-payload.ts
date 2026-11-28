@@ -5,7 +5,7 @@
  * ## Why Loki and not Promtail
  *
  * Promtail is a file *tailer*: it watches log files on disk and ships what it
- * reads to Loki. CamStack already has every entry in memory, in structured form,
+ * reads to Loki. Dominevo already has every entry in memory, in structured form,
  * at the moment it is emitted — writing it to disk purely so a sidecar can parse
  * it back out loses the structure and adds a process. Loki's own ingestion API
  * (`POST /loki/api/v1/push`) takes the structured form directly.
@@ -41,7 +41,7 @@
  *
  * That is at most `4 × nodes` streams, which is what Loki is built for.
  */
-import type { LogEntry, LogLevel } from '@camstack/types'
+import type { LogEntry, LogLevel } from '@dominevo/types'
 
 /** One `[unixNano, line]` pair, exactly as Loki's push API expects. */
 export type LokiValue = readonly [string, string]

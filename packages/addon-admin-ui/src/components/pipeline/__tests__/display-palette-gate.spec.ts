@@ -1,4 +1,4 @@
-import { bundledCamstack } from '@camstack/types'
+import { bundledCamstack } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { paletteViewOf } from '../display-palette-gate'
 

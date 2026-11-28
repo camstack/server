@@ -16,7 +16,7 @@ function parse(args: readonly string[]): Record<string, string | boolean | undef
   return values
 }
 
-// D1101: the `camstack login` session is the only client credential.
+// D1101: the `dominevo login` session is the only client credential.
 describe('removed token flags', () => {
   it('a command without them passes', () => {
     expect(() => assertNoRemovedTokenFlags(parse(['-s', 'hub.lan']))).not.toThrow()
@@ -26,11 +26,11 @@ describe('removed token flags', () => {
     ['--token', 'abc'],
     ['-t', 'abc'],
     ['--token-file', '/tmp/x'],
-  ])('%s fails with a "removed, use camstack login" message instead of an unknown option', (flag, v) => {
+  ])('%s fails with a "removed, use dominevo login" message instead of an unknown option', (flag, v) => {
     const values = parse([flag, v])
     expect(() => assertNoRemovedTokenFlags(values)).toThrow(RemovedTokenFlagError)
     expect(() => assertNoRemovedTokenFlags(values)).toThrow(/removed/)
-    expect(() => assertNoRemovedTokenFlags(values)).toThrow(/camstack login <host>/)
+    expect(() => assertNoRemovedTokenFlags(values)).toThrow(/dominevo login <host>/)
   })
 
   it('never echoes the value it was given', () => {

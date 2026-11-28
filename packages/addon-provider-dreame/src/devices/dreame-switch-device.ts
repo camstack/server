@@ -4,7 +4,7 @@ import {
   type DeviceContext,
   type InferNativeProvider,
   type SwitchStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { dreameChildSchema } from './dreame-child-device.js'
 import { DreameChildDevice } from './dreame-child-device.js'
 

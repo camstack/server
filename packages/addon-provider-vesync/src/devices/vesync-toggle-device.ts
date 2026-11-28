@@ -6,7 +6,7 @@ import {
   type InferNativeProvider,
   type SwitchStatus,
   switchCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { vesyncToggleSchema, type VeSyncToggleKind } from '../config.js'
 import type { VeSyncClient, VeSyncDeviceSnapshot } from '../vesync-client-contract.js'
 import { vesyncAccounts } from '../vesync-account-resolver.js'
@@ -16,8 +16,8 @@ const SWITCH_CAP = switchCapability.name
 const COLD_START: SwitchStatus = { on: false, lastChangedAt: 0 }
 
 /**
- * One VeSync boolean toggle (`child-lock` or `display`) as a CamStack
- * {@link import('@camstack/types').DeviceType.Switch} accessory child of a purifier
+ * One VeSync boolean toggle (`child-lock` or `display`) as a Dominevo
+ * {@link import('@dominevo/types').DeviceType.Switch} accessory child of a purifier
  * (both toggles) or a humidifier (`display` only — tsvesync drives no humidifier child
  * lock). Registers ONE cap (`switch`). `purifierNativeId` is the parent's VeSync cid,
  * whatever its kind (the field keeps its first name so stored children still parse).

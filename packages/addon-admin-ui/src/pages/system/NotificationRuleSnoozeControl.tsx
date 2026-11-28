@@ -31,7 +31,7 @@
  * rather than offering a window the server would reject.
  */
 
-import { Button, Select, useSystem } from '@camstack/ui-library'
+import { Button, Select, useSystem } from '@dominevo/ui-library'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { BellOff, Loader2 } from 'lucide-react'
 import { useState } from 'react'

@@ -20,7 +20,7 @@
  */
 import { describe, expect, it, vi } from 'vitest'
 import sharp from 'sharp'
-import type { DecodedFrame, FrameHandle, IScopedLogger } from '@camstack/types'
+import type { DecodedFrame, FrameHandle, IScopedLogger } from '@dominevo/types'
 import { EventMediaDispatcher } from '../event-media-dispatcher.js'
 import type { EventMediaDispatcherDeps, ParkedSubjectSlab } from '../event-media-dispatcher.js'
 import type { MediaPutInput } from '../../store/media-store.js'

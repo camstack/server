@@ -10,7 +10,7 @@
  * three packages that must act on that fact — `pipeline-orchestrator` (renders
  * and stores the one row), `addon-post-analysis` (pins it for a re-embed pass)
  * and `addon-admin-ui` (mirrors it) — may not import an addon, so they read the
- * mirrored registry `CLUSTER_MODEL_SCOPED_STEPS` in `@camstack/types`.
+ * mirrored registry `CLUSTER_MODEL_SCOPED_STEPS` in `@dominevo/types`.
  *
  * Two lists. The moment they disagree the failure is silent and asymmetric:
  *

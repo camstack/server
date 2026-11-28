@@ -8,7 +8,7 @@
  * `DeferredResponse` now and the real `Response` when the cover reports the
  * target (or an `ErrorResponse` at the timeout).
  */
-import type { AddonApi, AddonContext, IScopedLogger } from '@camstack/types'
+import type { AddonApi, AddonContext, IScopedLogger } from '@dominevo/types'
 import { z } from 'zod'
 import type { VerifiedDirectiveIdentity } from '../directive-router.js'
 import {

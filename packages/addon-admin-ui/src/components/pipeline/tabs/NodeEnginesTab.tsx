@@ -18,7 +18,7 @@
  */
 import { useMemo } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import type { PipelineEngineChoice } from '@camstack/types'
+import type { PipelineEngineChoice } from '@dominevo/types'
 
 import { useEventInvalidation } from '../../../hooks/useEventInvalidation'
 import {
@@ -31,7 +31,7 @@ import {
   usePipelineExecutorListLoadedEngines,
   usePipelineRunnerGetLocalCameras,
   useConfirm,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Zap, Trash2, Cpu, Layers } from 'lucide-react'
 import { Trans, useTranslation } from 'react-i18next'
 import i18n from '../../../i18n/index'

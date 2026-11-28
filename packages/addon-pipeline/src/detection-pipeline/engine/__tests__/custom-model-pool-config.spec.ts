@@ -9,7 +9,7 @@
  */
 import { describe, expect, it } from 'vitest'
 import * as os from 'node:os'
-import type { ModelCatalogEntry } from '@camstack/types'
+import type { ModelCatalogEntry } from '@dominevo/types'
 import { buildPoolModelConfigForStep } from '../engine-factory.js'
 
 const PLUS_CATALOG_LABELS = ['person', 'car', 'dog'] as const

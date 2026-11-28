@@ -32,7 +32,7 @@
  * 'operator-contradiction', chain: bfsPath(...) }` — the suppression test
  * turns into a contradiction.
  */
-import type { TrackPurity, TrackRelation } from '@camstack/types'
+import type { TrackPurity, TrackRelation } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { makeLogRecorder, makeSilentLogger } from '../../__tests__/test-helpers.js'
 import type { Tape } from '../tape-codec.js'

@@ -1,10 +1,10 @@
 # UniFi Network Provider
 
-UniFi Network controller device-provider addon for CamStack — local-controller infra switches/APs (as containers) + network-client presence. No cameras.
+UniFi Network controller device-provider addon for Dominevo — local-controller infra switches/APs (as containers) + network-client presence. No cameras.
 
 <!-- readme:generated:start (derived from the manifest; edit outside this block) -->
 
-Package `@camstack/addon-provider-unifi` on npm.
+Package `@dominevo/addon-provider-unifi` on npm.
 
 ## What it provides
 
@@ -15,11 +15,11 @@ Package `@camstack/addon-provider-unifi` on npm.
 
 - Placement: hub-only.
 - Python: UniFi Network installs `python/requirements.txt` into its own environment.
-- A CamStack hub. An agent is used only where the placement above allows it.
+- A Dominevo hub. An agent is used only where the placement above allows it.
 
 ## Documentation
 
-- [docs/architecture/device-model.md](https://github.com/camstack/server/blob/main/docs/architecture/device-model.md)
+- [docs/architecture/device-model.md](https://github.com/dominevo/server/blob/main/docs/architecture/device-model.md)
 
 See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
 

@@ -9,7 +9,7 @@ import {
   type CompositionCustomizationRead,
   type CompositionView,
   coreBlockComposition,
-} from '@camstack/types'
+} from '@dominevo/types'
 import i18n from '../../../i18n/index'
 
 /** The one field of a query error this module reads. */

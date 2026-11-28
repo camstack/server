@@ -4,7 +4,7 @@ import { splitByNodeRequirements } from '../delivery-requirements.js'
 const requiresServer = (range: string) => async () => ({ server: range })
 
 describe('splitByNodeRequirements (D989)', () => {
-  const target = { name: '@camstack/addon-x', version: '1.3.0' }
+  const target = { name: '@dominevo/addon-x', version: '1.3.0' }
 
   it('holds a delivery whose version needs a newer server than the node runs', async () => {
     const out = await splitByNodeRequirements([target], '1.2.0', requiresServer('>=1.3.0'))
@@ -36,14 +36,14 @@ describe('splitByNodeRequirements (D989)', () => {
     const out = await splitByNodeRequirements(
       [target],
       '1.3.1',
-      async () => ({ addons: { '@camstack/addon-y': '>=2.0.0' } }),
-      [{ name: '@camstack/addon-y', version: '1.0.0' }],
+      async () => ({ addons: { '@dominevo/addon-y': '>=2.0.0' } }),
+      [{ name: '@dominevo/addon-y', version: '1.0.0' }],
     )
     expect(out.deliver).toEqual([])
     expect(out.held[0]?.unmet).toEqual([
       {
         kind: 'addon-too-old',
-        packageName: '@camstack/addon-y',
+        packageName: '@dominevo/addon-y',
         required: '2.0.0',
         running: '1.0.0',
       },
@@ -53,35 +53,35 @@ describe('splitByNodeRequirements (D989)', () => {
 
   it('delivers when the node roster, or the same batch, meets the addon minimum', async () => {
     const needsY = async (name: string) =>
-      name === target.name ? { addons: { '@camstack/addon-y': '>=2.0.0' } } : undefined
+      name === target.name ? { addons: { '@dominevo/addon-y': '>=2.0.0' } } : undefined
     const met = await splitByNodeRequirements([target], '1.3.1', needsY, [
-      { name: '@camstack/addon-y', version: '2.1.0' },
+      { name: '@dominevo/addon-y', version: '2.1.0' },
     ])
     expect(met.deliver).toEqual([target])
-    const inBatch = { name: '@camstack/addon-y', version: '2.0.0' }
+    const inBatch = { name: '@dominevo/addon-y', version: '2.0.0' }
     const batch = await splitByNodeRequirements([target, inBatch], '1.3.1', needsY, [
-      { name: '@camstack/addon-y', version: '1.0.0' },
+      { name: '@dominevo/addon-y', version: '1.0.0' },
     ])
     expect(batch.deliver).toEqual([target, inBatch])
   })
 
   it('does not judge an addon the node will never carry (hub-only, or not in its roster or batch)', async () => {
-    const needsHubOnly = async () => ({ addons: { '@camstack/addon-hub-only': '>=2.0.0' } })
+    const needsHubOnly = async () => ({ addons: { '@dominevo/addon-hub-only': '>=2.0.0' } })
     const out = await splitByNodeRequirements([target], '1.3.1', needsHubOnly, [
-      { name: '@camstack/addon-other', version: '1.0.0' },
+      { name: '@dominevo/addon-other', version: '1.0.0' },
     ])
     expect(out.deliver).toEqual([target])
     expect(out.held).toEqual([])
   })
 
   it('does not judge an addon the same pass removes from the node', async () => {
-    const needsY = async () => ({ addons: { '@camstack/addon-y': '>=2.0.0' } })
+    const needsY = async () => ({ addons: { '@dominevo/addon-y': '>=2.0.0' } })
     const out = await splitByNodeRequirements(
       [target],
       '1.3.1',
       needsY,
-      [{ name: '@camstack/addon-y', version: '1.0.0' }],
-      new Set(['@camstack/addon-y']),
+      [{ name: '@dominevo/addon-y', version: '1.0.0' }],
+      new Set(['@dominevo/addon-y']),
     )
     expect(out.deliver).toEqual([target])
   })

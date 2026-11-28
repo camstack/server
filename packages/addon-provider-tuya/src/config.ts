@@ -1,5 +1,5 @@
 import type { TuyaCloudOptions, TuyaRegion } from '@apocaliss92/nodetuya'
-import type { ConfigUISchema } from '@camstack/types'
+import type { ConfigUISchema } from '@dominevo/types'
 import { z } from 'zod'
 
 /**

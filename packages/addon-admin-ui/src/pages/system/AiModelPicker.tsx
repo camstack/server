@@ -26,8 +26,8 @@ import type {
   LlmRuntimeNode,
   ManagedModelCatalogEntry,
   ManagedModelRef,
-} from '@camstack/types'
-import { Badge, Button, ErrorBox, FormField, Input, Select, useSystem } from '@camstack/ui-library'
+} from '@dominevo/types'
+import { Badge, Button, ErrorBox, FormField, Input, Select, useSystem } from '@dominevo/ui-library'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { Download, Loader2, Search } from 'lucide-react'
 import { useMemo, useState } from 'react'

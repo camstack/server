@@ -15,8 +15,8 @@ import type {
   ModelCatalogEntry,
   PipelineRunOptions,
   StepDefinition,
-} from '@camstack/types'
-import { COCO_TO_MACRO } from '@camstack/types'
+} from '@dominevo/types'
+import { COCO_TO_MACRO } from '@dominevo/types'
 import sharp from 'sharp'
 import { describe, expect, it, vi } from 'vitest'
 import { PipelineExecutor } from '../executor.js'

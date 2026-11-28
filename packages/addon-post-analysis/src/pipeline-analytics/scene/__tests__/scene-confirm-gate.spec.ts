@@ -1,4 +1,4 @@
-import type { IScopedLogger, SceneConfirm } from '@camstack/types'
+import type { IScopedLogger, SceneConfirm } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { callDeferredRelease } from '../../../__tests__/support/vitest-mock.js'
 import { mergeSilentLogger } from '../../__tests__/test-helpers.js'

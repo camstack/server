@@ -3,8 +3,8 @@
  * vocabulary not read yet never looks like "no events", and a pick writes one
  * button and one event.
  */
-import type { DeviceFiredLeaf } from '@camstack/types'
-import { selectOption } from '@camstack/ui-library/testing'
+import type { DeviceFiredLeaf } from '@dominevo/types'
+import { selectOption } from '@dominevo/ui-library/testing'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { useState } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -19,9 +19,9 @@ const read: { current: SliceRead; asked: Array<{ deviceId: number; enabled: bool
   asked: [],
 }
 
-vi.mock('@camstack/ui-library', async () => {
+vi.mock('@dominevo/ui-library', async () => {
   const actual =
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+    await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return {
     ...actual,
     useDeviceStateGetCapSlice: (

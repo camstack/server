@@ -1,7 +1,7 @@
 /**
  * `copyBundledNativeModules` — propagate PREBUILT natives from a packaged
  * desktop's bundled addon copy (`<resources>/addons/<addon>/node_modules`) into
- * the freshly-copied `data/addons/@camstack/<addon>` BEFORE its runtime `npm
+ * the freshly-copied `data/addons/@dominevo/<addon>` BEFORE its runtime `npm
  * install`, so that install never re-runs the fragile `prebuild-install` and
  * leaves a source-only `better-sqlite3` shadowing the good hoisted `.node`.
  */
@@ -10,7 +10,7 @@ import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 import { copyBundledNativeModules } from '../manifest-native-deps.js'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 function makeLogger(): IScopedLogger {
   const l: IScopedLogger = {

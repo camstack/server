@@ -1,6 +1,6 @@
 // Hardware-driven Runtime Registry — detection-pipeline local view.
 //
-// Support/devices/format rules are DELEGATED to `@camstack/types`
+// Support/devices/format rules are DELEGATED to `@dominevo/types`
 // (`inference/runtime-capabilities`), which is the single source of truth.
 // This module retains ONLY the detection-specific per-runtime data:
 //   - `pythonRequirements`: the requirements files to install
@@ -16,8 +16,8 @@ import {
   defaultDeviceFor as sharedDefaultDeviceFor,
   type RuntimeId,
   type DeviceOption,
-} from '@camstack/types'
-import type { HardwareInfo, GpuInfo, NpuInfo, CoralInfo, NvidiaInfo } from '@camstack/types'
+} from '@dominevo/types'
+import type { HardwareInfo, GpuInfo, NpuInfo, CoralInfo, NvidiaInfo } from '@dominevo/types'
 import type { PoolBatchMode, PoolTuning } from './engine/shared-inference-pool.js'
 
 // ---------------------------------------------------------------------------
@@ -264,7 +264,7 @@ const RUNTIME_DETAIL: Record<RuntimeId, RuntimeDetail> = {
 
 /**
  * Returns the list of supported runtime IDs for the given hardware env.
- * Delegates to `@camstack/types` `supportedRuntimes`.
+ * Delegates to `@dominevo/types` `supportedRuntimes`.
  */
 export function supportedRuntimes(env: RuntimeEnv): readonly RuntimeId[] {
   return sharedSupportedRuntimes(envToHardwareInfo(env))
@@ -272,7 +272,7 @@ export function supportedRuntimes(env: RuntimeEnv): readonly RuntimeId[] {
 
 /**
  * Returns the device options for a given runtime and probed hardware.
- * Delegates to `@camstack/types` `runtimeDevices`.
+ * Delegates to `@dominevo/types` `runtimeDevices`.
  */
 export function runtimeDevices(
   id: RuntimeId,
@@ -283,7 +283,7 @@ export function runtimeDevices(
 
 /**
  * Returns the default device string for a given runtime.
- * Delegates to `@camstack/types` `defaultDeviceFor`.
+ * Delegates to `@dominevo/types` `defaultDeviceFor`.
  */
 export function defaultDeviceFor(id: RuntimeId): string {
   return sharedDefaultDeviceFor(id)

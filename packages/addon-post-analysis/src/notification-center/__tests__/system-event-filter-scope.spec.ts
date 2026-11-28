@@ -25,8 +25,8 @@
  * destructive direction (D49), and an editor that hides the box has already
  * told the operator this filter does not speak about these kinds.
  */
-import type { NcSystemEventCondition, NcSystemEventKind } from '@camstack/types'
-import { NcRuleInputSchema, NcRuleSchema } from '@camstack/types'
+import type { NcSystemEventCondition, NcSystemEventKind } from '@dominevo/types'
+import { NcRuleInputSchema, NcRuleSchema } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { evaluateRule, NC_SYSTEM_DEVICE_ID, type NcRuleSubject } from '../rule-engine.js'
 
@@ -48,7 +48,7 @@ const UNSATISFIABLE: SystemEventFilters = {
   deviceIds: [1],
   deviceTypes: ['camera'],
   nodeIds: ['a-node-that-does-not-exist'],
-  packageNames: ['@camstack/never-installed'],
+  packageNames: ['@dominevo/never-installed'],
 }
 
 function ruleWith(kinds: readonly NcSystemEventKind[], filters: SystemEventFilters) {
@@ -121,23 +121,23 @@ const STARVED_KINDS: ReadonlyArray<{
   },
   {
     kind: 'addon-update-available',
-    carries: { nodeId: 'agent-a', packageName: '@camstack/addon-pipeline' },
-    inFamily: { nodeIds: ['agent-a'], packageNames: ['@camstack/addon-pipeline'] },
+    carries: { nodeId: 'agent-a', packageName: '@dominevo/addon-pipeline' },
+    inFamily: { nodeIds: ['agent-a'], packageNames: ['@dominevo/addon-pipeline'] },
   },
   {
     kind: 'server-update-available',
-    carries: { nodeId: 'hub', packageName: '@camstack/server' },
-    inFamily: { nodeIds: ['hub'], packageNames: ['@camstack/server'] },
+    carries: { nodeId: 'hub', packageName: '@dominevo/server' },
+    inFamily: { nodeIds: ['hub'], packageNames: ['@dominevo/server'] },
   },
   {
     kind: 'addon-updated',
-    carries: { nodeId: 'agent-a', packageName: '@camstack/addon-pipeline' },
-    inFamily: { nodeIds: ['agent-a'], packageNames: ['@camstack/addon-pipeline'] },
+    carries: { nodeId: 'agent-a', packageName: '@dominevo/addon-pipeline' },
+    inFamily: { nodeIds: ['agent-a'], packageNames: ['@dominevo/addon-pipeline'] },
   },
   {
     kind: 'server-updated',
-    carries: { nodeId: 'hub', packageName: '@camstack/server' },
-    inFamily: { nodeIds: ['hub'], packageNames: ['@camstack/server'] },
+    carries: { nodeId: 'hub', packageName: '@dominevo/server' },
+    inFamily: { nodeIds: ['hub'], packageNames: ['@dominevo/server'] },
   },
 ]
 
@@ -210,7 +210,7 @@ describe('a foreign filter never closes a kind', () => {
   it('ignores packageNames on a node kind rather than closing it', () => {
     expect(
       evaluateRule(
-        ruleWith(['node-offline'], { packageNames: ['@camstack/addon-pipeline'] }),
+        ruleWith(['node-offline'], { packageNames: ['@dominevo/addon-pipeline'] }),
         systemSubject('node-offline', { nodeId: 'agent-a' }),
       ).matched,
     ).toBe(true)
@@ -278,7 +278,7 @@ describe('a filter still narrows the kinds it belongs to', () => {
         ruleWith(['addon-update-available'], { nodeIds: ['hub'] }),
         systemSubject('addon-update-available', {
           nodeId: 'agent-a',
-          packageName: '@camstack/addon-pipeline',
+          packageName: '@dominevo/addon-pipeline',
         }),
       ).matched,
     ).toBe(false)
@@ -287,8 +287,8 @@ describe('a filter still narrows the kinds it belongs to', () => {
   it('still narrows packageNames inside the update family', () => {
     expect(
       evaluateRule(
-        ruleWith(['addon-update-available'], { packageNames: ['@camstack/addon-recorder'] }),
-        systemSubject('addon-update-available', { packageName: '@camstack/addon-pipeline' }),
+        ruleWith(['addon-update-available'], { packageNames: ['@dominevo/addon-recorder'] }),
+        systemSubject('addon-update-available', { packageName: '@dominevo/addon-pipeline' }),
       ).matched,
     ).toBe(false)
   })
@@ -343,8 +343,8 @@ describe('an exclusion names the filter that caused it', () => {
     ).toBe('nodeIds')
     expect(
       evaluateRule(
-        ruleWith(['addon-updated'], { packageNames: ['@camstack/addon-recorder'] }),
-        systemSubject('addon-updated', { packageName: '@camstack/addon-pipeline' }),
+        ruleWith(['addon-updated'], { packageNames: ['@dominevo/addon-recorder'] }),
+        systemSubject('addon-updated', { packageName: '@dominevo/addon-pipeline' }),
       ).excludedBySystemEventFilter,
     ).toBe('packageNames')
   })

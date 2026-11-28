@@ -26,7 +26,7 @@ decides nothing beyond that:
   `propagateToAgents` fans out only on a tarball upload, only to agents online at
   that instant. An npm `addons.updatePackage` without a `nodeId` is hub-only.
 - **The hub cannot update an agent-only addon.** The back-fill skips the agent
-  bootstrap set (`@camstack/system`, `@camstack/addon-agent-ui`) and drops every
+  bootstrap set (`@dominevo/system`, `@dominevo/addon-agent-ui`) and drops every
   package the hub does not itself install (`notOnHub`). `addons.updatePackage`
   for agent-ui on the hub fails with "not currently tracked in manifest".
 - **Leftovers stay.** little-unraid still carries hub-only packages (auth,
@@ -54,7 +54,7 @@ leaves a node is a hub-side tombstone (`noteAddonUndeployed` /
 
 ### Operator decisions (2026-10-31)
 
-- **`@camstack/addon-admin-ui` and `@camstack/addon-auth` are `hub-only`.** Their
+- **`@dominevo/addon-admin-ui` and `@dominevo/addon-auth` are `hub-only`.** Their
   manifests declare `placement: 'hub-only'`; the first convergence removes them
   from the agents that still carry them.
 - **The periodic reconcile runs every 10 minutes for every online agent**

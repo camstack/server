@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { buttonCapability, type DeviceContext, type InferNativeProvider } from '@camstack/types'
+import { buttonCapability, type DeviceContext, type InferNativeProvider } from '@dominevo/types'
 import { dreameChildSchema } from './dreame-child-device.js'
 import { DreameChildDevice } from './dreame-child-device.js'
 

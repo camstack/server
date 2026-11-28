@@ -5,7 +5,7 @@
  */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import type { ConfigUISchemaWithValues } from '@camstack/types'
+import type { ConfigUISchemaWithValues } from '@dominevo/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const CLUSTER_FORM: ConfigUISchemaWithValues = {
@@ -44,9 +44,9 @@ const DECLARATIONS = [
 
 const h = vi.hoisted(() => ({ update: vi.fn() }))
 
-vi.mock('@camstack/ui-library', async () => {
+vi.mock('@dominevo/ui-library', async () => {
   const actual =
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+    await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   const noop = () => ({ mutateAsync: vi.fn(), mutate: vi.fn(), isPending: false })
   return {
     ...actual,

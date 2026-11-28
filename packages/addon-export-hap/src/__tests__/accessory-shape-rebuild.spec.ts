@@ -14,8 +14,8 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Accessory } from '@homebridge/hap-nodejs'
-import { EventCategory } from '@camstack/types'
-import type { DurableState, IScopedLogger, LogExtras, LogTags, SystemEvent } from '@camstack/types'
+import { EventCategory } from '@dominevo/types'
+import type { DurableState, IScopedLogger, LogExtras, LogTags, SystemEvent } from '@dominevo/types'
 import type { z } from 'zod'
 import { BridgeHost } from '../bridge-host.js'
 import { BridgeInstance } from '../bridge-instance.js'

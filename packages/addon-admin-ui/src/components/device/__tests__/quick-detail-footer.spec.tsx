@@ -1,5 +1,5 @@
-import type { DeviceDisplayOverride } from '@camstack/types'
-import { ConfirmDialogProvider } from '@camstack/ui-library'
+import type { DeviceDisplayOverride } from '@dominevo/types'
+import { ConfirmDialogProvider } from '@dominevo/ui-library'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen } from '@testing-library/react'
 import type { ReactNode } from 'react'
@@ -10,8 +10,8 @@ import { QuickDetailSaveProvider, useQuickDetailSave } from '../quick-detail-sav
 
 const mutation = { mutate: vi.fn(), mutateAsync: vi.fn(async () => undefined), isPending: false }
 
-vi.mock('@camstack/ui-library', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@camstack/ui-library')>()
+vi.mock('@dominevo/ui-library', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dominevo/ui-library')>()
   return {
     ...actual,
     useSystem: () => ({ trpcClient: {} }),

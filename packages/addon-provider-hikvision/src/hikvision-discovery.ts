@@ -1,4 +1,9 @@
-import { DeviceType, type DiscoveryCandidate, type DiscoveryHit, type DiscoveryMode } from '@camstack/types'
+import {
+  DeviceType,
+  type DiscoveryCandidate,
+  type DiscoveryHit,
+  type DiscoveryMode,
+} from '@dominevo/types'
 import { HikvisionIsapiClient } from './hikvision-isapi-client.js'
 
 /** A Hikvision camera found on the LAN (via WS-Discovery and/or an ISAPI probe). */

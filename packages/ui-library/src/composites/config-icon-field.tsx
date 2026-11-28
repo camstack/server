@@ -6,7 +6,7 @@
  * the field's default", and a stored value the catalog does not know (a
  * free-text lucide name from before D780) is drawn as that default.
  */
-import { resolveIconKey } from '@camstack/types'
+import { resolveIconKey } from '@dominevo/types'
 import { ShieldCheck } from 'lucide-react'
 import { useDisplayIconResolver } from './icon-glyphs'
 import { IconPicker, type IconPickerLabels } from './icon-picker'

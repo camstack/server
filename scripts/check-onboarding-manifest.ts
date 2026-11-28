@@ -4,7 +4,7 @@
  *
  * ## The failure this catches
  *
- * The get-started flow is written once, in the public docs, and `camstack mcp`
+ * The get-started flow is written once, in the public docs, and `dominevo mcp`
  * bundles a snapshot of the manifest the docs build emits. The manifest names
  * things that live HERE: admin UI routes and sidebar labels for the manual
  * path, and the addon ids and packages of the core addon groups. Rename a

@@ -1,4 +1,4 @@
-import type { VehicleRefreshResult } from '@camstack/types'
+import type { VehicleRefreshResult } from '@dominevo/types'
 import type { KiaCommand, KiaCommandResult, KiaVehicleState } from './kia-bridge.js'
 
 /** What a vehicle handle can ask of its account (the integration manager implements it). */

@@ -27,7 +27,7 @@ import type {
   HubHealthRunners,
   NodeLiveness,
   RunnerBootCheck,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { FastifyInstance, FastifyReply } from 'fastify'
 import { releaseIdentityFrom } from '../../core/release-identity.js'
 import { isRunnerBootCheckDegraded } from '../../core/runner-health/runner-boot-check.js'

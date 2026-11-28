@@ -1,4 +1,4 @@
-import type { InMemoryRecords } from '@camstack/types'
+import type { InMemoryRecords } from '@dominevo/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { ncRecordKinds } from '../../record-kinds.js'
 import { makeNcRecords, ncTable } from '../../__tests__/support/nc-test-deps.js'

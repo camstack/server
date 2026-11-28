@@ -7,8 +7,8 @@ import type {
   CompositionFieldKind,
   CompositionFieldSource,
   CompositionSourceRef,
-} from '@camstack/types'
-import { runtimeFieldUnit } from '@camstack/types'
+} from '@dominevo/types'
+import { runtimeFieldUnit } from '@dominevo/types'
 import {
   type DeviceSnapshot,
   type PickerDevice,

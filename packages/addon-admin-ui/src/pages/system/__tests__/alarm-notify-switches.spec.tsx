@@ -3,7 +3,7 @@
  * per-field edit (off CLEARS rather than storing `false`), IT + EN labels — and the stock
  * duration a "pick a timed action" fills in.
  */
-import type { NcAlarmSettings } from '@camstack/types'
+import type { NcAlarmSettings } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import en from '../../../i18n/en.json'
 import it_ from '../../../i18n/it.json'

@@ -35,8 +35,8 @@
  */
 import { promises as fs } from 'node:fs'
 import { join } from 'node:path'
-import type { IScopedLogger } from '@camstack/types'
-import { errMsg } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
 
 /** One recent frame is the value; a newer one is not worth the disk. */
 const DEFAULT_MIN_INTERVAL_MS = 60_000

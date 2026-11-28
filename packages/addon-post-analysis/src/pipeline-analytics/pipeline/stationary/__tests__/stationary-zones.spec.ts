@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import type { Zone } from '@camstack/types'
+import type { Zone } from '@dominevo/types'
 import { ZoneEngine } from '../../zones/zone-engine.js'
 import { computeStationaryEntryZones } from '../stationary-zones.js'
 

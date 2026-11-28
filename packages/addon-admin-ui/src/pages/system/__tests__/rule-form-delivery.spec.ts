@@ -1,4 +1,4 @@
-import type { Target, TargetKind } from '@camstack/types'
+import type { Target, TargetKind } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { declaredBy } from '../rule-form-delivery'
 

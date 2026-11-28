@@ -37,7 +37,7 @@
  * report lands in Loki, which carries 12 h and more.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 /** How many stack frames identify a call site. One frame is a method; three are
  *  a cause — `listFleet < listAll < onDeviceRegistered` is the answer, `listAll`

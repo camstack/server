@@ -1,4 +1,4 @@
-import type { IClusterBroker, ILogDestination, IScopedLogger, LogEntry } from '@camstack/types'
+import type { IClusterBroker, ILogDestination, IScopedLogger, LogEntry } from '@dominevo/types'
 import { formatLogLine } from '../../logging/formatter.js'
 
 const DEFAULT_OUTBOUND_BUFFER_SIZE = 500

@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { type ConfigUISchema, linkField } from '@camstack/types'
+import { type ConfigUISchema, linkField } from '@dominevo/types'
 import type { AlexaCredentials } from './alexa-client.js'
 import { ALEXA_ACCOUNT_LINK } from './speak/constants.js'
 

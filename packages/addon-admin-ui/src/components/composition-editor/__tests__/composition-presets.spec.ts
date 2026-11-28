@@ -3,7 +3,7 @@
  * only from a complete set of picks, the filter is a pair, and a suggestion
  * is a presentation — it never picks.
  */
-import { type CompositionSourceRef, DeviceType } from '@camstack/types'
+import { type CompositionSourceRef, DeviceType } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { CandidateDevice } from '../../device/customize/assignments/assignment-candidates'
 import { deviceCandidates, entitySuggestions } from '../command-sources'

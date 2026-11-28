@@ -1,14 +1,14 @@
 import { spawn } from 'node:child_process'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
-import { collectModelFiles, isModelDownloaded } from '@camstack/server/system'
+import { collectModelFiles, isModelDownloaded } from '@dominevo/server/system'
 import type {
   IModelDistributorProvider,
   ModelCatalogEntry,
   ModelDistributeInput,
   ModelDistributeResult,
   ModelFormat,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { LoggingService } from '../core/logging/logging.service'
 import type { MoleculerService } from '../core/moleculer/moleculer.service'
 import { buildHubHttpSource } from './addon-upload.js'

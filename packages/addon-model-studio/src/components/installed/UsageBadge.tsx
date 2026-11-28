@@ -3,7 +3,7 @@
  * library Badges. The words are the contract: "in use" means RESIDENT in a
  * pool, "unused" means no enabled device runs this format (reclaimable).
  */
-import { Badge } from '@camstack/ui-library'
+import { Badge } from '@dominevo/ui-library'
 import type { InstalledUsage } from '../../ui/installed-inventory.js'
 import { useT } from '../../i18n/index.js'
 

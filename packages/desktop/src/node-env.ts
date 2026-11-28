@@ -1,5 +1,5 @@
 /**
- * The environment the CamStack node process is started with — ONE builder for
+ * The environment the Dominevo node process is started with — ONE builder for
  * both ways of starting it: the Electron shell spawning a child, and the
  * Windows service (`windows-service/`) running the same bundled Node.
  *
@@ -23,9 +23,9 @@ export interface NodeEnvInput {
   readonly appVersion: string
   /** Required for the agent role, ignored for the hub. */
   readonly agent?: AgentConnectionInput
-  /** The packaged closure's `@camstack` scope dir; null in dev. */
+  /** The packaged closure's `@dominevo` scope dir; null in dev. */
   readonly bundledAddonsDir: string | null
-  /** The baked seed `@camstack/server` dir; null in dev. */
+  /** The baked seed `@dominevo/server` dir; null in dev. */
   readonly seedServerDir: string | null
 }
 

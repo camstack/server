@@ -11,7 +11,7 @@ import {
   DeviceRole,
   type HeatingValveStatus,
   type HvacMode,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { CardGlyph } from '../icons'
 import type { ClimateRole } from '../illustrations/ClimateRoleGlyph'
 import {

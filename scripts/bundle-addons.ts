@@ -6,7 +6,7 @@
  * For each package in REQUIRED_PACKAGES:
  *   1. Finds it in the workspace (packages/)
  *   2. Builds it if dist/ is missing
- *   3. Copies dist/ + package.json → target/addons/@camstack/X/
+ *   3. Copies dist/ + package.json → target/addons/@dominevo/X/
  *   4. Writes .install-source = "bundled"
  *
  * Usage:
@@ -28,14 +28,14 @@ const targetIdx = args.indexOf('--target')
 const targetDir =
   targetIdx >= 0 && args[targetIdx + 1] ? path.resolve(args[targetIdx + 1]) : DEFAULT_TARGET
 
-// Import REQUIRED_PACKAGES from system (kernel absorbed into @camstack/server/system)
+// Import REQUIRED_PACKAGES from system (kernel absorbed into @dominevo/server/system)
 const { AddonInstaller } = require(
   path.join(ROOT, 'packages/system/dist/kernel/index.js'),
-) as typeof import('@camstack/server/system')
-// `@camstack/server` is the builtins carrier: it travels in the server closure,
+) as typeof import('@dominevo/server/system')
+// `@dominevo/server` is the builtins carrier: it travels in the server closure,
 // not as an addon bundle.
 const REQUIRED_PACKAGES = AddonInstaller.REQUIRED_PACKAGES.filter(
-  (name) => name !== '@camstack/server',
+  (name) => name !== '@dominevo/server',
 )
 
 console.log(`Bundling ${REQUIRED_PACKAGES.length} required packages → ${targetDir}\n`)
@@ -64,7 +64,7 @@ function stripCamstackDeps(pkg: Record<string, unknown>): Record<string, unknown
     if (!deps) continue
     const filtered: Record<string, string> = {}
     for (const [key, value] of Object.entries(deps)) {
-      if (!key.startsWith('@camstack/')) {
+      if (!key.startsWith('@dominevo/')) {
         filtered[key] = value
       }
     }
@@ -77,7 +77,7 @@ let success = 0
 let failed = 0
 
 for (const packageName of REQUIRED_PACKAGES) {
-  const shortName = packageName.replace('@camstack/', '')
+  const shortName = packageName.replace('@dominevo/', '')
   const sourceDir = path.join(PACKAGES_DIR, shortName)
   const sourcePkgJson = path.join(sourceDir, 'package.json')
 

@@ -15,7 +15,7 @@ import {
   type SourceReader,
   type SourceReading,
   type SystemEvent,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { CompositionRuntime } from '../composition-runtime.js'
 import type { PulseFieldSeed } from '../pulse-seed.js'

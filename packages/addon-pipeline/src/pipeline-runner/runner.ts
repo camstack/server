@@ -16,8 +16,8 @@ import type {
   SessionTrigger,
   OrchestratorMetrics,
   PipelinePhaseMode,
-} from '@camstack/types'
-import { DEFAULT_NATIVE_LEASE_SETTINGS } from '@camstack/types'
+} from '@dominevo/types'
+import { DEFAULT_NATIVE_LEASE_SETTINGS } from '@dominevo/types'
 import type { CameraLoadSample } from './frame-governor.js'
 import { FrameGovernor } from './frame-governor.js'
 import { REASON_INFERENCE_TIMEOUT } from './failure-report.js'

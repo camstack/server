@@ -15,7 +15,7 @@ import type {
 } from '../interfaces/storage.js'
 import type { StorageLocationType } from '../interfaces/storage-location.js'
 
-// Inline constants to avoid runtime dependency on @camstack/types
+// Inline constants to avoid runtime dependency on @dominevo/types
 // (types is external in tsup bundle, may not be resolvable from data/addons/)
 const STORAGE_LOCATION_TYPES: readonly StorageLocationType[] = [
   'data',

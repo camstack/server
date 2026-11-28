@@ -4,7 +4,7 @@
  * `day` otherwise. Twilight is `day`: the IR-cut has not flipped yet at the
  * band's edges, and a promotion may override the tag (§3.6).
  */
-import type { SceneCondition } from '@camstack/types'
+import type { SceneCondition } from '@dominevo/types'
 import type { TapeLighting } from '../tape-schema.js'
 
 export function lightingFromCondition(condition: SceneCondition): TapeLighting {

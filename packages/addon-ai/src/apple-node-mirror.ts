@@ -17,7 +17,7 @@
  * runner re-registering), and it is re-checked within seconds. A registry
  * read that fails or answers nothing changes nothing, and backs off a period.
  */
-import type { AppleFmAvailability, IScopedLogger } from '@camstack/types'
+import type { AppleFmAvailability, IScopedLogger } from '@dominevo/types'
 
 const DEFAULT_STALE_MS = 30_000
 const DEFAULT_ASK_TIMEOUT_MS = 5_000

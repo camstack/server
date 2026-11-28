@@ -8,7 +8,7 @@
  * the watchdog must hold off; the wake is the reconnect.
  */
 import * as net from 'node:net'
-import type { IScopedLogger, StreamSource } from '@camstack/types'
+import type { IScopedLogger, StreamSource } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { StreamBroker } from '../stream-broker/stream-broker.js'
 

@@ -15,7 +15,7 @@ import {
   type DeclareKindResult,
   type RecordKindDeclaration,
   StoredRecordKindDeclarationSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { indexDdl, indexName, RECORDS_SCHEMA_SQL } from './records-sql.js'
 
 /** One kind as the engine holds it. */

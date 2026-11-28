@@ -26,8 +26,8 @@ import {
   registerEventBusService,
   EVENT_TOPIC_PREFIX,
 } from '../../moleculer/addon-context-factory.js'
-import { EventCategory } from '@camstack/types'
-import type { AddonDeclaration, SystemEvent } from '@camstack/types'
+import { EventCategory } from '@dominevo/types'
+import type { AddonDeclaration, SystemEvent } from '@dominevo/types'
 
 // ── Helpers (copied from cluster-event-delivery.cluster.spec.ts) ───────────────
 

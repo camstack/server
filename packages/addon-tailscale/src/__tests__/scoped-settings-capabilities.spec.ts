@@ -1,4 +1,4 @@
-import type { ConfigUISchema } from '@camstack/types'
+import type { ConfigUISchema } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { TailscaleClientAddon } from '../client/tailscale.addon.js'
 import { TailscaleIngressAddon } from '../ingress/tailscale-ingress.addon.js'

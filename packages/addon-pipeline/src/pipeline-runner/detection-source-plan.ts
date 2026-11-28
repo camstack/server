@@ -18,7 +18,7 @@
  * Downstream there is one plane, one result, one tracker pass — and the source
  * is a field on the payload rather than a door.
  */
-import type { CameraNativeDetection, DetectionSources, ObjectDetection } from '@camstack/types'
+import type { CameraNativeDetection, DetectionSources, ObjectDetection } from '@dominevo/types'
 import {
   macroGateVerdict,
   type MacroGateSettings,

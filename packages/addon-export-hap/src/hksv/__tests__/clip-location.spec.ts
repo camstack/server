@@ -8,7 +8,7 @@
  * tests therefore feed rows in each mode and assert the resolver refuses, by
  * name, rather than writing to a disk the operator is draining.
  */
-import type { IScopedLogger, StorageLocationMode } from '@camstack/types'
+import type { IScopedLogger, StorageLocationMode } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 
 import type { ClipLocationPorts, ClipLocationRow } from '../clip-location.js'

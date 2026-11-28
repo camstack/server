@@ -11,7 +11,7 @@ import {
   type IScopedLogger,
   type LockDoorLink,
   lockDoorLinkOfComposition,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export type { LockDoorLink }
 

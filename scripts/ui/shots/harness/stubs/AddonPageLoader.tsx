@@ -8,7 +8,7 @@
 import { type ComponentType, lazy } from 'react'
 import { AddonPageBoundary } from '@admin/layouts/AddonPageFrame'
 import { useNavigate, useParams } from 'react-router-dom'
-import type { AddonPageInfo as ServerAddonPageInfo } from '@camstack/types'
+import type { AddonPageInfo as ServerAddonPageInfo } from '@dominevo/types'
 import pages from 'virtual:ui-shots-addon-pages'
 import { fakeClient } from './transport'
 

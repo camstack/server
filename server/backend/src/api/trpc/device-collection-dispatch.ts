@@ -60,7 +60,7 @@
  * existed, and it is pinned by spec.
  */
 
-import { CAP_METHOD_NOT_IMPLEMENTED, type CapabilityRegistry } from '@camstack/server/system'
+import { CAP_METHOD_NOT_IMPLEMENTED, type CapabilityRegistry } from '@dominevo/server/system'
 import {
   type CapabilityMethodSchema,
   type DeviceBindingEntry,
@@ -71,7 +71,7 @@ import {
   isArrayOutputSchema,
   reservedSourceOwner,
   unreachableExtensionSlotRow,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { TRPCError } from '@trpc/server'
 
 /** A method the dispatcher can call on a resolved source provider. */

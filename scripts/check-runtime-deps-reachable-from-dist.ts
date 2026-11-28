@@ -13,7 +13,7 @@
  * `@xyflow/react`, `konva`, `@xterm/*` and more sitting in `dependencies` —
  * every one of them already bundled into the package's own `dist` (verified
  * by grepping the SHIPPED output, not the source: zero bare
- * `require("lucide-react")` anywhere). `@camstack/server` depends on every
+ * `require("lucide-react")` anywhere). `@dominevo/server` depends on every
  * addon package unconditionally, so an AGENT node that will never render a
  * UI installed the whole admin toolchain on every closure update — the
  * dominant cost of a healthy `npm install` on `agent-a` (measured:

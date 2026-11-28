@@ -16,7 +16,7 @@ applies-to:
 The long-lived Python inference subprocesses (`inference_pool.py` ×N,
 `yamnet_audio.py`, `raw_tensor_inference.py`) grow over hours, get OOM-killed,
 respawn near 100 MB and repeat. On 2026-08-18 `dmesg` showed two kills in six
-hours — anon-rss 3.8 GB inside the CamStack cgroup, then 8.8 GB host-wide —
+hours — anon-rss 3.8 GB inside the Dominevo cgroup, then 8.8 GB host-wide —
 on a 62 GiB host with NO swap, and the pressure killed the co-hosted Home
 Assistant VM twice. The cycle is invisible to casual sampling: measured at the
 wrong moment the pools read 78–171 MB and look healthy, and the addon log ring
@@ -28,7 +28,7 @@ victim selection took down unrelated processes.
 ## Decision
 
 Every long-lived inference subprocess is watched by the shared
-`PoolMemoryWatchdog` (`@camstack/types`): one 60 s sweep logs a `pool memory`
+`PoolMemoryWatchdog` (`@dominevo/types`): one 60 s sweep logs a `pool memory`
 line per pool (RSS, VmSize, peak RSS, threads, request counters, queue depths,
 malloc arena count where obtainable) and restarts a pool whose max-worker RSS
 crosses `min(ceiling, max(floor, 4 × settled-baseline))` — restart means the
@@ -37,9 +37,9 @@ supervisor. At most one pool restarts per sweep; each pool has a 30 min
 cooldown and a bounded restart budget (6 / 24 h), past which the watchdog
 stops restarting and escalates with an error log. A pool whose pid changed
 outside the watchdog (kernel kill, idle eviction) is re-baselined, never
-budget-charged. The policy lives ONCE in `@camstack/types` because addons must
+budget-charged. The policy lives ONCE in `@dominevo/types` because addons must
 not import each other and self-contained bundles inline the bare types entry —
-so it ships with a plain `camstack deploy` of each addon.
+so it ships with a plain `dominevo deploy` of each addon.
 
 ## Consequences
 

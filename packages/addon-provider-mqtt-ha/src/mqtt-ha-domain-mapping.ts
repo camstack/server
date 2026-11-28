@@ -1,12 +1,12 @@
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import type { MqttHaEntity } from './mqtt-ha-discovery-types.js'
 import { matchIrProfile } from './mqtt-ha-ir-profiles.js'
 
 /**
- * Discovery component + `device_class` + unit → CamStack caps. Generic by
+ * Discovery component + `device_class` + unit → Dominevo caps. Generic by
  * design: nothing here knows a bridge, a vendor or a model.
  *
- * One physical device is ONE CamStack device. Its primary function (climate,
+ * One physical device is ONE Dominevo device. Its primary function (climate,
  * light, switch, event, else sensor) picks the device type; the other entities
  * become caps of that device, never separate sensors (D951): power, energy,
  * voltage and current fold into the `power-meter` of the load, and the battery
@@ -111,7 +111,7 @@ function classifySensor(entity: MqttHaEntity): MqttHaRole | null {
   return { kind: 'numeric' }
 }
 
-/** What an entity is to CamStack; null when it is not exposed. */
+/** What an entity is to Dominevo; null when it is not exposed. */
 export function classifyMqttHaEntity(entity: MqttHaEntity): MqttHaRole | null {
   switch (entity.component) {
     case 'switch':

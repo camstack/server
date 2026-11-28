@@ -10,7 +10,7 @@ import {
   type NotificationTargetRecordKind,
   type TargetKind,
   type TargetKindCaps,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** The form of a group: one editable list of member rows (the full editor is a custom dialog). */
 export function groupConfigSchema(): TargetKind['configSchema'] {

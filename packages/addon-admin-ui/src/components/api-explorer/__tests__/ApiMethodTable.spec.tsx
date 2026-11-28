@@ -2,7 +2,7 @@
  * The API explorer's grouped method list (planning#595): macro groups with
  * counts, an `other` bucket for an unlisted router, search across groups.
  */
-import type { ApiCatalogMethod } from '@camstack/types'
+import type { ApiCatalogMethod } from '@dominevo/types'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { ApiMethodTable } from '../ApiMethodTable'

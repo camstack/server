@@ -21,7 +21,7 @@ P2 of the Alexa plan (D869). Three small gaps remained after covers and climate:
   knows (Home Assistant `device_class: outlet`) but the mapping dropped it.
 - The Export table selected row by row. Exposing "all Homematic blinds" or "all
   outlets" meant hundreds of clicks.
-- A device could only be called what CamStack calls it. Renaming it in CamStack
+- A device could only be called what Dominevo calls it. Renaming it in Dominevo
   to suit Alexa renames it everywhere.
 
 ## Decision

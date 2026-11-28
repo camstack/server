@@ -7,12 +7,12 @@ import {
   type InferNativeProvider,
   type EventEmitterStatus,
   type EventFire,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { HaBaseChildDevice } from '../ha-base-child-device.js'
 import type { HaEntityState } from '../ha-types.js'
 
 /**
- * HA-backed CamStack event-emitter device. Materialised on adoption of
+ * HA-backed Dominevo event-emitter device. Materialised on adoption of
  * any HA `event.*` entity (one per button channel) — `mappedTo`
  * `capabilities` contains `event-emitter`.
  *

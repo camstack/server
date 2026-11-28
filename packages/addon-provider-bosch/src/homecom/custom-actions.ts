@@ -3,7 +3,7 @@ import {
   defineCustomActions,
   isSecretFieldView,
   type SecretFieldView,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { HomeComBrandSchema, HomeComRegionSchema } from './config.js'
 import {

@@ -2,7 +2,7 @@
  * AI -> Defaults: WHICH profile answers when a caller names none. The profiles are the `llm`
  * instances of the one instance model (`useInstancesOfCap`).
  */
-import type { LlmDefault } from '@camstack/types'
+import type { LlmDefault } from '@dominevo/types'
 import {
   FormSaveBar,
   Label,
@@ -11,7 +11,7 @@ import {
   Select,
   useInstancesOfCap,
   useSystem,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'

@@ -34,7 +34,7 @@ import type {
   SceneMonitor,
   SceneUnavailable,
   SceneVerdict,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { DurableLedger, type DurableLedgerSpec } from '../../durable/durable-ledger.js'
 import { pipelineAnalyticsRecordKinds } from '../record-kinds.js'
 import { SceneConfigLedger, type SceneConfigRow } from './scene-config-ledger.js'

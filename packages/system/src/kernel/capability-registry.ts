@@ -24,7 +24,7 @@ import type {
   IEventBus,
   IScopedLogger,
   SingletonCapabilityMap,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { redirectDeviceCalls } from './device-call-redirect.js'
 import {
   overlayGetStatus,
@@ -352,7 +352,7 @@ export class CapabilityRegistry {
 
     // Wrapper registration is driven by the cap DEFINITION (`kind:'wrapper'`),
     // never the manifest. Critical for forked/isolated addons: the cap
-    // definition ships with `@camstack/types` and is declared on the hub
+    // definition ships with `@dominevo/types` and is declared on the hub
     // at boot, so the hub knows the wrapper intent without trusting the
     // addon's manifest. This is what removes the bundle-merge bug class
     // that froze analytics for 9.7 days.

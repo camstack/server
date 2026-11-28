@@ -1,6 +1,6 @@
 ---
 id: D709
-title: A notification tap opens the address flagged on the Network page, and the default is the CamStack app link
+title: A notification tap opens the address flagged on the Network page, and the default is the Dominevo app link
 status: accepted
 date: 2026-10-06
 supersedes:
@@ -17,7 +17,7 @@ applies-to:
 
 A notification tap on a camera opened `<hub base>/viewer/camstack/camera/<id>?at=<ts>`,
 with the base taken from the notification endpoint ladder. On a phone with the
-CamStack app installed, that opened a browser, not the app. Only the central
+Dominevo app installed, that opened a browser, not the app. Only the central
 link domain `https://camstack.zentik.app` can open the app, because the app
 claims it as a Universal Link / App Link
 (`docs/design/2026-08-19-central-link-redirect.md`).
@@ -47,7 +47,7 @@ the Network page. There is one store (`local-network`'s
 `notificationBaseUrl`) and no second setting.
 
 - `local-network.getConnectionEndpoints({ includeAppLink: true })` adds one
-  generic entry to the palette. It is the **CamStack app link**,
+  generic entry to the palette. It is the **Dominevo app link**,
   `https://camstack.zentik.app`, with `kind: 'app-link'`. It is never raced
   and never ranked: only the Network page asks for it.
 - **AUTO (no explicit flag) resolves to the app link.** This is the operator's
@@ -65,7 +65,7 @@ the Network page. There is one store (`local-network`'s
   `<that base>/viewer/camstack/<viewer path>?<params>`, which is the pre-D709
   form.
 - Viewer paths are the routes the app claims in its AASA: `/camera/*`,
-  `/events*` and `/notifications*`. Only `buildViewerLink` (`@camstack/types`)
+  `/events*` and `/notifications*`. Only `buildViewerLink` (`@dominevo/types`)
   assembles a viewer link. The NC's default tap and the Network page's live
   preview both call it, and both read the endpoint through `viewerLinkBaseOf`.
 - **The app link is not a hub address.** Admin-UI destinations (an addon
@@ -88,7 +88,7 @@ the Network page. There is one store (`local-network`'s
   `'app-link'`, and `getConnectionEndpoints` grew `includeAppLink`. Every
   exhaustive switch over the kind must handle `'app-link'` (the
   connect-a-phone ranking returns `null`). This is a framework change: it is
-  live only with a `@camstack/server` that contains it. A pre-D709 hub never
+  live only with a `@dominevo/server` that contains it. A pre-D709 hub never
   resolves to the app link, so the NC reading it keeps the hub form.
 - The per-notifier-kind table of the design's §5 is not implemented. The form
   is one install-wide choice, as the operator asked.

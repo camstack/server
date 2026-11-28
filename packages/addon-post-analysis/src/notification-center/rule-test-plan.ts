@@ -42,13 +42,13 @@ import type {
   NcRule,
   NcSchedule,
   NcSystemEventKind,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   instantKindsOf,
   isScheduleActive,
   NC_SENSOR_TRANSITION_KINDS,
   ruleGroupingApplies,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { audioSpecFromCondition } from './audio-rule-matcher.js'
 import type { NcTestEventInput } from './test-event.js'
 
@@ -337,7 +337,7 @@ function systemEventSubject(
     return `addon-crash:${scope.nodeId ?? 'hub'}:${TEST_CRASHED_RUNNER}`
   }
   if (kind === 'addon-update-available' || kind === 'server-update-available') {
-    return `package:${scope.packageName ?? '@camstack/server'}`
+    return `package:${scope.packageName ?? '@dominevo/server'}`
   }
   // One shell per node, so the NODE is the dedup slot — mirroring the live
   // intake, which keys it the same way.
@@ -558,7 +558,7 @@ export function planRuleTest(input: NcRuleTestPlanInput): NcRuleTestPlan {
               actorLabel: 'admin',
               nodeId: systemScope.nodeId ?? 'hub',
               nodeName: systemScope.nodeId ?? 'hub',
-              packageName: systemScope.packageName ?? '@camstack/server',
+              packageName: systemScope.packageName ?? '@dominevo/server',
               // Plausible versions, not `0.0.0`. A test fire is byte-for-byte
               // an ordinary notification, so its placeholders teach the
               // operator how to read the real ones — and `0.0.0` is exactly
@@ -585,7 +585,7 @@ export function planRuleTest(input: NcRuleTestPlanInput): NcRuleTestPlan {
               reason: 'timeout',
               // `addon-crash-loop` names the addons the dead runner hosted.
               addons: TEST_CRASHED_RUNNER,
-              list: '@camstack/addon-pipeline 1.0.1 (current 1.0.0)',
+              list: '@dominevo/addon-pipeline 1.0.1 (current 1.0.0)',
               nodes: 'hub',
               fromVersion: '1.0.0',
               toVersion: '1.0.1',

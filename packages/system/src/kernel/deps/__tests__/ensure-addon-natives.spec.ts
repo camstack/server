@@ -26,7 +26,7 @@ import * as os from 'node:os'
 import * as path from 'node:path'
 import { ensureAddonNativePrebuilds } from '../ensure-addon-natives.js'
 import type { PrebuildFetchFn, PrebuildTarget } from '../ensure-native-prebuilds.js'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 function makeLogger(): IScopedLogger {
   const l: IScopedLogger = {
@@ -73,7 +73,7 @@ describe('ensureAddonNativePrebuilds', () => {
     scaffoldModule(addonDir, 'better-sqlite3', true)
     const fetchPrebuild = vi.fn<PrebuildFetchFn>(async () => undefined)
     const results = await ensureAddonNativePrebuilds(addonDir, {
-      addonName: '@camstack/server',
+      addonName: '@dominevo/server',
       logger: makeLogger(),
       target: TARGET,
       fetchPrebuild,
@@ -85,7 +85,7 @@ describe('ensureAddonNativePrebuilds', () => {
   it('skips a native that is absent from the installed addon (relies on hoist)', async () => {
     const fetchPrebuild = vi.fn<PrebuildFetchFn>(async () => undefined)
     const results = await ensureAddonNativePrebuilds(addonDir, {
-      addonName: '@camstack/server',
+      addonName: '@dominevo/server',
       logger: makeLogger(),
       target: TARGET,
       fetchPrebuild,
@@ -102,7 +102,7 @@ describe('ensureAddonNativePrebuilds', () => {
     const fetchPrebuild = vi.fn<PrebuildFetchFn>(async () => undefined)
 
     const results = await ensureAddonNativePrebuilds(addonDir, {
-      addonName: '@camstack/server',
+      addonName: '@dominevo/server',
       logger: makeLogger(),
       bundledSourceDir: bundledDir,
       target: TARGET,
@@ -135,7 +135,7 @@ describe('ensureAddonNativePrebuilds', () => {
     })
 
     const results = await ensureAddonNativePrebuilds(addonDir, {
-      addonName: '@camstack/server',
+      addonName: '@dominevo/server',
       logger: makeLogger(),
       bundledSourceDir: bundledDir,
       target: TARGET,
@@ -153,7 +153,7 @@ describe('ensureAddonNativePrebuilds', () => {
     })
 
     const results = await ensureAddonNativePrebuilds(addonDir, {
-      addonName: '@camstack/server',
+      addonName: '@dominevo/server',
       logger: makeLogger(),
       target: TARGET,
       fetchPrebuild,
@@ -171,13 +171,13 @@ describe('ensureAddonNativePrebuilds', () => {
 
     await expect(
       ensureAddonNativePrebuilds(addonDir, {
-        addonName: '@camstack/server',
+        addonName: '@dominevo/server',
         logger,
         bundledSourceDir: bundledDir,
         target: TARGET,
         fetchPrebuild,
       }),
-    ).rejects.toThrow(/@camstack\/server.*better-sqlite3/)
+    ).rejects.toThrow(/@dominevo\/server.*better-sqlite3/)
 
     expect(logger.error).toHaveBeenCalled()
     const errCall = (logger.error as ReturnType<typeof vi.fn>).mock.calls.find((c) =>
@@ -185,7 +185,7 @@ describe('ensureAddonNativePrebuilds', () => {
     )
     expect(errCall).toBeDefined()
     expect(errCall?.[1]).toMatchObject({
-      meta: expect.objectContaining({ addon: '@camstack/server', pkg: 'better-sqlite3' }),
+      meta: expect.objectContaining({ addon: '@dominevo/server', pkg: 'better-sqlite3' }),
     })
   })
 
@@ -198,7 +198,7 @@ describe('ensureAddonNativePrebuilds', () => {
 
     await expect(
       ensureAddonNativePrebuilds(addonDir, {
-        addonName: '@camstack/server',
+        addonName: '@dominevo/server',
         logger,
         target: TARGET,
         fetchPrebuild,
@@ -211,7 +211,7 @@ describe('ensureAddonNativePrebuilds', () => {
     scaffoldModule(addonDir, 'my-native', false)
     scaffoldModule(bundledDir, 'my-native', true)
     const results = await ensureAddonNativePrebuilds(addonDir, {
-      addonName: '@camstack/addon-x',
+      addonName: '@dominevo/addon-x',
       logger: makeLogger(),
       bundledSourceDir: bundledDir,
       target: TARGET,

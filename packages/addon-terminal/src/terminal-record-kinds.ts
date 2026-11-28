@@ -5,7 +5,7 @@
  * The record id IS the instance id the old settings list carried. A Terminal declares no camera
  * of its own: a Terminal camera is a core block naming the record id (planning#580).
  */
-import { type DefinedRecordKind, defineEntryKind } from '@camstack/types'
+import { type DefinedRecordKind, defineEntryKind } from '@dominevo/types'
 import { z } from 'zod'
 
 export type TerminalBody = {

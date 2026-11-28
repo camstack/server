@@ -11,7 +11,7 @@ import {
   useDeviceManagerGetAllBindings,
   useDeviceManagerListAll,
   useOsdManagerListTemplates,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Loader2, Monitor, Plus } from 'lucide-react'
 import { CameraOsdTable } from './components/CameraOsdTable.js'
 import { TemplatesPanel } from './components/TemplatesPanel.js'

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { DeviceCommandObservation, DeviceTransition } from '@camstack/types'
+import type { DeviceCommandObservation, DeviceTransition } from '@dominevo/types'
 import { CommandRecorder, NO_FIELD } from '../command-recorder.js'
 
 const actor = { kind: 'user', userId: 'u', username: 'ada', credential: 'session' } as const

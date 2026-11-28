@@ -12,7 +12,7 @@ import {
   useConfirm,
   useClusterNodes,
   usePipelineOrchestratorResetNodePipelineDefaults,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useState } from 'react'
 
 import { CameraStatusStrip } from '../CameraStatusStrip'

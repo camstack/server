@@ -14,14 +14,14 @@ import { execFileSync } from 'node:child_process'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import {
   BackupKeyRequiredError,
   generateBackupKeyPair,
   prepareRestoreArchive,
   readBackupEncryptionHeader,
   SystemBackupService,
-} from '@camstack/server/system'
+} from '@dominevo/server/system'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { applyPendingRestore } from '../pending-restore.js'
 

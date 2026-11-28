@@ -2,8 +2,8 @@
  * The pure half of the tag UI (D1054): style fallback, filter, paging,
  * grouping, suggestions and the remembered view mode.
  */
-import type { TagEntry } from '@camstack/types'
-import { defaultTagColorId } from '@camstack/types'
+import type { TagEntry } from '@dominevo/types'
+import { defaultTagColorId } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import {
   addTag,

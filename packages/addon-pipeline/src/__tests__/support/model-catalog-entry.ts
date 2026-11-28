@@ -1,4 +1,4 @@
-import type { ModelCatalogEntry } from '@camstack/types'
+import type { ModelCatalogEntry } from '@dominevo/types'
 
 /** Minimal valid catalog row for step-definition fixtures in specs. */
 export function makeModelCatalogEntry(

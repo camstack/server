@@ -19,7 +19,7 @@
 
 import { join } from 'node:path'
 import type { WyzeCamera } from '@apocaliss92/wyze-bridge-js'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { WyzeCloudClient } from './cloud-client.js'
 import type { WyzeCredentials } from './cloud-client.js'
 import { classifyCloudError } from './error-classifier.js'

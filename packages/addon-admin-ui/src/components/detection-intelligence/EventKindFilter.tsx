@@ -18,7 +18,7 @@
 import { useMemo, useState, type JSX } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronDown, ChevronRight, Search, Tag as TagIcon } from 'lucide-react'
-import type { EventKindDescriptor } from '@camstack/types'
+import type { EventKindDescriptor } from '@dominevo/types'
 import {
   resolveEventKindIcon,
   eventKindLabel,
@@ -26,7 +26,7 @@ import {
   Button,
   Checkbox,
   Input,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import type { KindGroup } from './event-kind-vocabulary.js'
 
 export interface EventKindFilterProps {

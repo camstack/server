@@ -16,7 +16,7 @@ import type {
   TrainingProviderDescriptor,
   TrainingProviderEntry,
   TrainingProviderType,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { MemoryPeerBytes } from './memory-peer-bytes.js'
 
 export const FAKE_TYPE_ID = 'fake'

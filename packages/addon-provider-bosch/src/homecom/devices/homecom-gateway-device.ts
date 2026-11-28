@@ -1,4 +1,4 @@
-import { BaseDevice, type DeviceContext, type DeviceFeature, DeviceType } from '@camstack/types'
+import { BaseDevice, type DeviceContext, type DeviceFeature, DeviceType } from '@dominevo/types'
 import { z } from 'zod'
 import { homeComConnections } from '../homecom-gateway.js'
 

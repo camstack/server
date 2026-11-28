@@ -11,14 +11,14 @@
  * Returns `null` when no provider has emitted yet (non-battery
  * camera, or initial fetch hasn't returned).
  */
-import type { BatteryStatus } from '@camstack/types'
+import type { BatteryStatus } from '@dominevo/types'
 import { type UseDeviceProxyTrpc, useDeviceState } from './use-device-proxy'
 
 /**
  * The cap's own runtime-state shape (`z.infer<BatteryStatusSchema>`) —
  * `percentage` is `number | null`: `null` means no reading has landed yet
  * (D315). Re-exported so call sites don't have to reach into
- * `@camstack/types` themselves.
+ * `@dominevo/types` themselves.
  */
 export type { BatteryStatus }
 

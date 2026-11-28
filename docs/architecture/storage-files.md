@@ -262,7 +262,7 @@ The cluster, fleet-default and node schemas of one addon declare disjoint keys, 
 contains `@` (`scripts/check-scoped-settings-declared.ts`).
 
 A device resolves a field as device row, then fleet-default row, then schema default. ONE kernel
-resolver (`kernel/device-settings-resolver.ts`, `resolveDeviceSettings` in `@camstack/types`)
+resolver (`kernel/device-settings-resolver.ts`, `resolveDeviceSettings` in `@dominevo/types`)
 serves hub-main's view and the runner's (`readResolvedDeviceStore(deviceId, schemaDefaults)`),
 and answers per field the value and its source (`device`, `fleet-default`, `schema-default`).
 `readDeviceStore` keeps returning the raw overrides. Reset is deleting the device row. A store

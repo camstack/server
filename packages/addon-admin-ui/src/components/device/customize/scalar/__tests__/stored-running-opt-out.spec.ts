@@ -1,4 +1,4 @@
-import { type Composition, DeviceType, runningOptOutFeature } from '@camstack/types'
+import { type Composition, DeviceType, runningOptOutFeature } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import '../../../../../i18n'
 import type { CustomizationHandle } from '../../use-customization'

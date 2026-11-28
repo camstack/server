@@ -32,7 +32,7 @@
  *
  *  - npm packages (react, react-dom, @tanstack/react-query, @trpc/*)
  *    are read off the bundler's import graph via namespace imports.
- *  - workspace packages (`@camstack/{ui-library,sdk,types}`) come off
+ *  - workspace packages (`@dominevo/{ui-library,sdk,types}`) come off
  *    `window.__camstack{UiLibrary,Sdk,Types}` globals set by
  *    `addon-admin-ui/src/main.tsx` to avoid double-bundling them here.
  *
@@ -145,9 +145,9 @@ function populateShareCache(): void {
   cache.share['@trpc/react-query'] ??= __mfHostTrpcReactQuery
   // react-konva / konva are NOT seeded synchronously here — they are
   // pre-warmed lazily below via fire-and-forget dynamic imports.
-  cache.share['@camstack/ui-library'] ??= readHostGlobal('__camstackUiLibrary')
-  cache.share['@camstack/sdk'] ??= readHostGlobal('__camstackSdk')
-  cache.share['@camstack/types'] ??= readHostGlobal('__camstackTypes')
+  cache.share['@dominevo/ui-library'] ??= readHostGlobal('__camstackUiLibrary')
+  cache.share['@dominevo/sdk'] ??= readHostGlobal('__camstackSdk')
+  cache.share['@dominevo/types'] ??= readHostGlobal('__camstackTypes')
 }
 
 // Returns an MF shared-scope entry backed by an async dynamic import —
@@ -220,9 +220,9 @@ export function ensureMfHostInit(): void {
       // the lazy split introduced in 3f2185e7 is preserved.
       'react-konva': lazyNpmShared(() => import('react-konva')),
       konva: lazyNpmShared(() => import('konva')),
-      '@camstack/ui-library': npmShared(() => readHostGlobal('__camstackUiLibrary')),
-      '@camstack/sdk': npmShared(() => readHostGlobal('__camstackSdk')),
-      '@camstack/types': npmShared(() => readHostGlobal('__camstackTypes')),
+      '@dominevo/ui-library': npmShared(() => readHostGlobal('__camstackUiLibrary')),
+      '@dominevo/sdk': npmShared(() => readHostGlobal('__camstackSdk')),
+      '@dominevo/types': npmShared(() => readHostGlobal('__camstackTypes')),
     },
   })
 }

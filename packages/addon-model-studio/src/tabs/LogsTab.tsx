@@ -1,7 +1,7 @@
 /**
  * Logs — live ring of the model-studio addon.
  */
-import { LogStream } from '@camstack/ui-library'
+import { LogStream } from '@dominevo/ui-library'
 
 const MODEL_STUDIO_ADDON_ID = 'model-studio'
 

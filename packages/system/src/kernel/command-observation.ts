@@ -15,8 +15,8 @@
 import type { TRPCLink } from '@trpc/client'
 import type { AnyRouter } from '@trpc/server'
 import { observable } from '@trpc/server/observable'
-import type { CommandActor, DeviceCommandObservation } from '@camstack/types'
-import { isCommand, readCommandOrigin, type CommandOriginClaim } from '@camstack/types/addon'
+import type { CommandActor, DeviceCommandObservation } from '@dominevo/types'
+import { isCommand, readCommandOrigin, type CommandOriginClaim } from '@dominevo/types/addon'
 import {
   commandFollowUpTarget,
   deviceIdOfArgs,

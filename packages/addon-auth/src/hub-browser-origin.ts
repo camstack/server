@@ -11,7 +11,7 @@
  * unreachable or names nothing a browser can open; the caller keeps its
  * `localhost` development default for that case.
  */
-import type { HubAddressBook, IScopedLogger } from '@camstack/types'
+import type { HubAddressBook, IScopedLogger } from '@dominevo/types'
 
 /** The slice of `ctx.api.localNetwork` this reads. */
 export interface LocalNetworkEndpointsQuery {

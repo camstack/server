@@ -28,7 +28,7 @@ import {
   type IScopedLogger,
   type IStorageProviderImpl,
   type StorageLocation,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   createSessionId,
   getOptionalBasePath,

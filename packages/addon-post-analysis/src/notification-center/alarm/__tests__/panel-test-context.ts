@@ -15,7 +15,7 @@ import {
   type DeviceContext,
   DeviceType,
   type IDeviceRuntimeState,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { vi } from 'vitest'
 
 export const TEST_PANEL_ID = 1023

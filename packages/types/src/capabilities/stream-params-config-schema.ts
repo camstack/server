@@ -12,8 +12,8 @@
  * (`buildProfileSection`). Both the Reolink and Hikvision `stream-params`
  * providers call `buildStreamParamsConfigSchema` from their
  * `getConfigSchema` cap method so the two cameras emit a structurally
- * identical form. No addon dependencies — only `@camstack/types` shapes —
- * so it lives in `@camstack/types` and is shared without a cross-addon
+ * identical form. No addon dependencies — only `@dominevo/types` shapes —
+ * so it lives in `@dominevo/types` and is shared without a cross-addon
  * import.
  *
  * The form field keys follow the `stream<Profile>_<prop>` convention

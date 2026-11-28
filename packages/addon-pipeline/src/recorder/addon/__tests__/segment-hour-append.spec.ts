@@ -21,7 +21,7 @@
  * question the fake was happy to answer.
  */
 import { describe, expect, it, vi } from 'vitest'
-import type { IScopedLogger, SettingsStoreClient } from '@camstack/types'
+import type { IScopedLogger, SettingsStoreClient } from '@dominevo/types'
 import { RecordingIndex } from '../../recording-index.js'
 import { segmentRelPath } from '../../segment-path.js'
 import type { SegmentRow } from '../../types.js'

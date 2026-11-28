@@ -4,7 +4,7 @@
  * a dead-end line.
  */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { type DeviceInfo, DeviceType } from '@camstack/types'
+import { type DeviceInfo, DeviceType } from '@dominevo/types'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
@@ -26,8 +26,8 @@ const confirmAction = vi.hoisted(() =>
   }),
 )
 
-vi.mock('@camstack/ui-library', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@camstack/ui-library')>()
+vi.mock('@dominevo/ui-library', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dominevo/ui-library')>()
   return {
     ...actual,
     useCoreBlocksGetComposition: () => ({

@@ -8,7 +8,7 @@ import {
   scheduleForSendTimes,
   systemEventDeliveryAsModes,
   type NcRule,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import type { NcStateSummary } from '../state-summary.js'
 import { NcStateSummaryScheduler } from '../state-summary-scheduler.js'

@@ -12,7 +12,7 @@ import {
   type DeviceContext,
   type InferNativeProvider,
   type SwitchStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   decodeBrightnessPercent,
   decodeCover,

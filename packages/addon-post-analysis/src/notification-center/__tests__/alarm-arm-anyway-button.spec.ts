@@ -22,7 +22,7 @@ import {
   DeviceType,
   type IScopedLogger,
   NcRuleInputSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import { NcActionPlane } from '../action-plane.js'

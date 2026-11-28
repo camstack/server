@@ -49,7 +49,7 @@ empty one.
 
 ## Consequences
 
-- The default file is NOT in `DEFAULT_BACKUP_LOCATIONS`, so CamStack's own
+- The default file is NOT in `DEFAULT_BACKUP_LOCATIONS`, so Dominevo's own
   backups never carry it. The nightly Unraid appdata tar does, which is why
   the live hub should configure `keychain.keyFile` outside appdata.
 - A key file that does not exist yet is the operator's to create: the hub

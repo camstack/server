@@ -19,7 +19,7 @@
  * drops out of the intersection the same way, after `DetectionClassSource`'s
  * confirmation window.
  */
-import type { ConfigFieldWithValue } from '@camstack/types'
+import type { ConfigFieldWithValue } from '@dominevo/types'
 import { DETECTION_SENSOR_CLASSES, type DetectionSensorClass } from '../handlers/endpoint-id.js'
 
 /** Per-device store key of the saved selection. */

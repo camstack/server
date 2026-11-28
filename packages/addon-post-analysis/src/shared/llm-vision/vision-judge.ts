@@ -32,7 +32,7 @@
  * them for good reason. The judge takes the prompt; it never composes one.
  */
 import { randomUUID } from 'node:crypto'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { z } from 'zod'
 import { parseModelJson } from './parse-model-json.js'
 

@@ -216,10 +216,10 @@ describe('HubNodeRegistry — rootPackage (runtime-updatable node packages)', ()
     const reg = new HubNodeRegistry()
     reg.registerNode({
       ...params('agent-a', [['agent-runtime', ['server-management']]]),
-      rootPackage: { name: '@camstack/server', version: '1.1.40' },
+      rootPackage: { name: '@dominevo/server', version: '1.1.40' },
     })
     expect(reg.getNodeRootPackage('agent-a')).toEqual({
-      name: '@camstack/server',
+      name: '@dominevo/server',
       version: '1.1.40',
     })
     expect(reg.getNodeRootPackage('unknown-node')).toBeNull()
@@ -229,7 +229,7 @@ describe('HubNodeRegistry — rootPackage (runtime-updatable node packages)', ()
     const reg = new HubNodeRegistry()
     reg.registerNode({
       ...params('agent-a', [['agent-runtime', ['server-management']]]),
-      rootPackage: { name: '@camstack/server', version: '1.1.40' },
+      rootPackage: { name: '@dominevo/server', version: '1.1.40' },
     })
     reg.registerNode(params('agent-a', [['agent-runtime', ['server-management']]]))
     expect(reg.getNodeRootPackage('agent-a')).toBeNull()
@@ -239,14 +239,14 @@ describe('HubNodeRegistry — rootPackage (runtime-updatable node packages)', ()
     const reg = new HubNodeRegistry()
     reg.registerNode({
       ...params('agent-a', [['agent-runtime', ['server-management']]]),
-      rootPackage: { name: '@camstack/server', version: '1.1.40' },
+      rootPackage: { name: '@dominevo/server', version: '1.1.40' },
     })
     reg.registerNode({
       ...params('agent-a', [['agent-runtime', ['server-management']]]),
-      rootPackage: { name: '@camstack/server', version: '1.1.41' },
+      rootPackage: { name: '@dominevo/server', version: '1.1.41' },
     })
     expect(reg.getNodeRootPackage('agent-a')).toEqual({
-      name: '@camstack/server',
+      name: '@dominevo/server',
       version: '1.1.41',
     })
   })
@@ -255,7 +255,7 @@ describe('HubNodeRegistry — rootPackage (runtime-updatable node packages)', ()
     const reg = new HubNodeRegistry()
     reg.registerNode({
       ...params('agent-a', [['agent-runtime', ['server-management']]]),
-      rootPackage: { name: '@camstack/server', version: '1.1.40' },
+      rootPackage: { name: '@dominevo/server', version: '1.1.40' },
     })
     reg.removeNode('agent-a')
     expect(reg.getNodeRootPackage('agent-a')).toBeNull()

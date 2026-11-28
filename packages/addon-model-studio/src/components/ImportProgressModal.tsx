@@ -4,7 +4,7 @@
  */
 import type { ConvertProgressEvent } from '../ui/api.js'
 import { useT } from '../i18n/index.js'
-import { Button } from '@camstack/ui-library'
+import { Button } from '@dominevo/ui-library'
 
 export type ImportStepStatus = 'pending' | 'active' | 'done' | 'error' | 'skipped'
 

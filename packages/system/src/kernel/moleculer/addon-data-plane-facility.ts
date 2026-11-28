@@ -14,7 +14,7 @@
  */
 import { createServer, type Server, type IncomingMessage, type ServerResponse } from 'node:http'
 import { randomBytes } from 'node:crypto'
-import { DATAPLANE_SECRET_HEADER } from '@camstack/types/addon'
+import { DATAPLANE_SECRET_HEADER } from '@dominevo/types/addon'
 import type {
   AddonDataPlane,
   AddonDataPlaneHandle,
@@ -23,7 +23,7 @@ import type {
   RouteAccess,
   IScopedLogger,
   ShareViewKind,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** Where the facility publishes the addon's current data-plane endpoints so the
  *  runner can expose them to the hub's pull. */

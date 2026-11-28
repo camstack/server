@@ -4,8 +4,8 @@ import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 import * as crypto from 'node:crypto'
-import { asJsonObject, asString, errMsg } from '@camstack/types/addon'
-import type { IScopedLogger } from '@camstack/types'
+import { asJsonObject, asString, errMsg } from '@dominevo/types/addon'
+import type { IScopedLogger } from '@dominevo/types'
 import { runNpm } from './npm-command.js'
 
 const execFileAsync = promisify(execFile)
@@ -235,7 +235,7 @@ function copyPrebuiltModuleDir(
  * Propagate PREBUILT native modules from a bundled addon copy's own
  * `node_modules` (the packaged-desktop 'local' source at
  * `<resources>/addons/<addon>`) into the freshly-copied target
- * (`<data>/addons/@camstack/<addon>`), BEFORE the target's `npm install` runs.
+ * (`<data>/addons/@dominevo/<addon>`), BEFORE the target's `npm install` runs.
  *
  * Why (Mac desktop first-boot FATAL, 2026-07-21): `installCopy` copies only
  * `dist/` then `npm install`s the addon's runtime deps. On a toolchain-less Mac

@@ -71,7 +71,7 @@ export function describePushFailure(err: unknown): PushFailure {
       return {
         kind: 'component-missing',
         permanent: true,
-        text: `${http} — Home Assistant has no CamStack integration installed (the ${PUSH_PATH} endpoint is missing). Install it from HACS, or turn off Home Assistant export`,
+        text: `${http} — Home Assistant has no Dominevo integration installed (the ${PUSH_PATH} endpoint is missing). Install it from HACS, or turn off Home Assistant export`,
       }
     }
     if (err.status === 401 || err.status === 403) {

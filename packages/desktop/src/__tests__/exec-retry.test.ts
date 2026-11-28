@@ -1,7 +1,7 @@
 /**
  * `exec-retry.mjs` — the bounded-retry + failure-description helpers used by
  * `stage-deps.mjs` for the one long, network-heavy, externally-killable step
- * (the `npm install @camstack/server@<version>` closure install).
+ * (the `npm install @dominevo/server@<version>` closure install).
  *
  * Regression guard for the v1.2.104 linux release leg: the closure install was
  * terminated by an EXTERNAL SIGTERM 124 s in (npm's own arborist signal handler
@@ -80,8 +80,8 @@ describe('describeExecFailure', () => {
       stderr: null,
     })
 
-    expect(describeExecFailure(err, 'npm install @camstack/server@1.2.104')).toBe(
-      'npm install @camstack/server@1.2.104 — exited with status 1',
+    expect(describeExecFailure(err, 'npm install @dominevo/server@1.2.104')).toBe(
+      'npm install @dominevo/server@1.2.104 — exited with status 1',
     )
   })
 

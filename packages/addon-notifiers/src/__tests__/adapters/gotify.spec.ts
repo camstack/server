@@ -6,8 +6,8 @@
  * the adapter emits — no network. This proves the level→native-integer mapping,
  * the markdown / click / bigImageUrl `extras`, and the JSON body shape.
  */
-import type { Notification } from '@camstack/types'
-import { prepareNotification } from '@camstack/types'
+import type { Notification } from '@dominevo/types'
+import { prepareNotification } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { HttpRequestPlan, TargetConfig } from '../../adapters/adapter.js'
 import { GOTIFY_KIND, gotifyAdapter, gotifyDescriptor } from '../../adapters/gotify.js'

@@ -97,7 +97,7 @@ function generate(caps: readonly CapStatusInfo[]): string {
     else imports.push(c.exportName)
     // `import type`: these schemas/cap-defs are used ONLY inside `z.infer<typeof X>` below (type
     // positions). A value import would drag every status cap-def schema into every runtime that
-    // touches the `@camstack/types` barrel (via the value export `CAP_NAMES_WITH_STATUS`), bloating
+    // touches the `@dominevo/types` barrel (via the value export `CAP_NAMES_WITH_STATUS`), bloating
     // each addon runner's heap for no runtime need. The `no-value-cap-import-in-status-types` guard
     // (scripts/check-cap-status-type-imports.ts) fails the build if this regresses to a value import.
     lines.push(`import type { ${imports.join(', ')} } from '../capabilities/${c.fileName}.js'`)

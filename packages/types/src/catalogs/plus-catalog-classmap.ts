@@ -130,7 +130,7 @@ export function plusCatalogLabelFields(labels: readonly string[]): PlusCatalogLa
  * Per-class confidence-floor defaults of an imported stock plus catalog detector
  * (D738): its per-detection `min_score` default, 0.5, for every class. Its
  * track-level `threshold` (the median of a track's recent scores) has no
- * counterpart in CamStack's per-detection floors and is not carried.
+ * counterpart in Dominevo's per-detection floors and is not carried.
  */
 export const PLUS_CATALOG_STOCK_CLASS_FLOORS: Readonly<Record<string, number>> = Object.freeze({
   person: 0.5,

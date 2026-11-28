@@ -1,4 +1,4 @@
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IScopedLogger } from '@dominevo/types'
 import type { PushResult } from './sync-engine.js'
 import type { LwaPausedReason, LwaPushState, LwaTokenEntry } from './types.js'
 

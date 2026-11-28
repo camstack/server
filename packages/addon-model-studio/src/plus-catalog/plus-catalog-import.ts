@@ -29,7 +29,7 @@ import {
   type ModelFormat,
   type ModelVariantGroup,
   type PostprocessorType,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export const PLUS_CATALOG_MODEL_TYPES = ['yolov9', 'yolonas', 'mobiledet'] as const
 export type PlusCatalogModelType = (typeof PLUS_CATALOG_MODEL_TYPES)[number]

@@ -4,7 +4,7 @@
  * judged, `clear` included, and only when the patch touched what the verdict
  * reads.
  */
-import { NcConfirmSchema } from '@camstack/types'
+import { NcConfirmSchema } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { makeLogRecorder } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import {

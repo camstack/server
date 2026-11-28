@@ -89,7 +89,7 @@ believe the screen.
   location, plus one for its peers. The pressure sweep already does this per
   location on a 60 s timer; the cost is proportional to the number of disks
   being retired at once, which is one.
-- `@camstack/system` ships inside the published `@camstack/server` closure, so
+- `@dominevo/system` ships inside the published `@dominevo/server` closure, so
   this is not live until a server containing it is installed on all three nodes.
 
 ## Enforcement

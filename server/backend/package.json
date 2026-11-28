@@ -1,15 +1,15 @@
 {
-  "name": "@camstack/server",
-  "version": "1.2.974",
+  "name": "@dominevo/server",
+  "version": "0.1.0",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/camstack/server.git",
+    "url": "https://github.com/dominevo/server.git",
     "directory": "server/backend"
   },
   "homepage": "https://camstack-docs.zentik.app",
   "bugs": {
-    "url": "https://github.com/camstack/server/issues"
+    "url": "https://github.com/dominevo/server/issues"
   },
   "private": false,
   "files": [
@@ -59,44 +59,44 @@
   },
   "camstack": {
     "agentBootstrapAddons": [
-      "@camstack/addon-pipeline",
-      "@camstack/addon-decoder-nodeav",
-      "@camstack/addon-agent-ui"
+      "@dominevo/addon-pipeline",
+      "@dominevo/addon-decoder-nodeav",
+      "@dominevo/addon-agent-ui"
     ],
     "agentOnlyBootstrapAddons": [
-      "@camstack/addon-agent-ui"
+      "@dominevo/addon-agent-ui"
     ],
     "requires": {
       "addons": {
-        "@camstack/addon-admin-ui": ">=1.2.765",
-        "@camstack/addon-agent-ui": ">=1.2.452",
-        "@camstack/addon-matter-broker": ">=0.2.183",
-        "@camstack/addon-post-analysis": ">=1.2.734",
-        "@camstack/addon-provider-dreo": ">=0.2.173",
-        "@camstack/addon-provider-homematic": ">=1.2.218",
-        "@camstack/addon-provider-mqtt-ha": ">=0.1.56",
-        "@camstack/addon-provider-zigbee-z2m": ">=0.1.1"
+        "@dominevo/addon-admin-ui": ">=0.1.0",
+        "@dominevo/addon-agent-ui": ">=0.1.0",
+        "@dominevo/addon-matter-broker": ">=0.1.0",
+        "@dominevo/addon-post-analysis": ">=0.1.0",
+        "@dominevo/addon-provider-dreo": ">=0.1.0",
+        "@dominevo/addon-provider-homematic": ">=0.1.0",
+        "@dominevo/addon-provider-mqtt-ha": ">=0.1.0",
+        "@dominevo/addon-provider-zigbee-z2m": ">=0.1.0"
       },
       "wrapper": {
-        "desktop": ">=0.0.1",
-        "image": ">=0.0.1"
+        "desktop": ">=0.1.0",
+        "image": ">=0.1.0"
       }
     }
   },
   "dependencies": {
-    "@camstack/addon-admin-ui": "*",
-    "@camstack/addon-agent-ui": "*",
-    "@camstack/addon-auth": "*",
-    "@camstack/addon-benchmark": "*",
-    "@camstack/addon-decoder-nodeav": "*",
-    "@camstack/addon-notifiers": "*",
-    "@camstack/addon-pipeline": "*",
-    "@camstack/addon-pipeline-orchestrator": "*",
-    "@camstack/addon-post-analysis": "*",
-    "@camstack/develop": "*",
-    "@camstack/sdk": "*",
-    "@camstack/types": "*",
-    "@camstack/ui-library": "*",
+    "@dominevo/addon-admin-ui": "0.1.0",
+    "@dominevo/addon-agent-ui": "0.1.0",
+    "@dominevo/addon-auth": "0.1.0",
+    "@dominevo/addon-benchmark": "0.1.0",
+    "@dominevo/addon-decoder-nodeav": "0.1.0",
+    "@dominevo/addon-notifiers": "0.1.0",
+    "@dominevo/addon-pipeline": "0.1.0",
+    "@dominevo/addon-pipeline-orchestrator": "0.1.0",
+    "@dominevo/addon-post-analysis": "0.1.0",
+    "@dominevo/develop": "0.1.0",
+    "@dominevo/sdk": "0.1.0",
+    "@dominevo/types": "0.1.0",
+    "@dominevo/ui-library": "0.1.0",
     "@fastify/compress": "^9.0.0",
     "@fastify/cookie": "^11.0.2",
     "@fastify/cors": "^11.2.0",
@@ -138,13 +138,13 @@
     "unplugin-swc": "^1.5.9",
     "vite": "^8.0.11",
     "vitest": "*",
-    "@camstack/node-root": "*",
+    "@dominevo/node-root": "0.1.0",
     "tsup": "^8.0.0"
   },
   "nx": {
     "implicitDependencies": [
-      "@camstack/addon-benchmark",
-      "@camstack/server-framework"
+      "@dominevo/addon-benchmark",
+      "@dominevo/server-framework"
     ],
     "targets": {
       "build": {

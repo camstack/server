@@ -18,9 +18,9 @@ import {
   Button,
   ZonesReadOnlyLayer,
   useDeviceZonesPresence,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 
-import type { StationaryOverlayBox } from '@camstack/types'
+import type { StationaryOverlayBox } from '@dominevo/types'
 import { useDeviceDetections } from '../../hooks/useDeviceDetections'
 import { useStationaryObjects } from '../detection-intelligence/use-stationary-objects'
 import { useDevice } from '../../hooks/useDevice'
@@ -240,7 +240,7 @@ export function ReplPanelContent({ deviceId }: ReplPanelContentProps) {
   // this device, it reminds the user that `device` is already bound and
   // points at `examples` / `context` for the full surface.
   const greeting = [
-    `CamStack REPL — device #${deviceId}`,
+    `Dominevo REPL — device #${deviceId}`,
     '',
     '  device.state.battery.value           sync state read',
     '  await device.snapshot.getSnapshot({})  cap action',

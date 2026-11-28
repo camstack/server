@@ -1,4 +1,4 @@
-import type { DeviceConstructor, DeviceContext, IDevice } from '@camstack/types'
+import type { DeviceConstructor, DeviceContext, IDevice } from '@dominevo/types'
 import { HmActuatorDevice } from './hm-actuator-device.js'
 import { HmSensorDevice } from './hm-sensor-device.js'
 import { HmEventEmitterDevice } from './hm-event-emitter-device.js'

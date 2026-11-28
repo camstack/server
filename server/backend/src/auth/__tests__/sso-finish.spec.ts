@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import type { TokenScope } from '@camstack/types'
+import type { TokenScope } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { AuthService } from '../../core/auth/auth.service.js'
 import { ExternalLinkIntents } from '../external-link-intents.js'
@@ -13,7 +13,7 @@ import {
   type SsoFinishOptions,
   type SsoFinishOutcome,
 } from '../sso-finish.js'
-import { staticJwtSigningKey } from '@camstack/server/system'
+import { staticJwtSigningKey } from '@dominevo/server/system'
 
 /**
  * `/api/auth/sso/finish` mints through THE session mint (D712): the session

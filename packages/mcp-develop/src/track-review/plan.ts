@@ -8,7 +8,7 @@
  * changes data.
  */
 import { z } from 'zod'
-import { RetrainAnnotationDraftSchema, RetrainMacroClassSchema } from '@camstack/types'
+import { RetrainAnnotationDraftSchema, RetrainMacroClassSchema } from '@dominevo/types'
 
 export const VERDICT_KINDS = [
   'correct',

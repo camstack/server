@@ -15,7 +15,7 @@ import type { HaCmps, HaDeviceBlock, PushMessage } from '../types.js'
 const DEV: HaDeviceBlock = {
   ids: ['camstack-a'],
   name: 'A',
-  mf: 'CamStack',
+  mf: 'Dominevo',
   mdl: 'camera',
 }
 const CMPS: HaCmps = {

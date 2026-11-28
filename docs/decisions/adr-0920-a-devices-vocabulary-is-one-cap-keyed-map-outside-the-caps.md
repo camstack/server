@@ -59,7 +59,7 @@ vocabulary by walking its bindings by cap NAME (never binding kind, D13) —
   refuses a missing cap, the guard refuses an unphrased operate method or
   event.
 - Wording, translation and device-type nuance change without touching a cap,
-  and ship with `@camstack/types` like any other framework data.
+  and ship with `@dominevo/types` like any other framework data.
 - A third language means a third key on `L10n`, and the guard then demands it
   everywhere.
 - The recipe trigger schema (`device-state`) compares by equality only; the

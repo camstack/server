@@ -98,13 +98,13 @@ describe('check-no-stacked-provider-lists', () => {
   it('flags a hand-written addon id comparison, map key and package list line', () => {
     expect(stackedListBreaches(ADDON_MAP)).toHaveLength(1)
     expect(
-      stackedListBreaches(file('components/P.tsx', "const L = [\n  '@camstack/server',\n]")),
+      stackedListBreaches(file('components/P.tsx', "const L = [\n  '@dominevo/server',\n]")),
     ).toHaveLength(1)
     expect(stackedListBreaches(file('pages/P.tsx', "if (addonId === 'addon-x') y()"))).toHaveLength(
       1,
     )
     expect(
-      stackedListBreaches(file('pages/P.tsx', "import x from '@camstack/ui-library'")),
+      stackedListBreaches(file('pages/P.tsx', "import x from '@dominevo/ui-library'")),
     ).toEqual([])
   })
 

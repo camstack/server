@@ -19,22 +19,22 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "noUncheckedIndexedAccess": false,
-    // Subpaths included so `@camstack/types/client` is this checkout, not the
+    // Subpaths included so `@dominevo/types/client` is this checkout, not the
     // main checkout a worktree's root node_modules points at.
     "paths": {
-      "@camstack/types": [
+      "@dominevo/types": [
         "../types/src/index.ts"
       ],
-      "@camstack/types/*": [
+      "@dominevo/types/*": [
         "../types/src/*"
       ],
-      "@camstack/sdk": [
+      "@dominevo/sdk": [
         "../sdk/src/index.ts"
       ],
-      "@camstack/ui-library/testing": [
+      "@dominevo/ui-library/testing": [
         "../ui-library/src/testing/select-option.ts"
       ],
-      "@camstack/ui-library": [
+      "@dominevo/ui-library": [
         "../ui-library/src/index.ts"
       ]
     },

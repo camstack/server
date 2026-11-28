@@ -3,7 +3,7 @@
  * (sent / transient backoff / dead-letter / permanent), boot hydration,
  * watermark round-trip and terminal-row pruning. Fake store + fake clock.
  */
-import type { InMemoryRecords } from '@camstack/types'
+import type { InMemoryRecords } from '@dominevo/types'
 import { ncTable, makeNcRecords } from './support/nc-test-deps.js'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'

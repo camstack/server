@@ -48,7 +48,7 @@ export const WizardArgsShape = {
     .boolean()
     .optional()
     .describe(
-      'Whether CamStack will be opened away from home. Ask the person; leave it out until they answered.',
+      'Whether Dominevo will be opened away from home. Ask the person; leave it out until they answered.',
     ),
 } as const
 

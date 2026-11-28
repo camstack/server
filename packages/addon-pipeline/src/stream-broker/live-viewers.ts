@@ -17,7 +17,7 @@
  * and the manager's per-camera roll-up read these rules, so the definition
  * cannot drift between the two planes.
  */
-import type { BrokerConsumerKind } from '@camstack/types'
+import type { BrokerConsumerKind } from '@dominevo/types'
 import type { RestreamIntent } from './rtsp/restream-intent.js'
 
 /**

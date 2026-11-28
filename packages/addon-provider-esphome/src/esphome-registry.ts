@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { errMsg, type UnifiedBrokerStatus, type IScopedLogger } from '@camstack/types'
+import { errMsg, type UnifiedBrokerStatus, type IScopedLogger } from '@dominevo/types'
 
 type BrokerStatus = UnifiedBrokerStatus
 import { sameConnection, type EspBrokerEntry, type EspConnection } from './config.js'

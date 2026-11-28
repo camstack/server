@@ -69,7 +69,7 @@ describe('resolveCapacityBar', () => {
 
   /**
    * The live `backups:smb` row: its VOLUME cannot be measured from the hub —
-   * it is an SMB share — but what CamStack holds on it was measured by the
+   * it is an SMB share — but what Dominevo holds on it was measured by the
    * provider that writes there (1.6 GB). Dropping that figure along with the
    * bar would hide a fact we have, which is the other half of the same
    * mistake: unknown is about the denominator, not the numerator.

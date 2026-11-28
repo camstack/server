@@ -1,5 +1,5 @@
-import { createEvent, DeviceType, NcRuleInputSchema, type SystemEvent } from '@camstack/types'
-import type { InMemoryRecords } from '@camstack/types'
+import { createEvent, DeviceType, NcRuleInputSchema, type SystemEvent } from '@dominevo/types'
+import type { InMemoryRecords } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import { NotificationCenter } from '../index.js'

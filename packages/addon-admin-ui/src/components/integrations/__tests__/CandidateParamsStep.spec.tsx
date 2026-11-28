@@ -13,7 +13,7 @@ const q = vi.hoisted(() => ({
   schema: {} as Record<string, unknown>,
 }))
 
-vi.mock('@camstack/ui-library', async (orig) => ({
+vi.mock('@dominevo/ui-library', async (orig) => ({
   ...(await orig<Record<string, unknown>>()),
   useDeviceManagerProviderCreationType: () => q.type,
   useDeviceManagerGetCreationSchema: () => q.schema,

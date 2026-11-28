@@ -11,7 +11,7 @@ import {
   StatusBadge,
   type AddonPageProps,
   type DataColumn,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Radio } from 'lucide-react'
 import {
   CcuOverviewSchema,

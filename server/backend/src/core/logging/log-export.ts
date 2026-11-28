@@ -16,7 +16,7 @@
  * id set only guards against a source that repeats a line across pages.
  */
 
-import type { LogReadEntry, LogReadQuery, LogReadResult } from '@camstack/types'
+import type { LogReadEntry, LogReadQuery, LogReadResult } from '@dominevo/types'
 import { z } from 'zod'
 
 /** "Everything, last six hours" — the default the issue asked for. */

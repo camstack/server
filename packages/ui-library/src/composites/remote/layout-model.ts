@@ -20,7 +20,7 @@ import {
   RemoteLayoutPayloadSchema,
   rectsOverlap,
   removeGroup as removeGroupOp,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export const DEFAULT_LAYOUT_COLUMNS = 3
 export const DEFAULT_LAYOUT_ROWS = 4

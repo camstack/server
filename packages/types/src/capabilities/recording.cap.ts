@@ -170,7 +170,7 @@ export const RecordingSourceSchema = z.object({
   /** The source id. {@link RECORDING_SOURCE_CAMSTACK} for ours (RESERVED), a
    *  vendor namespace (`native:reolink:onboard`, …) for a camera's own store. */
   source: z.string(),
-  /** Operator-facing name of the source ("CamStack recordings", "SD card"). */
+  /** Operator-facing name of the source ("Dominevo recordings", "SD card"). */
   label: z.string(),
   /**
    * The addon that SERVES this row, and the value a later call passes as

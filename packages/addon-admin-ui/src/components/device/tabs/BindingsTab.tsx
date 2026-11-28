@@ -8,8 +8,8 @@ import {
   useDeviceManagerListBindableCapsForDeviceType,
   useDeviceManagerSetWrapperActive,
   Button,
-} from '@camstack/ui-library'
-import type { DataColumn } from '@camstack/ui-library'
+} from '@dominevo/ui-library'
+import type { DataColumn } from '@dominevo/ui-library'
 import { useEventInvalidation } from '../../../hooks/useEventInvalidation'
 import { Trans, useTranslation } from 'react-i18next'
 

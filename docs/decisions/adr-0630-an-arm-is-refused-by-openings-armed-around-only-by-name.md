@@ -180,7 +180,7 @@ sensor state change reaches the rule engine as one `device-event` subject per
 linked camera, for EVERY transition — so a rule gated on `armed_<mode>` would
 otherwise fire when a covered window CLOSES too, sounding the siren on the
 person shutting it. A rule "belongs to the alarm" when its `deviceState` gate names ANY
-device's `armed_*` word — CamStack's panel or any other, e.g. an HA-mirrored
+device's `armed_*` word — Dominevo's panel or any other, e.g. an HA-mirrored
 alarm panel — or when an ENABLED `onTrigger` sequence has an
 `alarm-panel.trigger` step. It ignores which device, which mode, whether the
 rule is enabled and what it is scoped to: this is **not** the coverage
@@ -274,8 +274,8 @@ with a lock-control device.
   interleaved with detections; this is accepted, not filtered.
 - **The Phase-1/Phase-2 install order leaves a short window** where the new
   types are live but the transition-gated addon (Decision 8) is not yet
-  deployed. Phase 1 installs `@camstack/server` on the hub; Phase 2's
-  `camstack deploy packages/addon-post-analysis` follows immediately after,
+  deployed. Phase 1 installs `@dominevo/server` on the hub; Phase 2's
+  `dominevo deploy packages/addon-post-analysis` follows immediately after,
   back-to-back. In that window the OLD addon build runs against the NEW
   types, so a cover state change may pass through whatever ungated behaviour
   the old addon already had for it rather than the gate Decision 8 describes.

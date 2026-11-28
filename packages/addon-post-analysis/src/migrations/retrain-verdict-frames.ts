@@ -17,8 +17,8 @@
  * reports `already-done`. A track whose media is gone is skipped with one log
  * line and stays staged, as it was.
  */
-import type { IScopedLogger, MigrationProcedureResult } from '@camstack/types'
-import { errMsg } from '@camstack/types'
+import type { IScopedLogger, MigrationProcedureResult } from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
 import type { NcDetectionVerdictRecord } from '../notification-center/detection-verdict-ledger.js'
 
 /** A staged retrain track, as far as this migration needs to know it. */
@@ -69,10 +69,13 @@ export async function backfillRetrainVerdictFrames(
       continue
     }
     skipped += 1
-    ports.logger.warn('retrain verdict backfill — no frame could be copied, the track stays staged', {
-      tags: { deviceId: track.deviceId },
-      meta: { trackId: track.trackId, reason: result.reason },
-    })
+    ports.logger.warn(
+      'retrain verdict backfill — no frame could be copied, the track stays staged',
+      {
+        tags: { deviceId: track.deviceId },
+        meta: { trackId: track.trackId, reason: result.reason },
+      },
+    )
   }
   return {
     outcome: rekeyed + copied === 0 ? 'already-done' : 'done',

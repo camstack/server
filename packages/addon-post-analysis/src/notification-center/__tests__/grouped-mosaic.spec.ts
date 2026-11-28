@@ -11,7 +11,7 @@
  *
  * The harness is the one of `grouped-dispatch-text.spec.ts` (copied, not imported).
  */
-import type { IScopedLogger, MediaFile } from '@camstack/types'
+import type { IScopedLogger, MediaFile } from '@dominevo/types'
 import sharp from 'sharp'
 import { describe, expect, it } from 'vitest'
 import {

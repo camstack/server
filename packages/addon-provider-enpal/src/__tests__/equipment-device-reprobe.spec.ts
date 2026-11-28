@@ -7,7 +7,7 @@ import {
   DeviceType,
   type IDeviceRuntimeState,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { EnpalEquipmentDevice } from '../devices/enpal-equipment-device.js'
 import { settingsToConnection } from '../config.js'
@@ -28,9 +28,10 @@ const quiet: IScopedLogger = {
 
 const SYSTEM_CONFIG = { equipment: 'impianto', specIds: [], integrationId: INT, system: 'enpal' }
 
-function rig(
-  persistedConfig: Record<string, unknown> = SYSTEM_CONFIG,
-): { readonly ctx: DeviceContext; readonly providers: Map<string, unknown> } {
+function rig(persistedConfig: Record<string, unknown> = SYSTEM_CONFIG): {
+  readonly ctx: DeviceContext
+  readonly providers: Map<string, unknown>
+} {
   const providers = new Map<string, unknown>()
   let runtime: IDeviceRuntimeState | null = null
   // A DeviceContext is the kernel's own object; the spec supplies only what the device reads.
@@ -67,7 +68,6 @@ function rig(
   } as unknown as DeviceContext
   return { ctx, providers }
 }
-
 
 function publishBox(): EnpalIntegrationManager {
   const manager = new EnpalIntegrationManager({

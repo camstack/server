@@ -9,7 +9,7 @@
  * per-session `DecoderFrameRingSink` (a `/dev/shm` ring), shipped the resulting
  * zero-pixel `FrameHandle` on the inference-result event, and let hub-side
  * post-analysis read the pixels back — co-located via a shm reader, cross-node
- * via `decoder.getFrame`. That made `@camstack/shm-ring` (the last NATIVE
+ * via `decoder.getFrame`. That made `@dominevo/shm-ring` (the last NATIVE
  * host-external) a hard dependency of the detection data plane, which broke the
  * Electron/Mac runners and blocked npm publishes.
  *
@@ -46,7 +46,7 @@
  * `perDeviceFloor === 0` restores the pure global-FIFO behaviour. Memory stays
  * bounded by `budgetBytes` — the floor never grows retention past the ceiling.
  */
-import type { DecodedFrame, FrameHandle, IScopedLogger } from '@camstack/types'
+import type { DecodedFrame, FrameHandle, IScopedLogger } from '@dominevo/types'
 
 /**
  * Retained-frame RAM budget (MB): 160. A lazy contain ≤640 slot reserves the aspect-agnostic

@@ -7,7 +7,7 @@ import { MissingCredentialsError, resolveCredentials } from '../credentials.js'
 import { saveSession } from '../session-store.js'
 import { tryConnectHub } from '../../mcp/hub-connection.js'
 
-// D1101: the `camstack login` session is the ONLY way a client reaches a hub.
+// D1101: the `dominevo login` session is the ONLY way a client reaches a hub.
 const SESSION = { server: 'https://hub.lan:4443', token: 'tok_session' }
 const ENV_THEN_SESSION = {
   CAMSTACK_TOKEN: 'tok_env',
@@ -31,12 +31,12 @@ describe('resolveCredentials: the session is the only source', () => {
     expect(r.source).toBe('session')
   })
 
-  it('an env token without a session is NOT a login: it asks for `camstack login`', () => {
+  it('an env token without a session is NOT a login: it asks for `dominevo login`', () => {
     expect(() => resolveCredentials({ env: ENV_THEN_SESSION, loadSession: () => null })).toThrow(
       MissingCredentialsError,
     )
     expect(() => resolveCredentials({ env: ENV_THEN_SESSION, loadSession: () => null })).toThrow(
-      /camstack login/,
+      /dominevo login/,
     )
   })
 
@@ -60,7 +60,7 @@ describe('connectHub: environment tokens are ignored', () => {
       server: 'https://hub.example.test:4443',
       env: { CAMSTACK_TOKEN: 'tok_env', CAMSTACK_HUB_TOKEN: 'tok_env2' },
       sessionDir: dir,
-      loginCommand: 'camstack login',
+      loginCommand: 'dominevo login',
     })
     expect(outcome.ok).toBe(false)
   })
@@ -83,7 +83,7 @@ describe('connectHub: environment tokens are ignored', () => {
       server: 'https://hub.example.test:4443',
       env: { CAMSTACK_TOKEN: 'tok_env' },
       sessionDir: dir,
-      loginCommand: 'camstack login',
+      loginCommand: 'dominevo login',
     })
     expect(outcome).toMatchObject({ ok: true })
     if (outcome.ok) expect(outcome.connection.token).toBe('tok_saved')

@@ -3,7 +3,7 @@
  * refers to triggers, the ids never collide with ones already there, and the
  * row's choices are the automation's own trigger rows.
  */
-import type { AutomationAction, AutomationRecipe, TriggeredByLeaf } from '@camstack/types'
+import type { AutomationAction, AutomationRecipe, TriggeredByLeaf } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { ensureTriggerIds, toggleTrigger, triggerRowsOf } from '../triggered-by-model'
 

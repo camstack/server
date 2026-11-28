@@ -10,8 +10,8 @@
  * of logic (deny-list, subscriber map, filter semantics) without pulling in
  * Moleculer types.
  */
-import type { EventFilter, SystemEvent } from '@camstack/types'
-import { noiseEventCategories } from '@camstack/types/enums'
+import type { EventFilter, SystemEvent } from '@dominevo/types'
+import { noiseEventCategories } from '@dominevo/types/enums'
 import type { DeviceEventRings } from './device-event-ring.js'
 import { createDeviceEventRings, recordDeviceEvent } from './device-event-ring.js'
 
@@ -263,7 +263,7 @@ export function matchesEventFilter(
  * lifecycle / recording / detection.event) survive in the last-N window without
  * being displaced by per-frame noise.
  *
- * Derived from the `noise` flag of `EVENT_CATEGORY_CATALOG` (`@camstack/types`):
+ * Derived from the `noise` flag of `EVENT_CATEGORY_CATALOG` (`@dominevo/types`):
  * the catalogue is the one place a category is classified as telemetry. To deny
  * a category, mark it `noise` there. (The admin events tab keeps its own, smaller
  * default-hidden list on purpose: it still shows `motion.on-motion-changed`.)

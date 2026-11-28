@@ -10,7 +10,7 @@
  * applied rows are counted, not listed, so the answer stays small on a hub with
  * hundreds of them; the problems are capped and the cut is reported.
  */
-import { MigrationLedgerEntrySchema, MigrationPendingEntrySchema } from '@camstack/types'
+import { MigrationLedgerEntrySchema, MigrationPendingEntrySchema } from '@dominevo/types'
 import { z } from 'zod'
 import type { McpContext } from './context.js'
 import { createRedactor } from './report-scrub.js'

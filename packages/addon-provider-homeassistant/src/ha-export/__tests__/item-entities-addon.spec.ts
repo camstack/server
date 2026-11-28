@@ -8,7 +8,7 @@
  * and the re-announce tests fail; resolve the item mirror with the raw read
  * instead of the mirror — "holds a removal for one read" fails.
  */
-import type { ConsumablesStatus, IScopedLogger } from '@camstack/types'
+import type { ConsumablesStatus, IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { HaExportAddon } from '../ha-export.addon.js'
 import { itemEntitiesFor } from '../item-entities.js'

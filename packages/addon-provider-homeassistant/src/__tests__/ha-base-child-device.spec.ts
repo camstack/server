@@ -5,7 +5,7 @@ import {
   type ControlStatus,
   type TemperatureSensorStatus,
   type LockControlStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { HaCoverDevice } from '../devices/ha-cover-device.js'
 import { HaNumericSensorDevice } from '../devices/ha-numeric-sensor-device.js'
 import { HaControlDevice } from '../devices/ha-control-device.js'
@@ -99,7 +99,7 @@ function registeredFor(
       child: vi.fn(),
       withTags: vi.fn(),
     },
-  } as unknown as import('@camstack/types').DeviceContext
+  } as unknown as import('@dominevo/types').DeviceContext
   const device = new HaCoverDevice(ctx)
   return { names, device }
 }
@@ -163,7 +163,7 @@ function instantiateNumericSensor(config: Record<string, unknown>): HaNumericSen
       child: vi.fn(),
       withTags: vi.fn(),
     },
-  } as unknown as import('@camstack/types').DeviceContext
+  } as unknown as import('@dominevo/types').DeviceContext
 
   return new HaNumericSensorDevice(ctx)
 }
@@ -326,7 +326,7 @@ describe('HaNumericSensorDevice handleStatePush — quantity on the device', () 
         child: vi.fn(),
         withTags: vi.fn(),
       },
-    } as unknown as import('@camstack/types').DeviceContext
+    } as unknown as import('@dominevo/types').DeviceContext
 
     const device = new HaNumericSensorDevice(ctx)
 
@@ -415,7 +415,7 @@ function instantiateControlDevice(config: Record<string, unknown>): HaControlDev
       child: vi.fn(),
       withTags: vi.fn(),
     },
-  } as unknown as import('@camstack/types').DeviceContext
+  } as unknown as import('@dominevo/types').DeviceContext
 
   return new HaControlDevice(ctx)
 }
@@ -491,7 +491,7 @@ describe('HaNumericSensorDevice handleStatePush — typed temperature', () => {
         child: vi.fn(),
         withTags: vi.fn(),
       },
-    } as unknown as import('@camstack/types').DeviceContext
+    } as unknown as import('@dominevo/types').DeviceContext
 
     const device = new HaNumericSensorDevice(ctx)
 
@@ -587,7 +587,7 @@ describe('HaNumericSensorDevice handleStatePush — typed temperature', () => {
         child: vi.fn(),
         withTags: vi.fn(),
       },
-    } as unknown as import('@camstack/types').DeviceContext
+    } as unknown as import('@dominevo/types').DeviceContext
 
     const device = new HaNumericSensorDevice(ctx)
 
@@ -681,7 +681,7 @@ describe('HaControlDevice — numeric slice in the base unit', () => {
         child: vi.fn(),
         withTags: vi.fn(),
       },
-    } as unknown as import('@camstack/types').DeviceContext
+    } as unknown as import('@dominevo/types').DeviceContext
 
     const device = new HaControlDevice(ctx)
 
@@ -786,7 +786,7 @@ describe('HaControlDevice — numeric slice in the base unit', () => {
         child: vi.fn(),
         withTags: vi.fn(),
       },
-    } as unknown as import('@camstack/types').DeviceContext
+    } as unknown as import('@dominevo/types').DeviceContext
 
     const device = new HaControlDevice(ctx)
 
@@ -931,7 +931,7 @@ function makeLockWithHandler(config: Record<string, unknown>): {
       child: vi.fn(),
       withTags: vi.fn(),
     },
-  } as unknown as import('@camstack/types').DeviceContext
+  } as unknown as import('@dominevo/types').DeviceContext
 
   const device = new HaLockDevice(ctx)
   return {

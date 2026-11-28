@@ -5,7 +5,7 @@
  */
 
 import * as zlib from 'node:zlib'
-import type { ILogDestination, LogReadEntry, LogReadQuery } from '@camstack/types'
+import type { ILogDestination, LogReadEntry, LogReadQuery } from '@dominevo/types'
 import Fastify, { type FastifyInstance } from 'fastify'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {

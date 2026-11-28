@@ -9,7 +9,7 @@ import { fakeDeps } from './ccu-fake.js'
 import { hmDevice } from './hm-test-fixtures.js'
 
 const KEY = '00315F298E5093'
-const PROGRAM_NAME = 'CamStack: Pulsante bagno events'
+const PROGRAM_NAME = 'Dominevo: Pulsante bagno events'
 
 function keyDevice() {
   return hmDevice({
@@ -109,7 +109,7 @@ describe('parseLastRun', () => {
 })
 
 describe('listCcuPrograms', () => {
-  it('maps library programs to rows and resolves a condition channel to the CamStack device', async () => {
+  it('maps library programs to rows and resolves a condition channel to the Dominevo device', async () => {
     const getKeyEventProgram = vi.fn(async (name: string) => {
       if (name !== PROGRAM_NAME) return null
       return { programId: '42', channelAddresses: [`${KEY}:1`] }

@@ -12,8 +12,8 @@
  *     All opens the editor right there — no tab switch.
  */
 
-import type { NcTaxonomy, Target } from '@camstack/types'
-import { Button, ErrorBox, Select, useSystem } from '@camstack/ui-library'
+import type { NcTaxonomy, Target } from '@dominevo/types'
+import { Button, ErrorBox, Select, useSystem } from '@dominevo/ui-library'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { type ReactNode, useState } from 'react'
 import type { DeviceFleetView } from './device-fleet-view'

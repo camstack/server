@@ -3,7 +3,7 @@
  * restart-safety. See docs/superpowers/specs/2026-07-17-package-zones-design.md §5.
  */
 
-import type { IScopedLogger, ObjectEvent, Zone, ZoneRule } from '@camstack/types'
+import type { IScopedLogger, ObjectEvent, Zone, ZoneRule } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createNoopLogger } from '../../../embedding-encoder/shared/noop-logger.js'
 import { PACKAGE_DROP_DEFAULTS, type PackageDropSettings } from '../../package-settings.js'

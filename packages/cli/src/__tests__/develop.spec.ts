@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { developHelp, peekCapability } from '../commands/develop.js'
 
-describe('camstack develop', () => {
+describe('dominevo develop', () => {
   it('exposes help text with core subcommands', () => {
     const help = developHelp()
     expect(help).toContain('list-addons')

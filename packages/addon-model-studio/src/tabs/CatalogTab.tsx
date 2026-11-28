@@ -1,5 +1,5 @@
 /**
- * Catalog — acquisition for CamStack / plugin catalog / plus catalog (same chrome).
+ * Catalog — acquisition for Dominevo / plugin catalog / plus catalog (same chrome).
  * Custom lives under Import; Installed is the inventory tab.
  */
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -13,8 +13,8 @@ import {
   cn,
   type AddonPageProps,
   GroupedModelSelector,
-} from '@camstack/ui-library'
-import { buildModelVariantGroups, type ModelFormat, MODEL_FORMATS } from '@camstack/types'
+} from '@dominevo/ui-library'
+import { buildModelVariantGroups, type ModelFormat, MODEL_FORMATS } from '@dominevo/types'
 import { downloadPipelineModel, listPipelineCatalog } from '../ui/api.js'
 import {
   catalogFamilyCardTitle,
@@ -37,12 +37,12 @@ export type CatalogSource = 'camstack' | 'scrypted' | 'frigate'
 
 export function parseCatalogSource(raw: string | null): CatalogSource {
   if (raw === 'scrypted' || raw === 'frigate' || raw === 'camstack') return raw
-  // Legacy ?source=custom belonged to Import — Catalog defaults to CamStack.
+  // Legacy ?source=custom belonged to Import — Catalog defaults to Dominevo.
   return 'camstack'
 }
 
 const SOURCE_OPTIONS: readonly { value: CatalogSource; label: string }[] = [
-  { value: 'camstack', label: 'CamStack' },
+  { value: 'camstack', label: 'Dominevo' },
   { value: 'scrypted', label: 'plugin catalog' },
   { value: 'frigate', label: 'plus catalog' },
 ]

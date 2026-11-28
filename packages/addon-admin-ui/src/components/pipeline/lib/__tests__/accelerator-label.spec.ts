@@ -1,5 +1,5 @@
-import type { NodeInferenceDevice } from '@camstack/types'
-import { acceleratorLabel } from '@camstack/ui-library'
+import type { NodeInferenceDevice } from '@dominevo/types'
+import { acceleratorLabel } from '@dominevo/ui-library'
 import { describe, expect, it } from 'vitest'
 import { acceleratorLabel as autoTuneAcceleratorLabel } from '../../auto-tune/auto-tune-view-model'
 import { acceleratorFace } from '../../placement-board/NodeInferenceDevices'

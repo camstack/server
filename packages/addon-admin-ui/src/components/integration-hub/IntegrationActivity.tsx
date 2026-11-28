@@ -4,7 +4,7 @@
  */
 import { Bell, ScrollText, type LucideIcon } from 'lucide-react'
 import { useState, type ReactElement, type ReactNode } from 'react'
-import { Button, EventStream, LogStream } from '@camstack/ui-library'
+import { Button, EventStream, LogStream } from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 
 import { ACTIVITY_SECTION } from '../../lib/integration-hub-url'

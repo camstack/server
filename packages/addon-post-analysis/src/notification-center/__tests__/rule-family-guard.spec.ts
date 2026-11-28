@@ -7,7 +7,7 @@
  */
 import { ncRecordKinds } from '../record-kinds.js'
 import { makeNcRecords } from './support/nc-test-deps.js'
-import { type NcRuleInput, NcRuleInputSchema } from '@camstack/types'
+import { type NcRuleInput, NcRuleInputSchema } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import {
   makeLogRecorder,

@@ -22,8 +22,8 @@
  * on `alert-critical` / `alert-critical-resolved` tells the phone — this class
  * sends nothing itself.
  */
-import type { Alert, IScopedLogger } from '@camstack/types'
-import { errMsg } from '@camstack/types'
+import type { Alert, IScopedLogger } from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
 
 export type RegistryId = 'npm' | 'huggingface'
 
@@ -72,7 +72,7 @@ export function buildRegistryUnreachableAlert(
     category: REGISTRY_UNREACHABLE_CATEGORY,
     severity: 'critical',
     title: `${words.name} cannot be reached`,
-    message: `CamStack cannot reach ${words.name}. ${words.impact} until the connection is back (${reason}). Check the hub's internet access, DNS and proxy.`,
+    message: `Dominevo cannot reach ${words.name}. ${words.impact} until the connection is back (${reason}). Check the hub's internet access, DNS and proxy.`,
     status: 'active',
     read: false,
     createdAt: now,

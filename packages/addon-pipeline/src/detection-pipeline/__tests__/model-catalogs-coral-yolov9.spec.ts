@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { describe, it, expect } from 'vitest'
 // eslint-disable-next-line no-restricted-imports -- the revision rule is the downloader's (build-time dep, as in provider.ts)
-import { resolveFormatRevision } from '@camstack/server/system/addon-utils'
+import { resolveFormatRevision } from '@dominevo/server/system/addon-utils'
 import { OBJECT_DETECTION_MODELS } from '../registry/model-catalogs.js'
 import {
   getDefaultModelForFormat,
@@ -98,7 +98,7 @@ describe.each(BUILDS)('OBJECT_DETECTION_MODELS — $id (YOLOv9-s on the Coral)',
     expect(config.labels).toEqual([...COCO17])
   })
 
-  it('carries the GPL-3.0 record, hosted on the CamStack mirror', () => {
+  it('carries the GPL-3.0 record, hosted on the Dominevo mirror', () => {
     const license = entryOf(build.id)?.license
     expect(license?.weights).toBe('GPL-3.0')
     expect(license?.code).toBe('GPL-3.0')

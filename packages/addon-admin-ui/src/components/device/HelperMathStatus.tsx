@@ -7,8 +7,8 @@ import type {
   ArithmeticHelperSpec,
   ExpressionHelperSpec,
   ThresholdHelperSpec,
-} from '@camstack/types'
-import { ErrorBox, SECTION_BODY, SectionCard, StatCard } from '@camstack/ui-library'
+} from '@dominevo/types'
+import { ErrorBox, SECTION_BODY, SectionCard, StatCard } from '@dominevo/ui-library'
 import { Sigma } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'

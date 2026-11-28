@@ -1,7 +1,7 @@
 /**
  * System → Data → Records, an entry kind opened with Manage (`/system/data?tab=records`).
  */
-import { REDACTED_SECRET } from '@camstack/types'
+import { REDACTED_SECRET } from '@dominevo/types'
 import { defineFixtures } from './_define'
 import { NOW } from './_time'
 

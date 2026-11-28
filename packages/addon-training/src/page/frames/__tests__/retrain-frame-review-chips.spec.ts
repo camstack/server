@@ -1,4 +1,4 @@
-import type { RetrainCorpusPageFrame } from '@camstack/types'
+import type { RetrainCorpusPageFrame } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { summarizeFrameReview } from '../lib/retrain-frame-review-chips.js'
 

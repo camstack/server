@@ -36,7 +36,7 @@ import {
   type DetailCropConvention,
   type IScopedLogger,
   readDetailCropConvention,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /**
  * The addon whose GLOBAL settings own the convention. `pipeline-orchestrator`

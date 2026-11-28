@@ -18,7 +18,7 @@ describe('check-action-block-importers', () => {
       ),
       file(
         'packages/addon-admin-ui/src/pages/build/flow/CommandStep.tsx',
-        "import { DeviceDoActionFields } from '../../../components/device-do-action/DeviceDoActionFields'\nimport type { LooseVocabOffer } from '@camstack/types'\n",
+        "import { DeviceDoActionFields } from '../../../components/device-do-action/DeviceDoActionFields'\nimport type { LooseVocabOffer } from '@dominevo/types'\n",
       ),
     ]
     const importers = { 'packages/addon-admin-ui/src/pages/x/Editor.tsx': 'x editor' }
@@ -58,7 +58,7 @@ describe('check-action-block-importers', () => {
     const sources = [
       file(
         'packages/addon-osd/src/page/MyPicker.tsx',
-        "import type { ResolvedVocabAction } from '@camstack/types'\n",
+        "import type { ResolvedVocabAction } from '@dominevo/types'\n",
       ),
     ]
     const out = findViolations(sources, {})
@@ -70,7 +70,7 @@ describe('check-action-block-importers', () => {
     const sources = [
       file(
         'packages/addon-admin-ui/src/components/device-do-action/ActionPicker.tsx',
-        "import type { ResolvedVocabAction } from '@camstack/types'\n",
+        "import type { ResolvedVocabAction } from '@dominevo/types'\n",
       ),
     ]
     expect(findViolations(sources, {})).toEqual([])

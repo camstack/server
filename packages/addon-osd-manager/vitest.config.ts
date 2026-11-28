@@ -8,7 +8,7 @@ const catalogue = fileURLToPath(
 )
 
 /**
- * Vitest config for `@camstack/addon-osd-manager`.
+ * Vitest config for `@dominevo/addon-osd-manager`.
  *
  * The package's `vite.config.ts` is the shared Node-side lib preset
  * (`buildLibPreset`) with no `test` block, so a plain `vitest run` would
@@ -20,7 +20,7 @@ const catalogue = fileURLToPath(
 export default defineConfig({
   plugins: [react()],
   resolve: {
-    alias: [{ find: /^@camstack\/types\/device-template-catalogue$/, replacement: catalogue }],
+    alias: [{ find: /^@dominevo\/types\/device-template-catalogue$/, replacement: catalogue }],
   },
   test: {
     ...vitestWorkers(),

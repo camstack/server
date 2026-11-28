@@ -1,4 +1,4 @@
-import type { CapCallInput } from '@camstack/server/system'
+import type { CapCallInput } from '@dominevo/server/system'
 
 /** The budget one agent -> hub cap call has, registration wait included. */
 export const FORWARD_TO_HUB_TIMEOUT_MS = 60_000

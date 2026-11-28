@@ -8,7 +8,7 @@
  * turns into an HTTP request. Attachment url→bytes fetching is expressed as a
  * `needsFetch` directive the adapter executes (the engine never fetches).
  *
- * Lives in `@camstack/types` because both the system `notifiers` addon and the
+ * Lives in `@dominevo/types` because both the system `notifiers` addon and the
  * HA addon need it and addons may not cross-import.
  */
 import type { z } from 'zod'

@@ -15,7 +15,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { StreamBrokerManager } from '../stream-broker/stream-broker-manager.js'
 import { DEFAULT_PREBUFFER_SEC } from '../prebuffer.js'
-import type { ConfigSubTabsFieldWithValue, IScopedLogger } from '@camstack/types'
+import type { ConfigSubTabsFieldWithValue, IScopedLogger } from '@dominevo/types'
 
 function makeLogger(): IScopedLogger {
   const l: IScopedLogger = {
@@ -121,7 +121,7 @@ async function displayedPrebuffer(
 }
 
 function getSubTabsField(
-  contribution: import('@camstack/types').ConfigUISchemaWithValues,
+  contribution: import('@dominevo/types').ConfigUISchemaWithValues,
 ): ConfigSubTabsFieldWithValue {
   const section = contribution.sections.find((s) => s.id === 'stream-broker-streams')
   if (!section) throw new Error('section "stream-broker-streams" missing')

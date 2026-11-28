@@ -2,7 +2,7 @@
  * Two locations of the SAME type must not share a physical root (D389) — and
  * the three properties that decide whether this check helps or hurts.
  */
-import type { PhysicalRoot } from '@camstack/types/node'
+import type { PhysicalRoot } from '@dominevo/types/node'
 import { describe, expect, it } from 'vitest'
 import type { ResolveRoot, RootCollisionCandidate } from '../location-root-collision.js'
 import { findRootCollision, rootCollisionMessage } from '../location-root-collision.js'

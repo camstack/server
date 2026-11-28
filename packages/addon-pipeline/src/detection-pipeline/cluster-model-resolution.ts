@@ -42,7 +42,7 @@ import {
   type ModelFormat,
   resolveClusterStepModelId,
   type StepDefinition,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { getStepDefinition } from './registry/step-definitions.js'
 
 /** Catalog lookup that answers `null` instead of throwing — injectable for tests. */

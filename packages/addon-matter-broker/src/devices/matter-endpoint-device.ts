@@ -40,7 +40,7 @@ import {
   type InferNativeProvider,
   type LockControlStatus,
   type PowerMeterStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { matterCommands, matterNodes } from '../matter-gateway.js'
 import type { MatterAttributeReport, MatterEventReport } from '../matter-controller.js'
 import { decodeMatterEvent, LOCK_EVENT_TYPES, SWITCH_EVENT_TYPES } from '../matter-event-decode.js'
@@ -115,7 +115,7 @@ const KNOWN_CAPS: ReadonlySet<MatterEndpointCap> = new Set<MatterEndpointCap>([
   'event-emitter',
 ])
 
-/** Which CamStack cap a decoded attribute patch updates → the cap's slice name. */
+/** Which Dominevo cap a decoded attribute patch updates → the cap's slice name. */
 const CAP_SLICE_NAME: Readonly<Record<MatterEndpointCap, string>> = {
   switch: 'switch',
   brightness: 'brightness',
@@ -166,7 +166,7 @@ const COLD_CLIMATE: ClimateControlStatus = {
 const COLD_POWER: PowerMeterStatus = { lastFetchedAt: 0 }
 
 /**
- * One Matter endpoint as a CamStack accessory child. Registers the typed caps
+ * One Matter endpoint as a Dominevo accessory child. Registers the typed caps
  * derived from the endpoint's clusters and routes outbound commands to the live
  * controller through the {@link matterCommands} sink.
  *

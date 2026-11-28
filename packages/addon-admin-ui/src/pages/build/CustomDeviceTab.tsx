@@ -6,7 +6,7 @@
  * Customizations stay links to the device.
  */
 
-import { type CompositionListRead, LINKED_TRIGGER_TEMPLATE_ID } from '@camstack/types'
+import { type CompositionListRead, LINKED_TRIGGER_TEMPLATE_ID } from '@dominevo/types'
 import {
   Badge,
   Button,
@@ -24,7 +24,7 @@ import {
   useDeviceManagerSetName,
   useDeviceManagerSetTags,
   useItemFormUrl,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import type { TFunction } from 'i18next'
 import { Boxes, Trash2 } from 'lucide-react'
 import { CompositionBlockEditor } from '../../components/composition-editor/CompositionBlockEditor'

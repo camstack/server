@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { EspBrokerRegistry, type EspScheduler } from '../esphome-registry.js'
 import { EspLinkHub } from '../esphome-link-hub.js'
 import { EspLinkError } from '../esphome-link.js'

@@ -24,7 +24,7 @@
  * render failed (D62's argument, one level down).
  */
 
-import type { NcOccupancyCondition } from '@camstack/types'
+import type { NcOccupancyCondition } from '@dominevo/types'
 import { z } from 'zod'
 import { NcArtifactRecordSchema } from './artifact-index.js'
 import type { NcOccupancyProbe } from './occupancy-dry-run.js'

@@ -4,7 +4,7 @@
  * for an enum, a bounded number input, a switch for a boolean. The JSON editor
  * stays the source of truth; this form reads and writes the same value.
  */
-import { DeviceValuePicker, Input, Select, Switch, Textarea } from '@camstack/ui-library'
+import { DeviceValuePicker, Input, Select, Switch, Textarea } from '@dominevo/ui-library'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { isRecord } from '../../lib/api-explorer'

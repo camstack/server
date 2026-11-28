@@ -26,7 +26,7 @@ import {
   readStoredRemoteConfig,
   RunningStateStatusSchema,
   type TemplateUser,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { invokeCapOver } from './actions-wiring.js'
 import { coreBlocksRecordKinds } from './record-kinds.js'
 import {

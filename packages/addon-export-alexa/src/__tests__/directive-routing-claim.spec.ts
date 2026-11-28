@@ -3,7 +3,7 @@
  * `hubUrl` routing claim no longer matches it is refused with a LOGGED, named reason - never
  * a silent 401. Tokens without the claim, and tokens whose claim equals the role, pass on.
  */
-import type { AddonContext, AddonHttpReply, AddonHttpRequest, IScopedLogger } from '@camstack/types'
+import type { AddonContext, AddonHttpReply, AddonHttpRequest, IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { buildRoutes, BROKER_HEADER, type HttpRouteDeps, type RoutedSkill } from '../http-server.js'
 import {

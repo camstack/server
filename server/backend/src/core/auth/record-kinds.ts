@@ -1,7 +1,7 @@
 /**
  * Record kinds owned by `core-auth` (hub-resident, phase 6 / §2.8).
  */
-import { CredentialScopeSchema, defineRecordKinds, SHARE_VIEW_KINDS } from '@camstack/types'
+import { CredentialScopeSchema, defineRecordKinds, SHARE_VIEW_KINDS } from '@dominevo/types'
 import { z } from 'zod'
 
 const ShareTokenScopeSchema = z.object({

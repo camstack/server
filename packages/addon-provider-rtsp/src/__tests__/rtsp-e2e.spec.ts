@@ -16,15 +16,15 @@ import type {
   IEventBus,
   MigrationApiV1,
   SavedDevice,
-} from '@camstack/types'
-import { DeviceType, streamCatalogCapability } from '@camstack/types'
-import type { DeviceManagerApi, InferNativeProvider } from '@camstack/types'
+} from '@dominevo/types'
+import { DeviceType, streamCatalogCapability } from '@dominevo/types'
+import type { DeviceManagerApi, InferNativeProvider } from '@dominevo/types'
 
 import {
   DeviceRegistry,
   CapabilityRegistry,
   createBrokerDeviceManagerApi,
-} from '@camstack/server/system'
+} from '@dominevo/server/system'
 
 import { RtspProviderAddon } from '../addon.js'
 import { RtspCamera } from '../rtsp-camera.js'
@@ -156,8 +156,8 @@ function makeEventBus(): IEventBus {
 
 // Shared fake kernel stream-probe wired off `probeFixtures` so every
 // addon + device context in the suite hits the same metadata table.
-// Matches the real `IKernelStreamProbe` contract from `@camstack/types`.
-const fakeKernelStreamProbe: import('@camstack/types').IKernelStreamProbe = {
+// Matches the real `IKernelStreamProbe` contract from `@dominevo/types`.
+const fakeKernelStreamProbe: import('@dominevo/types').IKernelStreamProbe = {
   probe: async (url) => probeFixtures.get(url) ?? {},
   probeField: async (_key, value) => {
     const url = String(value ?? '')
@@ -202,7 +202,7 @@ function unusedMigrationApi(): MigrationApiV1 {
 function makeAddonContext(
   addonId: string,
   devicesApi: DeviceManagerApi,
-  api: import('@camstack/types').AddonApi,
+  api: import('@dominevo/types').AddonApi,
 ): AddonContext {
   const registeredProviders: Record<string, unknown> = {}
   return {
@@ -269,7 +269,7 @@ function makeFakePersistenceApi(
   addonId: string,
   deviceStore: DeviceStore,
   configStore: ConfigStore,
-): import('@camstack/types').AddonApi {
+): import('@dominevo/types').AddonApi {
   const contextId = addonId
   let nextId = 1
   const allocated = new Map<string, number>()
@@ -431,7 +431,7 @@ function makeFakePersistenceApi(
         },
       },
     },
-  } as unknown as import('@camstack/types').AddonApi
+  } as unknown as import('@dominevo/types').AddonApi
 }
 
 function makeDevicesApi(
@@ -441,7 +441,7 @@ function makeDevicesApi(
   configStore: ConfigStore,
 ): {
   devicesApi: DeviceManagerApi
-  api: import('@camstack/types').AddonApi
+  api: import('@dominevo/types').AddonApi
   capabilityRegistry: CapabilityRegistry
 } {
   const fakeApi = makeFakePersistenceApi(addonId, deviceStore, configStore)

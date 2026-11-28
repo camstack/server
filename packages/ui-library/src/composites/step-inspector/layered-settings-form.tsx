@@ -24,7 +24,7 @@ import {
   USE_ROOT_MODEL_SETTING_KEY,
   withFieldFrom,
   withoutField,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { cn } from '../../lib/cn'
 import { TEXT_HINT, TEXT_SECTION_LABEL } from '../../lib/responsive'
 import { ResetModelDefaultsButton } from '../model-bound-slider'

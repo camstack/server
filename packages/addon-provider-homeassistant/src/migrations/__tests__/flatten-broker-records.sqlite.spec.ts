@@ -18,7 +18,7 @@ import {
   type MigrationOwnerResult,
   recordSecretRef,
   runAddonMigrations,
-} from '@camstack/types'
+} from '@dominevo/types'
 import Database from 'better-sqlite3'
 import { z } from 'zod'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'

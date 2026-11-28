@@ -5,7 +5,7 @@
  * that failed — or answered without the value, which never legitimately
  * disappears — is `unread`, so the stored value is kept (D49).
  */
-import type { DeviceIdentifierKey, RawDeviceIdentifiers } from '@camstack/types'
+import type { DeviceIdentifierKey, RawDeviceIdentifiers } from '@dominevo/types'
 import { z } from 'zod'
 
 /** The `GetDeviceInformation` fields used here. */

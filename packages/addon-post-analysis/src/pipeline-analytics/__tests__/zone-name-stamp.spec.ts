@@ -1,4 +1,4 @@
-import type { Track } from '@camstack/types'
+import type { Track } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { stampZoneNames } from '../zone-name-stamp.js'
 

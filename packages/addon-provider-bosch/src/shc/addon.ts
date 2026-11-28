@@ -20,7 +20,7 @@ import {
   type RecordIntegrationInstances,
   type SystemEvent,
   rowsDepsOver,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { boschShcActions } from './custom-actions.js'
 import { shcClimateRowKind } from './shc-domain-mapping.js'
 import {
@@ -151,7 +151,7 @@ export class BoschShcProviderAddon extends BaseDeviceProvider {
             sslCertificate,
             sslKey,
             token,
-            summary: 'CamStack is registered with your Smart Home Controller.',
+            summary: 'Dominevo is registered with your Smart Home Controller.',
           }
         },
       },

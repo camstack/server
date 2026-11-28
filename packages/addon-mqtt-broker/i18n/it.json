@@ -9,7 +9,7 @@
   "fullSettings.brokers.password.label": "Password",
   "fullSettings.brokers.clientIdPrefix.label": "Prefisso dell'ID client",
   "fullSettings.brokers.onboard.label": "Avvia un broker integrato",
-  "fullSettings.brokers.onboard.description": "Avvia un broker aedes ospitato da CamStack su questo hub invece di collegarsi a uno esterno. Ogni broker integrato ha un proprio server e una propria porta dedicati.",
+  "fullSettings.brokers.onboard.description": "Avvia un broker aedes ospitato da Dominevo su questo hub invece di collegarsi a uno esterno. Ogni broker integrato ha un proprio server e una propria porta dedicati.",
   "fullSettings.brokers.port.label": "Porta",
   "fullSettings.brokers.port.description": "Porta TCP del broker integrato. Lascia vuoto per assegnarne automaticamente una libera.",
   "fullSettings.brokers.allowAnonymous.label": "Consenti l'accesso anonimo",

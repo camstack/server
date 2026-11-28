@@ -4,7 +4,7 @@
  * role in the generated access map the hub enforces. A method added without
  * `auth: 'admin'` fails here.
  */
-import { METHOD_ACCESS_MAP, terminalSessionCapability } from '@camstack/types'
+import { METHOD_ACCESS_MAP, terminalSessionCapability } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 
 describe('terminal-session access', () => {

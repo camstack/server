@@ -21,14 +21,14 @@
  *    in the {@link RootRestartUpdate} the update engine hands to the restart
  *    seam.
  */
-import type { PendingRestartMarkerPayload } from '@camstack/types'
+import type { PendingRestartMarkerPayload } from '@dominevo/types'
 import type { RootRestartUpdate } from '../../server-root/index.js'
 
 /** Reason-string prefix every `RootUpdateService`-driven restart carries. */
 const SERVER_UPDATE_PREFIX = 'server-update:'
 
 /** The root package a version-less `server-update:` reason is about. */
-const ROOT_PACKAGE_NAME = '@camstack/server'
+const ROOT_PACKAGE_NAME = '@dominevo/server'
 
 export interface RestartMarkerInput {
   /** Free-form reason from the caller (`server-update: <pkg>@<version>`, a username, …). */
@@ -64,7 +64,7 @@ export function isServerUpdateReason(requestedBy: string | undefined): boolean {
   return requestedBy !== undefined && requestedBy.startsWith(SERVER_UPDATE_PREFIX)
 }
 
-/** `server-update: @camstack/server@1.2.138` → `1.2.138`; `… manual restart` → none. */
+/** `server-update: @dominevo/server@1.2.138` → `1.2.138`; `… manual restart` → none. */
 export function versionFromReason(requestedBy: string | undefined): string | undefined {
   if (requestedBy === undefined) return undefined
   return /@([^@\s]+)$/.exec(requestedBy)?.[1]

@@ -9,8 +9,8 @@
  * - the frame's `packageLooked`, its RAW package boxes and the camera's
  *   `packageDropEarlyPickupEnabled` reach the tracker (F4, D687).
  */
-import type { FrameResult, IEventBus, PipelineInferenceResultPayload } from '@camstack/types'
-import { createEvent, EventCategory } from '@camstack/types'
+import type { FrameResult, IEventBus, PipelineInferenceResultPayload } from '@dominevo/types'
+import { createEvent, EventCategory } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   type PackageStillnessInput,

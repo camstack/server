@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import type { CustomModelDescriptor } from '@camstack/types'
+import type { CustomModelDescriptor } from '@dominevo/types'
 import {
   clearAvailability,
   clearAvailabilityFormat,
@@ -110,7 +110,7 @@ describe('renameCustomModel', () => {
     expect(list[0]?.entry.name).toBe('plus catalog yolo-generic (be9c11b4)')
   })
 
-  it('refuses an unknown id, an over-long name and a CamStack catalog model', () => {
+  it('refuses an unknown id, an over-long name and a Dominevo catalog model', () => {
     const row = pinned()
     expect(() => renameCustomModel([row], {}, 'nope', 'x')).toThrow(/not registered/)
     expect(() => renameCustomModel([row], {}, row.entry.id, 'x'.repeat(81))).toThrow(/limit is 80/)
@@ -118,7 +118,7 @@ describe('renameCustomModel', () => {
       stepId: 'object-detection',
       entry: { ...descriptor('yolov9s').entry, provider: 'camstack' },
     }
-    expect(() => renameCustomModel([camstack], {}, 'yolov9s', 'Mine')).toThrow(/CamStack catalog/)
+    expect(() => renameCustomModel([camstack], {}, 'yolov9s', 'Mine')).toThrow(/Dominevo catalog/)
   })
 })
 

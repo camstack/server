@@ -1,4 +1,4 @@
-import type { RunnerCameraConfig } from '@camstack/types'
+import type { RunnerCameraConfig } from '@dominevo/types'
 
 /** Complete defaults for {@link RunnerCameraConfig} in pipeline-runner specs. */
 export const DEFAULT_RUNNER_CAMERA_CONFIG: RunnerCameraConfig = {

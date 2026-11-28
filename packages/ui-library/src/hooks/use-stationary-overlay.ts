@@ -13,7 +13,7 @@
  * actually read.
  */
 import { useQuery } from '@tanstack/react-query'
-import type { StationaryOverlayBox } from '@camstack/types'
+import type { StationaryOverlayBox } from '@dominevo/types'
 
 /**
  * The ONE route this hook needs.

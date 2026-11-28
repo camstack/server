@@ -7,7 +7,7 @@ import {
   registerPowerSwitch,
   type WorkloadStatus,
   workloadCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { UNRAID_SYSTEM } from '../config.js'
 import type { UnraidClientLike } from '../unraid-client-contract.js'

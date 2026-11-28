@@ -12,7 +12,7 @@ describe('describePushFailure', () => {
     expect(f.kind).toBe('component-missing')
     expect(f.permanent).toBe(true)
     expect(f.text).toContain('HTTP 404')
-    expect(f.text).toContain('no CamStack integration installed')
+    expect(f.text).toContain('no Dominevo integration installed')
     expect(f.text).toContain('/api/camstack/push')
     expect(f.text).toContain('HACS')
   })

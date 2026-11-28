@@ -12,7 +12,7 @@ import {
   instanceApiOverTargets,
   type LogExtras,
   type Target,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { LEGACY_SUPPORT } from '../component-support.js'
 import {

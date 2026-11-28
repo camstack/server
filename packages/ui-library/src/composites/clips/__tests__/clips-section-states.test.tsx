@@ -94,7 +94,7 @@ describe('ClipsSection — loading', () => {
 
 describe('ClipsSection — failed', () => {
   it('a read that FAILED says so and is not drawn as an empty day', () => {
-    sourcesAnswer = { status: 'success', data: [source('analytics', 'CamStack', 'ok')] }
+    sourcesAnswer = { status: 'success', data: [source('analytics', 'Dominevo', 'ok')] }
     clipsAnswer = { status: 'error', error: { message: 'PRECONDITION_FAILED' } }
     render(<ClipsSection deviceId={107} />)
     const clips = within(screen.getByRole('region', { name: 'Clips' }))
@@ -106,7 +106,7 @@ describe('ClipsSection — empty with a cause', () => {
   it('names the DAY and which sources answered for it', () => {
     sourcesAnswer = {
       status: 'success',
-      data: [source('analytics', 'CamStack recordings', 'ok')],
+      data: [source('analytics', 'Dominevo recordings', 'ok')],
     }
     clipsAnswer = { status: 'success', data: [] }
     render(<ClipsSection deviceId={107} />)
@@ -114,7 +114,7 @@ describe('ClipsSection — empty with a cause', () => {
     // The day is spelled out: "no clips" with no date is the ambiguity this
     // surface exists to remove.
     expect(empty.textContent ?? '').toMatch(/\d{4}/)
-    expect(empty.textContent ?? '').toContain('CamStack recordings')
+    expect(empty.textContent ?? '').toContain('Dominevo recordings')
   })
 
   it('nobody answering is a DIFFERENT sentence from a quiet day', () => {
@@ -250,7 +250,7 @@ describe('ClipsSection — the window it asks for', () => {
   // against a frozen clock, because the default band's WIDTH depends on the
   // time of day the suite happens to run at.
   it('asks listClips for a half-open local window that never runs into the future', () => {
-    sourcesAnswer = { status: 'success', data: [source('analytics', 'CamStack recordings', 'ok')] }
+    sourcesAnswer = { status: 'success', data: [source('analytics', 'Dominevo recordings', 'ok')] }
     clipsAnswer = { status: 'success', data: [] }
     const before = Date.now()
     render(<ClipsSection deviceId={107} />)

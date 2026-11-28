@@ -19,7 +19,7 @@ import {
   type RecordKindHandle,
   tagIdFromKey,
   tagKey,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { readAllRows } from '../../../records/read-all-rows.js'
 import type {
   ActionRowBody,

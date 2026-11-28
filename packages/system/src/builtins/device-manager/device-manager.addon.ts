@@ -33,7 +33,7 @@ import type {
   IDeviceAdoptionProvider,
   IDeviceOpsProvider,
   InferProvider,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   BaseAddon,
   defineAddonMigrations,
@@ -48,7 +48,7 @@ import {
   type IJobSourceProvider,
   type JobSourceEntry,
   SECRET_CLEAR,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { purgeRetiredSettingsRows } from '../sqlite-storage/retired-settings-keys.js'
 import { AdoptionAutopilot } from './adoption-autopilot.js'
 import { RecordsAdoptionLedger } from './adoption-ledger.js'

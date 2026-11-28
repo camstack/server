@@ -7,7 +7,7 @@
  * Kept in a module with no side effects: the records guards import it.
  */
 import type { z } from 'zod'
-import { defineRecordKinds, DeviceRunSchema, type DefinedRecordKind } from '@camstack/types'
+import { defineRecordKinds, DeviceRunSchema, type DefinedRecordKind } from '@dominevo/types'
 
 export const DEVICE_RUNS_MAX_ROWS_PER_DEVICE = 500
 

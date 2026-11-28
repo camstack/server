@@ -16,8 +16,8 @@
 
 import { NcRuleAiStore } from '../rule-ai-store.js'
 import { ncRecordKinds } from '../record-kinds.js'
-import type { NcRuleInput } from '@camstack/types'
-import { NcRuleInputSchema, RecordingConfigSchema } from '@camstack/types'
+import type { NcRuleInput } from '@dominevo/types'
+import { NcRuleInputSchema, RecordingConfigSchema } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import { makeNcActionHandlers, type NcActionHandlers } from '../nc-actions.js'

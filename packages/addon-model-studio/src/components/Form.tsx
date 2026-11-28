@@ -4,7 +4,7 @@
  * benchmark page's inline inputs rather than the heavier TabbedSettingsForm.
  */
 import type { ReactNode } from 'react'
-import { Checkbox, Input } from '@camstack/ui-library'
+import { Checkbox, Input } from '@dominevo/ui-library'
 
 export function Field({ label, children }: { label: string; children: ReactNode }) {
   return (

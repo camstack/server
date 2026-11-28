@@ -15,7 +15,7 @@
  * - Keyed by OWNER (N-7): another block's claim on the same cap, and an `add`
  *   claim (which emits no shadow), never make this block's cap held.
  */
-import type { FieldClaim } from '@camstack/types'
+import type { FieldClaim } from '@dominevo/types'
 
 /** What one claim RPC of an owner did, as its target saw it. */
 export type ClaimEvent = 'claiming' | 'held' | 'free' | 'unsettled'

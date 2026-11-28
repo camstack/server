@@ -4,7 +4,7 @@
  * display unit, the same resolution a row uses. A release lands on the cap's
  * own step, so a °F thumb does not store a fraction of a °C.
  */
-import type { HeroAction, HeroCall } from '@camstack/types'
+import type { HeroAction, HeroCall } from '@dominevo/types'
 import { fireEvent, render, screen } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { describe, expect, it, vi } from 'vitest'

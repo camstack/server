@@ -37,7 +37,7 @@ import {
   type MotionStatus,
   snapshotCapability,
   streamCatalogCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { buildGridLayoutNativeProvider } from './grid-layout-native-provider.js'
 import type { GridSnapshotImage } from './grid-snapshot.js'

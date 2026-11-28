@@ -1,5 +1,5 @@
 /** D692 §4: has a grouped-window member anything left to wait for? */
-import type { DetailStepAnnounce } from '@camstack/types'
+import type { DetailStepAnnounce } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { recognitionOutlook, type RecognitionOutlookInput } from '../recognition-outlook.js'
 

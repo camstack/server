@@ -14,7 +14,7 @@ import {
   MIGRATION_API_VERSION,
   type MigrationMeta,
   RevConflictError,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import {
@@ -65,8 +65,8 @@ let world: MigrationWorld
 beforeEach(async () => {
   world = await makeMigrationWorld({
     installed: [
-      { dir: '@camstack/demo', addons: [{ id: OWNER }, { id: SIBLING, group: 'g' }] },
-      { dir: '@camstack/other', addons: [{ id: FOREIGN, group: 'g' }] },
+      { dir: '@dominevo/demo', addons: [{ id: OWNER }, { id: SIBLING, group: 'g' }] },
+      { dir: '@dominevo/other', addons: [{ id: FOREIGN, group: 'g' }] },
     ],
   })
   world.addIntegration({ id: INTEGRATION, addonId: OWNER })

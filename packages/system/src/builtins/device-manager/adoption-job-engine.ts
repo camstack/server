@@ -1,7 +1,7 @@
 /**
  * Background adoption job engine.
  *
- * `device-adoption.adopt({childNativeIds: [...]})` materialises one CamStack
+ * `device-adoption.adopt({childNativeIds: [...]})` materialises one Dominevo
  * device per candidate PLUS every accessory child, and the whole array shares
  * ONE UDS request deadline (60s). The deadline is correct and is not the thing
  * to raise — `SocketChannel.request` once had no timeout at all and a mute peer
@@ -52,8 +52,8 @@ import type {
   JobResult,
   JobSnapshot,
   JobUpdateInput,
-} from '@camstack/types'
-import { errMsg } from '@camstack/types'
+} from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
 import type { RemovalFence } from './removal-fence.js'
 
 /**

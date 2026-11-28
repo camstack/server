@@ -12,7 +12,7 @@ function file(path: string, source: string): SourceFile {
   return { path, source }
 }
 
-const IMPORT = `import { declareLinkKind } from '@camstack/types'\n`
+const IMPORT = `import { declareLinkKind } from '@dominevo/types'\n`
 
 describe('check-instance-refs-use-link-primitive', () => {
   it('rule 1: a broker-select field type is a violation, anywhere', () => {
@@ -53,7 +53,7 @@ describe('check-instance-refs-use-link-primitive', () => {
   })
 
   it('rule 2 accepts linkFieldDescriptor as the primitive too', () => {
-    const src = `import { linkFieldDescriptor } from '@camstack/types'\n{ key: 'smtpInstanceId' }`
+    const src = `import { linkFieldDescriptor } from '@dominevo/types'\n{ key: 'smtpInstanceId' }`
     expect(siteViolations([file('packages/addon-x/src/e.ts', src)])).toEqual([])
   })
 
@@ -81,7 +81,7 @@ describe('check-instance-refs-use-link-primitive', () => {
 
   it('a file that imports optionalLinkField from types is a link site, a file without it is flagged', () => {
     const body = `z.object({ brokerId: z.string() })`
-    const imported = `import { optionalLinkField } from '@camstack/types'\n${body}`
+    const imported = `import { optionalLinkField } from '@dominevo/types'\n${body}`
     expect(
       siteViolations([file('packages/addon-provider-reolink/src/email-push-bridge.ts', imported)]),
     ).toEqual([])

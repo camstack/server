@@ -42,7 +42,7 @@ The measurement itself carried a fourth lesson: hub-main's `/proc/7/cmdline`
 names `/opt/camstack-hub/…/dist/starter.js` on every boot — the baked starter —
 and the seed's `package.json` beside it carries the IMAGE version (1.2.338).
 That path is not what the process loaded; the launcher's `resolved
-@camstack/system@… from /data/server-root/current` line is. Reading a version
+@dominevo/system@… from /data/server-root/current` line is. Reading a version
 off the cmdline path diagnosed a hub running 1.2.352 as a version behind.
 
 Alternatives considered and rejected:

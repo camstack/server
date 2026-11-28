@@ -13,8 +13,8 @@
  * makes "no casts" achievable: the api surface is typed, and each call site
  * names its concrete path.
  */
-import type { AddonApi } from '@camstack/types'
-import { commandOrigin } from '@camstack/types/addon'
+import type { AddonApi } from '@dominevo/types'
+import { commandOrigin } from '@dominevo/types/addon'
 
 import type { CapCall, CapStatusRead } from './trait-catalog.js'
 

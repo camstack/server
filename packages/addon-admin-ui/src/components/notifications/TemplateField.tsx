@@ -13,14 +13,14 @@
  * which is `{{var}}` substitution only), a device-value picker would promise a
  * feature that does nothing.
  */
-import type { NcTemplateVarContext, NcTemplateVarDescriptor } from '@camstack/types'
+import type { NcTemplateVarContext, NcTemplateVarDescriptor } from '@dominevo/types'
 import {
   Button,
   DeviceTemplateField,
   type DeviceTemplateFieldHandle,
   Input,
   Textarea,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { AlertTriangle } from 'lucide-react'
 import { type ChangeEvent, useRef } from 'react'
 import {

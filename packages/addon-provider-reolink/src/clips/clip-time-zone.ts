@@ -7,7 +7,7 @@
  * specified: Etc/Unknown` the first time the catalog formats a day. Validate
  * once, here, and fall back instead of throwing out of the refresh.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 export interface ClipTimeZoneResolution {
   readonly timeZone: string

@@ -92,7 +92,7 @@ onto `listClips`.
   not-playable rather than pretending.
 
 `src/clips/clip-mapping.ts` parses a `listClips` row **structurally** (not from
-`z.infer`), deliberately, because *"`@camstack/sdk` lags the hub"*. It is the
+`z.infer`), deliberately, because *"`@dominevo/sdk` lags the hub"*. It is the
 one module that would need extending, and its reason for existing is still true
 (§ 6.1).
 
@@ -122,7 +122,7 @@ side.
 are React-**DOM** + Tailwind + the generated `system-hooks`. `src/**` is React
 Native and is explicitly forbidden from importing them
 (`src/live/stream-debug-sample.ts` says so in as many words; only `embed/**`
-imports `@camstack/ui-library`). The admin clips section cannot be mounted in the
+imports `@dominevo/ui-library`). The admin clips section cannot be mounted in the
 app. What *can* be shared is a **pure** rule, and § 5.2 says which one and where
 it must live.
 
@@ -226,7 +226,7 @@ tell apart.
 
 | # | Overlap | Real? | Where it comes from |
 | --- | --- | --- | --- |
-| A | **Two SOURCES over one span** — CamStack's own recording (analytics) and the camera's SD card both cover 14:32:10–14:32:40 | **Yes, by design** | The cap does NO dedup and no best-source pick: *"a clip held in two storages appears twice, once per source"* (D549 2/11, D554 7). On a camera that both records to the hub and keeps its own SD footage this is the NORMAL case, not an edge |
+| A | **Two SOURCES over one span** — Dominevo's own recording (analytics) and the camera's SD card both cover 14:32:10–14:32:40 | **Yes, by design** | The cap does NO dedup and no best-source pick: *"a clip held in two storages appears twice, once per source"* (D549 2/11, D554 7). On a camera that both records to the hub and keeps its own SD footage this is the NORMAL case, not an edge |
 | B | **Two rows of one FILE** — a hub child's events view lists 1–13 event windows per recording file; both rows play the same bytes | **Yes, measured** — 38 events in 28 files on 3628, 1–13 per file (D555) | The events view is the catalog on a hub child, and the clip id carries the event WINDOW so the rows are distinct (D555) |
 | C | **Sub and main twins as two rows** | **No** | Paired server-side at listing time into one row's `streams` (D549 15). 529/546 paired on 592 |
 | D | **The clips band overlapping the recording coverage band** | Not applicable | Clips mode hides the activity lanes entirely (`hideActivity: clipsMode`) |
@@ -303,7 +303,7 @@ for two labelled rows and no playhead to confuse. A timeline has neither.
 
 ### 4.5 The question for the operator — as short as it can be made
 
-> Quando la stessa mezz'ora è coperta **sia** dalla registrazione CamStack **sia**
+> Quando la stessa mezz'ora è coperta **sia** dalla registrazione Dominevo **sia**
 > da una clip sulla SD della camera, nella timeline vuoi:
 >
 > **(a)** un solo elemento, e quale dei due si apre quando lo tocchi — la nostra
@@ -318,7 +318,7 @@ for two labelled rows and no playhead to confuse. A timeline has neither.
 > dell'hub che contiene 13 eventi produce oggi 13 elementi che riproducono gli
 > stessi byte: vuoi 13 elementi o 1?
 >
-> [When the same half hour is covered **both** by the CamStack recording **and**
+> [When the same half hour is covered **both** by the Dominevo recording **and**
 > by a clip on the camera's SD card, on the timeline do you want:
 >
 > **(a)** a single element, and which of the two opens when you tap it — our
@@ -438,13 +438,13 @@ assertion is the third option and is the one this repo has a rule against.
 
 ## 6. What will bite whoever builds this
 
-### 6.1 The viewer's installed `@camstack/types` predates the whole clip line
+### 6.1 The viewer's installed `@dominevo/types` predates the whole clip line
 
-`camstack/node_modules/@camstack/types` is **1.2.228**; the workspace is
+`camstack/node_modules/@dominevo/types` is **1.2.228**; the workspace is
 **1.2.233**. The installed `videoclips.cap.d.ts` still describes the cap as
 *"a device-scoped WRAPPER cap… exactly one active provider per device,
 substitutable"* and has **no** `streams`, no `listSources`, no `playable`, no
-`switchedOff`. The viewer's tsconfig resolves `@camstack/*` from `node_modules`
+`switchedOff`. The viewer's tsconfig resolves `@dominevo/*` from `node_modules`
 **by design** (its `CLAUDE.md`: *"the answer is to publish the server package,
 never to re-point the alias"*).
 
@@ -452,7 +452,7 @@ Consequences, in order:
 
 - `clip-mapping.ts`'s structural parse is not a stylistic choice, it is the
   reason this is buildable at all today. Keep it.
-- The shared quality rule of § 5.3 requires a **publish of `@camstack/types`**
+- The shared quality rule of § 5.3 requires a **publish of `@dominevo/types`**
   and a bump in the viewer before the app can import it. That publish is a
   framework train, and it is the first slice.
 - Anyone who develops against `tsconfig.workspace.json` will see a green
@@ -507,11 +507,11 @@ Delete when touched, per the repo's rule:
 
 | # | Slice | Train |
 | --- | --- | --- |
-| **S0** | `clipProfileOptions()` in `packages/types` beside the schema; **fix `ClipPanel`** to derive its picker from `clip.streams` instead of a fixed three-way | framework: `npm publish @camstack/types` + `@camstack/ui-library`, then the hub's `applyServerUpdate` for the admin UI |
-| **S1** | Viewer `useCameraClips` — one hook over `listClips` + `listSources`, **native sources only**; `parseClip` extended; `resolveClipsStatus` gains the `nobodyAnswered` distinction; the stale headers deleted | viewer `src/**` → **OTA** (`npm run update:patch`), plus an `@camstack/types` bump from S0 |
+| **S0** | `clipProfileOptions()` in `packages/types` beside the schema; **fix `ClipPanel`** to derive its picker from `clip.streams` instead of a fixed three-way | framework: `npm publish @dominevo/types` + `@dominevo/ui-library`, then the hub's `applyServerUpdate` for the admin UI |
+| **S1** | Viewer `useCameraClips` — one hook over `listClips` + `listSources`, **native sources only**; `parseClip` extended; `resolveClipsStatus` gains the `nobodyAnswered` distinction; the stale headers deleted | viewer `src/**` → **OTA** (`npm run update:patch`), plus an `@dominevo/types` bump from S0 |
 | **S2** | Native clips on the clips-mode axis — the third branch in `positionDerivedClips`, the RN thumbnail ladder, **and the overlap rule** | viewer `src/**` → **OTA**. **BLOCKED on § 4.5** |
 | **S3** | Play a native clip — `{kind:'url'}` MP4 at the lowest available profile, `served` reported when it differs; the sequencer restricted | viewer `src/**` → **OTA** |
-| **S4** | D558 server-side — `ExportRecord.subject`, the by-handle pull, the wake gate, `createdBy` | framework + addon: publish, `applyServerUpdate`, `camstack deploy packages/addon-provider-reolink` |
+| **S4** | D558 server-side — `ExportRecord.subject`, the by-handle pull, the wake gate, `createdBy` | framework + addon: publish, `applyServerUpdate`, `dominevo deploy packages/addon-provider-reolink` |
 | **S5** | The viewer download list — the same S1 answer rendered as a list, per-row quality from S0's rule, `createExport` with a clip subject, delivered by the existing `useMediaDownload` | viewer `src/**` → **OTA**; the guard of § 5.4 decided first |
 
 Nothing here touches `embed/**` or the viewer's own `ui-library` usage, so

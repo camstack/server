@@ -1,4 +1,4 @@
-import type { EncodeProfile } from '@camstack/types'
+import type { EncodeProfile } from '@dominevo/types'
 
 /**
  * Resolve an EncodeProfile from an optional persisted override and a

@@ -7,7 +7,7 @@
  * and (c) buffer identity where a copy used to be.
  */
 import sharp from 'sharp'
-import type { DecodedFrame, FrameHandle, IScopedLogger } from '@camstack/types'
+import type { DecodedFrame, FrameHandle, IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { drawBoxedFrame } from '../../../shared/frame/box-drawer.js'
 import { decodeJpegToRgb } from '../../../shared/frame/encode-crop.js'

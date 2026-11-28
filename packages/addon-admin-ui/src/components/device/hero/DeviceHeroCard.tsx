@@ -4,7 +4,7 @@
  * draw it (a camera is the device page's own stream panel, never this card), so
  * the two never describe a device differently.
  */
-import { heroLang, useSystem, useThemeMode } from '@camstack/ui-library'
+import { heroLang, useSystem, useThemeMode } from '@dominevo/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import type { ConfigOption } from '@camstack/types'
+import type { ConfigOption } from '@dominevo/types'
 import {
   SEARCHABLE_MULTISELECT_MIN_OPTIONS,
   filterOptions,

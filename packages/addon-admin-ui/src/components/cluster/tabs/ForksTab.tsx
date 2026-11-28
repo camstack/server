@@ -9,9 +9,9 @@ import {
   useNodesRestartProcess,
   useNodesSetProcessLogLevel,
   Button,
-} from '@camstack/ui-library'
-import { EventStream } from '@camstack/ui-library'
-import { Dropdown, DropdownTrigger, DropdownContent, DropdownItem } from '@camstack/ui-library'
+} from '@dominevo/ui-library'
+import { EventStream } from '@dominevo/ui-library'
+import { Dropdown, DropdownTrigger, DropdownContent, DropdownItem } from '@dominevo/ui-library'
 import { formatBytes } from '../../../lib/format-size'
 import { useTranslation } from 'react-i18next'
 

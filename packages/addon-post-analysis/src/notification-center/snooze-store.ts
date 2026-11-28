@@ -21,8 +21,8 @@
  */
 
 import { randomUUID } from 'node:crypto'
-import type { IScopedLogger, NcSnooze, NcSnoozeSuppressed, RecordKindHandle } from '@camstack/types'
-import { NcSnoozeSchema, NcSnoozeSuppressedSchema } from '@camstack/types'
+import type { IScopedLogger, NcSnooze, NcSnoozeSuppressed, RecordKindHandle } from '@dominevo/types'
+import { NcSnoozeSchema, NcSnoozeSuppressedSchema } from '@dominevo/types'
 import { DurableLedger, type DurableLedgerSpec } from '../durable/durable-ledger.js'
 import type { DurableLedgerBody } from '../durable/durable-record-body.js'
 import { type DurableKindDeps } from '../durable/durable-wiring.js'

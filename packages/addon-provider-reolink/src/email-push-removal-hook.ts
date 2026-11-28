@@ -1,4 +1,4 @@
-import type { DeviceRemovedResult, IDeviceRemovalHookProvider } from '@camstack/types'
+import type { DeviceRemovedResult, IDeviceRemovalHookProvider } from '@dominevo/types'
 
 /**
  * A removed camera leaves its `cam-<stableId>` recipient in the mailbox (D865). The addon holds

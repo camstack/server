@@ -18,7 +18,7 @@
  *   `deriveFragmentLengthMs` refuses a GOP longer than 8 s. A camera the tee
  *   never writes for is not a gap in this store, it is a camera HKSV never
  *   recorded; {@link HksvClipRecord} exists only for the ones it did.
- * - **The duration is whatever iOS PULLED.** Not a window CamStack chose, and
+ * - **The duration is whatever iOS PULLED.** Not a window Dominevo chose, and
  *   a short clip is not a truncated one — {@link HksvClipRecord.truncated} is
  *   the only thing that says truncated. Since D578 it is READ FROM THE FILE
  *   (`mvhd`, after the faststart pass), because the tee's own wall clock is
@@ -34,7 +34,7 @@
  * {@link HksvClipRecord.thumbnailUnavailable} instead — the whole point of
  * vouching is that the promise and the file are not the same claim.
  */
-import { CamProfileSchema } from '@camstack/types'
+import { CamProfileSchema } from '@dominevo/types'
 import { z } from 'zod'
 
 /** The `videoclips` source id a later provider will list these under. */

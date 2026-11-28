@@ -7,7 +7,7 @@ import {
   deviceErrorEdge,
   type DeviceContext,
   type ErrorStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 interface RuntimeStateLike {
   installCapSchema(capName: string, schema: z.ZodObject<z.core.$ZodLooseShape>): void

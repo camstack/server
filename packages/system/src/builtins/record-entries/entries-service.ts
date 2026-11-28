@@ -19,7 +19,7 @@ import {
   secretViewsOf,
   type StorageKind,
   UnknownRecordKindError,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 
 /** Entries one list answers: an entries list is a settings page, not a table. */

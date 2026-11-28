@@ -3,7 +3,7 @@ import {
   EventCategory,
   type IEventBus,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** What the deriver needs from the device manager; every read may fail. */
 export interface FeatureDeriverDeps {

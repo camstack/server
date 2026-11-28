@@ -16,9 +16,9 @@ import type {
   ApiCatalogInputSchemaOutput,
   ApiCatalogListOutput,
   CredentialScope,
-} from '@camstack/types'
-import { capabilityScopesOf } from '@camstack/types'
-import { METHOD_ACCESS_MAP } from '@camstack/server/system'
+} from '@dominevo/types'
+import { capabilityScopesOf } from '@dominevo/types'
+import { METHOD_ACCESS_MAP } from '@dominevo/server/system'
 import { z } from 'zod'
 import type { AuthenticatedAgent } from '../trpc/trpc.context.js'
 import { enforcedScopesOf } from '../trpc/device-access.js'

@@ -1,6 +1,6 @@
 /**
  * The one sentence every hub tool gives when a credential is missing, refused
- * or not strong enough: run `camstack login <host>` once; every tool then uses
+ * or not strong enough: run `dominevo login <host>` once; every tool then uses
  * that session (refreshed automatically). There is no second credential file
  * to look for.
  */
@@ -25,13 +25,13 @@ function onPath(name: string, pathEnv: string | undefined): boolean {
 export const REPO_LOCAL_LOGIN = 'npx nx run camstack:build && node packages/cli/dist/cli.js login'
 
 /**
- * The exact command that refreshes the CLI session: `camstack login` when the
+ * The exact command that refreshes the CLI session: `dominevo login` when the
  * binary is on PATH, otherwise the checkout-local form.
  */
 export function sessionLoginCommand(
   env: Readonly<Record<string, string | undefined>> = process.env,
 ): string {
-  return onPath('camstack', env['PATH']) ? 'camstack login' : REPO_LOCAL_LOGIN
+  return onPath('camstack', env['PATH']) ? 'dominevo login' : REPO_LOCAL_LOGIN
 }
 
 /**
@@ -39,7 +39,7 @@ export function sessionLoginCommand(
  * short code, the operator approves it in the admin UI at `/approve`.
  */
 export const BROWSER_LOGIN_HINT =
-  'No keyboard? `camstack login <host> --browser` prints a code to approve in the admin UI. A headless service is logged in once, interactively; its session then refreshes unattended.'
+  'No keyboard? `dominevo login <host> --browser` prints a code to approve in the admin UI. A headless service is logged in once, interactively; its session then refreshes unattended.'
 
 /** The hub answered 401/403 to an admin-tier credential. */
 export function adminRejectedHint(command: string = sessionLoginCommand()): string {

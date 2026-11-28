@@ -1,11 +1,11 @@
 // The ONE credential doorway for operator scripts (scripts/hub/hub.mjs is the other
 // face of it). A script never opens a token file of its own and never logs in with a
-// password: it asks for `resolveHubAuth()` and gets a bearer from the `camstack login`
+// password: it asks for `resolveHubAuth()` and gets a bearer from the `dominevo login`
 // session in ~/.camstack/<host>_<port>.json, renewed automatically when it is about to
 // expire (packages/develop/src/hub/session-refresh.ts). Nothing else is a credential
 // (D1101): no token flag, no token file, no environment token.
 //
-// Setup, once per hub, interactively:  camstack login <host>
+// Setup, once per hub, interactively:  dominevo login <host>
 //
 // Usage in a script:
 //   import { resolveHubAuth } from '../hub/credentials.mjs'
@@ -18,10 +18,10 @@ const WORKSPACE_ROOT = fileURLToPath(new URL('../../', import.meta.url))
 
 async function loadDevelop() {
   try {
-    return await import('@camstack/develop')
+    return await import('@dominevo/develop')
   } catch (err) {
     throw new Error(
-      `cannot load @camstack/develop (${err instanceof Error ? err.message : String(err)}) — run: npm run build -w packages/develop`,
+      `cannot load @dominevo/develop (${err instanceof Error ? err.message : String(err)}) — run: npm run build -w packages/develop`,
     )
   }
 }
@@ -41,7 +41,7 @@ export async function resolveHubAuth(opts = {}) {
   })
   if (!hub) {
     throw new Error(
-      'no hub URL: pass --server, set CAMSTACK_HUB_URL, write scratchpad/.hub-url, or run `camstack login <host>`',
+      'no hub URL: pass --server, set CAMSTACK_HUB_URL, write scratchpad/.hub-url, or run `dominevo login <host>`',
     )
   }
   const credentials = await develop.resolveFreshCredentials({

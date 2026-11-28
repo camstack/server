@@ -1,5 +1,5 @@
 import type { BatteryPowerSourceMode, SwitchPowerSourceResult } from '@apocaliss92/nodelink-js'
-import type { ConfigUISchema, IScopedLogger } from '@camstack/types'
+import type { ConfigUISchema, IScopedLogger } from '@dominevo/types'
 import { z } from 'zod'
 
 /**

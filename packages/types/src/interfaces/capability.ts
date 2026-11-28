@@ -121,7 +121,7 @@ export interface CapabilityInfo {
  * Extensible via TypeScript declaration merging:
  *
  * ```typescript
- * declare module '@camstack/types' {
+ * declare module '@dominevo/types' {
  *   interface CapabilityProviderMap {
  *     'my-custom-capability': IMyProvider
  *   }
@@ -474,7 +474,7 @@ export interface CapabilityProviderMap {
   // Additional capabilities added via declaration merging.
   // NOTE: we deliberately do NOT add `[key: string]: unknown` because
   // that collapses every typed lookup to `unknown`. Downstream packages
-  // add their entries via `declare module '@camstack/types'`.
+  // add their entries via `declare module '@dominevo/types'`.
 }
 
 /**

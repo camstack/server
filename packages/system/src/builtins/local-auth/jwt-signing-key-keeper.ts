@@ -15,7 +15,7 @@ import {
   loadJwtSigningKey,
   setProcessJwtSigningKey,
 } from '../../auth/jwt-signing-key.js'
-import type { SecretsAccess } from '@camstack/types'
+import type { SecretsAccess } from '@dominevo/types'
 
 /** How often a locked keychain is asked again. */
 export const SIGNING_KEY_RETRY_MS = 30_000

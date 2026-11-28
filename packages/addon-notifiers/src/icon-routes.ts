@@ -38,7 +38,7 @@
  * pull route already uses for the same class of bug.
  */
 import { brotliCompressSync, deflateSync, gzipSync } from 'node:zlib'
-import { type IAddonHttpRoute } from '@camstack/types'
+import { type IAddonHttpRoute } from '@dominevo/types'
 import { type NotifierIcon, type NotifierIconKind, NOTIFIER_ICONS } from './icons-data.js'
 
 /** The addon id — also the `/addon/<id>/…` route prefix. Mirrors `NOTIFIERS_ADDON_ID`. */

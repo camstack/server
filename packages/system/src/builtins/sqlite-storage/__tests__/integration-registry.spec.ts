@@ -2,7 +2,7 @@
  * IntegrationRegistry round-trip over its record kind on the REAL records provider
  * (SQLite), so a body that does not survive serialisation fails here.
  */
-import { createRecordsAccess } from '@camstack/types'
+import { createRecordsAccess } from '@dominevo/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { integrationRegistryRecordKinds } from '../integration-record-kinds.js'
 import { IntegrationRegistry } from '../integration-registry.js'

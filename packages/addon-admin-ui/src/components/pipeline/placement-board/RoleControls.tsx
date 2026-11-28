@@ -5,7 +5,7 @@
  * The low-fps relocate policy lives with the other reactive load policies on
  * the Load balancing tab (D748).
  */
-import { LIST_ROW, Select, TEXT_HINT } from '@camstack/ui-library'
+import { LIST_ROW, Select, TEXT_HINT } from '@dominevo/ui-library'
 import { ROLE_FIELDS, roleHint, roleLabel, type RoleField } from './board-model'
 import { useTranslation } from 'react-i18next'
 

@@ -5,7 +5,7 @@
  * ## The problem this exists for
  *
  * An addon bundle leaves the packages in `HOST_EXTERNAL_SPECIFIERS`
- * (`@camstack/server/system` → `kernel/host-externals.ts`) unbundled and expects the
+ * (`@dominevo/server/system` → `kernel/host-externals.ts`) unbundled and expects the
  * HOST to provide them. What provides them is a module-customization hook
  * (`framework-resolver-hook.mjs`) that `registerFrameworkResolver` installs in
  * the **addon-runner process**, re-anchoring those bare specifiers at
@@ -14,7 +14,7 @@
  * A worker started with a plain `child_process.fork` — the session decode
  * worker (`session-decode/fork-decode-worker.ts`) is the one in this package —
  * does NOT inherit that hook. In it, `import('sharp')` and `import('node-av')`
- * throw `Cannot find package 'X' imported from /data/addons/@camstack/…`,
+ * throw `Cannot find package 'X' imported from /data/addons/@dominevo/…`,
  * because the addon directory has no `node_modules` to walk up into.
  *
  * ## Why an explicit path and not the hook
@@ -22,7 +22,7 @@
  * Registering the framework resolver in the child was considered and rejected:
  *
  *  - it would need the child to reach INTO another package's build output
- *    (`<frameworkDir>/node_modules/@camstack/server/system/dist/…/framework-resolver-hook.mjs`)
+ *    (`<frameworkDir>/node_modules/@dominevo/server/system/dist/…/framework-resolver-hook.mjs`)
  *    plus an `--import` shim, i.e. a hard coupling to a layout nothing checks;
  *  - a registered hook makes **every** `import()` in that process re-enter the
  *    loader and block the main thread on `Atomics.wait` until the hooks worker
@@ -44,7 +44,7 @@
  *    launcher points this at the ACTIVE closure in data-root mode and forked
  *    children inherit it (`server/backend/src/launcher.ts`).
  *  - **ELECTRON agent** — the app bundle around `CAMSTACK_BUNDLED_ADDONS_DIR`
- *    (`<resources>/node_modules/@camstack` since 2026-08-25, `<resources>/addons`
+ *    (`<resources>/node_modules/@dominevo` since 2026-08-25, `<resources>/addons`
  *    before it): `<resources>/node_modules/<pkg>` and the `app.asar.unpacked`
  *    mirror. See {@link electronResourcesRoot} — the depth is NOT assumed.
  *  - **the process cwd** — always tried last, and it is NOT redundant:
@@ -135,14 +135,14 @@ export function isModuleResolutionError(err: unknown): boolean {
  * Electron `Resources` dir itself. Walking past them is what makes the anchor
  * derivation independent of WHICH dir the shell chose to seed addons from.
  */
-const SEED_CONTAINER_SEGMENTS: readonly string[] = ['@camstack', 'node_modules', 'addons']
+const SEED_CONTAINER_SEGMENTS: readonly string[] = ['@dominevo', 'node_modules', 'addons']
 
 /**
  * The Electron `Contents/Resources` dir, derived from `CAMSTACK_BUNDLED_ADDONS_DIR`.
  *
  * That variable names the dir the launcher SEEDS addons from, and its shape has
  * moved: it was `<resources>/addons` (a second, hand-copied tree) and is now
- * `<resources>/node_modules/@camstack`, the closure's own scope dir — one copy
+ * `<resources>/node_modules/@dominevo`, the closure's own scope dir — one copy
  * (D45). What this function needs is neither: it needs the sibling
  * `<resources>/node_modules`, where the hoisted `sharp` / `node-av` actually
  * live. A plain `path.dirname` answered the first shape and would have silently

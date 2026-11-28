@@ -13,7 +13,7 @@ import {
   REDACTED_SECRET,
   type SecretScope,
   type SecretsAccess,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { BlockSecretsUnavailableError } from '../block-settings-store.js'
 import { blockSettingsStoreHarness, fakeSettingsStore } from './fixtures.js'

@@ -1,4 +1,4 @@
-import type { Composition, CompositionView } from '@camstack/types'
+import type { Composition, CompositionView } from '@dominevo/types'
 import { type CustomizationState, resolveCustomization } from '../../customization-read'
 
 export function viewOf(composition: Composition, updatedAt = 1_790_000_000_000): CompositionView {

@@ -13,7 +13,7 @@
  * has no inline detail rows).
  */
 
-import type { DataStoreDatabase } from '@camstack/types'
+import type { DataStoreDatabase } from '@dominevo/types'
 import {
   Button,
   type DataColumn,
@@ -32,7 +32,7 @@ import {
   useConfirm,
   useIsPhone,
   Checkbox,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   CalendarClock,

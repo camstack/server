@@ -10,7 +10,7 @@
  *    always matching, and observedClassNames
  */
 import { beforeEach, describe, expect, it } from 'vitest'
-import type { TrackZoneFilter } from '@camstack/types'
+import type { TrackZoneFilter } from '@dominevo/types'
 import {
   makeFakeSettingsStore,
   makeSilentLogger,

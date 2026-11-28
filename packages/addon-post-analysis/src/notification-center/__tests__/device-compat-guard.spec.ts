@@ -7,7 +7,7 @@
  * made (no `listDeviceIdsByCaps` wired) FAILS OPEN.
  */
 import { makeNcRecords } from './support/nc-test-deps.js'
-import { NC_CAMERA_SCOPE_CAP_NAME, NcRuleInputSchema } from '@camstack/types'
+import { NC_CAMERA_SCOPE_CAP_NAME, NcRuleInputSchema } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import {
   makeLogRecorder,

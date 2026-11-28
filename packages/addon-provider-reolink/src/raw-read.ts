@@ -1,12 +1,12 @@
 import type { CgiChannelStatusEntry, ReolinkBaichuanApi } from '@apocaliss92/nodelink-js'
-import type { BatteryStatus, IScopedLogger } from '@camstack/types'
+import type { BatteryStatus, IScopedLogger } from '@dominevo/types'
 import { z } from 'zod'
 import type { ReolinkCameraConfig } from './schema.js'
 import { resolveSnapshotAge, type SnapshotAge } from './snapshot-freshness.js'
 
 /**
  * Raw-read debug surface (D346): "what does the camera actually report,
- * versus what CamStack believes?"
+ * versus what Dominevo believes?"
  *
  * Every `deviceCache.*Snapshot` group is a PROJECTION — the probe keeps a
  * handful of fields and discards the rest of the camera's answer at read
@@ -30,7 +30,7 @@ import { resolveSnapshotAge, type SnapshotAge } from './snapshot-freshness.js'
  *     snapshot in the slice map stores credentials.
  *   - **Never wakes a sleeping battery camera.** The sleep gate runs
  *     BEFORE any login (`ensureApi` on a sleeping UDP cam IS the wake);
- *     a sleeping camera refuses loudly and still reports what CamStack
+ *     a sleeping camera refuses loudly and still reports what Dominevo
  *     believes, with its age. The one exemption is a read the PARENT HUB
  *     answers on its own mains-powered socket without addressing the
  *     channel (`servedByParentHub` + `hubChild`) — that read costs the
@@ -86,21 +86,21 @@ export interface RawReadInvokeContext {
 }
 
 /**
- * WHERE CamStack's belief about a slice lives.
+ * WHERE Dominevo's belief about a slice lives.
  *
  * A discriminated union rather than one nullable `snapshotKey`, because the
  * two homes are not interchangeable and neither is optional:
  *
  *   - fifteen slices are Baichuan reads whose projection is persisted in
  *     `deviceCache.<snapshotKey>` and aged from the freshness stamp map;
- *   - `battery` has **no deviceCache field at all**. What CamStack believes
+ *   - `battery` has **no deviceCache field at all**. What Dominevo believes
  *     about charge is the `battery` capability's runtime-state slice — the
  *     very thing `battery.getStatus` serves. Inventing a `batterySnapshot`
  *     cache key just to satisfy `keyof ReolinkDeviceCache` would have made
  *     the type lie about the system: nothing reads or writes such a field.
  *
  * The field is REQUIRED on every entry: a slice that cannot name where its
- * belief lives cannot answer "camera vs CamStack", which is the whole point
+ * belief lives cannot answer "camera vs Dominevo", which is the whole point
  * of the surface, so an entry that omits it must not compile.
  */
 export type BelievedSource =
@@ -117,7 +117,7 @@ export type BelievedSource =
 interface RawReadCatalogEntry {
   /** The lib call(s) behind the slice, for the operator's eyes. */
   readonly command: string
-  /** Where CamStack's side of the comparison is read from. */
+  /** Where Dominevo's side of the comparison is read from. */
   readonly believed: BelievedSource
   /**
    * `true` when the read is answered by the PARENT HUB's own CGI over the
@@ -372,7 +372,7 @@ function capStateAge(state: BatteryStatus | undefined, now: number): SnapshotAge
   return { state: 'known', fetchedAt: lastUpdated, ageMs: Math.max(0, now - lastUpdated) }
 }
 
-/** What CamStack currently believes about the slice, with its own age. */
+/** What Dominevo currently believes about the slice, with its own age. */
 const BelievedStateSchema = z.object({
   /** The persisted projection / cap slice, verbatim. */
   snapshot: z.unknown(),
@@ -411,7 +411,7 @@ export const RawReadResultSchema = z.discriminatedUnion('ok', [
     reason: z.enum(['sleeping', 'unsupported', 'login-failed', 'read-failed']),
     message: z.string(),
     /** The believed state is still reported — a refusal must not hide
-     *  what CamStack is currently serving. */
+     *  what Dominevo is currently serving. */
     believed: BelievedStateSchema,
   }),
 ])
@@ -528,8 +528,8 @@ export async function performRawRead(
       slice,
       reason: 'sleeping',
       message: deps.hubChild
-        ? `Battery camera is asleep and the "${slice}" read is addressed to the camera channel, which would wake it — refused. The believed state below is what CamStack currently serves. (The "battery" slice is answered by the parent hub and stays readable while the camera sleeps.)`
-        : 'Battery camera is asleep — a raw read would wake it, so it is refused. The believed state below is what CamStack currently serves.',
+        ? `Battery camera is asleep and the "${slice}" read is addressed to the camera channel, which would wake it — refused. The believed state below is what Dominevo currently serves. (The "battery" slice is answered by the parent hub and stays readable while the camera sleeps.)`
+        : 'Battery camera is asleep — a raw read would wake it, so it is refused. The believed state below is what Dominevo currently serves.',
       believed,
     }
   }

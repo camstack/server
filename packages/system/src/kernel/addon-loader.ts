@@ -5,8 +5,8 @@ import type {
   IScopedLogger,
   StorageLocationDeclaration,
   StorageLocationDeclarer,
-} from '@camstack/types'
-import { asJsonObject, parseJsonUnknown } from '@camstack/types'
+} from '@dominevo/types'
+import { asJsonObject, parseJsonUnknown } from '@dominevo/types'
 import { createHash } from 'node:crypto'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
@@ -58,7 +58,7 @@ function readOwningPackageVersion(entryPath: string): string | null {
  *    such a tarball, so the entry file of v1.0.0 and of v1.0.99 carry the same
  *    mtime. An mtime-only key (what this used to be) is a NO-OP — it produced
  *    one byte-identical URL for every version of every addon ever installed.
- *  - **the version does not change** on a `camstack deploy` of an unbumped
+ *  - **the version does not change** on a `dominevo deploy` of an unbumped
  *    workspace package — the whole dev loop.
  *  - **the entry hash does not change** when a multi-chunk dist alters a chunk
  *    the entry only re-exports; the version bump covers that case.
@@ -69,7 +69,7 @@ function readOwningPackageVersion(entryPath: string): string | null {
  * against the OLD `customActions` schema — silently STRIPPING newly-added
  * fields — and, worse, Node caches a load that THREW as a rejected module and
  * replays that rejection for every later retry at the same URL. On 2026-08-12
- * `@camstack/addon-export-hap` burned 126 identical failed load retries over
+ * `@dominevo/addon-export-hap` burned 126 identical failed load retries over
  * 10.5h, none of which could have succeeded: the fixed bytes on disk were never
  * read.
  *
@@ -97,7 +97,7 @@ export function addonModuleCacheKey(entryPath: string): string | null {
  * Import an addon entry module FRESH on every load, defeating Node's
  * per-URL ESM module cache.
  *
- * `camstack deploy` overwrites an addon's `dist/` in place (same path). Node
+ * `dominevo deploy` overwrites an addon's `dist/` in place (same path). Node
  * caches ESM modules by resolved URL, so a plain `import(entryPath)` after a
  * redeploy returns the STALE previously-cached module. The addon RUNNER child
  * is a fresh process so it reloads correctly — but hub-main also imports the
@@ -254,10 +254,10 @@ export class AddonLoader {
   /** Scan addons directory and load all addon packages.
    *  Supports scoped layout: addons/@scope/package-name/
    *
-   *  `skipPackages` names scoped packages (e.g. `@camstack/server/system`) that the
+   *  `skipPackages` names scoped packages (e.g. `@dominevo/server/system`) that the
    *  caller loads from elsewhere — the single-copy model loads the framework
    *  BUILTINS from the active closure, not the (now-inert) addons-dir copy, so
-   *  the addons-dir `@camstack/server/system` must NOT be double-loaded here. */
+   *  the addons-dir `@dominevo/server/system` must NOT be double-loaded here. */
   async loadFromDirectory(addonsDir: string, skipPackages: readonly string[] = []): Promise<void> {
     if (!fs.existsSync(addonsDir)) return
     const skip = new Set(skipPackages)
@@ -266,7 +266,7 @@ export class AddonLoader {
     for (const entry of entries) {
       if (!isDirectoryEntry(entry, addonsDir)) continue
 
-      // Scoped directory (e.g., @camstack/) — scan one level deeper
+      // Scoped directory (e.g., @dominevo/) — scan one level deeper
       if (entry.name.startsWith('@')) {
         const scopeDir = path.join(addonsDir, entry.name)
         const scopeEntries = fs.readdirSync(scopeDir, { withFileTypes: true })
@@ -373,8 +373,8 @@ export class AddonLoader {
 
     // An addon id belongs to the first PACKAGE that registered it. The hub
     // loads the closure's builtins before the addons dir, so a package that was
-    // later folded into the framework (`@camstack/addon-device-history` →
-    // `@camstack/server/system`) would otherwise replace the builtin from its stale
+    // later folded into the framework (`@dominevo/addon-device-history` →
+    // `@dominevo/server/system`) would otherwise replace the builtin from its stale
     // on-disk copy — and did, on every node that had installed it. A reload of
     // the SAME package still replaces it.
     const owner = this.addons.get(declaration.id)
@@ -572,7 +572,7 @@ function isDirectoryEntry(entry: fs.Dirent, parentDir: string): boolean {
   // "quarantined" addon kept being loaded and kept showing up in `addons.list`
   // — through a full hub restart, which is how it was finally noticed. Worse,
   // the rename only ever removed the addon from the paths resolved BY NAME: the
-  // runner spawn resolves `<addonsDir>/@camstack/addon-<id>`, so an addon still
+  // runner spawn resolves `<addonsDir>/@dominevo/addon-<id>`, so an addon still
   // listed in `manifest.json` whose directory had been renamed killed its
   // runner on every respawn — and with it every addon sharing that runner
   // (2026-08-09: `notification-output` lost all three providers for ~2h50m).

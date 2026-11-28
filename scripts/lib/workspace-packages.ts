@@ -54,7 +54,7 @@ export function publishedPackages(root: string): readonly WorkspacePackage[] {
   return readWorkspacePackages(root).filter((pkg) => !pkg.isPrivate)
 }
 
-/** Resolve `addon-ai`, `@camstack/addon-ai`, `camstack`, or a directory. */
+/** Resolve `addon-ai`, `@dominevo/addon-ai`, `camstack`, or a directory. */
 export function resolvePackage(
   packages: readonly WorkspacePackage[],
   query: string,
@@ -66,7 +66,7 @@ export function resolvePackage(
         pkg.name === wanted ||
         pkg.dir === wanted ||
         pkg.dir.endsWith(`/${wanted}`) ||
-        pkg.name === `@camstack/${wanted}`,
+        pkg.name === `@dominevo/${wanted}`,
     ) ?? null
   )
 }

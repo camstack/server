@@ -8,7 +8,7 @@
  * today. And it is drained only when the camera has no live frame waiting, so
  * a pre-roll frame can never delay a live one.
  */
-import type { DecodedFrame, FrameResult } from '@camstack/types'
+import type { DecodedFrame, FrameResult } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { RunnerConfig } from '../runner.js'
 import { PipelineRunner } from '../runner.js'

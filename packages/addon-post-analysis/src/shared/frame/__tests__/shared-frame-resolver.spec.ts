@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import type { FrameHandle } from '@camstack/types'
+import type { FrameHandle } from '@dominevo/types'
 import { createSharedFrameResolver, frameHandleKey } from '../shared-frame-resolver.js'
 
 function handle(overrides: Partial<FrameHandle> = {}): FrameHandle {

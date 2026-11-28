@@ -36,7 +36,7 @@
  * thing I am telling you) and is allowed a different answer.
  */
 
-import type { MediaFileKind } from '@camstack/types'
+import type { MediaFileKind } from '@dominevo/types'
 import { bboxPolygonOverlap } from '../pipeline-analytics/pipeline/zones/overlap.js'
 
 /** A point of the subject's trail — normalized 0..1, the same space

@@ -19,7 +19,7 @@
  *   - each reset is a WARN naming the old id.
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { IScopedLogger, LogExtras } from '@camstack/types'
+import type { IScopedLogger, LogExtras } from '@dominevo/types'
 import PipelineOrchestratorAddon from '../index.js'
 import { makeFakeBroker, makeFakeContext } from './e2e-helpers.js'
 import { sweepAgentSettingsPins } from '../removed-model-pin-reset.js'

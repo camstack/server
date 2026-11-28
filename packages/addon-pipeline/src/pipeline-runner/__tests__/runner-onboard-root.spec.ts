@@ -10,7 +10,7 @@
  *  3. a silent camera produces NO result — not an empty one, which would tell
  *     the tracker every quiet frame is evidence of absence.
  */
-import type { DecodedFrame, DetectionSource, FrameHandle, FrameResult } from '@camstack/types'
+import type { DecodedFrame, DetectionSource, FrameHandle, FrameResult } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { PipelineRunner } from '../runner.js'
 

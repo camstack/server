@@ -4,7 +4,7 @@
  * across a reconnect, a changed endpoint and a session that does not exist yet: the subscription is
  * the hub's, never the session's. A subscriber is told what is already known the moment it joins.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { Z2mConnection, Z2mEndpoint, Z2mSocketFactory, Z2mTimers } from './z2m-client.js'
 import type { Z2mBridgeInfo, Z2mDevice, Z2mState } from './z2m-protocol.js'
 import { Z2mSession } from './z2m-session.js'
@@ -43,7 +43,7 @@ export class Z2mHub {
   private readonly bound = new Map<string, number>()
   private readonly held = new Map<string, HeldMap>()
 
-  /** Remember which CamStack device is the node `ieee` of an integration (for `device-mesh`). */
+  /** Remember which Dominevo device is the node `ieee` of an integration (for `device-mesh`). */
   bindDevice(integrationId: string, ieee: string, deviceId: number): void {
     this.bound.set(key(integrationId, ieee), deviceId)
   }

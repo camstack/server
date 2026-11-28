@@ -34,7 +34,7 @@
  * Its own runner, `hub-only`, and no `execution.group`: it drives devices and a
  * co-located crash would respawn everything sharing the runner (D29).
  */
-import type { AddonInitResult, PtzAutotrackSettings, PtzAutotrackStatus } from '@camstack/types'
+import type { AddonInitResult, PtzAutotrackSettings, PtzAutotrackStatus } from '@dominevo/types'
 import {
   BaseAddon,
   EventCategory,
@@ -43,7 +43,7 @@ import {
   isEvent,
   ptzAutotrackCapability,
   type IPtzAutotrackProvider,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { DEFAULT_AUTOTRACK_LOOP_CONFIG } from './autotrack-config.js'
 import {

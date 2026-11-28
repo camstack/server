@@ -100,7 +100,7 @@ is driving this head", which is precisely the false assurance it would be added
 to prevent. Every provider (reolink, hikvision, amcrest, onvif) plus the cap's
 own mutation path would have to emit it first. It would also still be
 insufficient: an operator driving the camera from the vendor app or an NVR
-produces no CamStack event at all.
+produces no Dominevo event at all.
 
 The consequence is therefore stated in code rather than papered over by a
 half-built event: the camera is a CONSTANT, arming is an explicit edit, and the

@@ -7,7 +7,7 @@
  * turns the registry on); a registry that cannot be read writes nothing (D49); a provider that is
  * not registered yet FAILS the migration (tolerated) so the addon retries after registration.
  */
-import type { MigrationProcedureResult } from '@camstack/types'
+import type { MigrationProcedureResult } from '@dominevo/types'
 
 /** What the hub's capability registry says about Loki's `log-destination` provider. */
 export type RegistryState = 'active' | 'inactive' | 'unregistered'

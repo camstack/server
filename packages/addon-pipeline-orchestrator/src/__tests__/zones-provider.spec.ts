@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import type { Zone, IScopedLogger, DeviceProxy } from '@camstack/types'
+import type { Zone, IScopedLogger, DeviceProxy } from '@dominevo/types'
 import { ZonesProvider } from '../zones-provider.js'
 
 function makeLogger(): IScopedLogger {

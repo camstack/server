@@ -68,7 +68,7 @@ ends `sent`, like a snooze) with an info line naming the node and version. A
   that has not installed the viewer OTA mirroring them still drops a rule that
   selects one; that is unavoidable for any new kind.
 - The viewer's kind mirror cannot run ahead of the PUBLISHED types it is
-  checked against, so it follows the `@camstack/types` bump; until then the
+  checked against, so it follows the `@dominevo/types` bump; until then the
   mirror guard carries an `aheadOfViewer` allowance for both kinds, which fails
   the day the viewer gains them. The viewer's en/it words ship first.
 - An agent restart before its event bus is bound (mesh not up) is not

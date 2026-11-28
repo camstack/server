@@ -1,5 +1,5 @@
 /**
- * `camstack mcp update <version>|--latest` and `camstack mcp rollback` (D988).
+ * `dominevo mcp update <version>|--latest` and `dominevo mcp rollback` (D988).
  *
  * Only the installer's managed layout is switched (see `install-layout.ts`):
  * the new version is staged in `cli/<version>`, proven with
@@ -121,13 +121,13 @@ export async function runMcpUpdate(args: readonly string[], deps: McpUpdateDeps)
   const wantsLatest = args.includes('--latest')
   const requested = args.find((a) => !a.startsWith('-'))
   if (!wantsLatest && requested === undefined) {
-    deps.print('Usage: camstack mcp update <version> | --latest')
+    deps.print('Usage: dominevo mcp update <version> | --latest')
     return 1
   }
   const version = wantsLatest ? await deps.latestVersion() : requested
   if (version === null) {
     deps.print(
-      'Could not read the latest version from npm; name one: camstack mcp update <version>.',
+      'Could not read the latest version from npm; name one: dominevo mcp update <version>.',
     )
     return 1
   }
@@ -179,7 +179,7 @@ export async function runMcpUpdate(args: readonly string[], deps: McpUpdateDeps)
   const before = readLink(current)
   if (before !== null) swapLink(path.join(root, 'previous'), before)
   swapLink(current, staged)
-  deps.print(`camstack ${version} is now active (previous kept: \`camstack mcp rollback\`).`)
+  deps.print(`camstack ${version} is now active (previous kept: \`dominevo mcp rollback\`).`)
   deps.print(OPENCODE_RESTART_NOTE)
   return 0
 }

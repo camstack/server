@@ -10,7 +10,7 @@
  * garbage second per camera with no line saying so.
  */
 import { describe, expect, it, vi } from 'vitest'
-import type { DecodedAudioChunkWire } from '@camstack/types'
+import type { DecodedAudioChunkWire } from '@dominevo/types'
 import { AudioWindowAccumulator } from '../audio-window-accumulator.js'
 
 const F32 = 4

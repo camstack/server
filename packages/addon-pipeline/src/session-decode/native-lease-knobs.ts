@@ -1,14 +1,14 @@
 /**
  * The native-lease knobs AS THE DECODE WORKER RECEIVES THEM — the wire shape,
  * its guard, and the one-line spawn diagnostic. Child-safe by construction:
- * this module imports nothing but TYPES from `@camstack/types`.
+ * this module imports nothing but TYPES from `@dominevo/types`.
  *
  * ## Why this is not `native-lease-config.ts`
  *
  * That module resolves the knobs — operator setting > env var > shipped
  * default — and needs the Zod schemas to do it. Until D453 the CHILD did that
  * resolution at module load, from env vars the parent wrote at fork time, and
- * so the child bundle inlined the whole `@camstack/types` index (1.5 MB, every
+ * so the child bundle inlined the whole `@dominevo/types` index (1.5 MB, every
  * cap's schema) for three symbols. Measured on the hub, 2026-09-11, same
  * environment as the runner: fork → first IPC reply **195 ms and 200 MB RSS**
  * with that chunk, **65 ms and 63 MB** without it. That chunk was most of the
@@ -22,16 +22,16 @@
  * configuration it was born with.
  *
  * `scripts/check-decode-worker-child-lean.ts` fails the build if any module
- * reachable from the child entry imports a VALUE from `@camstack/types`.
+ * reachable from the child entry imports a VALUE from `@dominevo/types`.
  */
 import type {
   NativeLeaseAdmission,
   NativeLeaseKnob,
   NativeLeaseNumberKnob,
   NativeLeaseSettings,
-} from '@camstack/types'
+} from '@dominevo/types'
 
-export type { NativeLeaseKnob } from '@camstack/types'
+export type { NativeLeaseKnob } from '@dominevo/types'
 
 /** Every knob, in the order the spawn line names them. */
 export const NATIVE_LEASE_KNOB_NAMES: readonly NativeLeaseKnob[] = [

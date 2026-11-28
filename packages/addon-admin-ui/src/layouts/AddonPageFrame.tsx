@@ -10,7 +10,7 @@
  * now stop here: the boundary sits between the shell and the remote.
  */
 import { Component, Suspense, type ErrorInfo, type ReactNode } from 'react'
-import { ErrorBox, Skeleton } from '@camstack/ui-library'
+import { ErrorBox, Skeleton } from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 
 /** The library's loading placeholder, shaped like a page: header, tabs, body. */

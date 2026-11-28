@@ -20,15 +20,15 @@
  * second owner here is a FAKE serving a `linked-devices`-shaped row from its
  * own store — the fan-out and the prefix routing are what is under test.
  */
-import { CapabilityRegistry } from '@camstack/server/system'
-import type { IScopedLogger } from '@camstack/types'
+import { CapabilityRegistry } from '@dominevo/server/system'
+import type { IScopedLogger } from '@dominevo/types'
 import {
   createDeviceExtensionProvider,
   defineExtensionSlotProvider,
   deviceExtensionCapability,
   deviceManagerCapability,
   DeviceType,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { buildRuntimeCapRouters, type CapProxyProvider } from '../../api/trpc/cap-router-runtime.js'
 import { type CreateCallerCapableRouter, makeCtx } from './harness.js'

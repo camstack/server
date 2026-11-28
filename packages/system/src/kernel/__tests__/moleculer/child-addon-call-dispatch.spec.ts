@@ -8,8 +8,8 @@ import { z } from 'zod'
 import { createChildAddonCallDispatch } from '../../moleculer/child-addon-call-dispatch.js'
 import type { ChildAddonCallDispatchDeps } from '../../moleculer/child-addon-call-dispatch.js'
 import { CustomActionRegistry } from '../../custom-action-registry.js'
-import { customAction } from '@camstack/types'
-import type { CustomActionsSpec } from '@camstack/types'
+import { customAction } from '@dominevo/types'
+import type { CustomActionsSpec } from '@dominevo/types'
 import type { AddonCallInput } from '../../transport/child-cap-protocol.js'
 
 describe('createChildAddonCallDispatch', () => {

@@ -1,4 +1,4 @@
-import type { LlmProfile } from '@camstack/types'
+import type { LlmProfile } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { mergeProfileSecrets, REDACTED_MARKER, redactProfileForRead } from '../secrets.js'
 import { makeProfile } from './support/profile.js'

@@ -11,7 +11,7 @@
 // and the allowlisted engine-cascade holdouts (detection-pipeline index +
 // provider, whose per-node engine read/write pre-dates the base surface) and the
 // recorder config-store test-fake adapter. The BaseAddon wrappers themselves
-// live in `@camstack/types` (out of scope) and are the only sanctioned callers.
+// live in `@dominevo/types` (out of scope) and are the only sanctioned callers.
 or {
   `$obj.readAddonStore` where {
     register_diagnostic(span=$obj, message="Do NOT call ctx.settings.readAddonStore() directly — it is the @internal raw primitive. Use this.clusterSettings() / this.nodeSettings() / this.resolveGlobalStore(nodeId) for a settings view, or this.state<T>(key, schema, fallback) for a durable JSON blob.")

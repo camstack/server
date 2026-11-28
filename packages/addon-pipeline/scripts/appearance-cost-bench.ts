@@ -11,7 +11,7 @@
 import { spawn } from 'node:child_process'
 import { readFile } from 'node:fs/promises'
 import { gunzipSync } from 'node:zlib'
-import type { FrameResult } from '@camstack/types'
+import type { FrameResult } from '@dominevo/types'
 import sharp from 'sharp'
 import {
   type AppearanceScope,

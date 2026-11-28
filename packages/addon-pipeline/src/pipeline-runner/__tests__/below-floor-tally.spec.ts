@@ -5,7 +5,7 @@
  * question "how much did the 0.65 person floor take from the tracker on 104?"
  * had no answer — 0 lines on 2026-09-27.
  */
-import type { DiscardedDetection } from '@camstack/types'
+import type { DiscardedDetection } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { BelowFloorAccumulator, belowFloorBand, tallyBelowFloor } from '../below-floor-tally.js'
 

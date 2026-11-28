@@ -3,7 +3,7 @@ import type {
   LlmProfile,
   LlmRuntimeCompleteInput,
   ManagedRuntimeConfig,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import type { LlmCallRequest, LlmClient } from '../client/llm-client.js'
 import { DefaultsStore } from '../defaults-store.js'

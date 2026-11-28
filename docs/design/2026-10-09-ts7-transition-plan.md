@@ -55,7 +55,7 @@ on the runner itself.
 
 | | value |
 | --- | --- |
-| CI host | agent-a: N100, 4 cores, 16 GB RAM, **shared with a live CamStack agent** |
+| CI host | agent-a: N100, 4 cores, 16 GB RAM, **shared with a live Dominevo agent** |
 | runner | **one** self-hosted runner (label `<runner-host>`), container `memory.max` = **9 GB** |
 | safety net | 6 GB zram (compressed swap). A safety net only: a build that lives in zram is a build that has already failed. |
 | who else uses the runner | `ci.yml` (one job), `checks.yml` (three jobs: `static`, `docs`, `e2e`), and the viewer repo's `typecheck.yml` (same label). With one runner they serialize. |
@@ -316,7 +316,7 @@ ui-library (vite-plugin-dts), types (`tsc --emitDeclarationOnly`), sdk
 3. **Downstream typecheck on the new `.d.ts`.** With the TS 7 dists swapped in, the full `typecheck` (tsc 6 *and* tsgo) is unchanged against `ci-baseline.json`: server 0, system 0, sdk 0, ui-library 0, admin-ui on dist 0, addon-pipeline 323 (the pin). The CI-memory doc already did this once for types.
 4. **`npm run codegen:check` stays clean.** `generate-api-types.ts` expands the core routers with ts-morph's TS 6 checker *through `dist/*.d.ts`*. Union order in its output could follow the new declaration order (§4.2). If it drifts, the fix belongs in the generator (sort before printing), not in reverting P2.
 5. `scripts/check-no-dts-in-src.sh` before and after the build, and the `check-addon-types-entry` / `check-export-coverage` guards.
-6. The viewer's `ts-check` against a locally packed `@camstack/types` (`npm pack` → install into a scratch copy of the viewer): 0 errors. The viewer resolves `@camstack/types` from the **published** package, so this is the consumer the published text change reaches first.
+6. The viewer's `ts-check` against a locally packed `@dominevo/types` (`npm pack` → install into a scratch copy of the viewer): 0 errors. The viewer resolves `@dominevo/types` from the **published** package, so this is the consumer the published text change reaches first.
 
 **Rollback.** Per package: restore the `build` script (and the `dts()`
 plugin for system / ui-library). Keep `vite-plugin-dts` in the root lockfile
@@ -324,22 +324,22 @@ until P4 so that a rollback needs no install.
 
 **Effort.** 2–3 days: system and ui-library ~1 day, types/sdk/server ~0.5
 day, the normalizer and diff tooling ~0.5 day, the heavy-lane config ~0.5 day.
-Ship it at a release boundary, because the published `@camstack/types` text
+Ship it at a release boundary, because the published `@dominevo/types` text
 changes (decision D4).
 
 ### P3 — isolatedDeclarations where it is affordable; incremental where it is not
 
 **Scope.**
 - Remove the type *program* from declaration emit wherever exported types can be annotated: `isolatedDeclarations`. Emit then becomes a per-file transform with no checker.
-- For `@camstack/types`, where that is not affordable, reduce the program's cost instead.
+- For `@dominevo/types`, where that is not affordable, reduce the program's cost instead.
 
-**Finding that shapes this phase.** `@camstack/types` has **11 809**
+**Finding that shapes this phase.** `@dominevo/types` has **11 809**
 `isolatedDeclarations` errors in 233 files, 10 241 of them TS9013 ("expression
 type can't be inferred"). They are the `export const xSchema = z.object(…)`
 consts. The types *are* `z.infer` of those schemas by design: the API types are
 Zod-derived, and hand-written twins rot silently. Annotating 10 k schema consts
 would bring the hand-written twins back. **Do not apply isolatedDeclarations to
-`@camstack/types`.**
+`@dominevo/types`.**
 
 **Rollout order** (smallest debt first; each step is its own commit):
 
@@ -356,7 +356,7 @@ would bring the hand-written twins back. **Do not apply isolatedDeclarations to
 3. Change the emitter from `tsgo --emitDeclarationOnly` to a per-file transform: `oxc-transform`'s `isolatedDeclaration()` in a ~50-line script, or the Rolldown dts plugin if it meets the same gate. This needs no program and no `typescript`.
 4. Run the P2 validation gate again (same file set, normalized diff, downstream typecheck, codegen:check).
 
-**`@camstack/types` instead.**
+**`@dominevo/types` instead.**
 - **Barrel split** (§3). Programs that only need the cap surface should import a narrower entry (`addon`, `node`, `client`, `enums` already exist), so they load fewer of the 522 `.d.ts`. Measure the effect per consumer in P0 data before investing.
 - **Incremental typecheck/emit** (`tsgo --incremental` / `composite` + project references, `tsgo --build`).
   - The nx cache already skips an unchanged package entirely, so incremental helps only when a package *did* change. It saves check time on the unchanged files, but the program is still parsed and bound, so the RAM saving is small.
@@ -419,7 +419,7 @@ barrel-split measurement 0.5 d. These can be spread out and done on touch.
 | 2 | `--singleThreaded` | **none** measured (±2 % vs c1). Do not use. | — | — |
 | 3 | `paths` to built `.d.ts`, not sibling `src/` | admin-ui gate −1.7 GB (done); **desktop gate −1.26 GB**; agent-ui small. The root `tsconfig.json` still maps 21 entries to `src`; it is for editors and tsx and is not used by package builds. Keep it that way. | build gates | P1 (desktop: before TS 7) |
 | 4 | `skipLibCheck` | already `true` in `tsconfig.base.json`, server, and the viewer (expo base). Saving already taken; keep it (a guard could assert it). | all | — |
-| 5 | split the `@camstack/types` barrel (root vs `client`/`addon`/`node`/`enums`) | unmeasured; likely 0.3–0.8 GB for programs that import the root but use the cap surface only. The viewer already enforces `/client`. | consumers of the root entry | P3 (measure first) |
+| 5 | split the `@dominevo/types` barrel (root vs `client`/`addon`/`node`/`enums`) | unmeasured; likely 0.3–0.8 GB for programs that import the root but use the cap surface only. The viewer already enforces `/client`. | consumers of the root entry | P3 (measure first) |
 | 6 | `isolatedDeclarations` | removes the dts program: system −1.1 GB, ui-library −0.6 GB, sdk −0.2 GB. **Not for types** (11 809 Zod-inferred errors). | sdk, ui-library, system | P3 |
 | 7 | incremental + `.tsbuildinfo` | mostly time; RAM saving small (still parse + bind). Local dev first. | local typecheck; CI only if P0 data shows it | P3 |
 | 8 | nx heavy lane (`parallelism: false`) + `--parallel=3` for light tasks | build worst case from the *sum* of two heavy tasks to the *max* of one: ≈ −1.5 GB after P2 | CI and Checks build | P2 |
@@ -445,7 +445,7 @@ barrel-split measurement 0.5 d. These can be spread out and done on touch.
 
 ### 4.2 Codegen that depends on the TS API
 
-- `generate-api-types.ts` uses ts-morph's bundled TS 6.0.2 checker on the **server** program, reading `@camstack/types` / `system` through their `dist/*.d.ts`. After P2 those dists are TS 7-emitted, and its printed types may change order.
+- `generate-api-types.ts` uses ts-morph's bundled TS 6.0.2 checker on the **server** program, reading `@dominevo/types` / `system` through their `dist/*.d.ts`. After P2 those dists are TS 7-emitted, and its printed types may change order.
   - Mitigation: `codegen:check` is a P2 gate. If the output drifts, sort in the generator.
   - It stays on TS 6 until ts-morph ships on a TS 7 API. It runs in Checks only, so its RAM is outside the CI job.
 - The AST-only guard scripts are unaffected by TS 7 (they never see a TS 7 artifact).
@@ -482,8 +482,8 @@ barrel-split measurement 0.5 d. These can be spread out and done on touch.
 | D1 | tsgo source: keep `@typescript/native-preview@7.0.0-dev.20260707.2` (frozen) or move to `typescript@7.0.2` as an npm alias | **Alias the released 7.0.x**, binary called by path, version asserted. |
 | D2 | When `npm run typecheck` and the Checks grade switch to tsgo, and whether tsgo may re-pin `ci-baseline.json` | Grade with tsgo after **10** parity-clean Checks runs; re-pin with tsgo from P4 (one release later). |
 | D3 | Move type checking **out of `build`** into one CI typecheck step (`typecheck-tsgo`, all 55 projects, c1, sequential) | **Yes.** It is cheaper (one program per project), covers every package instead of three, and it is the single source of truth. It amends D704's "CI = build + test" by adding exactly one step. **ADR-worthy.** |
-| D4 | Accept TS 7-emitted `.d.ts` (226 cosmetic diffs in `@camstack/types`) in published packages | **Yes, at a release boundary**, after the P2 gate. |
-| D5 | `isolatedDeclarations` scope | **sdk, ui-library, system: yes. `@camstack/types`: no** (Zod-inferred by design). **ADR-worthy** (an authoring rule for exported APIs). |
+| D4 | Accept TS 7-emitted `.d.ts` (226 cosmetic diffs in `@dominevo/types`) in published packages | **Yes, at a release boundary**, after the P2 gate. |
+| D5 | `isolatedDeclarations` scope | **sdk, ui-library, system: yes. `@dominevo/types`: no** (Zod-inferred by design). **ADR-worthy** (an authoring rule for exported APIs). |
 | D6 | Budget enforcement | `::warning::` for 10 runs after P0, then **fail** on breach (`MEM_BUDGET_ENFORCE=1`). |
 | D7 | Re-enabling the second runner | Only when §6's gate holds: CI and Checks jobs each at p100 ≤ 4.5 GB over 10 runs. Then two runner containers, each with `memory.max` = **6 GB**. |
 | D8 | Viewer moves separately (P1v) | **Yes**, after the server's P1 parity window has started; `typescript@6` stays for `expo lint`. |
@@ -493,7 +493,7 @@ barrel-split measurement 0.5 d. These can be spread out and done on touch.
 **ADR-worthy (do not write yet):**
 - **(a)** TS 7 as the type authority, with the dual-install policy (TS 6 only as a JS-API library), covering D1, D2 and D9;
 - **(b)** type checking as its own CI step, out of `build` (D3, amends D704);
-- **(c)** `isolatedDeclarations` for the framework packages except `@camstack/types` (D5).
+- **(c)** `isolatedDeclarations` for the framework packages except `@dominevo/types` (D5).
 
 ---
 

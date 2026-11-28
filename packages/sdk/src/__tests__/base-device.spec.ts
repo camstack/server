@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { z } from 'zod'
-import { BaseDevice, DeviceType, DeviceFeature } from '@camstack/types'
-import type { AddonApi, DeviceContext } from '@camstack/types'
+import { BaseDevice, DeviceType, DeviceFeature } from '@dominevo/types'
+import type { AddonApi, DeviceContext } from '@dominevo/types'
 
 // Test fixture: nothing under test exercises ctx.api — throw loudly if a
 // test path accidentally reaches into it so the failure surfaces instead

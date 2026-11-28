@@ -46,8 +46,8 @@
  * the memory probe uses, so every shape here is testable against real files.
  */
 
-import type { IScopedLogger } from '@camstack/types'
-import { errMsg } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
 import { CGROUP_MOUNT_ROOT, nodeCgroupFileReader, parseCgroupSelf } from './cgroup-memory.js'
 import type { CgroupFileReader } from './cgroup-memory.js'
 

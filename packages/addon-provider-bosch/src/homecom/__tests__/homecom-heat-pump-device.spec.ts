@@ -9,7 +9,7 @@ import {
   type ErrorStatus,
   type HeatPumpStatus,
   type IDeviceRuntimeState,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { HomeComHeatPumpDevice } from '../devices/homecom-heat-pump-device.js'
 import type { HomeComApiClient, HomeComSystemSnapshot } from '../homecom-api-client.js'

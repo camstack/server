@@ -21,9 +21,9 @@
  *     nameless account links authenticate;
  *   - drop the users memo → `listUsers` is read once per verify.
  */
-import { attachUserManagementInternal, staticJwtSigningKey } from '@camstack/server/system'
-import type { UserManagementInternal } from '@camstack/server/system'
-import { makeInMemoryRecords, type TokenScope } from '@camstack/types'
+import { attachUserManagementInternal, staticJwtSigningKey } from '@dominevo/server/system'
+import type { UserManagementInternal } from '@dominevo/server/system'
+import { makeInMemoryRecords, type TokenScope } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import {
   bindHubCredentialStores,

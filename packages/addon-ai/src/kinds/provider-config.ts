@@ -10,7 +10,7 @@ import {
   type LlmProviderConfig,
   type ManagedRuntimeConfig,
   ManagedRuntimeConfigSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { AI_KIND_DESCRIPTORS, descriptorOf, type KindDescriptor } from './descriptors.js'
 import { explicitBaseUrl, HttpConnectionSchema, isHttpKind } from './http-connection.js'

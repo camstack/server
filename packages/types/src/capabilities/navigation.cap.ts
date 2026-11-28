@@ -17,7 +17,7 @@ import { t } from '../device/cap-vocabulary/l10n.js'
  *     (dock / spot-clean / follow-pet / go-to-point / …).
  *   - This cap is the SOURCE OF TRUTH. Two consumers adapt from it rather than
  *     the reverse:
- *       1. a native CamStack navigation panel (data-driven from `listActions`
+ *       1. a native Dominevo navigation panel (data-driven from `listActions`
  *          / `getOptions`), and
  *       2. the PTZ surface — a thin adapter mimics `ptz` from `navigation` so a
  *          robot camera shows up in the existing PTZ control path without every

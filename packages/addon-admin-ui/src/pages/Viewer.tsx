@@ -29,7 +29,7 @@ export function ViewerPage() {
     return (
       <div className="absolute inset-0" data-testid="viewer-embed">
         <iframe
-          title={t('pages.viewer.frameTitle', 'CamStack viewer')}
+          title={t('pages.viewer.frameTitle', 'Dominevo viewer')}
           src={plan.src}
           allow={VIEWER_FRAME_PERMISSIONS}
           className="h-full w-full border-0 bg-background"

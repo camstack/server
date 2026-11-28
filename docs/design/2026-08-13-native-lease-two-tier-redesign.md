@@ -487,9 +487,9 @@ live frame path. `StillFrameService` already ships 3/8/15 s; adopt its shape.
 ## 6. Phasing — what is addon-deployable and what needs a train
 
 The dividing line: `packages/types` (every `*.cap.ts`) travels inside the
-published `@camstack/server` closure, so **any new cap method is a train**.
+published `@dominevo/server` closure, so **any new cap method is a train**.
 Everything inside `packages/addon-pipeline` and `packages/addon-post-analysis`
-ships with `camstack deploy`.
+ships with `dominevo deploy`.
 
 **Phase 1 — R1 + R2. Addon-only, no train.** All of it lives in
 `session-decode/**` and `pipeline-runner/**`, and `getNativeCrop`'s cap

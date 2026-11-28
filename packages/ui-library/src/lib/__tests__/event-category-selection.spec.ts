@@ -1,4 +1,4 @@
-import { EventCategory, EVENT_CATEGORY_CATALOG, offerableEventCategories } from '@camstack/types'
+import { EventCategory, EVENT_CATEGORY_CATALOG, offerableEventCategories } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   eventCategoryGroups,

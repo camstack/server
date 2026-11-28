@@ -14,7 +14,7 @@
  */
 
 import { randomUUID } from 'node:crypto'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { type FaceAlignmentVersion, parseFaceAlignment } from '../face-alignment-version.js'
 import type { PhotoReenrolSample } from '../face-photo-reenrol-pass.js'
 import type { FaceReembedSample } from '../face-reembed-pass.js'

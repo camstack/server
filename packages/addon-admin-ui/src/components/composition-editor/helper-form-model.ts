@@ -49,7 +49,7 @@ import {
   type StatisticHelperSpec,
   type StatisticStat,
   type StatisticWindow,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { CREATE_TEMPLATE_PARAM, CREATE_TERMINAL_PARAM } from '../../lib/customization-routes'
 
 /** The source frame shape a crop is seeded for until its snapshot has loaded. */

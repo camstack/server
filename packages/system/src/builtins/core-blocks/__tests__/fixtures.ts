@@ -7,7 +7,7 @@ import {
   type IScopedLogger,
   LogExtras,
   SettingsStoreClient,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { readAllRows } from '../../../records/read-all-rows.js'
 import { makeRecordsWorld } from '../../sqlite-storage/__tests__/support/records-world.js'
 import { BlockSettingsStore, type SecretsForOwner } from '../block-settings-store.js'

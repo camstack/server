@@ -5,7 +5,7 @@
  * classified and heard nothing above the floor (D393).
  */
 import { describe, expect, it } from 'vitest'
-import type { AudioResult } from '@camstack/types'
+import type { AudioResult } from '@dominevo/types'
 import { ncAudioSampleFromFrame } from '../audio-classify-outcome.js'
 import { AudioWatcher } from '../../notification-center/audio-rule-matcher.js'
 

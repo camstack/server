@@ -14,7 +14,7 @@
  *    injection is exactly the kind of thing only a router-level test sees.
  */
 
-import type { NcSnooze, NcSnoozeInput } from '@camstack/types'
+import type { NcSnooze, NcSnoozeInput } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { buildCapRouterForTest, invokeProcedure, makeCtx } from './harness.js'
 

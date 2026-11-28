@@ -8,7 +8,7 @@
  * Idempotent: an absent, empty or already marker-backed code is `already-done`, so a crash
  * between the keychain write and the ledger row costs nothing on the rerun.
  */
-import { isSecretMarker, type MigrationProcedureResult } from '@camstack/types'
+import { isSecretMarker, type MigrationProcedureResult } from '@dominevo/types'
 import type { HubNodeFieldsPorts } from './hub-node-fields.js'
 
 export interface FixedPinPorts extends HubNodeFieldsPorts {

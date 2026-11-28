@@ -13,7 +13,7 @@
  * Pure factory: all IO is injected, so the null-on-miss contract is unit-tested
  * in isolation from the addon boot closure.
  */
-import type { FrameHandle, IScopedLogger } from '@camstack/types'
+import type { FrameHandle, IScopedLogger } from '@dominevo/types'
 import { REASON_NATIVE_MISS } from '../runtime/failure-report.js'
 import { padBbox } from './bbox-pad.js'
 

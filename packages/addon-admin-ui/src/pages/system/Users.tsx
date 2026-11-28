@@ -12,7 +12,7 @@ import {
   Pencil,
   Users,
 } from 'lucide-react'
-import type { SafeUser } from '@camstack/types'
+import type { SafeUser } from '@dominevo/types'
 
 import {
   useUserManagementCreateUser,
@@ -35,7 +35,7 @@ import {
   TABLE_SCROLL_MAX_H,
   type DataColumn,
   Checkbox,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useAuth } from '../../contexts/auth-context'
 import { AdminPage } from '../../components/AdminPage'
 import { ExternalIdentitiesModal } from '../../components/users/ExternalIdentitiesModal'

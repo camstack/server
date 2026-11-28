@@ -3,7 +3,7 @@
  * with (persisted as `greeMac`, the durable identity) and its last-known LAN IP
  * (weak). An AC whose address was never learnt keeps the stored IP (D49).
  */
-import type { DeviceIdentifierKey, RawDeviceIdentifiers } from '@camstack/types'
+import type { DeviceIdentifierKey, RawDeviceIdentifiers } from '@dominevo/types'
 
 export interface GreeIdentityRead {
   readonly mac: string

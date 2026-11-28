@@ -131,11 +131,11 @@ changed here.)
 
 ## Consequences
 
-- None of this ships with `camstack deploy`. `array-buffer-census.ts`, the
-  register-frame change and the runner-side validation are `@camstack/system`;
+- None of this ships with `dominevo deploy`. `array-buffer-census.ts`, the
+  register-frame change and the runner-side validation are `@dominevo/system`;
   the guard, the keep-alive and the catalog application are `server/backend`;
-  the descriptor type is `@camstack/types`. All ride one published
-  `@camstack/server` closure (D16), and the runner code and the hub code
+  the descriptor type is `@dominevo/types`. All ride one published
+  `@dominevo/server` closure (D16), and the runner code and the hub code
   update atomically with it — a hub that reads `customActions` off the frame
   and a runner that puts it there are the same release.
 - The catalog now appears in the registry only after the runner's init loop

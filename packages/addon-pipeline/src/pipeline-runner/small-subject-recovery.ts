@@ -52,12 +52,12 @@
  * cross a process boundary at frame rate (D9/D18) — a second crop of the
  * same frame on the same channel does not change that.
  *
- * The pure planning lives in `@camstack/types` (`pipeline/second-pass/`) so the
+ * The pure planning lives in `@dominevo/types` (`pipeline/second-pass/`) so the
  * offline accuracy eval runs the same planner; this module re-exports it and
  * keeps the one stateful piece, the per-camera motion-region mirror. The
  * runner wires the lease, the executor call and the rate limit around it.
  */
-import { type MotionRegion, type NormalizedRect, RECOVERY_MOTION_MAX_AGE_MS } from '@camstack/types'
+import { type MotionRegion, type NormalizedRect, RECOVERY_MOTION_MAX_AGE_MS } from '@dominevo/types'
 
 export {
   countRecoverySkips,
@@ -85,7 +85,7 @@ export {
   remapCropDetections,
   selectRecoveryStep,
   squareAround,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 interface MirrorEntry {
   readonly regions: readonly NormalizedRect[]

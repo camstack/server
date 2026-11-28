@@ -13,7 +13,7 @@
  * value is still true even when its provenance was written by an older build.
  */
 
-import { type LabelAttribution, LabelAttributionSchema } from '@camstack/types'
+import { type LabelAttribution, LabelAttributionSchema } from '@dominevo/types'
 import type { TieredLabelPatch } from '../pipeline/label-tier.js'
 
 /** The tiered columns as they read back off a persisted row. */

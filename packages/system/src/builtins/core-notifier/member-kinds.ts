@@ -4,7 +4,7 @@
  * read, rather than by a flag further down. A failed read throws: a catalogue that could not be read
  * is not an empty one (D49).
  */
-import { NOTIFIER_GROUP_ADDON_ID, type TargetKindCaps } from '@camstack/types'
+import { NOTIFIER_GROUP_ADDON_ID, type TargetKindCaps } from '@dominevo/types'
 import type { MemberKindCaps } from './group-notification-output.js'
 
 interface KindRow {

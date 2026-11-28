@@ -5,9 +5,9 @@
  * both for a viewer (allow list) and for a device-scoped grant.
  */
 
-import type { TokenScope, UserScope } from '@camstack/types'
-import { DeviceType } from '@camstack/types'
-import { METHOD_ACCESS_MAP } from '@camstack/server/system'
+import type { TokenScope, UserScope } from '@dominevo/types'
+import { DeviceType } from '@dominevo/types'
+import { METHOD_ACCESS_MAP } from '@dominevo/server/system'
 import { describe, expect, it } from 'vitest'
 import { checkScopeAccess, type DeviceScopeLookup } from '../scope-access.js'
 

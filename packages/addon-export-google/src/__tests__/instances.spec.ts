@@ -13,7 +13,7 @@ import {
   deviceExportCapability,
   integrationInstancesCapability,
   makeInMemoryRecords,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ExportGoogleAddon } from '../export-google.addon.js'
 import {

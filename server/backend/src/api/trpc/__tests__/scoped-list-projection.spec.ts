@@ -16,8 +16,8 @@
  * whole fleet — the exact leak the reachability branch would otherwise open.
  */
 
-import type { DeviceMetaLike } from '@camstack/types'
-import { DeviceType } from '@camstack/types'
+import type { DeviceMetaLike } from '@dominevo/types'
+import { DeviceType } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import type { AuthenticatedAgent, TrpcContext } from '../trpc.context.js'

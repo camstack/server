@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import type { RecordingConfig } from '@camstack/types'
+import type { RecordingConfig } from '@dominevo/types'
 import {
   buildSensorTriggerBindings,
   parseSensorStateChanged,

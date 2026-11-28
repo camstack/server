@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { parseFluxCsv } from '../enpal-flux-csv.js'
 import { createSnapshot, type EnpalSnapshot } from '../enpal-snapshot.js'
-import { DeviceRole } from '@camstack/types'
+import { DeviceRole } from '@dominevo/types'
 import {
   availableSpecs,
   capsOfSpec,

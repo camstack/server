@@ -16,7 +16,7 @@
  * A property is reported only for a known value: an assumed `standby`, a null
  * mute and an unlisted volume or input produce no property at all (D393).
  */
-import { DeviceFeature, MediaPlayerStatusSchema, type MediaPlayerStatus } from '@camstack/types'
+import { DeviceFeature, MediaPlayerStatusSchema, type MediaPlayerStatus } from '@dominevo/types'
 import type { AlexaCapability } from '../types.js'
 import { iface } from './shared.js'
 import type { AdapterDevice, GenericProperty } from './types.js'

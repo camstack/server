@@ -12,7 +12,7 @@
  *   - anything else (refused, timed out, DNS, 5xx) — the gateway did not answer.
  */
 import { Ecowitt } from '@apocaliss92/nodewitt'
-import { errMsg, type IntegrationTestConnectionResult } from '@camstack/types'
+import { errMsg, type IntegrationTestConnectionResult } from '@dominevo/types'
 import type { EcowittLocalConfig } from './config.js'
 
 /** How long the test waits for the first reading or the first error. */

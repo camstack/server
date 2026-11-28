@@ -47,8 +47,8 @@ import {
   type BirthDecisionRecord,
   BirthDecisionRecordSchema,
   MAX_BIRTH_DECISION_RECORDS,
-} from '@camstack/types'
-import type { IScopedLogger } from '@camstack/types'
+} from '@dominevo/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { EventLedgerCollection } from './event-ledger-collection.js'
 import type { BirthDecisionRecordDraft } from '../pipeline/birth-decision-record.js'
 

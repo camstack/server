@@ -10,8 +10,8 @@ import {
 import {
   supportedRuntimes as sharedSupportedRuntimes,
   defaultDeviceFor as sharedDefaultDeviceFor,
-} from '@camstack/types'
-import type { HardwareInfo } from '@camstack/types'
+} from '@dominevo/types'
+import type { HardwareInfo } from '@dominevo/types'
 
 const N100 = {
   platform: 'linux' as const,
@@ -132,7 +132,7 @@ describe('defaults / format / requirements', () => {
 // Delegation invariants: shared-rules parity
 //
 // These tests assert that the re-exported symbols from runtimes.ts delegate
-// correctly to `@camstack/types` runtime-capabilities (the shared SSOT).
+// correctly to `@dominevo/types` runtime-capabilities (the shared SSOT).
 // They also exercise the new `HardwareInfo`-based path directly via the
 // shared exports, confirming the two surfaces agree.
 // ---------------------------------------------------------------------------

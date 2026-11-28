@@ -13,7 +13,7 @@ import {
   type Scheduler,
   SchedulerError,
   type SchedulerInput,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { SchedulerRowBody, SchedulerStateRowBody } from '../record-kinds.js'
 
 export interface SchedulersStoreOptions {

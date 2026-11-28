@@ -2,7 +2,7 @@
 /**
  * Customize coverage guard (D936, D944, D984, D1004). Every Customize
  * cardinality, event shape, apply authority, extension slot, catalog cap title
- * and stored composition link declared in `@camstack/types` has a renderer in
+ * and stored composition link declared in `@dominevo/types` has a renderer in
  * the admin UI. A surface that is declared and never drawn reads as "not
  * customizable" (the lock whose door sensor showed on the container).
  *

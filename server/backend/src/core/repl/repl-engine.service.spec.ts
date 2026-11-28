@@ -11,10 +11,10 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ReplEngineService } from './repl-engine.service'
-import { SystemEventBus } from '@camstack/server/system'
-import type { ReplSessionContext } from '@camstack/server/system'
-import type { DeviceBinding } from '@camstack/types'
-import { DeviceType, EventCategory } from '@camstack/types'
+import { SystemEventBus } from '@dominevo/server/system'
+import type { ReplSessionContext } from '@dominevo/server/system'
+import type { DeviceBinding } from '@dominevo/types'
+import { DeviceType, EventCategory } from '@dominevo/types'
 
 // ── In-process broker api fixture ─────────────────────────────────────
 //

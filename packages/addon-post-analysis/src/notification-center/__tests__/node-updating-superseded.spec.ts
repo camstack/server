@@ -1,4 +1,4 @@
-import { createEvent, NcRuleInputSchema } from '@camstack/types'
+import { createEvent, NcRuleInputSchema } from '@dominevo/types'
 import { makeNcRecords, ncTable } from './support/nc-test-deps.js'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
@@ -74,7 +74,7 @@ describe('a node-updating that drains after its landing is not sent', () => {
         {
           kind: 'framework-update',
           requestedAt: 1,
-          packageName: '@camstack/server',
+          packageName: '@dominevo/server',
           fromVersion: '1.2.499',
           toVersion,
           nodeId: 'hub',
@@ -91,7 +91,7 @@ describe('a node-updating that drains after its landing is not sent', () => {
         {
           kind: 'framework-update',
           requestedAt: 1,
-          packageName: '@camstack/server',
+          packageName: '@dominevo/server',
           fromVersion: '1.2.499',
           toVersion,
           nodeId: 'hub',

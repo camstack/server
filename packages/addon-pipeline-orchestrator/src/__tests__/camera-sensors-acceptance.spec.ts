@@ -23,15 +23,15 @@ import {
   MOTION_CLOSE_AFTER_MS,
   type ProviderMotionData,
   providerMotionEvent,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type {
   IEventBus,
   IScopedLogger,
   MotionTriggeredBy,
   StreamSourceEntry,
   SystemEvent,
-} from '@camstack/types'
-import { createLocalTransport, LocalChildClient, LocalChildRegistry } from '@camstack/server/system'
+} from '@dominevo/types'
+import { createLocalTransport, LocalChildClient, LocalChildRegistry } from '@dominevo/server/system'
 import PipelineOrchestratorAddon from '../index.js'
 import {
   type FakeDirectoryNode,

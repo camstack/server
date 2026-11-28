@@ -13,7 +13,7 @@ import {
   RecordIntegrationInstances,
   type RecordsAccess,
   type ResolvedInstance,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { buildConnectionFormSchema, ecowittConfigSchema } from './config.js'
 import { type EcowittProbeFactory, testEcowittConnection } from './ecowitt-connection-test.js'

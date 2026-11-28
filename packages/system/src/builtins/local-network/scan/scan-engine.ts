@@ -23,7 +23,7 @@ import {
   type ScanNetworkResult,
   type ScanRequest,
   type ScanStats,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   buildPtrQuery,
   buildRecordQuery,

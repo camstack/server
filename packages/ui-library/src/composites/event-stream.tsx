@@ -41,7 +41,7 @@ import {
   Filter,
   RotateCcw,
 } from 'lucide-react'
-import { EventCategory, noiseEventCategories, offerableEventCategories } from '@camstack/types'
+import { EventCategory, noiseEventCategories, offerableEventCategories } from '@dominevo/types'
 import { trpc } from '../trpc-react'
 import { cn } from '../lib/cn'
 import { defaultUiText, useUiText, type UiTextFn } from '../contexts/ui-text'

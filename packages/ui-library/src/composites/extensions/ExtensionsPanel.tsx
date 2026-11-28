@@ -20,7 +20,7 @@
  * are three different sentences, and an owner that could not answer is shown
  * with its reason, verbatim — never dropped.
  */
-import type { ExtensionSlotId } from '@camstack/types'
+import type { ExtensionSlotId } from '@dominevo/types'
 import { Puzzle } from 'lucide-react'
 import { useDeviceExtensionListSlots } from '../../generated/system-hooks.js'
 import { useUiText } from '../../contexts/ui-text.js'

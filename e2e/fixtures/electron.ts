@@ -131,7 +131,7 @@ export async function spawnHub(opts: SpawnHubOptions = {}): Promise<SpawnedHub> 
   // that pattern → addon uninstall files trip a hub reboot mid-test.
   const args =
     mode === 'electron'
-      ? ['run', 'dev', '-w', '@camstack/desktop']
+      ? ['run', 'dev', '-w', '@dominevo/desktop']
       : ['run', 'serve:once', '-w', 'server/backend']
 
   const proc = spawn(cmd, args, {

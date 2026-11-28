@@ -3,7 +3,7 @@
  * sources an operator action re-opens, and which claims it still WANTS.
  * Nothing here touches a port; the composer acts on the answers.
  */
-import { compositionSourceKey } from '@camstack/types'
+import { compositionSourceKey } from '@dominevo/types'
 import { type ClaimGate, type ClaimKey, claimKey } from './claim-gate.js'
 import type { PlannedBlock } from './composer-plan.js'
 import type { LiveComposition } from './composer-verdict.js'

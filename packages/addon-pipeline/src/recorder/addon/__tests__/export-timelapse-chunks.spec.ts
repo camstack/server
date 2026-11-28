@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { ExportDense } from '@camstack/types'
+import type { ExportDense } from '@dominevo/types'
 import {
   TIMELAPSE_CHUNK_MS,
   denseRangesForChunk,

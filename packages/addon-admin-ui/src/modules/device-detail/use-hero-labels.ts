@@ -1,5 +1,5 @@
-import type { HeroConfirm } from '@camstack/types'
-import type { HeroConfirmLabels, HeroLabels } from '@camstack/ui-library'
+import type { HeroConfirm } from '@dominevo/types'
+import type { HeroConfirmLabels, HeroLabels } from '@dominevo/ui-library'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 

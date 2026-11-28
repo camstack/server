@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { ConfirmDialogProvider } from '@camstack/ui-library'
+import { ConfirmDialogProvider } from '@dominevo/ui-library'
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import HomematicCcuPage from '../page.js'
@@ -80,7 +80,7 @@ const HANDLERS: Record<string, Handler> = {
     programs: [
       {
         id: 'p1',
-        name: 'CamStack: Hall events',
+        name: 'Dominevo: Hall events',
         active: true,
         internal: false,
         lastRunMs: null,
@@ -195,7 +195,7 @@ describe('dummy programs', () => {
   it('names the program per key in the detail and flags the key without one', async () => {
     mountAt('?tab=devices&device=BTN1')
     const detail = await screen.findByTestId('hm-device-detail')
-    expect(await within(detail).findByText('CamStack: Hall events')).toBeTruthy()
+    expect(await within(detail).findByText('Dominevo: Hall events')).toBeTruthy()
     expect(within(detail).getByTestId('hm-key-event-ok')).toBeTruthy()
     expect(within(detail).getByTestId('hm-key-event-missing')).toBeTruthy()
     expect(within(detail).getByRole('button', { name: 'Create event program' })).toBeTruthy()

@@ -1,8 +1,8 @@
 /**
  * The deploy line has to be able to say "this node is running the new code".
  *
- * On 2026-08-07 `camstack deploy packages/addon-pipeline -n agent-a`
- * printed `✓ agent-a: @camstack/addon-pipeline@1.2.43` four times while
+ * On 2026-08-07 `dominevo deploy packages/addon-pipeline -n agent-a`
+ * printed `✓ agent-a: @dominevo/addon-pipeline@1.2.43` four times while
  * the node kept executing the previous dist — the hub installed the bundle and
  * never reloaded it. The tick was indistinguishable from a working deploy, so
  * the day went to hunting a tarball cache that does not exist.
@@ -15,7 +15,7 @@ describe('describeDeployOutcome', () => {
     const { detail, warning } = describeDeployOutcome(
       {
         success: true,
-        addonId: '@camstack/addon-pipeline',
+        addonId: '@dominevo/addon-pipeline',
         reloaded: ['pipeline-runner', 'stream-broker'],
       },
       true,
@@ -26,7 +26,7 @@ describe('describeDeployOutcome', () => {
 
   it('WARNS when an agent target reloaded nothing — the silent no-op', () => {
     const { warning } = describeDeployOutcome(
-      { success: true, addonId: '@camstack/addon-pipeline', reloaded: [] },
+      { success: true, addonId: '@dominevo/addon-pipeline', reloaded: [] },
       true,
     )
     expect(warning).toMatch(/still running the\s+previous code/)
@@ -34,7 +34,7 @@ describe('describeDeployOutcome', () => {
 
   it('WARNS when the node reported no reload field at all (stale hub runtime)', () => {
     const { warning } = describeDeployOutcome(
-      { success: true, addonId: '@camstack/addon-pipeline' },
+      { success: true, addonId: '@dominevo/addon-pipeline' },
       true,
     )
     expect(warning).toMatch(/predates deploy verification/)
@@ -42,10 +42,10 @@ describe('describeDeployOutcome', () => {
 
   it('stays quiet for a hub target — the hub install path restarts in the background', () => {
     const { detail, warning } = describeDeployOutcome(
-      { success: true, packageName: '@camstack/addon-pipeline', version: '1.2.43' },
+      { success: true, packageName: '@dominevo/addon-pipeline', version: '1.2.43' },
       false,
     )
-    expect(detail).toBe('@camstack/addon-pipeline@1.2.43')
+    expect(detail).toBe('@dominevo/addon-pipeline@1.2.43')
     expect(warning).toBeNull()
   })
 })

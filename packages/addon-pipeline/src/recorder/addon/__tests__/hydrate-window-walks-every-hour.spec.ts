@@ -29,7 +29,7 @@ import os from 'node:os'
 import path from 'node:path'
 import { promises as fs } from 'node:fs'
 import { afterEach, describe, expect, it } from 'vitest'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { RecordingIndex } from '../../recording-index.js'
 import { segmentRelPath } from '../../segment-path.js'
 import {

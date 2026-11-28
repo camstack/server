@@ -26,7 +26,7 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { beforeEach, describe, expect, it } from 'vitest'
-import type { SettingsStoreClient } from '@camstack/types'
+import type { SettingsStoreClient } from '@dominevo/types'
 import {
   makeFakeSettingsStore,
   makeFakeStorageProvider,

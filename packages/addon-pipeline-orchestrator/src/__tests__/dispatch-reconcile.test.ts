@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import type { ProfileSlot } from '@camstack/types'
+import type { ProfileSlot } from '@dominevo/types'
 import {
   computeDispatchGap,
   desiredDeviceIdsFromSlots,

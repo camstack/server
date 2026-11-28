@@ -8,7 +8,7 @@
  */
 import { useMemo } from 'react'
 import { Loader2, ScrollText } from 'lucide-react'
-import { trpc, useUserManagementListUsers } from '@camstack/ui-library'
+import { trpc, useUserManagementListUsers } from '@dominevo/ui-library'
 
 import { useAuth } from '../../contexts/auth-context'
 import { describeAuditEvent, type AuthAuditRecord } from './auth-audit-wording'

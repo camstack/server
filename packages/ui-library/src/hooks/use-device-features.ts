@@ -26,7 +26,7 @@
  * so the icon row renders without flickering on first paint.
  */
 import { useEffect, useState } from 'react'
-import type { DeviceBinding, DeviceBindingEntry } from '@camstack/types'
+import type { DeviceBinding, DeviceBindingEntry } from '@dominevo/types'
 import { FEATURE_TO_CAP_NAME } from '../composites/device-item/helpers'
 import type { UseDeviceProxyTrpc } from './use-device-proxy'
 

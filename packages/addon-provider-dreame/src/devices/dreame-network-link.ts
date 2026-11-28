@@ -7,12 +7,12 @@
  * position — 0 = unreached, null = unknown. A signal map is a wifi link, so a
  * reading makes the type `wifi`; an unknown reading changes nothing.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import {
   NETWORK_LINK_UNKNOWN,
   type NetworkLinkStatus,
   signalPercentFromBars,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { isDue } from './dreame-state-refresh.js'
 
 /** Dreame draws the signal map in four bars. */

@@ -9,7 +9,7 @@ import {
   type IDeviceRuntimeState,
   type InferNativeProvider,
   switchCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import { MatterEndpointDevice } from '../devices/matter-endpoint-device.js'
 

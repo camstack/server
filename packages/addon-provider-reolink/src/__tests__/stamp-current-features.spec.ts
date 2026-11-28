@@ -1,4 +1,4 @@
-import type { CamStreamDescriptor } from '@camstack/types'
+import type { CamStreamDescriptor } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { stampCurrentFeatures } from '../stamp-current-features.js'
 

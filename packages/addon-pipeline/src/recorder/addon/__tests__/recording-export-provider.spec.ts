@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
-import { RECORDING_EXPORT_MAX_READ_BYTES } from '@camstack/types'
-import type { ExportOptions, ExportState } from '@camstack/types'
+import { RECORDING_EXPORT_MAX_READ_BYTES } from '@dominevo/types'
+import type { ExportOptions, ExportState } from '@dominevo/types'
 import {
   getExportRecord,
   listExportsFor,

@@ -17,7 +17,7 @@ import {
   type GatedResult,
   type GatedToolSpec,
   type HubClient,
-} from '@camstack/develop'
+} from '@dominevo/develop'
 import { text } from './tool-result.js'
 import { z } from 'zod'
 import type { FetchFn, McpContext, ToolTextResult } from './context.js'
@@ -144,7 +144,7 @@ const PackumentShape = z.looseObject({
 export interface Compatibility {
   /** Where the addon runs, from its manifest `execution.placement`; null = not declared / unreadable. */
   readonly placement: readonly string[] | null
-  /** The `@camstack/types` peer range the package was published against. */
+  /** The `@dominevo/types` peer range the package was published against. */
   readonly peerTypesRange: string | null
   readonly node: string | null
   /** Why the above could not be read. */
@@ -182,7 +182,7 @@ async function compatibilityOf(
       .filter((p): p is string => p !== undefined)
     return {
       placement: placements.length > 0 ? [...new Set(placements)] : null,
-      peerTypesRange: parsed.data.peerDependencies?.['@camstack/types'] ?? null,
+      peerTypesRange: parsed.data.peerDependencies?.['@dominevo/types'] ?? null,
       node: parsed.data.engines?.['node'] ?? null,
     }
   } catch (err) {
@@ -283,7 +283,7 @@ export async function configureAddonsSearch(
       items,
       truncated: capped.truncated,
       ...(updates.ok ? {} : { updatesUnavailable: updates.reason }),
-      note: 'No addon declares a minimum server version; compatibility shows the @camstack/types peer range, the node engine and where the addon is placed (hub-only or any node).',
+      note: 'No addon declares a minimum server version; compatibility shows the @dominevo/types peer range, the node engine and where the addon is placed (hub-only or any node).',
     }
   })
 }
@@ -616,12 +616,12 @@ export async function uninstallAddon(
 }
 
 const TWO_STEP =
-  'Two steps: call without confirm_token for a preview and a one-shot token, then again with the SAME arguments and that token. Needs an admin `camstack login`.'
+  'Two steps: call without confirm_token for a preview and a one-shot token, then again with the SAME arguments and that token. Needs an admin `dominevo login`.'
 
 export function registerAddonTools(server: McpServer, ctx: McpContext): void {
   server.tool(
     'configure_addons_search',
-    'Search the addon store (the catalog the admin UI uses) with the installed version, an available update, whether the package is protected, and compatibility (placement, @camstack/types peer range, node engine; no addon declares a minimum server version).',
+    'Search the addon store (the catalog the admin UI uses) with the installed version, an available update, whether the package is protected, and compatibility (placement, @dominevo/types peer range, node engine; no addon declares a minimum server version).',
     {
       query: z.string().max(100).optional(),
       capability: z.string().max(100).optional(),

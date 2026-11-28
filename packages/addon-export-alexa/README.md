@@ -4,7 +4,7 @@ Alexa Smart Home Skill export — hub-side OAuth provider + directive handler. T
 
 <!-- readme:generated:start (derived from the manifest; edit outside this block) -->
 
-Package `@camstack/addon-export-alexa` on npm.
+Package `@dominevo/addon-export-alexa` on npm.
 
 ## What it provides
 
@@ -14,12 +14,12 @@ Package `@camstack/addon-export-alexa` on npm.
 ## Requirements
 
 - Placement: hub-only.
-- A CamStack hub. An agent is used only where the placement above allows it.
+- A Dominevo hub. An agent is used only where the placement above allows it.
 
 ## Documentation
 
-- [docs/addons/addon-export-alexa.md](https://github.com/camstack/server/blob/main/docs/addons/addon-export-alexa.md)
-- [packages/addon-export-alexa/AGENTS.md](https://github.com/camstack/server/blob/main/packages/addon-export-alexa/AGENTS.md)
+- [docs/addons/addon-export-alexa.md](https://github.com/dominevo/server/blob/main/docs/addons/addon-export-alexa.md)
+- [packages/addon-export-alexa/AGENTS.md](https://github.com/dominevo/server/blob/main/packages/addon-export-alexa/AGENTS.md)
 
 See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
 

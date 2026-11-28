@@ -200,7 +200,7 @@ thing from the UI side (*a source is never hidden, only its rows*). This record
 carved one case out of that rule without noticing it was the same rule, and
 [D555](adr-0555-a-source-whose-library-method-does-not-exist-is-a-listed-source-that-says-so.md)
 made the hole plain by collapsing Reolink to ONE source: on a Reolink camera the
-switch is now "the camera's own recordings, or only CamStack's", and switching
+switch is now "the camera's own recordings, or only Dominevo's", and switching
 the camera's recordings off deleted the whole picker. D62's rule is the other
 half of it — an off switch is REPORTED off, and disabled must never look like
 broken; a missing row says neither.
@@ -339,7 +339,7 @@ The operator settled it:
 that lives on some other surface. HKSV is a source if the camera is exported to
 HomeKit; that decision belongs to the HomeKit export. The Reolink source is a
 source because Reolink is the camera's provider; that decision belongs to the
-device's provider binding. CamStack's is always there. Each of those is already
+device's provider binding. Dominevo's is always there. Each of those is already
 an authority. A per-source on/off in a clips list is therefore a second knob
 over a decision somebody else already owns — which is D62's rule reached from a
 direction D62 does not spell out. D62 forbids a knob that writes a store nobody

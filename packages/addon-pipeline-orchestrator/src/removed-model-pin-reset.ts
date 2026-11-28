@@ -27,7 +27,7 @@ import {
   type IScopedLogger,
   isRemovedModelId,
   type StoredKeyRead,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { AgentSettingsMapBlob } from './orchestrator-store-schemas.js'
 
 /** Is `modelId` a registered custom model for `stepId`? */

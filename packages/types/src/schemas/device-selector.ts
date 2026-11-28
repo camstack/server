@@ -7,7 +7,7 @@
  *   - response projection + `auth.me`, against the WHOLE fleet, to compute
  *     the viewable device set and the effective-scope summary the UI reads.
  *
- * Lives in `@camstack/types` (framework, train-bound) because BOTH the
+ * Lives in `@dominevo/types` (framework, train-bound) because BOTH the
  * backend enforcement path and any addon/UI need the same rule — the F0.x
  * lesson that a hand-copied scope check drifts (D103).
  *

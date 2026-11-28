@@ -3,7 +3,7 @@
  * instance form shows, what a deleted bridge takes with it.
  */
 import { describe, expect, it, vi } from 'vitest'
-import { ExportInstanceUnknownError } from '@camstack/types'
+import { ExportInstanceUnknownError } from '@dominevo/types'
 import type { BridgeHost } from '../bridge-host.js'
 import { BridgeInstance } from '../bridge-instance.js'
 import type { Mapper } from '../mappers/types.js'

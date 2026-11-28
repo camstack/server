@@ -10,7 +10,7 @@
  * never costs the caller a slot. The ring is bounded (`MAX_RECENT_EVENTS`), so
  * reading it whole and cutting afterwards is one bounded pass.
  */
-import { type EventFilter, isOwnerOnlyEventCategory, type SystemEvent } from '@camstack/types'
+import { type EventFilter, isOwnerOnlyEventCategory, type SystemEvent } from '@dominevo/types'
 
 export function isPublicEvent(evt: Pick<SystemEvent, 'category'>): boolean {
   return !isOwnerOnlyEventCategory(evt.category)

@@ -3,7 +3,7 @@
  *
  * The live row, 2026-08-30, minted by this code path:
  *
- *   "@camstack/addon-terminal 0.0.0 → latest (hub)"
+ *   "@dominevo/addon-terminal 0.0.0 → latest (hub)"
  *
  * The real transition was `0.1.47 → 0.1.51`, and the hub knew both numbers.
  * Two independent faults produced that sentence:
@@ -18,7 +18,7 @@
  *  - `fromVersion` was `'0.0.0'`, the fallback of a version lookup that
  *    searched `<addonsDir>/addon-terminal/package.json` — the flat layout.
  *    Nothing has been installed flat since the scope directories landed: the
- *    package lives at `<addonsDir>/@camstack/addon-terminal/`, which is where
+ *    package lives at `<addonsDir>/@dominevo/addon-terminal/`, which is where
  *    the installer swaps it and where `packInstalledPackage` reads it. The
  *    `require.resolve` fallback then failed too (an addon is not in the hub's
  *    own node_modules) and `'0.0.0'` was emitted as if it were a version.
@@ -32,7 +32,7 @@
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { AddonPackageService } from '../addon-package.service.js'
 import { addonUpdatePayload } from '../addon-registry.service.js'
@@ -42,12 +42,12 @@ import { addonUpdatePayload } from '../addon-registry.service.js'
  *
  * The broken lookup's second chance was `require.resolve('<pkg>/package.json')`,
  * and in this repo that RESOLVES for a real addon — the worktree walks up into
- * `camstack-server/node_modules/@camstack/*`. A test named after the live
+ * `camstack-server/node_modules/@dominevo/*`. A test named after the live
  * package therefore read `0.1.51` out of the developer's checkout and never
  * reproduced the hub, which has no addon in its own node_modules and so falls
  * all the way through to `'0.0.0'`. This name resolves nowhere, on any machine.
  */
-const PACKAGE = '@camstack/addon-tapemachine'
+const PACKAGE = '@dominevo/addon-tapemachine'
 
 interface UpdateEventCall {
   readonly packageName: string
@@ -114,7 +114,7 @@ function makeHarness(installedVersion: string | null): Harness {
   const addonsDir = path.join(root, 'addons')
   fs.mkdirSync(addonsDir, { recursive: true })
   if (installedVersion !== null) {
-    writePackage(path.join(addonsDir, '@camstack', 'addon-tapemachine'), installedVersion)
+    writePackage(path.join(addonsDir, '@dominevo', 'addon-tapemachine'), installedVersion)
   }
   // What the lifecycle engine staged: the unpacked tarball of the new version.
   const stagedPath = path.join(root, 'staged')
@@ -183,7 +183,7 @@ describe('applyStagedAddonUpdate emits the versions that happened', () => {
     // `0.0.0` here would be a number the operator could take for real; the
     // honest answer is "unknown", and the renderer omits it.
     const h = makeHarness(null)
-    fs.mkdirSync(path.join(h.addonsDir, '@camstack', 'addon-tapemachine'), { recursive: true })
+    fs.mkdirSync(path.join(h.addonsDir, '@dominevo', 'addon-tapemachine'), { recursive: true })
     seedManifest(h.addonsDir, '0.1.47')
 
     await h.service.applyStagedAddonUpdate(PACKAGE, '0.1.51', h.stagedPath)

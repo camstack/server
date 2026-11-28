@@ -20,8 +20,8 @@ import {
   isSecretMarker,
   type MigrationProcedureResult,
   REDACTED_SECRET,
-} from '@camstack/types'
-import { LlmProfileSchema } from '@camstack/types'
+} from '@dominevo/types'
+import { LlmProfileSchema } from '@dominevo/types'
 import { secretFieldOf } from '../kinds/provider-config.js'
 import { hasFlatFields, migrateProfileBody } from '../profile-migration.js'
 

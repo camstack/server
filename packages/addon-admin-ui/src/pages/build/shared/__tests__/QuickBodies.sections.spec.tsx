@@ -3,8 +3,8 @@
  * scheduler's rules and devices, a script's state and logs, a custom device's
  * produced device and sources, a template's inputs and instances.
  */
-import { type CoreBlock, coreBlockAddonId, DeviceType, type TemplateRecord } from '@camstack/types'
-import type { Scheduler } from '@camstack/types'
+import { type CoreBlock, coreBlockAddonId, DeviceType, type TemplateRecord } from '@dominevo/types'
+import type { Scheduler } from '@dominevo/types'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen } from '@testing-library/react'
 import type { ReactNode } from 'react'
@@ -20,8 +20,8 @@ import { TemplateQuickBody } from '../quick-bodies/TemplateQuickBody'
 let blocks: readonly CoreBlock[] = []
 let previewAt: number | null = null
 
-vi.mock('@camstack/ui-library', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@camstack/ui-library')>()),
+vi.mock('@dominevo/ui-library', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@dominevo/ui-library')>()),
   useDeviceLabelById: (id: number) => `Device ${String(id)}`,
   useSchedulersGetTraces: () => ({ data: { traces: [], lastError: null }, error: null }),
   useSchedulersGetStatus: () => ({ data: [], error: null }),

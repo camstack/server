@@ -1,7 +1,7 @@
 /**
  * External sign-in identities linked to local users (D782).
  */
-import type { RecordKindHandle, SettingsStoreClient } from '@camstack/types'
+import type { RecordKindHandle, SettingsStoreClient } from '@dominevo/types'
 import { readAllRows } from '../records/read-all-rows.js'
 import type { ExternalIdentityBody } from '../builtins/local-auth/record-kinds.js'
 import { localAuthRecordKinds } from '../builtins/local-auth/record-kinds.js'
@@ -23,7 +23,7 @@ export interface ExternalIdentityKey {
 
 export class ExternalIdentityConflictError extends Error {
   constructor() {
-    super('This sign-in account is already linked to another CamStack user')
+    super('This sign-in account is already linked to another Dominevo user')
     this.name = 'ExternalIdentityConflictError'
   }
 }

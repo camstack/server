@@ -12,7 +12,7 @@
  * again.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { NcIncomingEvent } from './event-intake.js'
 import type { NcLivenessRow } from './liveness-ledger.js'
 import { NC_SYSTEM_DEVICE_ID } from './rule-engine.js'

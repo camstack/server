@@ -3,7 +3,7 @@ import {
   powerMeasurement,
   temperatureMeasurement,
   textMeasurement,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { UnitPreferencesProvider } from '../../../contexts/unit-preferences'
@@ -45,9 +45,10 @@ describe('the card draws the reading as the operator displays it', () => {
         <MeasurementScene measurement={temperatureMeasurement(48, null)} lang="en" deviceId={1} />
       </UnitPreferencesProvider>,
     )
-    expect(
-      Number.parseFloat(screen.getByTestId('dc-reading-value').textContent ?? ''),
-    ).toBeCloseTo(118.4, 0)
+    expect(Number.parseFloat(screen.getByTestId('dc-reading-value').textContent ?? '')).toBeCloseTo(
+      118.4,
+      0,
+    )
     expect(screen.getByText('°F')).toBeTruthy()
   })
 

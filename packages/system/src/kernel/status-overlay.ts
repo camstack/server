@@ -18,7 +18,7 @@
  * non-status method of a claimed cap. A class-instance provider loses its
  * prototype methods the same way.
  */
-import type { StatusOverlay, StatusOverlayAnswer } from '@camstack/types'
+import type { StatusOverlay, StatusOverlayAnswer } from '@dominevo/types'
 
 export type { StatusOverlay, StatusOverlayAnswer }
 

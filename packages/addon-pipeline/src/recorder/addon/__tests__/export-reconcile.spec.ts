@@ -11,7 +11,7 @@
  * (05:17) for camera 1441 were still `queued` an hour after the 05:31 restart,
  * with no ffmpeg behind either.
  */
-import type { ExportRecord } from '@camstack/types'
+import type { ExportRecord } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { getExportRecord, type RecordingExportsState, upsertExport } from '../export-store.js'
 import { makeExportsState } from './exports-state-fixture.js'

@@ -21,7 +21,7 @@
  * to the device's restart budget and its failures are not a verdict about the
  * live device.
  */
-import type { PipelineRunInput } from '@camstack/types'
+import type { PipelineRunInput } from '@dominevo/types'
 import { IdlePoolReaper } from './idle-pool-reaper.js'
 
 /** A benchmark pool idle this long is disposed; the next benchmark builds it again. */

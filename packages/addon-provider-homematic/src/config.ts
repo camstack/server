@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import type { ConfigUISchema } from '@camstack/types'
+import type { ConfigUISchema } from '@dominevo/types'
 import type { HomematicOptions } from 'nodehomematic'
 import { inferCallbackHost } from './callback-host.js'
 
@@ -154,7 +154,7 @@ export const homematicGatewayDeviceSchema = z.object({
   nativeId: z.string().min(1),
 })
 
-/** The CCU box itself ({@link import('@camstack/types').DeviceType.Gateway}). */
+/** The CCU box itself ({@link import('@dominevo/types').DeviceType.Gateway}). */
 export type HomematicGatewayDeviceConfig = z.infer<typeof homematicGatewayDeviceSchema>
 
 // ---------------------------------------------------------------------------

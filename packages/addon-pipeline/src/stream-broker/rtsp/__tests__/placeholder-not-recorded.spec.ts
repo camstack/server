@@ -10,7 +10,7 @@
 import { Socket } from 'node:net'
 import { afterEach, describe, expect, it } from 'vitest'
 
-import type { EncodedPacket } from '@camstack/types'
+import type { EncodedPacket } from '@dominevo/types'
 
 import { RECORDING_PATH_SUFFIX, SENTRY_PATH_SUFFIX, parseRestreamPath } from '../restream-intent.js'
 import { RtspRestreamer } from '../rtsp-restreamer.js'

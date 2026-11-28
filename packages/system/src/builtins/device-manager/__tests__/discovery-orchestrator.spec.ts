@@ -4,8 +4,8 @@ import type {
   IScopedLogger,
   LogExtras,
   ScanNetworkResult,
-} from '@camstack/types'
-import { DeviceType } from '@camstack/types'
+} from '@dominevo/types'
+import { DeviceType } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { type DiscoveryOrchestratorDeps, discoverProviders } from '../discovery-orchestrator.js'
 

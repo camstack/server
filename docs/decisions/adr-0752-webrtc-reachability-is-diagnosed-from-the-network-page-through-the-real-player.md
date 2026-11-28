@@ -40,7 +40,7 @@ for this and nothing else: production never sets a policy.
 
 ## Consequences
 
-- The probes and the report live in `@camstack/ui-library`
+- The probes and the report live in `@dominevo/ui-library`
   (`composites/webrtc-diagnostics/`), so the viewer embed can host the same
   test on a native phone without a second implementation; that needs a
   published ui-library first.

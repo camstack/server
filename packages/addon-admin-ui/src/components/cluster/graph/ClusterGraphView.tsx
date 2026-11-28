@@ -1,6 +1,6 @@
 import { useMemo, useState, useCallback, useRef } from 'react'
 import { ReactFlow, Background, Controls, type Node, type Edge } from '@xyflow/react'
-import { useSearchFieldHotkey, Button, Input } from '@camstack/ui-library'
+import { useSearchFieldHotkey, Button, Input } from '@dominevo/ui-library'
 import type { ClusterGraph } from './build-cluster-graph'
 import type { NodeBoxData } from './NodeBox'
 import { NodeBox } from './NodeBox'

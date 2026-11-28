@@ -82,7 +82,7 @@ have hidden this loader bug instead of naming it.
 ## Consequences
 
 The catalog reload now re-reads the whole bundle, which is what it always
-claimed to do — so a `camstack deploy` that adds a custom action is picked up
+claimed to do — so a `dominevo deploy` that adds a custom action is picked up
 without a hub restart, for real this time rather than for the single-chunk
 addons that happened to work.
 
@@ -108,4 +108,4 @@ would make this guard unreadable.
 Verified both directions on the artefact: with the purge scoped to
 `dirname(entryPath)` the guard reproduces the outage's exact message on
 `stream-broker`; with `bundleGraphRootFor` all six entries of
-`@camstack/addon-pipeline` reload cleanly.
+`@dominevo/addon-pipeline` reload cleanly.

@@ -6,9 +6,9 @@
  * `mixed` mid-edit), a node list read from `nodes.topology` (32–51 s, D315),
  * and a mixed rule rewritten by merely opening it.
  */
-import type { NcConditionDescriptor, NcSystemEventCondition, NodeDirectory } from '@camstack/types'
-import type { System } from '@camstack/sdk'
-import { SystemProvider } from '@camstack/ui-library'
+import type { NcConditionDescriptor, NcSystemEventCondition, NodeDirectory } from '@dominevo/types'
+import type { System } from '@dominevo/sdk'
+import { SystemProvider } from '@dominevo/ui-library'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
@@ -23,15 +23,15 @@ const mockDirectory = vi.fn(
 )
 const mockTopology = vi.fn(() => Promise.resolve([]))
 const mockListPackages = vi.fn(() =>
-  Promise.resolve([{ name: '@camstack/addon-ai', version: '0.2.17' }]),
+  Promise.resolve([{ name: '@dominevo/addon-ai', version: '0.2.17' }]),
 )
 /** The D642 schema probe (`previewTemplate`) — a current hub renders it. */
 const mockPreview = vi.fn(
   (): Promise<unknown> => Promise.resolve({ title: null, body: 'x', unknown: [] }),
 )
 
-vi.mock('@camstack/ui-library', async () => {
-  const real = await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+vi.mock('@dominevo/ui-library', async () => {
+  const real = await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return {
     ...real,
     useSystem: () => ({

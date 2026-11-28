@@ -15,7 +15,7 @@ import {
   MotionOnMotionChangedDataSchema,
   type MotionStatus,
   providerMotionEvent,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { CameraSensorsController } from '../camera-sensors/controller.js'
 import { CameraMotionSlice } from '../camera-sensors/motion-slice.js'
 import type { CameraSensorsResolverPorts } from '../camera-sensors/resolver.js'

@@ -12,7 +12,7 @@
  * `archiveUsageComplete`) into the real provider.
  */
 import { recordingsLocationOfMode } from '../roots.js'
-import type { IScopedLogger, SettingsStoreClient } from '@camstack/types'
+import type { IScopedLogger, SettingsStoreClient } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { RecordingIndex } from '../../recording-index.js'
 import { segmentRelPath } from '../../segment-path.js'

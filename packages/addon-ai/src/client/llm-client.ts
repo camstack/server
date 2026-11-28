@@ -45,7 +45,7 @@ import type {
   LlmImage,
   LlmProfile,
   LlmRetryPolicy,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   APICallError,
   generateText,

@@ -5,7 +5,7 @@
  * and the native phase rides on the merged slice.
  */
 import { describe, expect, it } from 'vitest'
-import { EventCategory, runtimeStatePolicyFor } from '@camstack/types'
+import { EventCategory, runtimeStatePolicyFor } from '@dominevo/types'
 import { harness, type Harness } from './mirror-harness.js'
 
 const NATIVE = {

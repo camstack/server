@@ -6,7 +6,7 @@
  * round 4): before `setSettingsStore`/`setSettingsDoor` the sync backend
  * reads the bootstrap file, which holds no addon key, and answered `missing`.
  */
-import type { ISettingsStoreProvider } from '@camstack/types'
+import type { ISettingsStoreProvider } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { ConfigManager } from '../config-manager.js'
 

@@ -8,7 +8,7 @@ import {
   type FloodStatus,
   floodCapability,
   type InferNativeProvider,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { veluxRainSensorSchema } from '../config.js'
 import type { VeluxNode } from '../velux-client-contract.js'
 import { veluxGateways } from '../velux-node-resolver.js'
@@ -17,7 +17,7 @@ import { nodeToFloodStatus } from '../velux-protocol.js'
 const DRY: FloodStatus = { flooded: false, lastChangedAt: 0 }
 
 /**
- * The rain sensor built into a VELUX roof window, as a CamStack
+ * The rain sensor built into a VELUX roof window, as a Dominevo
  * {@link DeviceType.Sensor} with the {@link DeviceRole.LeakSensor} role and the
  * existing `flood` cap (the same shape a moisture binary sensor takes elsewhere).
  * The child of a window container, following the window's node.

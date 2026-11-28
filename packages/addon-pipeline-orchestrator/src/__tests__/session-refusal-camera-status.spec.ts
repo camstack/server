@@ -9,7 +9,7 @@
  * bootstrap wiring under test: the status reads the ledger's pending reason,
  * then the session controller's last refusal.
  */
-import { EventCategory, type CameraDetectionConfig, type PipelineSchema } from '@camstack/types'
+import { EventCategory, type CameraDetectionConfig, type PipelineSchema } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import PipelineOrchestratorAddon from '../index.js'
 import {

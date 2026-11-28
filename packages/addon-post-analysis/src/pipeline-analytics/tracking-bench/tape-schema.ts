@@ -14,7 +14,7 @@
  * removed by the operator (decision 12); `lighting` is all a tape says about
  * the light.
  */
-import { APPEARANCE_BIN_COUNT, DetectionSourceSchema } from '@camstack/types'
+import { APPEARANCE_BIN_COUNT, DetectionSourceSchema } from '@dominevo/types'
 import { z } from 'zod'
 import { DetectionSensitivitySettingsSchema } from '../detection-sensitivity-settings.js'
 import { RETIRED_TRACKING_KEYS, TrackingSettingsSchema } from '../tracking-settings.js'

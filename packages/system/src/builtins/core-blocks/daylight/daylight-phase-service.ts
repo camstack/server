@@ -3,7 +3,7 @@
  * night", for the whole cluster. Provider of the `daylight-phase` cap.
  *
  * The sun is the default. With a sensor source the reading decides, through the
- * pure state machine in `@camstack/types` (`advanceSensorPhase`): a dark
+ * pure state machine in `@dominevo/types` (`advanceSensorPhase`): a dark
  * threshold, a hysteresis band and a minimum dwell. A sensor that cannot be read
  * is NOT a measurement: the sun answers instead, `fallbackReason` says why, and
  * the reason is logged once (with `tags: { deviceId }`) until it changes.
@@ -34,7 +34,7 @@ import {
   siteFor,
   sunPhaseAt,
   zoneOnlySite,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { DaylightSettingsRowBody } from '../record-kinds.js'
 
 /**

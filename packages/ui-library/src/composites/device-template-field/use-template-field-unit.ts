@@ -1,4 +1,4 @@
-import { runtimeFieldUnit, templateCapKey } from '@camstack/types'
+import { runtimeFieldUnit, templateCapKey } from '@dominevo/types'
 import {
   useDeviceManagerGetWireableFields,
   useDeviceManagerListAll,

@@ -36,7 +36,7 @@ inside the desktop app, the state is absent or stale, or nothing is downloaded.
 
 ## Consequences
 
-The layout and both halves of the read/write live in `@camstack/node-root`
+The layout and both halves of the read/write live in `@dominevo/node-root`
 (`desktop-app-channel.ts`), used by node and app alike. `accepted: true` means
 the request was written, not that the app restarted; the restart is seen on
 `desktopApp.version`. Open limit: the Windows service data dir is ACL-locked to

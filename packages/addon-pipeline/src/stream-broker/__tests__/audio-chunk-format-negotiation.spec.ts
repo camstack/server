@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import type { DecodedAudioChunk, IScopedLogger } from '@camstack/types'
+import type { DecodedAudioChunk, IScopedLogger } from '@dominevo/types'
 import { AudioChunkPlane } from '../stream-broker/audio-chunk-plane.js'
 
 /**

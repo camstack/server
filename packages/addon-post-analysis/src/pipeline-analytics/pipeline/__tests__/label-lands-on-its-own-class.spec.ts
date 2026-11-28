@@ -8,7 +8,7 @@
  * label rides the matched detection's own bbox — so a frame where the detector
  * called a person "dog" wrote `dog` onto a person track.
  */
-import type { FrameResult, ObjectDetection } from '@camstack/types'
+import type { FrameResult, ObjectDetection } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { FrameProcessor } from '../frame-processor.js'
 import { resolveTieredLabelWrite } from '../label-tier.js'

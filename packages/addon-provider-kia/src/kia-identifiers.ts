@@ -4,7 +4,7 @@
  * the identity: it is personal data and the cloud id is as stable. A blank id declares nothing,
  * so the stored value is kept (D49).
  */
-import type { DeviceIdentifierKey, RawDeviceIdentifiers } from '@camstack/types'
+import type { DeviceIdentifierKey, RawDeviceIdentifiers } from '@dominevo/types'
 
 export interface KiaIdentifierDeclaration {
   readonly identifiers: RawDeviceIdentifiers

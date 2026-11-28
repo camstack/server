@@ -10,7 +10,7 @@
  * arrives after the surface was swept is the defect, and it must be countable
  * per camera.
  */
-import type { FrameHandle } from '@camstack/types'
+import type { FrameHandle } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import PipelineRunnerAddon from '../index.js'
 

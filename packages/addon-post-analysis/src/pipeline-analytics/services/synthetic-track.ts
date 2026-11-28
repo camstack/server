@@ -25,7 +25,7 @@
  * {@link isSpatialTrack}.
  */
 import { newTrackId } from '../pipeline/track-id.js'
-import type { Track, TrackSource } from '@camstack/types'
+import type { Track, TrackSource } from '@dominevo/types'
 import {
   downscaleFullFrameJpeg,
   SYNTHETIC_SNAPSHOT_MAX_HEIGHT,

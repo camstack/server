@@ -346,7 +346,7 @@ export const SceneConfirmSchema = z.object({
 
 ### 4.3 Where it lives
 
-`pipeline-analytics` (in `@camstack/addon-post-analysis`) declares and provides
+`pipeline-analytics` (in `@dominevo/addon-post-analysis`) declares and provides
 `scene-monitor`. It is the addon that already owns the designated-node gate
 (`isPostProcessingNode`), the motion tap, the settings store, the
 `embedding-encoder` client and the `llm` client — every dependency the engine
@@ -790,8 +790,8 @@ usable position feedback, and the ones that do disagree about what a preset mean
 > ORIGINAL plan, not a record of actual time spent.
 
 Estimates are working days for one engineer who has read this document. "Train"
-= ships inside `@camstack/server` and is not live until a release carrying it is
-installed; "deploy" = `camstack deploy <pkg>`, live immediately.
+= ships inside `@dominevo/server` and is not live until a release carrying it is
+installed; "deploy" = `dominevo deploy <pkg>`, live immediately.
 
 | # | Phase | Ships via | Est. | Depends on |
 | --- | --- | --- | --- | --- |

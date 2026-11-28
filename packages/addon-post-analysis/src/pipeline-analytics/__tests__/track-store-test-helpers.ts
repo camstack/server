@@ -2,7 +2,7 @@
  * Shared builders for the D683 Task 16 specs (`track-store-adopt.spec.ts`,
  * `track-alias-store.spec.ts`, `track-close-gate.spec.ts`).
  */
-import type { LabelAttribution, SettingsStoreClient } from '@camstack/types'
+import type { LabelAttribution, SettingsStoreClient } from '@dominevo/types'
 import { EMPTY_MOVED_PROBE, type MovedProbe } from '../pipeline/stationary/promotion-plan.js'
 import { wireTrackAliasLedger } from '../store/event-ledger-wiring.js'
 import { TrackAliasStore } from '../store/track-alias-store.js'

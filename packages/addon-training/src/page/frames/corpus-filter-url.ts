@@ -4,7 +4,7 @@
  * Keys: `workState`, `camera` (csv device ids), `collection` (singular),
  * `class` (csv macro classes), `page` (1-based). Page size is not in the URL.
  */
-import type { RetrainFrameWorkState, RetrainMacroClass } from '@camstack/types'
+import type { RetrainFrameWorkState, RetrainMacroClass } from '@dominevo/types'
 
 const WORK_STATES: ReadonlySet<string> = new Set(['unannotated', 'annotated', 'complete'])
 const MACRO_CLASSES: ReadonlySet<string> = new Set([

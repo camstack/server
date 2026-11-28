@@ -16,8 +16,8 @@
  *      every Discover, so Alexa holds a value from the start;
  *   3. the existing transition ChangeReports.
  */
-import type { AddonContext, IScopedLogger } from '@camstack/types'
-import { EventCategory } from '@camstack/types'
+import type { AddonContext, IScopedLogger } from '@dominevo/types'
+import { EventCategory } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { buildParentCameraEndpoint } from '../endpoints/builder.js'
 import { handleReportState } from '../handlers/report-state.js'

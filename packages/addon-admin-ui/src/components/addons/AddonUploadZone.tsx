@@ -2,7 +2,7 @@ import { useRef, useCallback, useState } from 'react'
 import { Upload, Loader2 } from 'lucide-react'
 import { hubPath } from '../../lib/mount'
 import { useTranslation } from 'react-i18next'
-import { Button, FileInput } from '@camstack/ui-library'
+import { Button, FileInput } from '@dominevo/ui-library'
 
 interface AddonUploadZoneProps {
   onUploadSuccess: () => void

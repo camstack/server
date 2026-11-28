@@ -1,12 +1,12 @@
 import { randomUUID } from 'node:crypto'
-import type { EnsureTlsResult } from '@camstack/server/system'
-import { readPendingRestart, retirePreviousLocalCa } from '@camstack/server/system'
+import type { EnsureTlsResult } from '@dominevo/server/system'
+import { readPendingRestart, retirePreviousLocalCa } from '@dominevo/server/system'
 import type {
   IScopedLogger,
   PendingRestartMarkerPayload,
   TlsCertChangedPayload,
-} from '@camstack/types'
-import { EventCategory } from '@camstack/types'
+} from '@dominevo/types'
+import { EventCategory } from '@dominevo/types'
 import { AddonRegistryService } from '../core/addon/addon-registry.service'
 import { EventBusService } from '../core/events/event-bus.service'
 import { LoggingService } from '../core/logging/logging.service'

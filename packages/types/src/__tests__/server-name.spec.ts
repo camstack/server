@@ -48,23 +48,23 @@ describe('resolveServerName (D861)', () => {
     expect(resolveServerName('Casa', 'nas')).toEqual({ name: 'Casa', isDefault: false })
   })
 
-  it('an unusable hostname falls back to CamStack, still flagged default', () => {
+  it('an unusable hostname falls back to Dominevo, still flagged default', () => {
     for (const host of ['', '.local', 'localhost', 'localhost.localdomain']) {
-      expect(shortHostname(host)).toBe('CamStack')
-      expect(resolveServerName(undefined, host)).toEqual({ name: 'CamStack', isDefault: true })
+      expect(shortHostname(host)).toBe('Dominevo')
+      expect(resolveServerName(undefined, host)).toEqual({ name: 'Dominevo', isDefault: true })
     }
   })
 
-  it('a 12-hex container id falls back to CamStack', () => {
+  it('a 12-hex container id falls back to Dominevo', () => {
     expect(resolveServerName(undefined, 'a4afbe756e45')).toEqual({
-      name: 'CamStack',
+      name: 'Dominevo',
       isDefault: true,
     })
   })
 
-  it('a 64-hex container id falls back to CamStack', () => {
+  it('a 64-hex container id falls back to Dominevo', () => {
     expect(resolveServerName(undefined, 'a1b2c3d4e5f60718'.repeat(4))).toEqual({
-      name: 'CamStack',
+      name: 'Dominevo',
       isDefault: true,
     })
   })

@@ -12,7 +12,7 @@ import {
   type DeviceContext,
   type InferNativeProvider,
   type StateRefreshPolicy,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { greeConnections } from '../gree-gateway.js'
 
 /** The cadence the library's own poll ran at before the core took over. */

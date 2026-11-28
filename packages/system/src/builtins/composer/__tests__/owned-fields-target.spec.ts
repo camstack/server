@@ -1,4 +1,4 @@
-import type { ClaimOutcome } from '@camstack/types'
+import type { ClaimOutcome } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { TargetAsyncFailure } from '../composition-runtime.js'
 import { type OwnedFieldsApi, OwnedFieldsTarget } from '../owned-fields-target.js'

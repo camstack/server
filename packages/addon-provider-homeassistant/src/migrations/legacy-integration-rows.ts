@@ -7,7 +7,7 @@
  * A patch upserts only the keys it names. It does not rewrite the other rows, so a secret
  * marker stays a marker. A missing store answers as "nothing written" and the copy is a no-op.
  */
-import { collectSecretMarkerRefs, type SecretsAccess } from '@camstack/types'
+import { collectSecretMarkerRefs, type SecretsAccess } from '@dominevo/types'
 
 /** The addon id the integrations of a Home Assistant instance carry. */
 export const HA_PROVIDER_ADDON_ID = 'provider-homeassistant'

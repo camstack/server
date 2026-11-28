@@ -18,7 +18,7 @@
  * empty panel on every detection rule.
  */
 
-import { useSystem } from '@camstack/ui-library'
+import { useSystem } from '@dominevo/ui-library'
 import { useQuery } from '@tanstack/react-query'
 import { AlertTriangle, Radio } from 'lucide-react'
 import { useTranslation } from 'react-i18next'

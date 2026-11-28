@@ -35,7 +35,7 @@ import {
   DEFAULT_CLUSTER_STEP_SETTINGS,
   type IScopedLogger,
   readClusterStepSettings,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /**
  * The addon whose GLOBAL settings own the cluster row. Same owner as the crop

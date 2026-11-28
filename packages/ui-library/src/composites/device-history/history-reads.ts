@@ -13,7 +13,7 @@ import {
   type DeviceHistoryQueryManyEntry,
   type DeviceHistoryQueryManyItem,
   type DeviceHistoryQueryResult,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export interface HistoryReadWindow {
   readonly from: number

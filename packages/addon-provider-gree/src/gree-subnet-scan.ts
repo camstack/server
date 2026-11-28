@@ -1,5 +1,5 @@
 import type { DiscoveredDevice } from '@apocaliss92/nodegree'
-import type { DiscoveryMode } from '@camstack/types'
+import type { DiscoveryMode } from '@dominevo/types'
 
 /** The scan is an AES-encrypted JSON exchange only the nodegree library speaks (its keys and framing are not exported). */
 export const GREE_DISCOVERY_MODES: readonly DiscoveryMode[] = [

@@ -12,7 +12,7 @@
  *      single `current/` copy. Both are idempotent + crash-safe.
  *   3. Is the ONE canonical `current/` closure valid? → register in-process
  *      resolver hooks so the node's MAIN process resolves the host-external
- *      packages (@camstack/server/system, …) from `current/node_modules`, point the
+ *      packages (@dominevo/server/system, …) from `current/node_modules`, point the
  *      forked-runner framework dir at the same copy, and load its entry.
  *   4. Otherwise → load the baked seed entry next to the starter.
  *
@@ -44,9 +44,9 @@ import { detectWorkspaceRoot } from './workspace-detect.js'
  * redirected to the active root; everything else resolves normally.
  */
 export const HOST_EXTERNAL_SPECIFIERS: readonly string[] = [
-  '@camstack/server/system',
-  '@camstack/types',
-  '@camstack/sdk',
+  '@dominevo/server/system',
+  '@dominevo/types',
+  '@dominevo/sdk',
   'zod',
   '@trpc/server',
   '@trpc/client',
@@ -57,8 +57,8 @@ export const HOST_EXTERNAL_SPECIFIERS: readonly string[] = [
 ]
 
 /**
- * The oldest `@camstack/server` this starter can host (D989) — the first one
- * that ships its kernel as `@camstack/server/system`, because the host-external
+ * The oldest `@dominevo/server` this starter can host (D989) — the first one
+ * that ships its kernel as `@dominevo/server/system`, because the host-external
  * list above resolves that specifier and an older server imports another.
  * Declared as `camstack.requires.server` in this package's `package.json`; a
  * spec keeps the two equal. Raise it by hand when a server needs a newer
@@ -333,7 +333,7 @@ export function runNodeStarter(options: NodeStarterOptions): void {
     env[options.envNames.bootMode] = 'data-root'
     // `activeRoot` IS the single copy — both node entries (hub launcher / agent
     // cli) derive `CAMSTACK_FRAMEWORK_DIR` (forked-runner resolver + NODE_PATH)
-    // from it, so the runners resolve `@camstack/{system,types,…}` + native
+    // from it, so the runners resolve `@dominevo/{system,types,…}` + native
     // prebuilds from the SAME copy hub-main loaded (no separate /data/framework).
     env[options.envNames.activeRoot] = activeRootDir
     if (version !== null) {

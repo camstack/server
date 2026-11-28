@@ -3,7 +3,7 @@
  * the page's one Save persists them. There is no per-field save.
  */
 import { InfoRow } from './overview-primitives'
-import { Input } from '@camstack/ui-library'
+import { Input } from '@dominevo/ui-library'
 
 export function EditableNameRow({
   initialName,

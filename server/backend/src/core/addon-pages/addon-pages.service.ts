@@ -3,8 +3,8 @@ import * as fs from 'node:fs'
 import { LoggingService } from '../logging/logging.service'
 import { ConfigService } from '../config/config.service'
 import { CapabilityService } from '../capability/capability.service'
-import type { IScopedLogger } from '@camstack/types'
-import type { IAddonPageProvider } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
+import type { IAddonPageProvider } from '@dominevo/types'
 
 /**
  * AddonPagesService — server-side helper that backs the static file
@@ -12,7 +12,7 @@ import type { IAddonPageProvider } from '@camstack/types'
  *
  * The public listing surface (`addonPages.listPages` on the AppRouter)
  * has been split out of this class — it now lives in the
- * `addon-pages-aggregator` builtin (`@camstack/server/system/builtins/...`)
+ * `addon-pages-aggregator` builtin (`@dominevo/server/system/builtins/...`)
  * which walks every `addon-pages-source` collection provider and
  * stamps versioned `bundleUrl`s. The split lets both ends flow through
  * codegen instead of relying on a hand-written wrapper.
@@ -54,8 +54,8 @@ export class AddonPagesService {
     }
 
     const addonsDir = this.resolveAddonsDir()
-    // Addon packages are at addons/@camstack/addon-<id>/dist/
-    const addonDistPath = path.join(addonsDir, '@camstack', `addon-${addonId}`, 'dist')
+    // Addon packages are at addons/@dominevo/addon-<id>/dist/
+    const addonDistPath = path.join(addonsDir, '@dominevo', `addon-${addonId}`, 'dist')
 
     const resolvedBase = path.resolve(addonDistPath)
     const resolvedFile = path.resolve(addonDistPath, filePath)

@@ -7,7 +7,7 @@
  * sentence, in the language of `lang`/`Accept-Language`, in the same shell as every other app page. The query is never echoed: an unknown or
  * absent code gets a generic sentence, a known one its fixed words.
  */
-import { APP_REFUSED_PATH, isAppStartRefusal } from '@camstack/types'
+import { APP_REFUSED_PATH, isAppStartRefusal } from '@dominevo/types'
 import type { FastifyInstance } from 'fastify'
 import { appHint, appPageCsp, appParagraph, renderAppPage } from './app-page-shell.js'
 import { type AppPageLang, appStrings, resolveAppPageLang } from './app-page-strings.js'

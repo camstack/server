@@ -18,8 +18,8 @@ import type {
   ReadinessScope,
   StorageLocationDeclaration,
   StorageLocationDeclarer,
-} from '@camstack/types'
-import { createDebugEmitter } from '@camstack/types/addon'
+} from '@dominevo/types'
+import { createDebugEmitter } from '@dominevo/types/addon'
 import {
   createDeviceProxy,
   addonSliceHandleApi,
@@ -30,7 +30,7 @@ import {
   errMsg,
   EventCategory,
   scopeKey,
-} from '@camstack/types/addon'
+} from '@dominevo/types/addon'
 import { CapabilityHandle } from '../capability-handle.js'
 import { createMigrationApiOverContext } from './migration-api-facade.js'
 import { recordsTransportOf } from './records-api-transport.js'
@@ -684,7 +684,7 @@ async function buildAddonContext(
   // mode hydrates via `client.requestReadinessSnapshot()` on connect. Both
   // ingest live `system.ready-state` deltas through `scopedEventBus`, so
   // `awaitReady`/`acquireCapability`/`onReadyState` semantics are identical.
-  const readinessRegistry = (): import('@camstack/types').ReadinessRegistry =>
+  const readinessRegistry = (): import('@dominevo/types').ReadinessRegistry =>
     runtime.mode === 'broker'
       ? getOrInitReadinessRegistry(runtime.broker, scopedEventBus, scopedLogger)
       : getOrInitReadinessRegistryForClient(runtime.client, scopedEventBus, scopedLogger, nodeId)
@@ -790,7 +790,7 @@ async function buildAddonContext(
       // Providers that call `ctx.kernel.streamProbe.probe(url)` don't need
       // to know where they run. The same instance is mirrored onto every
       // `DeviceContext` via `DeviceManagerApi.streamProbe`.
-      const streamProbe: import('@camstack/types').IKernelStreamProbe =
+      const streamProbe: import('@dominevo/types').IKernelStreamProbe =
         runtime.mode === 'broker'
           ? {
               probe: (url, probeOptions) =>

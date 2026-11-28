@@ -275,7 +275,7 @@ is that batch endpoint. Give it its consumer.
 
 ### 3.2 Phase 1 — hot-deployable, no cap change, no train
 
-All four are `camstack deploy` (addon) or a viewer OTA. None touches a `*.cap.ts`.
+All four are `dominevo deploy` (addon) or a viewer OTA. None touches a `*.cap.ts`.
 
 1. **Keep-warm loop in the snapshot addon (fixes D1 — the actual complaint).**
    A timer in `SnapshotAddon` that refreshes the cache for cameras that are
@@ -348,7 +348,7 @@ The one real remaining gap is **latest-handle discovery**: nothing publishes "th
 newest `FrameHandle` for device N". `getNativeCrop` is by-handle only, and
 handles leave the runner only by riding an inference-result event.
 
-Proposed shape — a **new cap method**, therefore a train (`@camstack/system`
+Proposed shape — a **new cap method**, therefore a train (`@dominevo/system`
 force-publish + `applyServerUpdate`), not a hot deploy:
 
 ```
@@ -402,10 +402,10 @@ the one thing NVR does not do, and the one thing the operator complained about.
 
 | Change | Vehicle |
 | --- | --- |
-| keep-warm loop, overview consumer, event invalidation | **`camstack deploy-server`** — NOT a hot addon deploy. `camstack deploy packages/system` is REJECTED outright on a deployed hub (*"Framework packages no longer live-update via upload"*), because snapshot is a `@camstack/system` builtin and that package is host-provided ([D15](../decisions/adr-0015.md)). It ships as a server closure + `applyServerUpdate`, which restarts the hub. `applyServerUpdate` times out at 60 s and still succeeds — poll `serverManagement.getServerPackageStatus` for the promoted `runningVersion` instead of trusting the CLI's error. |
+| keep-warm loop, overview consumer, event invalidation | **`dominevo deploy-server`** — NOT a hot addon deploy. `dominevo deploy packages/system` is REJECTED outright on a deployed hub (*"Framework packages no longer live-update via upload"*), because snapshot is a `@dominevo/system` builtin and that package is host-provided ([D15](../decisions/adr-0015.md)). It ships as a server closure + `applyServerUpdate`, which restarts the hub. `applyServerUpdate` times out at 60 s and still succeeds — poll `serverManagement.getServerPackageStatus` for the promoted `runningVersion` instead of trusting the CLI's error. |
 | viewer `?w=`, cache-buster, overview polling | viewer OTA |
-| admin UI → data-plane URLs (D4) | `camstack deploy packages/addon-admin-ui` |
-| `pipelineRunner.getLatestFrameJpeg` | **train** — new cap method → `npm run codegen`, `@camstack/system` force-publish, `applyServerUpdate` |
+| admin UI → data-plane URLs (D4) | `dominevo deploy packages/addon-admin-ui` |
+| `pipelineRunner.getLatestFrameJpeg` | **train** — new cap method → `npm run codegen`, `@dominevo/system` force-publish, `applyServerUpdate` |
 
 ---
 

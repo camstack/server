@@ -1,7 +1,7 @@
 /**
  * `addons.uninstallPackage` reaches AGENTS (2026-10-08).
  *
- * `@camstack/addon-decoder-ffmpeg` was uninstalled on the hub and stayed
+ * `@dominevo/addon-decoder-ffmpeg` was uninstalled on the hub and stayed
  * installed — runner running — on both agents: `uninstallPackage` took only a
  * package name and acted on the hub, and `startJob({ kind: 'uninstall',
  * nodeIds })` refuses agents. These specs drive the LIVE cap router (input
@@ -9,13 +9,13 @@
  * over a broker fake that answers `$agent.status` / `$agent.undeploy` the way an
  * agent does.
  */
-import type { UninstallPackageResult } from '@camstack/types'
+import type { UninstallPackageResult } from '@dominevo/types'
 import { beforeAll, describe, expect, it, vi } from 'vitest'
 import { buildAddonsProvider } from '../../api/core/cap-providers.js'
 import { initLifecycleRunner } from '../../core/lifecycle/lifecycle-runner.singleton.js'
 import { buildCapRouterForTest, invokeProcedure, makeCtx } from './harness.js'
 
-const PKG = '@camstack/addon-decoder-ffmpeg'
+const PKG = '@dominevo/addon-decoder-ffmpeg'
 
 interface AgentFake {
   readonly id: string

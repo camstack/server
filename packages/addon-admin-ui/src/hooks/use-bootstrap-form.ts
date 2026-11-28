@@ -10,8 +10,8 @@
  */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { UseQueryResult } from '@tanstack/react-query'
-import type { ConfigUISchemaWithValues } from '@camstack/types'
-import { useSystem } from '@camstack/ui-library'
+import type { ConfigUISchemaWithValues } from '@dominevo/types'
+import { useSystem } from '@dominevo/ui-library'
 
 const SYSTEM_CONFIG_ADDON_ID = 'system-config'
 

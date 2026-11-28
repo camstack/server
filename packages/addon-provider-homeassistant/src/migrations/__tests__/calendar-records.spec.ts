@@ -8,7 +8,7 @@ import {
   calendarRecordId,
   makeInMemoryRecords,
   type FlattenRowPorts,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { haBrokersEntryKind, haCalendarsEntryKind } from '../../broker-record-kinds.js'
 import { NO_LINK_PORTS, NO_NOTIFY_PORTS } from '../../__tests__/no-link-ports.js'

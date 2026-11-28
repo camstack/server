@@ -7,7 +7,7 @@ import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { buildSystemApplyClosurePatches } from '../system-apply-closure-patches.js'
 
 function makeLogger(sink: string[]): IScopedLogger {
@@ -36,7 +36,7 @@ afterEach(() => {
 
 /** Writes a fake shipped applier that records the cwd it was run from. */
 function writeApplier(body: string): string {
-  const dir = path.join(closure, 'node_modules', '@camstack', 'server', 'scripts')
+  const dir = path.join(closure, 'node_modules', '@dominevo', 'server', 'scripts')
   fs.mkdirSync(dir, { recursive: true })
   const file = path.join(dir, 'closure-postinstall.mjs')
   fs.writeFileSync(file, body, 'utf-8')
@@ -57,7 +57,7 @@ describe('buildSystemApplyClosurePatches', () => {
     // realpath on both sides: macOS resolves /var through a /private symlink,
     // and the cwd the child reports is the resolved one.
     expect(fs.realpathSync(fs.readFileSync(receipt, 'utf-8'))).toBe(
-      fs.realpathSync(path.join(closure, 'node_modules', '@camstack', 'server')),
+      fs.realpathSync(path.join(closure, 'node_modules', '@dominevo', 'server')),
     )
   })
 

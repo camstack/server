@@ -4,8 +4,8 @@
  * The operator's code must reach `new VeSync(..., { countryCode })` on both the runtime and the
  * Test path, and that refusal must read as a region problem that names the fix.
  */
-import { makeInMemoryRecords } from '@camstack/types'
-import { fakeAddonContext } from '@camstack/types/testing'
+import { makeInMemoryRecords } from '@dominevo/types'
+import { fakeAddonContext } from '@dominevo/types/testing'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { connectionFromBody, vesyncConnectionSchema } from '../config.js'
 import type { VeSyncClient, VeSyncClientFactory } from '../vesync-client-contract.js'

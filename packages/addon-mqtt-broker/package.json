@@ -1,7 +1,7 @@
 {
-  "name": "@camstack/addon-mqtt-broker",
-  "version": "1.2.162",
-  "description": "MQTT broker registry addon for CamStack — manages external broker entries + an optional embedded aedes broker. Consumers spin up their own `mqtt.js` clients via the `mqtt-broker` cap.",
+  "name": "@dominevo/addon-mqtt-broker",
+  "version": "0.1.0",
+  "description": "MQTT broker registry addon for Dominevo — manages external broker entries + an optional embedded aedes broker. Consumers spin up their own `mqtt.js` clients via the `mqtt-broker` cap.",
   "keywords": [
     "camstack",
     "addon",
@@ -13,12 +13,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/camstack/server.git",
+    "url": "https://github.com/dominevo/server.git",
     "directory": "packages/addon-mqtt-broker"
   },
   "homepage": "https://camstack-docs.zentik.app",
   "bugs": {
-    "url": "https://github.com/camstack/server/issues"
+    "url": "https://github.com/dominevo/server/issues"
   },
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -61,7 +61,7 @@
       "aedes"
     ],
     "requires": {
-      "server": ">=1.2.968"
+      "server": ">=0.1.0"
     }
   },
   "files": [
@@ -78,7 +78,7 @@
     "test": "vitest run"
   },
   "peerDependencies": {
-    "@camstack/types": "*"
+    "@dominevo/types": "0.1.0"
   },
   "dependencies": {
     "aedes": "^0.51.3",
@@ -86,8 +86,8 @@
     "mqtt": "^5.10.0"
   },
   "devDependencies": {
-    "@camstack/sdk": "*",
-    "@camstack/types": "*",
+    "@dominevo/sdk": "0.1.0",
+    "@dominevo/types": "0.1.0",
     "@types/bcryptjs": "^2.4.6",
     "typescript": "~6.0.3",
     "vite": "^8.0.11",

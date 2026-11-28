@@ -1,3 +1,3 @@
-// Re-export from @camstack/server/system
-export { StorageLocationManager } from '@camstack/server/system'
-export type { StorageLocationName } from '@camstack/server/system'
+// Re-export from @dominevo/server/system
+export { StorageLocationManager } from '@dominevo/server/system'
+export type { StorageLocationName } from '@dominevo/server/system'

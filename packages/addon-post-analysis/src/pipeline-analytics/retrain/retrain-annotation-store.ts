@@ -39,7 +39,7 @@ import type {
   RetrainMacroClass,
   RetrainOrigin,
   RetrainAnnotationSource as WireAnnotationSource,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { EventLedgerCollection } from '../store/event-ledger-collection.js'
 import { KeyedCommitLock } from './keyed-commit-lock.js'
 import { narrowOrigin } from './retrain-origin.js'

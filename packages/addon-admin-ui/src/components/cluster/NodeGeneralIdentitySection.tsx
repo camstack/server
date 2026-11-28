@@ -5,7 +5,7 @@
 import { useMemo } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { NodeColorIdSchema, type NodeColorId } from '@camstack/types'
+import { NodeColorIdSchema, type NodeColorId } from '@dominevo/types'
 import {
   Button,
   NODE_COLOR_IDS,
@@ -14,7 +14,7 @@ import {
   nodeColorClass,
   usePipelineOrchestratorListAgentSettings,
   usePipelineOrchestratorSetAgentReachableHost,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import {
   invalidatePlacementQueries,
   mutationErrorMessage,

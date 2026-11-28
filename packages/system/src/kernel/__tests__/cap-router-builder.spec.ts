@@ -19,7 +19,7 @@ import {
   type CapabilityMethodSchema,
   expandCapMethods,
   resolveCapMount,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   buildCapRouters,

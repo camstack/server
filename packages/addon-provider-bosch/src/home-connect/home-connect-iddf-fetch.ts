@@ -9,7 +9,7 @@ import {
   homeConnectIddfHeaders,
   parseIddfZipBuffer,
 } from './home-connect-iddf.js'
-import { errMsg, isSecretMarker, isSecretMarkerLike } from '@camstack/types'
+import { errMsg, isSecretMarker, isSecretMarkerLike } from '@dominevo/types'
 import type { HomeConnectConfig, HomeConnectStoredAppliance } from './config.js'
 import {
   homeConnectTokenExpiresAtMs,

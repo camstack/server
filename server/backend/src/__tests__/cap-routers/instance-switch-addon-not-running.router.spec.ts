@@ -5,14 +5,14 @@
  * to the hub proxy, never kept anywhere else. A REAL registry and the REAL
  * `createCapRouterServices`: a faked refusal would prove only the fake.
  */
-import { buildCapRouters, CapabilityRegistry } from '@camstack/server/system'
+import { buildCapRouters, CapabilityRegistry } from '@dominevo/server/system'
 import {
   type IIntegrationInstancesProvider,
   integrationInstancesCapability,
   type IScopedLogger,
   kebabToCamel,
   readErrorI18n,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { TRPCError } from '@trpc/server'
 import { describe, expect, it, vi } from 'vitest'
 import {

@@ -1,8 +1,8 @@
-import { Button, DataTable, IconButton, Input, type DataColumn } from '@camstack/ui-library'
+import { Button, DataTable, IconButton, Input, type DataColumn } from '@dominevo/ui-library'
 import { Check, Trash2, X } from 'lucide-react'
 import { useState } from 'react'
 
-import type { IconKey, SiteZone } from '@camstack/types'
+import type { IconKey, SiteZone } from '@dominevo/types'
 
 import { LocationIconPicker } from './LocationIconPicker'
 import { useTranslation } from 'react-i18next'

@@ -1,4 +1,4 @@
-import type { InstalledPackage, IScopedLogger } from '@camstack/types'
+import type { InstalledPackage, IScopedLogger } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 // Resolved against the `vi.mock` below (hoisted above this import by vitest).
 import { AddonPackageService, SYSTEM_PACKAGE } from '../addon-package.service.js'
@@ -94,8 +94,8 @@ describe('runAutoUpdate → single engine bulk job', () => {
     const service = buildService()
 
     const installed: InstalledPackage[] = [
-      { name: '@camstack/addon-pipeline', version: '1.0.0', dir: '/x/pipeline' },
-      { name: '@camstack/addon-recorder', version: '2.0.0', dir: '/x/recorder' },
+      { name: '@dominevo/addon-pipeline', version: '1.0.0', dir: '/x/pipeline' },
+      { name: '@dominevo/addon-recorder', version: '2.0.0', dir: '/x/recorder' },
       { name: SYSTEM_PACKAGE, version: '0.9.0', dir: '/x/system' },
     ]
     vi.spyOn(service, 'listInstalled').mockReturnValue(installed)
@@ -106,9 +106,9 @@ describe('runAutoUpdate → single engine bulk job', () => {
     // Newer versions advertised for all three.
     fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(
       fakeRegistry({
-        '@camstack%2Faddon-pipeline': '1.1.0',
-        '@camstack%2Faddon-recorder': '2.1.0',
-        '@camstack%2Fsystem': '1.0.0',
+        '@dominevo%2Faddon-pipeline': '1.1.0',
+        '@dominevo%2Faddon-recorder': '2.1.0',
+        '@dominevo%2Fsystem': '1.0.0',
       }),
     )
 
@@ -128,8 +128,8 @@ describe('runAutoUpdate → single engine bulk job', () => {
     expect(arg.targets).toHaveLength(2)
 
     const byName = new Map(arg.targets.map((t) => [t.name, t.version]))
-    expect(byName.get('@camstack/addon-pipeline')).toBe('1.1.0')
-    expect(byName.get('@camstack/addon-recorder')).toBe('2.1.0')
+    expect(byName.get('@dominevo/addon-pipeline')).toBe('1.1.0')
+    expect(byName.get('@dominevo/addon-recorder')).toBe('2.1.0')
     expect(byName.has(SYSTEM_PACKAGE)).toBe(false)
     // ONE batched event for the whole `addon` target, not one per package —
     // this assertion said 2 from the per-candidate era and had been red on
@@ -148,25 +148,25 @@ describe('runAutoUpdate → single engine bulk job', () => {
   it('moves DOWN when registry latest is lower, and logs from, to and the reason', async () => {
     const service = buildService()
     const installed: InstalledPackage[] = [
-      { name: '@camstack/addon-post-analysis', version: '1.2.7', dir: '/x/pa' },
-      { name: '@camstack/addon-pipeline', version: '1.2.6', dir: '/x/pipeline' },
+      { name: '@dominevo/addon-post-analysis', version: '1.2.7', dir: '/x/pa' },
+      { name: '@dominevo/addon-pipeline', version: '1.2.6', dir: '/x/pipeline' },
     ]
     vi.spyOn(service, 'listInstalled').mockReturnValue(installed)
     vi.spyOn(service, 'getEffectiveAutoUpdateChannel').mockReturnValue('latest')
     fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(
       fakeRegistry({
-        '@camstack%2Faddon-post-analysis': '1.2.6',
-        '@camstack%2Faddon-pipeline': '1.2.6',
+        '@dominevo%2Faddon-post-analysis': '1.2.6',
+        '@dominevo%2Faddon-pipeline': '1.2.6',
       }),
     )
     await service.runAutoUpdate()
     expect(startJob).toHaveBeenCalledTimes(1)
     const arg = startJob.mock.calls[0]?.[0]
     if (arg === undefined) throw new Error('startJob was called without a job')
-    expect(arg.targets).toEqual([{ name: '@camstack/addon-post-analysis', version: '1.2.6' }])
+    expect(arg.targets).toEqual([{ name: '@dominevo/addon-post-analysis', version: '1.2.6' }])
     const move = infoLines.find((line) => line.message === 'Moving addon to registry latest')
     expect(move?.meta).toMatchObject({
-      name: '@camstack/addon-post-analysis',
+      name: '@dominevo/addon-post-analysis',
       from: '1.2.7',
       to: '1.2.6',
       reason: 'installed version differs from registry latest',
@@ -176,7 +176,7 @@ describe('runAutoUpdate → single engine bulk job', () => {
   it('changes nothing when the registry cannot be read', async () => {
     const service = buildService()
     vi.spyOn(service, 'listInstalled').mockReturnValue([
-      { name: '@camstack/addon-pipeline', version: '1.2.6', dir: '/x/pipeline' },
+      { name: '@dominevo/addon-pipeline', version: '1.2.6', dir: '/x/pipeline' },
     ])
     vi.spyOn(service, 'getEffectiveAutoUpdateChannel').mockReturnValue('latest')
     fetchSpy = vi
@@ -191,7 +191,7 @@ describe('runAutoUpdate → single engine bulk job', () => {
     const service = buildService()
 
     const installed: InstalledPackage[] = [
-      { name: '@camstack/addon-pipeline', version: '1.0.0', dir: '/x/pipeline' },
+      { name: '@dominevo/addon-pipeline', version: '1.0.0', dir: '/x/pipeline' },
     ]
     vi.spyOn(service, 'listInstalled').mockReturnValue(installed)
     vi.spyOn(service, 'getEffectiveAutoUpdateChannel').mockReturnValue('latest')
@@ -199,7 +199,7 @@ describe('runAutoUpdate → single engine bulk job', () => {
     // Registry advertises the SAME version that's already installed.
     fetchSpy = vi
       .spyOn(globalThis, 'fetch')
-      .mockImplementation(fakeRegistry({ '@camstack%2Faddon-pipeline': '1.0.0' }))
+      .mockImplementation(fakeRegistry({ '@dominevo%2Faddon-pipeline': '1.0.0' }))
 
     await service.runAutoUpdate()
 

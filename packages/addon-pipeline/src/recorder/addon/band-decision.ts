@@ -17,13 +17,13 @@
  * unit-testable without ffmpeg, the broker, the event bus, or a real wall clock.
  */
 import { PREBUFFER_MAX_MS } from '../../stream-broker/prebuffer.js'
-import { DEFAULT_EVENTS_BAND_BUFFER_SEC } from '@camstack/types'
+import { DEFAULT_EVENTS_BAND_BUFFER_SEC } from '@dominevo/types'
 import type {
   FirstLevelMacroClass,
   RecordingBand,
   RecordingBandAudio,
   RecordingConfig,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { activeBandAt, type BatteryContext } from '../band-engine.js'
 
 /**

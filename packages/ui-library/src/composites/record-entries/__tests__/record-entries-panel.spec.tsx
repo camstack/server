@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import type { EntryKindInfo, EntryView } from '@camstack/types'
+import type { EntryKindInfo, EntryView } from '@dominevo/types'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'

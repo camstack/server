@@ -8,7 +8,7 @@
  * `openvino: 1` since 2026-06-24.
  */
 import { describe, expect, it } from 'vitest'
-import type { IScopedLogger, PipelineEngineChoice } from '@camstack/types'
+import type { IScopedLogger, PipelineEngineChoice } from '@dominevo/types'
 import {
   overridesEqual,
   readOperatorOverride,

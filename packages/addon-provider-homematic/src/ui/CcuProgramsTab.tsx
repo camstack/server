@@ -10,7 +10,7 @@ import {
   type KebabMenuItem,
   useConfirm,
   useDataTableFilter,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { ListTree, Pencil, Play, Power, Trash2 } from 'lucide-react'
 import { type ReactNode, useMemo, useState } from 'react'
 import {
@@ -68,7 +68,7 @@ function errorText(err: unknown): string {
 
 /**
  * The CCU's programs. Run, enable and delete ask first and report on the row.
- * Create and edit only the key-event program CamStack uses for an HmIP button.
+ * Create and edit only the key-event program Dominevo uses for an HmIP button.
  */
 export function CcuProgramsTab(props: CcuProgramsTabProps) {
   const { trpc, integrationId } = props

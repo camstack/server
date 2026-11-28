@@ -19,8 +19,8 @@ import {
   type NotificationField,
   type NotificationFieldSupport,
   type Target,
-} from '@camstack/types'
-import { CollapsibleCard, FormField, Select, Switch } from '@camstack/ui-library'
+} from '@dominevo/types'
+import { CollapsibleCard, FormField, Select, Switch } from '@dominevo/ui-library'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TemplateField } from '../../components/notifications/TemplateField'

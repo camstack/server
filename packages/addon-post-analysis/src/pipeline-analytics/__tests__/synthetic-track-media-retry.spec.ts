@@ -10,7 +10,7 @@
  *  - a frame fetched later than the stale bound after the event is refused
  *  - a marker that already has media is never retried
  */
-import type { Track } from '@camstack/types'
+import type { Track } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   type SnapshotClient,

@@ -2,7 +2,7 @@
  * Generic composition cards read like declared ones: vocabulary titles,
  * device names, and the same Change / Remove / + Add actions.
  */
-import { DeviceRole, DeviceType, type Composition, type DeviceInfo } from '@camstack/types'
+import { DeviceRole, DeviceType, type Composition, type DeviceInfo } from '@dominevo/types'
 import { render, screen } from '@testing-library/react'
 import { type ReactNode } from 'react'
 import { describe, expect, it, vi } from 'vitest'
@@ -15,7 +15,7 @@ import { scalarCardTargets } from '../../scalar/scalar-targets'
 import { presentState } from '../../kinds/__tests__/customization-fixture'
 import { type CustomizationHandle, type CustomizationSaveOutcome } from '../../use-customization'
 
-vi.mock('@camstack/ui-library', () => ({
+vi.mock('@dominevo/ui-library', () => ({
   Badge: ({ children }: { readonly children?: ReactNode }) => <span>{children}</span>,
   Button: ({
     children,

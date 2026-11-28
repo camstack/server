@@ -6,7 +6,7 @@
  * executor handed to `actuate`.
  */
 
-import type { RuleFireOrigin } from '@camstack/types'
+import type { RuleFireOrigin } from '@dominevo/types'
 import type { NcRuleFireRef } from './rule-engine.js'
 
 /** The claim fields of a fire ref. Absent optionals stay absent. */

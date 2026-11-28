@@ -69,7 +69,7 @@ export function loadApiIndex(workspaceRoot: string): ApiIndex {
     text = fs.readFileSync(file, 'utf8')
   } catch (err) {
     throw new Error(
-      `cannot read ${file} — run \`npm run docs:generate\` in the CamStack checkout (the ops tools take the method catalogue from it)`,
+      `cannot read ${file} — run \`npm run docs:generate\` in the Dominevo checkout (the ops tools take the method catalogue from it)`,
       { cause: err },
     )
   }

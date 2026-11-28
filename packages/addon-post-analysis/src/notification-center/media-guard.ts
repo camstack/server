@@ -10,7 +10,7 @@
  *    (`imageModesForKind`): a sound owns no region of the frame, so it is never
  *    offered `crop`.
  *
- * The predicate is `ncMediaPolicyError` (`@camstack/types`), read by the admin
+ * The predicate is `ncMediaPolicyError` (`@dominevo/types`), read by the admin
  * editor too. It runs on both save routes — the cap provider
  * (`notificationRules.createRule/updateRule`) and the rule bridge
  * (`nc.createRule/updateRule`) — beside the other guards.
@@ -29,7 +29,7 @@ import {
   type NcMediaPolicy,
   type NcRulePatch,
   ncMediaPolicyError,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { NcRuleFamilyGuardContext } from './rule-family-guard.js'
 
 export class NcMediaPolicyRefusal extends Error {

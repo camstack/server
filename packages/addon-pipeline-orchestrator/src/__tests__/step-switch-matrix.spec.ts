@@ -10,7 +10,7 @@ import type {
   PipelineSchema,
   StepSwitchCell,
   StepSwitchMatrix,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { buildStepSwitchMatrix, type StepSwitchMatrixInput } from '../step-switch-matrix.js'
 
 type Slot = PipelineAddonSchema['slot']

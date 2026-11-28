@@ -5,7 +5,7 @@ import { AuthService } from '../../../core/auth/auth.service.js'
 import { HandoffCodeService } from '../../../core/auth/handoff-code.service.js'
 import type { AuthenticatedAgent, TrpcContext } from '../../trpc/trpc.context.js'
 import { createAuthRouter } from '../auth.router.js'
-import { staticJwtSigningKey } from '@camstack/server/system'
+import { staticJwtSigningKey } from '@dominevo/server/system'
 
 /**
  * D782 — a signed-in user links an OIDC identity to THEIR OWN account. The

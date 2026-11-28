@@ -29,7 +29,7 @@
  *        stopped). Running before `autoStartEnabledProviders` is safe:
  *        it can only add already-connected providers, never evict.
  */
-import { BaseAddon, EventCategory, type ProviderRegistration } from '@camstack/types'
+import { BaseAddon, EventCategory, type ProviderRegistration } from '@dominevo/types'
 import { z } from 'zod'
 import {
   reconcileEnabledProviders,

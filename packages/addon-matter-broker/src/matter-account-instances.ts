@@ -8,7 +8,7 @@ import {
   type IntegrationTestConnectionResult,
   type RecordsAccess,
   RecordIntegrationInstances,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { matterBrokersEntryKind, type MatterBrokerBody } from './broker-record-kinds.js'
 import { buildConnectionFormSchema } from './config.js'
 import type { MatterBrokerInfo } from './matter-integration-manager.js'

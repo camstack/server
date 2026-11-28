@@ -4,7 +4,7 @@
  * record), the entry-title join, and the compact `menu` filter group. An
  * unknown row count is never "empty".
  */
-import { StorageKindSchema, type EntryKindInfo, type StorageKind } from '@camstack/types'
+import { StorageKindSchema, type EntryKindInfo, type StorageKind } from '@dominevo/types'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import {

@@ -1,4 +1,4 @@
-import type { AddonMigration } from '@camstack/types'
+import type { AddonMigration } from '@dominevo/types'
 import { DEVICE_TAG_IDS_ID, type DeviceTagIdsPorts, planDeviceTagIds } from './device-tag-ids.js'
 import { type OrphanChildrenPorts, removeOrphanChildren } from './orphan-children.js'
 import {

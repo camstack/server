@@ -6,7 +6,7 @@
 
 ## Goal
 
-A first-class surface to bring custom detection models into CamStack and shape
+A first-class surface to bring custom detection models into Dominevo and shape
 them for the cluster's heterogeneous hardware:
 
 - **Manipulate models in all directions** — convert between `onnx ↔ openvino ↔
@@ -32,7 +32,7 @@ them for the cluster's heterogeneous hardware:
   tensors). The Model Studio engine is this logic, promoted to a runtime cap.
 - **Static catalog:** `ModelCatalogEntry` + `ovFormat`/`ovPrecisionVariant` in
   `detection-pipeline/registry/model-catalogs.ts`; `getStepDefinition().models`.
-- **Download + sibling fetch:** `@camstack/system` `ensureModel` /
+- **Download + sibling fetch:** `@dominevo/system` `ensureModel` /
   `ModelDownloadService` (now sibling-aware), `isModelDownloaded`.
 - **Per-node addressing precedent:** agent-pull addon deploy (hub stages a tgz →
   agent pulls it over an authenticated one-time-token HTTP route, sha256-verified)

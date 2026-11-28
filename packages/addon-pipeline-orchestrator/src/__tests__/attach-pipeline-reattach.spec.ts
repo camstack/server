@@ -16,7 +16,7 @@ import type {
   IScopedLogger,
   PipelineStepInputOutput,
   RunnerCameraConfig,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { type AttachPipelineOutcome, resolveAttachPipeline } from '../attach-pipeline.js'
 import { NodeLifecycleHandler, type NodeLifecycleHandlerDeps } from '../node-lifecycle-handler.js'

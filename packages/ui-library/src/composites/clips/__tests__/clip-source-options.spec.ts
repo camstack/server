@@ -1,4 +1,4 @@
-import type { Clip, ClipSource } from '@camstack/types'
+import type { Clip, ClipSource } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   clipAtInstant,

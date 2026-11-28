@@ -13,13 +13,13 @@
  * so every `where {assigned:false}` page of faces threw on the hub.
  */
 import Database from 'better-sqlite3'
-import { RecordsEngine } from '@camstack/server/system'
+import { RecordsEngine } from '@dominevo/server/system'
 import {
   createRecordsAccess,
   type RecordKindHandle,
   type RecordsAccess,
   type RecordsTransport,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { makeFakeEmbeddingIndex, makeSilentLogger } from '../../__tests__/test-helpers.js'
 import { pipelineAnalyticsRecordKinds } from '../../record-kinds.js'

@@ -9,7 +9,7 @@
  * swaps it onto the live System. Only a hub REFUSAL of the refresh signs the
  * user out; a network failure is retried.
  */
-import { SessionKeeper, type SessionTokens } from '@camstack/sdk'
+import { SessionKeeper, type SessionTokens } from '@dominevo/sdk'
 import { getSystem } from './backend'
 import { hubPath } from './mount'
 

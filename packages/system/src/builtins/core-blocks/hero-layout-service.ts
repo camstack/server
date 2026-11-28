@@ -17,7 +17,7 @@ import {
   type ReadingQuantity,
   resolveHeroLayout,
   type SwitchOptions,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** What the registry says about the device. */
 export interface HeroDeviceFacts {

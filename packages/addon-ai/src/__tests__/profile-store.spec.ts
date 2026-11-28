@@ -1,4 +1,4 @@
-import type { LlmProfile } from '@camstack/types'
+import type { LlmProfile } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { ProfileStore, SEED_PROFILE_ID } from '../profile-store.js'
 import { makeAiRecords } from './support/fake-records.js'

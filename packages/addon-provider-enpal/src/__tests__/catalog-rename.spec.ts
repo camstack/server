@@ -2,7 +2,7 @@
  * Devices created while both meters were named "Consumption" keep that stored
  * name. A restore renames one only when it still equals that old default.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   type CatalogRenameChild,

@@ -2,9 +2,9 @@
  * Calendar-events rules — standalone list page (same chrome as Summaries /
  * Timelapses) plus the column builder the unified Rules table reuses.
  */
-import type { Target } from '@camstack/types'
-import type { DataColumn } from '@camstack/ui-library'
-import { Badge, Button, ErrorBox, Switch, useSystem } from '@camstack/ui-library'
+import type { Target } from '@dominevo/types'
+import type { DataColumn } from '@dominevo/ui-library'
+import { Badge, Button, ErrorBox, Switch, useSystem } from '@dominevo/ui-library'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { Calendar as CalendarIcon, Plus } from 'lucide-react'
 import { useEffect, useState } from 'react'

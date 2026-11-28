@@ -1,5 +1,5 @@
-import { DeviceActivityPanel } from '@camstack/ui-library'
-import { EventCategory } from '@camstack/types'
+import { DeviceActivityPanel } from '@dominevo/ui-library'
+import { EventCategory } from '@dominevo/types'
 
 /**
  * Default event categories the device-detail panel pre-tracks. The user

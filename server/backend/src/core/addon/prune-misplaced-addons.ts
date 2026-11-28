@@ -3,13 +3,13 @@
  *
  * ## The state this exists to clear
  *
- * `@camstack/addon-agent-ui` declares `execution.placement: 'agent-only'`, and
+ * `@dominevo/addon-agent-ui` declares `execution.placement: 'agent-only'`, and
  * both hub-side load paths honour that: `addon-registry.service.ts` skips it at
  * boot and after an install. `selectHubBootstrapPackages` also subtracts it, so
  * a hub does not install it any more.
  *
  * None of that removes the copy an OLDER build already put on disk. On the live
- * hub `/data/addons/@camstack/addon-agent-ui` is dated 2026-07-22 — eleven days
+ * hub `/data/addons/@dominevo/addon-agent-ui` is dated 2026-07-22 — eleven days
  * before this was looked at. The loader skips it, so it never initialises, so
  * the fleet UI shows it as **failed**, forever, on a node where it is not
  * supposed to exist. An operator cannot tell that apart from an addon that is
@@ -24,7 +24,7 @@
  * An `agent-only` addon on a hub has no dormant use: it cannot be enabled, it
  * cannot be reached, and keeping it costs a false failure. The directory is
  * reinstallable from npm at any time, so removal is not destructive in the way
- * deleting DATA would be. Anything outside `<dataDir>/addons/@camstack/` is
+ * deleting DATA would be. Anything outside `<dataDir>/addons/@dominevo/` is
  * refused outright.
  */
 import * as fs from 'node:fs'
@@ -32,7 +32,7 @@ import * as path from 'node:path'
 
 /** One installed addon considered for pruning. */
 export interface InstalledAddonDir {
-  /** Package name, e.g. `@camstack/addon-agent-ui`. */
+  /** Package name, e.g. `@dominevo/addon-agent-ui`. */
   readonly packageName: string
   /** Absolute directory it is installed in. */
   readonly dir: string
@@ -70,7 +70,7 @@ export function decidePrune(
     }))
 }
 
-/** Guard: only ever remove something under `<dataDir>/addons/@camstack/`. */
+/** Guard: only ever remove something under `<dataDir>/addons/@dominevo/`. */
 export function isPrunableDir(dir: string, addonsRoot: string): boolean {
   const rel = path.relative(addonsRoot, dir)
   if (rel === '' || rel.startsWith('..') || path.isAbsolute(rel)) return false

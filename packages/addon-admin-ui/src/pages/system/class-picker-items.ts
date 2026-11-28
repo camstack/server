@@ -1,7 +1,7 @@
 /**
  * The detection-class picker's list (D641): the SAME smart picker the device
  * scope uses (`DevicePicker`, generic over the id), over the class taxonomy
- * (`pickerForRuleClasses` from `@camstack/types` — the one source of truth; no
+ * (`pickerForRuleClasses` from `@dominevo/types` — the one source of truth; no
  * class list lives here). It never lists a sound: a detection rule that picked
  * one broke itself, and sounds are a Sound rule's (R13, D690).
  *
@@ -13,8 +13,8 @@
  * `null` when the hub serves no taxonomy — the caller keeps its free-text
  * input rather than drawing an empty picker that reads as "no classes".
  */
-import type { NcTaxonomy } from '@camstack/types'
-import { pickerForRuleClasses } from '@camstack/types'
+import type { NcTaxonomy } from '@dominevo/types'
+import { pickerForRuleClasses } from '@dominevo/types'
 import type { PickerGroup, PickerItem } from './device-picker-model'
 import i18n from '../../i18n/index'
 

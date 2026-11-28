@@ -21,10 +21,10 @@ import {
   type StorageLocation,
   type StorageLocationMode,
   type StorageLocationStateSource,
-} from '@camstack/types'
+} from '@dominevo/types'
 import i18n from '../../i18n/index'
 
-/** The mode union, owned by `@camstack/types` (D385). Re-exported so the UI
+/** The mode union, owned by `@dominevo/types` (D385). Re-exported so the UI
  *  has one name for it and no second definition to drift. */
 export type LocationMode = StorageLocationMode
 
@@ -34,7 +34,7 @@ export type LocationModeFacts = StorageLocationStateSource
 /**
  * Fold a row into its mode.
  *
- * Delegated to the owning module in `@camstack/types` so the UI can never fold
+ * Delegated to the owning module in `@dominevo/types` so the UI can never fold
  * a row differently from the server. Both legacy flags — `config.readOnly` and
  * `enabled: false` — mean `readonly`: neither ever deleted on its own, and
  * folding either to `drain` would start deleting footage on upgrade. Nothing

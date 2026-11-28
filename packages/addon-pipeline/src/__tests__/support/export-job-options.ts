@@ -1,4 +1,4 @@
-import type { ExportOptions } from '@camstack/types'
+import type { ExportOptions } from '@dominevo/types'
 
 /** Defaults every export spec needs on {@link ExportOptions}. */
 export const DEFAULT_EXPORT_JOB_OPTIONS: ExportOptions = {

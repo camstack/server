@@ -3,7 +3,7 @@
  * every earlier build wrote through `updateGlobalSettings`. A value an old build stored is read by
  * the new code (an unchanged restart must not rebuild), and a write lands under the same key.
  */
-import { fakeAddonContext } from '@camstack/types/testing'
+import { fakeAddonContext } from '@dominevo/types/testing'
 import { describe, expect, it } from 'vitest'
 import { BridgeInstance } from '../bridge-instance.js'
 import { BridgeHost } from '../bridge-host.js'

@@ -1,4 +1,4 @@
-import { EventCategory } from '@camstack/types'
+import { EventCategory } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   UNSUPPORTED_ADDON_SETTLE_MS,
@@ -29,12 +29,12 @@ function harness(settleMs = 0) {
 }
 
 const OLD: UnsupportedAddonFacts = {
-  packageName: '@camstack/addon-ml',
+  packageName: '@dominevo/addon-ml',
   addonId: 'ml',
   installedVersion: '1.0.0',
   serverVersion: '1.2.721',
   requiredMinimum: '2.0.0',
-  unmet: ['requires @camstack/addon-ml >= 2.0.0, installed 1.0.0'],
+  unmet: ['requires @dominevo/addon-ml >= 2.0.0, installed 1.0.0'],
 }
 
 describe('UnsupportedAddonTracker', () => {
@@ -46,7 +46,7 @@ describe('UnsupportedAddonTracker', () => {
     expect(events).toHaveLength(1)
     expect(events[0]?.category).toBe(EventCategory.AddonUnsupportedVersion)
     expect(events[0]?.data).toMatchObject({
-      packageName: '@camstack/addon-ml',
+      packageName: '@dominevo/addon-ml',
       addonId: 'ml',
       nodeId: 'hub',
       installedVersion: '1.0.0',
@@ -65,7 +65,7 @@ describe('UnsupportedAddonTracker', () => {
       EventCategory.AddonUnsupportedResolved,
     ])
     expect(events[1]?.data).toMatchObject({
-      packageName: '@camstack/addon-ml',
+      packageName: '@dominevo/addon-ml',
       nodeId: 'hub',
     })
   })
@@ -73,10 +73,10 @@ describe('UnsupportedAddonTracker', () => {
   it('resolves a package that is absent from the full installed set, and only then', () => {
     const { tracker, events } = harness()
     tracker.observe([OLD.packageName], [OLD], [OLD.packageName])
-    tracker.observe([], [], [OLD.packageName, '@camstack/addon-other'])
+    tracker.observe([], [], [OLD.packageName, '@dominevo/addon-other'])
     expect(events).toHaveLength(1)
-    tracker.observe([], [], ['@camstack/addon-other'])
-    tracker.observe([], [], ['@camstack/addon-other'])
+    tracker.observe([], [], ['@dominevo/addon-other'])
+    tracker.observe([], [], ['@dominevo/addon-other'])
     expect(events.map((e) => e.category)).toEqual([
       EventCategory.AddonUnsupportedVersion,
       EventCategory.AddonUnsupportedResolved,
@@ -99,7 +99,7 @@ describe('UnsupportedAddonTracker', () => {
   it('a package this run did not judge keeps its streak', () => {
     const { tracker, events } = harness()
     tracker.observe([OLD.packageName], [OLD])
-    tracker.observe(['@camstack/addon-other'], [])
+    tracker.observe(['@dominevo/addon-other'], [])
     expect(
       events.filter((e) => e.data['packageName'] === OLD.packageName).map((e) => e.category),
     ).toEqual([EventCategory.AddonUnsupportedVersion])
@@ -148,7 +148,7 @@ describe('UnsupportedAddonTracker', () => {
     tracker.observe([OLD.packageName], [])
     expect(events.map((e) => e.category)).toEqual([EventCategory.AddonUnsupportedResolved])
     expect(events[0]?.data).toMatchObject({
-      packageName: '@camstack/addon-ml',
+      packageName: '@dominevo/addon-ml',
       nodeId: 'hub',
     })
   })

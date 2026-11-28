@@ -10,9 +10,9 @@
  *  - the drop is LOGGED at info, because a branch that silently drops work is
  *    exactly what left a live rule unable to fire for fifteen hours.
  */
-import type { InMemoryRecords } from '@camstack/types'
-import type { AudioEvent, NcRuleInput, ObjectEvent } from '@camstack/types'
-import { NcRuleInputSchema } from '@camstack/types'
+import type { InMemoryRecords } from '@dominevo/types'
+import type { AudioEvent, NcRuleInput, ObjectEvent } from '@dominevo/types'
+import { NcRuleInputSchema } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   type FakeSettingsStore,

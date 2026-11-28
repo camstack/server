@@ -6,7 +6,7 @@
  *
  * `addons.custom` is typed `z.unknown()` at the cap boundary here too, so the
  * answer still has to be narrowed. But a timelapse rule's schema lives in
- * `@camstack/types` (`notification/timelapse-rule.ts`), so the narrowing can be
+ * `@dominevo/types` (`notification/timelapse-rule.ts`), so the narrowing can be
  * the schema ITSELF rather than a hand-written mirror of it — one authority for
  * what a rule is, and no way for this file to disagree with the store about a
  * bound. The summary rule cannot do this: its schema is addon-local by design.
@@ -37,19 +37,19 @@
  * box cannot express the first two, which is why `previewTextSet` exists.
  */
 
-import type { NcRuleTarget, NcSchedule, NcTargetOverrides } from '@camstack/types'
+import type { NcRuleTarget, NcSchedule, NcTargetOverrides } from '@dominevo/types'
 import {
   DEFAULT_TIMELAPSE_PREVIEW_TEXT,
   TIMELAPSE_DENSE_FLOOR_SEC,
   TimelapseRuleSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 
 import { agoLabel, sameShape, scheduleLabel, targetsFromIds } from './notification-digest.helpers'
 import { overridesForSave, type TargetFieldsOf } from './rule-form-target-settings'
 import i18n from '../../i18n/index'
 import { type TagsWire, tagsForCreate, tagsForPatch } from './rule-tags-wire'
-import { formatNumeric } from '@camstack/ui-library'
+import { formatNumeric } from '@dominevo/ui-library'
 
 // ── The bridge ───────────────────────────────────────────────────────
 

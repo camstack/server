@@ -2,7 +2,7 @@
  * Saving one template draft (create or update), shared by the Templates page and
  * the remote modal's layout view so both write the same way and refuse the same way.
  */
-import { useTemplateCreate, useTemplateUpdate } from '@camstack/ui-library'
+import { useTemplateCreate, useTemplateUpdate } from '@dominevo/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import type { TemplateDraft } from './TemplateEditorDialog'

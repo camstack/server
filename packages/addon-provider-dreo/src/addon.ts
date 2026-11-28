@@ -18,7 +18,7 @@ import {
   type SystemEvent,
   collectOwnerIntegrationIds,
   rowsDepsOver,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { DreoReconciler, type IntegrationLifecycleKind } from './dreo-reconciler.js'
 import { DreoContainerDevice } from './devices/dreo-container-device.js'
 import { buildDreoAdoptionProvider } from './dreo-adoption-provider.js'

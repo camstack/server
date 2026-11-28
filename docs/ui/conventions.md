@@ -26,7 +26,7 @@ the `camstack-ui` skill. Moved here from `docs/architecture/ui.md` on
 
 ## Use the library
 
-Before building a panel, check `@camstack/ui-library` for it: `StreamPanel`,
+Before building a panel, check `@dominevo/ui-library` for it: `StreamPanel`,
 `CameraStreamPlayer`, `AutotrackSection`, `DataTable`, `DeviceList`, `LogStream`,
 `EventStream`, `NodePicker`, `PHASE_CONFIG`, `useDeviceWebrtc`,
 `useDeviceDetections`. Do not fork a composite — extend it or add a prop.
@@ -132,7 +132,7 @@ the reason on a wrapping `<span title>` and keeps both directions drawn, so the
 controls never jump and an edge never looks like a missing feature.
 
 **One number rule.** A reading or measurement goes through `formatNumeric(value,
-precision)` (`@camstack/ui-library`): the precision the operator set in Customize
+precision)` (`@dominevo/ui-library`): the precision the operator set in Customize
 wins (`toFixed(precision)`, zeros kept), with none it shows at most two decimals,
 trailing zeros trimmed, and a tiny non-zero value reads `<0.01`. A value that
 belongs to a device passes that device's resolved precision (a card reads

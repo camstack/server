@@ -1,5 +1,5 @@
 import * as net from 'node:net'
-import type { TcpConnect } from '@camstack/types'
+import type { TcpConnect } from '@dominevo/types'
 
 /** Open a TCP connection and close it again: resolves when the port answered, rejects with the reason. */
 export const tcpConnect: TcpConnect = (host, port, timeoutMs) =>

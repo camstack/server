@@ -7,8 +7,8 @@
  * when they decide the data is not wanted. Idempotent — a location already
  * disabled is skipped, so a retry or the boot re-drive answers zero.
  */
-import { resolveLocationMode } from '@camstack/types'
-import type { INodeRemovalHookProvider, IScopedLogger, StorageLocation } from '@camstack/types'
+import { resolveLocationMode } from '@dominevo/types'
+import type { INodeRemovalHookProvider, IScopedLogger, StorageLocation } from '@dominevo/types'
 import type { StorageOrchestratorService } from './storage-orchestrator.service.js'
 
 export interface NodeRemovalDeps {

@@ -110,7 +110,7 @@ bar, and never widens a rule doing it.
   `updatedAt` changes, so a bad row never costs a second read per tick.
 - The ledger grows with rules × deleted subjects; a row whose rule was deleted
   is inert.
-- No `@camstack/types` or cap change: the reason lives in an addon-local side
+- No `@dominevo/types` or cap change: the reason lives in an addon-local side
   table because `NcRuleSchema` drops unknown keys on read.
 
 ## Enforcement

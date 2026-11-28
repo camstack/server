@@ -1,5 +1,5 @@
 /**
- * How a washer, dryer or dishwasher leaves CamStack.
+ * How a washer, dryer or dishwasher leaves Dominevo.
  *
  * Home Assistant has no laundry domain: the device is offered, and what
  * travels is its power reading. The others have a laundry type that this

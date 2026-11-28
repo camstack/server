@@ -33,8 +33,8 @@ import type {
   ShareSource,
   ShareWeights,
   SuggestSharesResult,
-} from '@camstack/types'
-import { errMsg, isAutomaticShareSource } from '@camstack/types'
+} from '@dominevo/types'
+import { errMsg, isAutomaticShareSource } from '@dominevo/types'
 
 export interface EffectiveSharesServiceDeps {
   readonly readSource: () => ShareSource

@@ -16,7 +16,7 @@ import {
   type ModelFormat,
   type NodeBenchFingerprint,
   nodePin,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { WasmMotionDetector } from '../../motion-wasm/wasm-motion-detector.js'
 import type { ForkedChildLike } from '../../session-decode/session-decode-coordinator.js'
 import type { WorkerLeaseKnobs } from '../../session-decode/native-lease-knobs.js'

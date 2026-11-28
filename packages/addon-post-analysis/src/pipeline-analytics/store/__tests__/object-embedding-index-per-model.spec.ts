@@ -8,7 +8,7 @@
  * rots silently: a vector left in the index nobody searches today outlives its
  * track, and comes back the day the operator rolls the model back.
  */
-import { encodeVectorBase64, vectorIndexDimConflictError } from '@camstack/types'
+import { encodeVectorBase64, vectorIndexDimConflictError } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { makeFakeVectorStore, makeLogRecorder } from '../../__tests__/test-helpers.js'
 import {

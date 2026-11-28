@@ -28,7 +28,7 @@ const ROWS: readonly AddonRuntimeRow[] = [
     key: 'decoder',
     kind: 'addon',
     addonId: 'decoder',
-    packageName: '@camstack/addon-d',
+    packageName: '@dominevo/addon-d',
     version: '1.0.0',
     status: 'running',
     runner: runner('decoder', ['decoder'], 11),
@@ -37,7 +37,7 @@ const ROWS: readonly AddonRuntimeRow[] = [
     key: 'ml-a',
     kind: 'addon',
     addonId: 'ml-a',
-    packageName: '@camstack/addon-ml',
+    packageName: '@dominevo/addon-ml',
     version: '2.0.0',
     status: 'running',
     runner: runner('ml', ['ml-a', 'ml-b'], 22),
@@ -54,7 +54,7 @@ const ROWS: readonly AddonRuntimeRow[] = [
 ]
 
 const updateRow = (over: Partial<AddonUpdateRow>): AddonUpdateRow => ({
-  packageName: '@camstack/addon-d',
+  packageName: '@dominevo/addon-d',
   installedVersion: '1.0.0',
   latestVersion: '1.0.0',
   updateAvailable: false,
@@ -114,7 +114,7 @@ describe('Update goes to the hub', () => {
     fireEvent.click(button)
     await waitFor(() =>
       expect(post).toHaveBeenCalledWith('/api/agent/addon-updates/update', {
-        packageName: '@camstack/addon-d',
+        packageName: '@dominevo/addon-d',
       }),
     )
   })
@@ -142,11 +142,11 @@ describe('Update goes to the hub', () => {
   it('shows a start refusal from the agent', async () => {
     stub({ available: true, entries: [behind], error: null, hubVersions: 'known' }, () => ({
       started: false,
-      message: 'The hub does not install @camstack/addon-d',
+      message: 'The hub does not install @dominevo/addon-d',
     }))
     mount()
     fireEvent.click(await screen.findByText('Update to 1.1.0'))
-    await screen.findByText('The hub does not install @camstack/addon-d')
+    await screen.findByText('The hub does not install @dominevo/addon-d')
   })
 
   it('says when the hub versions are unknown instead of showing aligned', async () => {

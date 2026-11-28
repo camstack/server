@@ -9,7 +9,7 @@ import {
   type IScopedLogger,
   type MigrationOwnerResult,
   runAddonMigrations,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   EMAIL_PUSH_TO_MAILBOX_ID,

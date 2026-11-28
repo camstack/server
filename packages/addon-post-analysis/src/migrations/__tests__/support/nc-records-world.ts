@@ -3,8 +3,8 @@
  * owner binds them: the ports the `pipeline-analytics` catalogue reads and writes for the
  * notification templates, plus the settings ports a test supplies.
  */
-import { RecordsEngine } from '@camstack/server/system'
-import { createRecordsAccess, type RecordsAccess, type RecordsTransport } from '@camstack/types'
+import { RecordsEngine } from '@dominevo/server/system'
+import { createRecordsAccess, type RecordsAccess, type RecordsTransport } from '@dominevo/types'
 import Database from 'better-sqlite3'
 import { ncRecordKinds } from '../../../notification-center/record-kinds.js'
 import { makeSilentLogger } from '../../../pipeline-analytics/__tests__/test-helpers.js'

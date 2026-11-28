@@ -8,8 +8,8 @@
 import { useClassPainter } from './display-palette-context'
 import { getPhaseVisual } from '../lib/phase-config'
 import type { DeviceDetections, MotionRawBox } from '../hooks/use-device-detections'
-import type { ObjectDetection, StationaryOverlayBox } from '@camstack/types'
-import { formatParkedFor, STATIONARY_OVERLAY_STYLE } from '@camstack/types'
+import type { ObjectDetection, StationaryOverlayBox } from '@dominevo/types'
+import { formatParkedFor, STATIONARY_OVERLAY_STYLE } from '@dominevo/types'
 import { type JSX } from 'react'
 
 export interface DetectionOverlayProps {

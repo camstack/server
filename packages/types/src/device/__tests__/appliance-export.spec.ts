@@ -1,5 +1,5 @@
 /**
- * A plug-built washer, dryer or dishwasher leaves CamStack only where the
+ * A plug-built washer, dryer or dishwasher leaves Dominevo only where the
  * other ecosystem can say what it is. Home Assistant receives the power
  * sensor. The rest name why they do not.
  */

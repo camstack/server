@@ -27,7 +27,7 @@
  * start-does-not-wait-for-the-backfill.spec.ts`, which pins what the back-fill
  * must not cost once it is off the critical path (no loss, no duplicate).
  */
-import type { SettingsStoreClient } from '@camstack/types'
+import type { SettingsStoreClient } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { NC_LIVENESS_COLLECTION } from '../../notification-center/liveness-ledger.js'
 import { NC_OUTBOX_COLLECTION } from '../../notification-center/outbox.js'

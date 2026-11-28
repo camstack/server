@@ -8,28 +8,16 @@
  * setting, and every hub surface that offers or completes a login asks THIS
  * gate rather than the registry state of whichever cap it happens to read.
  */
-import type { CapabilityRegistry } from "@camstack/server/system";
+import type { CapabilityRegistry } from '@dominevo/server/system'
 
 /** Capabilities whose per-provider toggle is an auth addon's enable. */
-export const AUTH_GOVERNING_CAPS = [
-  "auth-provider",
-  "user-passkeys",
-  "login-method",
-] as const;
+export const AUTH_GOVERNING_CAPS = ['auth-provider', 'user-passkeys', 'login-method'] as const
 
-export type ProviderDisabledLookup = Pick<
-  CapabilityRegistry,
-  "isProviderDisabled"
->;
+export type ProviderDisabledLookup = Pick<CapabilityRegistry, 'isProviderDisabled'>
 
 /** Whether the operator disabled `addonId` on Identity → Authentication. */
-export function isAuthAddonDisabled(
-  registry: ProviderDisabledLookup,
-  addonId: string,
-): boolean {
-  return AUTH_GOVERNING_CAPS.some((cap) =>
-    registry.isProviderDisabled(cap, addonId),
-  );
+export function isAuthAddonDisabled(registry: ProviderDisabledLookup, addonId: string): boolean {
+  return AUTH_GOVERNING_CAPS.some((cap) => registry.isProviderDisabled(cap, addonId))
 }
 
 /**
@@ -37,6 +25,6 @@ export function isAuthAddonDisabled(
  * is signed by `auth-oidc`, anything else names its addon directly.
  */
 export function bridgeProviderAddonId(provider: string): string {
-  const slash = provider.indexOf("/");
-  return slash === -1 ? provider : provider.slice(0, slash);
+  const slash = provider.indexOf('/')
+  return slash === -1 ? provider : provider.slice(0, slash)
 }

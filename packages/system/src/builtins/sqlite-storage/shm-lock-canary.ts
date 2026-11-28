@@ -28,8 +28,8 @@
  * it cannot look, and stops.
  */
 import { readFileSync, statSync } from 'node:fs'
-import type { IScopedLogger } from '@camstack/types'
-import { errMsg } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
 
 /** `UNIX_SHM_DMS`: the byte of the `-shm` a live connection holds shared. */
 export const SQLITE_SHM_DMS_BYTE = 128

@@ -69,7 +69,7 @@ const TEXT_RULES: readonly TextRule[] = [
   // ── the npm scope ────────────────────────────────────────────────────────
   {
     id: 'scope: @camstack → @dominevo',
-    pattern: /(?<![A-Za-z0-9._-])@camstack(?![A-Za-z0-9_-]|\.(?:local|dev|example|zentik)\b)/g,
+    pattern: /@camstack(?![A-Za-z0-9_]|\.(?:local|dev|example|zentik)\b)/g,
     replace: '@dominevo',
   },
   // ── the image and the GitHub org ─────────────────────────────────────────
@@ -94,11 +94,17 @@ const TEXT_RULES: readonly TextRule[] = [
       /((?:-R|--repo|repo:|repository:)[ =]*["']?)camstack\/(server|addon-x|addon-examples|docs|viewer|unraid-templates|proxmox|camstack-server)(?![A-Za-z0-9_-])/g,
     replace: '$1dominevo/$2',
   },
+  {
+    id: 'org: quoted slug camstack/<repo> → dominevo/<repo>',
+    pattern:
+      /(?<=["'`])camstack\/(server|addon-x|addon-examples|docs|viewer|unraid-templates|proxmox|camstack-server)(?=["'`])/g,
+    replace: 'dominevo/$1',
+  },
   // ── the CLI ──────────────────────────────────────────────────────────────
   {
     id: 'cli: `camstack <command>` → `dominevo <command>`',
     pattern: new RegExp(
-      `(?<![A-Za-z0-9_@./~$-])camstack (?=(?:${CLI_WORDS})(?![A-Za-z0-9_-]))`,
+      `(?<![A-Za-z0-9_@.~$-]|[A-Za-z0-9_.-]/)camstack (?=(?:${CLI_WORDS})(?![A-Za-z0-9_-]))`,
       'g',
     ),
     replace: 'dominevo ',

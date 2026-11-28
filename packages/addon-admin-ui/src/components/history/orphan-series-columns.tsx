@@ -4,8 +4,8 @@
  * from adds why it is orphan, its span and its points per tier; the outcome of
  * the last deletion adds what happened to each row.
  */
-import type { DeviceHistoryOrphanSeries, DeviceHistoryTierRows } from '@camstack/types'
-import { Badge, type DataColumn } from '@camstack/ui-library'
+import type { DeviceHistoryOrphanSeries, DeviceHistoryTierRows } from '@dominevo/types'
+import { Badge, type DataColumn } from '@dominevo/ui-library'
 import type { ReactNode } from 'react'
 import type { TFunction } from 'i18next'
 import { totalRows, type OrphanDeleteOutcome, type OrphanOutcomeRow } from './orphan-series-model'

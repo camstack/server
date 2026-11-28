@@ -15,7 +15,7 @@
  * admin's orphan listing (System -> Secrets), which names a device-scoped
  * secret whose device no longer points at it.
  */
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IScopedLogger } from '@dominevo/types'
 
 /** One store that holds data of a removed device. `run` returns what it deleted. */
 export interface RemovalStep {

@@ -20,7 +20,7 @@
  * uses one asks first.
  */
 
-import type { PipelineSchema, RetrainMacroClass } from '@camstack/types'
+import type { PipelineSchema, RetrainMacroClass } from '@dominevo/types'
 import {
   Button,
   Dialog,
@@ -34,8 +34,8 @@ import {
   usePipelineAnalyticsListRetrainAssistProfiles,
   usePipelineAnalyticsProposeRetrainAnnotations,
   usePipelineAnalyticsProposeRetrainAnnotationsWithLlm,
-} from '@camstack/ui-library'
-import type { RetrainFrame } from '@camstack/types'
+} from '@dominevo/ui-library'
+import type { RetrainFrame } from '@dominevo/types'
 import { Loader2, Wand2 } from 'lucide-react'
 import { useMemo, useRef, useState } from 'react'
 import type { AssistDetector } from './lib/retrain-assist-defaults.js'

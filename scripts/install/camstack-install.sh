@@ -1,5 +1,5 @@
 #!/bin/sh
-# CamStack CLI installer (D988) — Linux and macOS.
+# Dominevo CLI installer (D988) — Linux and macOS.
 #
 #   curl -fsSL https://camstack-docs.zentik.app/install.sh | sh
 #
@@ -37,7 +37,7 @@ NODE_DIST="${CAMSTACK_NODE_DIST:-https://nodejs.org/dist}"
 case "$(uname -s)" in
   Linux) OS=linux ;;
   Darwin) OS=darwin ;;
-  *) fail "unsupported system $(uname -s): Linux and macOS only (Windows: install Node ${MIN_NODE_MAJOR}, then npm i -g camstack)." ;;
+  *) fail "unsupported system $(uname -s): Linux and macOS only (Windows: install Node ${MIN_NODE_MAJOR}, then npm i -g dominevo)." ;;
 esac
 case "$(uname -m)" in
   x86_64 | amd64) ARCH=x64 ;;
@@ -138,7 +138,7 @@ LAUNCHER="$BIN_DIR/camstack"
 OTHER="$(command -v camstack 2>/dev/null || true)"
 cat >"$LAUNCHER.tmp.$$" <<LAUNCH
 #!/bin/sh
-# Written by the CamStack installer. Uses the managed Node when there is one.
+# Written by the Dominevo installer. Uses the managed Node when there is one.
 ROOT="$ROOT"
 if [ -x "\$ROOT/runtime/bin/node" ]; then NODE="\$ROOT/runtime/bin/node"; else NODE="\$(command -v node)"; fi
 exec "\$NODE" "\$ROOT/current/node_modules/camstack/dist/cli.js" "\$@"
@@ -156,6 +156,6 @@ case ":$PATH:" in
   *) say "Add $BIN_DIR to your PATH, e.g.:  export PATH=\"$BIN_DIR:\$PATH\"" ;;
 esac
 say ''
-say 'Next: camstack mcp doctor        check the install'
-say '      camstack login <hub>      sign in (approve in your browser; no password is typed here)'
-say '      camstack mcp update --latest | camstack mcp rollback'
+say 'Next: dominevo mcp doctor        check the install'
+say '      dominevo login <hub>      sign in (approve in your browser; no password is typed here)'
+say '      dominevo mcp update --latest | dominevo mcp rollback'

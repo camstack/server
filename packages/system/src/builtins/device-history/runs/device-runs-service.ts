@@ -13,7 +13,7 @@ import {
   type IScopedLogger,
   type RecordKindHandle,
   type RecordsAccess,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { SnapshotMap } from '../capture/capture-engine.js'
 import { createDeviceRunsProvider } from './device-runs-provider.js'
 import { deviceRunsRecordKinds } from './device-runs-record-kinds.js'

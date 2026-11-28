@@ -14,10 +14,10 @@
  * Rows 2 and 3 are inserted into the fake store BEFORE boot, in the shape the old code wrote.
  */
 
-import type { InMemoryRecords } from '@camstack/types'
+import type { InMemoryRecords } from '@dominevo/types'
 import { ncTable, makeNcRecords } from './support/nc-test-deps.js'
-import type { NcRuleInput, ObjectEvent, Track } from '@camstack/types'
-import { NcRuleInputSchema } from '@camstack/types'
+import type { NcRuleInput, ObjectEvent, Track } from '@dominevo/types'
+import { NcRuleInputSchema } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import type { NcSendInput, NcTargetRef } from '../dispatcher.js'

@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 /**
- * closure-pins-install — pin a REGISTRY install of `@camstack/server` to the
+ * closure-pins-install — pin a REGISTRY install of `@dominevo/server` to the
  * third-party versions its release was tested with (#681).
  *
  *   node scripts/closure-pins-install.mjs <dir> [version-or-tag]   # default tag: latest
  *
  * For the Docker image and the desktop build, which install the closure with a
- * bare `npm install @camstack/server@…` outside the node updater. It resolves
+ * bare `npm install @dominevo/server@…` outside the node updater. It resolves
  * the version ONCE, packs that exact version, reads `package/closure-pins.json`
  * out of the tarball and writes it as `overrides` into `<dir>/package.json`
  * (npm honours `overrides` only in the root project). Anything that goes wrong
@@ -15,7 +15,7 @@
  *
  * stdout carries ONE line, the version to install (the tag itself when the
  * registry could not resolve it): the caller installs
- * `@camstack/server@<that line>` so pack and install see the same release.
+ * `@dominevo/server@<that line>` so pack and install see the same release.
  * Runs on a bare Node 24 (type stripping reads the shared parser), no workspace build.
  */
 import { execFile } from 'node:child_process'
@@ -45,7 +45,7 @@ async function importClosurePins() {
 const { fetchClosurePins, isRejectedPinsMiss, withClosureOverrides } = await importClosurePins()
 
 const execFileAsync = promisify(execFile)
-const SERVER_PACKAGE = '@camstack/server'
+const SERVER_PACKAGE = '@dominevo/server'
 const NPM_TIMEOUT_MS = 180_000
 const VIEW_ATTEMPTS = 3
 

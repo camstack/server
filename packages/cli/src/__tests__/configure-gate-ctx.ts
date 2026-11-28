@@ -1,4 +1,4 @@
-import { MutationGate } from '@camstack/develop'
+import { MutationGate } from '@dominevo/develop'
 import type { McpContext } from '../mcp/context.js'
 
 /** The public-mode context: writes are allowed through the two-step gate, nothing is audited to disk. */

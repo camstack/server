@@ -19,7 +19,7 @@ import { Mic, MicOff, Loader2, AlertCircle } from 'lucide-react'
 import { useDeviceIntercom } from '../../hooks/useDeviceIntercom'
 import { Trans, useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
-import { Button } from '@camstack/ui-library'
+import { Button } from '@dominevo/ui-library'
 
 interface IntercomPanelProps {
   deviceId: number

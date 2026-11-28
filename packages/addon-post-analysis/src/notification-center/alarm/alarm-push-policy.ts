@@ -24,7 +24,7 @@
  * for a match during the delay), the rule's push is kept and the caller WARNs — a policy that
  * silenced the only notification would be a blackout, not a de-duplication.
  */
-import type { AlarmArmMode } from '@camstack/types'
+import type { AlarmArmMode } from '@dominevo/types'
 
 /** Where the alarm stood for one match, as the panel classified it BEFORE pressing it. */
 export type NcAlarmMatchPhase =

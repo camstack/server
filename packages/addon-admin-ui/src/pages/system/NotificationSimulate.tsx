@@ -26,8 +26,8 @@
  * simulation would answer honestly about an event production can never emit.
  */
 
-import type { EventKindDescriptor, NcRule, Target } from '@camstack/types'
-import { DeviceType } from '@camstack/types'
+import type { EventKindDescriptor, NcRule, Target } from '@dominevo/types'
+import { DeviceType } from '@dominevo/types'
 import {
   Button,
   Card,
@@ -38,7 +38,7 @@ import {
   Select,
   useDeviceManagerListAll,
   useSystem,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { AlertTriangle, FlaskConical, Loader2 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'

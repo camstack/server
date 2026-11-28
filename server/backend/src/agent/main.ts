@@ -11,7 +11,7 @@ import type {
   PendingTransporter,
   RegisteredAddonManifest,
   RegisterNodeParams,
-} from '@camstack/server/system'
+} from '@dominevo/server/system'
 import {
   AddonInstaller,
   AddonLoader,
@@ -54,15 +54,15 @@ import {
   TlsTcpTransporter,
   NativeMetricsProvider,
   rehydrateSwitchesOnHubConnect,
-} from '@camstack/server/system'
-import { EventCategory } from '@camstack/types'
+} from '@dominevo/server/system'
+import { EventCategory } from '@dominevo/types'
 import type {
   IEventBus,
   ILogDestination,
   IMetricsProvider,
   IScopedLogger,
   IStorageProvider,
-} from '@camstack/types'
+} from '@dominevo/types'
 // Capability definitions — must be declared before addon registerProvider() calls
 import {
   ALL_CAPABILITY_DEFINITIONS,
@@ -86,7 +86,7 @@ import {
   settingsStoreCapability,
   storageCapability,
   storageProviderCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { ServiceBroker } from 'moleculer'
 import { buildServerManagementProvider } from '../api/core/server-management.provider.js'
 import { resolveBuiltinsDir } from '../core/addon/package-dir-utils.js'
@@ -167,7 +167,7 @@ import { registerAgentCapDispatch } from './register-agent-cap-dispatch.js'
 // The hub-forwarder addon registers as a destination, so all log
 // entries flow through it (console output + hub forwarding).
 // ---------------------------------------------------------------------------
-import { LogManager, systemHostFacts } from '@camstack/server/system'
+import { LogManager, systemHostFacts } from '@dominevo/server/system'
 import { createForwardToHub } from './forward-to-hub.js'
 import { buildAgentChildUdsManifest } from './agent-child-manifest.js'
 import { startAgentHeapWatch } from './agent-heap-watch.js'
@@ -185,7 +185,7 @@ const agentRunnerOfAddon = new RunnerOfAddon()
  * `addon-settings`, `addons`, `nodes`, `pipeline-orchestrator`), never a
  * routing pin. The agent's own capabilityRegistry only declares the agent
  * caps, so derive the set from the static cap definitions shipped in
- * `@camstack/types`. Fed to `createParentUnownedCallHandler` so a forked
+ * `@dominevo/types`. Fed to `createParentUnownedCallHandler` so a forked
  * addon on this agent calling e.g.
  * `addon-settings.getScopedSettings({addonId, cap, scope, nodeId})` forwards UNPINNED to
  * the hub singleton (which reads `nodeId` as data) instead of being pinned to
@@ -264,11 +264,11 @@ async function startAgent(configPath?: string): Promise<void> {
   // Ensure required addon packages are installed in the agent's addonsDir.
   // Resolution order:
   //   1. `CAMSTACK_BUNDLED_ADDONS_DIR` — Electron-packaged builds copy out of
-  //      the closure's own scope dir, `<resourcesPath>/node_modules/@camstack`
+  //      the closure's own scope dir, `<resourcesPath>/node_modules/@dominevo`
   //      (`'local'` mode). Was a second `<resourcesPath>/addons` tree until
   //      2026-08-25 — see `packages/desktop/src/process-manager.ts`.
   //   2. Otherwise npm from registry. A workspace build reaches a node via
-  //      `camstack deploy` (CLI tarball upload), bypassing this path.
+  //      `dominevo deploy` (CLI tarball upload), bypassing this path.
   const bundledDir = process.env['CAMSTACK_BUNDLED_ADDONS_DIR']
   const installer = new AddonInstaller({
     addonsDir: config.addonsDir,
@@ -471,7 +471,7 @@ async function startAgent(configPath?: string): Promise<void> {
   // AbortController for the upward hub registration retry loop — cancelled on
   // agent shutdown so we don't leak the retry loop after stop().
   const registerAbortController = new AbortController()
-  // The hub's `@camstack/server` version from the last `registerNode` ack (agent self-update).
+  // The hub's `@dominevo/server` version from the last `registerNode` ack (agent self-update).
   let hubServerVersion: string | null = null
   let selfUpdateOnFirstAck: (() => void) | null = null
 
@@ -639,7 +639,7 @@ async function startAgent(configPath?: string): Promise<void> {
 
   // ── Runtime-updatable root package ───────────────────────────────────
   // The agent hosts its own `server-management` provider, backed by the
-  // update service that stages `@camstack/server` closures into
+  // update service that stages `@dominevo/server` closures into
   // `<dataDir>/server-root/`. Registered under the synthetic
   // `agent-runtime` addonId (no addon owns it); `buildAgentOwnManifest`
   // appends the matching manifest entry so the hub can route
@@ -710,8 +710,8 @@ async function startAgent(configPath?: string): Promise<void> {
     // ONE COPY PER NODE — the same sweep the hub runs, at this role's own
     // healthy-boot moment (D45, task 32). Operator, 2026-08-13: "l'agente deve
     // essere identico all'hub" [the agent must be identical to the hub]. An agent is where the redundant copies actually
-    // are: `agent-a` still holds `<dataDir>/addons/@camstack/server/system@1.2.78`
-    // — a copy nothing loads (both roles pass `['@camstack/server/system']` as the
+    // are: `agent-a` still holds `<dataDir>/addons/@dominevo/server/system@1.2.78`
+    // — a copy nothing loads (both roles pass `['@dominevo/server/system']` as the
     // loader's skip list) and that WINS over the closure for anything resolving
     // through it.
     void runSingleCopyCleanup({
@@ -802,8 +802,8 @@ async function startAgent(configPath?: string): Promise<void> {
     // group-runner cap proxies it removes (registered by
     // `registerGroupRunnerProviders`, ownerless — so a plain unregister owns them).
     bootstrapPackages: new Set([
-      '@camstack/server',
-      '@camstack/addon-agent-ui',
+      '@dominevo/server',
+      '@dominevo/addon-agent-ui',
       ...AddonInstaller.AGENT_PACKAGES,
     ]),
     unregisterProvider: (capName, addonId) => {
@@ -1500,11 +1500,11 @@ async function bootCoreAddons(
   loggerFactory: (addonId: string) => IScopedLogger,
 ): Promise<void> {
   // Builtins come from the CLOSURE this process is running, exactly as the hub
-  // has done since 2026-07-18 — never from a `<addonsDir>/@camstack/server/system`
+  // has done since 2026-07-18 — never from a `<addonsDir>/@dominevo/server/system`
   // copy, which nothing refreshes and which therefore drifts (both agents were
   // 17 versions behind on 2026-08-11). `planAgentAddonScan` owns the decision
   // and the fallback; see `addon-scan.ts`. Non-framework infra providers
-  // (e.g. `@camstack/addon-platform-probe-native`) still come from the scan.
+  // (e.g. `@dominevo/addon-platform-probe-native`) still come from the scan.
   const closureSystemDir = resolveBuiltinsDir()
   if (closureSystemDir === null) {
     // Louder than the hub's warn: on an agent the builtins ARE the infra, so
@@ -1789,7 +1789,7 @@ async function loadDeployedAddons(
   // the agent MAIN thread is what wedged `$agent.reload` and dropped the node
   // from topology. A group-runner addon only needs its declaration to be
   // (re)dispatched to a subprocess, which loads the real module itself.
-  // Same skip: a `$agent.deploy` of `@camstack/server/system` still lands bytes in the
+  // Same skip: a `$agent.deploy` of `@dominevo/server/system` still lands bytes in the
   // addon root, but a reload must not adopt them over the closure.
   const packageDirs = resolveAddonPackageDirs(addonsDir, systemSkipList())
   const groupCandidates: GroupCandidate[] = []
@@ -1936,8 +1936,8 @@ async function loadInProcessDeployedAddons(
 
 /**
  * Read the agent's own root package.json version (best-effort). The agent
- * boots the `@camstack/server` closure (via CAMSTACK_ROLE=agent), so its
- * on-disk root package is `@camstack/server`.
+ * boots the `@dominevo/server` closure (via CAMSTACK_ROLE=agent), so its
+ * on-disk root package is `@dominevo/server`.
  */
 function readAgentVersion(): string {
   // package.json sits above `dist/`. Walk up until we hit it.
@@ -1952,7 +1952,7 @@ function readAgentVersion(): string {
         name?: string
         version?: string
       }
-      if (raw.name === '@camstack/server' && typeof raw.version === 'string') return raw.version
+      if (raw.name === '@dominevo/server' && typeof raw.version === 'string') return raw.version
     } catch {
       /* keep searching */
     }

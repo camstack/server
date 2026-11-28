@@ -16,7 +16,7 @@ import {
   OsdStatusSchema,
   osdManagerCapability,
   type ProviderRegistration,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { OsdBindingsStore } from './bindings-handle.js'
 import { ADDON_MIGRATIONS, osdMigrationPortsOver } from './migrations/index.js'

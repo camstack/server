@@ -3,7 +3,7 @@ import {
   type InferNativeProvider,
   type TemperatureSensorStatus,
   temperatureSensorCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { readNumberDp } from '../tuya-dp-mapping.js'
 import { tuyaChildSchema, TuyaChildDevice } from './tuya-child-device.js'

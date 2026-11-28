@@ -29,13 +29,13 @@ import {
   unmetRequirements,
   type PackageRequires,
   type UnmetRequirement,
-} from '@camstack/types'
-import type { UnsupportedAddonFacts, UnsupportedAddonTracker } from '@camstack/server/system'
+} from '@dominevo/types'
+import type { UnsupportedAddonFacts, UnsupportedAddonTracker } from '@dominevo/server/system'
 import type { GroupCandidate } from './agent-group-runner.js'
 
 /** What the gate needs to know about the node. */
 export interface StaleGateContext {
-  /** The running `@camstack/server`, or `null` when unreadable. */
+  /** The running `@dominevo/server`, or `null` when unreadable. */
   readonly serverVersion: string | null
   /** What the running server requires of addon packages (`requires.addons`). */
   readonly serverRequiresAddons: Readonly<Record<string, string>>

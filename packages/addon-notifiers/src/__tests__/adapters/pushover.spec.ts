@@ -7,7 +7,7 @@
  * the adapter emits. NO network — `discover` is exercised structurally only
  * (missing-credential short-circuit), never dialing Pushover.
  */
-import { type Notification, prepareNotification } from '@camstack/types'
+import { type Notification, prepareNotification } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { HttpRequestPlan, MultipartPart, TargetConfig } from '../../adapters/adapter.js'
 import { pushoverAdapter } from '../../adapters/pushover.js'

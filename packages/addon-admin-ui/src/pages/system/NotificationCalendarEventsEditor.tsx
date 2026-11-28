@@ -13,7 +13,7 @@ import {
   Textarea,
   useCalendarsListCalendars,
   useSystem,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useMutation } from '@tanstack/react-query'
 import { Calendar as CalendarIcon, Loader2 } from 'lucide-react'
 import { useState } from 'react'
@@ -49,7 +49,7 @@ import {
   NC_CALENDAR_EVENTS_TABS,
   NC_UPSERT_CALENDAR_EVENTS_RULE_ACTION,
 } from './notification-calendar-events.helpers'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@camstack/ui-library'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 
 export interface NotificationCalendarEventsEditorProps {

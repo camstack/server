@@ -9,7 +9,7 @@ import type {
   DetectorOutput,
   CropperOutput,
   ClassifierOutput,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { AddonLoader } from '../src/kernel/addon-loader'
 import { AddonEngineManager } from '../src/kernel/addon-engine-manager'
 import { PipelineRunner } from '../src/pipeline/pipeline-runner'

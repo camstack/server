@@ -1,4 +1,4 @@
-import { Badge } from '@camstack/ui-library'
+import { Badge } from '@dominevo/ui-library'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { MigrationRowStatus } from './migration-rows'

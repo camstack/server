@@ -12,7 +12,7 @@ import { useDeviceConfig, useUpdateDeviceConfig } from '../../hooks/useDevice.js
 import type { ConfigUISchema } from '../../types/config-ui.js'
 import type { DeviceConfigEntry } from '../../hooks/useDevice.js'
 import { useTranslation } from 'react-i18next'
-import { Button } from '@camstack/ui-library'
+import { Button } from '@dominevo/ui-library'
 
 // ---------------------------------------------------------------------------
 // Adapter: serialized config entries → ConfigUISchema

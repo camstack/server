@@ -26,7 +26,7 @@ import type {
   TrainingProviderDescriptor,
   TrainingProviderEntry,
   TrainingProviderType,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { parseTrainerDockerfile, trainerDockerfileUrl } from './dockerfile.js'
 import { MODAL_ENTRY_CONFIG_SCHEMA } from './modal-entry-schema.js'
 import { MODAL_ICON_ASSET, MODAL_TYPE_ID, type ModalEntryRecord } from './modal-entries.js'

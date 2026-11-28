@@ -16,7 +16,7 @@ import {
   type IMigrationsProvider,
   type MigrationApiV1,
   type RecordsAccess,
-} from '@camstack/types'
+} from '@dominevo/types'
 import Database from 'better-sqlite3'
 import { z } from 'zod'
 import {

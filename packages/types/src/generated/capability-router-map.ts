@@ -1617,7 +1617,7 @@ import { zoneRulesCapability as _zoneRulesCapability } from '../capabilities/zon
 import { zonesCapability as _zonesCapability } from '../capabilities/zones.cap.js'
 
 /**
- * Every CapabilityDefinition shipped by `@camstack/types`. The hub
+ * Every CapabilityDefinition shipped by `@dominevo/types`. The hub
  * iterates this array at boot to declare each cap on the registry
  * before addons (in-process or via the Moleculer bridge) attempt
  * `registerProvider`. Adding a new cap means dropping a `*.cap.ts`

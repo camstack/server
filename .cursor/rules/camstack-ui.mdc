@@ -1,5 +1,5 @@
 ---
-description: CamStack UI design system — load before planning, building or restyling any admin-ui page, ui-library component, addon page, widget or viewer screen
+description: Dominevo UI design system — load before planning, building or restyling any admin-ui page, ui-library component, addon page, widget or viewer screen
 alwaysApply: false
 ---
 <!-- Written by `npx tsx scripts/skills/gen-skill-pointers.ts` — a pointer, not a copy. The rules live in the skills below and in docs/ui/. -->

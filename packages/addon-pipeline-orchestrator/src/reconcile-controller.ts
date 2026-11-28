@@ -28,8 +28,8 @@
  * test-seam wrapper on `index.ts` that `remote-health.spec.ts` subclasses
  * onto.
  */
-import type { AddonApi, ProfileSlot, RunnerCameraConfig } from '@camstack/types'
-import { errMsg, type IScopedLogger, nodePin } from '@camstack/types'
+import type { AddonApi, ProfileSlot, RunnerCameraConfig } from '@dominevo/types'
+import { errMsg, type IScopedLogger, nodePin } from '@dominevo/types'
 import {
   computeDispatchGap,
   desiredDeviceIdsFromSlots,

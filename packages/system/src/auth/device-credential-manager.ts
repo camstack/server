@@ -1,4 +1,4 @@
-import { userError } from '@camstack/types'
+import { userError } from '@dominevo/types'
 /**
  * Device credentials (D855): the registry of enrolled devices, the one-shot
  * enrollment codes, the login nonces and the certificate checks.
@@ -17,7 +17,7 @@ import type {
   IScopedLogger,
   RecordKindHandle,
   SettingsStoreClient,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { readAllRows } from '../records/read-all-rows.js'
 import type { DeviceCredentialBody } from '../builtins/local-auth/record-kinds.js'
 import { localAuthRecordKinds } from '../builtins/local-auth/record-kinds.js'
@@ -28,7 +28,7 @@ import {
   DEVICE_ENROLLMENT_TTL_MS,
   DEVICE_NONCE_TTL_MS,
   type DeviceSignaturePurpose,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   type DeviceCaSigner,
   type DeviceLeafMaterial,

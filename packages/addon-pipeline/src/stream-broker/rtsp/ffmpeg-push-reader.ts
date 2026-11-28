@@ -31,9 +31,9 @@ import {
   defaultFfmpegSpawn,
   type FfmpegSpawnFn,
   type SpawnedFfmpegProcess,
-} from '@camstack/types/node'
-import type { EncodedPacket, IScopedLogger, PushAudioInfo } from '@camstack/types'
-import { NO_COST_CLAIM, type ChildCostClaimHandle } from '@camstack/types/node'
+} from '@dominevo/types/node'
+import type { EncodedPacket, IScopedLogger, PushAudioInfo } from '@dominevo/types'
+import { NO_COST_CLAIM, type ChildCostClaimHandle } from '@dominevo/types/node'
 import { MpegTsDemux } from './mpegts-demux.js'
 
 export interface FfmpegPushReaderCallbacks {

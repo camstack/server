@@ -20,10 +20,10 @@ import {
   errMsg,
   type AddonApi,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /**
- * The list lives in `@camstack/types` now, and this is an alias rather than a
+ * The list lives in `@dominevo/types` now, and this is an alias rather than a
  * second copy. There WERE two — this one and the Terminal addon's — and they
  * had drifted: neither named `pipeline-analytics`, the one cap with no gate of
  * its own, which is what a grid forwarding its sources' motion would have used

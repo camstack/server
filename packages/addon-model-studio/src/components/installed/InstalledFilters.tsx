@@ -11,8 +11,8 @@ import {
   SectionToolbar,
   Select,
   cn,
-} from '@camstack/ui-library'
-import type { ModelProviderId } from '@camstack/types'
+} from '@dominevo/ui-library'
+import type { ModelProviderId } from '@dominevo/types'
 import type { DeviceFilterOption } from '../../ui/installed-inventory.js'
 import { NodeSelector } from '../NodeSelector.js'
 import { useT } from '../../i18n/index.js'

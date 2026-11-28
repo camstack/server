@@ -1,4 +1,4 @@
-import { InstanceInUseError } from '@camstack/types'
+import { InstanceInUseError } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { assertMqttBrokerUnused } from '../mqtt-broker-users.js'
 

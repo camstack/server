@@ -18,7 +18,7 @@ import {
   type IScopedLogger,
   pruneDeletedEntities,
   runExportedAction,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { Accessory } from '@homebridge/hap-nodejs'
 
 import { buildActionSwitch } from './action-switch.js'

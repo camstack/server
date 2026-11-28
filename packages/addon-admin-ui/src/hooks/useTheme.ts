@@ -1,1 +1,1 @@
-export { useThemeMode } from '@camstack/ui-library'
+export { useThemeMode } from '@dominevo/ui-library'

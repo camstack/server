@@ -33,7 +33,7 @@ production on 2026-08-19. tRPC or the nightly tars in
 ## 2. Get the marked set, and analyse it — two calls
 
 Both are `addonId: 'pipeline-analytics'` (the MANIFEST id, **not**
-`@camstack/addon-post-analysis` — that name is rejected), `auth: admin`.
+`@dominevo/addon-post-analysis` — that name is rejected), `auth: admin`.
 
 ```bash
 cd /Users/<local-user>/Documents/Git/camstack/camstack-server
@@ -275,7 +275,7 @@ Not a method — a field, and then the train. In order:
    so a flag set on a live track survives its expiry-time persist.
 3. `npm run codegen` — the cap routers are generated.
 4. Ship it: a `*.cap.ts` change is a **framework** change. It reaches a node only
-   inside a published `@camstack/server` (D16) — an addon `camstack deploy`
+   inside a published `@dominevo/server` (D16) — an addon `dominevo deploy`
    cannot expose it. See `camstack-hub-image-deploy`.
 5. Consider `.strict()` on `TrackFlagsPatchSchema` in the same change, so the
    next caller's typo is a 400 instead of an invisible no-op.

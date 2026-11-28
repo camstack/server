@@ -2,7 +2,7 @@
  * Which source types are dialed ONLY when a consumer is attached.
  *
  * The rule this encodes is the user-visible one: **a stream is open only when
- * someone is watching.** Every PULL source — one where CamStack opens a
+ * someone is watching.** Every PULL source — one where Dominevo opens a
  * connection TO the camera — belongs here. Ordinary push sources (a camera
  * delivering into us) do not: there is nothing to defer. **Derived** push
  * brokers are the exception — see {@link isDerivedOnDemandSource}: their

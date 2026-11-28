@@ -18,7 +18,7 @@ import {
   type DeviceTemplateThisDevice,
   type DeviceTemplateView,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   mirrorTemplateResolver,
   type TemplateDeviceEntry,

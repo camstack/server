@@ -22,7 +22,7 @@ import type {
   IEventBus,
   IScopedLogger,
   SystemEvent,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { getOrInitReadinessRegistryForClient } from '../../moleculer/readiness-context.js'
 
 // ---------------------------------------------------------------------------

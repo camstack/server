@@ -9,7 +9,7 @@
  * BUILD NOTE): workspace defer → apply a staged root swap + migrate the legacy
  * layout to the single `current/` copy → host-external resolver hooks → load
  * the single copy (or the baked seed). This file only binds the hub's names:
- * `@camstack/server`, `dist/launcher.js`, the `CAMSTACK_SERVER_*` env
+ * `@dominevo/server`, `dist/launcher.js`, the `CAMSTACK_SERVER_*` env
  * markers and the `CAMSTACK_DATA` data dir.
  *
  * Console usage is intentional: the starter runs before any logging exists.

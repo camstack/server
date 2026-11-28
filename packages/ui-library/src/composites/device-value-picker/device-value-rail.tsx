@@ -1,4 +1,4 @@
-import type { DeviceSearchFacets } from '@camstack/types'
+import type { DeviceSearchFacets } from '@dominevo/types'
 import { ChevronRight } from 'lucide-react'
 import { type JSX, type ReactNode, useState } from 'react'
 import { Button } from '../../primitives/button'

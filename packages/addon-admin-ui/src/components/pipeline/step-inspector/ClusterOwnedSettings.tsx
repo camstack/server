@@ -6,7 +6,7 @@
  * one shared index, and two admission policies would fill it inconsistently.
  */
 import { Link } from 'react-router-dom'
-import { clusterStepSettingFieldsFor, pickClusterStepSettings } from '@camstack/types'
+import { clusterStepSettingFieldsFor, pickClusterStepSettings } from '@dominevo/types'
 import {
   SETTING_ROW,
   SETTING_ROW_LABEL,
@@ -14,7 +14,7 @@ import {
   TEXT_HINT,
   TEXT_SECTION_LABEL,
   useAddonSettingsGetScopedSettings,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { clusterStepSettingsHref } from '../pipeline-links'
 import { useTranslation } from 'react-i18next'
 

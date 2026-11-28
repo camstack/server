@@ -3,7 +3,7 @@
  *
  * These are TEMPLATES — they are not installed on the hub. Copy into the
  * editor, fill settings, Save + Restart. Each uses only Node builtins +
- * `@camstack/types` (no npm packages in the block bundle).
+ * `@dominevo/types` (no npm packages in the block bundle).
  *
  * Homelab-specific scripts (UniFi WAN check, TV schedule scrape, …) stay on
  * the hub only — never as repo templates.
@@ -28,14 +28,14 @@ export const SCRIPT_EXAMPLES: readonly ScriptExample[] = [
     },
     entry: 'main.ts',
     files: {
-      'main.ts': `import type { AddonContext } from '@camstack/types'
+      'main.ts': `import type { AddonContext } from '@dominevo/types'
 
 /**
  * A core block. Runs in its own process, with the same \`ctx\` an addon gets.
  * Return a function to release whatever you took (timers, sockets, listeners).
  *
  * Declaring devices: import { reconcileBlockDevices, exposeBlockDevices } from
- * '@camstack/types' and hang them off the shared Blocks integration.
+ * '@dominevo/types' and hang them off the shared Blocks integration.
  */
 export default function block(ctx: AddonContext) {
   ctx.logger.info('hello from a core block')

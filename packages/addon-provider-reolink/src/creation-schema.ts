@@ -1,4 +1,4 @@
-import type { ConfigUISchema } from '@camstack/types'
+import type { ConfigUISchema } from '@dominevo/types'
 
 /**
  * Creation form for Reolink devices.
@@ -226,7 +226,7 @@ export function buildCreationFormSchema(): ConfigUISchema {
             label: 'Auto-configure event push on add',
             labelKey: 'provider-reolink:creation.s_events.autoConfigureEventPush.label',
             description:
-              'Once, right after the camera is added, set up its local push (webhook or camera mailbox) so motion and AI events reach CamStack.',
+              'Once, right after the camera is added, set up its local push (webhook or camera mailbox) so motion and AI events reach Dominevo.',
             descriptionKey: 'provider-reolink:creation.s_events.autoConfigureEventPush.description',
             default: true,
           },

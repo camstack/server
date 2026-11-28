@@ -221,17 +221,17 @@ feeds back — are each proven neutral by a test.
   implementation; a disagreement with the literature is found by reading, not
   by CI.
 - `packages/types/src/interfaces/track-relations.ts` adds refusal names and
-  interfaces to `@camstack/types`. Rolldown 1.0.3 is known to PANIC bundling
-  `addon-post-analysis`'s two-entry build the moment `@camstack/types`
+  interfaces to `@dominevo/types`. Rolldown 1.0.3 is known to PANIC bundling
+  `addon-post-analysis`'s two-entry build the moment `@dominevo/types`
   re-exports a new runtime **string constant** through an entry it inlines
   (the cross-chunk const-inlining pass; the workaround is
   `optimization.inlineConst: false` in that package's `vite.config.ts` — see
   the 2026-09-29 session entry on the publish-build panic). D681's additions
-  to `@camstack/types` are Zod enum literals and interfaces, not exported
+  to `@dominevo/types` are Zod enum literals and interfaces, not exported
   `const` strings, and each `packages/addon-post-analysis` build across the
   branch was verified clean of the panic — but the lesson applies to this
   surface specifically: a future addition of an actual `export const
-  <string>` to `@camstack/types` must build every bundle that inlines `types`,
+  <string>` to `@dominevo/types` must build every bundle that inlines `types`,
   not only the packages the change touches.
 
 ## Enforcement

@@ -24,7 +24,7 @@ import {
   type SystemEvent,
   type DeviceSummary,
   userError,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { ECOWITT_SYSTEM, gatewayKeyOf } from './config.js'
 import { EcowittContainerDevice } from './devices/ecowitt-container-device.js'

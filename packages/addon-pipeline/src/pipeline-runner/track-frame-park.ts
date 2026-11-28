@@ -26,7 +26,7 @@
  * tile it cut itself. The parcel is one compressed encode at one decision
  * point; nothing here runs at frame rate.
  */
-import type { IPipelineRunnerProvider, IScopedLogger, ParkTrackFrameResult } from '@camstack/types'
+import type { IPipelineRunnerProvider, IScopedLogger, ParkTrackFrameResult } from '@dominevo/types'
 import type { ParkedFrameStore } from '../session-decode/parked-frame-store.js'
 import type { NativeCropLeaseFacts } from '../session-decode/video-frame-generator.js'
 import { suspectLeaseLossCause } from './lease-miss-cause.js'

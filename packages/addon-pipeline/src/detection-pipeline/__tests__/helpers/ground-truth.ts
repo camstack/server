@@ -9,7 +9,7 @@
  */
 import * as fs from 'node:fs'
 import * as path from 'node:path'
-import type { FrameResult, ObjectDetection, ScoredLabel } from '@camstack/types'
+import type { FrameResult, ObjectDetection, ScoredLabel } from '@dominevo/types'
 
 // ---------------------------------------------------------------------------
 // Types

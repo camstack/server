@@ -1,7 +1,7 @@
 /**
- * API-shared types — types that originated in @camstack/server/system, @camstack/server/system,
+ * API-shared types — types that originated in @dominevo/server/system, @dominevo/server/system,
  * or server internals and are now canonical here so the generated API type file
- * has zero external dependencies beyond @camstack/types.
+ * has zero external dependencies beyond @dominevo/types.
  */
 
 import type { ProviderStatus } from './device-provider.js'
@@ -12,7 +12,7 @@ import type { AddonPageDeclaration } from './addon.js'
 import type { UnmetRequirement } from '../addon/package-requires.js'
 
 // ---------------------------------------------------------------------------
-// From @camstack/server/system — backup
+// From @dominevo/server/system — backup
 // ---------------------------------------------------------------------------
 
 export interface BackupManifest {
@@ -25,7 +25,7 @@ export interface BackupManifest {
 }
 
 // ---------------------------------------------------------------------------
-// From @camstack/server/system — provider
+// From @dominevo/server/system — provider
 // ---------------------------------------------------------------------------
 
 export interface ProviderListItem {
@@ -38,7 +38,7 @@ export interface ProviderListItem {
 }
 
 // ---------------------------------------------------------------------------
-// From @camstack/server/system — addon installer
+// From @dominevo/server/system — addon installer
 // ---------------------------------------------------------------------------
 
 export interface InstalledPackage {
@@ -69,7 +69,7 @@ export interface AddonPageInfo {
 }
 
 // Benchmark types (BenchmarkPhase / BenchmarkProgress / BenchmarkResult /
-// HistoryEntry) moved to `@camstack/addon-benchmark` (2026-04-14). The core
+// HistoryEntry) moved to `@dominevo/addon-benchmark` (2026-04-14). The core
 // types package no longer carries benchmark-specific shapes — the canonical
 // schemas live next to the addon's customActions catalog.
 

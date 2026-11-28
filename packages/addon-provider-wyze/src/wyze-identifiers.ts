@@ -3,7 +3,7 @@
  * cloud lists it by (strong) and its last-known LAN IP (weak). A blank value
  * was not reported, so the stored one is kept (D49).
  */
-import type { DeviceIdentifierKey, RawDeviceIdentifiers } from '@camstack/types'
+import type { DeviceIdentifierKey, RawDeviceIdentifiers } from '@dominevo/types'
 
 export interface WyzeIdentityRead {
   readonly mac: string

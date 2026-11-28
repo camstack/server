@@ -13,7 +13,7 @@
  * in three colours.
  */
 import { describe, expect, it } from 'vitest'
-import type { ClipSource } from '@camstack/types'
+import type { ClipSource } from '@dominevo/types'
 import { describeSource, formatCatalogAge } from '../clip-source-state.js'
 
 type SourceState = ClipSource['availability']['state']

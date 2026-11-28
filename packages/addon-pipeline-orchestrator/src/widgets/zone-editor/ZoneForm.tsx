@@ -5,7 +5,7 @@ import {
   useZoneEditing,
   Button,
   Input,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useT } from '../../i18n/index.js'
 import type { Zone } from './types'
 

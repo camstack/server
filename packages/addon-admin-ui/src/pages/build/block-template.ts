@@ -15,7 +15,7 @@
  * the thing an author remembers.
  *
  * Declaring devices: use `reconcileBlockDevices` / `exposeBlockDevices` from
- * `@camstack/types` so they hang off the shared Blocks integration (D97) —
+ * `@dominevo/types` so they hang off the shared Blocks integration (D97) —
  * never mint an integration from a block.
  *
  * The blank starter lives in `./examples` — homelab-specific scripts do not.
@@ -27,7 +27,7 @@ const blank = SCRIPT_EXAMPLES.find((e) => e.id === 'blank')
 
 export const NEW_BLOCK_TEMPLATE: string =
   blank?.files['main.ts'] ??
-  `import type { AddonContext } from '@camstack/types'
+  `import type { AddonContext } from '@dominevo/types'
 
 export default function block(ctx: AddonContext) {
   ctx.logger.info('hello from a core block')

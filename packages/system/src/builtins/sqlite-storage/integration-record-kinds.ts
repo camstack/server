@@ -4,7 +4,7 @@
  * An integration's configuration is the addon's own instance record. This owner
  * keeps only the registry row (id, addon, name, enabled, info).
  */
-import { defineRecordKinds, type DefinedRecordKind } from '@camstack/types'
+import { defineRecordKinds, type DefinedRecordKind } from '@dominevo/types'
 import { z } from 'zod'
 import type { IsolatedRecordKinds } from '../records-isolated.js'
 

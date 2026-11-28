@@ -4,7 +4,7 @@
  * Every schedule here pins `timezone: 'UTC'` so the assertions do not depend
  * on the host's timezone.
  */
-import type { NcSchedule } from '@camstack/types'
+import type { NcSchedule } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { findLastClosedWindow } from '../window-bounds.js'
 

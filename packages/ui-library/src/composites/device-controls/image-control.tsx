@@ -14,7 +14,7 @@
  */
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { ImageOff, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react'
-import type { ImageStatus } from '@camstack/types'
+import type { ImageStatus } from '@dominevo/types'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
 import { useUiText } from '../../contexts/ui-text'
 import { Dialog, DialogContent } from '../../primitives/dialog'

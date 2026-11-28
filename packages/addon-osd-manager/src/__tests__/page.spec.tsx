@@ -4,14 +4,14 @@ import React from 'react'
  * OsdManagerPage — cameras DataTable + ItemFormDialog editor, and the
  * "Duplicate into…" flow.
  *
- * Partial-mock of `@camstack/ui-library`: only the generated tRPC hooks this
+ * Partial-mock of `@dominevo/ui-library`: only the generated tRPC hooks this
  * page and its children call are stubbed; every presentational primitive
  * (Button, Select, Badge, ErrorBox, Dialog, …) keeps its real
  * implementation so the test exercises actual DOM structure.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react'
-import { selectOption, selectOptionLabels } from '@camstack/ui-library/testing'
+import { selectOption, selectOptionLabels } from '@dominevo/ui-library/testing'
 
 const mockSetSlotBinding = vi.fn().mockResolvedValue({
   slot: { slotId: 'text-1', kind: 'text', readOnly: false, cameraEnabled: true, binding: null },
@@ -96,9 +96,9 @@ function refetchFor(deviceId: number) {
   return spy
 }
 
-vi.mock('@camstack/ui-library', async () => {
+vi.mock('@dominevo/ui-library', async () => {
   const actual =
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+    await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return {
     ...actual,
     DEVICE_TEMPLATE_DOCS_URL: 'https://camstack-docs.zentik.app/docs/day-to-day/device-templates',

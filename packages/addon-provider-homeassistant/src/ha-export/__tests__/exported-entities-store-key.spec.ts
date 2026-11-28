@@ -3,7 +3,7 @@
  * (D968) — the key every earlier build wrote through `updateGlobalSettings`. A selection an old build
  * stored is served by the new code, and a change is written back under the same key.
  */
-import { fakeAddonContext } from '@camstack/types/testing'
+import { fakeAddonContext } from '@dominevo/types/testing'
 import { describe, expect, it } from 'vitest'
 import { HaExportAddon } from '../ha-export.addon.js'
 import type { ExportedEntities } from '../exported-entities.js'

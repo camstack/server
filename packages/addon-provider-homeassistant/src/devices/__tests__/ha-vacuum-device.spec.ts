@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { DeviceType, type IDeviceRuntimeState } from '@camstack/types'
+import { DeviceType, type IDeviceRuntimeState } from '@dominevo/types'
 import { HaVacuumDevice } from '../ha-vacuum-device.js'
 import type { HaEntityState } from '../../ha-types.js'
 
@@ -7,7 +7,7 @@ function buildVacuumCtx(
   entityId: string,
   publishMutate = vi.fn(async () => null),
 ): {
-  ctx: import('@camstack/types').DeviceContext
+  ctx: import('@dominevo/types').DeviceContext
   setCapStateCalls: Array<{ cap: string; val: Record<string, unknown> }>
 } {
   let runtimeStateRef: IDeviceRuntimeState | null = null
@@ -93,7 +93,7 @@ function buildVacuumCtx(
       addContext: vi.fn(),
       with: vi.fn(),
     },
-  } as unknown as import('@camstack/types').DeviceContext
+  } as unknown as import('@dominevo/types').DeviceContext
 
   return { ctx, setCapStateCalls }
 }
@@ -108,7 +108,7 @@ function capSlice(
   return undefined
 }
 
-function getVacuumProvider(ctx: import('@camstack/types').DeviceContext): {
+function getVacuumProvider(ctx: import('@dominevo/types').DeviceContext): {
   start: (i: { deviceId: number }) => Promise<void>
   pause: (i: { deviceId: number }) => Promise<void>
   stop: (i: { deviceId: number }) => Promise<void>

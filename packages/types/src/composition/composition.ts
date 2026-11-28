@@ -29,7 +29,7 @@ import { CompositionSourceRefSchema, type CompositionSourceRef } from './source-
 export const COMPOSER_ADDON_ID = 'composer'
 /**
  * The stored name of a block that customizes an EXISTING device starts with this
- * (`customizationBlockName`, `@camstack/types/node`). Never parsed to tell a
+ * (`customizationBlockName`, `@dominevo/types/node`). Never parsed to tell a
  * customization apart: `composition.target.kind === 'existing'` says that (D663).
  */
 export const CUSTOMIZATION_BLOCK_NAME_PREFIX = 'customize:'

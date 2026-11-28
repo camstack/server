@@ -1,5 +1,5 @@
 /**
- * The two figures the bar carries BESIDES the volume's own fill: CamStack's
+ * The two figures the bar carries BESIDES the volume's own fill: Dominevo's
  * share of the disk, and the cap — when one is actually in force.
  *
  * "The volume is 89% full" and "we hold half of it" are different decisions,
@@ -23,12 +23,12 @@ function known(bar: CapacityBar) {
   return bar
 }
 
-describe("resolveCapacityBar — CamStack's own share", () => {
+describe("resolveCapacityBar — Dominevo's own share", () => {
   it('draws the share as its own band, with the rest of the disk beside it', () => {
     const bar = known(resolveCapacityBar(RECORDINGS, null, { ownedBytes: 930 * GB }))
     expect(bar.segments.ownedPercent).toBeCloseTo(49.9, 0)
     expect(bar.labels.owned).toMatch(/930 GB of recordings \(50%\)/)
-    expect(bar.summary).toMatch(/CamStack holds 930 GB of recordings/)
+    expect(bar.summary).toMatch(/Dominevo holds 930 GB of recordings/)
     // `used` is now what is on the disk BESIDE us — the two do not overlap —
     // while the summary still reports the volume's own free/total.
     expect(bar.segments.usedPercent).toBeCloseTo(38.8, 0)
@@ -41,7 +41,7 @@ describe("resolveCapacityBar — CamStack's own share", () => {
       const bar = known(resolveCapacityBar(RECORDINGS, null, extras))
       expect(bar.segments.ownedPercent).toBeNull()
       expect(bar.labels.owned).toBeNull()
-      expect(bar.summary).not.toMatch(/CamStack holds/)
+      expect(bar.summary).not.toMatch(/Dominevo holds/)
     }
   })
 
@@ -67,7 +67,7 @@ describe('resolveCapacityBar — the system-managed cap', () => {
   it('marks a legacy cap and names who manages it', () => {
     const bar = known(resolveCapacityBar(RECORDINGS, null, { cap: LEGACY_CAP }))
     expect(bar.segments.capPercent).toBeCloseTo(48.3, 0)
-    expect(bar.labels.cap).toMatch(/900 GB cap \(managed by CamStack\)/)
+    expect(bar.labels.cap).toMatch(/900 GB cap \(managed by Dominevo\)/)
     expect(bar.capBelowOwned).toBe(false)
   })
 
@@ -88,7 +88,7 @@ describe('resolveCapacityBar — the system-managed cap', () => {
     const bar = known(
       resolveCapacityBar(RECORDINGS, null, { ownedBytes: 200 * GB, cap: DRAIN_CAP }),
     )
-    expect(bar.labels.cap).toMatch(/120 GB drain target \(managed by CamStack\)/)
+    expect(bar.labels.cap).toMatch(/120 GB drain target \(managed by Dominevo\)/)
     expect(bar.capBelowOwned).toBe(true)
     expect(bar.segments.capPercent).toBeCloseTo(6.4, 0)
   })

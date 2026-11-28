@@ -17,9 +17,9 @@ import {
   useClusterNodes,
   useLiveEvent,
   usePipelineOrchestratorGetAudioNodeLoad,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
-import { formatNumeric } from '@camstack/ui-library'
+import { formatNumeric } from '@dominevo/ui-library'
 interface CameraSnapshot {
   readonly deviceId: number
   readonly nodeId: string

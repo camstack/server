@@ -22,7 +22,7 @@ import {
   type CapabilityDefinition,
   type InferNativeProvider,
   type InferProvider,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, expectTypeOf, it } from 'vitest'
 import { z } from 'zod'
 import {
@@ -351,7 +351,7 @@ describe('caller: required — collection cap path', () => {
 
 // ── Type surface (compile-gated by `npm run typecheck -w packages/system`,
 //    which — unlike packages/types' tsconfig — includes __tests__; these
-//    assertions also exercise the EMITTED @camstack/types declarations) ──
+//    assertions also exercise the EMITTED @dominevo/types declarations) ──
 
 describe("caller: 'required' — InferProvider/InferNativeProvider type surface", () => {
   type Provider = InferProvider<typeof callerCap>

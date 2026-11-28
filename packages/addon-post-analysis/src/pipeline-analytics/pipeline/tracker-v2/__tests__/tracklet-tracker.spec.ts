@@ -35,7 +35,7 @@
  *  - give a coasting owner `RIVAL_MARGIN` again in `auditRivalBoxes`: "a newcomer on a
  *    coasting tracklet's stale box never takes its id by margin" fails.
  */
-import type { BoundingBox, SpatialDetection } from '@camstack/types'
+import type { BoundingBox, SpatialDetection } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { sequentialTrackIdMinter } from '../../track-id.js'
 import type { SpawnRefusalFacts } from '../../tracker/spawn-refusal.js'

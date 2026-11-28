@@ -20,7 +20,7 @@
  * could not measure. A rejected read propagates; the dispatcher turns it into
  * "unknown" (D49).
  */
-import type { DeviceRun } from '@camstack/types'
+import type { DeviceRun } from '@dominevo/types'
 import {
   NC_UNKNOWN_CYCLE_FACTS,
   type NcApplianceCycleFacts,

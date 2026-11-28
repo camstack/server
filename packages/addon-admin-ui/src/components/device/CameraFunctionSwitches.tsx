@@ -48,7 +48,7 @@ import {
   Volume2,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import type { CameraSwitchId } from '@camstack/types'
+import type { CameraSwitchId } from '@dominevo/types'
 import {
   Popover,
   PopoverContent,
@@ -56,7 +56,7 @@ import {
   usePipelineOrchestratorGetCameraSwitches,
   usePipelineOrchestratorSetCameraSwitch,
   Button,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useEventInvalidation } from '../../hooks/useEventInvalidation'
 import {
   type CameraSwitchIconKey,

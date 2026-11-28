@@ -70,7 +70,7 @@ and since 2026-08-01 it is **per step, not per tree**:
 
 The hub's NPU is real hardware: `/dev/accel/accel0` with `intel_vpu` loaded,
 mapped into the container. Confirm with
-`docker exec CamStack ls -la /dev/accel/` before suspecting the code.
+`docker exec Dominevo ls -la /dev/accel/` before suspecting the code.
 
 ## How a session lands on a device
 
@@ -265,7 +265,7 @@ Do not replace this with `AUTO`, `MULTI` or `HETERO`:
 - `HETERO` partitions unsupported operations of one graph across devices. It is
   not camera or request load balancing.
 - cumulative-throughput/AUTO scheduling would hide the actual execution device
-  from CamStack's per-device capacity, pinning and load telemetry.
+  from Dominevo's per-device capacity, pinning and load telemetry.
 
 **The NPU compiler refuses a DYNAMIC dimension, full stop.** Found live on
 2026-08-20, not in theory: the hub — pinned by the operator to the NPU — repeated
@@ -714,7 +714,7 @@ and look merely quiet.
 
 ## Traps
 
-- **`camstack deploy -n <agent>` used to report success without delivering —
+- **`dominevo deploy -n <agent>` used to report success without delivering —
   FIXED 2026-08-07, and the diagnosis is worth keeping.** It was never a stale
   tarball cache. Three separate defects wore the same symptom: the `-n` branch
   called `$agent.deploy` and never `$agent.reload`, so correct bytes sat unloaded;
@@ -737,7 +737,7 @@ and look merely quiet.
   `ensureModel` fetches the new bytes, and the old copy serves until they are
   complete (D743). So, after replacing an artefact on the mirror, run
   `npx tsx scripts/check-hosted-model-revisions.ts --write` and ship the table
-  in a `@camstack/server` release. Without that, the node keeps the old file
+  in a `@dominevo/server` release. Without that, the node keeps the old file
   while the catalog, the logs and the version all say it was updated. A
   running pool keeps the model it already loaded until it reloads it.
 - **An NVIDIA GPU alone is not a `cuda` device.** No image ships
@@ -750,7 +750,7 @@ and look merely quiet.
   the ONNX Runtime lists `CUDAExecutionProvider`; nothing passes that list yet:
   planning#605). `cuda` is offered only for a usable slot. The pool's `ONNX:
   execution provider` line says `device=` from the provider the session BOUND
-  (`device=cpu, asked=…`). The install docs and `camstack host-check` say
+  (`device=cpu, asked=…`). The install docs and `dominevo host-check` say
   NVIDIA is not supported yet and point at the Intel iGPU.
 - **`gpu` is the iGPU (Intel / AMD / render node), never NVIDIA.** When `gpu`
   read `nvidia` on a host that also had an Intel iGPU (an i7-8700K + RTX 2060),

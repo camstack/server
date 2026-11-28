@@ -25,7 +25,7 @@ used one accent for every class.
 
 Rejected: a per-theme pair (two colours for one kind), a per-camera palette
 (the legend would disagree with the picture the hub drew), and treating an
-unreadable settings row as the CamStack preset (D393, D651: a failed read is
+unreadable settings row as the Dominevo preset (D393, D651: a failed read is
 not the default).
 
 ## Decision
@@ -35,16 +35,16 @@ One palette for the product, served by the hub-only system singleton
 every entry as `{ form: 'solid', hex }` or the audio `{ form: 'gradient', hex,
 alphas }`, plus `fallbacks`) or `{ status: 'unknown', reason }` when the
 settings store cannot be read or the stored blob does not parse. An empty
-store is `status: 'ready', source: 'unconfigured'` — the bundled CamStack
+store is `status: 'ready', source: 'unconfigured'` — the bundled Dominevo
 preset, named as such. `setPalette({ presetId } | { presetId, overrides })`
 refuses, naming the pairs, when two entries are closer than ΔE2000 7 or any
 entry is below 3:1 on either theme background (`#0c0a09`, `#fafaf9`). The
 live cursor and the heatmap handle must also clear ΔE2000 20 against each
 other: they sit next to each other as small swatches, and ΔE 7 still lets
-two olives read as one (CamStack `#8d7a00` vs `#715c1d` was 12.8 on the same
-hue). The global floor stays 7. The closest pair in each preset is CamStack
+two olives read as one (Dominevo `#8d7a00` vs `#715c1d` was 12.8 on the same
+hue). The global floor stays 7. The closest pair in each preset is Dominevo
 7.30, high contrast 7.49, colour-blind safe 7.01, so a higher global floor
-would refuse the tables. The CamStack heatmap handle is `#4b32ff`, a violet,
+would refuse the tables. The Dominevo heatmap handle is `#4b32ff`, a violet,
 so it does not read as the live cursor. The same function validates in admin
 while editing. The Palette tab names every swatch (label and hex) on both
 grounds; subclasses stay in a collapsed group under their parent. Audio
@@ -55,7 +55,7 @@ preset, not a second table.
 ## Consequences
 
 Consumers that need the cluster choice call `getPalette`. On `unknown` they
-paint the bundled CamStack preset and say so. `getPalette` and `listPresets`
+paint the bundled Dominevo preset and say so. `getPalette` and `listPresets`
 are labelled `viewer` so the viewer app can call them; `setPalette` stays
 admin. The viewer (phase 2) consumes this output shape unchanged. A custom
 palette cannot store a pair the validator rejected.

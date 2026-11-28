@@ -10,7 +10,7 @@ import {
   ExportInstanceUnknownError,
   type IScopedLogger,
   makeInMemoryRecords,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { HaExportAddon } from '../ha-export.addon.js'
 import type { ExportMembership } from '../membership.js'

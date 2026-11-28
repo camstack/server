@@ -23,7 +23,7 @@ covers:
 
 ## Intent
 
-Some root detectors (plus catalog, SSDLite MobileDet, future CamStack builds)
+Some root detectors (plus catalog, SSDLite MobileDet, future Dominevo builds)
 already emit **fine labels** (`dog`, `deer`, `sedan`) that today only become
 tier-1 / tier-2 via a second-stage classifier (`animal-classifier`,
 `vehicle-classifier`, `bird-classifier`). Running the classifier anyway is
@@ -46,7 +46,7 @@ runs.
 
 ### 1. Model catalog metadata (declaration)
 
-On the **object-detection** `ModelCatalogEntry` (CamStack seed, plus catalog import,
+On the **object-detection** `ModelCatalogEntry` (Dominevo seed, plus catalog import,
 custom registry):
 
 ```ts

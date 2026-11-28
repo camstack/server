@@ -76,7 +76,7 @@ AKID + SAN. Only the producer moved.
 
 ## Consequences
 
-- `@camstack/system` gains `@peculiar/x509` (already in the lockfile as a
+- `@dominevo/system` gains `@peculiar/x509` (already in the lockfile as a
   werift transitive). Vite inlines JS deps, so it costs ~400 kB in the system
   bundle (79 kB gzip) and nothing in the closure.
 - The hub no longer needs an `openssl` binary to obtain a TLS identity. The

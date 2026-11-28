@@ -68,7 +68,7 @@ import {
   type NcMediaPolicy,
   type NcRule,
   ruleGroupingApplies,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { effectiveMediaPolicyForRule } from './rule-engine.js'
 
 /**

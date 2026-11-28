@@ -73,7 +73,7 @@ export function connectHtml(cap: GoogleSettingsCap, publicOrigin: string | null)
       `After Save, open <a href="${OAUTH_START_PATH}">Connect Google</a> in this hub (admin session required). `,
       'Connect requests <code>gmail.send</code> (and Calendar read for the Calendars page). ',
       `Google must list exactly: <code>${redirect}</code>. `,
-      'If an older Connect predates Gmail send, revoke CamStack in Google Account → Security and Connect again. ',
+      'If an older Connect predates Gmail send, revoke Dominevo in Google Account → Security and Connect again. ',
       `Console: ${consoleLinksHtml()}.`,
     ].join('')
   }

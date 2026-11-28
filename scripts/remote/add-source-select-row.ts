@@ -9,7 +9,7 @@
  *
  * `--apply` first writes the ORIGINAL payloads of the templates it will change
  * to `--backup <file>` (JSON) and refuses to run without it. Reaches the hub
- * only through `scripts/hub/hub.mjs` (its credential chain: `camstack login`);
+ * only through `scripts/hub/hub.mjs` (its credential chain: `dominevo login`);
  * no password or token is read or printed here.
  */
 import { writeFileSync } from 'node:fs'

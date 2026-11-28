@@ -26,7 +26,7 @@
  * discovered: the LANGUAGE is frozen at enqueue too.
  */
 
-import type { IScopedLogger, NcRuleTarget, NcTargetOverrides } from '@camstack/types'
+import type { IScopedLogger, NcRuleTarget, NcTargetOverrides } from '@dominevo/types'
 import { ncClockText } from '../clock-text.js'
 import {
   escapeLiteralMarkup,

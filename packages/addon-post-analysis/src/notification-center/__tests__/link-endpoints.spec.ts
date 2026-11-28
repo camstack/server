@@ -5,7 +5,7 @@
  * role with something different on purpose: a resolver that read it would
  * mint on that address and fail here.
  */
-import type { ConnectionEndpoint } from '@camstack/types'
+import type { ConnectionEndpoint } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import { pickArtifactBaseUrl } from '../artifact-url.js'

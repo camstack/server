@@ -31,8 +31,8 @@ vi.mock('../../settings/NodeAddonsSettingsPanel', () => ({
   },
 }))
 vi.mock('../NodeDetailHeader', () => ({ NodeDetailHeader: () => null }))
-vi.mock('@camstack/ui-library', async () => ({
-  ...(await vi.importActual<Record<string, unknown>>('@camstack/ui-library')),
+vi.mock('@dominevo/ui-library', async () => ({
+  ...(await vi.importActual<Record<string, unknown>>('@dominevo/ui-library')),
   useClusterNodes: () => ({ nodes: [] }),
 }))
 

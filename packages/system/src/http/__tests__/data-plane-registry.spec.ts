@@ -1,4 +1,4 @@
-import type { AddonDataPlaneEndpoint } from '@camstack/types'
+import type { AddonDataPlaneEndpoint } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { canServeDataPlane, DataPlaneRegistry } from '../data-plane-registry.js'
 
@@ -88,13 +88,13 @@ describe('unregisterAddon leaves no route behind', () => {
 
   it('stops matching every prefix the addon had', () => {
     const registry = new DataPlaneRegistry()
-    registry.registerAddon('@camstack/addon-post-analysis', [endpoint])
-    expect(registry.match('@camstack/addon-post-analysis', '/media/7/crop.jpg')).not.toBeNull()
+    registry.registerAddon('@dominevo/addon-post-analysis', [endpoint])
+    expect(registry.match('@dominevo/addon-post-analysis', '/media/7/crop.jpg')).not.toBeNull()
 
-    registry.unregisterAddon('@camstack/addon-post-analysis')
+    registry.unregisterAddon('@dominevo/addon-post-analysis')
 
-    expect(registry.match('@camstack/addon-post-analysis', '/media/7/crop.jpg')).toBeNull()
-    expect(registry.has('@camstack/addon-post-analysis')).toBe(false)
+    expect(registry.match('@dominevo/addon-post-analysis', '/media/7/crop.jpg')).toBeNull()
+    expect(registry.has('@dominevo/addon-post-analysis')).toBe(false)
   })
 
   it('is idempotent — a dead child can be reported more than once', () => {

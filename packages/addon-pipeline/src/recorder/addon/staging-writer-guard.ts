@@ -34,7 +34,7 @@
  * then a claim refuses at once, without a table read or a signal, and the
  * ERROR is written once per change of state.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { segmentListPath } from './ffmpeg-args.js'
 import type {
   ListedProcess,

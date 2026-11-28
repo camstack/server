@@ -7,7 +7,7 @@
  * pinning are therefore: the bytes really ship, they are the media type they
  * claim, and they stay small enough that no adapter rejects them.
  */
-import type { AddonHttpReply, AddonHttpRequest } from '@camstack/types'
+import type { AddonHttpReply, AddonHttpRequest } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { hasSample, sampleRoutes, sampleUrlFor } from '../sample-routes.js'
 

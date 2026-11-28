@@ -8,8 +8,8 @@
  * remaining blob are dropped — including snapshot-less rows. Enrolled gallery
  * media (`identity` / `vehicle` / `scene`) is never probed.
  */
-import type { EventOwnerType } from '@camstack/types'
-import { EVENT_OWNER_TYPES } from '@camstack/types'
+import type { EventOwnerType } from '@dominevo/types'
+import { EVENT_OWNER_TYPES } from '@dominevo/types'
 import {
   FACE_MEDIA_OWNER_PREFIX,
   isMediaOwnerKind,

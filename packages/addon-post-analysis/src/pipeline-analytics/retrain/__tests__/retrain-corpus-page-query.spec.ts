@@ -4,14 +4,14 @@
  * used to apply after that full load.
  */
 import Database from 'better-sqlite3'
-import { RecordsEngine } from '@camstack/server/system'
+import { RecordsEngine } from '@dominevo/server/system'
 import {
   createRecordsAccess,
   type RecordsAccess,
   type RetrainCorpusFilter,
   type RetrainMacroClass,
   type RecordsTransport,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { makeAnalyticsWorld } from '../../__tests__/fake-records.js'
 import { makeSilentLogger } from '../../__tests__/test-helpers.js'
@@ -360,7 +360,7 @@ function retrainLedgers(records: Pick<RecordsAccess, 'kind' | 'transact'>): Ledg
 }
 
 /**
- * Same readers as `records-explain.ts`. That file lives in `@camstack/server/system`,
+ * Same readers as `records-explain.ts`. That file lives in `@dominevo/server/system`,
  * outside this package's `rootDir`, so the page spec carries the two functions
  * it needs to judge the statements the store actually prepared.
  */

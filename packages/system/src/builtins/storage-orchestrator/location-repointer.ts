@@ -33,7 +33,7 @@
  * repoint leaves the bytes in the old root or a verified copy in the new one (see
  * `location-repoint-move.ts`), never a stale lock.
  */
-import type { IScopedLogger, StorageLocation, StorageMigrationMover } from '@camstack/types'
+import type { IScopedLogger, StorageLocation, StorageMigrationMover } from '@dominevo/types'
 import { classifyPath } from './location-class-paths.js'
 import {
   moveLocationTree,

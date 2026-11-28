@@ -44,10 +44,10 @@ import {
   type AdoptMode,
   type DiscoveredChildDevice,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { AdoptedCandidate, StartAdoptionJobInput } from './adoption-job-engine.js'
 import { modeKey, type AdoptionLedger } from './adoption-ledger.js'
-import type { AdoptionJob } from '@camstack/types'
+import type { AdoptionJob } from '@dominevo/types'
 
 /** The slice of the job engine the autopilot drives. */
 export interface AutopilotJobs {

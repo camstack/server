@@ -26,8 +26,8 @@ import {
   usePipelineOrchestratorAssignPipeline,
   usePipelineOrchestratorResolvePipeline,
   usePipelineOrchestratorUnassignPipeline,
-} from '@camstack/ui-library'
-import type { CameraStatus } from '@camstack/types'
+} from '@dominevo/ui-library'
+import type { CameraStatus } from '@dominevo/types'
 import {
   deriveCameraProblems,
   extractOrchestratorCameraSettings,

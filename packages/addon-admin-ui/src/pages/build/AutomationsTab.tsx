@@ -14,7 +14,7 @@ import {
   type AutomationTemplatePayload,
   type CoreBlock,
   type CoreBlockInput,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   ErrorBox,
   TABLE_SCROLL_MAX_H,
@@ -24,7 +24,7 @@ import {
   useTemplateCreate,
   TaggedDataTable,
   type DataColumn,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { blockSearchText, blockTags } from './tag-accessors'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { Workflow } from 'lucide-react'

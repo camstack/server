@@ -14,7 +14,7 @@ import { describe, it, expect, afterEach } from 'vitest'
 import { createLocalTransport } from '../../transport/create-local-transport.js'
 import { LocalChildRegistry } from '../../transport/local-child-registry.js'
 import { LocalChildClient } from '../../transport/local-child-client.js'
-import type { SystemEvent, IReadinessRegistryRecord } from '@camstack/types'
+import type { SystemEvent, IReadinessRegistryRecord } from '@dominevo/types'
 import type { ChildLogMessage } from '../../transport/child-cap-protocol.js'
 
 // ---------------------------------------------------------------------------

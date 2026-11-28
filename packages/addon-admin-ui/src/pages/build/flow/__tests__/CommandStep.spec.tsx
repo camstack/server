@@ -10,8 +10,8 @@ import type { AutomationDevice } from '../../automation/automation-data'
 import type { CommandStep as CommandStepValue } from '../command-vocab'
 import type { ActionPickDraft } from '../../../../components/device-do-action/ActionPicker'
 
-vi.mock('@camstack/ui-library', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@camstack/ui-library')>()),
+vi.mock('@dominevo/ui-library', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@dominevo/ui-library')>()),
   ItemFormDialog: (props: { readonly children: ReactNode; readonly footer: ReactNode }) => (
     <div data-testid="dialog">
       {props.children}

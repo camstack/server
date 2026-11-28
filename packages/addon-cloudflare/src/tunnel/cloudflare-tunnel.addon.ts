@@ -11,7 +11,7 @@ import {
   networkAccessCapability,
   normalizeNodeId,
   userError,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import * as path from 'node:path'
 import { CloudflareTunnelService, type CloudflareTunnelConfig } from './cloudflare-tunnel'
@@ -52,7 +52,7 @@ export { cloudflareTunnelActions as customActions } from './cloudflare-actions'
 type CloudflareTunnelAddonConfig = Readonly<Record<string, unknown>>
 
 /**
- * Cloudflare Tunnel — exposes CamStack via Cloudflare's network.
+ * Cloudflare Tunnel — exposes Dominevo via Cloudflare's network.
  *
  * The connection is ONE `tunnels` record named after the addon, edited on the Remote Access
  * page through `integration-instances` (D985, D996); where the tunnel forwards to is a node
@@ -104,7 +104,7 @@ export class CloudflareTunnelAddon extends BaseAddon<CloudflareTunnelAddonConfig
    *   1. Explicit `localPort` in addon config (> 0) — operator override.
    *   2. `CAMSTACK_PORT` env (set by the bootstrap config manager).
    *   3. `PORT` env (legacy / .env fallback).
-   *   4. 4443 — CamStack hub backend HTTPS default.
+   *   4. 4443 — Dominevo hub backend HTTPS default.
    */
   private resolveLocalPort(): number {
     // `localPortMode === 'custom'` is the only path that honours

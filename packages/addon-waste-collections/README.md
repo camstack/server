@@ -4,7 +4,7 @@ Waste collection schedules via the vendored HACS waste_collection_schedule Pytho
 
 <!-- readme:generated:start (derived from the manifest; edit outside this block) -->
 
-Package `@camstack/addon-waste-collections` on npm.
+Package `@dominevo/addon-waste-collections` on npm.
 
 ## What it provides
 
@@ -15,13 +15,13 @@ Package `@camstack/addon-waste-collections` on npm.
 
 - Placement: hub-only (runner group `integrations`).
 - Python: Waste Collection installs `python/requirements.txt` into its own environment.
-- A CamStack hub. An agent is used only where the placement above allows it.
+- A Dominevo hub. An agent is used only where the placement above allows it.
 
 ## Documentation
 
-- [docs/addons/addon-waste-collections.md](https://github.com/camstack/server/blob/main/docs/addons/addon-waste-collections.md)
-- [docs/architecture/secrets-keychain.md](https://github.com/camstack/server/blob/main/docs/architecture/secrets-keychain.md)
-- [packages/addon-waste-collections/AGENTS.md](https://github.com/camstack/server/blob/main/packages/addon-waste-collections/AGENTS.md)
+- [docs/addons/addon-waste-collections.md](https://github.com/dominevo/server/blob/main/docs/addons/addon-waste-collections.md)
+- [docs/architecture/secrets-keychain.md](https://github.com/dominevo/server/blob/main/docs/architecture/secrets-keychain.md)
+- [packages/addon-waste-collections/AGENTS.md](https://github.com/dominevo/server/blob/main/packages/addon-waste-collections/AGENTS.md)
 
 See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
 

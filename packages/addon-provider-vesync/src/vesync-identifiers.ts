@@ -4,7 +4,7 @@
  * entry without a MAC (not reported) keeps the stored one (D49); no snapshot
  * declares nothing.
  */
-import type { DeviceIdentifierKey, RawDeviceIdentifiers } from '@camstack/types'
+import type { DeviceIdentifierKey, RawDeviceIdentifiers } from '@dominevo/types'
 import type { VeSyncDeviceSnapshot } from './vesync-client-contract.js'
 
 export type VeSyncIdentityRead = Pick<VeSyncDeviceSnapshot, 'nativeId' | 'mac'>

@@ -1,4 +1,4 @@
-import { MotionStatusSchema } from '@camstack/types'
+import { MotionStatusSchema } from '@dominevo/types'
 import { detectionValue, iface, unshaped } from './shared.js'
 import type { GenericAdapter } from './types.js'
 

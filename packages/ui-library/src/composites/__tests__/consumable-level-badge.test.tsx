@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import { ConsumableLevelSchema } from '@camstack/types'
+import { ConsumableLevelSchema } from '@dominevo/types'
 import {
   ConsumableLevelBadge,
   consumableItemLevel,

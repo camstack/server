@@ -9,7 +9,7 @@
  * This drives the production `emit` (the reporting door) and the production
  * rules fingerprint — the unit spec fakes both.
  */
-import { DeviceType, NcRuleInputSchema } from '@camstack/types'
+import { DeviceType, NcRuleInputSchema } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import type { NcTargetRef } from '../dispatcher.js'

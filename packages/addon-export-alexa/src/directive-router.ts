@@ -4,8 +4,8 @@
  * `header.namespace + name`, and falls back to the stub responder for
  * namespaces we haven't implemented yet.
  */
-import type { ExportEntityApi, IScopedLogger, MethodAccess, TokenScope } from '@camstack/types'
-import { scopesAllowDeviceCap } from '@camstack/types'
+import type { ExportEntityApi, IScopedLogger, MethodAccess, TokenScope } from '@dominevo/types'
+import { scopesAllowDeviceCap } from '@dominevo/types'
 import { type AlexaPrincipal, endpointAccessTarget } from './access/access-gate.js'
 import { readConnectivity } from './connectivity.js'
 import {
@@ -118,7 +118,7 @@ export function assertDeviceScope(scopes: readonly TokenScope[]): void {
  * `'view'` for read/discovery directives, `'create'` for control.
  *
  * The matching itself is `scopesAllowDeviceCap`, which now lives in
- * `@camstack/types` precisely so an addon can reach it: both of these used to
+ * `@dominevo/types` precisely so an addon can reach it: both of these used to
  * carry a hand-copied re-implementation with a comment saying so, and a copy
  * that drifts from the framework's matcher is a scope check that disagrees with
  * every other scope check in the product.
@@ -320,7 +320,7 @@ async function dispatchParsedDirective(
     'Alexa.SmartVision.SnapshotProvider/GetSnapshot': 'view',
     // R4 (D779): all three only change or read what ALEXA holds about the
     // camera (which classes it is told about, the history it is shown);
-    // nothing in CamStack is actuated or deleted.
+    // nothing in Dominevo is actuated or deleted.
     'Alexa.SmartVision.ObjectDetectionSensor/SetObjectDetectionClasses': 'view',
     'Alexa.DataController/ReportData': 'view',
     'Alexa.DataController/DeleteData': 'view',

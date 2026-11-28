@@ -10,7 +10,7 @@
  * `retrain-frames` records kind, reached through the retrain-frame ledger.
  */
 import { describe, expect, it, vi } from 'vitest'
-import type { SettingsStoreClient } from '@camstack/types'
+import type { SettingsStoreClient } from '@dominevo/types'
 import type { MediaBlobStorage } from '../location-aware-media-storage.js'
 import { MediaRelocateEngine } from '../media-relocate-engine.js'
 import { pipelineAnalyticsRecordKinds } from '../record-kinds.js'

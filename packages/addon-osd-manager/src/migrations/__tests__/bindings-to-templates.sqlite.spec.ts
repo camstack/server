@@ -6,7 +6,7 @@
  * survive, a neighbour's rows are untouched, and a second run changes nothing.
  */
 import { fileURLToPath } from 'node:url'
-import type { DeviceTemplateView } from '@camstack/types'
+import type { DeviceTemplateView } from '@dominevo/types'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { DeviceTemplateRenderer } from '../../../../system/src/builtins/device-manager/device-template/template-renderer.js'
 import { settingsFixture } from '../../../../system/src/builtins/sqlite-storage/__tests__/support/addon-settings-fixture.js'

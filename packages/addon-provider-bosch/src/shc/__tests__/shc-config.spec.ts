@@ -1,4 +1,4 @@
-import { collectKeychainStoredKeys } from '@camstack/types'
+import { collectKeychainStoredKeys } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { boschShcActions } from '../custom-actions.js'
 import { buildConnectionFormSchema, SHC_PAIRING_ONLY_SHOW_WHEN } from '../config.js'

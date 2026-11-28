@@ -15,7 +15,7 @@ import {
   RecordIntegrationInstances,
   type RecordsAccess,
   type ResolvedInstance,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { MAILBOX_LINK_FIELD, mailboxLinkField, SMTP_MAILBOX_LINK } from './email-push-bridge.js'
 import {

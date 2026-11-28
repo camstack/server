@@ -2,7 +2,7 @@
  * The seam to `integrationInstances.setInstanceEnabled`: the panel depends on this hook only,
  * so its specs stub one module.
  */
-import { useIntegrationInstancesSetInstanceEnabled } from '@camstack/ui-library'
+import { useIntegrationInstancesSetInstanceEnabled } from '@dominevo/ui-library'
 
 export interface SetInstanceEnabledInput {
   readonly addonId: string

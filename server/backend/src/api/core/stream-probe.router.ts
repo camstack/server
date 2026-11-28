@@ -9,7 +9,7 @@
  * here as part of eliminating the `streaming` aggregator capability.
  */
 import { z } from 'zod'
-import { classifyStream } from '@camstack/types'
+import { classifyStream } from '@dominevo/types'
 import type { StreamProbeService } from '../../core/streaming/stream-probe.service.js'
 import { trpcRouter, adminProcedure } from '../trpc/trpc.middleware.js'
 

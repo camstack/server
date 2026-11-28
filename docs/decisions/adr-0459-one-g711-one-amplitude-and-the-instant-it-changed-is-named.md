@@ -73,7 +73,7 @@ Three parts, and the third is a refusal.
    check.
 
 2. **`AUDIO_SCALE_EPOCH_MS` and `G711_SCALE_CORRECTION_DB` are one module in
-   `@camstack/types`** (`audio/audio-scale-epoch.ts`). The factors are DERIVED
+   `@dominevo/types`** (`audio/audio-scale-epoch.ts`). The factors are DERIVED
    (`20·log10(4)`, `20·log10(8)`) — arithmetic on an exact ratio, never an
    estimate — and the epoch names the day, not a deploy minute, because the
    correction reaches each node when that node's `addon-pipeline` is
@@ -161,7 +161,7 @@ drives the real `AudioRtpDecoder` over all 256 codes of both laws and compares
 against an in-test ITU-T expansion, plus the standard's published constants
 (±32124 μ-law full scale, ±32256 / ±8 A-law). It goes through the decoder, not
 through the table functions, so it keeps guarding the behaviour wherever the
-tables end up living — including after D455's move into `@camstack/types`.
+tables end up living — including after D455's move into `@dominevo/types`.
 
 `packages/types/src/audio/__tests__/audio-scale-epoch.spec.ts` pins the two
 factors to their derivation and pins `unknown` to never collapse into `itu`.

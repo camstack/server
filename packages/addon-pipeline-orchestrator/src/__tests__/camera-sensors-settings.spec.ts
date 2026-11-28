@@ -3,7 +3,7 @@
  * `cameraSensors` value beside `motionSources`, and the write gate that
  * `applyDeviceSettingsPatch` runs before anything lands.
  */
-import type { AddonContext, IEventBus, IScopedLogger } from '@camstack/types'
+import type { AddonContext, IEventBus, IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   parseCameraSensorsSetting,

@@ -38,15 +38,15 @@
  */
 import { useTranslation } from 'react-i18next'
 import { AlertTriangle } from 'lucide-react'
-import { useDeviceManagerListAll } from '@camstack/ui-library'
+import { useDeviceManagerListAll } from '@dominevo/ui-library'
 import { formatBytes } from '../../../lib/format-size'
 import { SingleLineChart } from './LoadChart'
-import { gapThresholdMs } from '@camstack/ui-library'
+import { gapThresholdMs } from '@dominevo/ui-library'
 import { type NodeScope } from './contribution-origin'
 import { useCameraLoadSeries } from './use-camera-load-series'
 import { cameraNamesById } from './camera-names'
 import type { CameraLoadBucket } from './camera-load-fold'
-import { formatNumeric } from '@camstack/ui-library'
+import { formatNumeric } from '@dominevo/ui-library'
 
 /** 25% of one core — below it a camera's CPU line is noise, not a trend. */
 const CPU_AXIS_FLOOR_PERCENT = 25

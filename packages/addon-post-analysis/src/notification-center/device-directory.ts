@@ -31,7 +31,7 @@
  * was sixteen notifications about a smart plug.
  */
 
-import { DeviceType, type IScopedLogger } from '@camstack/types'
+import { DeviceType, type IScopedLogger } from '@dominevo/types'
 import { deviceTypePhrase, type DeviceLabelLanguage } from './device-type-label.js'
 
 /** One device, as the notification path needs to know it. */

@@ -20,7 +20,7 @@ import {
   type MigrationEdit,
   type MigrationPlan,
   preconditionOf,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { LEGACY_ALEXA_NAME_KEY, validateAlexaName } from '../endpoints/alexa-name.js'
 
 const OWNER = 'export-alexa'

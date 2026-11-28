@@ -3,7 +3,7 @@
  *
  * A derived stream re-encodes an existing camera stream (a broker loopback
  * restream) into a distinct geometry/bitrate/codec variant. It builds its argv
- * through the ONE builder in `@camstack/types` — the same one the WebRTC
+ * through the ONE builder in `@dominevo/types` — the same one the WebRTC
  * transcode leg, the broker transcode pool and HomeKit use. There is no second
  * builder; the previous `buildTranscodeFfmpegArgs` in `webrtc/session.ts` was
  * deleted, and with it the two hacks this module needed to bend it into shape:
@@ -50,7 +50,7 @@ import {
   type EncodeProfile,
   invocationFromEncodeProfile,
   type VideoEncode,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /**
  * Audio codecs that survive BOTH hops of the derived carrier untouched: a

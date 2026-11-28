@@ -10,7 +10,7 @@
  *    whose announcement was never heard, once — and not again after a restart;
  *  - the reconcile never reads an unread ledger as "nothing was notified".
  */
-import type { InMemoryRecords } from '@camstack/types'
+import type { InMemoryRecords } from '@dominevo/types'
 import { makeNcRecords, ncTable } from './support/nc-test-deps.js'
 import {
   alertEpisodePayload,
@@ -19,7 +19,7 @@ import {
   type Alert,
   type NcSystemEventKind,
   type SystemEvent,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import type { NcTargetRef } from '../dispatcher.js'

@@ -61,7 +61,7 @@
  * Addons never import each other (`ctx.api` is the only cross-addon layer), and
  * this primitive has consumers in two of them — `addon-post-analysis` and
  * `addon-pipeline-orchestrator`. A framework home (`types`/`system`) is the
- * right one, but a framework fix is not live until a whole `@camstack/server`
+ * right one, but a framework fix is not live until a whole `@dominevo/server`
  * is published, and the holes this closes are deployable today. So the file is
  * duplicated, byte for byte, and
  * `scripts/check-durable-state-declared.ts` FAILS the build if the two copies
@@ -89,7 +89,7 @@ import type {
   CollectionIndex,
   IScopedLogger,
   RecordKindHandle,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** The persisted body of a durable row — the column map minus the pk. */
 export type DurableRecordBody = Record<string, unknown>

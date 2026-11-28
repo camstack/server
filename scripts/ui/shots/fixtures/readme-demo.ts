@@ -203,7 +203,7 @@ function node(id: string, isHub: boolean, ip: string): Record<string, unknown> {
     addons: [],
     processes: [],
     categories: [],
-    rootPackage: { name: '@camstack/server', version: '1.2.500' },
+    rootPackage: { name: '@dominevo/server', version: '1.2.500' },
   }
 }
 

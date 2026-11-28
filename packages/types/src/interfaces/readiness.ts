@@ -2,7 +2,7 @@
  * Consumer-facing interface for the kernel-owned readiness registry.
  *
  * Implemented by `ReadinessRegistry` under
- * `@camstack/types/readiness/readiness-registry.ts`. Exposed here as a
+ * `@dominevo/types/readiness/readiness-registry.ts`. Exposed here as a
  * narrow interface so `AddonContext.kernel.readinessRegistry` can be
  * typed without pulling the full registry module into the addon
  * interface file (avoids import cycles).

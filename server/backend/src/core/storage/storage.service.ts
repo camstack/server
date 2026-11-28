@@ -1,3 +1,3 @@
-import { StorageManager } from '@camstack/server/system'
+import { StorageManager } from '@dominevo/server/system'
 
 export class StorageService extends StorageManager {}

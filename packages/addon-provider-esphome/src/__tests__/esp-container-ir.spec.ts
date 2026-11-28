@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { DeviceRole, DeviceType } from '@camstack/types'
+import { DeviceRole, DeviceType } from '@dominevo/types'
 import { EspContainerDevice } from '../devices/esp-container-device.js'
 import { EspIrTransmitterDevice } from '../devices/esp-ir-transmitter-device.js'
 import { espIrOverrides } from '../esphome-ir-overrides.js'

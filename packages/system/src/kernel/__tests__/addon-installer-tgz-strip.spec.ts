@@ -1,15 +1,15 @@
 /**
- * AddonInstaller.installFromTgz — `@camstack/*` dependency stripping.
+ * AddonInstaller.installFromTgz — `@dominevo/*` dependency stripping.
  *
- * Regression guard: a deployed addon (e.g. `@camstack/server/system`) must NOT get
- * its OWN `node_modules/@camstack/types` planted by the post-extract
+ * Regression guard: a deployed addon (e.g. `@dominevo/server/system`) must NOT get
+ * its OWN `node_modules/@dominevo/types` planted by the post-extract
  * `npm install`. Those are host-provided system packages — a local copy
  * inside the addon dir SHADOWS the host's fresh one, so a freshly-added
  * `DeviceFeature` enum value (or any type/enum change) silently never
  * reaches the running hub even though the addon dist is fresh.
  *
  * `installCopy` already strips here; this spec pins the same behaviour for
- * the tgz/upload path that `camstack deploy <pkg>` actually exercises.
+ * the tgz/upload path that `dominevo deploy <pkg>` actually exercises.
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import * as fs from 'node:fs'
@@ -45,7 +45,7 @@ function makeTgz(tmpRoot: string, manifest: TgzManifest): string {
         camstack: {
           addons: [
             {
-              id: manifest.name.replace('@camstack/', ''),
+              id: manifest.name.replace('@dominevo/', ''),
               name: manifest.name,
               version: manifest.version,
               entry: './dist/index.js',
@@ -61,12 +61,12 @@ function makeTgz(tmpRoot: string, manifest: TgzManifest): string {
     path.join(distDir, 'index.js'),
     `module.exports = { version: '${manifest.version}' };\n`,
   )
-  const tgzPath = path.join(tmpRoot, `${manifest.name.replace('@camstack/', '')}.tgz`)
+  const tgzPath = path.join(tmpRoot, `${manifest.name.replace('@dominevo/', '')}.tgz`)
   execFileSync('tar', ['-czf', tgzPath, '-C', stage, 'package'])
   return tgzPath
 }
 
-describe('AddonInstaller.installFromTgz — @camstack/* dep stripping', () => {
+describe('AddonInstaller.installFromTgz — @dominevo/* dep stripping', () => {
   let tmpRoot: string
   let addonsDir: string
   let installer: AddonInstaller
@@ -82,36 +82,36 @@ describe('AddonInstaller.installFromTgz — @camstack/* dep stripping', () => {
     fs.rmSync(tmpRoot, { recursive: true, force: true })
   })
 
-  it('strips @camstack/* deps from the installed manifest', async () => {
+  it('strips @dominevo/* deps from the installed manifest', async () => {
     const tgz = makeTgz(tmpRoot, {
-      name: '@camstack/test-core',
+      name: '@dominevo/test-core',
       version: '0.1.40',
-      dependencies: { '@camstack/types': '^0.1.0' },
+      dependencies: { '@dominevo/types': '^0.1.0' },
     })
 
     await installer.installFromTgz(tgz)
 
     const installed = JSON.parse(
-      fs.readFileSync(path.join(addonsDir, '@camstack/test-core', 'package.json'), 'utf-8'),
+      fs.readFileSync(path.join(addonsDir, '@dominevo/test-core', 'package.json'), 'utf-8'),
     ) as { dependencies?: Record<string, string> }
 
-    expect(installed.dependencies?.['@camstack/types']).toBeUndefined()
+    expect(installed.dependencies?.['@dominevo/types']).toBeUndefined()
   })
 
-  it('does NOT plant a local node_modules/@camstack/types that shadows the host', async () => {
+  it('does NOT plant a local node_modules/@dominevo/types that shadows the host', async () => {
     const tgz = makeTgz(tmpRoot, {
-      name: '@camstack/test-core',
+      name: '@dominevo/test-core',
       version: '0.1.40',
-      dependencies: { '@camstack/types': '^0.1.0' },
+      dependencies: { '@dominevo/types': '^0.1.0' },
     })
 
     await installer.installFromTgz(tgz)
 
     const planted = path.join(
       addonsDir,
-      '@camstack/test-core',
+      '@dominevo/test-core',
       'node_modules',
-      '@camstack',
+      '@dominevo',
       'types',
     )
     expect(fs.existsSync(planted)).toBe(false)
@@ -119,15 +119,15 @@ describe('AddonInstaller.installFromTgz — @camstack/* dep stripping', () => {
 
   it('keeps the addon dist and version intact', async () => {
     const tgz = makeTgz(tmpRoot, {
-      name: '@camstack/test-core',
+      name: '@dominevo/test-core',
       version: '0.1.40',
-      dependencies: { '@camstack/types': '^0.1.0' },
+      dependencies: { '@dominevo/types': '^0.1.0' },
     })
 
     const result = await installer.installFromTgz(tgz)
 
-    expect(result).toEqual({ name: '@camstack/test-core', version: '0.1.40' })
-    expect(fs.existsSync(path.join(addonsDir, '@camstack/test-core', 'dist', 'index.js'))).toBe(
+    expect(result).toEqual({ name: '@dominevo/test-core', version: '0.1.40' })
+    expect(fs.existsSync(path.join(addonsDir, '@dominevo/test-core', 'dist', 'index.js'))).toBe(
       true,
     )
   })

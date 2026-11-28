@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
-import { ConfirmDialogProvider } from '@camstack/ui-library'
-import { selectOption } from '@camstack/ui-library/testing'
+import { ConfirmDialogProvider } from '@dominevo/ui-library'
+import { selectOption } from '@dominevo/ui-library/testing'
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import HomematicCcuPage from '../page.js'
@@ -205,7 +205,7 @@ describe('HomematicCcuPage devices', () => {
     expect(await screen.findByText('The CCU has no devices')).toBeTruthy()
   })
 
-  it('links an adopted device to its CamStack page and puts Open device page first', async () => {
+  it('links an adopted device to its Dominevo page and puts Open device page first', async () => {
     const navigate = vi.fn()
     window.history.replaceState(null, '', '/?tab=devices')
     const { trpc } = fakeTrpc({
@@ -972,7 +972,7 @@ describe('HomematicCcuPage programs', () => {
     programs: [
       {
         id: '42',
-        name: 'CamStack: Hall buttons events',
+        name: 'Dominevo: Hall buttons events',
         active: true,
         internal: false,
         lastRunMs: Date.now() - FIVE_MIN,
@@ -1018,12 +1018,12 @@ describe('HomematicCcuPage programs', () => {
     return fake
   }
 
-  it('lists a program with its device, a relative last run, and the CamStack mark', async () => {
+  it('lists a program with its device, a relative last run, and the Dominevo mark', async () => {
     mountPrograms({})
-    expect(await screen.findByText('CamStack: Hall buttons events')).toBeTruthy()
+    expect(await screen.findByText('Dominevo: Hall buttons events')).toBeTruthy()
     expect(screen.getByText('Hall buttons · Left')).toBeTruthy()
     expect(screen.getByText('5 min ago')).toBeTruthy()
-    expect(screen.getByText('CamStack', { exact: true })).toBeTruthy()
+    expect(screen.getByText('Dominevo', { exact: true })).toBeTruthy()
     expect(screen.getAllByText('—').length).toBeGreaterThan(0)
     expect(screen.queryByText('1970')).toBeNull()
     expectOneTableFrame(screen.getByRole('table'))
@@ -1037,7 +1037,7 @@ describe('HomematicCcuPage programs', () => {
       })
     })
     mountPrograms({ runCcuProgram: run })
-    await screen.findByText('CamStack: Hall buttons events')
+    await screen.findByText('Dominevo: Hall buttons events')
     fireEvent.click(screen.getAllByRole('button', { name: /More actions/ })[0] as HTMLElement)
     fireEvent.click(await screen.findByRole('button', { name: 'Run' }))
     const confirm = await screen.findByRole('dialog', { name: /Run program/ })

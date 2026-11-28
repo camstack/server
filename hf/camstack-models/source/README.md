@@ -1,6 +1,6 @@
-<!-- Tracked in the CamStack repository as hf/camstack-models/source/README.md; edit it there, not on the Hub. The scripts beside it are copied by hf/camstack-models/upload.sh from scripts/ and packages/addon-model-studio/python/. -->
+<!-- Tracked in the Dominevo repository as hf/camstack-models/source/README.md; edit it there, not on the Hub. The scripts beside it are copied by hf/camstack-models/upload.sh from scripts/ and packages/addon-model-studio/python/. -->
 
-# Source: how the CamStack YOLO builds are made
+# Source: how the Dominevo YOLO builds are made
 
 This folder is the **Corresponding Source** under the GNU AGPL-3.0 for the
 Ultralytics-derived weights in this mirror (`objectDetection/yolo26`,
@@ -11,7 +11,7 @@ The full source offer is in
 | File | What it is |
 | --- | --- |
 | `build-camstack-models.py` | Rebuilds every file in the three folders above. One recipe per hosted file stem: upstream checkpoint, input size, the Ultralytics `export()` arguments, the OpenVINO precisions and the INT8 calibration count. Each value is what the hosted file records about itself in its metadata. |
-| `convert_lib.py` | The converter `build-camstack-models.py` calls for OpenVINO: ONNX to IR (`ov.convert_model`, FP32 or FP16-compressed), NNCF INT8 post-training quantisation, and validation of every IR. It is the same file CamStack's Model Studio runs. |
+| `convert_lib.py` | The converter `build-camstack-models.py` calls for OpenVINO: ONNX to IR (`ov.convert_model`, FP32 or FP16-compressed), NNCF INT8 post-training quantisation, and validation of every IR. It is the same file Dominevo's Model Studio runs. |
 | `requirements.txt` | Python dependencies of `convert_lib.py`, with per-platform markers. |
 | `export-models.py` | An older bulk exporter for YOLOv8 / YOLOv9 / YOLO11 ids. No file in this mirror needs it. |
 
@@ -81,7 +81,7 @@ python build-camstack-models.py --family yolo26 --calib-dir ./val2017
 The recipe takes the first N images in file-name order: 128 for YOLO26, 300
 for YOLOv9, as recorded in each IR's `rt_info`. Each image is letterboxed to
 the model's input size with grey (114) padding and scaled to [0, 1], the way
-CamStack feeds the model at runtime. `--calib-samples` overrides N. An IR does
+Dominevo feeds the model at runtime. `--calib-samples` overrides N. An IR does
 not record WHICH images calibrated it, so a different set gives an equivalent
 INT8 model, not a bit-identical one. Without calibration images the INT8 files
 are skipped and the run says so.
@@ -89,7 +89,7 @@ are skipped and the run says so.
 ## Licences
 
 - **These scripts** (`build-camstack-models.py`, `convert_lib.py`,
-  `export-models.py`, `requirements.txt`) are CamStack's own code and are
+  `export-models.py`, `requirements.txt`) are Dominevo's own code and are
   offered under the **MIT** licence.
 - **The weights they produce keep their upstream licence.** The Ultralytics
   checkpoints are AGPL-3.0 ([`LICENSES/AGPL-3.0.txt`](../LICENSES/AGPL-3.0.txt)),

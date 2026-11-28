@@ -13,7 +13,7 @@
  * the registered listeners fire.
  */
 import { useEffect, useMemo, useState } from 'react'
-import type { DeviceProxy, DeviceQueryFilters } from '@camstack/types'
+import type { DeviceProxy, DeviceQueryFilters } from '@dominevo/types'
 import { useSystem } from '../contexts/system-context.js'
 
 /**

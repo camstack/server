@@ -1,6 +1,6 @@
 /**
  * Our detections on a NATIVE clip (D923): the camera's own clip carries the
- * classes CamStack saw inside its window, by the same overlap rule the
+ * classes Dominevo saw inside its window, by the same overlap rule the
  * recorder's visits use, and keeps what the firmware said.
  */
 import { describe, expect, it, vi } from 'vitest'

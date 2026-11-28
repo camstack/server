@@ -1,6 +1,6 @@
 {
-  "name": "@camstack/addon-pipeline",
-  "version": "1.2.692",
+  "name": "@dominevo/addon-pipeline",
+  "version": "0.1.0",
   "description": "Pipeline bundle — runner, detection, motion, audio + stream broker. Multi-entry npm package shipping pipeline addons under a single bundle.",
   "keywords": [
     "camstack",
@@ -15,12 +15,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/camstack/server.git",
+    "url": "https://github.com/dominevo/server.git",
     "directory": "packages/addon-pipeline"
   },
   "homepage": "https://camstack-docs.zentik.app",
   "bugs": {
-    "url": "https://github.com/camstack/server/issues"
+    "url": "https://github.com/dominevo/server/issues"
   },
   "main": "./dist/pipeline-runner/index.js",
   "exports": {
@@ -296,7 +296,7 @@
       "werift"
     ],
     "requires": {
-      "server": ">=1.2.972"
+      "server": ">=0.1.0"
     }
   },
   "scripts": {
@@ -310,7 +310,7 @@
     "publish:npm": "npm publish --access public"
   },
   "peerDependencies": {
-    "@camstack/types": "*",
+    "@dominevo/types": "0.1.0",
     "react": ">=18",
     "react-dom": ">=18",
     "werift": "0.22.9"
@@ -323,9 +323,9 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@camstack/sdk": "*",
-    "@camstack/types": "*",
-    "@camstack/ui-library": "*",
+    "@dominevo/sdk": "0.1.0",
+    "@dominevo/types": "0.1.0",
+    "@dominevo/ui-library": "0.1.0",
     "@module-federation/vite": "^1.16.9",
     "@tailwindcss/vite": "^4.2.0",
     "@tanstack/react-query": "^5.90.0",
@@ -344,7 +344,7 @@
   },
   "nx": {
     "implicitDependencies": [
-      "@camstack/server-framework"
+      "@dominevo/server-framework"
     ]
   }
 }

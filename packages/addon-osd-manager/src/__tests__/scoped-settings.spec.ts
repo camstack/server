@@ -1,4 +1,4 @@
-import type { ConfigUISchema } from '@camstack/types'
+import type { ConfigUISchema } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { OsdManagerAddon } from '../addon.js'
 

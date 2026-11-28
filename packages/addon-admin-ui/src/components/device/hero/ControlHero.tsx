@@ -5,8 +5,8 @@ import {
   useDeviceProxy,
   useDeviceStateSlice,
   useSystem,
-} from '@camstack/ui-library'
-import { DeviceType } from '@camstack/types'
+} from '@dominevo/ui-library'
+import { DeviceType } from '@dominevo/types'
 import { type ReactElement, useState } from 'react'
 import type { HeroProps } from './HeroRegistry'
 import { RemoteHeroButton } from '../../remote/RemoteHeroButton'

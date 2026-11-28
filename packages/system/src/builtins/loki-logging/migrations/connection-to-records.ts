@@ -8,7 +8,7 @@
  * read in full (a password that cannot be resolved aborts the pass); an existing record is
  * never overwritten; the old password is cleared only once the record verifiably holds it.
  */
-import { type MigrationPlan, type MigrationProcedureResult, preconditionOf } from '@camstack/types'
+import { type MigrationPlan, type MigrationProcedureResult, preconditionOf } from '@dominevo/types'
 import { LOKI_DEFAULT_BODY, type LokiDestinationBody, LOKI_BOUNDS } from '../loki-record-kinds.js'
 
 /** The addon id, the prefix of its rows in the canonical settings table. */

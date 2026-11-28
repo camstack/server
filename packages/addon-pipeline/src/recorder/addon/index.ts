@@ -33,7 +33,7 @@ import {
   createFileDataPlaneHandler,
   parseRangeHeader,
   startEventLoopStallMonitor,
-} from '@camstack/server/system/addon-utils'
+} from '@dominevo/server/system/addon-utils'
 import {
   type AddonInitResult,
   BaseAddon,
@@ -68,8 +68,8 @@ import {
   storageEvictableCapability,
   storageOccupancyCapability,
   videoclipsCapability,
-} from '@camstack/types'
-import { ChildCostRegistry } from '@camstack/types/node'
+} from '@dominevo/types'
+import { ChildCostRegistry } from '@dominevo/types/node'
 import { subscribeEventCapture } from '../event-capture.js'
 import { isMfraTableServable, MfraTableStore, readMfraTable } from '../mfra-capture.js'
 import { qualifyObjectTrigger } from '../object-trigger.js'
@@ -495,12 +495,12 @@ export default class RecorderV2Addon extends BaseAddon<RecorderV2Config> {
    * Stops the GC-attributing stall monitor armed in {@link onInitialize}.
    *
    * REUSED, never re-implemented. It used to live next door in this bundle;
-   * on 2026-09-09 it moved to `@camstack/server/system/addon-utils` (the subpath, never
+   * on 2026-09-09 it moved to `@dominevo/server/system/addon-utils` (the subpath, never
    * the barrel — that one drags the kernel into the runner) because two more
    * processes that do NOT share this bundle needed it — `pipeline-analytics` and
    * hub-main — and a per-bundle copy is how two diagnostics end up disagreeing
    * about the same freeze. The cost of the move is a slower ship chain: this
-   * import is host-resolved, so a `camstack deploy` of this addon onto a hub
+   * import is host-resolved, so a `dominevo deploy` of this addon onto a hub
    * whose server closure predates the export fails to load. Deploy order is
    * closure first, addons second. See D417.
    */
@@ -1872,7 +1872,7 @@ export default class RecorderV2Addon extends BaseAddon<RecorderV2Config> {
         capability: recordingCapability,
         provider: this.heapProbe.wrapProvider(recordingCapability.name, recordingSourceProvider),
       },
-      // The CamStack clip source, over THIS addon's archive. A clip is a time
+      // The Dominevo clip source, over THIS addon's archive. A clip is a time
       // window over recorded footage, so the addon that writes the footage is
       // the one that declares the source (D560). The composer is unchanged; it
       // reads its annotations from `pipelineAnalytics` over `ctx.api` and its

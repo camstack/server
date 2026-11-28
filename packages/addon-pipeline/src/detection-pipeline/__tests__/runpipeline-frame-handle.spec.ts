@@ -10,7 +10,7 @@
  */
 import { describe, it, expect } from 'vitest'
 import { DetectionPipelineProvider } from '../provider.js'
-import type { FrameHandle, IScopedLogger, PipelineStepInput } from '@camstack/types'
+import type { FrameHandle, IScopedLogger, PipelineStepInput } from '@dominevo/types'
 
 function stubLogger(): IScopedLogger {
   const logger: IScopedLogger = {

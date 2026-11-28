@@ -24,7 +24,7 @@ import type {
   ModelCatalogEntry,
   PipelineDefaultStep,
   PoolModelConfig,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { PipelineModelManager, type PoolModelSource } from '../pipeline-model-manager.js'
 import { SharedInferencePool } from '../shared-inference-pool.js'
 import { buildPoolModelConfigForStep } from '../engine-factory.js'

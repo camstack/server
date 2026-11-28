@@ -2,7 +2,7 @@
 /**
  * bare ConfigFormBuilder must honor section.columns (ItemFormDialog path).
  */
-import type { ConfigUISchema } from '@camstack/types'
+import type { ConfigUISchema } from '@dominevo/types'
 import { cleanup, render } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { ConfigFormBuilder } from '../config-form-builder.js'

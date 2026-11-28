@@ -3,7 +3,7 @@
  * read from the recorded counters, and the flow-source spans read from the
  * recorded signed powers. Pure. A day nothing recorded is null, never 0 (D393).
  */
-import type { DeviceHistoryQueryResult } from '@camstack/types'
+import type { DeviceHistoryQueryResult } from '@dominevo/types'
 import type { TimePoint } from '../../charts/chart-data'
 import { ENERGY_STILL_BELOW_W, type EnergyToday } from '../scenes/energy/model'
 import { energyBalance, netGridKwh, selfConsumptionPct } from './energy-model'

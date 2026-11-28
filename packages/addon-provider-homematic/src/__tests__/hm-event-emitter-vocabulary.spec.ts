@@ -11,7 +11,7 @@ import {
   EventCategory,
   type EventEmitterStatus,
   type IDeviceRuntimeState,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { HmDevice, Homematic, ValueChangedEvent } from 'nodehomematic'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { HmEventEmitterDevice } from '../devices/hm-event-emitter-device.js'

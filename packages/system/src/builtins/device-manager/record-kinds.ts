@@ -18,7 +18,7 @@ import {
   type IdentityLinkBody,
   type RoomBody,
   type ZoneBody,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { IsolatedRecordKinds } from '../records-isolated.js'
 
 /** Body excludes `deviceId` — the record id is `String(deviceId)`. */

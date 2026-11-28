@@ -8,7 +8,7 @@ import {
   Slider,
   Textarea,
   Select,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { CapabilityBadges } from '../components/shared/CapabilityBadges'
 import { ProviderIcon } from '../components/shared/ProviderIcon'
 import { FormBuilder } from '../components/form-builder/FormBuilder'

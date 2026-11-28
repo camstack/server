@@ -32,7 +32,7 @@
  * the assertions are on where each *named* camera lands — never on a count that
  * an empty store would also satisfy.
  */
-import { createDurableState, type IScopedLogger } from '@camstack/types'
+import { createDurableState, type IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { RecordingOpsLogAppendInput, RecordingOpsLogSink } from '../addon/ops-log-store.js'
 import { PLACEMENT_CENSUS_REPORT_MS, PlacementService } from '../addon/placement-service.js'

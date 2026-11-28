@@ -26,7 +26,7 @@ import type {
   StreamProfile,
   StreamProfilePatch,
   StreamSourceEntry,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { type AmcrestEncodeFacts, readEncodeFacts } from './encode-facts.js'
 import {
   BaseDevice,
@@ -56,7 +56,7 @@ import {
   streamParamsCapability,
   summarisePrivacyAudio,
   userError,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   AmcrestCgiClient,
   type AmcrestEvent,
@@ -281,7 +281,7 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
    * is one storage reader in this addon and this is a caller of it, not a
    * second one. It is read live rather than taken off the cap's runtime slice
    * because that slice is `unknown` until the cap's first refresh, and
-   * "CamStack has not read this camera yet" must not reach an operator as
+   * "Dominevo has not read this camera yet" must not reach an operator as
    * "this camera cannot be reached".
    */
   getClipCamera(): AmcrestClipCamera {
@@ -2474,7 +2474,7 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
   /**
    * Register the vendor-neutral `recording-onboard` cap.
    *
-   * The camera's own card and the camera's own schedule — not CamStack's
+   * The camera's own card and the camera's own schedule — not Dominevo's
    * recorder. The whole surface rides the existing digest CGI client:
    * `storageDevice.cgi?action=getDeviceAllInfo` serves the card,
    * `configManager.cgi` serves `Record` / `RecordMode` / `MediaGlobal` /
@@ -2501,7 +2501,7 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
     const emptyStatus = (): RecordingOnboardStatus => ({
       storage: {
         kind: 'unknown',
-        reason: 'CamStack has not read this camera yet.',
+        reason: 'Dominevo has not read this camera yet.',
       },
       tracks: [],
       primaryTrackId: null,

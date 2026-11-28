@@ -1,4 +1,4 @@
-import type { DoorbellStatus } from '@camstack/types'
+import type { DoorbellStatus } from '@dominevo/types'
 import {
   ALL_CAPABILITY_DEFINITIONS,
   type CompositionFieldsFeature,
@@ -7,7 +7,7 @@ import {
   DeviceType,
   EventCategory,
   type SystemEvent,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { MirrorRowWriter } from '../../device-manager/mirror-row-writer.js'
 import { buildWorld, CALLER, type PersistedHub } from './feeder-world.js'
 

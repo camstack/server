@@ -9,8 +9,8 @@
  * device. See `ReolinkCamera.registerPtzAutotrackIfSupported()`.
  */
 
-import type { AccessoryKindValue, DeviceContext, IDevice } from '@camstack/types'
-import { AccessoryKind } from '@camstack/types'
+import type { AccessoryKindValue, DeviceContext, IDevice } from '@dominevo/types'
+import { AccessoryKind } from '@dominevo/types'
 import { type ReolinkAccessoryHost } from './base.js'
 import { FloodlightAccessory } from './floodlight.js'
 import { PirAccessory } from './pir.js'

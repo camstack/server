@@ -1,7 +1,7 @@
 /**
  * The two argv the compositor spawns: a tile DECODER, and the canvas ENCODER.
  *
- * Both go through the shared builder in `@camstack/types`. This addon builds no
+ * Both go through the shared builder in `@dominevo/types`. This addon builds no
  * argv of its own — the repo has already shipped two builders that disagreed
  * about hardware, and `scripts/check-ffmpeg-primitive.ts` refuses a third.
  *
@@ -26,7 +26,7 @@
  * they were measured: without `zerolatency` about four seconds of picture sat
  * inside the encoder, which the operator reported as "ritardi di secondi".
  */
-import type { FfmpegInvocation, FfmpegVideoEncodePlan, FfmpegVideoEncoderId } from '@camstack/types'
+import type { FfmpegInvocation, FfmpegVideoEncodePlan, FfmpegVideoEncoderId } from '@dominevo/types'
 import { GRID_WIRE_CONTAINER } from './grid-wire-format.js'
 import { TILE_PIXEL_FORMAT, type GridTile } from './grid-tile-plan.js'
 import type { PixelSize } from './grid-canvas.js'

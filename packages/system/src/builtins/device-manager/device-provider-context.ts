@@ -20,8 +20,8 @@ import type {
   IDeviceOpsProvider,
   IDeviceRegistry,
   InferProvider,
-} from '@camstack/types'
-import { deviceProviderCapability } from '@camstack/types'
+} from '@dominevo/types'
+import { deviceProviderCapability } from '@dominevo/types'
 import type { AdoptionAutopilot } from './adoption-autopilot.js'
 import type { AdoptionJobEngine } from './adoption-job-engine.js'
 import type { RoomStore } from './room-store.js'

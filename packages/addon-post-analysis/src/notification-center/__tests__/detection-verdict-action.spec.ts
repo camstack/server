@@ -9,7 +9,7 @@
  */
 
 import type { ServerResponse } from 'node:http'
-import { NcRuleInputSchema, type ObjectEvent, type RetrainVerdictSubject } from '@camstack/types'
+import { NcRuleInputSchema, type ObjectEvent, type RetrainVerdictSubject } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { makeTestObjectEvent } from '../../__tests__/support/events.js'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'

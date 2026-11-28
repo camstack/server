@@ -5,7 +5,7 @@
  * read answers nothing is offered, so an unanswered device never looks like one
  * with no events.
  */
-import { ToggleChipRow, useDeviceStateGetCapSlice } from '@camstack/ui-library'
+import { ToggleChipRow, useDeviceStateGetCapSlice } from '@dominevo/ui-library'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import {

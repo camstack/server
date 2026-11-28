@@ -15,7 +15,7 @@ import {
   type IScopedLogger,
   rebootCapability,
   userError,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { type ReolinkHubConnection, sameHubConnection } from './hub-connection.js'
 import {
   isMeasuredHubBatteryLevel,

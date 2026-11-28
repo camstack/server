@@ -11,7 +11,7 @@ import {
   type HvacMode,
   HvacModeSchema,
   parseColorInput,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export interface ActuatorInvokeApi {
   switchSetState(deviceId: number, on: boolean): Promise<void>

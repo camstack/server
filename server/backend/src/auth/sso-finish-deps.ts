@@ -1,11 +1,11 @@
-import { userError } from '@camstack/types'
+import { userError } from '@dominevo/types'
 /**
  * The live wiring of `finishSsoLogin`'s deps (D777, D782) — kept out of
  * `main.ts` so the route there stays a three-line mapping.
  */
 import { createHash } from 'node:crypto'
-import { type CapabilityRegistry, getUserManagementInternal } from '@camstack/server/system'
-import { SSO_STATE_COOKIE } from '@camstack/types'
+import { type CapabilityRegistry, getUserManagementInternal } from '@dominevo/server/system'
+import { SSO_STATE_COOKIE } from '@dominevo/types'
 import type { AuthService } from '../core/auth/auth.service.js'
 import type { MoleculerService } from '../core/moleculer/moleculer.service.js'
 import { isAuthAddonDisabled } from './auth-provider-gate.js'

@@ -5,7 +5,7 @@
  * short motion clear after ~5 s; the clear must also wait until 30 s after the
  * DETECTED report went out.
  */
-import { EventCategory } from '@camstack/types'
+import { EventCategory } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { LwaEventGateway, type LwaEventGatewayDeps } from '../lwa-event-gateway.js'
 import { MIN_DETECTED_BEFORE_CLEAR_MS, MotionClearHold } from '../motion-clear-hold.js'

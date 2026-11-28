@@ -7,8 +7,8 @@
  * `runStatelessStep`, so the pin, the node rotation and the refusal of a node
  * that ran another model are the production ones.
  */
-import type { RunStatelessStepInput, RunStatelessStepResult } from '@camstack/types'
-import { encodeVectorBase64 } from '@camstack/types'
+import type { RunStatelessStepInput, RunStatelessStepResult } from '@dominevo/types'
+import { encodeVectorBase64 } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   auditFaceEmbeddings,

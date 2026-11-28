@@ -10,7 +10,7 @@
  * stays failed until the next boot, and every reader is told so rather than
  * handed "unset".
  */
-import type { ISettingsStoreProvider } from '@camstack/types'
+import type { ISettingsStoreProvider } from '@dominevo/types'
 import { loadSystemSettingsPrefix } from './settings-door-view.js'
 import { SettingsReadUnavailableError } from './settings-read-error.js'
 import {

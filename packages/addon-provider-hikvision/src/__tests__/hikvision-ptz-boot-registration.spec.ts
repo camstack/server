@@ -15,7 +15,7 @@ import {
   deriveFeatureProvenance,
   type IDeviceRuntimeState,
   implementedMethodsOf,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { HikvisionCamera } from '../hikvision-camera.js'
 

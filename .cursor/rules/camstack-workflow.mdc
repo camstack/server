@@ -1,5 +1,5 @@
 ---
-description: CamStack entry point for any change — phases, gates and the definition of done; how to ask the operator
+description: Dominevo entry point for any change — phases, gates and the definition of done; how to ask the operator
 alwaysApply: true
 ---
 <!-- Written by `npx tsx scripts/skills/gen-skill-pointers.ts` — a pointer, not a copy. Always applied: keep it a few lines. -->

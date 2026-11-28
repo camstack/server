@@ -29,7 +29,7 @@ import {
   DoorbellController,
 } from '@homebridge/hap-nodejs'
 
-import type { AddonContext } from '@camstack/types'
+import type { AddonContext } from '@dominevo/types'
 
 import { populateAccessoryInfo } from './builders/accessory-info.js'
 import { buildBattery } from './builders/battery.js'
@@ -119,7 +119,7 @@ export async function buildCameraAccessory(input: CameraAccessoryInput): Promise
   // `Delegate finished streaming for N without setting RecordingPacket.isLast`
   // followed by a ~12 s timeout, all day, on every motion-capable camera
   // (D50). It was then withdrawn entirely, because the contract cannot be
-  // satisfied without a live fMP4 fragment source and CamStack had none.
+  // satisfied without a live fMP4 fragment source and Dominevo had none.
   //
   // It now has one (D80, D84), so the advertisement and the delegate come back
   // TOGETHER — `buildHksvRecording` returns both or neither, and returns

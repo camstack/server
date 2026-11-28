@@ -13,7 +13,7 @@
  * - anything else — the transport, a bug — is `fetch-failed` with the prose
  *   verbatim, exactly as the export engine treats an unknown error (D572).
  */
-import { clipExportFailureOf } from '@camstack/types'
+import { clipExportFailureOf } from '@dominevo/types'
 import type { ClipStreamDialAnswer } from './clip-stream-feeder.js'
 
 interface WithCode {

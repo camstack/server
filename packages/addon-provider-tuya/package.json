@@ -1,7 +1,7 @@
 {
-  "name": "@camstack/addon-provider-tuya",
-  "version": "0.2.165",
-  "description": "Tuya / Smart Life device-provider addon for CamStack — account-onboarded (Tuya IoT cloud fetch of device localKeys) + LOCAL DP control via the @apocaliss92/nodetuya encrypted-LAN client, exposing switch / water-heater-family kettle entities",
+  "name": "@dominevo/addon-provider-tuya",
+  "version": "0.1.0",
+  "description": "Tuya / Smart Life device-provider addon for Dominevo — account-onboarded (Tuya IoT cloud fetch of device localKeys) + LOCAL DP control via the @apocaliss92/nodetuya encrypted-LAN client, exposing switch / water-heater-family kettle entities",
   "keywords": [
     "camstack",
     "addon",
@@ -16,12 +16,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/camstack/server.git",
+    "url": "https://github.com/dominevo/server.git",
     "directory": "packages/addon-provider-tuya"
   },
   "homepage": "https://camstack-docs.zentik.app",
   "bugs": {
-    "url": "https://github.com/camstack/server/issues"
+    "url": "https://github.com/dominevo/server/issues"
   },
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -64,7 +64,7 @@
       }
     ],
     "requires": {
-      "server": ">=1.2.968"
+      "server": ">=0.1.0"
     }
   },
   "files": [
@@ -83,7 +83,7 @@
   },
   "devDependencies": {
     "@apocaliss92/nodetuya": "file:./vendor/apocaliss92-nodetuya-0.2.1.tgz",
-    "@camstack/types": "*",
+    "@dominevo/types": "0.1.0",
     "typescript": "~6.0.3",
     "vite": "^8.0.11",
     "vitest": "^2.0.0",

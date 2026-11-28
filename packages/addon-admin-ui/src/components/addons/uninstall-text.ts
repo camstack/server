@@ -1,4 +1,4 @@
-import type { PackageInstallation, UninstallPackageResult } from '@camstack/types'
+import type { PackageInstallation, UninstallPackageResult } from '@dominevo/types'
 
 /**
  * Text for the uninstall confirm and result dialogs. Pure, so the wording the

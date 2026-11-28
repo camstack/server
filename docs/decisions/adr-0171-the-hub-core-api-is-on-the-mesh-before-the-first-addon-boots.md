@@ -96,7 +96,7 @@ catches, logs, and retries the registration once on the original late path.
 **Overlapping the plan exposes exactly one shared resource: Node's
 `require.cache`.** Loading a custom-action catalog purges the cache under the
 addon's entry directory before importing — process-global mutation that was
-implicitly safe only because the loop was serial. `@camstack/addon-remote-storage`
+implicitly safe only because the loop was serial. `@dominevo/addon-remote-storage`
 ships three addon ids resolving into one `dist/`, each on its own runner, all in
 the same plan; overlapped, one sibling's purge could evict a module graph
 mid-evaluation. Purge-and-import is therefore serialised **per directory**

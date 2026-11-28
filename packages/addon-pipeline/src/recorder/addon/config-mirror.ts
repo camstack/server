@@ -75,8 +75,8 @@
  * the persisted one.
  */
 
-import type { IScopedLogger, RecordingConfig } from '@camstack/types'
-import { errMsg } from '@camstack/types/addon'
+import type { IScopedLogger, RecordingConfig } from '@dominevo/types'
+import { errMsg } from '@dominevo/types/addon'
 
 /** Reads one camera's config from the store. The wrapped, fallible call. */
 export type LoadDeviceConfigFn = (deviceId: number) => Promise<RecordingConfig>

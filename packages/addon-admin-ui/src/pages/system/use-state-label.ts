@@ -1,11 +1,11 @@
 /**
  * The admin UI's door to the shared state-word dictionary (R7, D690):
- * `stateLabel` from `@camstack/types`, in the language the admin UI is
+ * `stateLabel` from `@dominevo/types`, in the language the admin UI is
  * showing. The viewer resolves the same dictionary, so a device state reads
  * the same on both surfaces.
  */
-import type { StateLabelLocale } from '@camstack/types'
-import { stateLabel } from '@camstack/types'
+import type { StateLabelLocale } from '@dominevo/types'
+import { stateLabel } from '@dominevo/types'
 import { useTranslation } from 'react-i18next'
 
 /** The dictionary locale for an i18next language tag; anything not Italian is English. */

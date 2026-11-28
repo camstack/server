@@ -1,7 +1,7 @@
 /**
  * icon-glyphs — the web glyph table for the WHOLE icon catalog (D854).
  *
- * `@camstack/types` owns the keys; this module owns the drawing. Every
+ * `@dominevo/types` owns the keys; this module owns the drawing. Every
  * `ICON_KEYS` member resolves to a `lucide-react` component, without one
  * static import per icon and without putting the whole set in the initial
  * chunk:
@@ -30,7 +30,7 @@
  */
 // oxlint-disable-next-line typescript/triple-slash-reference -- the ambient shim must travel with this module wherever a consumer compiles it from source
 /// <reference path="../lucide-icons-module.d.ts" />
-import { canonicalIconKey } from '@camstack/types'
+import { canonicalIconKey } from '@dominevo/types'
 import type { LucideIcon } from 'lucide-react'
 import { useMemo, useSyncExternalStore } from 'react'
 import { FAST_ICON_GLYPHS } from './device-meta'

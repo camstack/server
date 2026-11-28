@@ -5,7 +5,7 @@
  * `migration-api.v1.schema.ts`. That contract is append-only, so this file only ever grows.
  */
 
-import type { DefinedRecordKind } from '@camstack/types'
+import type { DefinedRecordKind } from '@dominevo/types'
 import {
   type AddonApi,
   type AddonContext,
@@ -15,8 +15,8 @@ import {
   type MigrationRecordsKindV1,
   type RecordsAccess,
   type SecretsAccess,
-} from '@camstack/types'
-import { MIGRATION_API_VERSION } from '@camstack/types/addon'
+} from '@dominevo/types'
+import { MIGRATION_API_VERSION } from '@dominevo/types/addon'
 import type { z } from 'zod'
 
 /** The migration-only door for the pre-records integration rows. */

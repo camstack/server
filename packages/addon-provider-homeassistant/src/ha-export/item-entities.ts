@@ -32,7 +32,7 @@ import {
   type ConsumableRemainingKind,
   consumableFormOf,
   consumableKindOf,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { stateTopic, toSlug } from './topics.js'
 import type { StateValue } from './types.js'

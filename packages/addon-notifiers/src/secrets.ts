@@ -14,7 +14,7 @@
  * write, a row whose secret came back as the marker is matched to a prior row
  * by its non-secret (identity) fields and the stored secret is restored.
  */
-import type { ConfigField, Target, TargetKind } from '@camstack/types'
+import type { ConfigField, Target, TargetKind } from '@dominevo/types'
 import { changedDestinations, type DestinationSpec } from './destinations.js'
 
 /** Presence marker returned in place of a stored secret. */

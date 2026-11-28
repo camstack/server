@@ -24,7 +24,7 @@ import {
 import type { ProviderContext } from './device-provider-context.js'
 import { DEVICE_BLOB_SAVES } from '../shared/serialise-per-key.js'
 import { listAll } from './device-queries.js'
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 
 export const LINKED_MANUAL_BACKFILL_MARKER_KEY = '_linkedDevicesManualBackfillVersion'
 export const LINKED_MANUAL_BACKFILL_VERSION = 1

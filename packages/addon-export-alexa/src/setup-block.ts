@@ -7,7 +7,7 @@
  * secret (S2): the ingress token appears masked. `secret: true` only hides a
  * value in the browser; the value itself would still travel.
  */
-import type { ExportSetupSchema } from '@camstack/types'
+import type { ExportSetupSchema } from '@dominevo/types'
 import type { z } from 'zod'
 import { maskSecretTail } from './ingress-token.js'
 import type { PublicEndpointResult } from './public-endpoint.js'

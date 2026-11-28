@@ -4,7 +4,7 @@ import {
   type AccessoryChildSpec,
   type DeviceContext,
   type IDevice,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { KiaClimateDevice, KiaLockDevice } from './kia-vehicle-accessory-device.js'
 
 export interface KiaAccessoryParent {

@@ -36,14 +36,14 @@
  * and its own `tags.deviceId` warn line. A fleet read that fails fails for each
  * camera individually, with the same line each would have written alone.
  */
-import type { AddonApi, ProfileSlot } from '@camstack/types'
+import type { AddonApi, ProfileSlot } from '@dominevo/types'
 import {
   deviceManagerCapability,
   nodePin,
   notificationRulesCapability,
   pipelineExecutorCapability,
   streamBrokerCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { z } from 'zod'
 
 /** The device roster, as `deviceManager.listAll` answers it. */

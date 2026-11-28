@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { ShareViewGrant } from '@camstack/types'
+import type { ShareViewGrant } from '@dominevo/types'
 import {
   checkShareViewAccess,
   liveEventInShareScope,

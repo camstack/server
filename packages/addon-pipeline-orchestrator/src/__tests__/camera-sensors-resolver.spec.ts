@@ -4,7 +4,7 @@
  * a ready ref needs two agreeing by-id reads plus a by-addon listing that
  * also does not find it.
  */
-import type { CameraSensorsConfig, IScopedLogger } from '@camstack/types'
+import type { CameraSensorsConfig, IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   type CameraSensorDeviceRow,

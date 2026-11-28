@@ -25,7 +25,7 @@
  * this pass.
  */
 
-import type { NcRule } from '@camstack/types'
+import type { NcRule } from '@dominevo/types'
 import {
   NC_RECOGNITION_CONDITIONS,
   type NcEvaluation,

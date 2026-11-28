@@ -1,5 +1,5 @@
-import type { SystemTrpcClient } from '@camstack/ui-library'
-import { DeviceType } from '@camstack/types'
+import type { SystemTrpcClient } from '@dominevo/ui-library'
+import { DeviceType } from '@dominevo/types'
 import { render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { DeviceDetailModule } from '../DeviceDetailModule'

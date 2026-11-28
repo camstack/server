@@ -2,8 +2,8 @@
  * A helper's Customize section: what it computes and from which members,
  * read-only. Editing happens in the helper dialog (the Edit action).
  */
-import type { DeviceInfo } from '@camstack/types'
-import { Button, DeviceName, SECTION_BODY, SectionCard, SettingRow } from '@camstack/ui-library'
+import type { DeviceInfo } from '@dominevo/types'
+import { Button, DeviceName, SECTION_BODY, SectionCard, SettingRow } from '@dominevo/ui-library'
 import { Pencil } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'

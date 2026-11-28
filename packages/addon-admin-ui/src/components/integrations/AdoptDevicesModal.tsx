@@ -1,5 +1,5 @@
 import type { TFunction } from 'i18next'
-import { type AdoptionFilter, type DiscoveredChildDevice, DeviceType } from '@camstack/types'
+import { type AdoptionFilter, type DiscoveredChildDevice, DeviceType } from '@dominevo/types'
 import {
   allDeviceTypeFilterOptions,
   Button,
@@ -18,7 +18,7 @@ import {
   useIntegrationsGetAvailableTypes,
   useUiText,
   Checkbox,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import {
   AlertTriangle,
   Check,

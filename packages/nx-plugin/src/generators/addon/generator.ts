@@ -3,11 +3,11 @@ import * as path from 'node:path'
 import type { AddonGeneratorSchema } from './schema.js'
 
 /**
- * Scaffold a new CamStack addon workspace package.
+ * Scaffold a new Dominevo addon workspace package.
  *
  * Layout produced under `${directory}/addon-${name}/`:
- *   package.json    — name=@camstack/addon-<name>, manifest, build/deploy scripts
- *   project.json    — nx targets: build, deploy (via @camstack/nx-plugin)
+ *   package.json    — name=@dominevo/addon-<name>, manifest, build/deploy scripts
+ *   project.json    — nx targets: build, deploy (via @dominevo/nx-plugin)
  *   vite.config.ts  — entries map (silent miss without this — runtime only)
  *   tsconfig.json   — composite, extends base
  *   README.md       — generated-block markers; `npm run readme:generate` fills it
@@ -15,11 +15,11 @@ import type { AddonGeneratorSchema } from './schema.js'
  *   src/index.ts    — barrel
  *   src/<name>.addon.ts — BaseAddon skeleton ready to extend
  *
- * Prefer `camstack develop scaffold addon <name>` for the same layout from the
- * CLI / MCP (shared `@camstack/develop` implementation).
+ * Prefer `dominevo develop scaffold addon <name>` for the same layout from the
+ * CLI / MCP (shared `@dominevo/develop` implementation).
  *
  * Run with:
- *   nx g @camstack/nx-plugin:addon weather-station --displayName "Weather Station"
+ *   nx g @dominevo/nx-plugin:addon weather-station --displayName "Weather Station"
  */
 export default async function addonGenerator(
   tree: Tree,
@@ -31,7 +31,7 @@ export default async function addonGenerator(
   const directory = options.directory ?? 'packages'
   const projectRoot = joinPathFragments(directory, `addon-${fileName}`)
   const displayName = options.displayName ?? naming.className
-  const description = options.description ?? `${displayName} — CamStack addon.`
+  const description = options.description ?? `${displayName} — Dominevo addon.`
 
   const substitutions = {
     fileName,

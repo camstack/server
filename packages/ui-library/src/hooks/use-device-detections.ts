@@ -12,7 +12,7 @@ import type {
   PhaseTransitionPayload,
   PipelineAnalyticsFrameTrackedPayload,
   ObjectDetection,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { mergeDetections, type FramePart } from './merge-detections'
 
 // ---------------------------------------------------------------------------

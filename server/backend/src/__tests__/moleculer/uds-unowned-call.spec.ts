@@ -25,7 +25,7 @@ import {
   CapRouteResolver,
   CapRouteError,
   HubNodeRegistry,
-} from '@camstack/server/system'
+} from '@dominevo/server/system'
 import type {
   NodeCapAuthority,
   InProcessProviderLookup,
@@ -33,7 +33,7 @@ import type {
   NodeNativeCapEntry,
   HubLocalChildDispatcher,
   CapCallInput,
-} from '@camstack/server/system'
+} from '@dominevo/server/system'
 import type { ServiceBroker } from 'moleculer'
 
 // A node authority that knows nothing — the only routable thing is the

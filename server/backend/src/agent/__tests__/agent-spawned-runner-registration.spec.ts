@@ -22,7 +22,7 @@ import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 import type { SpawnOptions, ChildProcess } from 'node:child_process'
-import { createProcessService, deriveAgentListenPort } from '@camstack/server/system'
+import { createProcessService, deriveAgentListenPort } from '@dominevo/server/system'
 
 /**
  * The fake runners' pids are invented: every group reads as already empty so the

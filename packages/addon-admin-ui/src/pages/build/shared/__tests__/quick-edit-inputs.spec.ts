@@ -10,7 +10,7 @@ import {
   generateAutomationBlock,
   type Scheduler,
   type TemplateRecord,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   actionQuickEditInput,

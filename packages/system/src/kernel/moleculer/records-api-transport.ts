@@ -5,7 +5,7 @@
  * from the connection the call arrived on. The input carries no identity, so
  * there is nothing here an addon could change to read another addon's kind.
  */
-import type { AddonApi, RecordsTransport } from '@camstack/types'
+import type { AddonApi, RecordsTransport } from '@dominevo/types'
 
 export function recordsTransportOf(api: AddonApi): RecordsTransport {
   const r = api.records

@@ -2,7 +2,7 @@
  * The HomeCom gateway as a Gateway device, on a stub device context (the one boundary a spec
  * fakes): it registers no action the cloud account cannot perform, and follows the session.
  */
-import { type DeviceContext, DeviceType, type IDeviceRuntimeState } from '@camstack/types'
+import { type DeviceContext, DeviceType, type IDeviceRuntimeState } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { HomeComGatewayDevice } from '../devices/homecom-gateway-device.js'
 import {

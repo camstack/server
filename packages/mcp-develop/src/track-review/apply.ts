@@ -10,7 +10,7 @@
  *    which stops the run: every later write would be refused for the same reason.
  */
 import { z } from 'zod'
-import { HubHttpError, HubRpcError } from '@camstack/develop'
+import { HubHttpError, HubRpcError } from '@dominevo/develop'
 import type {
   MediaKind,
   RetrainAnnotationDraft,

@@ -89,8 +89,8 @@ import type {
   LedgerWalkReport,
   LedgerWalkSkipCounts,
   LedgerWalkSkipReason,
-} from '@camstack/types'
-import { errMsg } from '@camstack/types'
+} from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
 import { parseSegmentPath } from '../segment-path.js'
 import type { ArchiveScope, FootageArchive } from '../types.js'
 import type { RecordingsLocation } from './roots.js'
@@ -141,7 +141,7 @@ export const WALK_LIVE_TAIL_HOURS = 2
 
 /**
  * The report, the refusals and the per-camera rows are `z.infer` of the
- * schemas in `@camstack/types` — one shape, so the wire form and this module
+ * schemas in `@dominevo/types` — one shape, so the wire form and this module
  * can never drift. Re-exported here because this is where they are produced.
  */
 export type {

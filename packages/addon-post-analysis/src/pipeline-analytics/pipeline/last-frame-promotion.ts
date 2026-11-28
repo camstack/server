@@ -19,7 +19,7 @@
  * store operation.
  */
 
-import type { MediaFileBytes } from '@camstack/types'
+import type { MediaFileBytes } from '@dominevo/types'
 
 /**
  * WHY a close produced no `lastFrame`. Every value is a distinct branch, and

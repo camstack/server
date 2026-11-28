@@ -29,7 +29,7 @@ import {
   type DeviceType,
   type FieldClaimMode,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { z } from 'zod'
 import type { ReleasedField } from './composition-runtime.js'
 import type { GraftOutcome } from './graft-host.js'

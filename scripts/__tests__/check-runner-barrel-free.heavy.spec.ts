@@ -2,7 +2,7 @@
  * `check-runner-barrel-free` — the source-closure guard must follow RE-EXPORTS
  * (`export … from`, `export * from`) as well as imports. The barrel reached the
  * runner through `transport/index.ts` re-exporting a file with a bare
- * `@camstack/types` value import, and the guard only followed `import … from`.
+ * `@dominevo/types` value import, and the guard only followed `import … from`.
  */
 import * as fs from 'node:fs'
 import * as os from 'node:os'
@@ -30,7 +30,7 @@ afterEach(() => {
   for (const d of dirs.splice(0)) fs.rmSync(d, { recursive: true, force: true })
 })
 
-const LEAF = "import { createEvent } from '@camstack/types'\nexport const x = createEvent\n"
+const LEAF = "import { createEvent } from '@dominevo/types'\nexport const x = createEvent\n"
 
 const flagged = (files: Readonly<Record<string, string>>): readonly string[] => {
   const dir = fixture(files)
@@ -55,15 +55,15 @@ describe('which edges the closure walk follows', () => {
   })
 
   it('catches a re-export of the barrel itself', () => {
-    expect(flagged({ 'entry.ts': "export * from '@camstack/types'" })).toEqual(['entry.ts'])
-    expect(flagged({ 'entry.ts': "export { createEvent } from '@camstack/types'" })).toEqual([
+    expect(flagged({ 'entry.ts': "export * from '@dominevo/types'" })).toEqual(['entry.ts'])
+    expect(flagged({ 'entry.ts': "export { createEvent } from '@dominevo/types'" })).toEqual([
       'entry.ts',
     ])
   })
 
   it('catches a plain import, a side-effect import and a relative dynamic import', () => {
     expect(flagged({ 'entry.ts': LEAF })).toEqual(['entry.ts'])
-    expect(flagged({ 'entry.ts': "import '@camstack/types'" })).toEqual(['entry.ts'])
+    expect(flagged({ 'entry.ts': "import '@dominevo/types'" })).toEqual(['entry.ts'])
     expect(
       flagged({ 'entry.ts': "export const l = () => import('./leaf.js')", 'leaf.ts': LEAF }),
     ).toEqual(['leaf.ts'])
@@ -75,10 +75,10 @@ describe('what stays allowed', () => {
     expect(
       flagged({
         'entry.ts': [
-          "import type { A } from '@camstack/types'",
-          "import { type B } from '@camstack/types'",
-          "export type { C } from '@camstack/types'",
-          "export type * from '@camstack/types'",
+          "import type { A } from '@dominevo/types'",
+          "import { type B } from '@dominevo/types'",
+          "export type { C } from '@dominevo/types'",
+          "export type * from '@dominevo/types'",
         ].join('\n'),
       }),
     ).toEqual([])
@@ -88,14 +88,14 @@ describe('what stays allowed', () => {
     expect(
       flagged({
         'entry.ts':
-          "import { createEvent } from '@camstack/types/addon'\nlet v: import('@camstack/types').Foo",
+          "import { createEvent } from '@dominevo/types/addon'\nlet v: import('@dominevo/types').Foo",
       }),
     ).toEqual([])
   })
 
   it('ignores a comment that mentions the barrel', () => {
     expect(
-      flagged({ 'entry.ts': "// import { x } from '@camstack/types'\nexport const y = 1" }),
+      flagged({ 'entry.ts': "// import { x } from '@dominevo/types'\nexport const y = 1" }),
     ).toEqual([])
   })
 })
@@ -119,7 +119,7 @@ describe('ALL_CAPABILITY_DEFINITIONS in addon server code', () => {
     return findAddonDefinitionUses(dir).map((v) => `${v.file}:${v.line}`)
   }
   const USE =
-    "import { ALL_CAPABILITY_DEFINITIONS } from '@camstack/types'\nexport const n = ALL_CAPABILITY_DEFINITIONS.length\n"
+    "import { ALL_CAPABILITY_DEFINITIONS } from '@dominevo/types'\nexport const n = ALL_CAPABILITY_DEFINITIONS.length\n"
 
   it('flags server code with the file and line', () => {
     expect(uses({ 'packages/addon-x/src/gate.ts': USE })).toEqual([

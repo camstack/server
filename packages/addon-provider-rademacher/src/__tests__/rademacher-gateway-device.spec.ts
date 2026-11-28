@@ -3,7 +3,7 @@
  * fake): what it registers, how it follows the integration's session, and what
  * it refuses to claim.
  */
-import { type DeviceContext, DeviceType, type IDeviceRuntimeState } from '@camstack/types'
+import { type DeviceContext, DeviceType, type IDeviceRuntimeState } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { RademacherCoverDevice } from '../devices/rademacher-cover-device.js'
 import { RademacherGatewayDevice } from '../devices/rademacher-gateway-device.js'

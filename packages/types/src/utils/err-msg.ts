@@ -1,5 +1,5 @@
 /**
-import { errMsg } from '@camstack/types'
+import { errMsg } from '@dominevo/types'
  * Extract a human-readable message from an unknown error value.
  * Replaces the ubiquitous `errMsg(err)` pattern.
  */

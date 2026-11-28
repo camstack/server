@@ -2,7 +2,7 @@
  * Every field of both Tailscale addons is a node setting (D986): declared by the node hook of
  * the capability the addon provides, marked per node, and the pre-auth key stays a password.
  */
-import type { ConfigField, ConfigUISchema } from '@camstack/types'
+import type { ConfigField, ConfigUISchema } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { CLIENT_SETTING_KEYS } from '../client/migrations/settings-per-node.js'
 import { TailscaleClientAddon } from '../client/tailscale.addon.js'

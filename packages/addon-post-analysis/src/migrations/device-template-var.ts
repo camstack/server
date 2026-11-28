@@ -14,7 +14,7 @@
  * edit inside a plan). It is idempotent: a row without the old name is not touched,
  * so a rerun finds nothing to do and reports `already-done`.
  */
-import type { MigrationProcedureResult, RecordKindHandle, RecordRow } from '@camstack/types'
+import type { MigrationProcedureResult, RecordKindHandle, RecordRow } from '@dominevo/types'
 import type { RuleBody, TextsBody, TimelapseRuleBody } from '../notification-center/record-kinds.js'
 
 /** The three kinds the migration reads and writes. */

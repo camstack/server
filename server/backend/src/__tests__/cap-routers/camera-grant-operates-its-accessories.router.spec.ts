@@ -14,14 +14,14 @@
  *     the camera grant reaches the child, and ONLY that camera's children;
  *   - configuration of the camera (`accessories.setChildHidden`) stays admin.
  */
-import type { CapabilityDefinition, CapabilityMethodSchema, TokenScope } from '@camstack/types'
+import type { CapabilityDefinition, CapabilityMethodSchema, TokenScope } from '@dominevo/types'
 import {
   accessoriesCapability,
   buildRoleScopes,
   motionTriggerCapability,
   resolveMethodAuth,
   switchCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { TrpcContext } from '../../api/trpc/trpc.context.js'
 import type { DeviceScopeLookup } from '../../api/trpc/scope-access.js'

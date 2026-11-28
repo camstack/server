@@ -28,7 +28,7 @@
  * follow whenever the archive reaches back further than that window. Now an
  * unreadable answer skips that camera's sweep for the pass, and says so.
  */
-import type { IScopedLogger, RecordingStorageUsage } from '@camstack/types'
+import type { IScopedLogger, RecordingStorageUsage } from '@dominevo/types'
 import {
   resolveRetentionCutoffs,
   type DeviceRetentionCutoffs,

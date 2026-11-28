@@ -1,4 +1,4 @@
-import { compositionSliceKey, type CompositionFieldSource } from '@camstack/types'
+import { compositionSliceKey, type CompositionFieldSource } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { previewField, type SliceReading } from '../field-preview'
 

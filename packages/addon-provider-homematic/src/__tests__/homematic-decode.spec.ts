@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import type { ClimateControlStatus, CoverStatus } from '@camstack/types'
+import type { ClimateControlStatus, CoverStatus } from '@dominevo/types'
 import {
   decodeClimate,
   decodeClimateDemand,

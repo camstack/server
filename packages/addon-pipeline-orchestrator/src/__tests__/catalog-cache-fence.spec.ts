@@ -12,7 +12,7 @@ import {
   createDurableState,
   type DurableState,
   type PipelineSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { ZodType } from 'zod'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { PipelineSettingsStore } from '../pipeline-settings-store.js'

@@ -8,7 +8,7 @@ import {
   smtpSinceKey,
   SmtpInboundSinceSchema,
   SmtpInboundConfigSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { createTransport } from 'nodemailer'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {

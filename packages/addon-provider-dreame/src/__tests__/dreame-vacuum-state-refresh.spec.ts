@@ -9,7 +9,7 @@ import {
   DeviceType,
   deviceStateRefreshCapability,
   type IDeviceRuntimeState,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { DreameVacuumDevice } from '../devices/dreame-vacuum-device.js'
 import { dreameFacades } from '../dreame-gateway.js'

@@ -4,7 +4,7 @@
  * state. Disarm: stop passing `fusedIntoTrackId` in `onTrackLifecycle` —
  * "a fused piece's end pushes nothing" fails.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { HaExportAddon } from '../ha-export.addon.js'
 import type { StateValue } from '../state-projector.js'

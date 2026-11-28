@@ -26,7 +26,7 @@
   "device.buttonEvents.hint.content": "The CCU does not send some of these presses — turn them on below",
   "device.buttonEvents.keys.label": "Keys",
   "device.buttonEvents.keys.key": "Key",
-  "device.buttonEvents.keys.central": "Sent to CamStack",
+  "device.buttonEvents.keys.central": "Sent to Dominevo",
   "device.buttonEvents.keys.links": "Direct links",
   "device.panel.title": "Homematic"
 }

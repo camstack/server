@@ -3,7 +3,7 @@
  * (D1084). A read of the settings the alert center already holds; the prune on write reads the
  * same values (`resolveJobRetention`).
  */
-import type { RetentionKnob } from '@camstack/types'
+import type { RetentionKnob } from '@dominevo/types'
 import type { JobRetention } from './job-policy.js'
 
 export const ALERT_CENTER_ADDON_ID = 'alert-center'

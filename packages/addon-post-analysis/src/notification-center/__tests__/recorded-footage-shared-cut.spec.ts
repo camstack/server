@@ -11,7 +11,7 @@
  * - after a cut times out, the recorder is BUSY for {@link
  *   NC_RECORDER_BUSY_MS}: recorded rows ship still-only at once, by name.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import {

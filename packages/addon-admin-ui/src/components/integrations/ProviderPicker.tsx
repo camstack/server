@@ -1,4 +1,4 @@
-import { Input, useAddonsList, useIntegrationsGetAvailableTypes } from '@camstack/ui-library'
+import { Input, useAddonsList, useIntegrationsGetAvailableTypes } from '@dominevo/ui-library'
 import { Loader2, Search, Settings } from 'lucide-react'
 import { type ReactElement, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'

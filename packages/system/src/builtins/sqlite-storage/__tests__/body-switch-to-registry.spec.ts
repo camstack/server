@@ -9,7 +9,7 @@ import {
   defineAddonMigrations,
   defineEntryKind,
   entryBody,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import { makeRecordsAccessForOwner } from './support/records-world.js'

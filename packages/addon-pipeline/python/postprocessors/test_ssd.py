@@ -1,6 +1,6 @@
 """Pins the SSD decoder on REAL SSDLite MobileDet output tensors.
 
-The CamStack catalog keeps only `ssd-mobilenet-v2-coco-edgetpu`; plus catalog still
+The Dominevo catalog keeps only `ssd-mobilenet-v2-coco-edgetpu`; plus catalog still
 imports MobileDet. Both graphs end in `TFLite_Detection_PostProcess`, and this
 fixture (MobileDet outputs on two COCO val2017 frames) pins what the shared
 `postprocessor: 'ssd'` decoder must read correctly:

@@ -9,7 +9,7 @@ import {
   type DeviceContext,
   DeviceType,
   type IDeviceRuntimeState,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { isComposedDevice } from '../composed-device.js'
 import { declarationFor, shapeOf } from '../composition-declarations.js'

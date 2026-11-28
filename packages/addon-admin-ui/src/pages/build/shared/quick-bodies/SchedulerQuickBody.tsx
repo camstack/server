@@ -2,13 +2,13 @@
  * Scheduler quick body: when it fires next, its rules, what it triggers, and
  * its last fires.
  */
-import type { Scheduler, SchedulerStatus } from '@camstack/types'
+import type { Scheduler, SchedulerStatus } from '@dominevo/types'
 import {
   Badge,
   useSchedulersGetStatus,
   useSchedulersGetTraces,
   useSchedulersPreview,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { actionDeviceIds } from '../action-devices'

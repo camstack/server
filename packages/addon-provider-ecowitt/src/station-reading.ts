@@ -2,7 +2,7 @@
  * One station slice from the outdoor group's live sensors — the same poll
  * that feeds the children. A sensor the station does not have stays null.
  */
-import { ingestReading, type ReadingQuantity, type WeatherStationStatus } from '@camstack/types'
+import { ingestReading, type ReadingQuantity, type WeatherStationStatus } from '@dominevo/types'
 
 export type StationField = Exclude<keyof WeatherStationStatus, 'lastFetchedAt'>
 

@@ -9,7 +9,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { ConfigUISchemaWithValues, ScopedSettingsDeclaration } from '@camstack/types'
+import type { ConfigUISchemaWithValues, ScopedSettingsDeclaration } from '@dominevo/types'
 
 function form(
   sectionId: string,
@@ -53,9 +53,9 @@ const getScopedSettings = vi.fn(async (input: { cap: string; scope: string }) =>
 })
 const updateScopedSettings = vi.fn(async (_input: unknown) => ({ success: true }))
 
-vi.mock('@camstack/ui-library', async () => {
+vi.mock('@dominevo/ui-library', async () => {
   const actual =
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+    await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   const noop = () => ({ mutateAsync: vi.fn(), mutate: vi.fn(), isPending: false })
   return {
     ...actual,

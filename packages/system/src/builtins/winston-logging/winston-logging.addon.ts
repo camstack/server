@@ -1,6 +1,6 @@
 import path from 'node:path'
-import type { ConfigUISchema, ProviderRegistration } from '@camstack/types'
-import { BaseAddon, defineAddonMigrations, logDestinationCapability } from '@camstack/types'
+import type { ConfigUISchema, ProviderRegistration } from '@dominevo/types'
+import { BaseAddon, defineAddonMigrations, logDestinationCapability } from '@dominevo/types'
 import { ADDON_MIGRATIONS, WINSTON_LOGGING_ID } from './migrations/index.js'
 import { clusterNodeIds, readRawKeys } from './migrations/node-fields.js'
 import { WinstonDestination } from './winston-destination.js'

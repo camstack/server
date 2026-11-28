@@ -20,7 +20,7 @@
  * Pure. The client that sends these (`runtime/parked-frame-client.ts`) is
  * where the RPC, the in-flight coalescing and the failure log live.
  */
-import type { FrameHandle, ParkedFrameKind } from '@camstack/types'
+import type { FrameHandle, ParkedFrameKind } from '@dominevo/types'
 import {
   deliveredWideCentralSquareLayout,
   type WideCentralSquareLayout,

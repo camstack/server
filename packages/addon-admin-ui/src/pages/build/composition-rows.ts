@@ -32,7 +32,7 @@ import {
   fieldReads,
   LINKED_TRIGGER_TARGET_INPUT,
   type TemplateInstance,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { BlockTone } from './core-block-status'
 import i18n from '../../i18n/index'
 

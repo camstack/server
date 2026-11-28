@@ -53,7 +53,7 @@ sources, a pinned `provider` narrows to one, and a scalar call routes by the
 source prefix inside the id it carries. An id no source claims is refused by
 name rather than answered by whoever registered first.
 
-This is a server-side change: it is not live until a `@camstack/server`
+This is a server-side change: it is not live until a `@dominevo/server`
 containing it is installed on the node.
 
 ## Enforcement

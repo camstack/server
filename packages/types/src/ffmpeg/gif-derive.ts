@@ -2,7 +2,7 @@
  * The notification GIF's filter chain and argv — ONE definition for every
  * process that derives a gif from a notification video.
  *
- * ## Why this lives in `@camstack/types`
+ * ## Why this lives in `@dominevo/types`
  *
  * Two addons derive a notification gif from an mp4, and they may never import
  * each other:

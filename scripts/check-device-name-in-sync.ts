@@ -1,7 +1,7 @@
 /**
  * The device-name rule has one definition. The viewer cannot import
  * ui-library (it is a web package; the viewer is React Native) and it resolves
- * `@camstack/types` from an installed release, so it keeps a copy of
+ * `@dominevo/types` from an installed release, so it keeps a copy of
  * `format-device-name.ts`. This fails when the two diverge.
  *
  * The viewer half skips when `camstack/` is not checked out, and says so.

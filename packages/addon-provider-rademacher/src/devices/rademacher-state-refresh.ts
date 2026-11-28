@@ -13,7 +13,7 @@ import {
   type DeviceContext,
   type InferNativeProvider,
   type StateRefreshPolicy,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { rademacherSessions } from '../rademacher-session-resolver.js'
 
 /** The fastest a HomePilot hub is read: the connection form's lower bound. */

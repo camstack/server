@@ -7,7 +7,7 @@ import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
  * jitter, and observed/peak bandwidth per device + per client.
  *
  * Implementation lives in the server's `NetworkQualityService` (thin
- * wrapper over the shared `NetworkQualityTracker` from `@camstack/server/system`).
+ * wrapper over the shared `NetworkQualityTracker` from `@dominevo/server/system`).
  * The provider is registered from `trpc.router.ts` against the existing
  * service instance — no addon owns this state.
  *
@@ -70,7 +70,7 @@ export const networkQualityCapability = {
       { role: 'viewer', kind: 'mutation' },
     ),
   },
-  /** BIG PLAN 2: declarative mount hint — read by `@camstack/server/system` `buildCapRouters`. */
+  /** BIG PLAN 2: declarative mount hint — read by `@dominevo/server/system` `buildCapRouters`. */
   mount: { kind: 'server-provided' },
   vocabulary: { notOperatorFacing: NOT_A_DEVICE.NETWORK },
 } as const satisfies CapabilityDefinition

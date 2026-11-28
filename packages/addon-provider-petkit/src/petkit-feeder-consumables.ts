@@ -3,7 +3,7 @@ import type {
   consumablesCapability,
   InferRuntimeState,
   PetFeederStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /**
  * The feeder's `consumables` slice. Both items come from the feeder's OWN

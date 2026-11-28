@@ -9,7 +9,7 @@
  * the tracker. These tests pin the trigger, the geometry and the fusion.
  */
 
-import type { ObjectDetection } from '@camstack/types'
+import type { ObjectDetection } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   countRecoverySkips,

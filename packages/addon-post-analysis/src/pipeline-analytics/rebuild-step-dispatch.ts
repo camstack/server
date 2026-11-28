@@ -17,7 +17,7 @@
  *    node, and a track is tried at most once per candidate. When the rotation
  *    empties the pass is over, loudly, rather than spinning.
  */
-import type { RunStatelessStepInput, RunStatelessStepResult } from '@camstack/types'
+import type { RunStatelessStepInput, RunStatelessStepResult } from '@dominevo/types'
 import type { RebuildEmbedOutcome, RebuildSource } from './embedding-rebuild.js'
 import {
   buildRebuildStepInput,

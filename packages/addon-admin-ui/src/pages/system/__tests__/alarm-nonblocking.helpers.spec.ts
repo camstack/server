@@ -12,7 +12,7 @@
  * until it answers, and when it fails, nothing unknown is claimed (D315) and
  * nothing listed is dropped (D49).
  */
-import type { NcAlarmConfig } from '@camstack/types'
+import type { NcAlarmConfig } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   alarmDeviceNamer,

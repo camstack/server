@@ -3,7 +3,7 @@
  * (`tab: 'recording'`), the same component the device page renders. Derived from the
  * capabilities, never a hand-written copy (D14).
  */
-import { DeviceContextProvider } from '@camstack/ui-library'
+import { DeviceContextProvider } from '@dominevo/ui-library'
 import type { ReactElement } from 'react'
 import { DeviceAggregateSection } from '../device/tabs/DeviceAggregateSection'
 

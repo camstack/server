@@ -3,7 +3,7 @@
  * bridge's emit gate and the camera status both ask it, so the card can never
  * say a sensor drives motion that the bridge drops.
  */
-import type { CameraSensorsNotForwarded, CameraSensorsStatus, MotionSources } from '@camstack/types'
+import type { CameraSensorsNotForwarded, CameraSensorsStatus, MotionSources } from '@dominevo/types'
 
 /** The source the bridge emits under: the camera's own. */
 export const CAMERA_SENSORS_SOURCE = 'onboard'

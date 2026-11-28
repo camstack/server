@@ -10,7 +10,7 @@
  * that quietly fails to appear in the Home app is the hardest failure to
  * diagnose in this addon — there is no error anywhere, just an absence.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 import type { ActionSceneExports } from '../action-scenes.js'
 import type { DeviceGateway } from '../device-gateway.js'

@@ -8,7 +8,7 @@
  * puts the model in a terminal `failed` state:
  *
  * - every later request is refused BY NAME before anything is spawned — the
- *   ONE shared code `EMBEDDING_MODEL_FAILED` (`@camstack/types`), which the
+ *   ONE shared code `EMBEDDING_MODEL_FAILED` (`@dominevo/types`), which the
  *   live detail plane classifies on;
  * - ONE error line is logged at the transition, with the count — not one per
  *   request;
@@ -24,8 +24,8 @@
  * RUNTIME are not there (download, embedded Python, requirements) is refused
  * by another name and never counted here: see `model-requirements.ts`.
  */
-import type { EmbeddingFailedModel, EmbeddingTower, IScopedLogger } from '@camstack/types'
-import { embeddingModelFailedError } from '@camstack/types'
+import type { EmbeddingFailedModel, EmbeddingTower, IScopedLogger } from '@dominevo/types'
+import { embeddingModelFailedError } from '@dominevo/types'
 
 const MAX_CRASHES = 3
 export const CRASH_WINDOW_MS = 10 * 60_000

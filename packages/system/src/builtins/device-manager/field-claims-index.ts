@@ -25,8 +25,8 @@
  * Each caller that needs it loaded asks `load` again; a failed read is retried
  * by the next call, not by a clock.
  */
-import type { ClaimsListing, FieldClaim, IScopedLogger } from '@camstack/types'
-import { FieldClaimSchema } from '@camstack/types'
+import type { ClaimsListing, FieldClaim, IScopedLogger } from '@dominevo/types'
+import { FieldClaimSchema } from '@dominevo/types'
 import type { DeviceManagerSettings } from './device-meta-store.js'
 import type { ClaimsIndexView } from './device-state-mirror.js'
 import type { WriteLock } from './write-lock.js'

@@ -8,9 +8,9 @@
  * `decode-worker-main.ts` (the forked entry, which runs `decode-worker-child.ts`) is its own vite build entry, but the bundler puts
  * any module it SHARES with the addon's main entry into a common chunk. Two
  * helpers (`native-lease-config.ts`, `lazy-sharp.ts`) value-imported
- * `@camstack/types` for three symbols — a Zod schema, its enum, and a defaults
+ * `@dominevo/types` for three symbols — a Zod schema, its enum, and a defaults
  * object — and that pulled the 1.5 MB shared chunk (every capability's schema,
- * the detection model tables, the whole `@camstack/types` index) into the
+ * the detection model tables, the whole `@dominevo/types` index) into the
  * child. The child needed `__toESM`, `NativeLeaseSettingsSchema`,
  * `NativeLeaseAdmissionSchema` and `DEFAULT_NATIVE_LEASE_SETTINGS` — and paid
  * for all of it:
@@ -140,7 +140,7 @@ console.error(
 // eslint-disable-next-line no-console
 console.error(
   "  A VALUE import of a workspace package drags that package's shared chunk into the child.\n" +
-    '  Measured (D453): the @camstack/types chunk cost ~170 ms and ~99 MB of heap on EVERY fork,\n' +
+    '  Measured (D453): the @dominevo/types chunk cost ~170 ms and ~99 MB of heap on EVERY fork,\n' +
     '  and this fleet forks a decode worker ~277 times an hour from cold.\n' +
     '  Use `import type`, or move the runtime half to the PARENT and send it on `start`\n' +
     '  (see session-decode/native-lease-knobs.ts).\n',

@@ -9,7 +9,7 @@
  *  - a malformed row silences NOTHING, and a failed load keeps the windows
  *    already in memory rather than un-silencing the operator by accident.
  */
-import type { InMemoryRecords } from '@camstack/types'
+import type { InMemoryRecords } from '@dominevo/types'
 import { makeNcRecords, ncTable, seedRows, withNcFaults } from './support/nc-test-deps.js'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { defined } from '../../__tests__/support/vitest-mock.js'

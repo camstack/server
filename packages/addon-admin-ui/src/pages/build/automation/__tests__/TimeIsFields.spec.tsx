@@ -2,7 +2,7 @@
  * The `time-is` row: the days are toggles over the leaf, both ends of the
  * window are on screen, and the row says when a window ends the next day.
  */
-import type { TimeIsLeaf } from '@camstack/types'
+import type { TimeIsLeaf } from '@dominevo/types'
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { useState } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -19,9 +19,9 @@ let siteAnswer: SiteAnswer = {
   data: { location: { latitude: 45, longitude: 9 }, timeZone: 'Europe/Rome' },
 }
 
-vi.mock('@camstack/ui-library', async () => {
+vi.mock('@dominevo/ui-library', async () => {
   const actual =
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+    await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return { ...actual, useSystemGetSiteLocation: () => siteAnswer }
 })
 

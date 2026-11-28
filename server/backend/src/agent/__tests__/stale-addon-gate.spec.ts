@@ -2,8 +2,8 @@ import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 import { describe, it, expect } from 'vitest'
-import { EventCategory, type PackageRequires } from '@camstack/types'
-import { UnsupportedAddonTracker } from '@camstack/server/system'
+import { EventCategory, type PackageRequires } from '@dominevo/types'
+import { UnsupportedAddonTracker } from '@dominevo/server/system'
 import {
   groupCandidatesForSpawn,
   judgeSupport,
@@ -39,12 +39,12 @@ function context(overrides: Partial<StaleGateContext>): StaleGateContext {
 
 describe('judgeSupport (#346, D1017)', () => {
   it('reports an addon below the minimum the running server requires, with both versions', () => {
-    const ml = candidate('ml', '@camstack/addon-ml', '1.0.0')
+    const ml = candidate('ml', '@dominevo/addon-ml', '1.0.0')
     const result = judgeSupport(
       [ml],
       context({
-        serverRequiresAddons: { '@camstack/addon-ml': '>=2.0.0' },
-        installedVersions: { '@camstack/addon-ml': '1.0.0' },
+        serverRequiresAddons: { '@dominevo/addon-ml': '>=2.0.0' },
+        installedVersions: { '@dominevo/addon-ml': '1.0.0' },
       }),
     )
     expect(result.unsupported).toHaveLength(1)
@@ -52,7 +52,7 @@ describe('judgeSupport (#346, D1017)', () => {
     expect(result.unsupported[0]?.reason).toContain('1.0.0')
     expect(result.unsupported[0]?.reason).toContain('2.0.0')
     expect(supportFactsOf(result.unsupported[0]!, '1.2.721')).toMatchObject({
-      packageName: '@camstack/addon-ml',
+      packageName: '@dominevo/addon-ml',
       installedVersion: '1.0.0',
       requiredMinimum: '2.0.0',
       serverVersion: '1.2.721',
@@ -62,7 +62,7 @@ describe('judgeSupport (#346, D1017)', () => {
   it('reports an addon whose own requires.server the server does not satisfy', () => {
     const own: PackageRequires = { server: '>=1.3.0' }
     const result = judgeSupport(
-      [candidate('enc', '@camstack/addon-enc', '3.0.0')],
+      [candidate('enc', '@dominevo/addon-enc', '3.0.0')],
       context({ requiresOfDir: () => own }),
     )
     expect(result.unsupported[0]?.reason).toContain('1.3.0')
@@ -70,13 +70,13 @@ describe('judgeSupport (#346, D1017)', () => {
   })
 
   it('reports only the unsupported addon of a mixed set', () => {
-    const fine = candidate('ok', '@camstack/addon-ok', '2.0.0')
-    const stale = candidate('ml', '@camstack/addon-ml', '1.0.0')
+    const fine = candidate('ok', '@dominevo/addon-ok', '2.0.0')
+    const stale = candidate('ml', '@dominevo/addon-ml', '1.0.0')
     const result = judgeSupport(
       [fine, stale],
       context({
-        serverRequiresAddons: { '@camstack/addon-ml': '>=2.0.0', '@camstack/addon-ok': '>=2.0.0' },
-        installedVersions: { '@camstack/addon-ml': '1.0.0', '@camstack/addon-ok': '2.0.0' },
+        serverRequiresAddons: { '@dominevo/addon-ml': '>=2.0.0', '@dominevo/addon-ok': '>=2.0.0' },
+        installedVersions: { '@dominevo/addon-ml': '1.0.0', '@dominevo/addon-ok': '2.0.0' },
         requiresOfDir: () => ({ server: '>=1.2.0' }),
       }),
     )
@@ -85,7 +85,7 @@ describe('judgeSupport (#346, D1017)', () => {
 
   it('an unreadable server version does not judge the addon own requires.server', () => {
     const result = judgeSupport(
-      [candidate('enc', '@camstack/addon-enc', '3.0.0')],
+      [candidate('enc', '@dominevo/addon-enc', '3.0.0')],
       context({ serverVersion: null, requiresOfDir: () => ({ server: '>=1.3.0' }) }),
     )
     expect(result.unsupported).toEqual([])
@@ -94,7 +94,7 @@ describe('judgeSupport (#346, D1017)', () => {
 
 describe('an unknown fact raises no alert', () => {
   it('leaves an addon whose package requires could not be read unjudged, naming why', () => {
-    const x = candidate('x', '@camstack/addon-x', '1.0.0')
+    const x = candidate('x', '@dominevo/addon-x', '1.0.0')
     const result = judgeSupport(
       [x],
       context({ requiresOfDir: () => ({ unreadable: 'package.json is not valid JSON' }) }),
@@ -105,7 +105,7 @@ describe('an unknown fact raises no alert', () => {
   })
 
   it('reports an addon it could not judge because the running server version is unknown', () => {
-    const x = candidate('x', '@camstack/addon-x', '1.0.0')
+    const x = candidate('x', '@dominevo/addon-x', '1.0.0')
     const result = judgeSupport(
       [x],
       context({ serverVersion: null, requiresOfDir: () => ({ server: '>=1.3.0' }) }),
@@ -126,13 +126,13 @@ describe('reportSupport on an agent (D1017)', () => {
       log: () => undefined,
       settleMs: 0,
     })
-    const ml = candidate('ml', '@camstack/addon-ml', '1.0.0')
+    const ml = candidate('ml', '@dominevo/addon-ml', '1.0.0')
     const run = (installed: string): void =>
       reportSupport(
         [ml],
         context({
-          serverRequiresAddons: { '@camstack/addon-ml': '>=2.0.0' },
-          installedVersions: { '@camstack/addon-ml': installed },
+          serverRequiresAddons: { '@dominevo/addon-ml': '>=2.0.0' },
+          installedVersions: { '@dominevo/addon-ml': installed },
         }),
         tracker,
       )
@@ -162,11 +162,11 @@ describe('the agent spawn set (D1017)', () => {
     })
     return { tracker, events }
   }
-  const ml = candidate('ml', '@camstack/addon-ml', '1.0.0')
-  const ok = { ...candidate('ok', '@camstack/addon-ok', '3.0.0'), groupId: 'ml' }
+  const ml = candidate('ml', '@dominevo/addon-ml', '1.0.0')
+  const ok = { ...candidate('ok', '@dominevo/addon-ok', '3.0.0'), groupId: 'ml' }
   const stale = context({
-    serverRequiresAddons: { '@camstack/addon-ml': '>=2.0.0' },
-    installedVersions: { '@camstack/addon-ml': '1.0.0', '@camstack/addon-ok': '3.0.0' },
+    serverRequiresAddons: { '@dominevo/addon-ml': '>=2.0.0' },
+    installedVersions: { '@dominevo/addon-ml': '1.0.0', '@dominevo/addon-ok': '3.0.0' },
   })
 
   it('spawns an unsupported addon in its group, next to the supported one', () => {
@@ -175,19 +175,19 @@ describe('the agent spawn set (D1017)', () => {
     expect(grouped.get('ml')?.map((c) => c.addonId)).toEqual(['ml', 'ok'])
     // The supported package clears a card a previous process may have left, once.
     expect(events.map((e) => [e.category, e.data['packageName']])).toEqual([
-      [EventCategory.AddonUnsupportedResolved, '@camstack/addon-ok'],
-      [EventCategory.AddonUnsupportedVersion, '@camstack/addon-ml'],
+      [EventCategory.AddonUnsupportedResolved, '@dominevo/addon-ok'],
+      [EventCategory.AddonUnsupportedVersion, '@dominevo/addon-ml'],
     ])
   })
 
   it('clears the alert of a package that is no longer installed on the node', () => {
     const { tracker, events } = trackerOf()
-    groupCandidatesForSpawn([ml], stale, tracker, ['@camstack/addon-ml'])
-    groupCandidatesForSpawn([ok], stale, tracker, ['@camstack/addon-ok'])
+    groupCandidatesForSpawn([ml], stale, tracker, ['@dominevo/addon-ml'])
+    groupCandidatesForSpawn([ok], stale, tracker, ['@dominevo/addon-ok'])
     expect(events.map((e) => [e.category, e.data['packageName']])).toEqual([
-      [EventCategory.AddonUnsupportedVersion, '@camstack/addon-ml'],
-      [EventCategory.AddonUnsupportedResolved, '@camstack/addon-ml'],
-      [EventCategory.AddonUnsupportedResolved, '@camstack/addon-ok'],
+      [EventCategory.AddonUnsupportedVersion, '@dominevo/addon-ml'],
+      [EventCategory.AddonUnsupportedResolved, '@dominevo/addon-ml'],
+      [EventCategory.AddonUnsupportedResolved, '@dominevo/addon-ok'],
     ])
   })
 })

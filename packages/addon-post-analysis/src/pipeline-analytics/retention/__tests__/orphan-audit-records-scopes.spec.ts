@@ -12,7 +12,7 @@
  * map (the pre-fix wiring — every collection paged by name) turns every case
  * red with "is not declared".
  */
-import type { SettingsStoreClient } from '@camstack/types'
+import type { SettingsStoreClient } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { makeFakeRecords } from '../../__tests__/fake-records.js'
 import { makeFakeSettingsStore, makeSilentLogger } from '../../__tests__/test-helpers.js'

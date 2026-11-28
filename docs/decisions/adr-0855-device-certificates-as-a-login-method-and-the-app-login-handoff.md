@@ -77,7 +77,7 @@ system browser run ANY web login and bounce back to the app.
 3. **Login**: `getDeviceChallenge` answers a 60 s single-use nonce bound to the
    hub origin the request is entitled to (the claimed origin when the hub
    advertises it, else the public endpoint — the same rule as the OIDC return,
-   D791; the shared helpers moved to `@camstack/types`). The device signs
+   D791; the shared helpers moved to `@dominevo/types`). The device signs
    `camstack-device-cert-v1 \n <login|renew|revoke> \n <origin> \n <nonce>`
    with ECDSA P-256 / SHA-256 (raw `r||s` or DER). The purpose is inside the
    message, so a login signature is worthless as a renewal or a revoke.
@@ -118,7 +118,7 @@ system browser run ANY web login and bounce back to the app.
    answers `superseded` (non-definitive: the app holds only the newest one).
 6. **Typed refusals.** Every device endpoint answers a discriminated
    `{ ok: false, reason, definitive }` (`DeviceRefusalReason` in
-   `@camstack/types`): `revoked`, `unknown-credential`, `user-gone`
+   `@dominevo/types`): `revoked`, `unknown-credential`, `user-gone`
    (DEFINITIVE) and `expired`, `bad-signature`, `nonce-invalid`,
    `rate-limited`, `invalid-certificate`, `unavailable`, `code-invalid`,
    `self-enrollment-disabled`, `step-up-required`, `bad-public-key`. A refresh

@@ -1,4 +1,4 @@
-import type { DeviceFault } from '@camstack/types'
+import type { DeviceFault } from '@dominevo/types'
 import type { Homematic } from 'nodehomematic'
 import type { RadioActivityTracker } from './homematic-radio-silent.js'
 import { clearStoredKeyLinkStates } from './devices/hm-key-link-states.js'

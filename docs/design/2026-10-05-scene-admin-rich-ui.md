@@ -10,7 +10,7 @@ covers:
 
 # Scene — resume and rich Admin UI
 
-Scene lives in `@camstack/addon-post-analysis` as cap `scene-monitor` (no
+Scene lives in `@dominevo/addon-post-analysis` as cap `scene-monitor` (no
 separate addon). Admin route: `/scenes`. Design history:
 `docs/design/scene-state-analysis.md`. Architecture page still missing —
 queue `docs/architecture/scene-monitor.md`. <!-- drift-ok -->

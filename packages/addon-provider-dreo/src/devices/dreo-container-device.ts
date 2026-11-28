@@ -7,7 +7,7 @@ import {
   type DeviceContext,
   resyncCapability,
   resyncThroughAdoption,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { dreoConnections } from '../dreo-gateway.js'
 import { classifyDreoModel, deviceTypeForKind } from '../dreo-domain-mapping.js'
 import { dreoChildFactory } from './dreo-child-class-factory.js'

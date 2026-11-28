@@ -8,7 +8,7 @@
  * the rule without its `tags`: `{ ...rest, ...storedTags(tags) }`.
  */
 
-import { normalizeTags } from '@camstack/types'
+import { normalizeTags } from '@dominevo/types'
 
 /** The stored-tags slice of a rule: `{}` when there are none. */
 export interface StoredTags {

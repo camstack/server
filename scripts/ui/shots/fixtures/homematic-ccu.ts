@@ -372,7 +372,7 @@ const ACTIONS: Readonly<Record<string, unknown>> = {
     programs: [
       {
         id: '42',
-        name: 'CamStack: Hall buttons events',
+        name: 'Dominevo: Hall buttons events',
         active: true,
         internal: false,
         lastRunMs: TS - 5 * 60_000,

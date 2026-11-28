@@ -12,7 +12,7 @@
  * which eagerly constructs the Zod schema graph of all ~266 caps (+~144MB RSS
  * PER forked runner). This static map carries the ANSWER (cap name → method
  * names), computed at codegen time by running the REAL predicate, so the runner
- * imports plain data (zero Zod, a few KB) via the lightweight `@camstack/types/addon`
+ * imports plain data (zero Zod, a few KB) via the lightweight `@dominevo/types/addon`
  * entry instead of the schema barrel.
  *
  * Authoritative: the map is derived by executing the real

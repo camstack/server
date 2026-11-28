@@ -5,8 +5,8 @@
  * ## Why every field is re-declared here
  *
  * The summary rule's schema deliberately lives INSIDE `addon-post-analysis`
- * (`summary/summary-rule.ts`), not in `@camstack/types`: a field added there is
- * live on the next `camstack deploy` instead of the next framework train. The
+ * (`summary/summary-rule.ts`), not in `@dominevo/types`: a field added there is
+ * live on the next `dominevo deploy` instead of the next framework train. The
  * price is that this client cannot import it, and `addons.custom` is typed
  * `z.unknown()` at the cap boundary. So the answer is narrowed HERE, in one
  * file, with type guards rather than casts — a hub too old to serve the actions,
@@ -14,7 +14,7 @@
  * An empty table would read as "my rules are gone".
  *
  * `NcSchedule` and `NcRuleTarget` are the exceptions: both are ordinary
- * `@camstack/types` shapes that the rule embeds, and re-declaring them here
+ * `@dominevo/types` shapes that the rule embeds, and re-declaring them here
  * would be a second opinion about what a weekly window is.
  *
  * ## THE PATCH IS A DIFF — AND `ai` IS NOW ONE OF ITS KEYS
@@ -46,7 +46,7 @@ import {
   type NcRuleTarget,
   type NcSchedule,
   type NcTargetOverrides,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 import {
   agoLabel,
@@ -79,7 +79,7 @@ export const NC_TEST_SUMMARY_RULE_ACTION = 'nc.testSummaryRule'
 export const SUMMARY_MAX_TILES = 24
 /** `NC_SUMMARY_DEFAULT_TILES` in addon-post-analysis `summary/summary-rule.ts`
  *  — not importable from here (addons never import each other, and it is not
- *  in `@camstack/types`). This editor SENDS it on create, so a stale copy
+ *  in `@dominevo/types`). This editor SENDS it on create, so a stale copy
  *  retunes every new rule; the helpers spec pins it. */
 export const SUMMARY_DEFAULT_TILES = 12
 export const SUMMARY_MAX_AI_IMAGES = 8

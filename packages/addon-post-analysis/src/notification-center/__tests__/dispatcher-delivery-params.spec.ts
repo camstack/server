@@ -3,7 +3,7 @@
  * only for keys the target's KIND declared (D938). A kind that declared nothing
  * is handed nothing, whatever the rule carries.
  */
-import type { DeliveryParam } from '@camstack/types'
+import type { DeliveryParam } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import { NcDispatcher, type NcSendInput, type NcTargetRef } from '../dispatcher.js'

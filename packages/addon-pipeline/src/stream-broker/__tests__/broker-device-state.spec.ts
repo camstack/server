@@ -4,7 +4,7 @@
  * has seen, never written before a load answered, removed with the camera.
  */
 import { describe, expect, it } from 'vitest'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import {
   BROKER_PROFILE_KEY,
   flattenByDevice,

@@ -1,4 +1,4 @@
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { buildAlexaAdoptionProvider } from '../alexa-adoption-provider.js'
 import type { EchoDevice } from '../speak/worker-protocol.js'

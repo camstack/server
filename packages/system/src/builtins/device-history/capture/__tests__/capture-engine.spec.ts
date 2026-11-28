@@ -1,4 +1,4 @@
-import { DeviceType, HISTORY_CATALOG, HISTORY_ITEM_CATALOG } from '@camstack/types'
+import { DeviceType, HISTORY_CATALOG, HISTORY_ITEM_CATALOG } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { type Harness, makeHarness } from '../../__tests__/support/harness.js'
 import { emitState, rawOf, seriesOf } from '../../__tests__/support/read-helpers.js'

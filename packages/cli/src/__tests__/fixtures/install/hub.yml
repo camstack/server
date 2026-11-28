@@ -1,8 +1,8 @@
-# CamStack hub on Proxmox (AMD image). Installed by install-camstack-proxmox.sh
+# Dominevo hub on Proxmox (AMD image). Installed by install-camstack-proxmox.sh
 # into /opt/camstack/docker-compose.yml inside the LXC.
 services:
   camstack:
-    image: ghcr.io/camstack/camstack:amd-latest
+    image: ghcr.io/dominevo/dominevo:amd-latest
     container_name: camstack
     restart: unless-stopped
     network_mode: host

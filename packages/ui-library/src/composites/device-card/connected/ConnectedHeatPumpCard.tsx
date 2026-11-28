@@ -1,4 +1,4 @@
-import { heatPumpInstantCop } from '@camstack/types'
+import { heatPumpInstantCop } from '@dominevo/types'
 import type { ReactElement } from 'react'
 import { useTrpcClient } from '../../../contexts/system-context'
 import { useUiText } from '../../../contexts/ui-text'

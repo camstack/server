@@ -15,7 +15,7 @@
  * as 25 identical speaker icons.
  */
 import { describe, it, expect } from 'vitest'
-import { AUDIO_MACRO_LABELS, audioKindId } from '@camstack/types'
+import { AUDIO_MACRO_LABELS, audioKindId } from '@dominevo/types'
 import { EVENT_KIND_ICONS, resolveEventKindIcon } from '../event-kind-visuals'
 
 describe('audio macro classes → shared lucide glyphs', () => {

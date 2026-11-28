@@ -19,7 +19,7 @@
  *
  * `FrameResult.shed` has carried the truth since 2026-08-01. It is now counted.
  */
-import type { DecodedFrame, FrameResult, IScopedLogger } from '@camstack/types'
+import type { DecodedFrame, FrameResult, IScopedLogger } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { RunnerConfig } from '../runner.js'
 import { PipelineRunner } from '../runner.js'

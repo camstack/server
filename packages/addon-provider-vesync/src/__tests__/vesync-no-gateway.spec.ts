@@ -2,7 +2,7 @@
  * VeSync no longer creates a Gateway device: the account's connection state is the
  * integration's status. Discovery does not propose it and adoption refuses its old id.
  */
-import { DeviceType, type IScopedLogger } from '@camstack/types'
+import { DeviceType, type IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { buildVeSyncAdoptionProvider } from '../vesync-adoption-provider.js'
 

@@ -6,7 +6,7 @@
  * the D648 Extensions card (the Customize tab, D676 ruling 4). One predicate,
  * so each exclusion is armed by a spec rather than by a render.
  */
-import type { ConfigSection, ConfigSectionWithValues, DeviceType } from '@camstack/types'
+import type { ConfigSection, ConfigSectionWithValues, DeviceType } from '@dominevo/types'
 import { isDeviceExportSection } from './device-export-tab'
 import { isExtensionsPanelSection, showReadOnlyExtensionsInConfig } from './extensions-section'
 

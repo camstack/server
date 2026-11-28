@@ -105,8 +105,8 @@ The robot's stream hints `low`.
 
 ## Consequences
 
-- **None of this is live on the hub until a `@camstack/server` carrying this
-  `@camstack/types` is installed.** Addons inline their own `@camstack/types`,
+- **None of this is live on the hub until a `@dominevo/server` carrying this
+  `@dominevo/types` is installed.** Addons inline their own `@dominevo/types`,
   so the provider writes the slice and the recorder holds on it today — but
   the hub validates every tRPC input with ITS copy of the schema, and
   `RecordingTriggersSchema` is a non-strict `z.object`: `deviceSignal` is

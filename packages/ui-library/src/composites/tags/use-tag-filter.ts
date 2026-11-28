@@ -5,7 +5,7 @@
  * is remembered per section in `localStorage`. The selection follows the
  * registry's writes: a renamed tag stays selected, a removed one leaves.
  */
-import { normalizeTags } from '@camstack/types'
+import { normalizeTags } from '@dominevo/types'
 import { useCallback, useMemo, useState } from 'react'
 import type { DataTableFacet, DataTableFilterConfig } from '../data-table-filter'
 import { type DataTableFilter, useDataTableFilter } from '../use-data-table-filter'

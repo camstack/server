@@ -13,7 +13,7 @@
  * before this flag existed reads back with no flag and keeps working.
  */
 
-import type { IScopedLogger, StorageLocation } from '@camstack/types'
+import type { IScopedLogger, StorageLocation } from '@dominevo/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { StorageOrchestratorService } from '../storage-orchestrator.service.js'
 

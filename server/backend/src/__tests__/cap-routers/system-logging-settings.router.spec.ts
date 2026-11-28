@@ -19,7 +19,7 @@
  */
 
 import { describe, expect, it, vi } from 'vitest'
-import type { ISystemProvider, LoggingSettingsState } from '@camstack/types'
+import type { ISystemProvider, LoggingSettingsState } from '@dominevo/types'
 import { buildCapRouterForTest, checkAuthMatrix, invokeProcedure, makeCtx } from './harness.js'
 
 const STATE: LoggingSettingsState = {

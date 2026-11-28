@@ -1,4 +1,4 @@
-import { NcRuleInputSchema, NcRuleSchema } from '@camstack/types'
+import { NcRuleInputSchema, NcRuleSchema } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   cooldownKey,
@@ -86,11 +86,11 @@ describe('system-event rule matching', () => {
       evaluateRule(
         rule({
           kinds: ['addon-update-available'],
-          packageNames: ['@camstack/addon-recorder'],
+          packageNames: ['@dominevo/addon-recorder'],
         }),
         subject({
           kind: 'addon-update-available',
-          packageName: '@camstack/addon-pipeline',
+          packageName: '@dominevo/addon-pipeline',
         }),
       ).matched,
     ).toBe(false)
@@ -115,7 +115,7 @@ describe('system-event rule matching', () => {
     ).toBe(false)
     expect(
       evaluateRule(
-        rule({ kinds: ['addon-update-available'], packageNames: ['@camstack/addon-pipeline'] }),
+        rule({ kinds: ['addon-update-available'], packageNames: ['@dominevo/addon-pipeline'] }),
         subjectWithoutIdentities('addon-update-available'),
       ).matched,
     ).toBe(false)
@@ -145,7 +145,7 @@ describe('system-event rule matching', () => {
     ).toBe(true)
     expect(
       evaluateRule(
-        rule({ kinds: ['node-offline'], packageNames: ['@camstack/addon-pipeline'] }),
+        rule({ kinds: ['node-offline'], packageNames: ['@dominevo/addon-pipeline'] }),
         subjectWithoutIdentities('node-offline'),
       ).matched,
     ).toBe(true)
@@ -184,15 +184,15 @@ describe('system-event rule matching', () => {
       ...subjectWithoutIdentities('addon-update-available'),
       systemEvent: {
         ...subjectWithoutIdentities('addon-update-available').systemEvent!,
-        subject: 'package:hub:@camstack/addon-pipeline',
-        packageName: '@camstack/addon-pipeline',
+        subject: 'package:hub:@dominevo/addon-pipeline',
+        packageName: '@dominevo/addon-pipeline',
       },
     }
     const agent = subject({
       kind: 'addon-update-available',
-      subject: 'package:agent-a:@camstack/addon-pipeline',
+      subject: 'package:agent-a:@dominevo/addon-pipeline',
       nodeId: 'agent-a',
-      packageName: '@camstack/addon-pipeline',
+      packageName: '@dominevo/addon-pipeline',
     })
     expect(cooldownKey(updateRule, hub)).not.toBe(cooldownKey(updateRule, agent))
   })

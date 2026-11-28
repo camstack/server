@@ -15,7 +15,7 @@
  * Write-THROUGH: a stamp that did not land throws to the scheduler, which logs
  * it; the outbox dedup still refuses the second copy.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { DurableLedger, type DurableLedgerSpec } from '../../durable/durable-ledger.js'
 import { type DurableKindDeps } from '../../durable/durable-wiring.js'
 import { ncDurableRecordKinds } from '../nc-durable-record-kinds.js'

@@ -73,7 +73,7 @@ a `backups:<slug>` location on it. Zero lines in the backup subsystem.
 
 ### 0.2 The addon already exists, and it already has three siblings.
 
-`@camstack/addon-remote-storage` ships **three** manifest entries —
+`@dominevo/addon-remote-storage` ships **three** manifest entries —
 `sftp-storage`, `s3-storage`, `webdav-storage` — each registering one
 `storage-provider` collection provider, all from one npm package, all in
 `execution.group: "remote-storage"`. The split is forced: `CapabilityRegistry`
@@ -481,7 +481,7 @@ edit-without-retyping pattern the wizard needs anyway.
 
 This is a **framework change** (`packages/system`, possibly `packages/types`),
 it fixes SFTP/S3/WebDAV at the same time, and it is the one part of this work
-that is not shippable by `camstack deploy`. It is listed accordingly in §6.
+that is not shippable by `dominevo deploy`. It is listed accordingly in §6.
 
 **It is also a hard prerequisite for the SMB provider, not a follow-up.** Adding
 a credentialed provider to a surface known to leak credentials is not a smaller
@@ -576,8 +576,8 @@ Server is at **1.2.192**, system at **1.2.157**.
 | Change | Ships how |
 | --- | --- |
 | Option A (host CIFS mount + `filesystem-storage` location) | **Neither.** An operator action. Available today. |
-| The `smb-storage` provider — new manifest entry, vite entry, provider code, deps | **`camstack deploy packages/addon-remote-storage`.** `@camstack/addon-remote-storage` is a published npm package addon reaching a node through `<dataDir>/addons/`, not a framework package. No `@camstack/server` republish. |
-| **Credential redaction in `listLocations`** (§5) | **Publish train.** It lives in `packages/system` (`storage-orchestrator`), possibly `packages/types` if the sentinel needs a schema. Framework packages travel inside the `@camstack/server` closure, so it is not live until a published `@camstack/server` containing it is installed — regardless of what is in the registry. |
+| The `smb-storage` provider — new manifest entry, vite entry, provider code, deps | **`dominevo deploy packages/addon-remote-storage`.** `@dominevo/addon-remote-storage` is a published npm package addon reaching a node through `<dataDir>/addons/`, not a framework package. No `@dominevo/server` republish. |
+| **Credential redaction in `listLocations`** (§5) | **Publish train.** It lives in `packages/system` (`storage-orchestrator`), possibly `packages/types` if the sentinel needs a schema. Framework packages travel inside the `@dominevo/server` closure, so it is not live until a published `@dominevo/server` containing it is installed — regardless of what is in the registry. |
 | Comment/spec updates in `server/backend/**` | **Publish train** (same closure). |
 | An orchestrator-level `(host, share, basePath)` uniqueness guard (§2) | **Publish train.** Deferred — §7. |
 | Any `*.cap.ts` change | Not in this design. If one appears, it is a framework change *and* `npm run codegen`. |

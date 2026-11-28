@@ -19,9 +19,9 @@
  * Pure module — no tRPC machinery — so the spec exercises it directly (same
  * pattern as `scope-access.ts` / `share-view-access.ts`).
  */
-import { METHOD_ACCESS_MAP } from '@camstack/server/system'
-import type { CredentialScope, DeviceMetaLike, UserScope } from '@camstack/types'
-import { capabilityScopesOf, resolveViewableDeviceIds, viewerScopeOf } from '@camstack/types'
+import { METHOD_ACCESS_MAP } from '@dominevo/server/system'
+import type { CredentialScope, DeviceMetaLike, UserScope } from '@dominevo/types'
+import { capabilityScopesOf, resolveViewableDeviceIds, viewerScopeOf } from '@dominevo/types'
 import { personSessionScopes } from '../../auth/person-session-scopes.js'
 import { checkScopeAccess, type DeviceScopeLookup } from './scope-access.js'
 import { projectListAllForDeviceIds, type ShareFilterableEvent } from './share-view-access.js'

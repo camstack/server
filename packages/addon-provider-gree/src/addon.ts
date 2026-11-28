@@ -15,7 +15,7 @@ import {
   errMsg,
   type IDevice,
   defaultIntegrationDepsOver,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { buildConnectionFormSchema, type GreeConfig, settingsToGreeConfig } from './config.js'
 import {
   buildGreeInstances,

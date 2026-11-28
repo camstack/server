@@ -22,7 +22,7 @@ import {
   type MigrationProcedureResult,
   preconditionOf,
   type StoredKeyRead,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export const GOOGLE_ADDON_ID = 'google-services'
 

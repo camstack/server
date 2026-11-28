@@ -52,7 +52,7 @@ describe('parseSsoReturnFragment', () => {
 describe('ssoReturnErrorMessage', () => {
   it('names the provider and tells the user how to link', () => {
     expect(ssoReturnErrorMessage('sso-not-linked', 'Authentik')).toBe(
-      'This Authentik account is not linked to a CamStack user. Sign in normally and link it from your profile.',
+      'This Authentik account is not linked to a Dominevo user. Sign in normally and link it from your profile.',
     )
   })
 

@@ -10,7 +10,7 @@ applies-to:
 
 # OSD Manager
 
-OSD Manager binds camera-owned text overlay slots to CamStack values. The text
+OSD Manager binds camera-owned text overlay slots to Dominevo values. The text
 is burned into the camera video by the camera itself; OSD Manager decides what
 to write and when.
 
@@ -25,19 +25,19 @@ now, duplicate) and a horizontally scrollable slot tab strip — the active
 writable slot's editor is always mounted (no per-slot Edit); a read-only slot
 tab shows an explanation instead.
 
-Device values are picked with the shared `DeviceTemplateField` from `@camstack/ui-library`
+Device values are picked with the shared `DeviceTemplateField` from `@dominevo/ui-library`
 (the same field as Actions and Notifications).
 
 ## Sources and rendering ([D1029](../decisions/adr-1029-the-osd-text-is-a-device-template-the-clock-and-the-last-recognition-are-template-variables.md))
 
 A writable slot's source is one of three kinds (`OsdSourceSchema`): `none`
-(blank overlay text; the binding stays so CamStack owns the slot), `static`
+(blank overlay text; the binding stays so Dominevo owns the slot), `static`
 (literal text) and `template`, which points at a **named template**. A named
 template (`listTemplates` / `upsertTemplate` / `deleteTemplate` / `previewTemplate`,
 stored under the osd-manager settings key) is `{ id, name, text }`. The text is a
 **device template** (D1021): `{{ garage.temperature | unit('°C') | round(1) }}`,
 `{% if garage.humidity > 60 %}damp{% endif %}`. Aliases are the device aliases of
-the rest of CamStack; there is no second binding shape. The editor's "insert a
+the rest of Dominevo; there is no second binding shape. The editor's "insert a
 device value" button writes them, and `round(0)` gives the whole numbers some
 firmware needs.
 

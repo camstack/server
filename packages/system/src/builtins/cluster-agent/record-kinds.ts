@@ -1,7 +1,7 @@
 /**
  * Record kinds owned by cluster-agent (phase 4 — hub-main).
  */
-import { defineRecordKinds, type DefinedRecordKind, type RecordKindSpec } from '@camstack/types'
+import { defineRecordKinds, type DefinedRecordKind, type RecordKindSpec } from '@dominevo/types'
 import { z } from 'zod'
 import type { IsolatedRecordKinds } from '../records-isolated.js'
 

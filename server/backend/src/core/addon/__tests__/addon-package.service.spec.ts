@@ -8,20 +8,20 @@ const MONOREPO_ROOT = resolve(__dirname, '../../../../../../')
 
 describe('system package identity', () => {
   it('routes the pure-JS framework packages (system, types, sdk) through the live-sync gate', () => {
-    expect(SYSTEM_PACKAGE).toBe('@camstack/server')
+    expect(SYSTEM_PACKAGE).toBe('@dominevo/server')
     // Framework packages: `dist/` mirrored into the live hub closure by
     // `syncFrameworkDist`, so a capability change ships via
-    // `camstack deploy packages/types` with NO image rebuild.
-    expect(isFrameworkPackage('@camstack/server')).toBe(true)
-    expect(isFrameworkPackage('@camstack/types')).toBe(true)
-    expect(isFrameworkPackage('@camstack/sdk')).toBe(true)
+    // `dominevo deploy packages/types` with NO image rebuild.
+    expect(isFrameworkPackage('@dominevo/server')).toBe(true)
+    expect(isFrameworkPackage('@dominevo/types')).toBe(true)
+    expect(isFrameworkPackage('@dominevo/sdk')).toBe(true)
     // shm-ring ships a native `.node` prebuild the dist-only mirror can't
     // rebuild — it stays on the native-aware install path.
-    expect(isFrameworkPackage('@camstack/shm-ring')).toBe(false)
-    expect(isFrameworkPackage('@camstack/addon-pipeline')).toBe(false)
+    expect(isFrameworkPackage('@dominevo/shm-ring')).toBe(false)
+    expect(isFrameworkPackage('@dominevo/addon-pipeline')).toBe(false)
   })
 
-  it('only @camstack/server/system declares camstack.system:true', () => {
+  it('only @dominevo/server/system declares camstack.system:true', () => {
     const pkgs = ['types', 'sdk']
     for (const p of pkgs) {
       const m = JSON.parse(

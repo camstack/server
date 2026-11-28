@@ -21,7 +21,7 @@ import { buildOsdPatch, projectOsdSnapshot } from '../osd-mapping.js'
  * The fixtures below are the replies captured from live cameras through the
  * raw-read debug surface, in the shape `getOsd` now returns them. The 16.16
  * ↔ corner encoding itself is the library's, and is pinned by the library's
- * own tests against these same cameras — this file pins the CamStack half:
+ * own tests against these same cameras — this file pins the Dominevo half:
  * the projection into the snapshot, and "only what was touched" on the write.
  */
 

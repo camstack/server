@@ -45,7 +45,7 @@
  *
  * Face and plate gallery media are NOT in this table and are unaffected.
  */
-import type { RouteAccess } from '@camstack/types'
+import type { RouteAccess } from '@dominevo/types'
 import { NC_ARTIFACT_READ_PREFIX } from '../notification-center/artifact-index.js'
 
 /**

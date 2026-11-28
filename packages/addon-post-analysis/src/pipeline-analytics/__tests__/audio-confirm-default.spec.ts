@@ -10,8 +10,8 @@
  * measured 26 of in 24 hours.
  */
 import { afterEach, describe, expect, it } from 'vitest'
-import type { AudioDetection, AudioResult, IEventBus } from '@camstack/types'
-import { EventCategory, createEvent } from '@camstack/types'
+import type { AudioDetection, AudioResult, IEventBus } from '@dominevo/types'
+import { EventCategory, createEvent } from '@dominevo/types'
 import { AUDIO_EVENTS_COLLECTION } from '../store/event-store.js'
 import { bootAnalytics, bootedEventRows, type Booted } from './boot-analytics.js'
 import type { FakeNativeCropRequest } from './test-helpers.js'

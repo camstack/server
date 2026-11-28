@@ -4,7 +4,7 @@
  * off through it — and `timed-run`, which every device with a switch binds
  * (D1097), is the switch's timer.
  */
-import { timedRunLimitOf } from '@camstack/types'
+import { timedRunLimitOf } from '@dominevo/types'
 import { timedRunQuickCalls, timedRunQuickView } from '../../device-controls/timed-run-quick-model'
 import { useTrpcClient } from '../../../contexts/system-context'
 import { useUiText } from '../../../contexts/ui-text'

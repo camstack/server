@@ -15,7 +15,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { hydrateSchema, type ConfigUISchemaWithValues } from '@camstack/types'
+import { hydrateSchema, type ConfigUISchemaWithValues } from '@dominevo/types'
 // A spec may mount a sibling's real code: the point is THIS addon's schema.
 import { ALEXA_SKILL_DEFAULT_BODY } from '../../../../../addon-export-alexa/src/skill-records'
 import { buildAlexaInstanceSections } from '../../../../../addon-export-alexa/src/settings-schema'
@@ -51,9 +51,9 @@ const customMutate = vi.fn(async (_input: unknown) => ({
   failedCount: 0,
 }))
 
-vi.mock('@camstack/ui-library', async () => {
+vi.mock('@dominevo/ui-library', async () => {
   const actual =
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+    await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   const noopMutation = () => ({
     mutateAsync: vi.fn(),
     mutate: vi.fn(),
@@ -83,7 +83,7 @@ vi.mock('@camstack/ui-library', async () => {
   }
 })
 
-import { ConfirmDialogProvider } from '@camstack/ui-library'
+import { ConfirmDialogProvider } from '@dominevo/ui-library'
 import { NodeAddonsSettingsPanel } from '../NodeAddonsSettingsPanel'
 
 function renderTree(node: ReactNode) {

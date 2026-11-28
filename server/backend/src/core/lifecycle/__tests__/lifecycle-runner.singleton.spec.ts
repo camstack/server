@@ -42,7 +42,7 @@ describe('lifecycle-runner singleton', () => {
     const runner = initLifecycleRunner(makeDeps())
     const { jobId } = await runner.startJob({
       kind: 'update',
-      targets: [{ name: '@camstack/addon-x', version: '1.0.1' }],
+      targets: [{ name: '@dominevo/addon-x', version: '1.0.1' }],
       createdBy: 'alice',
     })
     const job = runner.getJob(jobId)

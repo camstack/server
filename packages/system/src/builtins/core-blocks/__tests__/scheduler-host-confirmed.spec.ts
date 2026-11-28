@@ -3,7 +3,7 @@
  * device's slice in the confirmed view, so a command the hub holds never
  * reads as already done.
  */
-import type { AddonApi } from '@camstack/types'
+import type { AddonApi } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { hostOver } from '../scheduler/scheduler-wiring.js'
 

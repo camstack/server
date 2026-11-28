@@ -9,8 +9,8 @@
  * engine, written through the production writer, and a door that cannot read
  * is a door that throws — exactly what production does.
  */
-import { SqliteSettingsBackend } from '@camstack/server/system'
-import type { ISettingsStoreProvider } from '@camstack/types'
+import { SqliteSettingsBackend } from '@dominevo/server/system'
+import type { ISettingsStoreProvider } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createAddonSettingsRouter } from '../api/core/addon-settings.router.js'
 import { ConfigService } from '../core/config/config.service.js'

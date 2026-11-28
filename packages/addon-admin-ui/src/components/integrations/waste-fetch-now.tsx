@@ -3,7 +3,7 @@
  * waste addon to re-read that one source's calendar (the `fetchNow` custom action) and says what
  * came back. Other calendar providers' rows get none.
  */
-import { Button, IconButton, useAlert, useAddonsCustom } from '@camstack/ui-library'
+import { Button, IconButton, useAlert, useAddonsCustom } from '@dominevo/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { Download } from 'lucide-react'
 import type { ReactElement } from 'react'

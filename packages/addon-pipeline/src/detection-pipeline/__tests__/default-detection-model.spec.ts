@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import type { ModelCatalogEntry, ModelFormat, StepDefinition } from '@camstack/types'
+import type { ModelCatalogEntry, ModelFormat, StepDefinition } from '@dominevo/types'
 import { resolveDefaultDetectionModel } from '../default-detection-model'
 import { getStepDefinition } from '../registry/step-definitions'
 

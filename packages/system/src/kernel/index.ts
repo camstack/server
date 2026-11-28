@@ -61,7 +61,7 @@ export type {
 // Capability
 export { CapabilityHandle, CapabilityUnavailableError } from './capability-handle.js'
 export { CapabilityRegistry } from './capability-registry.js'
-// BIG PLAN 2 — runtime cap-router builder (construction moved off @camstack/server).
+// BIG PLAN 2 — runtime cap-router builder (construction moved off @dominevo/server).
 export { buildCapRouters, builderMountedCapNames } from './cap-router-builder.js'
 export type {
   CapRouterPrimitives,
@@ -448,17 +448,17 @@ export type {
 // createAddonService settings.* actions + addon-settings singleton cap.
 // The `addon-host-service.ts` file itself was deleted as dead code.
 export { createScopedProcessManager } from './moleculer/process-context.js'
-export type { IAddonProcessManager } from '@camstack/types'
+export type { IAddonProcessManager } from '@dominevo/types'
 export { callWithServiceDiscovery } from './moleculer/resilient-cap-call.js'
 export type { ServiceDiscoveryBroker } from './moleculer/resilient-cap-call.js'
 
-// Generic utilities — also exported from @camstack/types so addons can import without @camstack/kernel
+// Generic utilities — also exported from @dominevo/types so addons can import without @dominevo/kernel
 export { RingBuffer } from './utils/ring-buffer.js'
 
 // Local UDS transport library
 export * from './transport/index.js'
 
-// Readiness protocol — re-exported from @camstack/types for convenience.
+// Readiness protocol — re-exported from @dominevo/types for convenience.
 // Spec: docs/superpowers/specs/2026-04-19-system-readiness-design.md
 export {
   ReadinessRegistry,
@@ -466,13 +466,13 @@ export {
   readinessKey,
   scopeKey,
   emitDownForOwnedCaps,
-} from '@camstack/types'
+} from '@dominevo/types'
 export type {
   ReadinessHandler,
   ReadinessTransition,
   AwaitReadyOptions,
   ReadinessRegistryOptions,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 // Lifecycle management — job engine for addon updates
 // Spec: docs/superpowers/sdd/task-5-brief.md

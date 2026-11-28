@@ -1,4 +1,4 @@
-import type { ConfigFieldWithValue, ConfigSectionWithValues } from '@camstack/types'
+import type { ConfigFieldWithValue, ConfigSectionWithValues } from '@dominevo/types'
 import type { KeyDirectLink } from '../ccu/ccu-schemas.js'
 
 const ADDON_ID = 'provider-homematic'
@@ -58,17 +58,17 @@ function toggleButton(integrationId: string, key: HmKeyLinkState): ConfigFieldWi
     addonId: ADDON_ID,
     action: 'setButtonEvents',
     paramsStatic: { integrationId, address: key.address, enabled: enable, confirmed: true },
-    buttonLabel: enable ? 'Send presses to CamStack' : 'Stop sending presses',
+    buttonLabel: enable ? 'Send presses to Dominevo' : 'Stop sending presses',
     variant: enable ? 'primary' : 'default',
     confirmMessage: enable
       ? `Create the central link of "${label}" on the CCU? Its direct links stay as they are.`
-      : `Remove the central link of "${label}" on the CCU? CamStack stops receiving its presses; its direct links stay as they are.`,
+      : `Remove the central link of "${label}" on the CCU? Dominevo stops receiving its presses; its direct links stay as they are.`,
   }
 }
 
 /**
  * The device-page section of a Homematic button device: per key, whether the
- * CCU sends its presses to CamStack (the central link), the channels it
+ * CCU sends its presses to Dominevo (the central link), the channels it
  * actuates directly, and a confirmed toggle that writes the central link.
  * Empty when the device has no key channel the CCU answered for.
  */
@@ -113,7 +113,7 @@ export function buttonEventsSection(
     labelKey: `${NS}.keys.label`,
     columns: [
       { key: 'key', label: 'Key', labelKey: `${NS}.keys.key` },
-      { key: 'central', label: 'Sent to CamStack', labelKey: `${NS}.keys.central`, kind: 'status' },
+      { key: 'central', label: 'Sent to Dominevo', labelKey: `${NS}.keys.central`, kind: 'status' },
       { key: 'program', label: 'Program', labelKey: `${NS}.keys.program` },
       { key: 'links', label: 'Direct links', labelKey: `${NS}.keys.links` },
     ],

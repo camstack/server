@@ -19,7 +19,7 @@
  *
  * Sensors share no hardware identifier with the gateway and declare none.
  */
-import type { DeviceIdentifierKey, RawDeviceIdentifiers } from '@camstack/types'
+import type { DeviceIdentifierKey, RawDeviceIdentifiers } from '@dominevo/types'
 import type { EcowittConfig, EcowittLocalConfig } from './config.js'
 
 export interface EcowittIdentifierDeclaration {

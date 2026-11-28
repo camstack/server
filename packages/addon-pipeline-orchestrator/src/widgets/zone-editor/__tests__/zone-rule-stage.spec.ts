@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { ZoneRuleStageEnum } from '@camstack/types'
+import { ZoneRuleStageEnum } from '@dominevo/types'
 import { zoneRuleStageTitle, ZONE_RULE_STAGES } from '../zone-rule-stage.js'
 
 describe('zoneRuleStageTitle', () => {

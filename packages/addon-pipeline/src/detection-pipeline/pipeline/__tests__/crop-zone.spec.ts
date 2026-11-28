@@ -3,7 +3,7 @@
  * crop-bbox resolver that feeds the executor's `crop-zone` frame prep.
  */
 import { describe, it, expect } from 'vitest'
-import type { Zone, ZoneRule } from '@camstack/types'
+import type { Zone, ZoneRule } from '@dominevo/types'
 import { resolvePackageCropBbox } from '../crop-zone.js'
 
 const FRAME_W = 1000

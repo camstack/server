@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import type { IEventBus, IScopedLogger, SystemEvent } from '@camstack/types'
+import type { IEventBus, IScopedLogger, SystemEvent } from '@dominevo/types'
 
 /**
  * Non-blocking connect contract for the HA broker lifecycle.

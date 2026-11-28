@@ -43,7 +43,7 @@ describe('addons.updatePackage — an agent-tracked package', () => {
   it('fans out to every online agent instead of the hub lifecycle runner', async () => {
     const env = build(['agent-a', 'agent-b'])
 
-    const result = await env.provider.updatePackage({ name: '@camstack/addon-agent-ui' })
+    const result = await env.provider.updatePackage({ name: '@dominevo/addon-agent-ui' })
 
     expect(result).toMatchObject({ success: true, version: '1.3.0' })
     expect(env.packPackage).toHaveBeenCalledTimes(1)
@@ -51,7 +51,7 @@ describe('addons.updatePackage — an agent-tracked package', () => {
     expect(deploys.map(([, , opts]) => opts.nodeID)).toEqual(['agent-a', 'agent-b'])
     expect(env.agentRegistry.noteExplicitDelivery).toHaveBeenCalledWith(
       'agent-a',
-      '@camstack/addon-agent-ui',
+      '@dominevo/addon-agent-ui',
     )
   })
 
@@ -59,7 +59,7 @@ describe('addons.updatePackage — an agent-tracked package', () => {
     const env = build(['agent-a'])
     env.brokerCall.mockRejectedValueOnce(new Error('node went away'))
 
-    const result = await env.provider.updatePackage({ name: '@camstack/addon-agent-ui' })
+    const result = await env.provider.updatePackage({ name: '@dominevo/addon-agent-ui' })
 
     expect(result).toMatchObject({ success: false })
     expect(JSON.stringify(result)).toContain('agent-a')

@@ -10,8 +10,8 @@ import { mkdtemp, rm, stat, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
-import type { IScopedLogger } from '@camstack/types'
-import { Fmp4FragmentPlane } from '@camstack/types/node'
+import type { IScopedLogger } from '@dominevo/types'
+import { Fmp4FragmentPlane } from '@dominevo/types/node'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import { HksvClipStore } from '../clip-store.js'

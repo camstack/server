@@ -26,7 +26,7 @@ import {
   sleepSliceOfBattery,
   streamCatalogCapability,
   type VacuumState,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { mapMiotStateToVacuumState } from '../dreame-vacuum-decode.js'
 import {
   advertisedRfcHost,
@@ -150,7 +150,7 @@ export const CAMERA_SETTINGS_SCHEMA: ConfigUISchema = {
       title: 'Video backend',
       titleKey: 'provider-dreame:camera_settings.s_camera-backend.title',
       description:
-        'Only the Aliyun path is implemented; a robot on Tencent cannot be viewed by CamStack. Changing this asks the robot to switch.',
+        'Only the Aliyun path is implemented; a robot on Tencent cannot be viewed by Dominevo. Changing this asks the robot to switch.',
       descriptionKey: 'provider-dreame:camera_settings.s_camera-backend.description',
       fields: [
         {

@@ -12,7 +12,7 @@
  *     version: 1.2.338
  *     path: CamStackViewer-1.2.338-arm64.dmg
  *
- * The viewer leg finishes last and wins, so the FULL CamStack app's macOS
+ * The viewer leg finishes last and wins, so the FULL Dominevo app's macOS
  * updater was pointed at the reduced product. It failed safe only by accident:
  * Squirrel.Mac applies a `.zip`, the viewer shipped only a `.dmg`, and
  * `MacUpdater` threw `ERR_UPDATER_ZIP_FILE_NOT_FOUND` instead of installing the
@@ -29,7 +29,7 @@
  *                `Resources/app-update.yml`), fed through the same suffix rules
  *                (`Provider.getChannelFilePrefix`, electron-updater 6.8.9).
  *
- * The node product KEEPS `latest`. That is not cosmetic: every CamStack desktop
+ * The node product KEEPS `latest`. That is not cosmetic: every Dominevo desktop
  * install in the field has an `app-update.yml` with no channel in it and asks
  * for `latest-mac.yml` forever. Moving the node product would strand that
  * installed base; leaving it there rescues it the moment the viewer stops

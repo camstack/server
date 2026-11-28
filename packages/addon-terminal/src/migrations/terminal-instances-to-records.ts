@@ -14,7 +14,7 @@ import {
   type MigrationApiV1,
   type MigrationProcedureResult,
   type MigrationRecordsKindV1,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { type TerminalBody, terminalInstancesKind } from '../terminal-record-kinds.js'
 

@@ -5,7 +5,7 @@
  * effect (the addon binds it to `applyDeviceSettingsPatch`, whose event the
  * delegate spec in device-contribution.spec.ts proves) — and `null` clears.
  */
-import { CAMERA_SENSORS_SETTINGS_KEY, type IScopedLogger } from '@camstack/types'
+import { CAMERA_SENSORS_SETTINGS_KEY, type IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { type CameraSensorsWriteDevice, writeCameraSensors } from '../camera-sensors/write.js'
 

@@ -4,7 +4,7 @@ import { lifecycleJobSchema, lifecycleTaskSchema, taskPhaseSchema } from '../job
 const task = {
   taskId: 't1',
   nodeId: 'hub',
-  packageName: '@camstack/addon-pipeline',
+  packageName: '@dominevo/addon-pipeline',
   fromVersion: '1.0.0',
   toVersion: '1.0.1',
   target: 'addon',
@@ -36,7 +36,7 @@ describe('lifecycle schemas', () => {
   })
   it('round-trips a job through JSON', () => {
     const parsed = lifecycleJobSchema.parse(JSON.parse(JSON.stringify(job)))
-    expect(parsed.tasks[0]?.packageName).toBe('@camstack/addon-pipeline')
+    expect(parsed.tasks[0]?.packageName).toBe('@dominevo/addon-pipeline')
     expect(parsed.schemaVersion).toBe(1)
   })
   it('rejects schemaVersion != 1', () => {

@@ -44,7 +44,7 @@
  * and a branch that drops work must say so.
  */
 import { randomUUID } from 'node:crypto'
-import { DeviceType, EventCategory } from '@camstack/types'
+import { DeviceType, EventCategory } from '@dominevo/types'
 import type { PersistedDeviceMeta } from './device-meta-types.js'
 import type { ProviderContext } from './device-provider-context.js'
 import type { DeviceRow } from './device-row-store.js'

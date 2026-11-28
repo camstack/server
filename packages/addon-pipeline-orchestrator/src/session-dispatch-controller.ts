@@ -52,13 +52,13 @@ import type {
   SessionTrigger,
   ShareAffinityElection,
   Zone,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   errMsg,
   type IScopedLogger,
   type MotionTriggeredBy,
   type SessionPlacementPolicy,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { AgentLoadService } from './agent-load-service.js'
 import {
   type EarlyLookAnswer,

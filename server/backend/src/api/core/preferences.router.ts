@@ -20,8 +20,8 @@
  * The rows live in `local-auth` (it owns the users, and a user's delete wipes
  * them), reached through the hub-internal half of `user-management`.
  */
-import { getUserManagementInternal, preferencesLimitReasonOf } from '@camstack/server/system'
-import type { UserPreferencesInternal } from '@camstack/server/system'
+import { getUserManagementInternal, preferencesLimitReasonOf } from '@dominevo/server/system'
+import type { UserPreferencesInternal } from '@dominevo/server/system'
 import {
   PreferencesChangedSinceInputSchema,
   PreferencesChangedSinceOutputSchema,
@@ -33,7 +33,7 @@ import {
   PreferencesPutOutputSchema,
   scopesAllowOwnPreferences,
   type CredentialScope,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { protectedProcedure, trpcRouter } from '../trpc/trpc.middleware.js'
 import { trpcUserError } from '../trpc/user-error.js'
 

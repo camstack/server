@@ -15,7 +15,7 @@ const writePkg = (v: string) => async (_t: Buffer, d: string) => {
   fs.mkdirSync(d, { recursive: true })
   fs.writeFileSync(
     path.join(d, 'package.json'),
-    JSON.stringify({ name: '@camstack/addon-x', version: v }),
+    JSON.stringify({ name: '@dominevo/addon-x', version: v }),
   )
 }
 
@@ -27,7 +27,7 @@ describe('StagingArea', () => {
     })
     const { stagedPath } = await sa.fetchAndStage({
       jobId: 'j1',
-      name: '@camstack/addon-x',
+      name: '@dominevo/addon-x',
       version: '1.0.1',
       signal: new AbortController().signal,
     })
@@ -42,7 +42,7 @@ describe('StagingArea', () => {
     await expect(
       sa.fetchAndStage({
         jobId: 'j2',
-        name: '@camstack/addon-x',
+        name: '@dominevo/addon-x',
         version: '1.0.1',
         signal: new AbortController().signal,
       }),
@@ -60,7 +60,7 @@ describe('StagingArea', () => {
     })
     const { stagedPath, resolvedVersion } = await sa.fetchAndStage({
       jobId: 'j4',
-      name: '@camstack/addon-x',
+      name: '@dominevo/addon-x',
       version: 'latest',
       signal: new AbortController().signal,
     })
@@ -75,14 +75,14 @@ describe('StagingArea', () => {
         fs.mkdirSync(destDir, { recursive: true })
         fs.writeFileSync(
           path.join(destDir, 'package.json'),
-          JSON.stringify({ name: '@camstack/addon-x' }),
+          JSON.stringify({ name: '@dominevo/addon-x' }),
         )
       },
     })
     await expect(
       sa.fetchAndStage({
         jobId: 'j5',
-        name: '@camstack/addon-x',
+        name: '@dominevo/addon-x',
         version: 'latest',
         signal: new AbortController().signal,
       }),
@@ -102,7 +102,7 @@ describe('StagingArea', () => {
     await expect(
       sa.fetchAndStage({
         jobId: 'j3',
-        name: '@camstack/addon-x',
+        name: '@dominevo/addon-x',
         version: '1.0.1',
         signal: ac.signal,
       }),

@@ -2,7 +2,7 @@
  * The back-fill must ship the bytes the HUB RUNS, not the registry's build of
  * the same version string.
  *
- * 2026-08-07: `@camstack/addon-pipeline@1.2.43` existed as two different
+ * 2026-08-07: `@dominevo/addon-pipeline@1.2.43` existed as two different
  * bundles — the one deployed from the workspace and the one published to npm.
  * The back-fill packed `npm pack <name>@<version>`, so every deploy to
  * agent-a was overwritten ~1.5s later by the published build. Identical
@@ -30,11 +30,11 @@ let previousAddonsDir: string | undefined
 beforeEach(() => {
   root = fs.mkdtempSync(path.join(os.tmpdir(), 'pack-installed-'))
   const addonsDir = path.join(root, 'addons')
-  const pkgDir = path.join(addonsDir, '@camstack', 'addon-fake')
+  const pkgDir = path.join(addonsDir, '@dominevo', 'addon-fake')
   fs.mkdirSync(path.join(pkgDir, 'dist'), { recursive: true })
   fs.writeFileSync(
     path.join(pkgDir, 'package.json'),
-    JSON.stringify({ name: '@camstack/addon-fake', version: '1.2.43', files: ['dist'] }),
+    JSON.stringify({ name: '@dominevo/addon-fake', version: '1.2.43', files: ['dist'] }),
   )
   fs.writeFileSync(path.join(pkgDir, 'dist', 'index.mjs'), `export const marker = '${MARKER}'\n`)
   previousData = process.env['CAMSTACK_DATA']
@@ -59,7 +59,7 @@ function makeService(): AddonPackageService {
 
 describe('AddonPackageService.packInstalledPackage', () => {
   it("packs the hub's installed bytes, not a registry build of the same version", async () => {
-    const packed = await makeService().packInstalledPackage('@camstack/addon-fake')
+    const packed = await makeService().packInstalledPackage('@dominevo/addon-fake')
     expect(packed).not.toBeNull()
     expect(packed?.version).toBe('1.2.43')
 
@@ -74,6 +74,6 @@ describe('AddonPackageService.packInstalledPackage', () => {
   }, 60_000)
 
   it('returns null when the hub has no installed copy — the registry is then the only source', async () => {
-    expect(await makeService().packInstalledPackage('@camstack/addon-not-here')).toBeNull()
+    expect(await makeService().packInstalledPackage('@dominevo/addon-not-here')).toBeNull()
   })
 })

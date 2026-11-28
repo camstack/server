@@ -1,5 +1,5 @@
-import type { DeviceType } from '@camstack/types'
-import { ExtensionsPanel } from '@camstack/ui-library'
+import type { DeviceType } from '@dominevo/types'
+import { ExtensionsPanel } from '@dominevo/ui-library'
 import { DeviceAggregateSection } from './DeviceAggregateSection'
 import { showReadOnlyExtensionsInConfig } from './extensions-section'
 

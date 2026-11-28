@@ -6,7 +6,7 @@ import {
   coreBlockComposition,
   type DeviceInfo,
   isEngineHostedHelper,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   Badge,
   Button,
@@ -17,7 +17,7 @@ import {
   useDeviceManagerRemove,
   useCoreBlocksGetComposition,
   useCoreBlocksUpdateComposition,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'

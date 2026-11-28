@@ -1,11 +1,11 @@
-import { DEVICE_BACKEND_TO_FORMAT, type PipelineEngineChoice } from '@camstack/types'
+import { DEVICE_BACKEND_TO_FORMAT, type PipelineEngineChoice } from '@dominevo/types'
 
 /**
  * Resolve a Phase-1 device key (`<backend>:<device>`, or bare `cpu`) into the
  * {@link PipelineEngineChoice} used to build that device's inference pool.
  * Throws on an unknown backend token so a bad `deviceKey` fails loud rather
  * than silently building a wrong pool. Format comes from the shared
- * {@link DEVICE_BACKEND_TO_FORMAT} SSOT (`@camstack/types`) — no local copy.
+ * {@link DEVICE_BACKEND_TO_FORMAT} SSOT (`@dominevo/types`) — no local copy.
  */
 export function resolveDeviceEngine(deviceKey: string): PipelineEngineChoice {
   const colon = deviceKey.indexOf(':')

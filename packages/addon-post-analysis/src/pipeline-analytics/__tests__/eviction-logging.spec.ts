@@ -16,7 +16,7 @@
  * pattern used (and tested) here for `pruneEventsBefore`.
  */
 import { describe, it, expect, afterEach } from 'vitest'
-import type { IScopedLogger, LogExtras, LogTags } from '@camstack/types'
+import type { IScopedLogger, LogExtras, LogTags } from '@dominevo/types'
 import PipelineAnalyticsAddon from '../index.js'
 import {
   makeFakeSettingsStore,
@@ -33,7 +33,7 @@ import {
   OBJECT_EVENTS_COLLECTION,
   AUDIO_EVENTS_COLLECTION,
 } from '../store/event-store.js'
-import type { AddonContext } from '@camstack/types'
+import type { AddonContext } from '@dominevo/types'
 
 // ── Spy logger ──────────────────────────────────────────────────────────
 

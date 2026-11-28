@@ -15,7 +15,7 @@ import {
   type AutomationLeafRole,
   leafCatalogEntry,
   leafKindsFor,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** The resolved texts of one kind, in the viewer's language. */
 export interface KindTexts {

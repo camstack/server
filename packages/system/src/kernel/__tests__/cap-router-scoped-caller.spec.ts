@@ -7,7 +7,7 @@
  * FORBIDDEN, so a cap that adopts the flag stays admin-only until its provider opts in.
  */
 
-import { method, type CapabilityDefinition } from '@camstack/types'
+import { method, type CapabilityDefinition } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import {

@@ -69,8 +69,8 @@ import {
   type RecordingConfig,
   resolveRecordingProfiles,
   selectAssignedProfileSlots,
-} from '@camstack/types'
-import { NO_COST_CLAIM, type ChildCostRegistry } from '@camstack/types/node'
+} from '@dominevo/types'
+import { NO_COST_CLAIM, type ChildCostRegistry } from '@dominevo/types/node'
 import {
   RECORDING_PRE_ROLL_REQUEST_MS,
   withRecordingIntent,

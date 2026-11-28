@@ -3,7 +3,7 @@ import {
   AutomationRecipeSchema,
   AutomationTemplatePayloadSchema,
   type AutomationTemplatePayload,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   convertInstance,
   expandInstance,

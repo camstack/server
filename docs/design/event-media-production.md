@@ -111,7 +111,7 @@ with it.
 
 The duplication on `gifSpeed` is deliberate and was verified live. A Zod
 `.default()` on a cap input is applied by the **hub's** router, which ships
-inside `@camstack/system` and therefore lags an addon deploy by a whole publish
+inside `@dominevo/system` and therefore lags an addon deploy by a whole publish
 train (`CAP_INPUT_DEFAULTS`). Measured on the hub right after deploying the addon
 alone: a call omitting `gifSpeed` entirely still came back **4×** (the provider's
 own default) but at 8 fps (the hub's stale `gifFps`). `speed` needs no provider
@@ -183,7 +183,7 @@ The fallback exists for exactly three reasons. Each has a fix, and none of them
 is "keep both paths forever".
 
 1. **A hub older than the method.** Self-closing: the fallback is dead code the
-   moment every node runs a `@camstack/server` carrying `produceEventMedia`.
+   moment every node runs a `@dominevo/server` carrying `produceEventMedia`.
    Delete it then, and delete `renderPreBufferClip`'s gif branch with it.
 
 2. **An H.265-only camera** (e.g. 112). Two options, in the operator's order of

@@ -21,8 +21,8 @@ import {
   type CoreCapAction,
   type CoreCapCallOrigin,
   createCoreCapService,
-} from '@camstack/server/system'
-import type { IScopedLogger } from '@camstack/types'
+} from '@dominevo/server/system'
+import type { IScopedLogger } from '@dominevo/types'
 import { Errors, type ServiceSchema } from 'moleculer'
 import {
   authorizeRemoteUpdatePackage,

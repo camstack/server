@@ -1,5 +1,5 @@
 /**
- * Dependency-free unit conversion entry (`@camstack/types/units-lean`).
+ * Dependency-free unit conversion entry (`@dominevo/types/units-lean`).
  *
  * The device-template render worker (a worker thread of the hub) converts a
  * reading with the SAME table and arithmetic as every other render path, and

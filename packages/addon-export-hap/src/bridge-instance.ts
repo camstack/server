@@ -12,7 +12,7 @@ import type { HapBridgeIdentity } from './hap-instance-kinds.js'
 import { accessoryUuidFor, type MapperKind } from './mappers/kind.js'
 import type { Mapper } from './mappers/types.js'
 import type { BuiltAccessoryShape } from './reconcile/accessory-shape.js'
-import type { ExportTargetEntry } from '@camstack/types/node'
+import type { ExportTargetEntry } from '@dominevo/types/node'
 
 export class BridgeInstance {
   /** The devices of this bridge that have a live accessory, by device id. */

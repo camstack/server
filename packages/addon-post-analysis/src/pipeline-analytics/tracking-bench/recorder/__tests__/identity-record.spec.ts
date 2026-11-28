@@ -19,7 +19,7 @@
  * resurrects an id, so nothing marks a held face unverified and nothing
  * retracts its label on a later rejection.
  */
-import type { FrameResult, IScopedLogger } from '@camstack/types'
+import type { FrameResult, IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   type FaceIdentityVerdict,

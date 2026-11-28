@@ -60,7 +60,7 @@ rows come from the 91-frame Coral benchmark.
   downloading it once from the Hugging Face mirror (sha256-pinned, D743/D744)
   if the node's models directory does not hold it. A Coral with an explicit
   model pin (per-device `steps` or addon settings) keeps the SSD. A node
-  needs the new `@camstack/addon-pipeline` / `@camstack/addon-pipeline-orchestrator`
+  needs the new `@dominevo/addon-pipeline` / `@dominevo/addon-pipeline-orchestrator`
   deployed for any of this to happen; nothing re-downloads before that.
   agent-b (live Coral, `edgetpu:pci` + `edgetpu:pci:1`): unpinned units
   switch to YOLOv9-s @320 at their next pool load after the deploy and
@@ -68,7 +68,7 @@ rows come from the 91-frame Coral benchmark.
 - **17-class label set.** The community build has COCO's first 17 classes
   (person, vehicles, animals), no `package`. Package still comes from its own
   step; a Coral-rooted camera that relied on the SSD's 80-class vocabulary for
-  anything outside the macro mapping loses nothing CamStack consumes.
+  anything outside the macro mapping loses nothing Dominevo consumes.
 - **Cost.** More step time than the SSD (30 vs 18 ms warm p50), mostly the
   Python decode; the Coral is one shared context, so the D710 rule that any
   second model on it is a parameter re-stream is unchanged.

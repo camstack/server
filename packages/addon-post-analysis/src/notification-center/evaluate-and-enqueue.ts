@@ -41,13 +41,13 @@ import { NcSceneStateCache } from './scene-state-cache.js'
 import type { NcActionCatalog } from './rule-actions.js'
 import { NcStillShelf } from './still-shelf.js'
 import { NcZoneOwnershipCache } from './zone-owner-cache.js'
-import type { IScopedLogger, NcRule, NcRuleTarget } from '@camstack/types'
+import type { IScopedLogger, NcRule, NcRuleTarget } from '@dominevo/types'
 import {
   instantKindsOf,
   isSystemDelivery,
   isSystemEventSummaryRule,
   ruleGroupingApplies,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /**
  * What a GROUPED close (D692) adds to `buildEntries`, as ONE options object rather than

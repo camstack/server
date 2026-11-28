@@ -11,7 +11,7 @@
  * off an index that ANSWERED — an unknown index evaluates nothing (D49).
  */
 import { describe, it, expect, vi } from 'vitest'
-import type { SensorEvent } from '@camstack/types'
+import type { SensorEvent } from '@dominevo/types'
 import {
   CameraIndexUnknownDrops,
   DEFAULT_INDEX_UNKNOWN_SUMMARY_WINDOW_MS,

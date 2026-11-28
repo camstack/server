@@ -10,7 +10,7 @@
  * must not depend on which node the balancer happened to pick).
  */
 
-import type { ConfigField, ConfigSection } from '@camstack/types'
+import type { ConfigField, ConfigSection } from '@dominevo/types'
 import {
   DEFAULT_NATIVE_LEASE_SETTINGS,
   NATIVE_LEASE_ACTIVITY_KEY,
@@ -22,7 +22,7 @@ import {
   NATIVE_LEASE_TILE_BUDGET_KEY,
   pickNativeLeaseOverride,
   readNativeLeaseOverride,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { buildGlobalSettingsSections } from '../settings-ui-schemas.js'
 

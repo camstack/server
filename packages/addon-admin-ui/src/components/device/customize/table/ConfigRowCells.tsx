@@ -4,8 +4,8 @@
  * shows what is configured and where it comes from — or says the read is
  * unanswered or failed (D315, D393), never a bare "configured" badge.
  */
-import type { DeviceInfo } from '@camstack/types'
-import { useFanPresetsGetPresets, useRemoteGetConfig, useTemplateList } from '@camstack/ui-library'
+import type { DeviceInfo } from '@dominevo/types'
+import { useFanPresetsGetPresets, useRemoteGetConfig, useTemplateList } from '@dominevo/ui-library'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useConfigDraft } from '../config/config-draft'

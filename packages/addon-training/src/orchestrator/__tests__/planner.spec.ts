@@ -2,7 +2,7 @@
  * Split policy and thin-corpus warnings — pure, no provider.
  */
 import { describe, expect, it } from 'vitest'
-import type { RetrainDatasetStats } from '@camstack/types'
+import type { RetrainDatasetStats } from '@dominevo/types'
 import { MIN_HOLDOUT_SUPPORT, planSplit, thinCorpusWarnings } from '../planner.js'
 
 function stats(

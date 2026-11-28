@@ -76,7 +76,8 @@ export function localCaCommonName(hubName: string | undefined): string {
     .join('')
     .replace(/\s+/gu, ' ')
     .trim()
-  if (cleaned === '' || cleaned.toLowerCase() === 'camstack') return CA_COMMON_NAME
+  const lowered = cleaned.toLowerCase()
+  if (cleaned === '' || lowered === 'dominevo' || lowered === 'camstack') return CA_COMMON_NAME
   const room = X509_COMMON_NAME_MAX_LENGTH - CA_COMMON_NAME.length - CA_HUB_NAME_SEPARATOR.length
   const name = [...cleaned].slice(0, room).join('').trimEnd()
   return `${CA_COMMON_NAME}${CA_HUB_NAME_SEPARATOR}${name}`

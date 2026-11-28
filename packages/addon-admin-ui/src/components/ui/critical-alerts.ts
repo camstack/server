@@ -1,4 +1,4 @@
-import type { Alert } from '@camstack/types'
+import type { Alert } from '@dominevo/types'
 
 /** Dismissed for this full document load only — reset on reload. */
 let criticalAlertsPanelDismissedThisLoad = false

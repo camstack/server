@@ -3,7 +3,7 @@
  * facts list, and the last-runs list. Bodies compose these, so the six sections
  * look like one.
  */
-import type { AutomationRunTrace } from '@camstack/types'
+import type { AutomationRunTrace } from '@dominevo/types'
 import {
   Badge,
   Button,
@@ -12,7 +12,7 @@ import {
   Skeleton,
   useCoreBlocksGet,
   useDeviceLabelById,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { type ReactNode, useId } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'

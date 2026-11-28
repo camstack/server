@@ -1,4 +1,4 @@
-import type { AgentLoadSummary, NodeInferenceDevice } from '@camstack/types'
+import type { AgentLoadSummary, NodeInferenceDevice } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { buildNodeLoadRows, type ClusterNodeFacts } from '../node-load-model'
 

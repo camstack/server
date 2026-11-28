@@ -6,8 +6,8 @@
  * planning#464), a CARD is shown inside the generic row dialog. A catalog
  * entry with neither renders nothing (it never invents one).
  */
-import { CAP_CUSTOMIZE_CATALOG, type DeviceInfo } from '@camstack/types'
-import { useRemoteGetConfig } from '@camstack/ui-library'
+import { CAP_CUSTOMIZE_CATALOG, type DeviceInfo } from '@dominevo/types'
+import { useRemoteGetConfig } from '@dominevo/ui-library'
 import type { ComponentType, ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FanPresetsExtensionCard } from '../../../fan-presets/FanPresetsExtensionCard'

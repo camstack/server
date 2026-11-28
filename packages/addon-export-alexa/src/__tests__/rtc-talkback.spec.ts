@@ -3,7 +3,7 @@
  * only when the camera has `intercom` AND the linked user may control it; the
  * broker is told so with `talkback` on `webrtcSession.handleOffer`.
  */
-import type { AddonContext, IScopedLogger } from '@camstack/types'
+import type { AddonContext, IScopedLogger } from '@dominevo/types'
 import type { AlexaEgressPrewarmPort } from '../egress/alexa-egress-prewarm.js'
 import { describe, expect, it, vi } from 'vitest'
 import { handleInitiateSessionWithOffer } from '../handlers/rtc-session.js'

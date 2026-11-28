@@ -7,7 +7,7 @@ import {
   type DatabaseSnapshotResult,
   type IScopedLogger,
   type LogExtras,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type Database from 'better-sqlite3'
 import * as tar from 'tar'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
@@ -111,12 +111,12 @@ describe('SystemBackupService', () => {
     dataDir = path.join(tmpRoot, 'data')
     fs.mkdirSync(dataDir, { recursive: true })
     fs.writeFileSync(path.join(dataDir, 'config.yaml'), 'cluster: prod\n')
-    fs.mkdirSync(path.join(dataDir, 'addons', '@camstack', 'foo'), {
+    fs.mkdirSync(path.join(dataDir, 'addons', '@dominevo', 'foo'), {
       recursive: true,
     })
     fs.writeFileSync(
-      path.join(dataDir, 'addons', '@camstack', 'foo', 'package.json'),
-      JSON.stringify({ name: '@camstack/foo', version: '1.0.0' }),
+      path.join(dataDir, 'addons', '@dominevo', 'foo', 'package.json'),
+      JSON.stringify({ name: '@dominevo/foo', version: '1.0.0' }),
     )
     service = new SystemBackupService(dataDir, noopLogger)
   })
@@ -287,12 +287,12 @@ describe('SystemBackupService', () => {
     /**
      * The live hub archived ~196 MB of per-addon `node_modules` on every
      * backup: `AddonInstaller` materialises runtime deps under
-     * `addons/@camstack/<addon>/node_modules`, and the tar walk had no
+     * `addons/@dominevo/<addon>/node_modules`, and the tar walk had no
      * filter for them. Only built `dist` (plus package.json/assets) is
      * restore-worthy — deps are reinstalled from npm.
      */
     it('never archives node_modules — dist and package.json survive, node_modules does not', async () => {
-      const addonDir = path.join(dataDir, 'addons', '@camstack', 'foo')
+      const addonDir = path.join(dataDir, 'addons', '@dominevo', 'foo')
       fs.mkdirSync(path.join(addonDir, 'dist'), { recursive: true })
       fs.writeFileSync(path.join(addonDir, 'dist', 'index.js'), 'export {}')
       fs.mkdirSync(path.join(addonDir, 'node_modules', 'dep'), {
@@ -309,13 +309,13 @@ describe('SystemBackupService', () => {
       const restoreDir = path.join(tmpRoot, 'restored-nm')
       await extractAll(archivePath, restoreDir)
       expect(
-        fs.existsSync(path.join(restoreDir, 'addons', '@camstack', 'foo', 'dist', 'index.js')),
+        fs.existsSync(path.join(restoreDir, 'addons', '@dominevo', 'foo', 'dist', 'index.js')),
       ).toBe(true)
       expect(
-        fs.existsSync(path.join(restoreDir, 'addons', '@camstack', 'foo', 'package.json')),
+        fs.existsSync(path.join(restoreDir, 'addons', '@dominevo', 'foo', 'package.json')),
       ).toBe(true)
       expect(
-        fs.existsSync(path.join(restoreDir, 'addons', '@camstack', 'foo', 'node_modules')),
+        fs.existsSync(path.join(restoreDir, 'addons', '@dominevo', 'foo', 'node_modules')),
       ).toBe(false)
       // The embedded manifest must agree with the tar — no phantom entries.
       expect(result.manifest.entries.some((e) => e.path.includes('node_modules'))).toBe(false)

@@ -30,8 +30,8 @@
  */
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
-import type { IScopedLogger, SettingsStoreClient } from '@camstack/types'
-import { mayWriteToLocation } from '@camstack/types'
+import type { IScopedLogger, SettingsStoreClient } from '@dominevo/types'
+import { mayWriteToLocation } from '@dominevo/types'
 import { isMediaOwnerKind, MEDIA_COLLECTION } from '../store/media-store.js'
 import { type DiscardLocationRow, locationBasePath } from './location-discard-policy.js'
 import {

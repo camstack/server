@@ -10,7 +10,7 @@ import {
   type SirenOptions,
   type SirenStatus,
   type SwitchStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { SirenAccessory } from '../siren.js'
 

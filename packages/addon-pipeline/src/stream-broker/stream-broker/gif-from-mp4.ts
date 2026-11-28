@@ -34,12 +34,12 @@
  */
 import type { ChildProcess, spawn as nodeSpawn } from 'node:child_process'
 
-import { type IScopedLogger, gifFromMp4Args } from '@camstack/types'
+import { type IScopedLogger, gifFromMp4Args } from '@dominevo/types'
 
 // The chain and argv are shared with the notification centre's RECORDED derive
-// (D682) and live in `@camstack/types`; re-exported so this module stays the
+// (D682) and live in `@dominevo/types`; re-exported so this module stays the
 // broker's one import point.
-export { gifDeriveSpeed, gifFilterComplex, gifFromMp4Args } from '@camstack/types'
+export { gifDeriveSpeed, gifFilterComplex, gifFromMp4Args } from '@dominevo/types'
 
 /**
  * Long side of the gif.

@@ -14,7 +14,7 @@
  * failure shape this repo has shipped twice.
  */
 import type { spawn as nodeSpawn } from 'node:child_process'
-import type { PinnedFfmpegResolver } from '@camstack/types'
+import type { PinnedFfmpegResolver } from '@dominevo/types'
 
 /** How one bounded ffmpeg ended. Three distinct operator actions, never one. */
 export interface ClipFfmpegRun {

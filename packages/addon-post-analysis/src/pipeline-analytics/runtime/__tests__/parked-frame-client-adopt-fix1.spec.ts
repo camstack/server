@@ -10,7 +10,7 @@
  *    "a park still in flight at release is released when it lands" fails;
  *  - drop the eviction log (review L5): "evicting a fused survivor's members is logged" fails.
  */
-import type { ParkTrackFrameResult } from '@camstack/types'
+import type { ParkTrackFrameResult } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { makeLogRecorder } from '../../__tests__/test-helpers.js'
 import { createParkedFrameClient } from '../parked-frame-client.js'

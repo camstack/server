@@ -14,7 +14,7 @@
 import { readFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import type { IScopedLogger, SettingsStoreClient } from '@camstack/types'
+import type { IScopedLogger, SettingsStoreClient } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { RecordingIndex } from '../../recording-index.js'
 import { segmentRelPath } from '../../segment-path.js'

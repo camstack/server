@@ -9,7 +9,7 @@
  * 2026-10-07): hub with an iGPU and an NPU enabled and the CPU off, and the
  * N100 with one iGPU.
  */
-import type { System } from '@camstack/sdk'
+import type { System } from '@dominevo/sdk'
 import type {
   CameraPipelineSettings,
   ConfigField,
@@ -17,8 +17,8 @@ import type {
   PipelineAddonSchema,
   PipelineSchema,
   StepSwitchMatrix,
-} from '@camstack/types'
-import { ConfirmDialogProvider, SystemProvider, trpc } from '@camstack/ui-library'
+} from '@dominevo/types'
+import { ConfirmDialogProvider, SystemProvider, trpc } from '@dominevo/ui-library'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createTRPCClient, TRPCClientError, type TRPCLink } from '@trpc/client'
 import { observable } from '@trpc/server/observable'

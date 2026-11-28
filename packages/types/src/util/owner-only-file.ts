@@ -11,7 +11,7 @@
  *
  * ZERO imports beyond Node built-ins, on purpose: the Electron shell bundles
  * this single file (see `packages/desktop/tsup.config.ts`) instead of the
- * whole `@camstack/types` barrel.
+ * whole `@dominevo/types` barrel.
  *
  * Failure is NOT swallowed. A secret file that could not be restricted is a
  * secret file the caller must know about, so `OwnerOnlyError` propagates; the

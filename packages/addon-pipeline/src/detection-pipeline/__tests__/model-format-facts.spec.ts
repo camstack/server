@@ -8,7 +8,7 @@
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import { HF_REPO, hfModelUrl, type ModelCatalogEntry } from '@camstack/types'
+import { HF_REPO, hfModelUrl, type ModelCatalogEntry } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { formatPrecision, modelOnDiskState } from '../model-format-facts.js'
 
@@ -55,7 +55,7 @@ describe('formatPrecision', () => {
     expect(formatPrecision(e, 'tflite')).toBe('int8')
   })
 
-  it('a CamStack Core ML build is fp16 (D743), a third-party one is not assumed', () => {
+  it('a Dominevo Core ML build is fp16 (D743), a third-party one is not assumed', () => {
     const own = entry({
       formats: { coreml: { url: `${MIRROR}x/coreml/camstack-yolov9m-320.mlpackage`, sizeMB: 38 } },
     })

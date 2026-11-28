@@ -1,4 +1,4 @@
-import type { LockControlStatus } from '@camstack/types'
+import type { LockControlStatus } from '@dominevo/types'
 import type { LockActivity, LockDoor } from '../scenes/lock/model'
 
 export interface LockReading {

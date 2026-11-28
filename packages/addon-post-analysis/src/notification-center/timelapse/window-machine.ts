@@ -12,7 +12,7 @@
  * a window means the same thing everywhere — including `invert` and spans that
  * cross midnight.
  */
-import type { NcSchedule } from '@camstack/types'
+import type { NcSchedule } from '@dominevo/types'
 import { isScheduleActive } from '../rule-engine.js'
 
 /** What the scheduler must do for one (rule, device) pair at this tick. */

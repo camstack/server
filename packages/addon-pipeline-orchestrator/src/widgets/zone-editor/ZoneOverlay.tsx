@@ -19,7 +19,7 @@
  * frame highlights its row in the Detection tab list, and vice versa.
  */
 import { memo, useCallback, useMemo, useState, Suspense } from 'react'
-import type { Zone as CapZone } from '@camstack/types'
+import type { Zone as CapZone } from '@dominevo/types'
 import {
   MaskShapeCanvas,
   capZoneToCanvas,
@@ -27,9 +27,9 @@ import {
   useDeviceStateSlice,
   useZoneEditing,
   useSystem,
-} from '@camstack/ui-library'
-import type { MaskShape } from '@camstack/types'
-import type { MaskShapeItem } from '@camstack/ui-library'
+} from '@dominevo/ui-library'
+import type { MaskShape } from '@dominevo/types'
+import type { MaskShapeItem } from '@dominevo/ui-library'
 import {
   type Zone as CanvasZone,
   zoneToItem,
@@ -222,7 +222,7 @@ function ZoneOverlayImpl({ deviceId }: ZoneOverlayProps) {
   if (zones.length === 0 && drawingKind === null && saveError === null) return null
 
   // MaskShapeCanvas is exported as a React.lazy component from
-  // @camstack/ui-library (keeps ~300 KB konva bundle off first paint).
+  // @dominevo/ui-library (keeps ~300 KB konva bundle off first paint).
   // Wrap in <Suspense> so the lazy boundary is handled here.
   return (
     <Suspense fallback={null}>

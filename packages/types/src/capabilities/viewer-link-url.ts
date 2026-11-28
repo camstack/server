@@ -1,7 +1,7 @@
 /**
  * viewer-link-url — the ONE builder for a link that opens a VIEWER page
  * (a camera at an instant, the events timeline, the notification centre),
- * and the one definition of the "CamStack app link" address (D709).
+ * and the one definition of the "Dominevo app link" address (D709).
  *
  * The address a link points at is the endpoint the operator FLAGS for
  * notifications on the admin Network page (`local-network`'s notification
@@ -69,7 +69,7 @@ export interface ViewerLinkInput {
   readonly destination: ViewerDestination
 }
 
-/** True when `baseUrl` names the CamStack app link rather than a hub address. */
+/** True when `baseUrl` names the Dominevo app link rather than a hub address. */
 export function isAppLinkBase(baseUrl: string | null | undefined): boolean {
   if (baseUrl === null || baseUrl === undefined || baseUrl === '') return false
   try {

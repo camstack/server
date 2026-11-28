@@ -9,14 +9,14 @@
  * dropped sample (a pool the watchdog silently stopped seeing is a bound
  * that silently stopped existing).
  *
- * The parse itself (`parseProcStatus`) lives in `@camstack/types` next to the
+ * The parse itself (`parseProcStatus`) lives in `@dominevo/types` next to the
  * watchdog policy so it is unit-tested once and shared with
  * `addon-post-analysis`, which cannot import this addon. Only the `fs` read
  * lives here.
  */
 import * as fs from 'node:fs'
 import { execFile } from 'node:child_process'
-import { parseProcStatus, type ProcMemory } from '@camstack/types'
+import { parseProcStatus, type ProcMemory } from '@dominevo/types'
 
 const IS_LINUX = process.platform === 'linux'
 

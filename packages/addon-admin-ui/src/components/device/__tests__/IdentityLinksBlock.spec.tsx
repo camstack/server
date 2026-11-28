@@ -10,7 +10,7 @@
  */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
-import type { IdentityLink, IdentityLinkDecision } from '@camstack/types'
+import type { IdentityLink, IdentityLinkDecision } from '@dominevo/types'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -23,9 +23,9 @@ let linksQuery: { data: unknown; error: unknown } = {
   error: null,
 }
 
-vi.mock('@camstack/ui-library', async () => {
+vi.mock('@dominevo/ui-library', async () => {
   const actual =
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+    await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return {
     ...actual,
     useDeviceManagerListIdentityLinks: () => linksQuery,

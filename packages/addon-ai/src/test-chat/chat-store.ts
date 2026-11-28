@@ -6,7 +6,7 @@
  * that belongs to someone else is refused.
  */
 import { randomUUID } from 'node:crypto'
-import type { RecordKindHandle, RecordRow, RecordsAccess } from '@camstack/types'
+import type { RecordKindHandle, RecordRow, RecordsAccess } from '@dominevo/types'
 import { aiRecordKinds } from '../record-kinds.js'
 import { readAllRows } from '../record-pages.js'
 import {

@@ -5,8 +5,8 @@ import type {
   PipelineDefaultStep,
   PipelineStepInput,
   StepDefinition,
-} from '@camstack/types'
-import { overlayClusterStepSettings, stepModelRunsOnFormat } from '@camstack/types'
+} from '@dominevo/types'
+import { overlayClusterStepSettings, stepModelRunsOnFormat } from '@dominevo/types'
 import { type ClusterModelRefusal, resolveClusterStepModel } from './cluster-model-resolution.js'
 import {
   OBJECT_DETECTION_STEP_ID,

@@ -7,7 +7,7 @@ import {
   type FanControlStatus,
   type InferNativeProvider,
   type SwitchStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { DreoChildDevice } from './dreo-child-device.js'
 import {
   DREO_MAX_FAN_LEVEL,

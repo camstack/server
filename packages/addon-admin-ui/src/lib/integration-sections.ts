@@ -5,7 +5,7 @@
  * absent, the default applies: an addon shipped in a framework package
  * (`manifest.packageName`) is System, every other one is a Provider.
  */
-import type { IntegrationSection } from '@camstack/types'
+import type { IntegrationSection } from '@dominevo/types'
 import { isFrameworkPackage } from './framework-packages'
 
 export interface AddonPackageRef {

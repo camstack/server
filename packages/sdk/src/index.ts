@@ -18,7 +18,7 @@ export type {
 } from './system.js'
 // Client-facing device identity snapshot (name/type/online) — surfaced by
 // System.getDeviceInfo / listDeviceInfos so consumers don't derive it.
-export type { DeviceInfo } from '@camstack/types'
+export type { DeviceInfo } from '@dominevo/types'
 // Settings-redesign cleanup: `SettingsSection` type deleted together
 // with the legacy `settings.*` tRPC namespace. Hub yml sections now
 // flow through the `system-config` built-in addon via
@@ -138,18 +138,18 @@ export type {
 } from './nvr.js'
 
 // ─── Device identifiers (D1059) ─────────────────────────────────────
-// The normaliser lives in `@camstack/types` (the provider-facing contract every
+// The normaliser lives in `@dominevo/types` (the provider-facing contract every
 // addon bundles); re-exported here so a client or a tool normalises the same way.
 export {
   DeviceIdentifiersSchema,
   identifierStrength,
   normaliseIdentifiers,
   normaliseMac,
-} from '@camstack/types'
+} from '@dominevo/types'
 export type {
   DeviceIdentifierKey,
   DeviceIdentifiers,
   DeviceIdentifierStrength,
   NormalisedIdentifiers,
   RawDeviceIdentifiers,
-} from '@camstack/types'
+} from '@dominevo/types'

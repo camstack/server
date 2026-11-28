@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import type { FrameRef, FrameViewSpec, MaterializedFrameView } from '@camstack/types'
+import type { FrameRef, FrameViewSpec, MaterializedFrameView } from '@dominevo/types'
 import { resolveFrameViewGeometry } from './frame-view-geometry.js'
 import { isSessionDecodeReadGone } from './session-decode-read-gone.js'
 import type { FrameImage } from './video-frame-generator.js'

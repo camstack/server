@@ -41,7 +41,7 @@ const listed = (ids: readonly string[]): unknown =>
   ids.map((id) => ({
     manifest: {
       id,
-      packageName: `@camstack/addon-${id}`,
+      packageName: `@dominevo/addon-${id}`,
       packageVersion: '1.0.0',
     },
   }))
@@ -88,7 +88,7 @@ describe('setup_core_addons', () => {
       group: 'camera-integration',
       tool: 'configure_addon_install',
     })
-    expect(JSON.stringify(cameras.nextAction)).toContain('@camstack/addon-provider-onvif')
+    expect(JSON.stringify(cameras.nextAction)).toContain('@dominevo/addon-provider-onvif')
   })
 
   it('installed without an instance is "installed": the next action is the admin page, never a tool that would carry a secret', async () => {

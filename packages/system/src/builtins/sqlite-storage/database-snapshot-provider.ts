@@ -14,7 +14,7 @@ import type {
   DatabaseSnapshotWritten,
   DataStoreDatabase,
   IDatabaseSnapshotProvider,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { OwnedSqliteFile } from './owned-sqlite-file.js'
 
 /** What the provider needs from an owned file. */

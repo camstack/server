@@ -5,7 +5,7 @@
  *
  * The kind name is `destinations` (kind names are lower-case-dashed); the owner is `loki-logging`.
  */
-import { type DefinedRecordKind, defineEntryKind } from '@camstack/types'
+import { type DefinedRecordKind, defineEntryKind } from '@dominevo/types'
 import { z } from 'zod'
 
 export interface LokiBound {

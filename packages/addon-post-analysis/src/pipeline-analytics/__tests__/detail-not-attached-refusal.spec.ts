@@ -17,7 +17,7 @@
  * immediately and feed the scheduler EXACTLY ONE frame-miss, so the bounded
  * give-up (3 consecutive misses) abandons the step instead of looping.
  */
-import type { DetailStepAnnounce, FrameHandle, IScopedLogger } from '@camstack/types'
+import type { DetailStepAnnounce, FrameHandle, IScopedLogger } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { TrackDetailDispatcher, type TrackDetailFrame } from '../detail-dispatcher.js'
 

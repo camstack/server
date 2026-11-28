@@ -1,4 +1,4 @@
-import { DEVICE_TEMPLATE_CATALOGUE } from '@camstack/types/device-template-catalogue'
+import { DEVICE_TEMPLATE_CATALOGUE } from '@dominevo/types/device-template-catalogue'
 import { describe, expect, it } from 'vitest'
 import {
   applyTemplateSuggestion,

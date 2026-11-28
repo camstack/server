@@ -16,7 +16,7 @@
  */
 import { readFileSync } from 'node:fs'
 import { describe, expect, it, vi } from 'vitest'
-import type { LogEntry } from '@camstack/types'
+import type { LogEntry } from '@dominevo/types'
 import { type ILogDestination, LogManager } from '../../logging/log-manager.js'
 import {
   buildHeapSample,

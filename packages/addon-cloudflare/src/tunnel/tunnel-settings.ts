@@ -6,7 +6,7 @@
  * exists (the migration has not copied them yet) the bare row of the old layout is read, so a
  * tunnel never loses its origin because a migration was tolerated.
  */
-import { normalizeNodeId } from '@camstack/types'
+import { normalizeNodeId } from '@dominevo/types'
 import type { CloudflareTunnelConfig } from './cloudflare-tunnel'
 import { bodyFrom } from './migrations/connection-to-records'
 import type { CloudflareTunnelBody } from './tunnel-record-kinds'

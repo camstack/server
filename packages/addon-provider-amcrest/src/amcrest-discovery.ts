@@ -1,4 +1,9 @@
-import { DeviceType, type DiscoveryCandidate, type DiscoveryHit, type DiscoveryMode } from '@camstack/types'
+import {
+  DeviceType,
+  type DiscoveryCandidate,
+  type DiscoveryHit,
+  type DiscoveryMode,
+} from '@dominevo/types'
 import { AmcrestCgiClient } from './amcrest-cgi-client.js'
 
 /** A Amcrest or Dahua camera found on the LAN (via WS-Discovery and/or a CGI probe). */

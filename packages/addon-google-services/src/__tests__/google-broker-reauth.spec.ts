@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { AddonContext, IScopedLogger } from '@camstack/types'
+import type { AddonContext, IScopedLogger } from '@dominevo/types'
 import { GoogleBrokerRegistry } from '../google-broker-registry.js'
 import { buildGoogleBrokerReconnectAlert } from '../google-broker-reconnect-alert.js'
 import { GoogleServicesAddon } from '../google-services.addon.js'
@@ -201,7 +201,7 @@ describe('a refreshed session the record refuses is kept, and saved at the next 
   })
 })
 
-describe('the OAuth callback lands in CamStack, never on a bare text page', () => {
+describe('the OAuth callback lands in Dominevo, never on a bare text page', () => {
   beforeEach(() => {
     vi.mocked(exchangeCode).mockReset()
   })

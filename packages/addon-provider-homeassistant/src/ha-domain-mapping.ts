@@ -3,10 +3,10 @@ import {
   DeviceRole,
   DeviceFeature,
   type EnumSensorDateTimeFormat,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /**
- * HA domain + device_class → CamStack materialisation triplet. The
+ * HA domain + device_class → Dominevo materialisation triplet. The
  * function is pure: same inputs always yield the same mapping. Called
  * once per HA entity at discovery time to pre-populate
  * `HaDiscoveredEntity.mappedTo` so the adoption preview is a no-
@@ -23,7 +23,7 @@ export interface HaEntityMapping {
   readonly role: DeviceRole | null
   /**
    * Capability names that should register on the accessory child device.
-   * Cap names match the CamStack cap registry (`switch`, `brightness`,
+   * Cap names match the Dominevo cap registry (`switch`, `brightness`,
    * `color`, `temperature-sensor`, …).
    */
   readonly capabilities: readonly string[]
@@ -132,7 +132,7 @@ export function mapHaEntityToCamStack(input: HaEntityMappingInput): HaEntityMapp
     // like `image.*`. We model it as an Image device (not a streamable Camera)
     // so snapshot-only sources (e.g. a vacuum map) render as a plain image and
     // never engage the stream broker. Streaming HA cameras are better adopted
-    // through CamStack's native ONVIF/RTSP providers.
+    // through Dominevo's native ONVIF/RTSP providers.
     case 'camera':
       return mapImage(attributes)
 

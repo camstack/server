@@ -55,7 +55,7 @@ import {
   RecordIntegrationInstances,
   resolveSecretMarkers,
   isInstanceOn,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 type BrokerStatus = MqttBrokerLiveStatus
 
@@ -1043,7 +1043,7 @@ export class MqttBrokerAddon extends BaseAddon<Record<string, never>> {
   // ── Instance form ─────────────────────────────────────────────────
 
   /**
-   * The broker form. The create form (`id` null) offers "run an onboard broker" (CamStack hosts an
+   * The broker form. The create form (`id` null) offers "run an onboard broker" (Dominevo hosts an
    * `aedes` server on this hub: a port, anonymous access) or an external URL; an existing onboard
    * broker edits only its credentials, since its address is the one it was given.
    */
@@ -1070,7 +1070,7 @@ export class MqttBrokerAddon extends BaseAddon<Record<string, never>> {
             id: 'broker',
             title: 'Onboard broker',
             description:
-              'A CamStack-hosted broker on this hub. Its port was chosen when it was created.',
+              'A Dominevo-hosted broker on this hub. Its port was chosen when it was created.',
             columns: 1,
             fields: credentials,
           },
@@ -1085,8 +1085,8 @@ export class MqttBrokerAddon extends BaseAddon<Record<string, never>> {
           id: 'broker',
           title: creating ? 'MQTT broker' : 'External broker',
           description: creating
-            ? 'Run a broker on this hub, or connect to one running outside CamStack (mosquitto, EMQX, HiveMQ, cloud bridges, …). The password is kept in the keychain.'
-            : 'A broker running outside CamStack (mosquitto, EMQX, HiveMQ, cloud bridges, …). The password is kept in the keychain.',
+            ? 'Run a broker on this hub, or connect to one running outside Dominevo (mosquitto, EMQX, HiveMQ, cloud bridges, …). The password is kept in the keychain.'
+            : 'A broker running outside Dominevo (mosquitto, EMQX, HiveMQ, cloud bridges, …). The password is kept in the keychain.',
           columns: 1,
           fields: [
             ...(creating
@@ -1097,7 +1097,7 @@ export class MqttBrokerAddon extends BaseAddon<Record<string, never>> {
                     label: 'Run an onboard broker',
                     labelKey: 'mqtt-broker:fullSettings.brokers.onboard.label',
                     description:
-                      'Spin up a CamStack-hosted aedes broker on this hub instead of connecting to an external one. Each onboard broker gets its own dedicated server + port.',
+                      'Spin up a Dominevo-hosted aedes broker on this hub instead of connecting to an external one. Each onboard broker gets its own dedicated server + port.',
                     descriptionKey: 'mqtt-broker:fullSettings.brokers.onboard.description',
                     default: false,
                   },

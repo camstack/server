@@ -132,7 +132,7 @@ export interface SendToExportedTargetInput {
   readonly notification: z.input<typeof NotificationSchema>
 }
 
-/** Send through one CamStack notification target on behalf of an exporter. */
+/** Send through one Dominevo notification target on behalf of an exporter. */
 export async function sendToExportedTarget(
   api: ExportEntityApi,
   log: IScopedLogger,

@@ -1,5 +1,5 @@
-import { findVocabularyEntry, readEventVocabulary } from '@camstack/types'
-import { useDeviceProxy, useDeviceStateSlice, useSystem } from '@camstack/ui-library'
+import { findVocabularyEntry, readEventVocabulary } from '@dominevo/types'
+import { useDeviceProxy, useDeviceStateSlice, useSystem } from '@dominevo/ui-library'
 import { Hand, MousePointerClick } from 'lucide-react'
 import { type ReactElement, useEffect, useRef, useState } from 'react'
 import {

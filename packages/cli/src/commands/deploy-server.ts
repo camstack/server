@@ -1,11 +1,11 @@
 /**
- * `camstack deploy-server` — the dev server-deploy channel (full fidelity,
+ * `dominevo deploy-server` — the dev server-deploy channel (full fidelity,
  * no npm publish).
  *
  * Flow (operator decision: every dev iteration goes through the SAME
  * stage → drain → probation → promote cycle as a release — no fast
  * dist-overlay mode):
- *   1. discover the `@camstack/server` workspace closure from the graph,
+ *   1. discover the `@dominevo/server` workspace closure from the graph,
  *   2. build every closure package in dependency order,
  *   3. pack each install-closure package at ONE uniform dev version
  *      (`<serverBase>-dev.<epochSeconds>`; temp-only package.json rewrite),
@@ -20,7 +20,7 @@ import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 import { hubRequest } from '../http/hub-http.js'
-import { type CredentialSource, withAuthHint } from '@camstack/develop'
+import { type CredentialSource, withAuthHint } from '@dominevo/develop'
 import {
   computeDevVersion,
   discoverServerClosure,
@@ -602,7 +602,7 @@ export async function deployServer(opts: DeployServerOptions): Promise<void> {
         devVersion,
         intraSetNames,
         outDir,
-        pkg.name === '@camstack/server' ? addonMinimums : undefined,
+        pkg.name === '@dominevo/server' ? addonMinimums : undefined,
       )
       console.log(`[camstack]   ✓ ${pkg.name} → ${path.basename(packed.tgzPath)}`)
       tarballs.push(packed)

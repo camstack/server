@@ -2,7 +2,7 @@
  * Live preview of one scalar draft. A dwell shows the delay a fresh
  * observation would wait — it does not invent runtime memory.
  */
-import { type CompositionSourceRef, evaluateExpressionSource } from '@camstack/types'
+import { type CompositionSourceRef, evaluateExpressionSource } from '@dominevo/types'
 import { scalarOutputPath } from './scalar-fit'
 import {
   scalarFeatureFromForm,

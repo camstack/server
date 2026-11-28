@@ -1,8 +1,8 @@
 /**
- * How the review tools find their hub: the shared `@camstack/develop` chain
- * (`connectHub`), the same one `camstack deploy` and `scripts/hub/hub.mjs` use.
+ * How the review tools find their hub: the shared `@dominevo/develop` chain
+ * (`connectHub`), the same one `dominevo deploy` and `scripts/hub/hub.mjs` use.
  * Hub address: `CAMSTACK_HUB_URL`, the scratchpad file, else the cached
- * `camstack login` session. Credential: the login session, and only that
+ * `dominevo login` session. Credential: the login session, and only that
  * (D1101; renewed when about to expire): no token variable is read. TLS is never disabled — a self-signed hub is trusted by naming its
  * CA (`CAMSTACK_HUB_CA_FILE`) or saving it next to the session.
  *
@@ -13,7 +13,7 @@ import {
   connectHub,
   type HubConnection,
   type HubTransport,
-} from '@camstack/develop'
+} from '@dominevo/develop'
 import { createReviewHub, type ReviewHub } from './hub-api.js'
 
 type Env = Readonly<Record<string, string | undefined>>
@@ -41,7 +41,7 @@ interface ConnectedReviewHub {
   readonly connection: HubConnection
 }
 
-const REMEDY = 'Run `camstack login <host>` (admin account for the write tools).'
+const REMEDY = 'Run `dominevo login <host>` (admin account for the write tools).'
 
 async function connect(options: ReviewHubOptions): Promise<ConnectedReviewHub> {
   const env = options.env ?? process.env

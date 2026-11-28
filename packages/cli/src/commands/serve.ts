@@ -32,9 +32,9 @@ export async function runServe(args: readonly string[]): Promise<void> {
   }
   Object.assign(process.env, buildServeEnv(opts))
   // Optional runtime dep — see package.json `optionalDependencies`.
-  // `npx @camstack/cli serve` only makes sense inside a repo checkout or
-  // when @camstack/server is co-installed.
+  // `npx @dominevo/cli serve` only makes sense inside a repo checkout or
+  // when @dominevo/server is co-installed.
   // The launcher reads the role and wires the framework paths; `main.js` is
   // the hub bootstrap and skips both.
-  await import('@camstack/server/launcher.js')
+  await import('@dominevo/server/launcher.js')
 }

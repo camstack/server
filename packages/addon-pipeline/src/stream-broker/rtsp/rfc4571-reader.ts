@@ -27,7 +27,7 @@ import * as net from 'node:net'
 import { copyOwned, type PacketAllocator } from '../stream-broker/owned-buffer.js'
 import { parseSdp, extractVideoTrack, extractAudioTrack } from './sdp-parser.js'
 import type { ParsedSdp, SdpVideoTrack, SdpAudioTrack } from './sdp-parser.js'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 export interface Rfc4571ReaderOptions {
   /** Loopback URL the lib's RFC 4571 server emitted (`tcp://[user:pass@]host:port`). */

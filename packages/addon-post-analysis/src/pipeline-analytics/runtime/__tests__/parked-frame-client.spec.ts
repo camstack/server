@@ -14,8 +14,8 @@
  *    never re-derived from a frame; a track never parked costs no RPC;
  *  - release drops the parcels on the node and the mirror here.
  */
-import type { ParkTrackFrameResult } from '@camstack/types'
-import { CAP_NODE_PIN_CONTEXT_KEY } from '@camstack/types'
+import type { ParkTrackFrameResult } from '@dominevo/types'
+import { CAP_NODE_PIN_CONTEXT_KEY } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { makeLogRecorder } from '../../__tests__/test-helpers.js'
 import { createParkedFrameClient } from '../parked-frame-client.js'

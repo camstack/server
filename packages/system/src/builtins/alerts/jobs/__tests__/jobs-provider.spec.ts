@@ -9,7 +9,7 @@ import {
   type JobRegisterInput,
   type JobSourceEntry,
   type JobState,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { makeRecordsWorld } from '../../../sqlite-storage/__tests__/support/records-world.js'
 import { jobRecordKinds } from '../job-records.js'

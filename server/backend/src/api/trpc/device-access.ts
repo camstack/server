@@ -10,8 +10,8 @@
  *
  * Pure module — no tRPC machinery — so the spec exercises it directly.
  */
-import { METHOD_ACCESS_MAP } from '@camstack/server/system'
-import type { CredentialScope } from '@camstack/types'
+import { METHOD_ACCESS_MAP } from '@dominevo/server/system'
+import type { CredentialScope } from '@dominevo/types'
 import { personSessionScopes } from '../../auth/person-session-scopes.js'
 import { authorizeProcedure } from './principal-authorization.js'
 import type { DeviceScopeLookup } from './scope-access.js'

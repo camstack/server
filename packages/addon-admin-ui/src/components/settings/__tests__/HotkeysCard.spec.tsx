@@ -2,7 +2,7 @@
 /** The read-only shortcut list shows what is registered with the provider. */
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
-import { HotkeyProvider, useHotkey } from '@camstack/ui-library'
+import { HotkeyProvider, useHotkey } from '@dominevo/ui-library'
 import '../../../i18n'
 import { HotkeysCard, formatCombo } from '../HotkeysCard'
 

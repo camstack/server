@@ -14,7 +14,7 @@
  * unregister must PRESENT that owner. A mismatched (or missing) owner is a
  * logged no-op, never a deletion.
  */
-import type { IEventBus, IScopedLogger, SystemEvent } from '@camstack/types'
+import type { IEventBus, IScopedLogger, SystemEvent } from '@dominevo/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { CapabilityRegistry } from '../capability-registry.js'
 

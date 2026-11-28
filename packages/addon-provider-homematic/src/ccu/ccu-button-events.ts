@@ -31,7 +31,7 @@ export function isHmipDevice(device: Pick<HmDevice, 'type'>): boolean {
   return /^hmip/i.test(device.type)
 }
 
-const KEY_EVENT_PROGRAM_PREFIX = 'CamStack: '
+const KEY_EVENT_PROGRAM_PREFIX = 'Dominevo: '
 const KEY_EVENT_PROGRAM_SUFFIX = ' events'
 
 /** The one CCU program that carries a device's key events. It is found by this name; nothing else is stored. */
@@ -39,7 +39,7 @@ export function keyEventProgramName(device: Pick<HmDevice, 'address' | 'name'>):
   return `${KEY_EVENT_PROGRAM_PREFIX}${hmName(device.name) ?? device.address}${KEY_EVENT_PROGRAM_SUFFIX}`
 }
 
-/** True when the name is one CamStack assigned to a key-event program. */
+/** True when the name is one Dominevo assigned to a key-event program. */
 export function isCamStackKeyEventProgramName(name: string): boolean {
   return (
     name.startsWith(KEY_EVENT_PROGRAM_PREFIX) &&
@@ -131,7 +131,7 @@ function sessionStopped(
   return new Error('Homematic session stopped before the CCU answered')
 }
 
-/** CCU address → CamStack device id of the adopted devices (a missing address is not adopted). */
+/** CCU address → Dominevo device id of the adopted devices (a missing address is not adopted). */
 export interface AdoptedAddressIndex {
   has(address: string): boolean
   get(address: string): number | undefined

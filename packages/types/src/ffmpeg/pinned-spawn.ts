@@ -4,7 +4,7 @@
  * name. There is no fourth answer: the `?? 'ffmpeg'` this replaces made "no
  * pinned build" mean "run the host's", silently, at every clip site that had it.
  *
- * Node-only (`node:child_process`), so it lives under `@camstack/types/node`.
+ * Node-only (`node:child_process`), so it lives under `@dominevo/types/node`.
  */
 import { type ChildProcess, spawn, type SpawnOptions } from 'node:child_process'
 

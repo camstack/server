@@ -3,7 +3,7 @@ import {
   REMOVED_TOKEN_FLAG_OPTIONS,
 } from '../commands/removed-token-flags.js'
 import { parseArgs } from 'node:util'
-import { tryConnectHub } from '@camstack/develop'
+import { tryConnectHub } from '@dominevo/develop'
 import { hubRequest } from '../http/hub-http.js'
 import { doctorExitCode, formatDoctor, runDoctorChecks, type HubProbe } from './doctor.js'
 
@@ -20,7 +20,7 @@ async function probeHub(server: string): Promise<HubProbe> {
   }
 }
 
-/** `camstack mcp doctor [-s <host>] [--json]`; the exit code is 1 on a failing check. */
+/** `dominevo mcp doctor [-s <host>] [--json]`; the exit code is 1 on a failing check. */
 export async function runDoctorCommand(
   args: readonly string[],
   cliVersion: string,

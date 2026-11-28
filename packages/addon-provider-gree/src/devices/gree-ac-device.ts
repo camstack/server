@@ -15,7 +15,7 @@ import {
   fanControlCapability,
   hydrateSchema,
   type InferNativeProvider,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import {
   ADVERTISED_CAP_MODES,
@@ -104,7 +104,7 @@ export const greeAcSchema = z.object({
 export type GreeAcConfig = z.infer<typeof greeAcSchema>
 
 /**
- * One Gree air conditioner as a CamStack `Thermostat`-type accessory child.
+ * One Gree air conditioner as a Dominevo `Thermostat`-type accessory child.
  * Registers `climate-control` (power via mode=`off`, heat/cool/auto/dry/fan_only,
  * target temp, current temp) and `fan-control` (fan speed → percentage, swing →
  * oscillating). Maps the library `AcDevice` getters → the two cap slices on every

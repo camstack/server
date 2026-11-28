@@ -1,4 +1,4 @@
-import type { NcAlarmSettingsPatch } from '@camstack/types'
+import type { NcAlarmSettingsPatch } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { modeDelaysFromPersisted } from '../alarm-mode-delays.js'
 import { NcAlarmPanelDevice } from '../alarm-panel-device.js'

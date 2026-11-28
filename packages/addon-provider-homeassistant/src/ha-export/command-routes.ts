@@ -37,7 +37,7 @@ import {
   type FanDirection,
   type HvacMode,
   type MediaPlayerRepeat,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { capCommandEntities, CAP_ENTITY_MAP, PTZ_BUTTONS } from './entity-catalog.js'
 import type { ItemEntity } from './item-entities.js'
 import { derivedEntityId, derivedExtraEntityId, toSlug } from './topics.js'
@@ -1203,7 +1203,7 @@ export async function applyCapCommand(
         return { ok: false, reason: 'no-provider', capName: 'alarm-panel' }
       }
       /**
-       * **The arm can be REFUSED.** CamStack's own panel throws
+       * **The arm can be REFUSED.** Dominevo's own panel throws
        * `NcAlarmArmRefusedError` when a contact the mode covers is open,
        * and that refusal is the operator's answer — reporting success
        * over it would leave Home Assistant showing `armed_away` on a

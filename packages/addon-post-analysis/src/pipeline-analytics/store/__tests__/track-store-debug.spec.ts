@@ -12,7 +12,7 @@
  * looking exactly like a marking bug. The last case here simulates the dropped
  * predicate and pins that the in-memory re-check catches it.
  */
-import type { SettingsStoreClient } from '@camstack/types'
+import type { SettingsStoreClient } from '@dominevo/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import {
   type FakeSettingsStore,

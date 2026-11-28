@@ -83,7 +83,7 @@ const PLUGIN_CATALOG_SUPPLIES = deriveRootSupplies(PLUGIN_CATALOG_LABELS, {
 })
 
 describe('deriveRootSupplies — every root is judged the same way', () => {
-  it('a CamStack COCO model supplies animals 6/8 and vehicles 5/8 — no COCO exception', () => {
+  it('a Dominevo COCO model supplies animals 6/8 and vehicles 5/8 — no COCO exception', () => {
     const animal = supplyFor(COCO_SUPPLIES, 'animal-classifier')
     expect(animal).toEqual({
       kind: 'label',
@@ -257,7 +257,7 @@ describe('resolveRootSupply — intent kept beside the model, effective only whe
     )
   })
 
-  it('the root switch CamStack → plus catalog → plugin catalog → back', () => {
+  it('the root switch Dominevo → plus catalog → plugin catalog → back', () => {
     const settings = { modelId: 'animal-classifier-v2' }
     const states = [
       COCO_SUPPLIES,

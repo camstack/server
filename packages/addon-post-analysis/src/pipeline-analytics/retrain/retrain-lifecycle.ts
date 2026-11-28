@@ -28,7 +28,7 @@
  * is that somebody clicked Complete on a track they had not annotated yet.
  */
 
-import type { IScopedLogger, RetrainStatus } from '@camstack/types'
+import type { IScopedLogger, RetrainStatus } from '@dominevo/types'
 
 /** Why a lifecycle move was refused. */
 export type RetrainTransitionRefusal =

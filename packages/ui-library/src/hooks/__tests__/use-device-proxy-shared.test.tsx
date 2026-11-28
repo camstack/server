@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi } from 'vitest'
 import { act, renderHook, waitFor } from '@testing-library/react'
-import type { DeviceBinding } from '@camstack/types'
+import type { DeviceBinding } from '@dominevo/types'
 import { useDeviceProxy, useDeviceStateSlice } from '../use-device-proxy'
 
 /**

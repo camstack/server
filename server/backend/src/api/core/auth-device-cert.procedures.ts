@@ -15,9 +15,9 @@
  * credential is dead"). Every refusal is logged by the credential manager with
  * its reason; rate-limit refusals are logged here.
  */
-import type { CapabilityRegistry } from '@camstack/server/system'
-import { getUserManagementInternal } from '@camstack/server/system'
-import type { DeviceCheckRefusal } from '@camstack/server/system'
+import type { CapabilityRegistry } from '@dominevo/server/system'
+import { getUserManagementInternal } from '@dominevo/server/system'
+import type { DeviceCheckRefusal } from '@dominevo/server/system'
 import {
   CompleteEnrollmentInputSchema,
   CompleteEnrollmentResultSchema,
@@ -34,7 +34,7 @@ import {
   isDefinitiveDeviceRefusal,
   RenewDeviceCertificateResultSchema,
   RevokeOwnDeviceCertificateResultSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { TRPCError } from '@trpc/server'
 import { z } from 'zod'
 import type { AuthNetworkPolicy } from '../../auth/auth-network-policy.js'

@@ -3,7 +3,7 @@
  * type where the cluster alone is ambiguous, and the attribute decode behind
  * each. Every case fails on the mapping/decoder that existed before.
  */
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { decodeMatterAttribute, MatterAttributeId } from '../matter-attr-decode.js'
 import {

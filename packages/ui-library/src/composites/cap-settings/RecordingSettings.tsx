@@ -1,13 +1,13 @@
 import { useState, type JSX } from 'react'
 import { Loader2, Save } from 'lucide-react'
-import { CAM_PROFILE_ORDER, deriveRecordingMode, resolveRecordingProfiles } from '@camstack/types'
+import { CAM_PROFILE_ORDER, deriveRecordingMode, resolveRecordingProfiles } from '@dominevo/types'
 import type {
   RecordingBand,
   RecordingConfig,
   RecordingStorageMode,
   CamProfile,
   RecordingRetention,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   RecordingBandsEditor,
   type DeviceSignalPresence,

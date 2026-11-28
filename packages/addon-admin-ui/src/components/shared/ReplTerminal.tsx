@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useMutation } from '@tanstack/react-query'
-import { useSystem, Input } from '@camstack/ui-library'
+import { useSystem, Input } from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 
 // ---------------------------------------------------------------------------

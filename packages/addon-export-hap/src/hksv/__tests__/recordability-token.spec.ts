@@ -36,7 +36,7 @@
  * tear down and republish a working accessory every time a read blipped —
  * which is the churn the fingerprint exists to prevent.
  */
-import type { RtspEntryLike } from '@camstack/types'
+import type { RtspEntryLike } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 
 import {

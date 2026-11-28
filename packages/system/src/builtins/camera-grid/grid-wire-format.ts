@@ -14,7 +14,7 @@
  * ffmpeg segfaults re-muxing MPEG-TS, which is exactly what the broker's source
  * reader does to whatever this serves.
  */
-import type { CamStreamKind } from '@camstack/types'
+import type { CamStreamKind } from '@dominevo/types'
 
 /** The ffmpeg muxer the composition writes to stdout. */
 export const GRID_WIRE_CONTAINER = 'flv' as const

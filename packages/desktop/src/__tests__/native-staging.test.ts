@@ -1,8 +1,8 @@
 /**
  * `native-staging.mjs` — the pure DMG-build helpers that plant hoisted native
  * prebuilds into each bundled addon copy and VERIFY every referenced native
- * carries its `.node`. Regression guard for the fresh CamStack.app first-boot
- * FATAL (better-sqlite3 hoisted away from the `@camstack/server/system` copy).
+ * carries its `.node`. Regression guard for the fresh Dominevo.app first-boot
+ * FATAL (better-sqlite3 hoisted away from the `@dominevo/server/system` copy).
  */
 
 import * as fs from 'node:fs'
@@ -100,7 +100,7 @@ describe('stageNativeIntoAddon + addonMissingNatives', () => {
 })
 
 describe('bundledAddonSourceDirs', () => {
-  /** A `@camstack/<short>` package dir inside a staged closure. */
+  /** A `@dominevo/<short>` package dir inside a staged closure. */
   function pkg(scope: string, short: string, name: string): string {
     const dir = path.join(scope, short)
     fs.mkdirSync(dir, { recursive: true })
@@ -108,30 +108,30 @@ describe('bundledAddonSourceDirs', () => {
     return dir
   }
 
-  it('is every @camstack package in the staged closure — the seed source, not a second tree', () => {
+  it('is every @dominevo package in the staged closure — the seed source, not a second tree', () => {
     // The list used to be derived from the `extraResources` entries whose `to`
     // started with `addons/`. Those entries are GONE (2026-08-25): the packaged
-    // app seeds from `Resources/node_modules/@camstack`, so the dirs that must
+    // app seeds from `Resources/node_modules/@dominevo`, so the dirs that must
     // carry their natives are the closure's own package dirs.
-    const scope = path.join(tmp, 'node_modules', '@camstack')
-    pkg(scope, 'addon-pipeline', '@camstack/addon-pipeline')
-    pkg(scope, 'system', '@camstack/server')
-    pkg(scope, 'addon-decoder-nodeav', '@camstack/addon-decoder-nodeav')
+    const scope = path.join(tmp, 'node_modules', '@dominevo')
+    pkg(scope, 'addon-pipeline', '@dominevo/addon-pipeline')
+    pkg(scope, 'system', '@dominevo/server')
+    pkg(scope, 'addon-decoder-nodeav', '@dominevo/addon-decoder-nodeav')
     expect(
       bundledAddonSourceDirs(path.join(tmp, 'node_modules')).map((d) => path.basename(d)),
     ).toEqual(['addon-decoder-nodeav', 'addon-pipeline', 'system'])
   })
 
   it('skips a dir with no package.json — a stray, not a package', () => {
-    const scope = path.join(tmp, 'node_modules', '@camstack')
-    pkg(scope, 'system', '@camstack/server')
+    const scope = path.join(tmp, 'node_modules', '@dominevo')
+    pkg(scope, 'system', '@dominevo/server')
     fs.mkdirSync(path.join(scope, '.bin'), { recursive: true })
     expect(
       bundledAddonSourceDirs(path.join(tmp, 'node_modules')).map((d) => path.basename(d)),
     ).toEqual(['system'])
   })
 
-  it('is [] when the closure has no @camstack scope dir', () => {
+  it('is [] when the closure has no @dominevo scope dir', () => {
     fs.mkdirSync(path.join(tmp, 'node_modules'), { recursive: true })
     expect(bundledAddonSourceDirs(path.join(tmp, 'node_modules'))).toEqual([])
   })

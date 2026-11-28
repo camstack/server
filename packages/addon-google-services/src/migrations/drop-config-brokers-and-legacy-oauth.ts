@@ -11,7 +11,7 @@
  * Each edit carries a precondition read, so a row that changed since the plan was made is not
  * deleted; a second run finds nothing to plan.
  */
-import { type MigrationPlan, type StoredKeyRead, preconditionOf } from '@camstack/types'
+import { type MigrationPlan, type StoredKeyRead, preconditionOf } from '@dominevo/types'
 import {
   ADDON_SETTINGS_TABLE,
   type CalendarIdsPorts,

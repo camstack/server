@@ -11,7 +11,7 @@
  * instance record, a device — not only the running managers: an integration that was signed out
  * or unreadable has no manager, and its devices and alert must still go when it is deleted.
  */
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IScopedLogger } from '@dominevo/types'
 import type { HomeComConfig } from './config.js'
 import type { HomeComClientRegistry } from './homecom-client-registry.js'
 

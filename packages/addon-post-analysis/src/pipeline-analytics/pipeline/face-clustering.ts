@@ -4,7 +4,7 @@
  * assignment. No I/O, no `any`. The embeddings never leave the server; only the
  * resulting faceId groupings are returned to the UI.
  */
-import { cosineSimilarity } from '@camstack/types'
+import { cosineSimilarity } from '@dominevo/types'
 
 export interface ClusterItem {
   readonly id: string

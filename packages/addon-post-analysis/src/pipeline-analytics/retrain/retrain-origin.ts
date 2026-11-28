@@ -15,7 +15,7 @@ import {
   type RetrainOrigin,
   RetrainOriginSchema,
   type RetrainPipelineBox,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 function parseJsonIfText(value: unknown): unknown {
   if (typeof value !== 'string') return value

@@ -16,7 +16,7 @@ media was pulled (`pipelineAnalytics.getTrackMedia`) and **looked at**, per the
 `camstack-track-audit` discipline; log evidence is Loki (≈2-day retention), row
 evidence is `settingsStore.query` on `pipeline-analytics:tracks` with
 `filter.where.debug`. Running versions at audit time:
-`@camstack/addon-post-analysis` **1.2.148**, `@camstack/addon-pipeline`
+`@dominevo/addon-post-analysis` **1.2.148**, `@dominevo/addon-pipeline`
 **1.2.149** (confirmed via `addons.list`).
 
 **The three complaints are three different defects, but two share one shape:

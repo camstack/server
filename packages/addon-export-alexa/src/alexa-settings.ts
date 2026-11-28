@@ -13,7 +13,7 @@ export type SkillMode = 'public' | 'custom'
 
 export interface AlexaSettings {
   /**
-   * Which Alexa skill backs this export. `public` uses the built-in CamStack
+   * Which Alexa skill backs this export. `public` uses the built-in Dominevo
    * skill (its id is in `public-skill.ts`) so no Amazon developer setup is
    * needed. `custom` uses the operator's own skill (`expectedAudience`) and
    * the operator's own copy of the skill Lambda. Either way the hub holds NO

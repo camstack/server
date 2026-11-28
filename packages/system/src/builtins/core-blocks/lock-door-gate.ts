@@ -15,7 +15,7 @@ import type {
   DeviceCallAnswer,
   DeviceCallRedirect,
   IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { DeviceStateChangedData } from '../shared/device-state-changed.js'
 
 const LOCK_CONTROL = 'lock-control'

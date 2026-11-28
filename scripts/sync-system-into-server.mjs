@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 /**
- * Ship the built `packages/system` (private workspace `@camstack/server-framework`)
- * INSIDE the `@camstack/server` package, as `@camstack/server/system` (D-fold).
+ * Ship the built `packages/system` (private workspace `@dominevo/server-framework`)
+ * INSIDE the `@dominevo/server` package, as `@dominevo/server/system` (D-fold).
  *
  *   packages/system/{dist,assets}  ->  server/backend/system/{dist,assets}
  *   packages/system/package.json   ->  server/backend/system/package.json
  *
  * The generated `system/package.json` is the BUILTINS manifest the addon loader
  * reads (`camstack.addons`, entries relative to `system/`). It carries the
- * package name `@camstack/server` and the server's own version: the builtins are
+ * package name `@dominevo/server` and the server's own version: the builtins are
  * the server's, there is no second package and no second version.
  *
  * `server/backend/system/` is build output (gitignored); `files` in the server
@@ -29,7 +29,7 @@ export function buildBuiltinsManifest(systemManifest, serverManifest) {
   return {
     name: serverManifest.name,
     version: serverManifest.version,
-    description: 'CamStack builtins — shipped inside @camstack/server (generated, do not edit)',
+    description: 'Dominevo builtins — shipped inside @dominevo/server (generated, do not edit)',
     license: serverManifest.license,
     camstack,
   }

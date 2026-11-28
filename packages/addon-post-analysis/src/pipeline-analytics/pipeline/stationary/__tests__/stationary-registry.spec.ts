@@ -5,7 +5,7 @@ import {
   type FakeRecords,
 } from '../../../__tests__/fake-records.js'
 import { StationaryObjectRegistry, type StationaryChangePhase } from '../stationary-registry.js'
-import type { IScopedLogger, LogExtras } from '@camstack/types'
+import type { IScopedLogger, LogExtras } from '@dominevo/types'
 import { DEFAULT_DEPARTURE_CONFIG, type StationaryEntry } from '../stationary-types.js'
 import { watchFrames } from './watch-frames.js'
 import { createNoopLogger } from '../../../../embedding-encoder/shared/noop-logger.js'

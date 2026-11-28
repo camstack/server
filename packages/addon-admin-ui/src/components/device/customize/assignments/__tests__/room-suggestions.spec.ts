@@ -3,7 +3,7 @@
  * that are VALID for the card come first, a container contributes only the
  * child it stands for, and nothing is ever assigned on its own.
  */
-import { compositionSourceKey } from '@camstack/types'
+import { compositionSourceKey } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { type CandidateDevice, sourceCandidates } from '../assignment-candidates'
 import {

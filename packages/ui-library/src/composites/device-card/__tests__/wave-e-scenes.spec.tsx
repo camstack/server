@@ -5,7 +5,7 @@
  * resolves to, what each draws from its model, which command each control
  * sends, and every mockup fixture rendering through the shell.
  */
-import { DeviceType, type EventEmitterStatus } from '@camstack/types'
+import { DeviceType, type EventEmitterStatus } from '@dominevo/types'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import type { ReactElement } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'

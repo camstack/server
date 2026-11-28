@@ -1,4 +1,4 @@
-import type { CalendarEntry } from '@camstack/types'
+import type { CalendarEntry } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { HolderData } from '../../instances/instances-model'
 import { calendarInstanceRefs, joinCalendarRows } from '../calendar-rows'

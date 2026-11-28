@@ -8,7 +8,7 @@
  * `local-child-client.ts` — the first test sees `undefined` on the parent's
  * `RegisteredChild` after `updateCaps(caps, catalogs)`.
  */
-import type { ChildCustomActionCatalogs } from '@camstack/types'
+import type { ChildCustomActionCatalogs } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import { createLocalTransport } from '../../transport/create-local-transport.js'
 import { LocalChildClient } from '../../transport/local-child-client.js'

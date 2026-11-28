@@ -3,7 +3,7 @@
  * are rendered by the hub's one renderer, on the authored text only, before the
  * `{{var}}` pass.
  */
-import type { DeviceTemplateRender } from '@camstack/types'
+import type { DeviceTemplateRender } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import { NcDispatcher, type NcSendInput } from '../dispatcher.js'

@@ -9,7 +9,7 @@
 //
 // Prints shell-evaluable lines:
 //   TC_DIRS='ALL' | 'cli ui-library …' | ''   package dirs for typecheck-tsgo.ts ('' = nothing affected)
-//   AFFECTED_CSV='@camstack/cli,…'            affected nx projects (build, test)
+//   AFFECTED_CSV='@dominevo/cli,…'            affected nx projects (build, test)
 //   FOOTPRINT_ALL=1|0                          every addon dist may have changed (types/src moved)
 //   FOOTPRINT_ADDONS='addon-a,addon-b'         the addons whose own sources changed
 //   SCRIPTS_CHANGED=1|0                        scripts/ moved (repo-scripts tests)

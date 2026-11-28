@@ -39,7 +39,7 @@
 import { useUiText, UiTrans } from '../../contexts/ui-text'
 import { useCallback, useEffect, useMemo, useRef, useState, type JSX } from 'react'
 import { Grid2x2 } from 'lucide-react'
-import type { MaskGridShape, MaskShape, MotionZoneOptions } from '@camstack/types'
+import type { MaskGridShape, MaskShape, MotionZoneOptions } from '@dominevo/types'
 import { useDeviceProxy } from '../../hooks/use-device-proxy'
 import { useSystem } from '../../contexts/system-context'
 import { usePlayerOverlayLayer } from '../../contexts/player-overlays'

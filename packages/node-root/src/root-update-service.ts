@@ -1,7 +1,7 @@
 /**
  * RootUpdateService — the shared install/update engine for a node's
  * runtime-updatable ROOT package. Post-consolidation there is a SINGLE root
- * package (`@camstack/server`) for every node role; the hub's
+ * package (`@dominevo/server`) for every node role; the hub's
  * `ServerUpdateService` and the agent's `AgentUpdateService` are thin
  * adapters over this one class (they differ only in restart semantics).
  *
@@ -33,7 +33,7 @@ import type {
   ServerUpdateState,
   UpdateBlocker,
   WrapperIdentity,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   DEV_UPLOADS_KEEP_COUNT,
   devChannelEpoch,
@@ -101,7 +101,7 @@ function isJsonObject(value: unknown): value is { readonly [key: string]: unknow
 /** npm registry override args — mirrors addon-package.service (module-local there). */
 function buildNpmRegistryArgs(registry: string | undefined): readonly string[] {
   if (registry === undefined || registry.length === 0) return []
-  return ['--registry', registry, `--@camstack:registry=${registry}`]
+  return ['--registry', registry, `--@dominevo:registry=${registry}`]
 }
 
 /**
@@ -117,7 +117,7 @@ export type NpmExecFn = (
 
 /**
  * Structural logger surface — satisfied by the hub's `IScopedLogger` AND the
- * agent's console logger, without a runtime dependency on `@camstack/types`.
+ * agent's console logger, without a runtime dependency on `@dominevo/types`.
  */
 export interface RootUpdateLogContext {
   /**
@@ -211,7 +211,7 @@ export interface RootUpdateServiceOptions {
   /**
    * Apply the root package's SHIPPED closure patches to the staged closure.
    *
-   * Why this is not left to npm: `@camstack/server`'s `postinstall` is what
+   * Why this is not left to npm: `@dominevo/server`'s `postinstall` is what
    * applies them, and npm 12 blocks a dependency's install scripts by default
    * (`allowScripts`). Measured 2026-09-13 on the Mac-mini agent, which had
    * bootstrapped npm 12.0.1 while hub and agent-a still ran npm 11 — the
@@ -367,7 +367,7 @@ export const ROLLBACK_UNSUPPORTED_REASON = 'rollback-unsupported'
  *
  * Measured 2026-09-13 on the Mac-mini agent (npm 12.0.1): seven packages were
  * blocked. Each one here does something the closure cannot do without:
- *   - `@camstack/server`  applies the shipped closure patches (D478),
+ *   - `@dominevo/server`  applies the shipped closure patches (D478),
  *   - `better-sqlite3`    fetches/builds the native the settings store needs,
  *   - `node-av`           fetches the ffmpeg binaries the decode path needs,
  *   - `node-pty`, `ssh2`, `cpu-features`, `esbuild` — natives and platform
@@ -377,7 +377,7 @@ export const ROLLBACK_UNSUPPORTED_REASON = 'rollback-unsupported'
  * not land. This list is how a legitimate update stops NEEDING to be refused.
  */
 const CLOSURE_ALLOW_SCRIPTS: Readonly<Record<string, true>> = {
-  '@camstack/server': true,
+  '@dominevo/server': true,
   'better-sqlite3': true,
   'node-av': true,
   'node-pty': true,
@@ -906,7 +906,7 @@ export class RootUpdateService {
     // from tarballs previously landed in THIS node's
     // `server-root/dev-uploads/<version>/` — it never exists on npm. Hub:
     // `POST /api/server-upload`. Agents: `POST /api/server-upload/propagate`
-    // (`camstack deploy-server -n <id>` / `--all`) which writes the same layout
+    // (`dominevo deploy-server -n <id>` / `--all`) which writes the same layout
     // via `$agent.stageDevUploads`.
     if (isDevChannelVersion(target)) {
       const uploadsDir = devUploadVersionDir(this.rootDir(), target)
@@ -915,8 +915,8 @@ export class RootUpdateService {
           'dev-uploads-missing',
           target,
           `Refused: dev-channel version ${target} has no uploaded tarballs on this node ` +
-            `(${uploadsDir} is missing). On the hub: \`camstack deploy-server\`. ` +
-            'On an agent: `camstack deploy-server -n <nodeId>` (or `--all`) so the hub ' +
+            `(${uploadsDir} is missing). On the hub: \`dominevo deploy-server\`. ` +
+            'On an agent: `dominevo deploy-server -n <nodeId>` (or `--all`) so the hub ' +
             'can POST /api/server-upload/propagate first.',
         )
       }
@@ -1266,7 +1266,7 @@ export class RootUpdateService {
           meta: { error: err instanceof Error ? err.message : String(err) },
         })
       }
-      // Closure-patch assertion (D478) — `@camstack/server`'s `postinstall`
+      // Closure-patch assertion (D478) — `@dominevo/server`'s `postinstall`
       // applies the patches that cannot be bundled (werift), and it is
       // best-effort by design. This is the half that is not: a closure whose
       // patch markers are absent is refused here, BEFORE the swap is armed,
@@ -1385,7 +1385,7 @@ export class RootUpdateService {
   /**
    * Synthetic staging package.json for the dev server-deploy channel:
    * `dependencies` carries the root package as a `file:` ref to its uploaded
-   * tgz; `overrides` maps EVERY OTHER uploaded `@camstack/<name>` to its tgz.
+   * tgz; `overrides` maps EVERY OTHER uploaded `@dominevo/<name>` to its tgz.
    * Fail-closed: a missing/invalid manifest, a manifest for a different
    * version, a missing root package, or a listed-but-absent tgz all throw.
    */
@@ -1422,7 +1422,7 @@ export class RootUpdateService {
       }
       return `file:${abs}`
     }
-    // Third-party pins first; the `@camstack/*` file: entries win on overlap.
+    // Third-party pins first; the `@dominevo/*` file: entries win on overlap.
     const overrides: Record<string, string> = { ...pins }
     for (const [pkgName, filename] of Object.entries(manifest.packages)) {
       if (pkgName === this.spec.packageName) continue

@@ -6,7 +6,7 @@ import {
   type IScopedLogger,
   type LogExtras,
   type RecordsAccess,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { makeRecordsWorld } from '../../sqlite-storage/__tests__/support/records-world.js'
 import type { DiscoveryProvider } from '../discovery-orchestrator.js'

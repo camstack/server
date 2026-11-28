@@ -1,6 +1,6 @@
 {
-  "name": "@camstack/addon-agent-ui",
-  "version": "1.2.452",
+  "name": "@dominevo/addon-agent-ui",
+  "version": "0.1.0",
   "description": "Agent UI — lightweight status dashboard served by every agent node",
   "keywords": [
     "camstack",
@@ -11,12 +11,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/camstack/server.git",
+    "url": "https://github.com/dominevo/server.git",
     "directory": "packages/addon-agent-ui"
   },
   "homepage": "https://camstack-docs.zentik.app",
   "bugs": {
-    "url": "https://github.com/camstack/server/issues"
+    "url": "https://github.com/dominevo/server/issues"
   },
   "type": "module",
   "files": [
@@ -57,15 +57,15 @@
       }
     ],
     "requires": {
-      "server": ">=1.2.974"
+      "server": ">=0.1.0"
     }
   },
   "dependencies": {},
   "peerDependencies": {
-    "@camstack/types": "*"
+    "@dominevo/types": "0.1.0"
   },
   "devDependencies": {
-    "@camstack/ui-library": "*",
+    "@dominevo/ui-library": "0.1.0",
     "@tailwindcss/vite": "^4.2.0",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/react": "^16.3.2",

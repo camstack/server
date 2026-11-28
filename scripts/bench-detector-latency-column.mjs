@@ -9,9 +9,9 @@
  *   - fps = round(1000 / p50) for single-request columns
  *   - shed / crash → cell omitted (recorded in output.failed)
  *
- * Auth / hub: the `camstack login` session through the shared resolver
+ * Auth / hub: the `dominevo login` session through the shared resolver
  * (scripts/hub/credentials.mjs, same chain as scripts/hub/hub.mjs); run
- * `camstack login <host>` once. --server names the hub address.
+ * `dominevo login <host>` once. --server names the hub address.
  *
  * Usage:
  *   node scripts/bench-detector-latency-column.mjs \
@@ -78,7 +78,7 @@ const MODELS = modelsArg
 
 if (!HUB || !TOK || !NODE || !DEVICE || !COLUMN) {
   console.error(
-    'required: --node, --device, --column (and a `camstack login <host>` session)\n' +
+    'required: --node, --device, --column (and a `dominevo login <host>` session)\n' +
       'example: node scripts/bench-detector-latency-column.mjs --node agent-b --device onnx:webgpu --column amd-phoenix/amd-igpu',
   )
   process.exit(2)

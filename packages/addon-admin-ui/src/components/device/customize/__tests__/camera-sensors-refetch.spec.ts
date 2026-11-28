@@ -3,7 +3,7 @@
  * instead of throwing, so the Motion card only learns that its re-read after a
  * write failed through this outcome — a catch alone never fires in production.
  */
-import type { CameraSensorsStatus } from '@camstack/types'
+import type { CameraSensorsStatus } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { cameraSensorsPresence, refetchOutcome } from '../use-camera-sensors-presence'
 

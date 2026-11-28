@@ -15,7 +15,7 @@
  * unavailable` the same second; the slice lost its stamp, the mirror diffed,
  * and the gate passed the doorbell through as "arrival is the event".
  */
-import { ALL_CAPABILITY_DEFINITIONS, EventCategory } from '@camstack/types'
+import { ALL_CAPABILITY_DEFINITIONS, EventCategory } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import { ADVANCE_FIELD, SensorTransitionGate } from '../services/sensor-transition-gate.js'
 import {

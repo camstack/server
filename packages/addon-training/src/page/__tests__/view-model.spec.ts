@@ -6,7 +6,7 @@
  * (an estimate says so); the comparison table carries baseline / candidate /
  * INT8 per class and colours a per-camera recall drop past 0.01 as worse.
  */
-import type { TrainingJob, TrainingResult } from '@camstack/types'
+import type { TrainingJob, TrainingResult } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   comparisonRows,

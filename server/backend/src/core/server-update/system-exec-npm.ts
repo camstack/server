@@ -1,13 +1,13 @@
 /**
  * `buildSystemExecNpm` — the `execNpm` the shared `RootUpdateService` uses to
- * shell out to npm when staging a root-package closure (`@camstack/server` —
+ * shell out to npm when staging a root-package closure (`@dominevo/server` —
  * the single root package for every node role).
  *
  * Two jobs:
  *
  * 1. Resolve a working npm. On a host with NO system npm on PATH — a packaged
  *    desktop app shipping a bare bundled Node — a raw `npm` dies with ENOENT.
- *    `@camstack/server/system`'s `resolveNpmInvocation` answers system →
+ *    `@dominevo/server/system`'s `resolveNpmInvocation` answers system →
  *    previously-bootstrapped copy under `cacheDir` → bootstrap from the
  *    registry. The `cacheDir` mirrors `AddonInstaller`'s
  *    (`<dataDir>/addons/.npm-bootstrap`) so both share one bootstrapped npm.
@@ -21,8 +21,8 @@
  * `deps` is the DI seam so the mapping is unit-testable without npm or disk.
  */
 import * as path from 'node:path'
-import { type NpmInvocation, buildNpmChildEnv, resolveNpmInvocation } from '@camstack/server/system'
-import type { IScopedLogger } from '@camstack/types'
+import { type NpmInvocation, buildNpmChildEnv, resolveNpmInvocation } from '@dominevo/server/system'
+import type { IScopedLogger } from '@dominevo/types'
 import {
   NPM_INSTALL_KILL_GRACE_MS,
   NPM_INSTALL_POLL_MS,

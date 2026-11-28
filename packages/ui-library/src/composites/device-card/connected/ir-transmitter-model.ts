@@ -8,7 +8,7 @@ import type {
   IrMedium,
   IrTransmitterRuntimeState,
   IrTransmitterSendRecord,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { UiTextFn } from '../../../contexts/ui-text'
 import type { CardReading } from '../parts/Readings'
 import type { CardTone } from '../shell/model'

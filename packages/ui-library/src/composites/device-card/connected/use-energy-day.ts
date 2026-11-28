@@ -8,7 +8,7 @@ import type {
   DeviceHistoryQueryManyEntry,
   DeviceHistoryQueryManyItem,
   DeviceHistorySeriesInfo,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { useMemo } from 'react'
 import type { UiTextFn } from '../../../contexts/ui-text'
 import { useCapabilityPresence } from '../../../hooks/use-capability-presence'

@@ -6,7 +6,7 @@
  * The opt-out table is configuration, not history: it names no database and so
  * lives in `camstack.db`, which the nightly backup carries.
  */
-import type { DeclareCollectionInput } from '@camstack/types'
+import type { DeclareCollectionInput } from '@dominevo/types'
 import type { RollupTier } from '../time/bucket-time.js'
 
 export const HISTORY_NAMESPACE = 'device-history'

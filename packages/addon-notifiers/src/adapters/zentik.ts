@@ -10,7 +10,7 @@
  *  class-validator decorators in `create-message.dto.ts`):
  *   - `title` (string, REQUIRED, `@MaxLength(100)`) — we ALWAYS emit a clamped,
  *     non-empty title (falls back to the body/app name), else the backend 400s.
- *   - `body` (string, optional) — no CamStack-side length cap (operator request;
+ *   - `body` (string, optional) — no Dominevo-side length cap (operator request;
  *     the historical `@MaxLength(500)` mirror was truncating alarm/AI bodies).
  *     `subtitle` (string, `@MaxLength(100)`).
  *   - `userIds` (string[], optional) — target specific users of a shared bucket
@@ -56,7 +56,7 @@ import type {
   NotificationActionIcon,
   PreparedNotification,
   TargetKind,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { HttpRequestPlan, HttpNotifierAdapter, TargetConfig } from './adapter.js'
 
 const DEFAULT_BASE_URL = 'https://notifier-api.zentik.app'
@@ -68,14 +68,14 @@ const DEFAULT_DELIVERY_TYPE = 'NORMAL'
 
 /**
  * Backend `CreateMessageDto` title is REQUIRED and `@MaxLength(100)`.
- * Body has no CamStack truncate — model "no cap" like webhook (positive int).
+ * Body has no Dominevo truncate — model "no cap" like webhook (positive int).
  */
 const TITLE_MAX_LEN = 100
 /** Positive int required by caps; large enough that degrade never truncates. */
 const NO_BODY_CAP = 1_000_000
 
 /** Non-empty fallback title when a notification carries no title. */
-const FALLBACK_TITLE = 'CamStack'
+const FALLBACK_TITLE = 'Dominevo'
 
 /** url-mode attachment ceiling (no hard doc limit; matrix §5 → 5). */
 const MAX_ATTACHMENTS = 5
@@ -487,7 +487,7 @@ const zentikDescriptor: TargetKind = {
     // `ephemeral` is Zentik's only TTL lever: a fixed ~1h auto-cleanup, not a
     // configurable duration. We flip it on whenever a canonical `ttl` is set.
     ttl: true,
-    // No CamStack body truncate (webhook precedent: large positive int).
+    // No Dominevo body truncate (webhook precedent: large positive int).
     bodyMaxLen: NO_BODY_CAP,
   },
 }

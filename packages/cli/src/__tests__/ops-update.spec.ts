@@ -54,7 +54,7 @@ const node = (id: string, over: object = {}): object => ({
 
 function status(running: string, over: object = {}): object {
   return {
-    packageName: '@camstack/server',
+    packageName: '@dominevo/server',
     runningVersion: running,
     installedVersion: running,
     latestVersion: '2.0.0',

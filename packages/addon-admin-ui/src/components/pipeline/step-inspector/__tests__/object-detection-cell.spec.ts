@@ -5,7 +5,7 @@
  * `yolo26n` pin on an iGPU once read as the hardware default because the cell
  * dropped the pin's source.
  */
-import type { NodeInferenceDevice, PipelineAddonSchema } from '@camstack/types'
+import type { NodeInferenceDevice, PipelineAddonSchema } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   cellStateFor,

@@ -8,7 +8,7 @@
  * over; the sweep runs the discovery the integrations already offer, at most one
  * at a time, once per {@link SWEEP_INTERVAL_MS}.
  */
-import { errMsg, type DiscoveryObservation, type IScopedLogger } from '@camstack/types'
+import { errMsg, type DiscoveryObservation, type IScopedLogger } from '@dominevo/types'
 import { observationKey, parseMdnsPacket, parseSsdpPacket } from './passive-packets.js'
 
 export const SWEEP_INTERVAL_MS: number = 30 * 60 * 1000

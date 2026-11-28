@@ -7,7 +7,7 @@
  * expect the framework to provide" (the starter and the raw-ESM hook cannot import
  * the TypeScript one). A specifier present in one and absent in another resolves
  * on one node role and fails on another, with an error that names nothing. When
- * the framework moved under `@camstack/server/system` the three had to move
+ * the framework moved under `@dominevo/server/system` the three had to move
  * together; this is the check that says they did.
  *
  *   packages/system/src/kernel/host-externals.ts

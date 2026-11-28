@@ -8,7 +8,7 @@ import { resolveMotionWasmPath } from '../wasm-motion-path.js'
  * The bundler decides where the detector's code lands: `dist/motion-wasm/`
  * when one entry owns it, a shared chunk directly in `dist/` once a second
  * entry imports it (the node benchmark did, and every `detection` runner
- * died at boot on `<addons>/@camstack/wasm/motion.wasm`).
+ * died at boot on `<addons>/@dominevo/wasm/motion.wasm`).
  */
 describe('resolveMotionWasmPath', () => {
   let root = ''

@@ -42,7 +42,7 @@
  */
 import { Buffer } from 'node:buffer'
 import { execFile } from 'node:child_process'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import sharp from 'sharp'
 import { readMp4DurationMs } from './mp4-duration.js'
 

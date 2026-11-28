@@ -23,7 +23,7 @@ import {
   type RecordRow,
   type RecordsAccess,
   secretViewsOf,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   type FetchSourceDeps,
   fetchWasteSource,

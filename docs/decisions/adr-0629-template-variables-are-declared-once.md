@@ -156,13 +156,13 @@ supplied); a producer field with no descriptor fails it the other way
 and fails the CI text guard the moment any shipped string names it.
 
 `packages/addon-post-analysis` builds self-contained and INLINES
-`@camstack/types`, so the new schemas (`NcTemplateVarDescriptorSchema`,
+`@dominevo/types`, so the new schemas (`NcTemplateVarDescriptorSchema`,
 `NcTemplatePreviewInputSchema`, etc.) travel inside the addon and the
 `nc.getTemplateCatalog`/`nc.previewTemplate` bridge actions work on the addon
 deploy alone. The coupling is the hub's cap-router INPUT validation, the same
 one D628 records: `notificationRules.getTemplateCatalog`/`previewTemplate` are
-routed and validated by `@camstack/system`, which inlines its own copy of
-`@camstack/types` (`bundleTypesMainEntry`). The `@camstack/server` release
+routed and validated by `@dominevo/system`, which inlines its own copy of
+`@dominevo/types` (`bundleTypesMainEntry`). The `@dominevo/server` release
 carrying them must be installed before a caller uses the cap routes.
 
 The historical requirements spec (planning repo: superpowers/specs/2026-07-22-notification-center-requirements.md)

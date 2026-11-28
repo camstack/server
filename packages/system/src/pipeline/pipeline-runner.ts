@@ -9,9 +9,9 @@ import type {
   PipelineSlot,
   IAddonResolver,
   InferenceOutput,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { randomUUID } from 'node:crypto'
-import { errMsg } from '@camstack/types'
+import { errMsg } from '@dominevo/types'
 
 export class PipelineRunner {
   constructor(private readonly addonResolver: IAddonResolver) {}

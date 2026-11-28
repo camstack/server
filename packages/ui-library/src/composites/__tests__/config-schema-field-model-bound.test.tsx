@@ -7,8 +7,8 @@
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { render, screen, cleanup, fireEvent } from '@testing-library/react'
-import type { ConfigField } from '@camstack/types'
-import { modelBindingKey } from '@camstack/types'
+import type { ConfigField } from '@dominevo/types'
+import { modelBindingKey } from '@dominevo/types'
 import { ConfigSchemaField, type PipelineStepDisplayConfig } from '../pipeline-step'
 
 const KEY = 'minConfidencePerson'

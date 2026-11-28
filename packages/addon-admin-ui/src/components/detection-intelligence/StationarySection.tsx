@@ -13,7 +13,7 @@
  * with the live feed for attention.
  */
 
-import { useDeviceManagerListAll, Button } from '@camstack/ui-library'
+import { useDeviceManagerListAll, Button } from '@dominevo/ui-library'
 import { ChevronDown, ChevronRight, ParkingSquare } from 'lucide-react'
 import { type JSX, useMemo, useState } from 'react'
 import { mediaIdPath, useAuthedImage } from '../../lib/authed-media.js'

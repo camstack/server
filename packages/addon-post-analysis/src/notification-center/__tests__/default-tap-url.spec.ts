@@ -84,7 +84,7 @@ describe('defaultTapUrl', () => {
     ).toBe('http://192.0.2.10:4480/viewer/camstack/camera/101?at=1000')
   })
 
-  describe('the CamStack app link is the taps address (D709)', () => {
+  describe('the Dominevo app link is the taps address (D709)', () => {
     const tap = { form: 'app', hubBaseUrl: 'https://cam.example.top' } as const
 
     it('a camera tap opens the viewer route on the central domain with hub=', () => {

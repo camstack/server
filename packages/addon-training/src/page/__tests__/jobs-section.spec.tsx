@@ -8,13 +8,13 @@ import type {
   TrainingBaseModel,
   TrainingJob,
   TrainingProviderDescriptor,
-} from '@camstack/types'
-import { ConfirmDialogProvider, type AddonPageProps } from '@camstack/ui-library'
+} from '@dominevo/types'
+import { ConfirmDialogProvider, type AddonPageProps } from '@dominevo/ui-library'
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { JobsSection } from '../JobsSection.js'
 
-vi.mock(import('@camstack/ui-library'), async (importOriginal) => {
+vi.mock(import('@dominevo/ui-library'), async (importOriginal) => {
   const actual = await importOriginal()
   return {
     ...actual,

@@ -9,13 +9,13 @@
  * side-effecting dependency is injected.
  */
 
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IScopedLogger } from '@dominevo/types'
 import type {
   AdoptionFilter,
   AdoptionStatus,
   DiscoveredChildDevice,
   IDeviceAdoptionProvider,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { WyzeCamera } from '@apocaliss92/wyze-bridge-js'
 import { buildWyzeCandidates } from './candidates.js'
 
@@ -56,7 +56,7 @@ export interface WyzeAdoptionProviderDeps {
 /** The single granularity this provider advertises: whole-device adoption. */
 const DEVICES_FILTER: AdoptionFilter = { id: 'devices', label: 'Cameras', isDefault: true } as const
 
-/** Build a `MAC(uppercased) → CamStack deviceId` map for one integration. */
+/** Build a `MAC(uppercased) → Dominevo deviceId` map for one integration. */
 function adoptedMapForIntegration(
   integrationId: string,
   adopted: readonly AdoptedWyzeCamera[],

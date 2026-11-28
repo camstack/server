@@ -17,7 +17,7 @@ import {
   type SystemEvent,
   collectOwnerIntegrationIds,
   rowsDepsOver,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { PetkitReconciler, type IntegrationLifecycleKind } from './petkit-reconciler.js'
 import { toNodepetkitOptions, toPetkitCredentials } from './config.js'
 import {

@@ -27,7 +27,7 @@ describe('OauthLandingPage', () => {
   it('the button returns right away', () => {
     const onContinue = vi.fn()
     render(<OauthLandingPage outcome={BROKER_OK} closable={false} onContinue={onContinue} />)
-    fireEvent.click(screen.getByRole('button', { name: 'Back to CamStack' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Back to Dominevo' }))
     expect(onContinue).toHaveBeenCalledTimes(1)
   })
 

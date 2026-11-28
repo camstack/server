@@ -23,7 +23,7 @@ import {
   switchCapability,
   temperatureSensorCapability,
   type TemperatureSensorStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { UNRAID_SYSTEM } from '../config.js'
 import type { UnraidClientLike, UnraidSnapshot } from '../unraid-client-contract.js'
 import { findUps } from '../unraid-discovery.js'
@@ -78,7 +78,7 @@ const COLD_EVENT: EventEmitterStatus = {
 }
 
 /**
- * One Unraid entity as a CamStack accessory child. A CHILD of the instance
+ * One Unraid entity as a Dominevo accessory child. A CHILD of the instance
  * Container. A single generic class keyed by a discriminated
  * `kind` (numeric | temperature | enum | binary | switch | button | event) so
  * the whole surface stays compact + compiling. It registers EXACTLY ONE cap

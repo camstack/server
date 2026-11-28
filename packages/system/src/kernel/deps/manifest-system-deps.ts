@@ -39,7 +39,7 @@
 import { execFile } from 'node:child_process'
 import * as os from 'node:os'
 import { promisify } from 'node:util'
-import type { AddonDeclaration, AddonSystemDependency, IScopedLogger } from '@camstack/types'
+import type { AddonDeclaration, AddonSystemDependency, IScopedLogger } from '@dominevo/types'
 import { decidePackageInstall } from './system-package-broker.js'
 import type { PackageInstallRequest, PackageInstallResult } from './system-package-broker.js'
 import { privilegedHelperAvailable, requestPrivilegedInstall } from './system-package-client.js'

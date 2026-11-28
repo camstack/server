@@ -11,7 +11,7 @@ import {
   weatherStationCapability,
   resyncCapability,
   resyncThroughAdoption,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { ecowittFacades } from '../ecowitt-gateway.js'
 import {
   childEntriesForGroup,

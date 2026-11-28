@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { errMsg, type IConnectionProbe, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IConnectionProbe, type IScopedLogger } from '@dominevo/types'
 import { kiaConfigSchema } from './config.js'
 import { KiaBridgeError } from './kia-bridge.js'
 import type { KiaBridgeFactory } from './kia-integration-manager.js'

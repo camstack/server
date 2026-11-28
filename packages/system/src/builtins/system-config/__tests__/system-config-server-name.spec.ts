@@ -1,5 +1,5 @@
-import type { AddonContext } from '@camstack/types'
-import { SERVER_NAME_MAX_LENGTH } from '@camstack/types'
+import type { AddonContext } from '@dominevo/types'
+import { SERVER_NAME_MAX_LENGTH } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { storeMayAnswer } from '../../../kernel/system-settings-policy.js'
 import { SystemConfigAddon } from '../system-config.addon.js'

@@ -14,7 +14,7 @@ import {
   type Alert,
   type AlertSeverity,
   type SystemEvent,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { NcAlertEpisodeLedger, type NcAlertEpisodeEdge } from '../alert-episode-ledger.js'
 import type { NcDeviceLookup } from '../device-directory.js'

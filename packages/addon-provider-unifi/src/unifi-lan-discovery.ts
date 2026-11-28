@@ -3,7 +3,7 @@ import {
   type DiscoveryCandidate,
   type DiscoveryHit,
   type DiscoveryMode,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /**
  * LAN discovery of a UniFi OS console through the Ubiquiti discovery protocol: one UDP broadcast

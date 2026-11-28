@@ -4,7 +4,7 @@
  * after overwrite/null/throw/timeout/detach, writing a store entry for a
  * no-detection result, or dropping a transferred detection in the runner finally.
  */
-import type { DecodedFrame, FrameResult } from '@camstack/types'
+import type { DecodedFrame, FrameResult } from '@dominevo/types'
 import { makeObjectDetection } from '../../__tests__/support/object-detection.js'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { LocalFrameRegistry } from '../../session-decode/local-frame-registry.js'

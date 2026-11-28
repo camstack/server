@@ -4,7 +4,7 @@
  * The hub's `HubNodeRegistry` is a pure PUSH: `triggerUpwardRegistration`
  * fires on agent boot, on a child's `$agent.registerNode`, and on hub
  * `$node.connected` — nowhere else. `$agent.reload` (the last step of every
- * `camstack deploy` to an agent) mutates `loadedAddons` and the capability
+ * `dominevo deploy` to an agent) mutates `loadedAddons` and the capability
  * registry without any of those three happening, so a capability the node
  * GAINS after boot stayed invisible to the hub until the next restart or
  * reconnect.

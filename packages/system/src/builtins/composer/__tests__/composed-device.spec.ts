@@ -6,7 +6,7 @@ import {
   DeviceType,
   planComposition,
   unwrapSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import { LOOKUP_CAP } from './fixtures.js'

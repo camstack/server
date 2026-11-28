@@ -6,7 +6,7 @@
  * "which one is still downloading"), and a comparison read as prose is not a
  * comparison.
  */
-import type { LlmRuntimeNode } from '@camstack/types'
+import type { LlmRuntimeNode } from '@dominevo/types'
 import {
   Badge,
   DataTable,
@@ -17,8 +17,8 @@ import {
   Skeleton,
   TABLE_SCROLL_MAX_H,
   useSystem,
-} from '@camstack/ui-library'
-import type { DataColumn } from '@camstack/ui-library'
+} from '@dominevo/ui-library'
+import type { DataColumn } from '@dominevo/ui-library'
 import { useQuery } from '@tanstack/react-query'
 import { Server } from 'lucide-react'
 import { useMemo } from 'react'

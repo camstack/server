@@ -1,6 +1,6 @@
 /**
  * Writes the device-template function table into the public docs page.
- * The table is generated from `@camstack/types` catalogue; the check fails
+ * The table is generated from `@dominevo/types` catalogue; the check fails
  * when the committed page has drifted. The docs repo is a sibling of the
  * main checkout (`../docs`). When it is not there (CI), the check skips.
  *

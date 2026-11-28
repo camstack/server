@@ -7,7 +7,7 @@
  * every step runs, one that throws neither stops nor delays the rest, and is
  * logged and retried on its own.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { createRemovalCleanup, type RemovalStep } from '../removal-cleanup.js'
 

@@ -12,7 +12,7 @@
  * `storage-orchestrator-persistence.spec.ts` / `storage-orchestrator.spec.ts`.
  */
 
-import type { IScopedLogger, StorageLocation } from '@camstack/types'
+import type { IScopedLogger, StorageLocation } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import type { ILocationStore } from '../location-store.js'
 import { StorageOrchestratorService } from '../storage-orchestrator.service.js'

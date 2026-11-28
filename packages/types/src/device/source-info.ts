@@ -24,7 +24,7 @@ import { ReadingQuantitySchema } from '../units/quantity.js'
  * at adopt, and a date/time value stores `dateTimeShape` the same way —
  * neither is repeated on each sample. The `device_class` tag is an
  * HA-specific input consumed at the discovery boundary (`ha-domain-mapping`)
- * to derive the CamStack `DeviceRole`; it is never stored after that point.
+ * to derive the Dominevo `DeviceRole`; it is never stored after that point.
  *
  * The `raw` escape hatch carries provider-specific attributes that don't
  * fit the structured slots (HA `attributes` whitelist, Reolink `deviceCache`
@@ -60,7 +60,7 @@ export type SourceInfo = z.infer<typeof SourceInfoSchema>
  * Build the synthetic SourceInfo every existing provider falls back to
  * when no upstream value has been persisted. Keeps non-migrated providers
  * (Reolink / Hikvision / ONVIF / RTSP) functional without code
- * changes — `id` reuses the CamStack stableId, `system` reuses the addon
+ * changes — `id` reuses the Dominevo stableId, `system` reuses the addon
  * id. Real upstream identity replaces this once a provider migrates and
  * calls `updateSourceInfo()` with concrete values.
  */

@@ -5,7 +5,7 @@
  * the NESTED connection object (secrets inside), and the integration's legacy `brokerId` row.
  * Every row carries a MARK so a step that rewrote a row it does not own is caught by the replay.
  */
-import { defineEntryKind, entryBody, makeInMemoryRecords, recordSecretRef } from '@camstack/types'
+import { defineEntryKind, entryBody, makeInMemoryRecords, recordSecretRef } from '@dominevo/types'
 import type Database from 'better-sqlite3'
 import { z } from 'zod'
 import { alexaRecordKinds } from '../../broker-record-kinds.js'

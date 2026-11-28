@@ -9,7 +9,7 @@
  * the component.
  */
 
-import type { CoreBlock } from '@camstack/types'
+import type { CoreBlock } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { restartReason } from '../restart-gate'
 

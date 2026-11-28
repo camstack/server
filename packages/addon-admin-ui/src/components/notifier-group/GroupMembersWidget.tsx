@@ -3,8 +3,8 @@
  * notification targets and one policy card per member. It owns the form's `members` key; groups are
  * never offered, and a target the hub no longer lists stays visible so the operator can remove it.
  */
-import type { Target } from '@camstack/types'
-import { Button, EmptyState, Input, Skeleton } from '@camstack/ui-library'
+import type { Target } from '@dominevo/types'
+import { Button, EmptyState, Input, Skeleton } from '@dominevo/ui-library'
 import { Plus, Search } from 'lucide-react'
 import { useState, type ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'

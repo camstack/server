@@ -1,4 +1,4 @@
-import type { EncodedPacket } from '@camstack/types'
+import type { EncodedPacket } from '@dominevo/types'
 
 /** Minimal video {@link EncodedPacket} for stream-broker specs. */
 export function videoPacket(

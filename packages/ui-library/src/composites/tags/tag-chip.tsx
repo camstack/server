@@ -4,7 +4,7 @@
  * default icon. `onStyle` makes the chip itself the "style" affordance;
  * `onRemove` adds the small remove button an input needs.
  */
-import type { TagColorId, TagEntry } from '@camstack/types'
+import type { TagColorId, TagEntry } from '@dominevo/types'
 import { Tag as TagGlyph, X } from 'lucide-react'
 import type { JSX } from 'react'
 import { useUiText } from '../../contexts/ui-text'

@@ -14,7 +14,7 @@ import {
   type RunningStateStatus,
   runningFromDishwasherOperation,
   runningStateCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { homeConnectConnections, type HomeConnectWatchEvent } from '../home-connect-gateway.js'
 import {
   COLD_DISHWASHER_STATUS,

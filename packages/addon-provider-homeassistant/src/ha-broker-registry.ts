@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { errMsg, type IEventBus, type IScopedLogger, isInstanceOn } from '@camstack/types'
+import { errMsg, type IEventBus, type IScopedLogger, isInstanceOn } from '@dominevo/types'
 import {
   HaIntegrationManager,
   type HaBrokerInfo,

@@ -36,7 +36,7 @@ import {
   type IFanPresetsProvider,
   type IScopedLogger,
   type SetOscillationAxisInput,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** The per-device store the presets live in. */
 export interface FanPresetsStore {

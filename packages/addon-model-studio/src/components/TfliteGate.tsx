@@ -3,7 +3,7 @@
  * the public plus catalog default card.
  */
 import { useEffect, useState } from 'react'
-import type { AddonPageProps } from '@camstack/ui-library'
+import type { AddonPageProps } from '@dominevo/ui-library'
 import { tfliteSupportNodes } from '../ui/api.js'
 import { useT } from '../i18n/index.js'
 

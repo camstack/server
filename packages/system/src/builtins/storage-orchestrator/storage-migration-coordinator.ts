@@ -22,8 +22,8 @@ import type {
   StorageMigrationResidue,
   UnstampedEventMediaCount,
   UnstampedRows,
-} from '@camstack/types'
-import { mayWriteToLocation, resolveLocationMode, withLocationMode } from '@camstack/types'
+} from '@dominevo/types'
+import { mayWriteToLocation, resolveLocationMode, withLocationMode } from '@dominevo/types'
 import type { StorageOrchestratorService } from './storage-orchestrator.service.js'
 
 const STORAGE_CLASSES: readonly StorageMigrationClass[] = [

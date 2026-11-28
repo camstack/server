@@ -2,14 +2,14 @@
  * Logs router — fixed core API (not a capability).
  *
  * Queries and streams log entries via `LoggingService` (thin NestJS DI
- * wrapper over `LogManager` from `@camstack/server/system`). Admin can read
+ * wrapper over `LogManager` from `@dominevo/server/system`). Admin can read
  * everything; viewers/protected users only see entries matching their
  * allowed providers scope (filtered in `query`).
  */
 
 import { randomUUID } from 'node:crypto'
-import { lineContainsText } from '@camstack/server/system'
-import type { ILogDestination, LogEntry, LogReadEntry, LogReadQuery } from '@camstack/types'
+import { lineContainsText } from '@dominevo/server/system'
+import type { ILogDestination, LogEntry, LogReadEntry, LogReadQuery } from '@dominevo/types'
 import { z } from 'zod'
 import { toWireLogLine } from '../../core/logging/log-export.js'
 import {

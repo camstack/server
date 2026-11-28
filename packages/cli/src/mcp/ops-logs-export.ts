@@ -1,7 +1,7 @@
 /**
  * `ops_logs_export` (#570): the Logs page export from the public MCP. It reuses
  * the hub's `GET /api/logs/export` route and the same defaults (everything,
- * the last six hours) through `@camstack/develop`, writes one NDJSON file (or, with `zip`, one .zip holding it) under
+ * the last six hours) through `@dominevo/develop`, writes one NDJSON file (or, with `zip`, one .zip holding it) under
  * `~/.camstack/exports/logs/` (0600) and answers with a bounded summary.
  */
 import * as fs from 'node:fs'
@@ -12,7 +12,7 @@ import {
   downloadLogsExport,
   type LogsExportArgs,
   type LogsExportDownload,
-} from '@camstack/develop'
+} from '@dominevo/develop'
 import type { McpContext } from './context.js'
 import { reasonOf, withHub, type NoSessionResult, type RefusedResult } from './ops-hub.js'
 

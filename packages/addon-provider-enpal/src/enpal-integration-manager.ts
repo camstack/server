@@ -1,4 +1,4 @@
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { EnpalConnection } from './config.js'
 import { EnpalError, readEnpalSnapshot, type FetchLike } from './enpal-client.js'
 import { BlazorBackoff, type BlazorReader } from './enpal-blazor.js'

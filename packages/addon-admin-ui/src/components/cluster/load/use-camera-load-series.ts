@@ -32,7 +32,7 @@
  * the moment differencing began.
  */
 import { useEffect, useRef, useState } from 'react'
-import { useEventStreamLatest, useSystemGetLoadContributions } from '@camstack/ui-library'
+import { useEventStreamLatest, useSystemGetLoadContributions } from '@dominevo/ui-library'
 import {
   foldContributionsByCamera,
   type CameraLoadBucket,

@@ -51,7 +51,7 @@ import {
   isSecretMarker,
   parseRecordBody,
   preconditionOf,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { DEVICE_ROWS_COLLECTION } from '../../device-manager/device-row-store.js'
 import { deviceManagerRecordKinds } from '../../device-manager/record-kinds.js'
 import { HUB_OWNER, type MigrationRecordWriter } from './migration-types.js'

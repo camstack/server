@@ -17,7 +17,7 @@
  * silent-drop rule); a pass that runs long is attributable without correlating
  * timestamps by hand.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { HeapDeltaTracker } from './heap-delta.js'
 
 export interface PeriodicPassDeps {

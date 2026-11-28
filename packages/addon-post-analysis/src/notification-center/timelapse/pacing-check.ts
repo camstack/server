@@ -42,7 +42,7 @@
  * it), and expecting frames from footage that does not exist would cry wolf.
  */
 
-import type { ExportDenseRange } from '@camstack/types'
+import type { ExportDenseRange } from '@dominevo/types'
 import type { TimelapseTrackInterval } from './dense-ranges.js'
 
 /** Tolerated deviation between planned and delivered frames, as a fraction of

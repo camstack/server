@@ -31,15 +31,15 @@ import {
   ALL_CAPABILITY_DEFINITIONS,
   buildCapRouters,
   CapabilityRegistry,
-} from '@camstack/server/system'
-import type { IScopedLogger } from '@camstack/types'
+} from '@dominevo/server/system'
+import type { IScopedLogger } from '@dominevo/types'
 import {
   deviceExportCapability,
   expandCapMethods,
   isVoidInput,
   kebabToCamel,
   resolveCapMount,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   type CapProxyProvider,

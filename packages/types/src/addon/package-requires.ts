@@ -1,14 +1,14 @@
 /**
  * What a published package needs from the rest of the install (D989).
  *
- * One published framework package (`@camstack/server`) carries the kernel, the
+ * One published framework package (`@dominevo/server`) carries the kernel, the
  * builtins and the capability contracts, so "which addon runs on which
  * framework" is a question of version, and the answer is DECLARED by the
  * package that knows it:
  *
  *   - an addon says the oldest server it runs on (`requires.server: ">=X"`);
  *   - the server says the oldest addon it works with
- *     (`requires.addons: { "@camstack/addon-x": ">=Y" }`) and the oldest shell
+ *     (`requires.addons: { "@dominevo/addon-x": ">=Y" }`) and the oldest shell
  *     around it (`requires.wrapper: { desktop, image }`);
  *   - a wrapper (the desktop app, the container starter) says which server
  *     range it can host, and reports its own kind and version.
@@ -28,7 +28,7 @@ export const MinVersionSchema = z
   .regex(/^>=\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$/, 'a minimum is written ">=X.Y.Z"')
 
 export const PackageRequiresSchema = z.object({
-  /** The oldest `@camstack/server` this package runs on. */
+  /** The oldest `@dominevo/server` this package runs on. */
   server: MinVersionSchema.optional(),
   /** The oldest installed version of each named addon package. */
   addons: z.record(z.string(), MinVersionSchema).optional(),

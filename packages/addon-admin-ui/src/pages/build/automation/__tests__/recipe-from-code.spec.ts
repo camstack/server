@@ -13,7 +13,7 @@
  * paid for before.
  */
 
-import { type AutomationRecipe, generateAutomationBlock, MAX_WHEN_LEAVES } from '@camstack/types'
+import { type AutomationRecipe, generateAutomationBlock, MAX_WHEN_LEAVES } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { ejectRecipeFromCode, looksLikeAutomation, parseRecipeFromCode } from '../recipe-from-code'
 

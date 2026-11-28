@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
-import type { VacuumControlStatus } from '@camstack/types'
+import type { VacuumControlStatus } from '@dominevo/types'
 import { VacuumInlineControl } from '../vacuum-control'
 
 /** Full default slice; spread overrides on top — no `as` casts in tests. */

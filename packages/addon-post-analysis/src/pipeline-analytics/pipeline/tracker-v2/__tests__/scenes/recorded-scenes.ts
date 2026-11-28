@@ -7,7 +7,7 @@
  * synthetic, and the 101 scenes are synthetic between four stored endpoint
  * boxes plus a hypothetical newcomer (see that section).
  */
-import { APPEARANCE_BIN_COUNT, type AppearanceDescriptor } from '@camstack/types'
+import { APPEARANCE_BIN_COUNT, type AppearanceDescriptor } from '@dominevo/types'
 import type { SceneBox, SceneDetection, SceneFrame } from './run-scene.js'
 
 type Timed = readonly [number, number, number, number, number] // t, x, y, w, h

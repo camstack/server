@@ -10,8 +10,8 @@ import type {
   IScopedLogger,
   ProviderRegistration,
   SystemEvent,
-} from '@camstack/types'
-import { EventCategory } from '@camstack/types'
+} from '@dominevo/types'
+import { EventCategory } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   __resetCommandObserverRegistryForTests,

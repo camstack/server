@@ -16,8 +16,8 @@
  *     authenticates;
  *   - drop `scopesGrantAdmin(...) && !subject.isAdmin` → the demoted row is admin.
  */
-import { attachUserManagementInternal, type UserManagementInternal } from '@camstack/server/system'
-import type { CredentialScope, CredentialTokenClaims, TokenScope } from '@camstack/types'
+import { attachUserManagementInternal, type UserManagementInternal } from '@dominevo/server/system'
+import type { CredentialScope, CredentialTokenClaims, TokenScope } from '@dominevo/types'
 import { TRPCError } from '@trpc/server'
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'

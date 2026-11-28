@@ -23,7 +23,7 @@ import {
   DEFAULT_DETAIL_CROP_CONVENTION,
   deriveDetailCropRect,
   FULL_IMAGE_BBOX,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   type FaceReembedDeps,
   type FaceReembedSample,

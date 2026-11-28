@@ -1,7 +1,7 @@
 /**
  * Record kinds owned by the training orchestrator (records plan phase 2).
  */
-import { defineRecordKinds, RECORD_MAX_DATA_BYTES, TrainingJobSchema } from '@camstack/types'
+import { defineRecordKinds, RECORD_MAX_DATA_BYTES, TrainingJobSchema } from '@dominevo/types'
 
 export const trainingRecordKinds = defineRecordKinds({
   jobs: {

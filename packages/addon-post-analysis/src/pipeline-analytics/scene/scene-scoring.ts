@@ -9,7 +9,7 @@
 //     before a flip; resets on disagreement) — lifted verbatim from the
 //     retired scene-state-worker.
 
-import type { SceneCondition, SceneMonitorState, SceneReference } from '@camstack/types'
+import type { SceneCondition, SceneMonitorState, SceneReference } from '@dominevo/types'
 
 export interface ScoreResult {
   readonly bestStateId: string | null

@@ -1,4 +1,4 @@
-import { type MigrationPlan, preconditionOf, type StoredKeyRead } from '@camstack/types'
+import { type MigrationPlan, preconditionOf, type StoredKeyRead } from '@dominevo/types'
 
 /** The canonical settings table: one row per key, id `<addonId>.<key>`. */
 export const ADDON_SETTINGS_TABLE = 'addon-settings'

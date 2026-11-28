@@ -20,7 +20,7 @@
  *    outbox says so, once, instead of producing two fallback failures.
  */
 
-import type { IScopedLogger, MediaFile } from '@camstack/types'
+import type { IScopedLogger, MediaFile } from '@dominevo/types'
 import { makeTestMediaFile } from '../../__tests__/support/media-file.js'
 import { describe, expect, it } from 'vitest'
 import {

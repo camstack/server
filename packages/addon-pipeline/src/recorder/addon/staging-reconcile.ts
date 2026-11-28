@@ -35,7 +35,7 @@
  */
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { nodeLoopPacer } from '../loop-pacer.js'
 import { STAGING_DIR_NAME } from './recording-controller.js'
 import { parseEpochStartMs, parseLivePlaylist } from './segment-watcher.js'

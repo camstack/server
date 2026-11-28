@@ -20,7 +20,7 @@ import {
   RecordIntegrationInstances,
   type RecordsAccess,
   type RowsMigrationLog,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { buildConnectionFormSchema, connectionFromSettings, type PetkitConfig } from './config.js'
 

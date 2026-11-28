@@ -17,7 +17,7 @@
  *      the bridge closes its P2P server 30 s after the last client, so the next
  *      dial repaid the entire cold open.
  */
-import type { IScopedLogger, StreamSource } from '@camstack/types'
+import type { IScopedLogger, StreamSource } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { StreamBroker } from '../stream-broker/stream-broker.js'
 

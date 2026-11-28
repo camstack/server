@@ -11,7 +11,7 @@ import {
   type ConfigUISchema,
   type RecordsAccess,
   RecordIntegrationInstances,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { isGreeSweepCidr } from './gree-subnet-scan.js'
 

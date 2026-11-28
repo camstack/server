@@ -8,7 +8,7 @@
  * primary child for a promoted widget). Renders nothing when the device
  * declares none.
  */
-import { DeviceContextProvider, WidgetSlot } from '@camstack/ui-library'
+import { DeviceContextProvider, WidgetSlot } from '@dominevo/ui-library'
 import type { ReactNode } from 'react'
 import type { HeroWidget } from './hero-widgets'
 

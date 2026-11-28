@@ -19,8 +19,8 @@ import type {
   IInferenceEngine,
   ModelCatalogEntry,
   PipelineDefaultStep,
-} from '@camstack/types'
-import { modelBindingKey } from '@camstack/types'
+} from '@dominevo/types'
+import { modelBindingKey } from '@dominevo/types'
 import {
   OBJECT_DETECTION_CLASS_FLOOR_MODEL_IDS,
   OBJECT_DETECTION_MODELS,

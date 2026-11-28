@@ -1,4 +1,4 @@
-import { customAction, defineCustomActions } from '@camstack/types'
+import { customAction, defineCustomActions } from '@dominevo/types'
 import { z } from 'zod'
 
 const DiscardStartInput = z.object({

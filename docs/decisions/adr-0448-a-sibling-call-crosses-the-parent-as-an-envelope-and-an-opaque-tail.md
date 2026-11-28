@@ -114,7 +114,7 @@ at most ~40 % of the analyzer leg's bytes, not an order of magnitude.
 
 5. **The audio plane gets no shared-memory handle, and the orchestrator
    relay leg is priced, not removed.** An `AudioHandle` on a shared-memory
-   ring is the mechanism D18 removed from video — `@camstack/shm-ring` was
+   ring is the mechanism D18 removed from video — `@dominevo/shm-ring` was
    the last native host-external, and "shared memory is not a data plane" is
    what `data-planes.md` says today. The video mechanism as it EXISTS is
    in-process co-location or an on-demand fetch of compressed media by handle
@@ -137,8 +137,8 @@ at most ~40 % of the analyzer leg's bytes, not an order of magnitude.
   The response shape's floor is byte handling — the socket read, the
   exact-fit copy `FrameDecoder` keeps for pinning reasons, the write — not
   msgpack.
-- **On the hub this rides a published `@camstack/server` (D16)**; nothing
-  here ships with `camstack deploy`. The before-numbers are in Context; the
+- **On the hub this rides a published `@dominevo/server` (D16)**; nothing
+  here ships with `dominevo deploy`. The before-numbers are in Context; the
   after is read from the same `[mem]` line, the same profile, and
   `socketFwd=` at the same hour on the same hub. Projected from the bench and
   the 79 % sibling share, hub-main's busy time should drop by a quarter to a

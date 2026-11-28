@@ -6,7 +6,7 @@
  */
 import { useState, type ReactElement } from 'react'
 import { Ruler } from 'lucide-react'
-import { DISPLAY_PREFERENCES, type DisplayPreference } from '@camstack/types'
+import { DISPLAY_PREFERENCES, type DisplayPreference } from '@dominevo/types'
 import {
   ErrorBox,
   Select,
@@ -16,7 +16,7 @@ import {
   useAccountUnitPreferences,
   type TemperatureScale,
   type UnitPreferences,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 
 function isSystem(value: string): value is DisplayPreference {

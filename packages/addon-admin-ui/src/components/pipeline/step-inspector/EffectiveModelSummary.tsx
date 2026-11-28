@@ -6,7 +6,7 @@
  * that accelerator's cell (`href`).
  */
 import { Link } from 'react-router-dom'
-import { LIST_ROW, TEXT_HINT } from '@camstack/ui-library'
+import { LIST_ROW, TEXT_HINT } from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 
 export interface EffectiveModelRow {

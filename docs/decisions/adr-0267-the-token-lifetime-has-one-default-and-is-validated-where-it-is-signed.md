@@ -55,7 +55,7 @@ typing `3600` meaning "an hour" gets a token that dies in 3.6 seconds.
 
 ## Decision
 
-`DEFAULT_TOKEN_EXPIRY` (`@camstack/types`) is the one default. It is `30d` —
+`DEFAULT_TOKEN_EXPIRY` (`@dominevo/types`) is the one default. It is `30d` —
 the value the product documents and the one an operator decided on — and it is
 imported by the schema, by `RUNTIME_DEFAULTS` and by the signer's fallback. No
 second spelling of it exists, including inside the parser, which derives its

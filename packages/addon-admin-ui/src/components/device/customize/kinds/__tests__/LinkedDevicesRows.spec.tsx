@@ -1,4 +1,4 @@
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
@@ -58,8 +58,8 @@ const candidatesAnswer = vi.hoisted((): { current: readonly unknown[] } => ({ cu
 const offeredToPicker = vi.hoisted((): { current: unknown } => ({ current: null }))
 const setSlot = vi.fn(async (_input: unknown) => ({ applied: true, reload: 'none' }))
 const confirmAnswer = vi.hoisted((): { current: boolean } => ({ current: true }))
-vi.mock('@camstack/ui-library', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@camstack/ui-library')>()
+vi.mock('@dominevo/ui-library', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dominevo/ui-library')>()
   return {
     ...actual,
     useConfirm: () => async () => confirmAnswer.current,

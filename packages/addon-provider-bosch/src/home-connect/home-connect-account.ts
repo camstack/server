@@ -3,7 +3,7 @@
  * of the tokens (keychain-backed secret fields). The record's change hook reconciles the
  * integration: a record with no token stops its manager and takes its devices offline.
  */
-import { type IIntegrationInstancesProvider, SECRET_CLEAR } from '@camstack/types'
+import { type IIntegrationInstancesProvider, SECRET_CLEAR } from '@dominevo/types'
 import { APPLIANCE_SECRETS_KEY } from './config.js'
 
 /** The slice of the instances helper the sign out goes through. */

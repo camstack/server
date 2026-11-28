@@ -7,7 +7,7 @@
  * not exist, would restore a secret to anywhere, so the declarations are pinned here against the
  * REAL adapters.
  */
-import type { ConfigField } from '@camstack/types'
+import type { ConfigField } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { NotifierAdapter } from '../adapters/adapter.js'
 import { NOTIFIER_ADAPTERS } from '../adapters/registry.js'

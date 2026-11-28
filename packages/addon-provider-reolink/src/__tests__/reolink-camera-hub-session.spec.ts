@@ -5,7 +5,7 @@
  * the registry.
  */
 import { ReolinkBaichuanApi } from '@apocaliss92/nodelink-js'
-import { DeviceType, deviceStateRefreshCapability } from '@camstack/types'
+import { DeviceType, deviceStateRefreshCapability } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ReolinkCamera } from '../reolink-camera.js'
 import { reolinkHubSessions } from '../reolink-hub-session.js'

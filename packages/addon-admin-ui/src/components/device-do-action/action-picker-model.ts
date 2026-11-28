@@ -7,8 +7,8 @@
  * caps (`getBindingsBatch`) — through the cap vocabulary (D920). A device
  * offers an action when one of its bindings provides the action's cap.
  */
-import { deviceOffersActions, REPEAT_ITEM_VAR, vocabularyActionsForDevice } from '@camstack/types'
-import type { ActionTarget, ResolvedVocabAction } from '@camstack/types'
+import { deviceOffersActions, REPEAT_ITEM_VAR, vocabularyActionsForDevice } from '@dominevo/types'
+import type { ActionTarget, ResolvedVocabAction } from '@dominevo/types'
 
 /** The variable a run binds to the device that triggered it. */
 export const TRIGGER_DEVICE_VAR = 'deviceId'

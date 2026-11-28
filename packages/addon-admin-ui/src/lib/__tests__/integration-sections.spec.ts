@@ -11,17 +11,17 @@ describe('systemAddonIdsOf - declared section', () => {
   it('a declared system wins over a non-framework package', () => {
     const ids = systemAddonIdsOf([
       {
-        manifest: { id: 'hosted', packageName: '@camstack/addon-x', integrationSection: 'system' },
+        manifest: { id: 'hosted', packageName: '@dominevo/addon-x', integrationSection: 'system' },
       },
-      addon('plain', '@camstack/addon-x'),
+      addon('plain', '@dominevo/addon-x'),
     ])
     expect([...ids]).toEqual(['hosted'])
   })
 
   it('a declared providers wins over a framework package', () => {
     const ids = systemAddonIdsOf([
-      { manifest: { id: 'p', packageName: '@camstack/server', integrationSection: 'providers' } },
-      addon('s', '@camstack/server'),
+      { manifest: { id: 'p', packageName: '@dominevo/server', integrationSection: 'providers' } },
+      addon('s', '@dominevo/server'),
     ])
     expect([...ids]).toEqual(['s'])
   })
@@ -30,9 +30,9 @@ describe('systemAddonIdsOf - declared section', () => {
 describe('systemAddonIdsOf', () => {
   it('names the addons shipped in a framework package, never by addon id', () => {
     const ids = systemAddonIdsOf([
-      addon('core-blocks', '@camstack/server'),
-      addon('camera-grid', '@camstack/server'),
-      addon('provider-reolink', '@camstack/addon-provider-reolink'),
+      addon('core-blocks', '@dominevo/server'),
+      addon('camera-grid', '@dominevo/server'),
+      addon('provider-reolink', '@dominevo/addon-provider-reolink'),
     ])
     expect([...ids].sort()).toEqual(['camera-grid', 'core-blocks'])
   })

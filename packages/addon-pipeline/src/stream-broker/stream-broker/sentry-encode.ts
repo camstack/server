@@ -30,7 +30,7 @@
  * inline SVG, the house pattern from `snapshot-courtesy.ts`.
  */
 import { type ChildProcess, spawn } from 'node:child_process'
-import { buildFfmpegArgs, errMsg, type FfmpegInvocation, type IScopedLogger } from '@camstack/types'
+import { buildFfmpegArgs, errMsg, type FfmpegInvocation, type IScopedLogger } from '@dominevo/types'
 import type { SentryPlan } from './sentry-plan.js'
 
 /**

@@ -16,7 +16,7 @@ applies-to:
 [D22](adr-0022.md) generated `unraid/**` from the image contract,
 [D23](adr-0023.md) generated `docker-compose.yml` from the same spec, and
 `scripts/check-deployment-templates.ts` refused drift on every commit. The <!-- drift-ok -->
-distribution copy lived in the public `camstack/unraid-templates`, so every
+distribution copy lived in the public `dominevo/unraid-templates`, so every
 template existed twice. The second copy is the one that rotted: it sat at the
 `1.2.19` stamp while the tree reached `1.2.456`, with the generator and its
 guard green throughout. [D714](adr-0714-the-release-pushes-the-unraid-templates-to-the-public-distribution-repo.md)
@@ -29,9 +29,9 @@ operator wants one source.
 
 ## Decision
 
-The Unraid templates live only in `github.com/camstack/unraid-templates`, the
-Proxmox install script in `github.com/camstack/proxmox`, and the Docker Compose
-example only in the public docs (`camstack/docs`). This repo carries none of
+The Unraid templates live only in `github.com/dominevo/unraid-templates`, the
+Proxmox install script in `github.com/dominevo/proxmox`, and the Docker Compose
+example only in the public docs (`dominevo/docs`). This repo carries none of
 them, nor a generator, nor a guard. A change to the container contract — an
 environment variable the code reads, a port it binds, a volume, a device — is
 mirrored by hand in those places in the same piece of work.

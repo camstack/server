@@ -7,9 +7,9 @@
  * rolls and a profile with distinctive values, and the test asserts each one
  * survived the projection, not just that `image` appeared.
  */
-import type { InMemoryRecords } from '@camstack/types'
+import type { InMemoryRecords } from '@dominevo/types'
 import { makeNcRecords } from './support/nc-test-deps.js'
-import { NcRuleInputSchema } from '@camstack/types'
+import { NcRuleInputSchema } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import {
   makeLogRecorder,

@@ -350,7 +350,7 @@ describe('resolveHfReference', () => {
     expect(out.error.code).toBe('too-large')
   })
 
-  it('reports a gated repo as gated, and says CamStack cannot download it', async () => {
+  it('reports a gated repo as gated, and says Dominevo cannot download it', async () => {
     const { fetchFn } = fetcher({
       tree: () =>
         new Response('{}', {

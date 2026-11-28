@@ -14,5 +14,5 @@ Some folders are licensed for non-commercial or research use only; the root
 README.md lists them under "Non-commercial models".
 
 This file, README.md and the folder README.md cards are maintained in the
-CamStack source repository (hf/camstack-models/). LICENSES/ is a copy of its
+Dominevo source repository (hf/camstack-models/). LICENSES/ is a copy of its
 licenses/models/, and THIRD_PARTY_MODELS.md a copy of its root notice.

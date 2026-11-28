@@ -10,8 +10,8 @@
  * declarer that did not load, a package that could not be read are all
  * "unknown", never "no writable location".
  */
-import type { IScopedLogger, StorageLocation, StorageLocationDeclarer } from '@camstack/types'
-import { EventCategory, mayWriteToLocation } from '@camstack/types'
+import type { IScopedLogger, StorageLocation, StorageLocationDeclarer } from '@dominevo/types'
+import { EventCategory, mayWriteToLocation } from '@dominevo/types'
 
 export const WRITABILITY_FINDING_PREFIX = 'storage:no-writable-location:'
 const STORAGE_PAGE = '/system/storage'

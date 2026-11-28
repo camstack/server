@@ -4,8 +4,8 @@
  * connect paths are resolved once here. `InstanceCreateDialog` and the pickers read through it.
  * Kind VALUES are data; nothing here branches on one.
  */
-import { useAddonsListCapabilityProviders, useSystem } from '@camstack/ui-library'
-import { type IntegrationInstanceDescription, kindServesCap } from '@camstack/types'
+import { useAddonsListCapabilityProviders, useSystem } from '@dominevo/ui-library'
+import { type IntegrationInstanceDescription, kindServesCap } from '@dominevo/types'
 import { useQueries } from '@tanstack/react-query'
 import { useMemo } from 'react'
 

@@ -50,7 +50,7 @@
  * the other three and always answering OK would be worse than not declaring
  * them, because an OK on `fireAlarm` is a claim we have no basis for.
  */
-import type { AlarmArmMode, AlarmState } from '@camstack/types'
+import type { AlarmArmMode, AlarmState } from '@dominevo/types'
 
 /** The arm states `Alexa.SecurityPanelController` defines. */
 export type AlexaArmState = 'DISARMED' | 'ARMED_STAY' | 'ARMED_AWAY' | 'ARMED_NIGHT'

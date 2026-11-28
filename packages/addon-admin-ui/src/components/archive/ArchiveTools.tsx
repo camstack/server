@@ -2,7 +2,7 @@
  * Archive overview → Tools (collapsed, admin): storage migration, cleanup and
  * reconcile-from-disk. The destructive ones keep their own confirmations.
  */
-import { CollapsibleCard } from '@camstack/ui-library'
+import { CollapsibleCard } from '@dominevo/ui-library'
 import { Wrench } from 'lucide-react'
 import { useEffect, useState, type ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'

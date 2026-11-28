@@ -24,7 +24,7 @@ import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 import { resolveNpmInvocation, __clearNpmInvocationCacheForTests } from '../npm-command.js'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 function makeLogger(): IScopedLogger {
   const l: IScopedLogger = {

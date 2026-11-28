@@ -35,7 +35,7 @@
  * warm because someone closed a tab.
  */
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import type { DataPlaneHandler, IScopedLogger } from '@camstack/types'
+import type { DataPlaneHandler, IScopedLogger } from '@dominevo/types'
 import type { ChatRetention, ChatStore } from './chat-store.js'
 import {
   TestChatRequestSchema,

@@ -5,14 +5,14 @@
  * a capped node yields, a stale device pin is said once and ignored, and the
  * placement statistics see every start.
  */
-import { CAMERA_TRIGGER } from '@camstack/types'
+import { CAMERA_TRIGGER } from '@dominevo/types'
 import type {
   CameraDetectionConfig,
   IScopedLogger,
   RunnerCameraConfig,
   RunnerLocalLoad,
   SessionPlacementPolicy,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { RoundRobinInferenceDeviceRotation } from '../device-balancer.js'
 import {

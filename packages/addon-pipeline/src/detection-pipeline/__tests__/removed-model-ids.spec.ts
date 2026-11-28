@@ -6,11 +6,11 @@
  *
  * What these specs pin is the catalog side — every deleted id is really absent
  * and the survivor is the whole offer — and the pass-through side. The deleted
- * ids are `REMOVED_MODEL_IDS` from `@camstack/types`: the list the
+ * ids are `REMOVED_MODEL_IDS` from `@dominevo/types`: the list the
  * orchestrator's stored-pin reset reads (D725). An id listed there that a
  * catalog still ships, or a step id no catalog knows, fails here.
  */
-import { REMOVED_MODEL_IDS } from '@camstack/types'
+import { REMOVED_MODEL_IDS } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import * as modelCatalogs from '../registry/model-catalogs.js'
 import { getStepDefinition, resolveModelForFormat } from '../registry/step-definitions.js'

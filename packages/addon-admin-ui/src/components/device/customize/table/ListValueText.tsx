@@ -2,7 +2,7 @@
  * A list in a Customize value cell: the count, then the first names.
  * The full list is the tooltip (and the row's editor).
  */
-import { Tooltip, TooltipContent, TooltipTrigger } from '@camstack/ui-library'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@dominevo/ui-library'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { listPreview } from './list-value'

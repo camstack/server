@@ -9,7 +9,7 @@ import {
   type IRecordEntriesProvider,
   type ProviderRegistration,
   recordEntriesCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { EntriesService } from './entries-service.js'
 
 export class RecordEntriesAddon extends BaseAddon {

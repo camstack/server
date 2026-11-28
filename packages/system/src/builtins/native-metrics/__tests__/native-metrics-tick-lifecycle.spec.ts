@@ -14,7 +14,7 @@
  * in-flight case, a tick that fires before `initialize()` / after `shutdown()`,
  * and that shutdown really clears both timers.
  */
-import type { SystemEvent } from '@camstack/types'
+import type { SystemEvent } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { CAMSTACK_CMD_RE } from '../process-classification.js'
 

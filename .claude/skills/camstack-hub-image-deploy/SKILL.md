@@ -1,6 +1,6 @@
 ---
 name: camstack-hub-image-deploy
-description: Put a SERVER-SIDE change (server-backend, generated cap routers, @camstack/types/system/sdk, manifest placement) on a running CamStack hub or agent. The default path is publish → `serverManagement.applyServerUpdate` per node — NO Docker image. Covers the dev `deploy-server` channel, the backup before a swap, the traps that recur on every update, and the rare cases that DO need an image (a fresh container seed, the starter/entrypoint, the baked native set) including the dev overlay image. Use when a new cap method 404s on a node, a framework fix "is not live", or a container must be recreated.
+description: Put a SERVER-SIDE change (server-backend, generated cap routers, @dominevo/types/system/sdk, manifest placement) on a running Dominevo hub or agent. The default path is publish → `serverManagement.applyServerUpdate` per node — NO Docker image. Covers the dev `deploy-server` channel, the backup before a swap, the traps that recur on every update, and the rare cases that DO need an image (a fresh container seed, the starter/entrypoint, the baked native set) including the dev overlay image. Use when a new cap method 404s on a node, a framework fix "is not live", or a container must be recreated.
 ---
 
 # Server-side deploy to a running node
@@ -17,10 +17,10 @@ below use `<hub-url>`, `<container>` and `<nodeId>`.
 
 The image tag is the **product** version (`intel-0.1.0`, `amd-0.1.0`, labelled
 beta while the major is 0). `applyServerUpdate` takes the **npm** version of
-`@camstack/server` (1.2.x). They are different numbers (D943). A server-side
+`@dominevo/server` (1.2.x). They are different numbers (D943). A server-side
 change still does not need a new image.
 
-A node runs `@camstack/server` (kernel, builtins, generated cap routers;
+A node runs `@dominevo/server` (kernel, builtins, generated cap routers;
 `types`/`system`/`sdk` ride along) from `<dataDir>/server-root/current`, put
 there by `applyServerUpdate`. The image only provides the starter, the
 entrypoint and the first-boot seed. So for any server-side change:
@@ -46,8 +46,8 @@ node packages/cli/dist/cli.js deploy --closure -s <hub-url> --cluster
 
 (`deploy-server` is a deprecated alias of `deploy --closure`.) Full flow §0b.
 
-Then deploy any changed ADDON too (`camstack deploy <addon>`) and verify (§1).
-`camstack deploy packages/system` (or `types`) is REFUSED on a deployed hub —
+Then deploy any changed ADDON too (`dominevo deploy <addon>`) and verify (§1).
+`dominevo deploy packages/system` (or `types`) is REFUSED on a deployed hub —
 the framework ships only as a server closure.
 
 ## 0b. Path B in full — `deploy --closure` (+ agent fan-out via API)
@@ -67,7 +67,7 @@ node packages/cli/dist/cli.js deploy --closure -s <hub-url>
 # Note the version from the log: 1.2.N-dev.<epoch>
 #
 # If apply returns 403 Forbidden (a non-admin login): upload may still have
-# succeeded — `camstack login <host>` as an admin once, then hub.mjs uses that
+# succeeded — `dominevo login <host>` as an admin once, then hub.mjs uses that
 # session (refreshed automatically; see the hub-access skill):
 node scripts/hub/hub.mjs POST serverManagement.applyServerUpdate \
   '{"version":"<base>-dev.<epoch>"}'
@@ -123,7 +123,7 @@ happy path.
 
 `deploy-server` does **not** replace addon packages under `<dataDir>/addons/`.
 Deploy every changed addon to every node that needs it
-(`camstack deploy <pkg>` / `-n <nodeId>`). ui-library changes ride
+(`dominevo deploy <pkg>` / `-n <nodeId>`). ui-library changes ride
 `addon-admin-ui` on the hub.
 
 ## 1. Verify
@@ -146,14 +146,14 @@ node scripts/hub/hub.mjs POST <cap>.<newMethod> '{…}'                         
    restore = move it back and restart. Or know the last good version and
    re-apply it.
 3. **One copy of the framework.** Both roles load builtins from the closure
-   and skip any `@camstack/server/system` under the node's addons dir — but the hub's
+   and skip any `@dominevo/server/system` under the node's addons dir — but the hub's
    hot-load rescan (`loadNewAddons`) still reads a stale copy there, and an
    agent falls back to it when the closure cannot resolve the package
    (`docs/architecture/update-and-release.md` §"Deploying a framework change
    in development"). After an update, compare:
    ```bash
-   docker exec <container> sh -c 'cat /data/addons/@camstack/system/package.json 2>/dev/null | grep -m1 version || echo "ABSENT (correct)"'
-   docker exec <container> sh -c 'grep -m1 version /data/server-root/current/node_modules/@camstack/system/package.json'
+   docker exec <container> sh -c 'cat /data/addons/@dominevo/system/package.json 2>/dev/null | grep -m1 version || echo "ABSENT (correct)"'
+   docker exec <container> sh -c 'grep -m1 version /data/server-root/current/node_modules/@dominevo/system/package.json'
    ```
 4. **A reported version is a claim about the closure**, not about what a
    builtin or a forked addon executed. Change a log string in the same commit
@@ -173,14 +173,14 @@ node scripts/hub/hub.mjs POST <cap>.<newMethod> '{…}'                         
 
 | Change | Action |
 | --- | --- |
-| Addon `src` (provider logic, settings schema) | `camstack deploy <addon>` |
-| An additive OUTPUT field on an existing cap method | `camstack deploy <addon>` (output passes through structurally) |
-| A new INPUT field, a new method, a new cap | publish (`force_packages=@camstack/server`) → `applyServerUpdate`, then deploy the addon |
-| `server/backend`, `@camstack/server/system`, `@camstack/sdk` | publish → `applyServerUpdate` |
+| Addon `src` (provider logic, settings schema) | `dominevo deploy <addon>` |
+| An additive OUTPUT field on an existing cap method | `dominevo deploy <addon>` (output passes through structurally) |
+| A new INPUT field, a new method, a new cap | publish (`force_packages=@dominevo/server`) → `applyServerUpdate`, then deploy the addon |
+| `server/backend`, `@dominevo/server/system`, `@dominevo/sdk` | publish → `applyServerUpdate` |
 | Manifest `placement` / `execution.group` | publish → `applyServerUpdate` |
 | The starter, the entrypoint (heap flags, env, user), `Dockerfile` | a new image AND a container recreate |
 | The baked native set, a fresh host | a new image |
-| ui-library used by the admin UI | `camstack deploy packages/addon-admin-ui` (it bundles the library) + a hard browser reload |
+| ui-library used by the admin UI | `dominevo deploy packages/addon-admin-ui` (it bundles the library) + a hard browser reload |
 
 **Symptom of a skipped server update:** the addon deploys and its settings
 schema updates, but the new method answers `No procedure found on path
@@ -189,13 +189,13 @@ schema updates, but the new method answers `No procedure found on path
 ## 4. When you DO need an image
 
 - **The image installs from npm**, not from your tree: the `Dockerfile`
-  installs `@camstack/server@latest`. Your change must be published (and be
+  installs `@dominevo/server@latest`. Your change must be published (and be
   `latest`) before the image builds, and the image LABEL (`intel-X.Y.Z`) is not
   proof of the baked version — read `/health` or `getServerPackageStatus`.
-- **The starter runs from the image** (`/opt/…/@camstack/server/dist/starter.js`):
+- **The starter runs from the image** (`/opt/…/@dominevo/server/dist/starter.js`):
   code there changes only on a container recreate. The process command line
   names the seed path on every boot — the loaded version is the starter's
-  `booting @camstack/server@X from …` line, not the path.
+  `booting @dominevo/server@X from …` line, not the path.
 - **A recreate keeps `/data`** — cameras, database, tokens and the applied
   closure survive; a wipe of `/data` is a greenfield and destroys them.
 - **A node on an old starter** that never acknowledges an update can be moved
@@ -213,9 +213,9 @@ schema updates, but the new method answers `No procedure found on path
 To try packed workspace packages inside a container without publishing:
 
 ```bash
-./scripts/dev-pack.sh @camstack/server @camstack/types     # or --affected, or --all → dev-overlay/*.tgz
+./scripts/dev-pack.sh @dominevo/server @dominevo/types     # or --affected, or --all → dev-overlay/*.tgz
 docker build -f Dockerfile.dev --build-arg BASE=<a published camstack image> -t camstack:dev-<tag> .
-docker run --rm --entrypoint sh camstack:dev-<tag> -c 'grep -rl "<unique marker>" /opt/camstack-hub/node_modules/@camstack/server/dist || echo MISSING'
+docker run --rm --entrypoint sh camstack:dev-<tag> -c 'grep -rl "<unique marker>" /opt/camstack-hub/node_modules/@dominevo/server/dist || echo MISSING'
 ```
 
 Run it with the same volumes and env as the container it replaces (keep
@@ -229,7 +229,7 @@ path:      <A release X.Y.Z | B deploy-server <dev version> | image <tag>>
 dev-uploads: <hub only | propagate --all | propagate -n …>
 backup:    <current.bak-… | known-good version X.Y.Z>
 applied:   <nodeId → runningVersion, restartRequired, for EVERY enumerated node>
-framework: <stale addons-dir @camstack/server/system: absent | removed>
-addons:    <camstack deploy … per node, or none>
+framework: <stale addons-dir @dominevo/server/system: absent | removed>
+addons:    <dominevo deploy … per node, or none>
 verified:  <the new method / behaviour, observed on the node>
 ```

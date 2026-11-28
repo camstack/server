@@ -86,7 +86,7 @@
  * Device 102 — the busiest lot in the fleet — holds 8.
  */
 
-import type { InferenceOccasion, TrackState } from '@camstack/types'
+import type { InferenceOccasion, TrackState } from '@dominevo/types'
 import { isPlausibleStationaryBirthBox } from './stationary-birth-guard.js'
 import { iou } from './stationary-match.js'
 import type { StationaryBbox } from './stationary-types.js'

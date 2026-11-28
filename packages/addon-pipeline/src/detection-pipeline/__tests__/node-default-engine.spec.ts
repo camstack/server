@@ -13,7 +13,7 @@
  *   resolveDeviceEngine(enumerateInferenceDevices(hw)[0].key)
  */
 import { describe, it, expect } from 'vitest'
-import { enumerateInferenceDevices } from '@camstack/types'
+import { enumerateInferenceDevices } from '@dominevo/types'
 import { resolveDeviceEngine } from '../engine/resolve-device-engine.js'
 import { envToHardwareInfo } from '../runtimes.js'
 

@@ -8,12 +8,12 @@
  * suite exercises with synthetic interface lists.
  */
 
-import type { LocalInterface } from '@camstack/types'
+import type { LocalInterface } from '@dominevo/types'
 import {
   AUTOMATIC_HUB_ADDRESS_FLAGS,
   pickAppLinkHub,
   selectAppConnectionEndpoints,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   ALLOWLIST_RECONCILE_INTERVAL_MS,

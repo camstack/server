@@ -24,8 +24,8 @@ import type {
   FrameHandle,
   IScopedLogger,
   IEventBus,
-} from '@camstack/types'
-import { createEvent, decodeVectorBase64, EventCategory } from '@camstack/types'
+} from '@dominevo/types'
+import { createEvent, decodeVectorBase64, EventCategory } from '@dominevo/types'
 import PipelineAnalyticsAddon from '../index.js'
 import { FaceRecognizer } from '../face-recognizer.js'
 import { FACE_ARCFACE_INDEX } from '../store/embedding-vector-index.js'

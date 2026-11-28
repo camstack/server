@@ -81,7 +81,7 @@ interface AddonManifest {
   readonly group: string | null
   readonly instanceMode: string | null
   readonly capabilities: readonly string[]
-  /** `@camstack/server/system` builtin that opted out of running in hub-main. */
+  /** `@dominevo/server/system` builtin that opted out of running in hub-main. */
   readonly isolate: boolean
   /** The package the manifest came from — decides in-process vs own runner. */
   readonly packageName: string
@@ -178,11 +178,11 @@ function collectPackages(): PackageInfo[] {
   return out
 }
 
-/** `@camstack/*` dependencies of the root package = the shipped closure. */
+/** `@dominevo/*` dependencies of the root package = the shipped closure. */
 function rootClosureDeps(): ReadonlySet<string> {
   const pkg = readJson(path.join(ROOT, 'server', 'backend', 'package.json'))
   const deps = asRecord(pkg['dependencies']) ?? {}
-  return new Set(Object.keys(deps).filter((d) => d.startsWith('@camstack/')))
+  return new Set(Object.keys(deps).filter((d) => d.startsWith('@dominevo/')))
 }
 
 /**
@@ -210,11 +210,11 @@ function roleOf(pkg: PackageInfo, closure: ReadonlySet<string>): PackageRole {
 /**
  * How a package's code actually reaches a running node — the distinction that
  * decides whether `Update all` (a root-package install) picks a change up, or
- * whether it needs `camstack deploy`.
+ * whether it needs `dominevo deploy`.
  */
 function shipsVia(pkg: PackageInfo, role: PackageRole, closure: ReadonlySet<string>): string {
   if (role === 'app') return 'the update itself'
-  if (role === 'framework') return '`@camstack/server` closure'
+  if (role === 'framework') return '`@dominevo/server` closure'
   // The Publish Packages workflow skips exactly `private: true` packages, so the
   // manifest alone says whether a tool is on npm — no registry call in a generator.
   if (role === 'tooling') return pkg.private ? 'not published (private)' : 'npm, standalone tool'
@@ -276,7 +276,7 @@ function renderPackages(pkgs: readonly PackageInfo[]): string {
         'Host-provided: addons do NOT bundle these, they resolve them from the running',
         'closure. Consequence worth knowing: a framework change reaches a node ONLY',
         'through a root-package install (`applyServerUpdate` / "Update all"), pinned to',
-        'the exact version the published `@camstack/server` carries. `camstack deploy`',
+        'the exact version the published `@dominevo/server` carries. `dominevo deploy`',
         'cannot ship it.',
       ].join(' '),
       byRole('framework'),
@@ -285,7 +285,7 @@ function renderPackages(pkgs: readonly PackageInfo[]): string {
       'Addons',
       [
         'Each declares one or more `camstack.addons[]` entries and lives in',
-        '`<dataDir>/addons/`. Updated with `camstack deploy` (or the Addons page) —',
+        '`<dataDir>/addons/`. Updated with `dominevo deploy` (or the Addons page) —',
         'NOT by a root-package update. The ones marked _image-seeded_ are also',
         'dependencies of the root package: the image copies them into the addons dir on',
         'first boot, after which the addons-dir copy is what loads and the closure copy',
@@ -298,11 +298,11 @@ function renderPackages(pkgs: readonly PackageInfo[]): string {
 }
 
 /**
- * Where the addon's code actually executes. A `@camstack/server/system` builtin is
+ * Where the addon's code actually executes. A `@dominevo/server/system` builtin is
  * in-process on hub-main by default; `execution.isolate` opts it out.
  */
 function addonProcess(addon: AddonManifest): string {
-  if (addon.packageName !== '@camstack/server') return 'own runner'
+  if (addon.packageName !== '@dominevo/server') return 'own runner'
   return addon.isolate ? 'own runner (`isolate`)' : 'hub-main'
 }
 
@@ -327,7 +327,7 @@ function renderAddons(pkgs: readonly PackageInfo[]): string {
     'collapses its members into ONE process so their cap calls resolve in-process',
     '— that is the only reason to use it.',
     '',
-    '`Process` says WHERE the addon actually runs. `@camstack/server` builtins are',
+    '`Process` says WHERE the addon actually runs. `@dominevo/server` builtins are',
     'resident in hub-main — they hold the storage/settings/logging every runner',
     'depends on — unless the manifest declares `execution.isolate`, which forks the',
     'builtin like any other addon. Reading "system package" as "in hub-main" is what',
@@ -726,7 +726,7 @@ interface GeneratedFile {
 function renderStorage(map: StorageMap, durable: ReadonlyMap<string, DurableAnnotation>): string {
   const lines: string[] = [BANNER, '# Storage map', '']
   lines.push(
-    'Every SQLite table CamStack creates, and the file that owns it. There is no',
+    'Every SQLite table Dominevo creates, and the file that owns it. There is no',
     'schema file to read — tables come into existence five different ways, so a',
     'map showing only one of them would be worse than none.',
     '',

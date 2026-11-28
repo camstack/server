@@ -15,8 +15,8 @@
  * the wrong verdict for rules carrying it.
  */
 
-import type { NcConditions, NcRule } from '@camstack/types'
-import { NC_AUTHORABLE_SYSTEM_EVENT_KINDS, NcRuleInputSchema, NcRuleSchema } from '@camstack/types'
+import type { NcConditions, NcRule } from '@dominevo/types'
+import { NC_AUTHORABLE_SYSTEM_EVENT_KINDS, NcRuleInputSchema, NcRuleSchema } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { evaluateRule } from '../rule-engine.js'
 import { planRuleTest, scheduleActiveAt, testTriggerForRule } from '../rule-test-plan.js'

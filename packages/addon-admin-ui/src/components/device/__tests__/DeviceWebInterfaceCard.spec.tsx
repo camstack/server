@@ -5,7 +5,7 @@ import { DeviceWebInterfaceCard } from '../DeviceWebInterfaceCard'
 
 let link: { url: string; label: string; target: 'device'; host: string } | null
 
-vi.mock('@camstack/ui-library', async (importOriginal) => {
+vi.mock('@dominevo/ui-library', async (importOriginal) => {
   const actual: Record<string, unknown> = await importOriginal()
   return {
     ...actual,

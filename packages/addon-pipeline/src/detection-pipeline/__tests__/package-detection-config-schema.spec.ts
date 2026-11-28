@@ -32,7 +32,7 @@ import type {
   IInferenceEngine,
   InferenceInput,
   PipelineDefaultStep,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 import { getStep } from '../registry/step-definitions.js'
 import { buildExecutableTree } from '../pipeline/tree-builder.js'

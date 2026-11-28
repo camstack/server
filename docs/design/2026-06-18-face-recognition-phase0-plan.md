@@ -6,7 +6,7 @@
 
 **Architecture:** Approach B (see `docs/design/2026-06-18-face-recognition-design.md` §3 — that document was never committed to this repo) <!-- drift-ok -->: the runner change is minimal. The arcface postprocessor already L2-normalizes the vector (`dispatch.ts` `postprocessArcface` → `embeddingNorm`). Today `result-assembler.applyChildOutput` collapses that output to an opaque `embedding:<dim>d` marker label and throws the vector away. We add two optional fields to `ObjectDetection` (`embedding`, `embeddingModelId`), store the normalized vector on the `face` detail in the `embedding` case, and inherit it onto the parent person in `buildFrameResult` (mirroring the existing label inheritance). The back-compat marker label is kept (it is already filtered downstream by `label-utils`).
 
-**Tech Stack:** TypeScript 5.9 (strict, ESM, NodeNext), vitest, nx monorepo, `@camstack/types` (vite + tsc `--emitDeclarationOnly`). Python postprocessors are unchanged.
+**Tech Stack:** TypeScript 5.9 (strict, ESM, NodeNext), vitest, nx monorepo, `@dominevo/types` (vite + tsc `--emitDeclarationOnly`). Python postprocessors are unchanged.
 
 ## Global Constraints
 
@@ -17,7 +17,7 @@
 - **Type gate:** `cd packages/addon-pipeline && npx tsc --noEmit` must pass. Project-wide gate is `npm run ts-check`.
 - **Commit hygiene:** commit with `git commit --no-verify` (the lint-staged/eslint pre-commit hook hangs on the monorepo type graph). The real gates are `tsc --noEmit` + vitest.
 - **Conventional commits**, no attribution trailers (match repo history).
-- **Deploy (after all tasks):** rebuild `@camstack/types` BEFORE deploying because a shared type changed: `npm run build -w packages/types`, then `camstack deploy packages/addon-pipeline --server https://localhost:4443`.
+- **Deploy (after all tasks):** rebuild `@dominevo/types` BEFORE deploying because a shared type changed: `npm run build -w packages/types`, then `dominevo deploy packages/addon-pipeline --server https://localhost:4443`.
 
 ## File Structure
 
@@ -429,7 +429,7 @@ git commit --no-verify -m "feat(pipeline): inherit the best face embedding onto 
 
 ---
 
-### Task 4: Verify, rebuild `@camstack/types`, and deploy
+### Task 4: Verify, rebuild `@dominevo/types`, and deploy
 
 Lock the whole package green, regenerate the shared types build (a shared type changed → required before deploy), and ship to the hub.
 
@@ -450,14 +450,14 @@ Expected: PASS (all tests in both files).
 Run (repo root): `npm run ts-check`
 Expected: clean (this is the CI gate). If `ts-check` is too broad/slow, the per-package `tsc --noEmit` from Step 1 plus `npm run build -w packages/types` (Step 4) covers the changed surface.
 
-- [ ] **Step 4: Rebuild `@camstack/types`**
+- [ ] **Step 4: Rebuild `@dominevo/types`**
 
 Run (repo root): `npm run build -w packages/types`
 Expected: `vite build` + `tsc --emitDeclarationOnly` succeed; `packages/types/dist` regenerated with the new optional fields in the `.d.ts`. <!-- drift-ok: dist/ is a gitignored build output, absent until `npm run build` runs -->
 
 - [ ] **Step 5: Deploy the runner**
 
-Run (repo root): `camstack deploy packages/addon-pipeline --server https://localhost:4443`
+Run (repo root): `dominevo deploy packages/addon-pipeline --server https://localhost:4443`
 Expected: `✓ Deployed` + `✓ Hub healthy`.
 
 - [ ] **Step 6: Empirically verify the vector ships (cam99)**
@@ -468,7 +468,7 @@ cam99 (deviceId 99) runs the full pipeline (object-detection → face-detection/
 
 ## Self-Review
 
-**Spec coverage (spec §12 Phase 0):** "expose the normalized face embedding on the detection (result-assembler + optional field in `packages/types`; rebuild `@camstack/types` for deploy)." → Task 1 (optional fields + own emit), Task 2 (store normalized vector in the assembler), Task 3 (parent inheritance, the "inherited from the face detail to its parent" requirement of §4.1), Task 4 (rebuild types + deploy). ✅
+**Spec coverage (spec §12 Phase 0):** "expose the normalized face embedding on the detection (result-assembler + optional field in `packages/types`; rebuild `@dominevo/types` for deploy)." → Task 1 (optional fields + own emit), Task 2 (store normalized vector in the assembler), Task 3 (parent inheritance, the "inherited from the face detail to its parent" requirement of §4.1), Task 4 (rebuild types + deploy). ✅
 
 **Open question #1 (spec §13 — field shape):** resolved — two first-class optional fields on `ObjectDetection` (`embedding`, `embeddingModelId`), NOT a debug-gated side-channel (debug is stripped when `traceVerbosity !== verbose`, and Phase 1's model-version check needs the model id in production). `dim` is derived from `.length`. Lowest-churn (no zod/schema edits; bus auto-forwards). ✅
 

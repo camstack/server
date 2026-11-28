@@ -707,7 +707,7 @@ function renderAutomationBlock(input: GenerateAutomationBlockInput): string {
   TimeSite,
   TimeSpec,
   WeekdayKey,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   ACTION_TARGET_INVALIDATION_EVENTS,
   ActionTargetResolver,
@@ -753,7 +753,7 @@ import {
   siteWithPhase,
   validateTimeSpecForSite,
   zoneOnlySite,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /**
  * ${name}

@@ -7,7 +7,7 @@
  * USB unit: a PCIe-only node would have built an `edgetpu:usb` pool for a USB
  * Coral it does not have, and a driverless one would have been offered at all.
  */
-import { enumerateInferenceDevices, supportedRuntimes, type CoralInfo } from '@camstack/types'
+import { enumerateInferenceDevices, supportedRuntimes, type CoralInfo } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { envToHardwareInfo, type RuntimeEnv } from '../runtimes.js'
 

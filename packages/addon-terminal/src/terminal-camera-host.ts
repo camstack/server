@@ -28,7 +28,7 @@ import {
   type IScopedLogger,
   selectEngineHostedBlocks,
   type TerminalHelperSpec,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { TerminalCameraDevice } from './terminal-camera-device.js'
 import type { TerminalInstance } from './terminal-instances.js'
 

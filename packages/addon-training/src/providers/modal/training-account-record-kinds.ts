@@ -1,4 +1,4 @@
-import { defineEntryKind, entryBody } from '@camstack/types'
+import { defineEntryKind, entryBody } from '@dominevo/types'
 import { z } from 'zod'
 
 export const TRAINING_MODAL_OWNER = 'training-modal'

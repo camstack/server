@@ -42,8 +42,8 @@
  * single default accelerator already serves it — pinning every session to the
  * one key would be redundant and, pre-D, spin a needless second pool).
  */
-import type { RunnerLocalLoad, SessionPlacementPolicy, ShareAffinityReason } from '@camstack/types'
-import { electByShareWithAffinity } from '@camstack/types'
+import type { RunnerLocalLoad, SessionPlacementPolicy, ShareAffinityReason } from '@dominevo/types'
+import { electByShareWithAffinity } from '@dominevo/types'
 import type { ShareElectionHistory } from './share-election-history.js'
 import type { BalancerInput } from './load-balancer.js'
 import { balance, rankCandidates } from './load-balancer.js'

@@ -1,12 +1,12 @@
 # Public-docs draft: hardware accelerators on Proxmox (LXC + Docker), Coral PCIe validated
 
-Status: DRAFT for the public docs (`camstack/docs`, D717/D822). The device
-lines also belong in the Proxmox install script (`camstack/proxmox`), which is
+Status: DRAFT for the public docs (`dominevo/docs`, D717/D822). The device
+lines also belong in the Proxmox install script (`dominevo/proxmox`), which is
 mirrored by hand. Plain Docker: `2026-10-21-public-draft-accelerators-docker.md`.
 
 Proxmox differs from plain Docker in one way that matters: there are TWO
 hops. The driver runs on the **PVE host**, the device node is passed into the
-**LXC container** with a `devN:` entry, and the CamStack compose inside the CT
+**LXC container** with a `devN:` entry, and the Dominevo compose inside the CT
 passes it on to the **Docker container**.
 
 Validated on `agent-b` (2026-10-21): PVE 9.2.2, kernel `7.0.2-6-pve`,
@@ -58,14 +58,14 @@ pct reboot $CT
 A Coral USB in an LXC needs the USB bus instead (`lxc.cgroup2.devices.allow:
 c 189:* rwm` plus a bind mount of `/dev/bus/usb` in `/etc/pve/lxc/<CT>.conf`).
 NVIDIA in an LXC needs the host driver, the same driver version in the CT and
-the NVIDIA Container Toolkit; Hailo is not supported by CamStack today.
+the NVIDIA Container Toolkit; Hailo is not supported by Dominevo today.
 
 ## 3. Compose inside the CT
 
 ```yaml
 services:
   camstack:
-    image: ghcr.io/camstack/camstack:amd-latest   # intel-latest on Intel
+    image: ghcr.io/dominevo/dominevo:amd-latest   # intel-latest on Intel
     network_mode: host
     volumes:
       - /opt/camstack/data:/data
@@ -82,7 +82,7 @@ services:
 ```
 
 The entrypoint makes every passed node openable by the `camstack` user, so no
-`group_add` is needed for CamStack itself — for `/dev/apex_*` only from the
+`group_add` is needed for Dominevo itself — for `/dev/apex_*` only from the
 first Docker release after v1.2.583. The validated CT ran v1.2.509 with a
 host-mounted entrypoint (`- /opt/camstack/docker-entrypoint.sh:/usr/local/bin/docker-entrypoint.sh:ro`,
 added earlier for `/dev/dri/renderD*`); that copy had to gain `/dev/apex_*`
@@ -93,7 +93,7 @@ remove the mount when you pull a newer image.
 ## 4. Coral runtime, then enable it
 
 ```sh
-docker exec -u root camstack sh /data/addons/@camstack/addon-pipeline/python/edgetpu-install.sh
+docker exec -u root camstack sh /data/addons/@dominevo/addon-pipeline/python/edgetpu-install.sh
 ```
 
 Then, per node, enable `Coral Edge TPU (PCIe)` and `(PCIe 2)` (device keys

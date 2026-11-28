@@ -11,8 +11,8 @@
  * Each is a `Known` (D315): nothing is claimed absent before both the bindings
  * and the fields have answered, and a failed read says why.
  */
-import { type ConsumableItem, ConsumablesStatusSchema } from '@camstack/types'
-import { isConsumableLevelField } from '@camstack/ui-library'
+import { type ConsumableItem, ConsumablesStatusSchema } from '@dominevo/types'
+import { isConsumableLevelField } from '@dominevo/ui-library'
 import type { Known } from './known'
 import type { LiveValue } from './assignments/live-value'
 import type { WireableCatalog } from './source-picker-model'

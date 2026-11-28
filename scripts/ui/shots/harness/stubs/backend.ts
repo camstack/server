@@ -1,4 +1,4 @@
-import type { System } from '@camstack/sdk'
+import type { System } from '@dominevo/sdk'
 import { resolveFixture } from '../fixtures-runtime'
 import { fakeClient } from './transport'
 

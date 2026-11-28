@@ -1,4 +1,4 @@
-import { MutationGate, type ConnectOutcome } from '@camstack/develop'
+import { MutationGate, type ConnectOutcome } from '@dominevo/develop'
 import type { McpContext } from '../mcp/context.js'
 import { fakeHub, type FakeHub } from './ops-fake-hub.js'
 

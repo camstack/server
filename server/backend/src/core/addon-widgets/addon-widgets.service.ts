@@ -3,7 +3,7 @@ import * as fs from 'node:fs'
 import { LoggingService } from '../logging/logging.service'
 import { CapabilityService } from '../capability/capability.service'
 import { AddonRegistryService } from '../addon/addon-registry.service'
-import type { IScopedLogger, IAddonWidgetsSourceProvider } from '@camstack/types'
+import type { IScopedLogger, IAddonWidgetsSourceProvider } from '@dominevo/types'
 
 /**
  * Strip the `@<nodeId>` suffix the CapabilityBridge appends to
@@ -54,7 +54,7 @@ export function stripBundleVersionSegment(rawPath: string): {
  * `AddonRegistryService.getAddonInstallPath()` so bundled addons
  * (where one npm package ships multiple addon entries under
  * `dist/<entryId>/`) resolve to the right sub-folder instead of the
- * pre-bundle `addons/@camstack/addon-<id>/dist/` layout.
+ * pre-bundle `addons/@dominevo/addon-<id>/dist/` layout.
  */
 export class AddonWidgetsService {
   private readonly logger: IScopedLogger

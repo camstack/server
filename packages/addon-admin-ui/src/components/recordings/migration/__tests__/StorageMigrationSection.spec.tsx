@@ -1,13 +1,13 @@
 /// <reference types="@testing-library/jest-dom" />
 
-import { selectOption } from '@camstack/ui-library/testing'
+import { selectOption } from '@dominevo/ui-library/testing'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 /**
  * StorageMigrationSection — capability gate + core interaction.
  *
  * `storage-migration` is a `system`-scope singleton builtin (always
  * registered — see `packages/system/src/builtins/storage-orchestrator`),
- * wired into `@camstack/ui-library`'s generated hooks (`useStorageMigrationPlan`
+ * wired into `@dominevo/ui-library`'s generated hooks (`useStorageMigrationPlan`
  * / `useStorageMigrationStart` / `useStorageMigrationStatus` /
  * `useStorageMigrationCancel`). This file pins:
  *   1. the SETTLED halves of the runtime gate — an `absent` answer renders
@@ -113,9 +113,9 @@ function drainingJob(filesMoved: number, elapsedMs: number, filesTotal: number |
   }
 }
 
-vi.mock('@camstack/ui-library', async () => {
+vi.mock('@dominevo/ui-library', async () => {
   const actual =
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+    await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return {
     ...actual,
     useStorageListLocations: () => ({ data: LOCATIONS, isLoading: false }),

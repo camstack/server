@@ -30,7 +30,7 @@
  * of the object. An `object` without `className` remains a defect and has its own name
  * (`malformed-object`), distinct from an unreadable envelope.
  */
-import { isFirstLevelMacroClass, type FirstLevelMacroClass } from '@camstack/types'
+import { isFirstLevelMacroClass, type FirstLevelMacroClass } from '@dominevo/types'
 
 /** The `kind` of the only branch of the topic that can open a window. */
 const OBJECT_EVENT_KIND = 'object'

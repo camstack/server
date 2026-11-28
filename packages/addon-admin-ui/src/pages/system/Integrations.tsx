@@ -13,7 +13,7 @@ import { Calendar, Mail, Plug, Radio, Share2, type LucideIcon } from 'lucide-rea
 import { useEffect, useMemo, type ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router-dom'
-import type { DataColumn } from '@camstack/ui-library'
+import type { DataColumn } from '@dominevo/ui-library'
 
 import { AdminSectionedPage } from '../../components/AdminSectionedPage'
 import { type ConnectivitySectionId } from '../../lib/integration-hub-url'

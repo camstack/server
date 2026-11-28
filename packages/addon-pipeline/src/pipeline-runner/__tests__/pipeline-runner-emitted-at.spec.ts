@@ -13,8 +13,8 @@
  * with it and read as "unknown" forever.
  */
 import { describe, it, expect, vi } from 'vitest'
-import type { DecodedFrame, FrameResult, FrameHandle, SystemEvent } from '@camstack/types'
-import { EventCategory } from '@camstack/types'
+import type { DecodedFrame, FrameResult, FrameHandle, SystemEvent } from '@dominevo/types'
+import { EventCategory } from '@dominevo/types'
 
 function makeFrame(capturedAt?: number): DecodedFrame {
   return {

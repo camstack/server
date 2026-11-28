@@ -16,7 +16,7 @@
  *     named), refuses a mismatch, skips the caller's own session, and audits
  *     the call.
  */
-import { trpc, usePrompt } from '@camstack/ui-library'
+import { trpc, usePrompt } from '@dominevo/ui-library'
 import { useState } from 'react'
 
 import i18n from '../../i18n/index'

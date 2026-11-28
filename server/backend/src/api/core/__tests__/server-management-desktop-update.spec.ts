@@ -37,7 +37,7 @@ beforeEach(() => {
   fs.mkdirSync(serverRootDir(dataDir), { recursive: true })
   fs.writeFileSync(
     path.join(tmp, 'running.json'),
-    JSON.stringify({ name: '@camstack/server', version: '1.2.0' }),
+    JSON.stringify({ name: '@dominevo/server', version: '1.2.0' }),
     'utf-8',
   )
 })

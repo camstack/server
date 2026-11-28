@@ -4,12 +4,12 @@
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, render, screen } from '@testing-library/react'
-import type { AddonPageProps } from '@camstack/ui-library'
+import type { AddonPageProps } from '@dominevo/ui-library'
 import { CatalogInventory } from '../tabs/CatalogInventory.js'
 
-vi.mock('@camstack/ui-library', async () => {
+vi.mock('@dominevo/ui-library', async () => {
   const actual =
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+    await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return {
     ...actual,
     useClusterNodes: () => ({

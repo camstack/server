@@ -1,7 +1,7 @@
 {
   "extends": null,
   "appId": "com.camstack.viewer",
-  "productName": "CamStack Viewer",
+  "productName": "Dominevo Viewer",
   "executableName": "camstack-viewer",
   "electronVersion": "42.4.1",
   "directories": {
@@ -56,7 +56,7 @@
   "extraResources": [],
   "extraMetadata": {
     "name": "camstack-viewer",
-    "productName": "CamStack Viewer",
+    "productName": "Dominevo Viewer",
     "dependencies": {
       "electron-store": "^11.0.0",
       "electron-updater": "^6.3.0"

@@ -1,4 +1,4 @@
-import type { CamProfile, ClipWake } from '@camstack/types'
+import type { CamProfile, ClipWake } from '@dominevo/types'
 import type { ClipAudioReport, ClipIncompleteReport } from './clip-stream-feeder.js'
 import { serializeServerMessage, type ControlMessage } from './control-protocol'
 import type { FeederState, LocateResult, ScrubMapHint } from './recorded-feeder'

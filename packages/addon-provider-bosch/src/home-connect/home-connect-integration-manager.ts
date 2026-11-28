@@ -1,4 +1,4 @@
-import { errMsg, isSecretMarker, isSecretMarkerLike, type IScopedLogger } from '@camstack/types'
+import { errMsg, isSecretMarker, isSecretMarkerLike, type IScopedLogger } from '@dominevo/types'
 import {
   connectionFromSettings,
   type HomeConnectConfig,

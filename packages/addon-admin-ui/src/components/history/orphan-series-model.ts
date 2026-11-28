@@ -13,7 +13,7 @@ import {
   type DeviceHistoryOrphanDeleteEntry,
   type DeviceHistoryOrphanSeries,
   type DeviceHistoryTierRows,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** A batch whose request failed: no id in it was judged by the hub. */
 export interface OrphanRequestFailed {

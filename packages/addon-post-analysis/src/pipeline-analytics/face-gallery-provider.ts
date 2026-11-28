@@ -23,7 +23,7 @@ import {
   type PipelineAnalyticsFaceGalleryChangedPayload,
   type SuggestFaceClustersInput,
   userError,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { type GalleryMediaRow, toGalleryMediaRow } from './gallery-media-row.js'
 import { resolveIncludeCrops } from './include-crops-default.js'
 import { mapWithConcurrency } from './map-with-concurrency.js'

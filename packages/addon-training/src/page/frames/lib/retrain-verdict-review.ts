@@ -12,7 +12,7 @@
  * Nothing here saves or exports anything: a pre-confirmed box is unsaved work
  * (the editor opens dirty), and the operator confirms by saving.
  */
-import type { RetrainMacroClass, RetrainVerdict } from '@camstack/types'
+import type { RetrainMacroClass, RetrainVerdict } from '@dominevo/types'
 import { translate } from '../../../i18n/index.js'
 import type { EditorBoxInput, EditorFlag } from './retrain-editor.js'
 

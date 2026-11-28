@@ -12,7 +12,7 @@ import {
   type IScopedLogger,
   type LogExtras,
   instanceApiOverTargets,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { ActionExports, type ActionExportEntry, type ActionExportPorts } from '../action-exports.js'

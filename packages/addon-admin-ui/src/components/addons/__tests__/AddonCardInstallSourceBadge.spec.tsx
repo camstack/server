@@ -6,9 +6,9 @@ import { render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import type { AddonListItem } from '../AddonCard'
 
-vi.mock('@camstack/ui-library', async () => {
+vi.mock('@dominevo/ui-library', async () => {
   const actual =
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+    await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return {
     Badge: actual.Badge,
     Button: actual.Button,
@@ -59,7 +59,7 @@ function addon(installSource?: 'npm' | 'local' | 'upload'): AddonListItem {
       name: 'Addon A',
       version: '1.0.0',
       capabilities: [],
-      packageName: '@camstack/addon-a',
+      packageName: '@dominevo/addon-a',
       packageVersion: '1.0.0',
     },
     enabled: true,

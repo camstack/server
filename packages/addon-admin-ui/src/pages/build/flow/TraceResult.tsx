@@ -6,8 +6,8 @@
  * list; nothing is shown twice.
  */
 
-import { AutomationConditionOperatorSchema, type TraceNodeOutcome } from '@camstack/types'
-import { Badge, type BadgeVariant, ErrorBox } from '@camstack/ui-library'
+import { AutomationConditionOperatorSchema, type TraceNodeOutcome } from '@dominevo/types'
+import { Badge, type BadgeVariant, ErrorBox } from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 import { operatorLabel } from '../automation/recipe-parts'
 import {

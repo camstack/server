@@ -1,5 +1,5 @@
-import type { CustomizeEventEdge } from '@camstack/types'
-import { Select } from '@camstack/ui-library'
+import type { CustomizeEventEdge } from '@dominevo/types'
+import { Select } from '@dominevo/ui-library'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 

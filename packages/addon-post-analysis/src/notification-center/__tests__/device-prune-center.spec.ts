@@ -3,9 +3,9 @@
  * on every node but the evaluating one (the single writer), and the reload
  * tick's reconcile is wired to the directory refresh that precedes it.
  */
-import type { InMemoryRecords } from '@camstack/types'
+import type { InMemoryRecords } from '@dominevo/types'
 import { makeNcRecords, withNcFaults } from './support/nc-test-deps.js'
-import { NcRuleInputSchema } from '@camstack/types'
+import { NcRuleInputSchema } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { NcDeviceIdentity } from '../device-directory.js'
 import { NcPruneLedger } from '../device-prune-ledger.js'

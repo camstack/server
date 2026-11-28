@@ -10,9 +10,9 @@
 | Code licence | Apache-2.0 |
 | **Weights licence** | Apache-2.0 ([`LICENSES/Apache-2.0.txt`](../../LICENSES/Apache-2.0.txt)) |
 | Training data | fine-tuning set not recorded (**unverified**) |
-| CamStack modifications | fine-tuned to 2 classes at 576; exported to ONNX, OpenVINO IR and CoreML. `camstack-rfdetr-package.pth` is the training checkpoint the exports were made from |
+| Dominevo modifications | fine-tuned to 2 classes at 576; exported to ONNX, OpenVINO IR and CoreML. `camstack-rfdetr-package.pth` is the training checkpoint the exports were made from |
 | Commercial use | permitted by Apache-2.0; fine-tuning data terms unverified |
 
-CamStack redistributes the files in this folder; every change from the upstream is stated above. Converting a model does not change its licence. The collection statement is [`LICENSE`](../../LICENSE); every model's attribution is in [`THIRD_PARTY_MODELS.md`](../../THIRD_PARTY_MODELS.md).
+Dominevo redistributes the files in this folder; every change from the upstream is stated above. Converting a model does not change its licence. The collection statement is [`LICENSE`](../../LICENSE); every model's attribution is in [`THIRD_PARTY_MODELS.md`](../../THIRD_PARTY_MODELS.md).
 
 Deployable: ONNX and OpenVINO. Source checkpoint: `.pth`. (This card replaces the one-paragraph README previously in this folder; its content is kept above.)

@@ -6,11 +6,7 @@
  * real vocabulary cap (`switch`), the same recording doubles as the other
  * cap-router specs.
  */
-import {
-  method,
-  type CapabilityDefinition,
-  type DeviceCommandObservation,
-} from '@camstack/types'
+import { method, type CapabilityDefinition, type DeviceCommandObservation } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import {
@@ -30,7 +26,9 @@ function makeProcedureBuilder(): ProcedureBuilder {
     output: () => builder,
     query: (resolver) => ({ call: (input: unknown, ctx: unknown) => resolver({ input, ctx }) }),
     mutation: (resolver) => ({ call: (input: unknown, ctx: unknown) => resolver({ input, ctx }) }),
-    subscription: (resolver) => ({ call: (input: unknown, ctx: unknown) => resolver({ input, ctx }) }),
+    subscription: (resolver) => ({
+      call: (input: unknown, ctx: unknown) => resolver({ input, ctx }),
+    }),
   }
   return builder
 }
@@ -53,14 +51,22 @@ const switchCap = {
   mode: 'singleton',
   methods: {
     // `setState` is a vocabulary action of `switch`; `getState` is a query.
-    setState: method(z.object({ deviceId: z.number(), on: z.boolean() }), z.object({ ok: z.boolean() }), {
-      kind: 'mutation',
-    }),
+    setState: method(
+      z.object({ deviceId: z.number(), on: z.boolean() }),
+      z.object({ ok: z.boolean() }),
+      {
+        kind: 'mutation',
+      },
+    ),
     getState: method(z.object({ deviceId: z.number() }), z.object({ on: z.boolean() })),
     // Not a vocabulary action: a mutation that is not a command.
-    rename: method(z.object({ deviceId: z.number(), label: z.string() }), z.object({ ok: z.boolean() }), {
-      kind: 'mutation',
-    }),
+    rename: method(
+      z.object({ deviceId: z.number(), label: z.string() }),
+      z.object({ ok: z.boolean() }),
+      {
+        kind: 'mutation',
+      },
+    ),
   },
 } as const satisfies CapabilityDefinition
 
@@ -85,7 +91,9 @@ function makeServices(
     badRequest: (m) => {
       throw new Error(`badRequest:${m}`)
     },
-    ...(withObserver ? { commandObserver: (obs: DeviceCommandObservation) => void observed.push(obs) } : {}),
+    ...(withObserver
+      ? { commandObserver: (obs: DeviceCommandObservation) => void observed.push(obs) }
+      : {}),
   }
 }
 
@@ -108,7 +116,13 @@ describe('hub mount command observer (D1022)', () => {
       capName: 'switch',
       method: 'setState',
       args: { deviceId: 7, on: true },
-      actor: { kind: 'user', userId: 'u1', username: 'ada', credential: 'session', credentialId: 'sess-1' },
+      actor: {
+        kind: 'user',
+        userId: 'u1',
+        username: 'ada',
+        credential: 'session',
+        credentialId: 'sess-1',
+      },
     })
   })
 
@@ -172,7 +186,9 @@ describe('hub mount command observer (D1022)', () => {
   it('stays silent, and the call still works, without an observer', async () => {
     const observed: DeviceCommandObservation[] = []
     const r = router(makeServices(observed, () => ({ ok: true }), false))
-    await expect(Promise.resolve(r.setState!.call({ deviceId: 7, on: true }, sessionCtx))).resolves.toEqual({ ok: true })
+    await expect(
+      Promise.resolve(r.setState!.call({ deviceId: 7, on: true }, sessionCtx)),
+    ).resolves.toEqual({ ok: true })
     expect(observed).toEqual([])
   })
 

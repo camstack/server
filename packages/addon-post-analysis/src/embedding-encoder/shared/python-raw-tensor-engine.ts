@@ -3,7 +3,7 @@ import type {
   DetectionRuntime,
   IRawTensorEngine,
   IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { FramedPythonProcess } from './framed-python-process.js'
 import { createNoopLogger } from './noop-logger.js'
 import { decodeTensorFrame } from './python-text-encoder-engine.js'

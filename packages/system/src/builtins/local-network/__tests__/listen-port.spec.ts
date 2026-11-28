@@ -9,7 +9,7 @@
  * value is only a fallback hint, and the answer says which of the two it was.
  */
 
-import type { AddonContext, ILocalNetworkProvider, IScopedLogger } from '@camstack/types'
+import type { AddonContext, ILocalNetworkProvider, IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { makeMigrationsApi } from './migrations-api.js'
 import { LocalNetworkAddon, resolveAdvertisedPort } from '../local-network.addon.js'

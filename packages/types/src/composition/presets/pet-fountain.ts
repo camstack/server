@@ -1,7 +1,7 @@
 /**
  * The preset for a pet water fountain built from loose entities (D659, D967).
  *
- * A fountain reaches CamStack as a container of single-purpose entities: a
+ * A fountain reaches Dominevo as a container of single-purpose entities: a
  * pump switch, a handful of sensors that report millilitres as text, a button,
  * and — on some models — a pump duty cycle (a switch and two number boxes) and
  * maintenance pairs (days left + a "done" button). This preset names the

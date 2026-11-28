@@ -2,7 +2,7 @@
  * The Terminal addon's settings of one node: the `terminal-session` capability's `node` scope
  * (`TerminalAddon.scopedSettingsCapabilities()`), asked through the scoped read.
  */
-import { AddonScopedSettingsForm, useSystem } from '@camstack/ui-library'
+import { AddonScopedSettingsForm, useSystem } from '@dominevo/ui-library'
 import { useInvalidateAddonSettings } from '../../../hooks/useInvalidateAddonSettings'
 
 export const TERMINAL_ADDON_ID = 'terminal'

@@ -1,4 +1,4 @@
-import type { DiscoveryHit } from '@camstack/types'
+import type { DiscoveryHit } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { OnboardedHikvisionCamera } from '../hikvision-discovery.js'
 
@@ -109,11 +109,9 @@ describe('mapHikvisionDiscoveryToCandidates', () => {
   })
 
   it('leaves a genuinely new host unmarked — absent is not "known to be new"', () => {
-    const [candidate] = mapHikvisionDiscoveryToCandidates(
-      [{ host: '192.0.2.77', port: 80 }],
-      {},
-      [{ deviceId: 7, name: 'Front Door', host: '192.0.2.50' }],
-    )
+    const [candidate] = mapHikvisionDiscoveryToCandidates([{ host: '192.0.2.77', port: 80 }], {}, [
+      { deviceId: 7, name: 'Front Door', host: '192.0.2.50' },
+    ])
     expect(candidate?.alreadyOnboarded).toBeUndefined()
     expect(candidate?.onboardedDeviceId).toBeUndefined()
   })

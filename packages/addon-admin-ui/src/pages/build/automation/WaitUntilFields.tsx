@@ -6,8 +6,8 @@ import {
   type AutomationRecipe,
   type AutomationWaitUntilStep,
   WAIT_UNTIL_TIMEOUT_MAX_S,
-} from '@camstack/types'
-import { DurationInput, ErrorBox, Select } from '@camstack/ui-library'
+} from '@dominevo/types'
+import { DurationInput, ErrorBox, Select } from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 import type { AutomationDevice } from './automation-data'
 import { PickerLabel } from './FieldPicker'

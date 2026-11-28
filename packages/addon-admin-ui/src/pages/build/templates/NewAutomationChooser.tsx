@@ -2,7 +2,7 @@
  * "New automation": blank, or made from a template. With no template to offer
  * the choice is not shown — the editor just opens blank.
  */
-import { AutomationTemplatePayloadSchema } from '@camstack/types'
+import { AutomationTemplatePayloadSchema } from '@dominevo/types'
 import {
   Button,
   Dialog,
@@ -12,7 +12,7 @@ import {
   DialogTitle,
   Skeleton,
   useTemplateList,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { type ReactNode, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 

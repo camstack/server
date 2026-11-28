@@ -7,12 +7,12 @@
  * `AgentUpdateService` (registered by the agent bootstrap). Both are
  * `RootUpdateService` subclasses, so there is no per-node provider copy.
  */
-import type { IServerManagementProvider } from '@camstack/types'
+import type { IServerManagementProvider } from '@dominevo/types'
 import type {
   LaunchOverrides,
   SetLaunchOverridesInput,
   SetLaunchOverridesResult,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { readLaunchOverrides, writeLaunchOverrides } from '../../launch-args.js'
 import type { RootUpdateService } from '../../server-root/index.js'
 

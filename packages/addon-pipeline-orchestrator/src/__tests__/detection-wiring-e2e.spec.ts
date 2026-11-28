@@ -38,8 +38,8 @@ import {
   enabledNodesFromBroker,
   waitUntil,
 } from './e2e-helpers.js'
-import { EventCategory } from '@camstack/types'
-import type { StreamSourceEntry, FrameResult, FrameHandle } from '@camstack/types'
+import { EventCategory } from '@dominevo/types'
+import type { StreamSourceEntry, FrameResult, FrameHandle } from '@dominevo/types'
 
 // ── Test fixtures ─────────────────────────────────────────────────
 

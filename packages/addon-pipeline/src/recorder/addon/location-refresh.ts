@@ -27,8 +27,8 @@
  * spend one refresh between them, and a doorbell that arrives while a refresh
  * is already running arms exactly one more rather than queueing N.
  */
-import type { IScopedLogger } from '@camstack/types'
-import { errMsg } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
 
 /**
  * How long doorbells are collected before one refresh is spent on them.

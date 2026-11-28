@@ -14,8 +14,8 @@
  * mint and authenticates nothing — it never falls back to another table.
  */
 import * as crypto from 'node:crypto'
-import type { CredentialScope, IScopedLogger, RecordKindHandle } from '@camstack/types'
-import { CREDENTIAL_TOKEN_KIND, userError } from '@camstack/types'
+import type { CredentialScope, IScopedLogger, RecordKindHandle } from '@dominevo/types'
+import { CREDENTIAL_TOKEN_KIND, userError } from '@dominevo/types'
 import type { VerifiedTokenRow, VerifierTokenRows } from '../../auth/credential-verifier.js'
 import { coreAuthRecordKinds, type CredentialTokenBody } from './record-kinds.js'
 

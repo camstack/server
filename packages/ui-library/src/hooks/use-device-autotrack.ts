@@ -14,7 +14,7 @@
  */
 import { useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import type { PtzAutotrackSettings, PtzAutotrackStatus } from '@camstack/types'
+import type { PtzAutotrackSettings, PtzAutotrackStatus } from '@dominevo/types'
 
 import {
   usePtzAutotrackGetStatus,

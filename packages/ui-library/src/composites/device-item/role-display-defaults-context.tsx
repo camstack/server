@@ -14,7 +14,7 @@
  * hook; mount it once inside `<trpc.Provider>` (the admin app does, in
  * `App.tsx`) and every list below it resolves the operator's role icon.
  */
-import type { RoleDisplayDefault } from '@camstack/types'
+import type { RoleDisplayDefault } from '@dominevo/types'
 import { createContext, useContext, type ReactNode } from 'react'
 import { useDeviceManagerGetRoleDisplayDefaults } from '../../generated/system-hooks'
 

@@ -31,13 +31,13 @@ import type {
   RecordingOnboardStatus,
   RecordTrigger,
   RecordWindow,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   DAY_NAMES,
   dayOfWeekToIndex,
   minutesToTimeOfDay,
   timeOfDayToMinutes,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** Read one tag's text, ignoring attributes and any namespace prefix. */
 function tagOf(xml: string, tag: string): string | undefined {
@@ -314,7 +314,7 @@ export function buildOnboardOptions(input: {
   readonly writeBlockedReason: string
 }): RecordingOnboardOptions {
   const reached = input.status !== null
-  const unreached = 'CamStack has not read this camera yet'
+  const unreached = 'Dominevo has not read this camera yet'
   const writable = (allowed: boolean, reason: string): RecordingOnboardOptions['enabled'] =>
     allowed && input.writesEnabled
       ? { readable: reached, writable: true }
@@ -327,7 +327,7 @@ export function buildOnboardOptions(input: {
   const hasPrimary = input.status?.primaryTrackId !== null && input.status !== null
   const noPrimary = 'this camera exposes no enabled video recording track'
   const partiallyRead =
-    'CamStack could not read every window this camera holds, so replacing them would delete the ones it could not show'
+    'Dominevo could not read every window this camera holds, so replacing them would delete the ones it could not show'
   const scheduleReadable = (input.status?.unreadableWindows ?? 0) === 0
 
   return {

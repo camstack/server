@@ -1,4 +1,4 @@
-import { useTrpcClient, type WidgetProps } from '@camstack/ui-library'
+import { useTrpcClient, type WidgetProps } from '@dominevo/ui-library'
 import { z } from 'zod'
 import type { CcuTrpc } from '../ui/ccu-client.js'
 import { DevicePanel } from '../ui/DevicePanel.js'
@@ -10,7 +10,7 @@ const PanelConfigSchema = z.object({
   address: z.string().min(1),
 })
 
-/** The Homematic panel on a CCU device's CamStack page. */
+/** The Homematic panel on a CCU device's Dominevo page. */
 export function DevicePanelWidget(props: WidgetProps) {
   const trpc: CcuTrpc = useTrpcClient()
   const { t } = useT()

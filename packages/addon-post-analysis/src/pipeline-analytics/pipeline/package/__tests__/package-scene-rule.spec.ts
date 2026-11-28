@@ -7,7 +7,7 @@
  * delivery event. Both options default off.
  */
 
-import type { IScopedLogger, ObjectEvent, Zone, ZoneRule } from '@camstack/types'
+import type { IScopedLogger, ObjectEvent, Zone, ZoneRule } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { PACKAGE_DROP_DEFAULTS } from '../../../package-settings.js'
 import { PackageDropDetector, type PackageObjectEventClient } from '../../package-drop-detector.js'

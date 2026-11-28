@@ -25,7 +25,7 @@
  *    one place a notification chooses which seconds it is about.
  */
 
-import type { CameraOccupancySnapshot, IScopedLogger } from '@camstack/types'
+import type { CameraOccupancySnapshot, IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import { NcDispatcher, type NcSendInput } from '../dispatcher.js'

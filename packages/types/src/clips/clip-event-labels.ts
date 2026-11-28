@@ -3,7 +3,7 @@
  * and the ONE label ranking, for every clip source (D923).
  *
  * The recorder's visits (`videoclip-visits.ts`) were the only clips labelled
- * by CamStack's detections; a clip the CAMERA recorded (Hikvision, Reolink,
+ * by Dominevo's detections; a clip the CAMERA recorded (Hikvision, Reolink,
  * Amcrest onboard storage) carried only what its firmware said, so a person
  * our pipeline saw inside a native clip never showed on it. The rule that
  * attaches an event to a window lives here so the visits and the native rows

@@ -94,12 +94,12 @@ vi.mock('../../../components/cluster/tabs/NodeLaunchSettingsCard', () => ({
   NodeLaunchSettingsCard: () => null,
 }))
 
-vi.mock('@camstack/ui-library', async () => ({
+vi.mock('@dominevo/ui-library', async () => ({
   formatNumeric: (
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+    await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   ).formatNumeric,
   KeyValueList: (
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+    await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   ).KeyValueList,
   useLiveEvent: () => {},
   useClusterTopology: () => ({ nodes: topology.nodes, isLoading: false, isError: false }),
@@ -230,7 +230,7 @@ vi.mock('@camstack/ui-library', async () => ({
         // the old `catch {}` reported as a success.
         getServerPackageStatus: {
           query: async () => ({
-            packageName: '@camstack/server',
+            packageName: '@dominevo/server',
             runningVersion: '1.2.201',
             nodeRuntimeVersion: '24.0.0',
             activeVersion: '1.2.201',
@@ -455,7 +455,7 @@ describe('NodeCard — no per-node Addons tab', () => {
  *
  * A `server-update-available` event taps through to
  * `<server>/system/nodes?node=<id>` — the page that can actually apply a
- * node's own update (the Addons page hides `@camstack/server`). The mint side
+ * node's own update (the Addons page hides `@dominevo/server`). The mint side
  * is `packages/addon-post-analysis/.../system-event-tap-url.ts`.
  */
 describe('ClusterPage — a notification link names a node', () => {

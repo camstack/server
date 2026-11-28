@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { UiTrans, useUiText, type UiTextFn } from '../../contexts/ui-text.js'
-import type { WebrtcSessionDebug } from '@camstack/types'
+import type { WebrtcSessionDebug } from '@dominevo/types'
 import {
   freezeVerdict,
   type FreezeVerdictKind,

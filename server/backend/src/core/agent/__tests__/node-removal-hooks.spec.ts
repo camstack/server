@@ -4,8 +4,8 @@
  * down is told by the re-drive — never because a node is "absent".
  */
 import { describe, expect, it, vi } from 'vitest'
-import type { IScopedLogger, NodeRemovedInput, RecordKindHandle } from '@camstack/types'
-import type { ClusterNodeTombstoneBody } from '@camstack/server/system'
+import type { IScopedLogger, NodeRemovedInput, RecordKindHandle } from '@dominevo/types'
+import type { ClusterNodeTombstoneBody } from '@dominevo/server/system'
 import {
   clearForgottenNodeSettings,
   clearSingletonNodeOverrides,

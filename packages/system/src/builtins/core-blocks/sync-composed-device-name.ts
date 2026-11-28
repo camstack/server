@@ -11,7 +11,7 @@ import {
   composedDeviceStableId,
   errMsg,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export interface ComposedDeviceNameRow {
   readonly id: number

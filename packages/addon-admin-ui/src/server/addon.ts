@@ -1,7 +1,7 @@
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import type { IAdminUiProvider, IAppSourceProvider, ProviderRegistration } from '@camstack/types'
-import { BaseAddon, adminUiCapability, appSourceCapability } from '@camstack/types'
+import type { IAdminUiProvider, IAppSourceProvider, ProviderRegistration } from '@dominevo/types'
+import { BaseAddon, adminUiCapability, appSourceCapability } from '@dominevo/types'
 import { buildAdminApp } from './admin-app'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))

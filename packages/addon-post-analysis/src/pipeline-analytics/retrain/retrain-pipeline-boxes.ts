@@ -42,7 +42,7 @@ import {
   type RetrainVerdict,
   type RetrainVerdictSubject,
   type Track,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { isRetrainMacroClass } from './retrain-taxonomy.js'
 
 /** How far from the capture time a position may be and still be "this frame".

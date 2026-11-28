@@ -7,8 +7,8 @@
  * this in a plain `.ts` module lets it be unit-tested without a JSX/jsdom
  * harness.
  */
-import { ZoneRuleStageEnum } from '@camstack/types'
-import type { ZoneRuleStage } from '@camstack/types'
+import { ZoneRuleStageEnum } from '@dominevo/types'
+import type { ZoneRuleStage } from '@dominevo/types'
 import { translate } from '../../i18n/index.js'
 
 /**

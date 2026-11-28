@@ -1,4 +1,4 @@
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { Mapper } from './mappers/types.js'
 
 function errMsg(e: unknown): string {

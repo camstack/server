@@ -32,7 +32,7 @@ import {
   deriveBatteryPresence,
   type BatteryPresence,
   type StreamHealthReason,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** The reasons that ARE an outage — the only `stream.offline` a consumer acts on. */
 export type StreamOutageReason = Extract<

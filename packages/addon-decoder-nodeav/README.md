@@ -1,10 +1,10 @@
 # Video Decoder
 
-Standalone in-process node-av decoder addon for CamStack.
+Standalone in-process node-av decoder addon for Dominevo.
 
 <!-- readme:generated:start (derived from the manifest; edit outside this block) -->
 
-Package `@camstack/addon-decoder-nodeav` on npm.
+Package `@dominevo/addon-decoder-nodeav` on npm.
 
 ## What it provides
 
@@ -14,7 +14,7 @@ Package `@camstack/addon-decoder-nodeav` on npm.
 ## Requirements
 
 - Placement: any-node.
-- A CamStack hub. An agent is used only where the placement above allows it.
+- A Dominevo hub. An agent is used only where the placement above allows it.
 
 See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
 

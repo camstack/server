@@ -19,7 +19,7 @@
 import { useState, useEffect, type ReactNode } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { ChevronDown, GitBranch, RefreshCw } from 'lucide-react'
-import { Button, PageShell } from '@camstack/ui-library'
+import { Button, PageShell } from '@dominevo/ui-library'
 import { NodeList } from '../components/pipeline/NodeList'
 import { NodeDetail } from '../components/pipeline/NodeDetail'
 import { ClusterDetail } from '../components/pipeline/ClusterDetail'

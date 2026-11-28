@@ -26,7 +26,7 @@ import type {
   AppleFmUnavailableReason,
   LlmProfileKindDescriptor,
   LlmRuntimeNode,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { LucideIcon } from 'lucide-react'
 import { Bot, Cloud, Cpu, Plug, Server, Sparkles } from 'lucide-react'
 import i18n from '../../i18n/index'

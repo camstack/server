@@ -121,7 +121,7 @@ export function buildProfiles(options: {
     profiles.push({
       profileId: 'glances',
       label: 'Glances',
-      description: 'Cross-platform curses monitor installed in CamStack embedded Python',
+      description: 'Cross-platform curses monitor installed in Dominevo embedded Python',
       file: configuredPath || pythonPath || 'glances',
       args:
         configuredPath || !pythonPath

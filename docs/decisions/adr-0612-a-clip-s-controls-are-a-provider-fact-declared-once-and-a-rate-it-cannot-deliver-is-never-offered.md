@@ -95,7 +95,7 @@ provider, and a rate that cannot be delivered is never offered.**
 
 - **Rollout order: the VIEWER ships first, and the hub follows.** The two halves
   travel on different trains — the server through a publish +
-  `applyServerUpdate` (this touches `packages/types`, so a `camstack deploy` is
+  `applyServerUpdate` (this touches `packages/types`, so a `dominevo deploy` is
   not enough), the viewer through an OTA — so a mismatch window is unavoidable.
   It is not symmetric. `clip-controls.ts` reads the ABSENCE of `clipTransport`
   as `LEGACY_CONTROLS` — free seek, backward step — deliberately, so that a
@@ -191,7 +191,7 @@ red, each restored byte-identical (`cmp`), each green again. **10 reverted,
 
 Two of these were proved twice, and the first proof is worth recording because
 it was WORTHLESS. The envelope invariants were first pinned in
-`packages/addon-provider-reolink`, whose vitest resolves `@camstack/types` to
+`packages/addon-provider-reolink`, whose vitest resolves `@dominevo/types` to
 the BUILT package — so adding 8 and 16 to the ladder in `src` left all 967
 tests green. They live in `packages/types/src/__tests__/` now, where the import
 is the source. And a first attempt to run the broker disarms as one background

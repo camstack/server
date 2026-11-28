@@ -1,4 +1,4 @@
-import type { ConfigUISchema } from '@camstack/types'
+import type { ConfigUISchema } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { LocalNetworkAddon } from '../local-network.addon.js'
 

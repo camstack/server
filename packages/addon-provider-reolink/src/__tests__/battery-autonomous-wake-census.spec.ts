@@ -137,7 +137,7 @@ describe('no self-initiated path wakes a sleeping battery camera', () => {
     // The gate now exempts `post-write`, and that does not weaken this census:
     // a re-read that follows an operator's save is not SELF-initiated, and the
     // write it follows already used the socket. What this file guards is the
-    // camera waking because CamStack felt like asking — see
+    // camera waking because Dominevo felt like asking — see
     // `battery-write-wakes-and-verifies.spec.ts` for why the exemption exists.
     expect(body).toContain('post-write')
   })

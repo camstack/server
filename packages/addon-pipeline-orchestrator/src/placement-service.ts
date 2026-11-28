@@ -39,8 +39,8 @@ import type {
   PipelineAssignment,
   RunnerCameraConfig,
   RunnerLocalLoad,
-} from '@camstack/types'
-import { errMsg, nodePin } from '@camstack/types'
+} from '@dominevo/types'
+import { errMsg, nodePin } from '@dominevo/types'
 import { isDeepStrictEqual } from 'node:util'
 import type { AgentLoadService } from './agent-load-service.js'
 import {

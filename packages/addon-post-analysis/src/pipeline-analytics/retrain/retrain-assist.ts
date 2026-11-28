@@ -28,7 +28,7 @@
  * decides what to ask for and what the answer means.
  */
 
-import type { DetailResult, NativeCropBbox } from '@camstack/types'
+import type { DetailResult, NativeCropBbox } from '@dominevo/types'
 import type { RetrainAnnotationDraft } from './retrain-annotation-store.js'
 import { toRetrainClassTiers } from './retrain-pipeline-boxes.js'
 import type { RetrainMacroClass } from './retrain-taxonomy.js'

@@ -1,6 +1,6 @@
 /**
  * Shared device types used by API responses and capability interfaces.
- * The legacy ILegacyDevice interface has been removed — use IDevice from '@camstack/types/device'.
+ * The legacy ILegacyDevice interface has been removed — use IDevice from '@dominevo/types/device'.
  */
 
 export interface DeviceState {

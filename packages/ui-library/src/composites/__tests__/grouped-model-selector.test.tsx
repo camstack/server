@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
-import type { ModelVariantSource } from '@camstack/types'
+import type { ModelVariantSource } from '@dominevo/types'
 import { GroupedModelSelector } from '../grouped-model-selector'
 
 // Minimal reduced-shape catalog (as a stepper would pass it): one active family

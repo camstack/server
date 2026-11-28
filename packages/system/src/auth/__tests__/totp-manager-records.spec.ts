@@ -1,4 +1,4 @@
-import { createRecordsAccess } from '@camstack/types'
+import { createRecordsAccess } from '@dominevo/types'
 import { generateSync } from 'otplib'
 import { describe, expect, it } from 'vitest'
 import { localAuthRecordKinds } from '../../builtins/local-auth/record-kinds.js'

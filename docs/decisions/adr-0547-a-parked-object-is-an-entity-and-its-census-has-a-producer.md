@@ -137,7 +137,7 @@ Alternatives considered and rejected:
 - `SessionDispatchControllerDeps.requestBurstOn` is optional; a controller
   built without it logs at boot that no camera will be re-sampled.
 - Cost: post-analysis and pipeline-orchestrator deploys on the hub (both
-  hub-only). No `@camstack/types` change; no server train.
+  hub-only). No `@dominevo/types` change; no server train.
 
 ## Enforcement
 

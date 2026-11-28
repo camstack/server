@@ -6,7 +6,7 @@ import {
   registerEventBusService,
   clusterEventTopic,
 } from '../../moleculer/addon-context-factory.js'
-import type { SystemEvent } from '@camstack/types'
+import type { SystemEvent } from '@dominevo/types'
 
 describe('$hub service', () => {
   let hub: ServiceBroker
@@ -159,5 +159,5 @@ describe('$hub service', () => {
 
   // Device persistence tests removed — persistence is now handled by
   // the `device-manager` capability addon, not `$hub.*` actions.
-  // See `device-manager.addon.ts` in `@camstack/server/system/builtins/`.
+  // See `device-manager.addon.ts` in `@dominevo/server/system/builtins/`.
 })

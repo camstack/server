@@ -27,7 +27,7 @@
 import { promises as fs } from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import type { CollectionColumn, CollectionIndex } from '@camstack/types'
+import type { CollectionColumn, CollectionIndex } from '@dominevo/types'
 import Database from 'better-sqlite3'
 import { afterEach, describe, expect, it } from 'vitest'
 import { SqliteSettingsBackend } from '../sqlite-settings-backend.js'

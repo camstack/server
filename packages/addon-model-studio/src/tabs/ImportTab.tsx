@@ -2,7 +2,7 @@
  * Import — Custom only (upload | URL). plugin catalog / plus catalog live under Catalog.
  */
 import { useEffect, useState } from 'react'
-import type { AddonPageProps } from '@camstack/ui-library'
+import type { AddonPageProps } from '@dominevo/ui-library'
 import { CustomTab } from './RegisterTab.js'
 import type { UploadPrefill } from './PlusCatalogSourceSections.js'
 import { useT } from '../i18n/index.js'

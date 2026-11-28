@@ -67,8 +67,8 @@ import {
   SECRET_CLEAR,
   saveExposedName,
   videoclipsCapability,
-} from '@camstack/types'
-import { type ExportTargetEntry, resolveExportFingerprint } from '@camstack/types/node'
+} from '@dominevo/types'
+import { type ExportTargetEntry, resolveExportFingerprint } from '@dominevo/types/node'
 import { uuid as HapUuid } from '@homebridge/hap-nodejs'
 import { z } from 'zod'
 import {
@@ -298,7 +298,7 @@ const HAP_STREAM_PREFERENCE_OPTIONS: readonly ConfigOption[] = [
 ]
 
 /** One device's advertised HAP state, persisted in the addon store. JSON-plain
- *  mirror of `ExportTargetEntry` from `@camstack/types/node`. Keyed by
+ *  mirror of `ExportTargetEntry` from `@dominevo/types/node`. Keyed by
  *  `String(deviceId)` in the `exportSyncState` store key. `externalIds` holds
  *  the deterministic accessory UUID (diagnostic; rebuild uses the live mapper). */
 const ExportTargetEntrySchema = z.object({
@@ -391,7 +391,7 @@ function generatePincode(): string {
 /** What a change to a record did, as `onChanged` reports it. */
 type InstanceChange = 'created' | 'updated' | 'enabled' | 'deleted'
 
-const DEFAULT_BRIDGE_NAME = 'CamStack Bridge'
+const DEFAULT_BRIDGE_NAME = 'Dominevo Bridge'
 
 function buildBridgeUuid(bridgeName: string): string {
   return HapUuid.generate(`camstack:bridge:${bridgeName}:${Date.now()}`)
@@ -2081,7 +2081,7 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
                   key: 'clipRetentionDays',
                   label: 'Keep HomeKit clips for (days)',
                   description:
-                    'CamStack keeps its own copy of every clip it sends to HomeKit Secure Video — HomeKit itself never gives one back. This is the fleet default; each camera can override it, and each can switch the copies off entirely. Clips are also capped at 200 per camera, 512 MB per camera and 4 GB overall — whichever limit is reached first wins, and the log names which one.',
+                    'Dominevo keeps its own copy of every clip it sends to HomeKit Secure Video — HomeKit itself never gives one back. This is the fleet default; each camera can override it, and each can switch the copies off entirely. Clips are also capped at 200 per camera, 512 MB per camera and 4 GB overall — whichever limit is reached first wins, and the log names which one.',
                   default: DEFAULT_CONFIG.clipRetentionDays,
                   placement: { tab: 'advanced' },
                 }),
@@ -2227,7 +2227,7 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
               key: useBridgeKey,
               label: 'Export through the bridge',
               description:
-                'Publish this device inside the shared CamStack bridge — one pairing and one entry in Add Accessory for every non-camera device, instead of one each. Turning this off gives it its own advertisement. Either way the switch REBUILDS the accessory and it must be added to the Home app again.',
+                'Publish this device inside the shared Dominevo bridge — one pairing and one entry in Add Accessory for every non-camera device, instead of one each. Turning this off gives it its own advertisement. Either way the switch REBUILDS the accessory and it must be added to the Home app again.',
               style: 'switch' as const,
               value: shouldBridge({
                 mapperKind: kind,
@@ -2310,13 +2310,13 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
               immediate: true,
             },
             {
-              // CamStack's own copy of what HomeKit is sent. Per camera because
+              // Dominevo's own copy of what HomeKit is sent. Per camera because
               // the cost is per camera (disk plus one thumbnail ffmpeg per
               // clip), and ON by default because HKSV has no read-back: a
               // recording made while this was off is gone for good (D550).
               type: 'boolean' as const,
               key: keepClipsKey,
-              label: 'Keep CamStack copies of HomeKit clips',
+              label: 'Keep Dominevo copies of HomeKit clips',
               description:
                 'Save a copy of every clip sent to HomeKit Secure Video, on the “HomeKit Clips” storage location. HomeKit never gives a clip back, so a recording made with this off cannot be recovered later. Off saves the disk and one thumbnail decode per clip; the HomeKit recording itself is unchanged either way.',
               style: 'switch' as const,

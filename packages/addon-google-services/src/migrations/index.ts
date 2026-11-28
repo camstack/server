@@ -2,7 +2,7 @@ import {
   type AddonMigration,
   type CalendarRecordPorts,
   moveCalendarIdsToRecords,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { parseStampedCalendarId } from '../google-broker-registry.js'
 import {
   type CalendarIdsPorts,

@@ -13,7 +13,7 @@ import {
   type IDeviceRuntimeState,
   type IScopedLogger,
   type StateRefreshPolicy,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { settingsToEcowittConfig } from '../config.js'
 import {

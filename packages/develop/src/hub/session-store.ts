@@ -1,8 +1,8 @@
 /**
- * The `camstack login` session cache — `~/.camstack/<host>.json` (0600), one
+ * The `dominevo login` session cache — `~/.camstack/<host>.json` (0600), one
  * file per hub. Moved here from the CLI so every hub-talking tool (CLI,
  * `scripts/hub/hub.mjs`, the operator MCP) reads the SAME cache through the
- * SAME code. The cache holds the login JWT and its refresh token from `camstack login`,
+ * SAME code. The cache holds the login JWT and its refresh token from `dominevo login`,
  * never a password.
  */
 import * as crypto from 'node:crypto'

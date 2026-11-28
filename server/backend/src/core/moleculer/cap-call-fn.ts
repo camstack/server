@@ -14,8 +14,8 @@
  * (hub → agent over Moleculer → agent's UDS child) and a direct remote as
  * `remote-moleculer`.
  */
-import { CALLER_STAMPED_CAPABILITIES } from '@camstack/types'
-import type { CallFn, CapRoute, CapRouteOpts, CapCallInput } from '@camstack/server/system'
+import { CALLER_STAMPED_CAPABILITIES } from '@dominevo/types'
+import type { CallFn, CapRoute, CapRouteOpts, CapCallInput } from '@dominevo/server/system'
 
 /** Minimal LocalChildRegistry surface this dispatcher needs (per-child UDS). */
 export interface CapCallFnLocalChild {

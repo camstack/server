@@ -6,7 +6,7 @@ import {
   type SendResult,
   type Target,
   type TargetKindCaps,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { GROUP_CAPS } from '../group-descriptor.js'
 import {

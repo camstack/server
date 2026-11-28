@@ -4,7 +4,7 @@
  * recorder exists, and D683 adds the tracker as a second sink. Each sink is
  * isolated — an observer can never change recognition.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { FaceIdentityVerdict } from '../../face-recognizer.js'
 
 export type IdentityVerdictSink = (verdict: FaceIdentityVerdict) => void

@@ -28,8 +28,8 @@ import type {
   AgentLoadSummary,
   InferenceDeviceExclusionReason,
   NodeInferenceDevice,
-} from '@camstack/types'
-import { acceleratorLabel } from '@camstack/ui-library'
+} from '@dominevo/types'
+import { acceleratorLabel } from '@dominevo/ui-library'
 
 /** The per-node facts the prospectus needs that do NOT come from the load snapshot. */
 export interface ClusterNodeFacts {

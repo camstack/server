@@ -10,7 +10,7 @@ import {
   type InferNativeProvider,
   type PowerMeterStatus,
   powerMeterCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { registerUnraidAdminLink } from '../unraid-admin-link.js'
 import { UNRAID_SYSTEM } from '../config.js'
 import { findUps } from '../unraid-discovery.js'

@@ -10,8 +10,8 @@
  * plus catalog uses kind / release / detector pre-selectors before arch chips.
  */
 import { useState, type ReactNode } from 'react'
-import { GroupedModelSelector } from '@camstack/ui-library'
-import { buildModelVariantGroups, type ModelVariantSource } from '@camstack/types'
+import { GroupedModelSelector } from '@dominevo/ui-library'
+import { buildModelVariantGroups, type ModelVariantSource } from '@dominevo/types'
 import { FacetSelect, type FacetOption } from './register-shared.js'
 import { useT } from '../i18n/index.js'
 

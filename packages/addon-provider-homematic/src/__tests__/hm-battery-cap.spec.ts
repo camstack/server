@@ -4,7 +4,7 @@
  * motion sensor), never on the container, and is fed from the MAINTENANCE
  * channel (channel 0): LOW_BAT -> the binary state, OPERATING_VOLTAGE -> volts.
  */
-import { type DeviceContext, DeviceType, type IDeviceRuntimeState } from '@camstack/types'
+import { type DeviceContext, DeviceType, type IDeviceRuntimeState } from '@dominevo/types'
 import type { Homematic, ValueChangedEvent } from 'nodehomematic'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { resetBatterySkipLog } from '../devices/hm-battery.js'

@@ -3,7 +3,7 @@
  * mass-UNREACH safety net and radio silence, and how sources merge. "Could not
  * read" is UNKNOWN, never "no fault".
  */
-import { ERROR_STATUS_COLD, type ErrorStatus } from '@camstack/types'
+import { ERROR_STATUS_COLD, type ErrorStatus } from '@dominevo/types'
 import type { HmDevice, ValueChangedEvent } from 'nodehomematic'
 import { describe, expect, it } from 'vitest'
 import {

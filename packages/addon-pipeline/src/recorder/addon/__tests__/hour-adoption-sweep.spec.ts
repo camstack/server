@@ -11,7 +11,7 @@
  * So this pass enumerates DIRECTORIES rather than claimed rows, runs on an
  * `active` location, and calls exactly one thing: `adoptWalkedHour`.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { segmentRelPath } from '../../segment-path.js'
 import {

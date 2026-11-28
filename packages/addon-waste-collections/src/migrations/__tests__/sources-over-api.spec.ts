@@ -4,7 +4,7 @@
  * keychain through the records door, ids and marks survive, a second run is a no-op.
  * Real SQLite for the legacy settings (the hand-written seed), in-memory records.
  */
-import { makeInMemoryRecords, REDACTED_SECRET } from '@camstack/types'
+import { makeInMemoryRecords, REDACTED_SECRET } from '@dominevo/types'
 import Database from 'better-sqlite3'
 import { describe, expect, it } from 'vitest'
 import { wasteSourceEntryKind } from '../../waste-source-record-kinds.js'

@@ -76,7 +76,7 @@ value its own capability now defines. Only the compiler noticed. This is why
 
 A docblock claiming a unification is not one. `container-primary-child.ts` said
 three copies of the precedence now delegated to it. None did. `ui-library` does
-now; the other two cannot — the viewer resolves `@camstack/types` from its own
+now; the other two cannot — the viewer resolves `@dominevo/types` from its own
 `node_modules`, where a newly added export simply is not present at runtime, and
 the Home Assistant provider ranks `DeviceType` enum members because it answers a
 different question from the same ordering. Both keep a copy, and

@@ -18,7 +18,7 @@ import { z } from 'zod'
  * `{ secret: true }` — the one spelling of "this field holds a credential".
  *
  * Addons write the LITERAL `.meta({ secret: true })` rather than importing
- * this constant: an addon running against an older `@camstack/types` would
+ * this constant: an addon running against an older `@dominevo/types` would
  * otherwise call `.meta(undefined)`, which in zod v4 is the metadata GETTER
  * and returns no schema at all.
  */

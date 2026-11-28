@@ -27,7 +27,7 @@
  * counterpart on this service and is deliberately not wired — a Switch that
  * silently buzzes a door open would be a second knob nobody asked for.
  */
-import { LockControlStatusSchema } from '@camstack/types'
+import { LockControlStatusSchema } from '@dominevo/types'
 import { Characteristic, Service } from '@homebridge/hap-nodejs'
 
 import type { BuilderContext, BuilderHandle } from '../../types.js'

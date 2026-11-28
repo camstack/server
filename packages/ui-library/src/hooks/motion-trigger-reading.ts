@@ -1,4 +1,4 @@
-import type { MotionTriggerRuntimeState } from '@camstack/types'
+import type { MotionTriggerRuntimeState } from '@dominevo/types'
 
 /**
  * What a `motion-trigger` slice says. `unknown` is the cold-start seed a provider

@@ -5,7 +5,7 @@
 // 503 a client should retry and a 400 it should not. It exists because every
 // `oauth-integration` descriptor now comes from an addon (D101), so an absence
 // during boot is normal and must not read as a refusal.
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { CapabilityRegistry } from '../capability-registry.js'
 

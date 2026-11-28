@@ -17,7 +17,7 @@ import {
   type ConfigFieldWithValue,
   type ScopedSettingsScope,
   dehydrateSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { ConfigFormBuilder } from './config-form-builder.js'
 import { FormSaveBar } from './form-save-bar.js'
 

@@ -3,7 +3,7 @@
  *
  * ## The failure this closes
  *
- * 2026-10-13, device 106 ("Baby monitor", standalone battery): CamStack showed
+ * 2026-10-13, device 106 ("Baby monitor", standalone battery): Dominevo showed
  * 80 % until the camera died, then 11 %. Every fresh reading of a sleeping
  * battery camera arrived only as a side effect — a firmware `battery` push, a
  * wake some consumer caused — and the hourly timer that existed was written to
@@ -42,7 +42,7 @@
  * The decision is pure ({@link decideBatteryRefresh}); the controller owns the
  * attempt bookkeeping and the single-flight, and is driven by fakes in the spec.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 /** The default window, in minutes. */
 export const BATTERY_REFRESH_MINUTES_DEFAULT = 60

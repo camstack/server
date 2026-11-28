@@ -20,7 +20,7 @@
  * builder iteration order.
  */
 
-import { type CapabilityDefinition, method } from '@camstack/types'
+import { type CapabilityDefinition, method } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import {

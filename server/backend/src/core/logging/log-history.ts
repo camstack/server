@@ -12,14 +12,14 @@ import {
   lineMatches,
   type CompiledLogFilter,
   type ReadableLine,
-} from '@camstack/server/system'
+} from '@dominevo/server/system'
 import type {
   ILogDestination,
   LogEntry,
   LogReadEntry,
   LogReadQuery,
   LogReadResult,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** The default history source: the hub's rotated files. */
 export const DEFAULT_LOG_SOURCE = 'winston-logging'

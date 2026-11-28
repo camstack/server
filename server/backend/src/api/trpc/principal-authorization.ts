@@ -10,14 +10,14 @@
  *   2. `'*'` passes;
  *   3. the capability / addon grants decide.
  */
-import { METHOD_ACCESS_MAP } from '@camstack/server/system'
+import { METHOD_ACCESS_MAP } from '@dominevo/server/system'
 import type {
   CredentialScope,
   RouteAccess,
   ShareViewGrant,
   ShareViewKind,
   UserScope,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   capabilityScopesOf,
   methodAccessForHttpMethod,
@@ -27,7 +27,7 @@ import {
   shareViewGrantOf,
   viewerHoldsRole,
   viewerScopeOf,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { SHARE_DEVICES_HEADER, SHARE_KIND_HEADER } from '../../auth/addon-route-share-gate.js'
 import { checkScopeAccess, type DeviceScopeLookup } from './scope-access.js'
 import { checkShareViewAccess } from './share-view-access.js'

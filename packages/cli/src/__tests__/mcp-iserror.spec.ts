@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js'
-import { MutationGate, type ConnectOutcome } from '@camstack/develop'
+import { MutationGate, type ConnectOutcome } from '@dominevo/develop'
 import type { McpContext } from '../mcp/context.js'
 import { createPublicServer } from '../mcp/server.js'
 
@@ -9,7 +9,7 @@ const NO_SESSION: ConnectOutcome = {
   ok: false,
   reason: 'no-session',
   message: 'no usable hub session',
-  action: 'run `camstack login <host>` in a terminal',
+  action: 'run `dominevo login <host>` in a terminal',
 }
 
 function context(hub: () => Promise<ConnectOutcome>): McpContext {
@@ -39,7 +39,7 @@ describe('MCP tool failures carry isError', () => {
     const client = await connect(context(async () => NO_SESSION))
     const res = await client.callTool({ name: 'ops_status', arguments: {} })
     expect(res.isError).toBe(true)
-    expect(JSON.stringify(res.content)).toContain('camstack login')
+    expect(JSON.stringify(res.content)).toContain('dominevo login')
   })
 
   it('a throwing tool yields isError true with the message', async () => {
@@ -64,7 +64,7 @@ describe('MCP tool failures carry isError', () => {
         tls: {},
         client: { call: async () => null },
         adminHint: null,
-        loginCommand: 'camstack login',
+        loginCommand: 'dominevo login',
       },
     }
     const client = await connect(context(async () => ok))

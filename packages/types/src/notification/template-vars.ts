@@ -172,7 +172,7 @@ const STATE_SUMMARY_SECTION_VARS: readonly {
   {
     name: 'summaryAddonUpdates',
     label: 'Summary: addon updates',
-    example: 'hub:\n• @camstack/addon-recorder 1.2.3 → 1.2.4',
+    example: 'hub:\n• @dominevo/addon-recorder 1.2.3 → 1.2.4',
     kinds: ['addon-update-available', 'addon-updated'],
   },
   {
@@ -998,7 +998,7 @@ export const NC_TEMPLATE_VARS: readonly NcTemplateVarDescriptor[] = [
   {
     name: 'package',
     label: 'Package',
-    example: '@camstack/addon-recorder',
+    example: '@dominevo/addon-recorder',
     group: 'system',
     families: ['rule'],
     fields: [...RULE_TEXT],
@@ -1008,7 +1008,7 @@ export const NC_TEMPLATE_VARS: readonly NcTemplateVarDescriptor[] = [
   {
     name: 'packageName',
     label: 'Package',
-    example: '@camstack/addon-recorder',
+    example: '@dominevo/addon-recorder',
     group: 'system',
     families: ['rule'],
     fields: [...RULE_TEXT],

@@ -18,8 +18,8 @@ import type {
   AutomationRecipe,
   AutomationWhen,
   deviceManagerCapability,
-} from '@camstack/types'
-import { AUTOMATION_LEAF_KINDS, leafCatalogEntry, seedLeaf } from '@camstack/types'
+} from '@dominevo/types'
+import { AUTOMATION_LEAF_KINDS, leafCatalogEntry, seedLeaf } from '@dominevo/types'
 import type { z } from 'zod'
 import i18n from '../../../i18n/index'
 import { CODE_STEP_TEMPLATE } from '../../../components/code/automation-code-step'
@@ -107,7 +107,7 @@ export function operatorChoices(kind: WireableFieldKind | undefined): readonly O
 }
 
 /** Row types that HAPPEN (an instant); the rest of {@link LEAF_KINDS} hold (a fact).
- *  Derived from the one catalogue in `@camstack/types`: a kind is never listed here. */
+ *  Derived from the one catalogue in `@dominevo/types`: a kind is never listed here. */
 export const EVENT_LEAF_KINDS: readonly LeafKind[] = AUTOMATION_LEAF_KINDS.filter(
   (kind) => leafCatalogEntry(kind).role === 'event',
 )

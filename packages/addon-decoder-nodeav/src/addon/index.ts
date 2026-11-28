@@ -4,14 +4,14 @@ import type {
   DurableState,
   IDecoderCapProvider,
   ProviderRegistration,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   audioCodecCapability,
   BaseAddon,
   DEFAULT_DECODER_HWACCEL_CONFIG,
   decoderCapability,
   HWACCEL_OPTIONS,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { rankDecodeHwAccels } from '../decode-hwaccel-rank.js'
 import { NodeAvAudioCodecProvider } from '../audio-codec/provider.js'

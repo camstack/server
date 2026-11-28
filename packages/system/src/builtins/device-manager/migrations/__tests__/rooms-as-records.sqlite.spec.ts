@@ -3,7 +3,7 @@
  * the `device-manager:devices` table and the `addon-settings` table share one file, the plan is
  * applied by the production transaction (`applyPlanFile`), and every assertion reads the file.
  */
-import { roomIdFromKey, zoneIdFromKey } from '@camstack/types'
+import { roomIdFromKey, zoneIdFromKey } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { deviceManagerRecordKinds } from '../../record-kinds.js'
 import { decodeDeviceRow } from '../../device-row-store.js'

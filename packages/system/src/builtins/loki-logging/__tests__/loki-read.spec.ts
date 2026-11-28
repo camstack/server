@@ -2,7 +2,7 @@
  * D898 — reading history back from Loki.
  */
 import { describe, expect, it } from 'vitest'
-import type { LogReadEntry } from '@camstack/types'
+import type { LogReadEntry } from '@dominevo/types'
 import { LokiDestination, type LokiConfig, type LokiFetch } from '../loki-destination.js'
 import {
   buildLogQl,

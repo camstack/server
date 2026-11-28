@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { DeviceType, type IDeviceRuntimeState } from '@camstack/types'
+import { DeviceType, type IDeviceRuntimeState } from '@dominevo/types'
 import { HaContainerDevice } from '../devices/ha-container-device.js'
 
 interface ContainerOnlineHarness {
@@ -79,7 +79,7 @@ async function makeContainer(config: Record<string, unknown>): Promise<Container
       child: vi.fn(),
       withTags: vi.fn(),
     },
-  } as unknown as import('@camstack/types').DeviceContext
+  } as unknown as import('@dominevo/types').DeviceContext
 
   const device = new HaContainerDevice(ctx)
   await device.onActivate()

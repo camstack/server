@@ -44,7 +44,7 @@ it.**
   - The interactive view on both pages: slot colours, class chips, the cell
     states, the camera's gate as a badge in the step's header.
   - Column headers name each accelerator through ONE function
-    (`acceleratorLabel`, `@camstack/ui-library`), with its format, its elected
+    (`acceleratorLabel`, `@dominevo/ui-library`), with its format, its elected
     model, and "off".
   - Switched-off accelerators are hidden behind "Show disabled accelerators".
   - Keyboard: one Tab stop (a roving tabindex over headers and cells); arrows,

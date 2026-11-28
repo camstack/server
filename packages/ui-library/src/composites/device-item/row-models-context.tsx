@@ -11,7 +11,7 @@
  * request is throttled to one refetch per `ROW_MODEL_REFRESH_MS`, so a list of
  * chatty sensors costs one query per window, not one per push.
  */
-import type { HeroRowModel } from '@camstack/types'
+import type { HeroRowModel } from '@dominevo/types'
 import {
   createContext,
   type ReactNode,

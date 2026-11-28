@@ -9,7 +9,7 @@ import {
   type IDeviceRuntimeState,
   DeviceType,
   switchCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import { withDefaultSwitchToggle } from '../../../kernel/moleculer/switch-toggle.js'
 import { setActuatorDispatcher, type ActuatorDispatchInput } from '../actuator-dispatch.js'

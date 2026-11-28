@@ -5,7 +5,7 @@ import {
   type DeviceContext,
   DeviceRole,
   type InferNativeProvider,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { numberDpPatch, readNumberDp } from '../tuya-dp-mapping.js'
 import { tuyaChildSchema, TuyaChildDevice } from './tuya-child-device.js'

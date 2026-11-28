@@ -4,7 +4,7 @@
  * engine (`prepareNotification`) with Discord's declared caps, then asserts the
  * exact request plan the adapter emits.
  */
-import { type Notification, prepareNotification } from '@camstack/types'
+import { type Notification, prepareNotification } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { HttpRequestPlan, MultipartPart } from '../../adapters/adapter.js'
 import { discordAdapter } from '../../adapters/discord.js'
@@ -149,11 +149,11 @@ describe('discord buildRequest', () => {
   it('threads username + avatar_url from config', () => {
     const plan = planFor(notif({ body: 'b', level: 'info' }), {
       webhookUrl: WEBHOOK_URL,
-      username: 'CamStack',
+      username: 'Dominevo',
       avatarUrl: 'https://cdn.test/avatar.png',
     })
     const payload = jsonPayload(plan)
-    expect(payload.username).toBe('CamStack')
+    expect(payload.username).toBe('Dominevo')
     expect(payload.avatar_url).toBe('https://cdn.test/avatar.png')
   })
 

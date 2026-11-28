@@ -6,7 +6,7 @@ import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { IScopedLogger, LogExtras } from '@camstack/types'
+import type { IScopedLogger, LogExtras } from '@dominevo/types'
 import { AddonInstaller } from '../addon-installer.js'
 import { clearHeldInstall, listHeldInstalls } from '../held-installs.js'
 import { RegistryReadError } from '../requires-registry.js'
@@ -136,7 +136,7 @@ describe('ensureRequiredPackages follows registry latest', () => {
   it('moves an installed addon down to a lower latest and logs from, to and the reason', async () => {
     const addonsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'camstack-latest-'))
     tmpDirs.push(addonsDir)
-    installed(addonsDir, '@camstack/addon-pipeline', '1.2.7')
+    installed(addonsDir, '@dominevo/addon-pipeline', '1.2.7')
     const { logger, lines } = capturingLogger()
     const installer = new AddonInstaller(
       {
@@ -146,14 +146,14 @@ describe('ensureRequiredPackages follows registry latest', () => {
       logger,
     )
     const apply = vi.spyOn(installer, 'applyUpdate').mockResolvedValue({
-      name: '@camstack/addon-pipeline',
+      name: '@dominevo/addon-pipeline',
       version: '1.2.6',
       backupDir: '/bak',
     })
 
-    await installer.ensureRequiredPackages(['@camstack/addon-pipeline'])
+    await installer.ensureRequiredPackages(['@dominevo/addon-pipeline'])
 
-    expect(apply).toHaveBeenCalledWith('@camstack/addon-pipeline', '1.2.6')
+    expect(apply).toHaveBeenCalledWith('@dominevo/addon-pipeline', '1.2.6')
     expect(lines.some((line) => line.includes('1.2.7') && line.includes('1.2.6'))).toBe(true)
     expect(
       lines.some((line) => line.includes('installed version differs from registry latest')),
@@ -163,7 +163,7 @@ describe('ensureRequiredPackages follows registry latest', () => {
   it('installs nothing when the registry cannot be read', async () => {
     const addonsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'camstack-latest-'))
     tmpDirs.push(addonsDir)
-    installed(addonsDir, '@camstack/addon-pipeline', '1.2.7')
+    installed(addonsDir, '@dominevo/addon-pipeline', '1.2.7')
     const installer = new AddonInstaller({
       addonsDir,
       resolveLatestVersion: async () => {
@@ -172,25 +172,25 @@ describe('ensureRequiredPackages follows registry latest', () => {
     })
     const apply = vi.spyOn(installer, 'applyUpdate')
 
-    await installer.ensureRequiredPackages(['@camstack/addon-pipeline'])
+    await installer.ensureRequiredPackages(['@dominevo/addon-pipeline'])
 
     expect(apply).not.toHaveBeenCalled()
     const raw: unknown = JSON.parse(
-      fs.readFileSync(path.join(addonsDir, '@camstack/addon-pipeline', 'package.json'), 'utf-8'),
+      fs.readFileSync(path.join(addonsDir, '@dominevo/addon-pipeline', 'package.json'), 'utf-8'),
     )
-    expect(raw).toEqual({ name: '@camstack/addon-pipeline', version: '1.2.7' })
+    expect(raw).toEqual({ name: '@dominevo/addon-pipeline', version: '1.2.7' })
   })
 
   it('leaves a copy that already matches latest', async () => {
     const addonsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'camstack-latest-'))
     tmpDirs.push(addonsDir)
-    installed(addonsDir, '@camstack/addon-pipeline', '1.2.6')
+    installed(addonsDir, '@dominevo/addon-pipeline', '1.2.6')
     const installer = new AddonInstaller({
       addonsDir,
       resolveLatestVersion: async () => '1.2.6',
     })
     const apply = vi.spyOn(installer, 'applyUpdate')
-    await installer.ensureRequiredPackages(['@camstack/addon-pipeline'])
+    await installer.ensureRequiredPackages(['@dominevo/addon-pipeline'])
     expect(apply).not.toHaveBeenCalled()
   })
 })
@@ -215,7 +215,7 @@ describe('ensureRequiredPackages holds a version the running server cannot host 
     )
     const install = vi.spyOn(installer, 'installFromNpm')
 
-    await installer.ensureRequiredPackages(['@camstack/addon-pipeline'])
+    await installer.ensureRequiredPackages(['@dominevo/addon-pipeline'])
 
     expect(install).not.toHaveBeenCalled()
     expect(lines.some((l) => l.includes('9.0.0') && l.includes('1.2.0'))).toBe(true)
@@ -232,7 +232,7 @@ describe('ensureRequiredPackages holds a version the running server cannot host 
       },
     })
     const install = vi.spyOn(installer, 'installFromNpm')
-    await installer.ensureRequiredPackages(['@camstack/addon-pipeline'])
+    await installer.ensureRequiredPackages(['@dominevo/addon-pipeline'])
     expect(install).not.toHaveBeenCalled()
   })
 
@@ -245,17 +245,17 @@ describe('ensureRequiredPackages holds a version the running server cannot host 
       resolveRequires: needsNewer,
     })
     const install = vi.spyOn(installer, 'installFromNpm').mockResolvedValue({
-      name: '@camstack/addon-pipeline',
+      name: '@dominevo/addon-pipeline',
       version: '1.0.0',
     })
-    await installer.ensureRequiredPackages(['@camstack/addon-pipeline'])
-    expect(install).toHaveBeenCalledWith('@camstack/addon-pipeline')
+    await installer.ensureRequiredPackages(['@dominevo/addon-pipeline'])
+    expect(install).toHaveBeenCalledWith('@dominevo/addon-pipeline')
   })
 
   it('does not move an installed copy to a latest that needs a newer server', async () => {
     const addonsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'camstack-requires-'))
     tmpDirs.push(addonsDir)
-    installed(addonsDir, '@camstack/addon-pipeline', '1.2.7')
+    installed(addonsDir, '@dominevo/addon-pipeline', '1.2.7')
     const installer = new AddonInstaller({
       addonsDir,
       serverVersion: '1.2.0',
@@ -263,7 +263,7 @@ describe('ensureRequiredPackages holds a version the running server cannot host 
       resolveRequires: needsNewer,
     })
     const apply = vi.spyOn(installer, 'applyUpdate')
-    await installer.ensureRequiredPackages(['@camstack/addon-pipeline'])
+    await installer.ensureRequiredPackages(['@dominevo/addon-pipeline'])
     expect(apply).not.toHaveBeenCalled()
   })
 })
@@ -282,7 +282,7 @@ describe('first boot falls back to the newest version this server can host (plan
   }
 
   it('installs the newest older version whose requires the server meets, not latest', async () => {
-    clearHeldInstall('@camstack/addon-pipeline')
+    clearHeldInstall('@dominevo/addon-pipeline')
     const installer = new AddonInstaller({
       addonsDir: dirFor(),
       serverVersion: '1.2.0',
@@ -294,16 +294,16 @@ describe('first boot falls back to the newest version this server can host (plan
       listVersions: async () => ['3.0.0', '2.0.0', '1.0.0'],
     })
     const install = vi.spyOn(installer, 'installFromNpm').mockResolvedValue({
-      name: '@camstack/addon-pipeline',
+      name: '@dominevo/addon-pipeline',
       version: '2.0.0',
     })
-    await installer.ensureRequiredPackages(['@camstack/addon-pipeline'])
-    expect(install).toHaveBeenCalledWith('@camstack/addon-pipeline', '2.0.0')
+    await installer.ensureRequiredPackages(['@dominevo/addon-pipeline'])
+    expect(install).toHaveBeenCalledWith('@dominevo/addon-pipeline', '2.0.0')
     expect(listHeldInstalls()).toEqual([])
   })
 
   it('holds with a typed reason and records it for the alert when no version fits', async () => {
-    clearHeldInstall('@camstack/addon-pipeline')
+    clearHeldInstall('@dominevo/addon-pipeline')
     const installer = new AddonInstaller({
       addonsDir: dirFor(),
       serverVersion: '1.2.0',
@@ -311,7 +311,7 @@ describe('first boot falls back to the newest version this server can host (plan
       listVersions: async () => ['3.0.0', '2.0.0'],
     })
     const install = vi.spyOn(installer, 'installFromNpm')
-    await installer.ensureRequiredPackages(['@camstack/addon-pipeline'])
+    await installer.ensureRequiredPackages(['@dominevo/addon-pipeline'])
     expect(install).not.toHaveBeenCalled()
     const held = listHeldInstalls()
     expect(held).toHaveLength(1)
@@ -321,7 +321,7 @@ describe('first boot falls back to the newest version this server can host (plan
   })
 
   it('an unreadable running server version passes nothing that declares a minimum, and says unknown', async () => {
-    clearHeldInstall('@camstack/addon-pipeline')
+    clearHeldInstall('@dominevo/addon-pipeline')
     const installer = new AddonInstaller({
       addonsDir: dirFor(),
       serverVersion: null,
@@ -329,7 +329,7 @@ describe('first boot falls back to the newest version this server can host (plan
       listVersions: async () => ['3.0.0', '2.0.0'],
     })
     const install = vi.spyOn(installer, 'installFromNpm')
-    await installer.ensureRequiredPackages(['@camstack/addon-pipeline'])
+    await installer.ensureRequiredPackages(['@dominevo/addon-pipeline'])
     expect(install).not.toHaveBeenCalled()
     const held = listHeldInstalls()
     expect(held).toHaveLength(1)
@@ -338,7 +338,7 @@ describe('first boot falls back to the newest version this server can host (plan
   })
 
   it('records an auth failure of its own as an unreadable registry, never as an unmet minimum', async () => {
-    clearHeldInstall('@camstack/addon-pipeline')
+    clearHeldInstall('@dominevo/addon-pipeline')
     const installer = new AddonInstaller({
       addonsDir: dirFor(),
       serverVersion: '1.2.0',
@@ -347,7 +347,7 @@ describe('first boot falls back to the newest version this server can host (plan
       },
     })
     const install = vi.spyOn(installer, 'installFromNpm')
-    await installer.ensureRequiredPackages(['@camstack/addon-pipeline'])
+    await installer.ensureRequiredPackages(['@dominevo/addon-pipeline'])
     expect(install).not.toHaveBeenCalled()
     expect(listHeldInstalls()[0]?.code).toBe('registry-unreadable')
     expect(listHeldInstalls()[0]?.reason).toContain('auth')

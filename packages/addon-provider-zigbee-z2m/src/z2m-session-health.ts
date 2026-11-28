@@ -1,4 +1,4 @@
-import { IntegrationSessionReporter, type SessionLossReason } from '@camstack/types'
+import { IntegrationSessionReporter, type SessionLossReason } from '@dominevo/types'
 
 /** The Zigbee2MQTT link ended for a reason the operator can act on. */
 export class Z2mSessionFault extends Error {

@@ -1,4 +1,4 @@
-import type { ConfigOption } from '@camstack/types'
+import type { ConfigOption } from '@dominevo/types'
 
 // The operator picks ONE source-stream slot for Alexa. Options are the three camstack profile
 // slots (`high`/`mid`/`low`) plus the smart `auto` default - NOT raw native camStream ids. The

@@ -12,7 +12,7 @@ import {
   LlmErrorCodeSchema,
   LlmRefusalSourceSchema,
   LlmUsageSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 
 export const AFM_PROTOCOL_VERSION = 1

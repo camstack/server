@@ -59,7 +59,7 @@ const desc = E2E_LIVE ? describe : describe.skip
 // ── Unique per-suite identifiers ────────────────────────────────────────
 // All ports + the cluster secret are deliberately off the dev defaults
 // (hub 4443 / tcp 6000 / udp 4445 / verdaccio 4873 / agent 4444).
-const PACKAGE_NAME = '@camstack/e2e-fixture-noop'
+const PACKAGE_NAME = '@dominevo/e2e-fixture-noop'
 const ADDON_ID = 'e2e-fixture-noop'
 const AGENT_NODE_ID = 'e2e-agent-update-0'
 
@@ -69,7 +69,7 @@ const VERDACCIO_PORT = 4887
 const AGENT_STATUS_PORT = 4547
 
 // Repo `packages/` dir — the agent boots its required packages
-// (@camstack/core, addon-pipeline, addon-agent-ui) from here as
+// (@dominevo/core, addon-pipeline, addon-agent-ui) from here as
 // `bundled` rather than pulling from npm. Without this the agent
 // would try to `npm install` the agent runtime packages, which are
 // NOT published to the test verdaccio, and hang on retries.

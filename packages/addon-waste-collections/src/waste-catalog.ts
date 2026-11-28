@@ -1,7 +1,7 @@
 /**
  * Runtime access to the addon-local generated catalog (country → service).
  */
-import type { ConfigUISchema } from '@camstack/types'
+import type { ConfigUISchema } from '@dominevo/types'
 import { z } from 'zod'
 import catalogJson from './catalog.json'
 import { isSecretArg } from './waste-secrets.js'

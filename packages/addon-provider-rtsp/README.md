@@ -1,10 +1,10 @@
 # RTSP Provider
 
-Generic RTSP camera device provider addon for CamStack.
+Generic RTSP camera device provider addon for Dominevo.
 
 <!-- readme:generated:start (derived from the manifest; edit outside this block) -->
 
-Package `@camstack/addon-provider-rtsp` on npm.
+Package `@dominevo/addon-provider-rtsp` on npm.
 
 ## What it provides
 
@@ -31,11 +31,11 @@ Edit these from System, Addons, this addon, Settings (a device's own settings ar
 ## Requirements
 
 - Placement: hub-only.
-- A CamStack hub. An agent is used only where the placement above allows it.
+- A Dominevo hub. An agent is used only where the placement above allows it.
 
 ## Documentation
 
-- [docs/architecture/device-model.md](https://github.com/camstack/server/blob/main/docs/architecture/device-model.md)
+- [docs/architecture/device-model.md](https://github.com/dominevo/server/blob/main/docs/architecture/device-model.md)
 
 See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
 

@@ -23,8 +23,8 @@ import type {
   TrackSource,
   TrackState,
   TrackZoneFilter,
-} from '@camstack/types'
-import { RetrainStatusSchema, TrackPlacementSchema, TrackSourceSchema } from '@camstack/types'
+} from '@dominevo/types'
+import { RetrainStatusSchema, TrackPlacementSchema, TrackSourceSchema } from '@dominevo/types'
 import {
   displayLabel,
   type LabelCandidate,
@@ -96,12 +96,12 @@ function parseCloseReason(value: unknown): TrackCloseReason | undefined {
 /**
  * The cap `Track` shape plus this addon's own close marker.
  *
- * `closedReason` is deliberately NOT on `Track` in `@camstack/types`: that
+ * `closedReason` is deliberately NOT on `Track` in `@dominevo/types`: that
  * package is `external` to the addon build and travels inside the published
- * `@camstack/server` closure, so a field added there is not live until a
+ * `@dominevo/server` closure, so a field added there is not live until a
  * framework train is installed AND is silently stripped by the cap schema
  * until it lands. The column, the write and both readers all live in this
- * addon, so the marker is live on the next `camstack deploy`. Promoting it to
+ * addon, so the marker is live on the next `dominevo deploy`. Promoting it to
  * `Track` later is additive.
  */
 export interface PersistedTrack extends Track {
@@ -113,7 +113,7 @@ export interface PersistedTrack extends Track {
    * and CLEARED by the late keyFrame upgrade when a native tile lands after
    * all. Absent = the tile landed native, or the row predates the column.
    * Addon-local for the same reason as `closedReason` above: live on the next
-   * `camstack deploy`; the wire copy on the cap `Track` needs a framework
+   * `dominevo deploy`; the wire copy on the cap `Track` needs a framework
    * train and is stripped until then.
    */
   readonly previewMissReason?: string
@@ -140,7 +140,7 @@ export interface PersistedTrack extends Track {
   readonly observations?: number
   /**
    * Pinned by a PROMOTED tracking-tape window (D681). Addon-local for the same
-   * reason as `closedReason` above: live on the next `camstack deploy`; the
+   * reason as `closedReason` above: live on the next `dominevo deploy`; the
    * wire copy on the cap `Track` needs a framework train and is stripped
    * until then. Undefined = never pinned.
    */

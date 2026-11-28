@@ -1,5 +1,5 @@
 import { fileURLToPath } from 'node:url'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { afterAll, describe, expect, it } from 'vitest'
 import { DeviceTemplateActions } from '../device-template-actions.js'
 import { DeviceTemplateRenderer } from '../device-template/template-renderer.js'
@@ -54,7 +54,10 @@ describe('DeviceTemplateActions', () => {
       templates: ['{{ camera.temperature }}'],
       thisDevice: { deviceId: 7 },
     })
-    expect(checked.results[0]).toMatchObject({ ok: true, aliases: [{ alias: 'camera', deviceId: 7 }] })
+    expect(checked.results[0]).toMatchObject({
+      ok: true,
+      aliases: [{ alias: 'camera', deviceId: 7 }],
+    })
   })
 
   it('check names the aliases, or the syntax refusal', async () => {

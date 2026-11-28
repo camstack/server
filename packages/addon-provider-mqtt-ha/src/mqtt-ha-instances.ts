@@ -19,7 +19,7 @@ import {
   RecordIntegrationInstances,
   type RecordsAccess,
   type RowsMigrationLog,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 
 /** The one link of an integration: to an `mqtt` broker instance, REQUIRED (D1013); `''` while unlinked. */

@@ -8,7 +8,7 @@
  * pipeline tab. Split out of `settings-schema.ts` only to respect the
  * 800-line file cap.
  */
-import type { ConfigSection } from '@camstack/types'
+import type { ConfigSection } from '@dominevo/types'
 import { CONFIRMATION_GATE_DEFAULTS, CONFIRMATION_GATE_KEYS } from './confirmation-gate-settings.js'
 import { DETECTION_SENSITIVITY_DEFAULTS } from './detection-sensitivity-settings.js'
 import { STILLNESS_BAR_MAX } from './pipeline/tracker/stillness-scale.js'

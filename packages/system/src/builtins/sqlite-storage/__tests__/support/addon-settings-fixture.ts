@@ -13,7 +13,7 @@ import {
   type MigrationOwnerResult,
   preconditionOf,
   runAddonMigrations,
-} from '@camstack/types'
+} from '@dominevo/types'
 import Database from 'better-sqlite3'
 
 const TABLE = 'addon-settings'

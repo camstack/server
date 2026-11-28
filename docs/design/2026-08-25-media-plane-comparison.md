@@ -1,5 +1,5 @@
 ---
-title: the reference NVR vs CamStack — comparative media-plane architecture, measured on the same host
+title: the reference NVR vs Dominevo — comparative media-plane architecture, measured on the same host
 last-verified: 2026-08-25
 covers:
   - packages/addon-pipeline/src/stream-broker/stream-broker/encoded-ring-buffer.ts
@@ -7,7 +7,7 @@ covers:
   - packages/system/src/kernel/transport/local-child-registry.ts
 ---
 
-# the reference NVR vs CamStack — comparative media-plane architecture
+# the reference NVR vs Dominevo — comparative media-plane architecture
 
 Both NVRs run on the SAME Unraid host (Core Ultra 7 265K, 62 GiB), against the
 same cameras. This document records measured numbers from 2026-08-25, the
@@ -31,7 +31,7 @@ stats/top, /proc, its public code). Nothing was restarted, configured or called.
    JS-vs-native. It is **how many times the bytes are re-handled, and who
    mediates**.
 2. **The CPU gap is real but half the claimed size.** 8 samples over 30 s:
-   CamStack ≈ **556 %** avg (peaks 837), the reference NVR ≈ **374 %** avg (peaks 440).
+   Dominevo ≈ **556 %** avg (peaks 837), the reference NVR ≈ **374 %** avg (peaks 440).
    The earlier 507-vs-252 snapshot caught the reference NVR in a trough — it bursts too
    (snapshot plugin 35 %, the operator's own advanced-notifier plugin 51 %).
    Ratio ≈ 1.5×, not 2×.
@@ -45,17 +45,17 @@ stats/top, /proc, its public code). Nothing was restarted, configured or called.
    - **the idle runner tail: ~25 runners × 105–190 MB ≈ 3.4 GiB** vs their
      idle-plugin tail at 35–110 MB each ≈ 1.5 GiB → **+1.9 GiB**.
 
-## 1. Measured inventory (2026-08-25, ~50 min after CamStack restart)
+## 1. Measured inventory (2026-08-25, ~50 min after Dominevo restart)
 
 ### Container level (8 × 4 s samples)
 
-| | CamStack | the reference NVR |
+| | Dominevo | the reference NVR |
 |---|---|---|
 | CPU avg / peak | 556 % / 837 % | 374 % / 440 % |
 | Memory | 16.6–18.9 GiB (cap 24, regime ~21) | 11.5–12.0 GiB (no cap) |
 | Load carried | 30 cams, continuous detection + recording | ~30 recorded streams (3 × ~10 cams), motion-gated detection |
 
-### CamStack per process (`metricsProvider.listNodeProcesses` + /proc)
+### Dominevo per process (`metricsProvider.listNodeProcesses` + /proc)
 
 | Process | RSS | CPU (30 s window / spot) | Notes |
 |---|---|---|---|
@@ -91,7 +91,7 @@ camera (`<id>`, `.remote`, `.low-resolution`) — the "3 streams per camera".
 
 ## 2. Mechanism table — where the bytes live, who copies them, who keeps them alive
 
-| Mechanism | CamStack | the reference NVR (public code) |
+| Mechanism | Dominevo | the reference NVR (public code) |
 |---|---|---|
 | Ingest | broker per stream: RTP parse in JS (`stream-broker.ts`, `source-parser.ts`) | `RtspClient` pure JS in prebuffer-mixin; ffmpeg only as protocol adapter for odd sources (`-c copy` back into the same JS parser) |
 | Prebuffer | `EncodedRingBuffer`, 10 s default, JS heap of broker runner (47 rings ≈ 970 MB) | `rtspPrebuffer: StreamChunk[]`, fixed 10 s, JS heap of prebuffer-mixin (≈2.5 GiB total) |

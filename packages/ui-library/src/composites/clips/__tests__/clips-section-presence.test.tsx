@@ -22,7 +22,7 @@ vi.mock('../../../hooks/use-capability-presence', () => ({
 vi.mock('../../../generated/system-hooks', () => ({
   useVideoclipsListSources: () => ({
     status: 'success',
-    data: [{ source: 'analytics', label: 'CamStack recordings', availability: { state: 'ok' } }],
+    data: [{ source: 'analytics', label: 'Dominevo recordings', availability: { state: 'ok' } }],
   }),
   useVideoclipsListClips: () => ({ status: 'success', data: [] }),
   usePipelineAnalyticsGetEventDensity: () => ({ status: 'success', data: [] }),

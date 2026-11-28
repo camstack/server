@@ -4,7 +4,7 @@ import {
   deviceAdminLinkCapability,
   type DiscoveredChildDevice,
   gatewayDeviceName,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   capForQuantity,
   deviceGroupForSensor,
@@ -57,7 +57,7 @@ export interface BuildEcowittCandidateInput {
   /** Current sensors on the gateway. */
   readonly sensors: readonly EcowittDiscoverableSensor[]
   /**
-   * Adopted CamStack device id PER device group, or null when that group's
+   * Adopted Dominevo device id PER device group, or null when that group's
    * Container is not yet adopted. A missing key is treated as null.
    */
   readonly adoptedDeviceIdByGroup: Readonly<Partial<Record<EcowittDeviceGroup, number | null>>>

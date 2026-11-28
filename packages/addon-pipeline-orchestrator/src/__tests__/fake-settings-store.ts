@@ -23,7 +23,7 @@
  * throws in production — prove such a read over the real engine.
  */
 
-import type { SettingsStoreClient } from '@camstack/types'
+import type { SettingsStoreClient } from '@dominevo/types'
 
 export interface FakeSettingsStore {
   readonly client: SettingsStoreClient

@@ -14,7 +14,7 @@
  *  - `rtspEnabled` hydrates independently of anything the token store does.
  */
 import { describe, it, expect, vi } from 'vitest'
-import { createDurableState, type DurableState, type IScopedLogger } from '@camstack/types'
+import { createDurableState, type DurableState, type IScopedLogger } from '@dominevo/types'
 import { hydratePersistedRtspState } from '../addon.js'
 import { RtspEnabledSchema, type RtspEnabledBlob } from '../stream-broker/stream-broker-manager.js'
 import { mergeRtspTokens, RTSP_TOKENS_KEY, rtspTokensMirror } from '../broker-device-state.js'

@@ -13,7 +13,7 @@ import {
   EMBEDDING_REQUIREMENTS_FAILED,
   EMBEDDING_REQUIREMENTS_UNAVAILABLE,
   embeddingRefusalOf,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   MAX_REQUIREMENTS_ATTEMPTS,

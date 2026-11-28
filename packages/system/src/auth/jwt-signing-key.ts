@@ -23,7 +23,7 @@
  * so a second copy of this module (an addon bundle) sees the same key.
  */
 import { randomBytes } from 'node:crypto'
-import { buildSecretRef, type SecretsAccess } from '@camstack/types'
+import { buildSecretRef, type SecretsAccess } from '@dominevo/types'
 
 /** The keychain owner of every system-held secret. */
 export const SYSTEM_SECRET_OWNER = 'system'

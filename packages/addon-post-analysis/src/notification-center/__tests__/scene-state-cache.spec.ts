@@ -10,7 +10,7 @@
  * The three neutralization checks are named in the test titles: each is written
  * so that removing the guard in `scene-state-cache.ts` makes it fail.
  */
-import type { SceneMonitor } from '@camstack/types'
+import type { SceneMonitor } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import {

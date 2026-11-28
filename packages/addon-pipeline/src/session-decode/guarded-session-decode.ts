@@ -1,5 +1,5 @@
-import type { IScopedLogger } from '@camstack/types'
-import { errMsg } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
 import type { LiveWorkerLease, SlotWaiter } from './live-worker-admission.js'
 import type { SessionDecodeTeardown, SessionTeardownMode } from './session-decode-coordinator.js'
 

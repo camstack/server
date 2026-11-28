@@ -243,7 +243,7 @@ function generate(): void {
   }
   lines.push('')
   lines.push('/**')
-  lines.push(' * Every CapabilityDefinition shipped by `@camstack/types`. The hub')
+  lines.push(' * Every CapabilityDefinition shipped by `@dominevo/types`. The hub')
   lines.push(' * iterates this array at boot to declare each cap on the registry')
   lines.push(' * before addons (in-process or via the Moleculer bridge) attempt')
   lines.push(' * `registerProvider`. Adding a new cap means dropping a `*.cap.ts`')

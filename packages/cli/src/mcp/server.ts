@@ -1,12 +1,12 @@
 /**
- * The public MCP server behind `camstack mcp` (stdio). Stdout is the protocol:
+ * The public MCP server behind `dominevo mcp` (stdio). Stdout is the protocol:
  * everything diagnostic goes to stderr, and never a token, cookie or secret.
  */
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js'
-import { MutationGate, tryConnectHub } from '@camstack/develop'
+import { MutationGate, tryConnectHub } from '@dominevo/develop'
 import { createManifestProvider } from '../onboarding/manifest.js'
 import { SERVER_INSTRUCTIONS, registerGetStartedPrompt } from './get-started-prompt.js'
 import type { FetchFn, HubProvider, McpContext } from './context.js'
@@ -112,7 +112,7 @@ export interface CliMcpOptions {
   readonly noDocsFetch?: boolean
 }
 
-/** The CLI's own chain, resolved per call so a `camstack login` mid-session is picked up. */
+/** The CLI's own chain, resolved per call so a `dominevo login` mid-session is picked up. */
 function sessionHub(options: CliMcpOptions): HubProvider {
   return () =>
     tryConnectHub({
@@ -138,7 +138,7 @@ export async function runPublicMcp(options: CliMcpOptions): Promise<void> {
     }),
   }
   const registerDevelop = options.toolsets.includes('develop')
-    ? (await import('@camstack/mcp-develop')).registerDevelopTools
+    ? (await import('@dominevo/mcp-develop')).registerDevelopTools
     : undefined
   const server = createPublicServer({
     toolsets: options.toolsets,

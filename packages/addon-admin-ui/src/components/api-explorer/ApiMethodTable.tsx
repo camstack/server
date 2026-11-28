@@ -15,8 +15,8 @@ import {
   DataTableFilterBar,
   TABLE_SCROLL_MAX_H,
   useDataTableFilter,
-} from '@camstack/ui-library'
-import type { ApiCatalogMethod } from '@camstack/types'
+} from '@dominevo/ui-library'
+import type { ApiCatalogMethod } from '@dominevo/types'
 import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { type ApiGroupId, groupMethods } from '../../lib/api-method-groups'

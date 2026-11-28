@@ -184,7 +184,7 @@ export function shutdownAutoUpdater(): void {
 export function notifyUpdateReady(version: string): void {
   void dialog.showMessageBox({
     type: 'info',
-    title: 'CamStack Agent — Update ready',
+    title: 'Dominevo Agent — Update ready',
     message: `Version ${version} has been downloaded.`,
     detail: 'It will be installed the next time the agent restarts.',
     buttons: ['OK'],

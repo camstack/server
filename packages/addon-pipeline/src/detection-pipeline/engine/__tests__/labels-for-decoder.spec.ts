@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { labelsForDecoder } from '../labels-for-decoder.js'
 import { buildPoolModelConfigForStep } from '../engine-factory.js'
-import type { ModelCatalogEntry } from '@camstack/types'
+import type { ModelCatalogEntry } from '@dominevo/types'
 import * as os from 'node:os'
 
 const coco80 = Array.from({ length: 80 }, (_, i) => `coco80-${i}`)

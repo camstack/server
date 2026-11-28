@@ -9,7 +9,7 @@
 import { type ReactElement, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Search } from 'lucide-react'
-import { Input, StatusBadge } from '@camstack/ui-library'
+import { Input, StatusBadge } from '@dominevo/ui-library'
 import type { IntegrationAddonGroup } from '../../lib/integration-addon-groups'
 import { sortByFriendlyName } from '../../lib/integration-sections'
 import { IntegrationCard, IntegrationCardGrid } from './integration-card'

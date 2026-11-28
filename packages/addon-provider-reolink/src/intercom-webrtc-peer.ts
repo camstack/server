@@ -32,7 +32,7 @@
  * `addon-stream-broker/src/webrtc/session.ts:loadWerift`).
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { IntercomWebrtcPeer } from './intercom-orchestrator.js'
 
 /** Minimal werift surface this file relies on. We type-shadow the

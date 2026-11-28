@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import type { DeviceIntegrationResolution, DeviceItemDevice } from '@camstack/ui-library'
+import type { DeviceIntegrationResolution, DeviceItemDevice } from '@dominevo/ui-library'
 import { ProviderIcon } from './ProviderIcon'
 
 /**

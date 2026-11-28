@@ -1,7 +1,7 @@
-import type { DecodedFrame, FrameHandle, IScopedLogger } from '@camstack/types'
+import type { DecodedFrame, FrameHandle, IScopedLogger } from '@dominevo/types'
 import type { FrameBox } from '../../shared/frame/box-drawer.js'
 import { drawBoxedFrame, drawBoxedJpeg } from '../../shared/frame/box-drawer.js'
-import { bundledCamstack, paintHex } from '@camstack/types'
+import { bundledCamstack, paintHex } from '@dominevo/types'
 
 const BUNDLED_PALETTE = bundledCamstack()
 import { extractCrop } from '../../shared/frame/crop-extractor.js'
@@ -298,7 +298,7 @@ export interface EventMediaDispatcherDeps {
   readonly mediaStore: EventMediaWriter
   readonly logger: IScopedLogger
   /**
-   * Class → palette hex. Absent in tests: the bundled CamStack preset.
+   * Class → palette hex. Absent in tests: the bundled Dominevo preset.
    * A live painter refreshes from `display-palette` and, when that read is
    * unknown, keeps painting the bundled preset (D939).
    */

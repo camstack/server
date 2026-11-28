@@ -11,7 +11,7 @@
  * for a dialog and keeps the endpoint stateless.
  */
 import { spawn as childProcessSpawn, type ChildProcess } from 'node:child_process'
-import type { IScopedLogger, PinnedFfmpegResolver } from '@camstack/types'
+import type { IScopedLogger, PinnedFfmpegResolver } from '@dominevo/types'
 import { resolveStillSource, type LowSegmentRow } from './still-source.js'
 
 /** Injectable ffmpeg spawn (matches `child_process.spawn`'s shape we use). */

@@ -1,7 +1,7 @@
-import type { PetFeederStatus } from '@camstack/types'
+import type { PetFeederStatus } from '@dominevo/types'
 
 /**
- * Pure mapping from a PetKit `FeederDevice` reading to the CamStack
+ * Pure mapping from a PetKit `FeederDevice` reading to the Dominevo
  * `pet-feeder` cap slice. Kept side-effect-free (no cloud client, no
  * `FeederDevice` import) so the decode — especially the status / error
  * decode and the dual-hopper split — is fully unit-testable with a plain

@@ -22,7 +22,7 @@ import {
   Switch,
   type NotificationTargetOption,
   type NotificationTargetsFieldProps,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { AlertTriangle, Info, Send } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { TemplateField, TemplatePreview } from '../../components/notifications/TemplateField'
@@ -174,14 +174,14 @@ export function DigestCameraField({
 
 // ── Targets ──────────────────────────────────────────────────────────
 //
-// Lives in `@camstack/ui-library` as `NotificationTargetsField` so scripts
+// Lives in `@dominevo/ui-library` as `NotificationTargetsField` so scripts
 // and ConfigUISchema forms share the same control. These aliases keep the
 // digest editors' call sites stable.
 
 export type DigestTargetOption = NotificationTargetOption
 export type DigestTargetsFieldProps = NotificationTargetsFieldProps
 
-/** @deprecated Prefer `NotificationTargetsField` from `@camstack/ui-library`. */
+/** @deprecated Prefer `NotificationTargetsField` from `@dominevo/ui-library`. */
 export function DigestTargetsField(props: DigestTargetsFieldProps) {
   const { t } = useTranslation()
   return (

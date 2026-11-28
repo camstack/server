@@ -70,7 +70,7 @@ import {
   type FieldClaim,
   type SourceReading,
   toExpressionValue,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { type ClaimEvent, HeldClaims } from './held-claims.js'
 import {
   type BindingVerdict,

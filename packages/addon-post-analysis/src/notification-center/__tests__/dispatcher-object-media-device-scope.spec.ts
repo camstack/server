@@ -11,8 +11,8 @@
  */
 
 import { makeNcRecords, ncTable } from './support/nc-test-deps.js'
-import type { MediaFileBytes, MediaFileKind, ObjectEvent } from '@camstack/types'
-import { NcRuleInputSchema } from '@camstack/types'
+import type { MediaFileBytes, MediaFileKind, ObjectEvent } from '@dominevo/types'
+import { NcRuleInputSchema } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import { NcDispatcher, type NcSendInput } from '../dispatcher.js'

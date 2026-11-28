@@ -5,7 +5,7 @@
  * member was skipped. The breakdown is what lets the operator see that, so
  * each member must read with its own status and the reason it got nothing.
  */
-import type { GroupMemberOutcome } from '@camstack/types'
+import type { GroupMemberOutcome } from '@dominevo/types'
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 

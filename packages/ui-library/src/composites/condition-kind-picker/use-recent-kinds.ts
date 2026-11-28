@@ -1,4 +1,4 @@
-import { AUTOMATION_LEAF_KINDS, type AutomationLeafKind } from '@camstack/types'
+import { AUTOMATION_LEAF_KINDS, type AutomationLeafKind } from '@dominevo/types'
 import { useCallback, useState } from 'react'
 import { rememberRecentKind } from './condition-kind-picker-model'
 

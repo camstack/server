@@ -3,7 +3,7 @@
  * A path with no vocabulary row and no clock phrase keeps the path, so an
  * unnamed leaf is still identifiable.
  */
-import { CAP_VOCABULARY_BY_NAME } from '@camstack/types'
+import { CAP_VOCABULARY_BY_NAME } from '@dominevo/types'
 
 interface L10nPair {
   readonly en: string

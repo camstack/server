@@ -60,7 +60,7 @@ predicted:**
   frames per 10 s at ~61 ms of inference each against `detections=0`, forever,
   on a rendered screen. `silence-analysis.ts` no longer keeps its own list:
   since 2026-09-18 `TERMINAL_SILENCED_CAP_NAMES` is an alias for
-  `DERIVED_CAMERA_SILENCED_CAP_NAMES` in `@camstack/types`, which is
+  `DERIVED_CAMERA_SILENCED_CAP_NAMES` in `@dominevo/types`, which is
   `motion-detection`, `detection-pipeline`, `audio-analysis`,
   `pipeline-analytics` and `scene-monitor`. There were TWO lists — the
   Terminal's and the camera grid's — and both had drifted to the same three
@@ -125,7 +125,7 @@ H.264.
 
 BTM, Top and Glances are explicit built-in profiles with separate enable,
 executable and argument settings. Glances is installed idempotently into
-CamStack's embedded Python from the addon's manifest requirements and runs as
+Dominevo's embedded Python from the addon's manifest requirements and runs as
 `python -m glances`; it never modifies system Python. Custom profiles retain
 the same fixed executable/arguments/cwd/environment schema.
 
@@ -245,7 +245,7 @@ command execution as the server user") is appended only when the addon's
 
 The addon is **not** a builtin and does not follow `loki-logging`'s
 inert-until-configured shape: it is its own npm package with a native dependency,
-so it is absent until somebody installs it (`camstack deploy`).
+so it is absent until somebody installs it (`dominevo deploy`).
 `execution.placement` is now `any-node`.
 
 ### Transport — SHIPPED, cluster revision built

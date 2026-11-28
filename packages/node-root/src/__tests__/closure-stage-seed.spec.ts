@@ -47,7 +47,7 @@ function readVersion(file: string): string | null {
  * and `npm install <pkg>@X` saves `^X` as the root dependency unless
  * `--save-exact` is passed (npm 11, checked by hand 2026-11-15). The fake
  * once saved `X` itself, which hid that the seeded tree check refused every
- * real seeded install (`dependency @camstack/server is ^1.2.881`).
+ * real seeded install (`dependency @dominevo/server is ^1.2.881`).
  */
 function savedSpec(args: readonly string[], version: string): string {
   return args.includes('--save-exact') ? version : `^${version}`
@@ -73,7 +73,7 @@ function scriptAwareInstall(serverVersion: string, nodeAvWanted: string): NpmExe
     fs.writeFileSync(path.join(pkgDir, 'dist', 'launcher.js'), '// entry', 'utf8')
     fs.writeFileSync(
       path.join(pkgDir, 'package.json'),
-      JSON.stringify({ name: '@camstack/server', version: serverVersion }),
+      JSON.stringify({ name: '@dominevo/server', version: serverVersion }),
       'utf8',
     )
     fs.writeFileSync(
@@ -83,9 +83,9 @@ function scriptAwareInstall(serverVersion: string, nodeAvWanted: string): NpmExe
         packages: {
           '': {
             name: 'camstack-node-root',
-            dependencies: { '@camstack/server': savedSpec(args, serverVersion) },
+            dependencies: { '@dominevo/server': savedSpec(args, serverVersion) },
           },
-          'node_modules/@camstack/server': { version: serverVersion },
+          'node_modules/@dominevo/server': { version: serverVersion },
           'node_modules/node-av': { version: nodeAvWanted },
         },
       }),
@@ -119,7 +119,7 @@ describe('stageClosure seeds from current/', () => {
     fs.mkdirSync(dataDir, { recursive: true })
     fs.writeFileSync(
       path.join(tmp, 'running-package.json'),
-      JSON.stringify({ name: '@camstack/server', version: '1.1.50' }),
+      JSON.stringify({ name: '@dominevo/server', version: '1.1.50' }),
       'utf8',
     )
     const current = currentDir(serverRootDir(dataDir))
@@ -129,7 +129,7 @@ describe('stageClosure seeds from current/', () => {
       JSON.stringify({
         name: 'camstack-node-root',
         private: true,
-        dependencies: { '@camstack/server': '1.1.50' },
+        dependencies: { '@dominevo/server': '1.1.50' },
       }),
       'utf8',
     )

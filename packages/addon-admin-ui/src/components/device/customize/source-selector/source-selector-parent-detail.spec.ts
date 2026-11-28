@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { DeviceNameFields } from '@camstack/ui-library'
+import type { DeviceNameFields } from '@dominevo/ui-library'
 import type { SourceCandidateDevice } from './source-selector-model'
 import { compatiblePickerItems, sourceRowLabel } from './source-selector-parent-detail'
 

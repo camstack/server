@@ -13,8 +13,8 @@ const state = vi.hoisted(() => ({
   panelProps: null as Record<string, unknown> | null,
 }))
 
-vi.mock('@camstack/ui-library', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@camstack/ui-library')>()
+vi.mock('@dominevo/ui-library', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dominevo/ui-library')>()
   return {
     ...actual,
     useSystem: () => ({ trpcClient: {} }),

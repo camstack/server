@@ -16,7 +16,7 @@ import {
   type MowerDevice as DreameMower,
   MowerStatus,
 } from '@apocaliss92/nodedreame'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { buildMowerConsumables, isMowerConsumableKey } from '../dreame-mower-decode.js'
 import {
   type ConsumablesRefreshReason,

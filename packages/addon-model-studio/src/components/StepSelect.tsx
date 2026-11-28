@@ -5,12 +5,12 @@
  * (`groupCustomModelsByStep` buckets by exact id) with no error anywhere.
  */
 import { useEffect, useState } from 'react'
-import type { AddonPageProps } from '@camstack/ui-library'
+import type { AddonPageProps } from '@dominevo/ui-library'
 import { listStepOptions } from '../ui/api.js'
 import type { StepOption } from '../ui/model-studio-ui.js'
 import { Field } from './Form.js'
 import { useT } from '../i18n/index.js'
-import { Select } from '@camstack/ui-library'
+import { Select } from '@dominevo/ui-library'
 
 interface StepSelectProps {
   readonly trpc: AddonPageProps['trpc']

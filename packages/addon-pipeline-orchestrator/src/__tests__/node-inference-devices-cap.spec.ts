@@ -21,7 +21,7 @@ import {
   inferenceDeviceCaps,
   makeRootCapabilityGuard,
 } from '../inference-device-model.js'
-import type { AddonContext, InferenceDeviceDescriptor, PipelineSchema } from '@camstack/types'
+import type { AddonContext, InferenceDeviceDescriptor, PipelineSchema } from '@dominevo/types'
 
 /**
  * Minimal `PipelineSchema` carrying a single object-detection root whose models

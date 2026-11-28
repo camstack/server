@@ -5,7 +5,7 @@
  *
  * Why mirrors at all: the timelapse and digest clearable-key lists are
  * ADDON-local (a timelapse rides no cap, so the list is not in
- * `@camstack/types`), and the viewer resolves `@camstack/types` from a
+ * `@dominevo/types`), and the viewer resolves `@dominevo/types` from a
  * PUBLISHED release, so even the rule-family list is copied there. A key the
  * addon learns to clear and the viewer does not is a field the phone can never
  * empty; a key the viewer sends and the addon does not know is refused by its

@@ -48,7 +48,7 @@ import type {
   RunStatelessStepResult,
   StatelessStepRefusal,
   StepDefinition,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { cutFromFullFrame, toDetailResult } from './detail-subtree.js'
 import type { NodeDeviceChoice } from './node-device-election.js'
 

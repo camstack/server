@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { selectOption, selectOptionLabels } from '../../testing/select-option'
-import type { ConfigInstanceSelectField } from '@camstack/types'
+import type { ConfigInstanceSelectField } from '@dominevo/types'
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { InstancePickerSlotProvider } from '../../contexts/instance-picker-slot'

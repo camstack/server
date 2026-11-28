@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { IntegrationInstance, IntegrationInstanceDescription } from '@camstack/types'
+import type { IntegrationInstance, IntegrationInstanceDescription } from '@dominevo/types'
 import {
   instancesOfHolder,
   selectableInstances,

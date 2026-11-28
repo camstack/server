@@ -7,7 +7,7 @@ import type {
   ModelCatalogEntry,
   ObjectDetection,
   PipelineStepInputOutput,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { getStepDefinition } from '../../detection-pipeline/registry/step-definitions.js'
 import { deriveDetailSteps } from '../index.js'

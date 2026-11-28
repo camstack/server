@@ -20,7 +20,7 @@ export function extendAddon(options: ExtendAddonOptions): ExtendAddonResult {
   const entryId = toFileName(options.entryId)
   const className = toClassName(entryId)
   const displayName = options.displayName ?? className
-  const description = options.description ?? `${displayName} — CamStack addon entry.`
+  const description = options.description ?? `${displayName} — Dominevo addon entry.`
 
   if (pkg.addons.some((a) => a.id === entryId)) {
     throw new Error(`Manifest already has addon id: ${entryId}`)
@@ -82,7 +82,7 @@ export function extendAddon(options: ExtendAddonOptions): ExtendAddonResult {
       'Confirm vite.config.ts entries map includes the new stem',
       'npm run build -w ' + pkg.packageName,
       'npx tsx scripts/check-addon-entries.ts',
-      'camstack deploy ' + pkg.relativeDir,
+      'dominevo deploy ' + pkg.relativeDir,
     ],
   }
 }
@@ -169,7 +169,7 @@ function patchIndexBarrel(pkgDir: string, className: string, fileName: string): 
 const ADDON_TS = `/**
  * <%= displayName %> — extended addon entry skeleton.
  */
-import { BaseAddon, type ProviderRegistration } from '@camstack/types'
+import { BaseAddon, type ProviderRegistration } from '@dominevo/types'
 
 // An addon has no settings page of its own (D1007). What an operator
 // configures is an integration INSTANCE (scaffold kind device-integration,

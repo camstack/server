@@ -8,7 +8,7 @@
  * device-hosted page belongs to a device that is offline. Never a disabled
  * control (D62).
  */
-import { Button, SectionCard, useDeviceAdminLink, useSystem } from '@camstack/ui-library'
+import { Button, SectionCard, useDeviceAdminLink, useSystem } from '@dominevo/ui-library'
 import { ExternalLink, Globe } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'

@@ -95,7 +95,7 @@ The addon is hub-only, and Sustained Throughput is a one-step Capacity Ramp.
   the pool's `numWorkers`/`concurrency`). Pre-D646 rows keep their engine label;
   Decoder Performance rows are dropped on read (logged).
 - Removing a cap field and adding the `replay` flag, `deviceKey` inputs and the
-  Track fields is a framework change: live only with a `@camstack/server`
+  Track fields is a framework change: live only with a `@dominevo/server`
   release. An executor older than that strips `replay` and `validatePipeline`'s
   `deviceKey`, and stamps no `rootModelId` — nothing there is pinned or
   zone-gated — so the replay REFUSES (`model-not-servable`) on the first frame

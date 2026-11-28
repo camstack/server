@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { applyChildOutput, buildFrameResult } from '../pipeline/result-assembler'
 import type { MutableObjectDetection } from '../pipeline/result-assembler'
-import type { StepOutput } from '@camstack/types'
+import type { StepOutput } from '@dominevo/types'
 
 // Minimal refiner child step on the 'refiner' slot, postprocessor 'saliency'.
 function makeRefinerStep() {

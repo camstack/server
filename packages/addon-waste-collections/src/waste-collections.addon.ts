@@ -13,7 +13,7 @@ import {
   type InstanceChange,
   integrationInstancesCapability,
   type ProviderRegistration,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { wasteCollectionsActions } from './custom-actions.js'
 import { fetchWasteSource } from './fetch-source.js'

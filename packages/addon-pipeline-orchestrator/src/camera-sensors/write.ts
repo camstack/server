@@ -19,7 +19,7 @@ import {
   errMsg,
   type IScopedLogger,
   type SetCameraSensorsInput,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** The fields of a device row this write needs — nothing else. */
 export interface CameraSensorsWriteDevice {

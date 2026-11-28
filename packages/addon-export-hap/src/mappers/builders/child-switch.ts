@@ -31,7 +31,7 @@
  * IR LED, etc.) return a no-op handle.
  */
 
-import { DeviceType, isOutlet, isSwitchFan, isSwitchLight } from '@camstack/types'
+import { DeviceType, isOutlet, isSwitchFan, isSwitchLight } from '@dominevo/types'
 import { Characteristic, Service } from '@homebridge/hap-nodejs'
 
 import type { BuilderContext, BuilderHandle } from '../types.js'
@@ -40,7 +40,7 @@ import { hapOrigin } from './hap-origin.js'
 
 /**
  * The HomeKit service an on/off device becomes. A switch's sub-role is read
- * only through the `@camstack/types` accessors (operator decision 2026-11-12:
+ * only through the `@dominevo/types` accessors (operator decision 2026-11-12:
  * every switch sub-role is exported as its own service, on/off only):
  *  - a dimmable light (brightness on a Light / Generic) → Lightbulb + Brightness;
  *  - a relay driving a lamp (`switch-light`) → Lightbulb, no Brightness;

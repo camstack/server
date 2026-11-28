@@ -1,4 +1,4 @@
-import type { RemoteLayoutPayload } from '@camstack/types'
+import type { RemoteLayoutPayload } from '@dominevo/types'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { useState } from 'react'
 import { describe, expect, it } from 'vitest'

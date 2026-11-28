@@ -12,7 +12,7 @@
  * The caller owns the right to wake: `force` walks past the wrapper's sleep
  * gate, so this runs only for a camera that is up.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 /** The wrapper may run on another node; a stale frame is hours old, skew is seconds. */
 const CLOCK_SKEW_TOLERANCE_MS = 60_000

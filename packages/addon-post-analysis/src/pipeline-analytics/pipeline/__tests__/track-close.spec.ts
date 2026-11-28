@@ -3,9 +3,9 @@ import type {
   PipelineAnalyticsTrackLifecyclePayload,
   Track,
   TrackEnvelope,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { completeLoggerStub } from '../../../notification-center/__tests__/support/nc-test-deps.js'
-import { NcRuleInputSchema, NcRuleSchema } from '@camstack/types'
+import { NcRuleInputSchema, NcRuleSchema } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { evaluateRule, subjectFromTrack } from '../../../notification-center/rule-engine.js'
 import { createKeyFrameCrop } from '../keyframe-crop.js'

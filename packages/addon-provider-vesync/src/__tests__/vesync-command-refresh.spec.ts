@@ -4,7 +4,7 @@
  * the real state (no value is invented). A scheduled read re-lists the account; a poll that
  * started before the command never overwrites the fresher read. The manager owns no timer.
  */
-import type { IScopedLogger, LogExtras } from '@camstack/types'
+import type { IScopedLogger, LogExtras } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { vesyncConnectionSchema } from '../config.js'
 import type {

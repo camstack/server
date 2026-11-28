@@ -58,7 +58,7 @@ export class MatterNodeResolver {
    * push report decodes straight into their runtime-state slice. Returns a
    * disposer.
    */
-  /** Remember the CamStack container id for a commissioned node. */
+  /** Remember the Dominevo container id for a commissioned node. */
   bindDevice(nodeId: string, deviceId: number): void {
     this.#deviceIds.set(nodeId, deviceId)
   }

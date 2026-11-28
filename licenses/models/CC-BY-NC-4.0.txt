@@ -1,6 +1,6 @@
 Source: https://creativecommons.org/licenses/by-nc/4.0/legalcode.txt
 Fetched: 2026-09-26 (verbatim below the line; nothing edited)
-Applies to: the Vehicle classification dataset by DrBimmer (https://huggingface.co/datasets/DrBimmer/vehicle-classification), on which vehicle-type-v1 was fine-tuned. CamStack treats the trained weights as non-commercial (conservative reading).
+Applies to: the Vehicle classification dataset by DrBimmer (https://huggingface.co/datasets/DrBimmer/vehicle-classification), on which vehicle-type-v1 was fine-tuned. Dominevo treats the trained weights as non-commercial (conservative reading).
 --------------------------------------------------------------------------------
 Attribution-NonCommercial 4.0 International
 

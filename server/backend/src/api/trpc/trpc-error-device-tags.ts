@@ -21,7 +21,7 @@
  * about a batch rather than a single camera.
  */
 
-import type { LogTags } from '@camstack/types'
+import type { LogTags } from '@dominevo/types'
 import { referencedDeviceIds } from './scope-access.js'
 
 /**

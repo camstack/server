@@ -92,7 +92,7 @@ bound.
 Glances uses the normal addon dependency system:
 
 1. `packages/addon-terminal/package.json` declares its requirements file.
-2. The kernel installs it idempotently into CamStack embedded Python.
+2. The kernel installs it idempotently into Dominevo embedded Python.
 3. The addon resolves that interpreter with `ctx.deps.ensurePython()`.
 4. The profile runs `<embedded-python> -m glances`.
 

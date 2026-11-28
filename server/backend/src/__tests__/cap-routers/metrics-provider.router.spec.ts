@@ -5,7 +5,7 @@
  *  - Verifies provider-missing → PRECONDITION_FAILED
  */
 import { describe, it, expect } from 'vitest'
-import { type IMetricsProvider } from '@camstack/types'
+import { type IMetricsProvider } from '@dominevo/types'
 import { makeCtx, invokeProcedure, buildCapRouterForTest } from './harness.js'
 
 /** The methods this spec's routes reach; the harness takes any provider object. */

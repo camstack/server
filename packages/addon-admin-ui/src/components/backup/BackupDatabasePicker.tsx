@@ -6,8 +6,8 @@
  * selectable (unknown is not absent).
  */
 
-import type { DataStoreDatabase } from '@camstack/types'
-import { Checkbox, FormField, useBackupListAvailableDatabases } from '@camstack/ui-library'
+import type { DataStoreDatabase } from '@dominevo/types'
+import { Checkbox, FormField, useBackupListAvailableDatabases } from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 import {
   type AvailableDatabases,

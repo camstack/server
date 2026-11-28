@@ -8,7 +8,7 @@
  * asserted there; one router-level case proves the refusal reaches the caller
  * as FORBIDDEN with the matcher's reason.
  */
-import type { UserScope, ViewerTokenScope } from '@camstack/types'
+import type { UserScope, ViewerTokenScope } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { checkScopeAccess, type DeviceScopeLookup } from '../scope-access.js'
 import { isBroadEventViewer, projectListAllForPrincipal } from '../principal-visibility.js'

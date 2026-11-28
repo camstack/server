@@ -1,7 +1,7 @@
 /**
  * `package name -> version` of every addon package installed under an addons
  * dir (D989) — the input to "which addons does the staged server want updated
- * with it". Read from the package.json on disk, scoped (`@camstack/<name>`) or
+ * with it". Read from the package.json on disk, scoped (`@dominevo/<name>`) or
  * flat (`<name>`); a package whose version cannot be read is `null`, never
  * absent and never `'0.0.0'`.
  */
@@ -35,10 +35,10 @@ export function readInstalledAddonVersions(
     for (const entry of entries) {
       if (!entry.isDirectory() || entry.name.startsWith('.')) continue
       const pkg = versionOf(path.join(dir, entry.name, 'package.json'))
-      if (pkg !== null && pkg.name.startsWith('@camstack/')) found[pkg.name] = pkg.version
+      if (pkg !== null && pkg.name.startsWith('@dominevo/')) found[pkg.name] = pkg.version
     }
   }
   scan(addonsDir)
-  scan(path.join(addonsDir, '@camstack'))
+  scan(path.join(addonsDir, '@dominevo'))
   return found
 }

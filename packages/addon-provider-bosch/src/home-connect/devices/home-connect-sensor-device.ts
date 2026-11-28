@@ -11,7 +11,7 @@ import {
   type NumericSensorStatus,
   powerMeterCapability,
   type PowerMeterStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   childSliceFromValue,
   HomeConnectChildBindingSchema,

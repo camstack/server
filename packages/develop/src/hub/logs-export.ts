@@ -1,6 +1,6 @@
 /**
  * The Logs page's export (#570): URL builder, args and the NDJSON summary, shared by
- * the operator MCP (`hub_logs_export`) and the public `camstack mcp` (`ops_logs_export`).
+ * the operator MCP (`hub_logs_export`) and the public `dominevo mcp` (`ops_logs_export`).
  *
  * It downloads the hub's `GET /api/logs/export` — the same route, the same
  * filters and the same default (everything over the last six hours, applied

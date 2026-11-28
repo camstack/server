@@ -10,7 +10,7 @@ import type {
   InferNativeProvider,
   NativeCapOptions,
   StateRefreshPolicy,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import { vesyncConnectionSchema } from '../config.js'
 import type { VeSyncClient, VeSyncPurifierSnapshot } from '../vesync-client-contract.js'

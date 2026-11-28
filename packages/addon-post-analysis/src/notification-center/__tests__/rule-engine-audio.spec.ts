@@ -8,8 +8,8 @@
  * subjects, and the video macro→leaf class expansion.
  */
 
-import type { AudioEvent, NcRule } from '@camstack/types'
-import { NcRuleInputSchema, NcRuleSchema } from '@camstack/types'
+import type { AudioEvent, NcRule } from '@dominevo/types'
+import { NcRuleInputSchema, NcRuleSchema } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { evaluateRule, type NcRuleSubject, subjectFromAudioEvent } from '../rule-engine.js'
 

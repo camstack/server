@@ -14,7 +14,7 @@ import {
   type WorkloadResources,
   type WorkloadState,
   type WorkloadStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type {
   UnraidContainerState,
   UnraidSnapshot,

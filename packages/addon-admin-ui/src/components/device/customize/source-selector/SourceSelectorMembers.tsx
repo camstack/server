@@ -4,7 +4,7 @@
  * matches only — a group does not offer incompatible fields, and an incompatible device is not listed at all.
  */
 import { liveWireableCatalog } from '../source-picker-model'
-import type { HelperMember, SourcePickRequest } from '@camstack/types'
+import type { HelperMember, SourcePickRequest } from '@dominevo/types'
 import {
   type DeviceListState,
   DeviceName,
@@ -14,7 +14,7 @@ import {
   useDeviceManagerListAll,
   useDeviceStateGetSnapshot,
   Radio,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useCapIndex } from '../assignments/use-cap-index'

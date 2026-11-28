@@ -1,4 +1,4 @@
-import type { ICamstackAddon, AddonContext, IEngineManager, IEngineInstance } from '@camstack/types'
+import type { ICamstackAddon, AddonContext, IEngineManager, IEngineInstance } from '@dominevo/types'
 import { AddonLoader } from './addon-loader.js'
 import { createHash } from 'node:crypto'
 

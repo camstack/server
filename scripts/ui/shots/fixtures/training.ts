@@ -17,7 +17,7 @@ import {
   type RetrainFrameReview,
   type RetrainOrigin,
   type RetrainPipelineBox,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { defineFixtures } from './_define'
 import { NOW } from './_time'
 

@@ -9,7 +9,7 @@
  */
 import { useState } from 'react'
 import { Loader2, LogOut, MonitorSmartphone } from 'lucide-react'
-import { trpc, useConfirm, Button } from '@camstack/ui-library'
+import { trpc, useConfirm, Button } from '@dominevo/ui-library'
 
 import { useAuth } from '../../contexts/auth-context'
 import { describeClient } from './session-client'

@@ -1,4 +1,4 @@
-import { type AddonApi, type FanPreset } from '@camstack/types'
+import { type AddonApi, type FanPreset } from '@dominevo/types'
 import { handleFanDirective } from '../../handlers/fan-controller.js'
 import {
   describeFan,

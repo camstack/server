@@ -48,7 +48,7 @@ What did not work, tried while building this:
 
 ## Decision
 
-There is ONE icon list: the catalog in `@camstack/types`
+There is ONE icon list: the catalog in `@dominevo/types`
 (`device/icon-catalog.ts`). Its keys are every lucide id drawable by BOTH
 `lucide-react` and the viewer's `lucide-react-native`, generated locally by
 `scripts/generate-icon-catalog.ts` into the committed
@@ -78,7 +78,7 @@ reaches.
   a READ must tolerate a stale stored value, and a strict output schema would
   fail a whole device list on one hand-edited row. They are resolved through
   `canonicalIconKey` when drawn, and written only by the picker.
-- `@camstack/types` carries ~200 KB of generated source (45 KB gzip) in the
+- `@dominevo/types` carries ~200 KB of generated source (45 KB gzip) in the
   admin initial bundle, measured +155 KB raw / +43 KB gzip on the initial JS.
   The tags are the bulk and only search needs them; splitting them behind an
   async search index is the follow-up if that cost matters.

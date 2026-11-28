@@ -2,7 +2,7 @@
  * Unit tests for target secret redaction + merge, including secrets nested in
  * `editable-array` rows (e.g. the webhook custom-header `value`).
  */
-import type { ConfigUISchema, Target, TargetKind, TargetKindCaps } from '@camstack/types'
+import type { ConfigUISchema, Target, TargetKind, TargetKindCaps } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   mergeSecrets,

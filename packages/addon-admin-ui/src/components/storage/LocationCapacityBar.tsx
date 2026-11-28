@@ -4,12 +4,12 @@
  *
  * The numbers are a LEGEND under the bar, one entry per band, IN THE SAME
  * ORDER as the bands, each carrying the colour of the band it names — the run-on sentence they used to be
- * ("194 GB free (10%) of 1.8 TB · CamStack 1.5 TB of recordings (84%) · …")
+ * ("194 GB free (10%) of 1.8 TB · Dominevo 1.5 TB of recordings (84%) · …")
  * wrapped onto three lines and squeezed the bar into a corner. `SEGMENT_CLASS`
  * is the ONE table: the band and its swatch read the same entry, so a colour
  * cannot drift from the thing it stands for.
  */
-import type { StorageLocation } from '@camstack/types'
+import type { StorageLocation } from '@dominevo/types'
 import type { VolumeFillSeverity } from '../recordings/storage-fill'
 import {
   type CapacityBar,
@@ -46,7 +46,7 @@ function swatchClass(segment: CapacitySegmentId, severity: VolumeFillSeverity): 
 export interface LocationCapacityBarProps {
   readonly location: Pick<StorageLocation, 'capacity' | 'config' | 'enabled'>
   /**
-   * Bytes CamStack holds on this volume. `null`/absent means nobody measured
+   * Bytes Dominevo holds on this volume. `null`/absent means nobody measured
    * it and the inner segment — and its legend entry — are OMITTED.
    */
   readonly ownedBytes?: number | null
@@ -75,7 +75,7 @@ export function LocationCapacityBar({ location, ownedBytes }: LocationCapacityBa
           ? t('storage.locationCapacityBar.capacityUnknown', 'Capacity unknown')
           : t(
               'storage.locationCapacityBar.capacityUnknownCamstackHolds',
-              'Capacity unknown · CamStack holds {{owned}}',
+              'Capacity unknown · Dominevo holds {{owned}}',
               { owned: bar.owned },
             )}
       </div>
@@ -84,7 +84,7 @@ export function LocationCapacityBar({ location, ownedBytes }: LocationCapacityBa
   return (
     <div className="mt-1 space-y-1" title={bar.summary}>
       {/* Four DISJOINT bands, in the order the legend lists them: the protected
-          reserve, CamStack's own share, everything else on the disk, then what
+          reserve, Dominevo's own share, everything else on the disk, then what
           is free. They are laid out in a row — no overlays — so the widths add
           up to the volume and the bar cannot misstate a proportion. */}
       <div className="relative flex h-2 w-full max-w-md overflow-hidden rounded-full bg-border">

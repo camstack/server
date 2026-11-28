@@ -1,4 +1,4 @@
-import type { AutomationRunTrace } from '@camstack/types'
+import type { AutomationRunTrace } from '@dominevo/types'
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import '../../../../i18n'

@@ -6,7 +6,7 @@
  * - DetectionRuntime ('onnx'|'coreml'|'pytorch'|'openvino'|'tflite')
  * - ModelFormat ('onnx'|'coreml'|'openvino'|'tflite'|'pt')
  *
- * Import from '@camstack/types' — do NOT duplicate these mappings anywhere.
+ * Import from '@dominevo/types' — do NOT duplicate these mappings anywhere.
  */
 import type { ModelFormat } from '../types/models.js'
 import type { DetectionRuntime } from '../types/config.js'

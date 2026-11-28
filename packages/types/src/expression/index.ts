@@ -5,7 +5,7 @@
  * hard resource bounds. It is the derivation language of a composed device and
  * the escape-hatch leaf of an automation's condition tree.
  *
- * This is the module barrel; leaf files inside @camstack/types MUST import from
+ * This is the module barrel; leaf files inside @dominevo/types MUST import from
  * the deep modules (e.g. `../expression/compile.js`), never through this file
  * OR the root barrel (see biome-plugins/no-types-barrel-leaf-import.grit).
  */

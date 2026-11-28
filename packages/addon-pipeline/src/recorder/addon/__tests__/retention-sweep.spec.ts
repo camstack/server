@@ -8,7 +8,7 @@
  * whole recorder addon.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import type { RecordingConfig } from '@camstack/types'
+import type { RecordingConfig } from '@dominevo/types'
 import {
   RetentionSweeper,
   hasRetentionPolicy,

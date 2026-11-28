@@ -23,7 +23,7 @@ import {
   NcRuleInputSchema,
   type ObjectEvent,
   type SensorEvent,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   makeFakeSettingsStore,
@@ -760,8 +760,8 @@ describe('arm and disarm', () => {
   })
 
   it('shows an arming row in history under its OWN kind (the hub closure knows it)', async () => {
-    // The downgrade to `alarm-armed` is gone: @camstack/server 1.2.379
-    // (@camstack/types 1.2.249), installed on every node, carries every alarm
+    // The downgrade to `alarm-armed` is gone: @dominevo/server 1.2.379
+    // (@dominevo/types 1.2.249), installed on every node, carries every alarm
     // kind in `NcSystemEventKindSchema`.
     const h = await makeHarness()
     await makeAlarmRule(h.center, ['tgt-phone'], ['alarm-arming'])

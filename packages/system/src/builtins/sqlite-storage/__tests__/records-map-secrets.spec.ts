@@ -10,7 +10,7 @@ import {
   createSecretsAccess,
   defineRecordKinds,
   recordSecretRef,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import { makeFakeKeychain, makeRecordsWorld } from './support/records-world.js'

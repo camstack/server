@@ -5,7 +5,7 @@
  * first collision. A batch with caller-chosen numeric ids raises the counter of
  * ANY kind.
  */
-import { RevConflictError } from '@camstack/types'
+import { RevConflictError } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { RecordsEngine } from '../records/records-engine.js'
 import { declaration, makeHarness, silentLogger } from './support/records-harness.js'

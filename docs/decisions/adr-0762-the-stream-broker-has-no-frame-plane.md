@@ -80,7 +80,7 @@ A field that nothing feeds is removed, not kept at 0 — the same rule as D758.
   procedure. The hub-served viewer embed bundle still contains the generated
   proxy entries until its next build; the viewer never calls them.
 - An older hub validating a newer broker's `getBrokerStats` would refuse the
-  missing fields; a broker and its hub ship in one `@camstack/server` release.
+  missing fields; a broker and its hub ship in one `@dominevo/server` release.
 - The `decoder` cap's session surface (`createSession`, `pushPacket`,
   `pullFrames`, `pullHandles`, `getFrame`, …) now has no in-repo caller. Its
   removal is the "decoder `frameSink: 'shm'` mode" slice of the shm-ring roadmap

@@ -14,7 +14,7 @@
  *    (`proxy.motion.isDetected({})`) when the motion cap is bound.
  */
 
-import { EventCategory } from '@camstack/types'
+import { EventCategory } from '@dominevo/types'
 import { Characteristic, Service } from '@homebridge/hap-nodejs'
 
 import type { BuilderContext, BuilderHandle } from '../types.js'

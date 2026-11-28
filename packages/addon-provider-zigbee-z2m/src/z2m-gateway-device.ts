@@ -7,7 +7,7 @@ import {
   deviceMeshCapability,
   type DeviceContext,
   type DeviceFeature,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { zigbeeGatewaySchema } from './z2m-device-config.js'
 import type { Z2mConnection } from './z2m-client.js'
 import { z2mHub } from './z2m-hub.js'

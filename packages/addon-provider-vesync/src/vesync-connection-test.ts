@@ -4,7 +4,7 @@
  * blocks creation; a cloud that did not answer, or anything the library does not explain, is
  * inconclusive and carries the library's own words.
  */
-import { errMsg, type IntegrationTestConnectionResult } from '@camstack/types'
+import { errMsg, type IntegrationTestConnectionResult } from '@dominevo/types'
 import type { VeSyncConnectionConfig } from './config.js'
 import type { VeSyncClientFactory } from './vesync-client-contract.js'
 import { VeSyncLoginError } from './vesync-tsvesync-client.js'

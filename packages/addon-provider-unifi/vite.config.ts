@@ -5,7 +5,7 @@ export default buildLibPreset({
     index: 'src/index.ts',
     addon: 'src/addon.ts',
   },
-  // Ships self-contained (only @camstack/kernel + node builtins stay
+  // Ships self-contained (only @dominevo/kernel + node builtins stay
   // external). Once a UniFi controller-API client lib is wired it bundles inline
   // here too.
   externals: 'self-contained',

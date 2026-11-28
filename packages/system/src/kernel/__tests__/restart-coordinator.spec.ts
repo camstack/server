@@ -41,7 +41,7 @@ describe('RestartCoordinator marker round-trip', () => {
   it('writes then reads the same payload and clears the marker', () => {
     const marker: PendingRestartMarker = {
       kind: 'framework-update',
-      packageName: '@camstack/server',
+      packageName: '@dominevo/server',
       fromVersion: '0.1.36',
       toVersion: '0.1.37',
       requestedBy: 'admin',
@@ -73,13 +73,13 @@ describe('RestartCoordinator marker round-trip', () => {
     writePendingRestart(tmpDir, { kind: 'manual', requestedAt: 1 })
     writePendingRestart(tmpDir, {
       kind: 'framework-update',
-      packageName: '@camstack/types',
+      packageName: '@dominevo/types',
       requestedAt: 2,
     })
 
     const read = readPendingRestart(tmpDir)
     expect(read?.kind).toBe('framework-update')
-    expect(read?.packageName).toBe('@camstack/types')
+    expect(read?.packageName).toBe('@dominevo/types')
     expect(read?.requestedAt).toBe(2)
   })
 

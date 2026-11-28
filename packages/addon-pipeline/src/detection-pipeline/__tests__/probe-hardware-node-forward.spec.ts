@@ -14,7 +14,7 @@
  *  2. resolves the local node in-process (no nodeId → hub-local provider).
  */
 
-import type { ProviderRegistration } from '@camstack/types'
+import type { ProviderRegistration } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import DetectionPipelineAddon from '../index.js'
 

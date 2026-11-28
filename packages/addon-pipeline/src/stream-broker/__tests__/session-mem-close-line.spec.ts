@@ -5,7 +5,7 @@ import type {
   IScopedLogger,
   IStreamBroker,
   Unsubscribe,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { BrokerWebrtcServer } from '../webrtc/broker-webrtc-server.js'
 
 const MB = 1024 * 1024

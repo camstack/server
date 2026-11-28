@@ -14,7 +14,7 @@
  * `broker.call('$readiness.getSnapshot')`.
  */
 import type { ServiceSchema } from 'moleculer'
-import type { IReadinessRegistry, IReadinessRegistryRecord } from '@camstack/types'
+import type { IReadinessRegistry, IReadinessRegistryRecord } from '@dominevo/types'
 
 /**
  * Service name AGENTS register their own readiness snapshot under.

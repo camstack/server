@@ -26,15 +26,15 @@
  */
 
 import { type FakeTagsApi, makeFakeTagsApi } from './fake-tags-api.js'
-import type { RecordsAccess } from '@camstack/types'
+import type { RecordsAccess } from '@dominevo/types'
 import type {
   AddonContext,
   IDeviceManagerProvider,
   IEventBus,
   IScopedLogger,
   ProviderRegistration,
-} from '@camstack/types'
-import { DeviceType } from '@camstack/types'
+} from '@dominevo/types'
+import { DeviceType } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { makeRecordsAccessForOwner } from '../../sqlite-storage/__tests__/support/records-world.js'
 import { DeviceRegistry } from '../../../kernel/device-registry.js'

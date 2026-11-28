@@ -5,7 +5,7 @@
  * make `configured` answer true for an empty connection and "unconfigured" fails; have
  * `deleteInstance` skip `onChanged` and "reloads" fails.
  */
-import { clearInstanceSwitches, isInstanceOn, makeInMemoryRecords } from '@camstack/types'
+import { clearInstanceSwitches, isInstanceOn, makeInMemoryRecords } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import { buildTargetForm } from '../target-form.js'
 import { openTargetInstances, type TargetChange } from '../target-instances.js'

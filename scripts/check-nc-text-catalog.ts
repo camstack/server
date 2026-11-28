@@ -201,7 +201,7 @@ for (const language of LANGUAGES) {
 //
 // A shipped sentence naming a variable no producer supplies renders a gap on
 // every phone, silently (a missing var renders EMPTY by design). The catalog
-// in `@camstack/types` is the declared vocabulary; the parity specs prove the
+// in `@dominevo/types` is the declared vocabulary; the parity specs prove the
 // producers supply it. So a placeholder outside it is a bug in the text.
 //
 // SCOPE, named rather than silently skipped: this only checks keys the

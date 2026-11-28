@@ -175,9 +175,9 @@ the three `backup_*` tables lost their fallback paths that way
 
 ## Shipping
 
-Types, system and the generated routers change, so none of it is live until a `@camstack/server`
+Types, system and the generated routers change, so none of it is live until a `@dominevo/server`
 closure containing them is installed on the hub (`camstack-server-change`); one hub restart. An
-addon's own kinds ship with the addon (`camstack deploy`).
+addon's own kinds ship with the addon (`dominevo deploy`).
 
 ## Not built yet
 

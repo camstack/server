@@ -13,8 +13,8 @@
  * the real centre, with the real store.
  */
 
-import type { ObjectEvent } from '@camstack/types'
-import { NcRuleInputSchema } from '@camstack/types'
+import type { ObjectEvent } from '@dominevo/types'
+import { NcRuleInputSchema } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import type { NcSendInput, NcTargetRef } from '../dispatcher.js'

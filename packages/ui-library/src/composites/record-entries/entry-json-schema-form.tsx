@@ -1,4 +1,4 @@
-import { type ConfigField, isSecretClear, isSecretFieldView } from '@camstack/types'
+import { type ConfigField, isSecretClear, isSecretFieldView } from '@dominevo/types'
 import { type JSX } from 'react'
 import { useUiText } from '../../contexts/ui-text'
 import { cn } from '../../lib/cn'

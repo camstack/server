@@ -1,7 +1,7 @@
 // server/backend/src/api/__tests__/capabilities.router.test.ts
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { CapabilityRegistry } from '@camstack/server/system'
-import type { IScopedLogger } from '@camstack/types'
+import { CapabilityRegistry } from '@dominevo/server/system'
+import type { IScopedLogger } from '@dominevo/types'
 
 function createMockLogger(): IScopedLogger {
   return {

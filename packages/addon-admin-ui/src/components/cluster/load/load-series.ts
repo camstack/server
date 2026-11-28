@@ -29,7 +29,7 @@
  *
  * Live events arrive as raw process snapshots and are folded HERE, with the
  * same `foldSnapshotByFunction` the server uses — imported from
- * `@camstack/types`, not reimplemented. Two copies of that arithmetic is two
+ * `@dominevo/types`, not reimplemented. Two copies of that arithmetic is two
  * charts that disagree about the same node.
  *
  * ## What a bucket means, and what a gap means
@@ -48,7 +48,7 @@ import {
   type LoadBucketKind,
   type LoadPoint,
   type LoadProcessRow,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export { foldSnapshotByFunction, ROOT_BUCKET_KEY, UNATTRIBUTED_BUCKET_KEY }
 export type { LoadBucketKind, LoadPoint, LoadProcessRow }

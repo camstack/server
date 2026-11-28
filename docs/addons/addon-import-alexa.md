@@ -17,7 +17,7 @@ operator signs in once, on the broker (Integrations, Alexa).
 | Where it is set up | Integrations, Alexa, plus the login proxy | nowhere: Notifications, Targets, kind Alexa; a rule can override mode and volume per notification |
 
 The official Alexa skill (`addon-export-alexa`) is a separate thing. It
-publishes CamStack devices to Amazon and cannot carry arbitrary text. See
+publishes Dominevo devices to Amazon and cannot carry arbitrary text. See
 [D949](../decisions/adr-0949-echo-speech-signs-in-as-an-import-broker.md).
 
 ## The worker

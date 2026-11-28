@@ -39,7 +39,7 @@
  * returning. "The run returned" is not the same fact as "the slot is free",
  * and shipping the first for the second is how this bug is re-introduced.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 import { RTSP_TEARDOWN_FLUSH_MS } from './rtsp/rtsp-replay-session.js'
 

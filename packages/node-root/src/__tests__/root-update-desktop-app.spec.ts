@@ -59,7 +59,7 @@ beforeEach(() => {
   fs.mkdirSync(rootDir, { recursive: true })
   fs.writeFileSync(
     path.join(tmp, 'running.json'),
-    JSON.stringify({ name: '@camstack/server', version: '1.2.32' }),
+    JSON.stringify({ name: '@dominevo/server', version: '1.2.32' }),
     'utf-8',
   )
 })

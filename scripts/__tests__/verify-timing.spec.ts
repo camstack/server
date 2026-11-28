@@ -82,7 +82,7 @@ describe('verify timing record', () => {
       ],
       projects: [
         {
-          project: '@camstack/addon-admin-ui',
+          project: '@dominevo/addon-admin-ui',
           lane: 'heavy',
           seconds: 328.1,
           exitCode: 0,
@@ -112,7 +112,7 @@ describe('verify timing record', () => {
     expect(summary).toContain('2040s')
     expect(summary).toContain('tsgo')
     expect(summary).toContain('156s')
-    expect(summary).toContain('@camstack/addon-admin-ui')
+    expect(summary).toContain('@dominevo/addon-admin-ui')
     expect(summary).not.toContain(file)
   })
 

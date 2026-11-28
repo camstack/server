@@ -12,8 +12,8 @@ import {
   type IIntegrationInstancesProvider,
   makeInMemoryRecords,
   type MigrationApiV1,
-} from '@camstack/types'
-import { fakeAddonContext } from '@camstack/types/testing'
+} from '@dominevo/types'
+import { fakeAddonContext } from '@dominevo/types/testing'
 import { createTRPCClient, TRPCClientError, type TRPCLink } from '@trpc/client'
 import { observable } from '@trpc/server/observable'
 import { describe, expect, it } from 'vitest'

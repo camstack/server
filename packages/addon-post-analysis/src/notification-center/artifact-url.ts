@@ -14,7 +14,7 @@
  *    therefore `access:'public'` and the authority is the signature: an
  *    unguessable HMAC over `(id, exp)` with a per-install secret, expiring on
  *    its own. Nothing else about the install is reachable through it. The HMAC
- *    is the shared one in `@camstack/types/node` — this module used to restate
+ *    is the shared one in `@dominevo/types/node` — this module used to restate
  *    it, as did the Home Assistant media plane, and two copies of a signing
  *    scheme is how one of them quietly loses its expiry check.
  *  - **The base URL is CHOSEN, never assumed.** A notification carrying
@@ -23,7 +23,7 @@
  *    tunnel > mesh > LAN, loopback last — is the authority, and loopback is
  *    refused outright rather than shipped as a broken link.
  */
-import { signExpiringUrl, verifyExpiringUrl } from '@camstack/types/node'
+import { signExpiringUrl, verifyExpiringUrl } from '@dominevo/types/node'
 
 /** One candidate base URL, as `local-network.getConnectionEndpoints` returns it. */
 export interface ArtifactEndpoint {
@@ -55,7 +55,7 @@ export interface ArtifactSignature {
 /**
  * Sign `(id, exp)` — the exact string the verifier recomputes.
  *
- * Delegates to the one derivation in `@camstack/types/node`. This used to
+ * Delegates to the one derivation in `@dominevo/types/node`. This used to
  * restate the HMAC locally, and so did the Home Assistant media plane, on the
  * correct reasoning that addons never import each other — but two copies of a
  * signing scheme is how one of them ends up with a different expiry check that

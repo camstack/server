@@ -4,7 +4,7 @@
  * editor, and the Runs ledger. The draft leaves only through
  * `checkSchedulerDraft`, the same parse and author-time rules the hub applies.
  */
-import type { Scheduler, SchedulerInput, SchedulerPoint, WeekdayKey } from '@camstack/types'
+import type { Scheduler, SchedulerInput, SchedulerPoint, WeekdayKey } from '@dominevo/types'
 import {
   Badge,
   Button,
@@ -26,7 +26,7 @@ import {
   useSchedulersGetTraces,
   useSchedulersUpdate,
   useSystemGetSiteLocation,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { CalendarClock, Plus, Trash2 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'

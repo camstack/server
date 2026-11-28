@@ -1,5 +1,5 @@
 import type { NodepetkitOptions, PetkitCredentials } from '@apocaliss92/nodepetkit'
-import type { ConfigUISchema } from '@camstack/types'
+import type { ConfigUISchema } from '@dominevo/types'
 import { z } from 'zod'
 
 /**
@@ -103,7 +103,7 @@ export function sameConnection(a: PetkitConfig | null, b: PetkitConfig | null): 
 
 /**
  * Persisted config for an adopted PetKit feeder
- * ({@link import('@camstack/types').DeviceType.PetFeeder}). `integrationId`
+ * ({@link import('@dominevo/types').DeviceType.PetFeeder}). `integrationId`
  * selects the account's live client (published on the in-process facade
  * resolver); `petkitDeviceId` resolves the live `FeederDevice` handle within
  * it. `petkitDeviceType` (`d4sh`, `feeder`, …) + `isDualHopper` are captured at

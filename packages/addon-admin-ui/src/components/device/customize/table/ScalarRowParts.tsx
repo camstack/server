@@ -8,8 +8,8 @@ import {
   compositionSourceKey,
   type CustomizeCatalogTarget,
   type DeviceInfo,
-} from '@camstack/types'
-import { Badge, IconButton } from '@camstack/ui-library'
+} from '@dominevo/types'
+import { Badge, IconButton } from '@dominevo/ui-library'
 import { Pencil, Trash2 } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'

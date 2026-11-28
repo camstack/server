@@ -11,7 +11,7 @@
  * per-format default; omitting the engine keeps the pre-existing flat
  * behaviour (no caller does this in production).
  */
-import type { PipelineStepInput } from '@camstack/types'
+import type { PipelineStepInput } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { resolveDefaultDetectionModel } from '../default-detection-model'
 import { getDefaultModelForFormat } from '../registry/step-definitions'

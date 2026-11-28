@@ -5,7 +5,7 @@
  * secret back only if THAT record's keychain entry holds it, so a body copied from another
  * integration's rows cannot pass the read-back.
  */
-import type { IntegrationRowsPorts, RowsIntegration } from '@camstack/types'
+import type { IntegrationRowsPorts, RowsIntegration } from '@dominevo/types'
 
 export interface FakeIntegration extends RowsIntegration {
   readonly addonId: string

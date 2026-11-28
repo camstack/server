@@ -4,7 +4,7 @@
  * for that service — it never reads the mesh multicast channel (D826 retired
  * it on the hub, so it can only ever show pre-D826 hubs).
  */
-import { HUB_MDNS_QUERY_NAME, HUB_MDNS_ROLE, HUB_MDNS_TXT_KEYS, isHubId } from '@camstack/types'
+import { HUB_MDNS_QUERY_NAME, HUB_MDNS_ROLE, HUB_MDNS_TXT_KEYS, isHubId } from '@dominevo/types'
 import makeMdns from 'multicast-dns'
 
 /** The records the browse cares about, free of the wire library's types. */

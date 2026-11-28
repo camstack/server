@@ -1,4 +1,4 @@
-import { NODE_COLOR_IDS, assignNodeColorId, type NodeColorId } from '@camstack/types'
+import { NODE_COLOR_IDS, assignNodeColorId, type NodeColorId } from '@dominevo/types'
 
 export { NODE_COLOR_IDS, assignNodeColorId, type NodeColorId }
 

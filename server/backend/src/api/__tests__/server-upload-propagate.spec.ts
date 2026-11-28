@@ -62,7 +62,7 @@ function seedHubUpload(): void {
   fs.writeFileSync(path.join(versionDir, 'camstack-server.tgz'), Buffer.from('S'))
   writeDevUploadManifest(versionDir, {
     version: VERSION,
-    packages: { '@camstack/server': 'camstack-server.tgz' },
+    packages: { '@dominevo/server': 'camstack-server.tgz' },
   })
 }
 

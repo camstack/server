@@ -17,7 +17,7 @@
  * and the ONE guarded call that decides what happens when it fails.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { ResolvedTrackFlags } from './track-flags.js'
 
 /** What the archive is told about one note being retired. */

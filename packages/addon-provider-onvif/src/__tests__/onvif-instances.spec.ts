@@ -1,4 +1,4 @@
-import { defaultIntegrationMigrations } from '@camstack/types'
+import { defaultIntegrationMigrations } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { ADDON_MIGRATIONS } from '../migrations/index.js'
 import { onvifConnectionsEntryKind, onvifRecordKinds } from '../onvif-instances.js'

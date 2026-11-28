@@ -10,7 +10,7 @@
 import { useEffect, useMemo, useState, type ReactElement } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { AlertCircle, CheckCircle, Copy, KeyRound, Loader2, Lock, Smartphone } from 'lucide-react'
-import { Button, useSystem, useWidgetMetadata, WidgetSlot, Input } from '@camstack/ui-library'
+import { Button, useSystem, useWidgetMetadata, WidgetSlot, Input } from '@dominevo/ui-library'
 import { Trans, useTranslation } from 'react-i18next'
 
 import { TotpQrCode } from './TotpQrCode'

@@ -13,7 +13,7 @@
  * with no camera paired answers zero channels just like a camera would.
  */
 import { ReolinkBaichuanApi } from '@apocaliss92/nodelink-js'
-import { errMsg, type IntegrationTestConnectionResult } from '@camstack/types'
+import { errMsg, type IntegrationTestConnectionResult } from '@dominevo/types'
 import type { ReolinkHubConnection } from './hub-connection.js'
 import { isConnectivityFailure } from './reachability-offline.js'
 

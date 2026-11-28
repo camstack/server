@@ -15,10 +15,10 @@ import {
   usePipelineRunnerGetAllCameraMetrics,
   usePipelineRunnerGetLocalMetrics,
   useUiText,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useEventInvalidation } from '../../../hooks/useEventInvalidation'
 import { useTranslation } from 'react-i18next'
-import { formatNumeric } from '@camstack/ui-library'
+import { formatNumeric } from '@dominevo/ui-library'
 
 interface NodeLiveTabProps {
   readonly nodeId: string

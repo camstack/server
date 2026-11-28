@@ -7,7 +7,7 @@
  * is fabricated.
  */
 import type { LlmClient } from '../client/llm-client.js'
-import type { LlmGenerateResult, LlmProfile, ManagedModelCatalogEntry } from '@camstack/types'
+import type { LlmGenerateResult, LlmProfile, ManagedModelCatalogEntry } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { DefaultsStore } from '../defaults-store.js'
 import { secretFieldOfDescriptor } from '../kinds/provider-config.js'

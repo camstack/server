@@ -1,6 +1,6 @@
 import type { ReactElement } from 'react'
-import { DummyHeroCard } from '@camstack/ui-library'
-import { useSystem } from '@camstack/ui-library'
+import { DummyHeroCard } from '@dominevo/ui-library'
+import { useSystem } from '@dominevo/ui-library'
 import type { HeroProps } from './HeroRegistry'
 
 /**

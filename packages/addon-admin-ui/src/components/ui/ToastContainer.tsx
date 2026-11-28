@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { X, Info, AlertTriangle, AlertCircle } from 'lucide-react'
-import type { Toast } from '@camstack/types'
-import { useToastOnToast, Button } from '@camstack/ui-library'
+import type { Toast } from '@dominevo/types'
+import { useToastOnToast, Button } from '@dominevo/ui-library'
 import { subscribeToasts } from './toast-bus'
 
 interface ToastItem {

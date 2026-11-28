@@ -11,7 +11,7 @@ import type {
   InferNativeProvider,
   NativeCapOptions,
   StateRefreshPolicy,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import { settingsToConnection } from '../config.js'
 import type { FetchLike } from '../enpal-client.js'

@@ -28,7 +28,7 @@
  * absences, under the declared `homekitClips` location
  * (`<root>/homekit-clips/<deviceId>/`, `clip-location.ts`).
  */
-import type { CamProfile, IScopedLogger } from '@camstack/types'
+import type { CamProfile, IScopedLogger } from '@dominevo/types'
 
 import type { HksvClipStore } from './clip-store.js'
 import { HksvClipWriter } from './clip-writer.js'

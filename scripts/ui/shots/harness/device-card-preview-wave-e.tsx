@@ -14,7 +14,7 @@ import {
   NotifierCard,
   ScriptCard,
   UpdateCard,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import type { ReactElement, ReactNode } from 'react'
 import {
   automationFixtures,

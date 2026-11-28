@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { REDACTED_SECRET } from '@camstack/types'
+import { REDACTED_SECRET } from '@dominevo/types'
 import type { EspConnection } from '../config.js'
 import type { EspBoardsStore } from '../esphome-instances.js'
 import {

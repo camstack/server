@@ -28,7 +28,7 @@
  * belongs here — {@link resolvePoolProvisioning} already receives the whole
  * engine — and must be backed by a bench, not a guess.
  */
-import type { PipelineEngineChoice } from '@camstack/types'
+import type { PipelineEngineChoice } from '@dominevo/types'
 import {
   tuningFor,
   type PoolBatchMode,

@@ -38,7 +38,7 @@ import {
   isSecretFieldView,
   isSecretMarker,
   smtpProviderCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   type SmtpCataloguePorts,
   type SmtpRecordState,

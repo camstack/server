@@ -9,7 +9,7 @@
  * consumer in the other runner can fetch it.
  */
 
-import type { EncodedPacket } from '@camstack/types'
+import type { EncodedPacket } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { EventMediaStore } from '../stream-broker/event-media-store.js'
 import {

@@ -3,7 +3,7 @@
  * every operator until they override via per-user preferences.
  */
 
-import type { CalendarColor } from '@camstack/types'
+import type { CalendarColor } from '@dominevo/types'
 
 /** Fixed palette — high-contrast hues that read on light and dark chrome. */
 export const CALENDAR_COLOR_PALETTE: readonly CalendarColor[] = [

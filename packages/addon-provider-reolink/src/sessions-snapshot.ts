@@ -1,5 +1,5 @@
 import type { ReolinkBaichuanApi } from '@apocaliss92/nodelink-js'
-import type { ConfigUISchema, IScopedLogger } from '@camstack/types'
+import type { ConfigUISchema, IScopedLogger } from '@dominevo/types'
 
 /**
  * Shared "Sessions" diagnostic helper used by both `ReolinkCamera` and

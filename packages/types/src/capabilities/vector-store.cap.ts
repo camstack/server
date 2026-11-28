@@ -56,7 +56,7 @@ import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
  * encoding this capability exists to stop paying. A 512-dim vector is 2,048
  * bytes raw, 2,732 as base64, against ~10-12 KB as JSON text.
  *
- * Helpers for both directions live in `@camstack/types` —
+ * Helpers for both directions live in `@dominevo/types` —
  * `encodeVectorBase64` / `decodeVectorBase64` — so no caller hand-rolls the
  * byte order.
  */

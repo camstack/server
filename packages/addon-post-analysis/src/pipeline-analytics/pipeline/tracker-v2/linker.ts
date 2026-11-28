@@ -20,7 +20,7 @@
  * step — a live piece's `lastSeenAt` must be current, since concurrency and a
  * coasting predecessor's re-bind are read from it.
  */
-import type { BoundingBox } from '@camstack/types'
+import type { BoundingBox } from '@dominevo/types'
 import { type AppearanceAggregate, aggregateDistance } from './appearance.js'
 import { minCostAssignment } from './assignment.js'
 import {

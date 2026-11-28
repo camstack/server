@@ -10,7 +10,7 @@
  *
  * Pure: no router, no React. The integration page address is `integrationPageHref`.
  */
-import { integrationPageHref } from '@camstack/types'
+import { integrationPageHref } from '@dominevo/types'
 
 export interface AddDeviceType {
   readonly addonId: string

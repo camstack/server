@@ -20,7 +20,7 @@
  *
  * Pure, deps-injected — unit-tested offline; the addon wires ctx.api.
  */
-import type { ConvertResult, ConvertTarget, ModelCatalogEntry } from '@camstack/types'
+import type { ConvertResult, ConvertTarget, ModelCatalogEntry } from '@dominevo/types'
 import type { NodeRecommendation } from '../convert-orchestrator.js'
 
 export type PlusConvertibleFormat = 'openvino' | 'coreml'

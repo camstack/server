@@ -17,8 +17,8 @@
  * speaks `null`, and the translation happens here rather than teaching the
  * control one consumer's encoding.
  */
-import { IconPicker, type IconPickerLabels } from '@camstack/ui-library'
-import { type IconCategoryId, iconCategoryLabel } from '@camstack/types'
+import { IconPicker, type IconPickerLabels } from '@dominevo/ui-library'
+import { type IconCategoryId, iconCategoryLabel } from '@dominevo/types'
 import type { LucideIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 

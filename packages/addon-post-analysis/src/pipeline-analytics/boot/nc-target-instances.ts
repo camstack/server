@@ -13,7 +13,7 @@ import {
   type InstanceSource,
   instancesOfCap,
   type TargetKind,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { NcTargetRef, NcUnreadableHolder } from '../../notification-center/dispatcher.js'
 
 const NOTIFICATION_OUTPUT = 'notification-output'

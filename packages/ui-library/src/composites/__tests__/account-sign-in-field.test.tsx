@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { SECRET_CLEAR, type ConfigAccountSignInField } from '@camstack/types'
+import { SECRET_CLEAR, type ConfigAccountSignInField } from '@dominevo/types'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { FormField } from '../config-form-field'

@@ -8,12 +8,12 @@ covers:
   - packages/types/src/capabilities/pipeline-analytics.cap.ts
 ---
 
-# CamStack model training — playback acquisition & external retrain
+# Dominevo model training — playback acquisition & external retrain
 
 ## Intent
 
 Close the loop: **pull labelled (or labelable) frames from theater playback**,
-export a dataset, retrain outside CamStack, register the result via Model
+export a dataset, retrain outside Dominevo, register the result via Model
 Studio. Do not build an in-hub training GPU job yet.
 
 ## What already works

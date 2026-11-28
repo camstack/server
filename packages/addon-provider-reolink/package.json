@@ -1,7 +1,7 @@
 {
-  "name": "@camstack/addon-provider-reolink",
-  "version": "1.2.264",
-  "description": "Reolink camera device provider addon for CamStack — native Baichuan protocol",
+  "name": "@dominevo/addon-provider-reolink",
+  "version": "0.1.0",
+  "description": "Reolink camera device provider addon for Dominevo — native Baichuan protocol",
   "keywords": [
     "camstack",
     "addon",
@@ -15,12 +15,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/camstack/server.git",
+    "url": "https://github.com/dominevo/server.git",
     "directory": "packages/addon-provider-reolink"
   },
   "homepage": "https://camstack-docs.zentik.app",
   "bugs": {
-    "url": "https://github.com/camstack/server/issues"
+    "url": "https://github.com/dominevo/server/issues"
   },
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -96,7 +96,7 @@
       "werift"
     ],
     "requires": {
-      "server": ">=1.2.968"
+      "server": ">=0.1.0"
     }
   },
   "files": [
@@ -117,7 +117,7 @@
     "@apocaliss92/nodelink-js": "^0.14.2"
   },
   "peerDependencies": {
-    "@camstack/types": "*",
+    "@dominevo/types": "0.1.0",
     "werift": "0.22.9",
     "zod": "^4.3.6"
   },
@@ -127,7 +127,7 @@
     }
   },
   "devDependencies": {
-    "@camstack/types": "*",
+    "@dominevo/types": "0.1.0",
     "typescript": "~6.0.3",
     "vite": "^8.0.11",
     "vitest": "^3.2.4",

@@ -1,11 +1,11 @@
 /**
  * The two cells the Storage table adds to the shared instance columns: the volume's capacity (with
- * CamStack's share and, for a draining location, how far it has got) and the location's one typed
+ * Dominevo's share and, for a draining location, how far it has got) and the location's one typed
  * state (D385). Both read the location behind the row; a row whose location is not in the list
  * yet draws nothing rather than a zero.
  */
-import { Badge } from '@camstack/ui-library'
-import type { DataColumn } from '@camstack/ui-library'
+import { Badge } from '@dominevo/ui-library'
+import type { DataColumn } from '@dominevo/ui-library'
 import type { ReactElement } from 'react'
 import type { PanelRow } from '../instances/instances-model'
 import { DrainProgressLine } from './DrainProgressLine'

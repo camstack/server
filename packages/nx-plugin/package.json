@@ -1,7 +1,7 @@
 {
-  "name": "@camstack/nx-plugin",
-  "version": "1.1.37",
-  "description": "Nx plugin for CamStack addon authors — `deploy` executor and `addon` generator. Drop into any Nx workspace to package + push addons to a running CamStack hub from the CLI.",
+  "name": "@dominevo/nx-plugin",
+  "version": "0.1.0",
+  "description": "Nx plugin for Dominevo addon authors — `deploy` executor and `addon` generator. Drop into any Nx workspace to package + push addons to a running Dominevo hub from the CLI.",
   "keywords": [
     "camstack",
     "nx",
@@ -12,12 +12,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/camstack/server.git",
+    "url": "https://github.com/dominevo/server.git",
     "directory": "packages/nx-plugin"
   },
   "homepage": "https://camstack-docs.zentik.app",
   "bugs": {
-    "url": "https://github.com/camstack/server/issues"
+    "url": "https://github.com/dominevo/server/issues"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

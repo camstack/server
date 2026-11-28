@@ -13,7 +13,7 @@
  *  - a store that cannot answer FAILS the call. An empty `runs` from a failed
  *    read would tell every rule it has not run (D315, D393).
  */
-import type { InMemoryRecords } from '@camstack/types'
+import type { InMemoryRecords } from '@dominevo/types'
 import { makeNcRecords, type NcRecordsQuery, withNcFaults } from './support/nc-test-deps.js'
 import { afterEach, describe, expect, it } from 'vitest'
 import type { PruneWindows } from '../prune-windows.js'

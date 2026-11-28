@@ -4,7 +4,7 @@
  * refused on a malformed input before the provider is reached. The limits themselves
  * (allowed / min / max) are the provider's, pinned in the bosch addon specs.
  */
-import { METHOD_ACCESS_MAP } from '@camstack/types'
+import { METHOD_ACCESS_MAP } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { buildCapRouterForTest, invokeProcedure, makeCtx } from './harness.js'
 

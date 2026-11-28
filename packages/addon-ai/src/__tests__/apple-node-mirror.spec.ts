@@ -1,4 +1,4 @@
-import type { AppleFmAvailability } from '@camstack/types'
+import type { AppleFmAvailability } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AppleNodeMirror, type AppleNodeSource } from '../apple-node-mirror.js'
 import { createTestLogger, makeTestLogger } from './support/logger.js'

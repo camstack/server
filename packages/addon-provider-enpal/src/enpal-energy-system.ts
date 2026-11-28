@@ -4,7 +4,7 @@ import type {
   EnergySolar,
   EnergyStorage,
   EnergySystemStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   computeSlices,
   findSpec,

@@ -12,7 +12,7 @@ import {
   type IntegrationTestConnectionResult,
   RecordIntegrationInstances,
   type RecordsAccess,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { Z2M_PERMIT_JOIN_DEFAULT_S } from './z2m-actions.js'
 
@@ -76,7 +76,7 @@ function managementSection(params: ActionParams): ConfigSection {
         key: '__rename-device',
         label: 'Rename a device',
         description:
-          'Renames the device on the Zigbee2MQTT server; its CamStack device keeps its identity.',
+          'Renames the device on the Zigbee2MQTT server; its Dominevo device keeps its identity.',
         buttonLabel: 'Rename…',
         action: 'renameDevice',
         variant: 'default',

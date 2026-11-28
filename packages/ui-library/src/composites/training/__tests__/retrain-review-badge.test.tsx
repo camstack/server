@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import { RETRAIN_REVIEW_STATUSES } from '@camstack/types'
+import { RETRAIN_REVIEW_STATUSES } from '@dominevo/types'
 import { RetrainReviewBadge, retrainReviewBadgeLook } from '../retrain-review-badge'
 
 describe('retrain review badge', () => {

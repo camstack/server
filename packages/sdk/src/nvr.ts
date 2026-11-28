@@ -5,7 +5,7 @@
  * now owned by the SDK so both app and proxy can share them.
  */
 
-import type { StreamSourceEntry } from '@camstack/types'
+import type { StreamSourceEntry } from '@dominevo/types'
 
 // Re-export StreamSourceEntry so consumers that previously imported StreamOption
 // from this module can now import StreamSourceEntry instead.

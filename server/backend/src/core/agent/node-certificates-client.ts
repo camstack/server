@@ -6,7 +6,7 @@
  * offline, capability not declared by an old agent) or a malformed answer becomes
  * a plain error naming the node - never a cast.
  */
-import { nodeCertificatesCapability } from '@camstack/types'
+import { nodeCertificatesCapability } from '@dominevo/types'
 import type { z } from 'zod'
 import type { MoleculerService } from '../moleculer/moleculer.service.js'
 

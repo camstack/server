@@ -13,7 +13,7 @@ import {
   type NodeBenchRunnerStatus,
   nodePin,
   type SuggestSharesResult,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { NodeTopologyService } from '../node-topology.js'
 import type { PlacementLedger } from '../placement-ledger.js'
 import type { RebalanceOptions, RebalanceResult } from '../placement-service.js'

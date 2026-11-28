@@ -8,7 +8,7 @@ import {
   errMsg,
   type IDevice,
   type InferNativeProvider,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { ENPAL_SYSTEM } from '../config.js'
 import { computeEnergySystemStatus, EnergySystemCounterGuards } from '../enpal-energy-system.js'

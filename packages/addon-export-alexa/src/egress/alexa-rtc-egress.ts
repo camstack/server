@@ -48,8 +48,8 @@
  * own node — which today is always, since nothing passes a pin yet.
  */
 
-import type { EgressTranscode, IScopedLogger, StreamBrokerClient } from '@camstack/types'
-import { errMsg } from '@camstack/types'
+import type { EgressTranscode, IScopedLogger, StreamBrokerClient } from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
 
 /**
  * The broker surface this module uses.
@@ -224,11 +224,11 @@ export async function releaseAlexaEgress(input: ReleaseAlexaEgressInput): Promis
 /**
  * Alexa's encode profile.
  *
- * Re-exported from `@camstack/types` rather than declared here. The previous
+ * Re-exported from `@dominevo/types` rather than declared here. The previous
  * copy was "intentionally duplicated so `addon-export-alexa` has no dependency
  * on any other addon's preset registry" — which was the right constraint and
  * the wrong conclusion: addons may never import each other, but they all import
- * `@camstack/types`, which is why every live-egress constant lives there now.
+ * `@dominevo/types`, which is why every live-egress constant lives there now.
  * Five sets in four packages used to disagree, three of them about Opus channel
  * count alone.
  *
@@ -248,6 +248,6 @@ export async function releaseAlexaEgress(input: ReleaseAlexaEgressInput): Promis
  *    out-of-band, exactly as the browser's does; removing the encode changes
  *    what the Echo hears not at all, and stops paying libopus per session.
  */
-export { ALEXA_EGRESS_PROFILE } from '@camstack/types'
+export { ALEXA_EGRESS_PROFILE } from '@dominevo/types'
 
-import { ALEXA_EGRESS_PROFILE } from '@camstack/types'
+import { ALEXA_EGRESS_PROFILE } from '@dominevo/types'

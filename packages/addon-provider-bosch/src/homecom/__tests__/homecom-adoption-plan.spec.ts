@@ -1,4 +1,4 @@
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { buildHomeComAdoptionProvider } from '../homecom-adoption-provider.js'
 import { planHomeComAdoption } from '../homecom-adoption-plan.js'

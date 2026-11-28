@@ -4,7 +4,7 @@
  * the router) plus the engine's own housekeeping. Pure types: the worker bundle
  * and the main thread both import this.
  */
-import type { IRecordsProvider, StorageKind } from '@camstack/types'
+import type { IRecordsProvider, StorageKind } from '@dominevo/types'
 
 /** A `records` cap method's input with the owner the router resolved. */
 export type OwnedInput<M extends keyof IRecordsProvider> = Parameters<IRecordsProvider[M]>[0] & {

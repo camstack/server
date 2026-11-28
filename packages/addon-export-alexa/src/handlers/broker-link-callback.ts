@@ -19,7 +19,7 @@
  * Errors: 400 `invalid_body` / `invalid_broker_url`, 401 `unauthorized`.
  */
 import { z } from 'zod'
-import type { AddonHttpReply, AddonHttpRequest } from '@camstack/types'
+import type { AddonHttpReply, AddonHttpRequest } from '@dominevo/types'
 
 import { normaliseBrokerUrl } from '../broker-client.js'
 import {

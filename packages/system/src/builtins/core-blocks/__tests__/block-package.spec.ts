@@ -9,7 +9,7 @@
 import * as fs from 'node:fs/promises'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import type { ConfigUISchema } from '@camstack/types'
+import type { ConfigUISchema } from '@dominevo/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import {
   blockAddonId,

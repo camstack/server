@@ -5,7 +5,7 @@
  * of the gate. That fixture agreed with the gate for the whole time the
  * gate was disagreeing with the BUS: the topic
  * `pipeline-analytics.detection-event` has no shared schema in
- * `@camstack/types` — it does not appear in `EventPayloadMap` — so the two banks
+ * `@dominevo/types` — it does not appear in `EventPayloadMap` — so the two banks
  * have no type keeping them aligned, and nothing went red when they
  * drifted apart. They stayed apart for weeks, at 100% rejections.
  *

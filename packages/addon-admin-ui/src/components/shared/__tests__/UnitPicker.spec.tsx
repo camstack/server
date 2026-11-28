@@ -3,7 +3,7 @@
  * dimension disables the control and names why — never an all-units list
  * that could author a refused conversion.
  */
-import { selectOption, selectOptionValues } from '@camstack/ui-library/testing'
+import { selectOption, selectOptionValues } from '@dominevo/ui-library/testing'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { UnitPicker } from '../UnitPicker'

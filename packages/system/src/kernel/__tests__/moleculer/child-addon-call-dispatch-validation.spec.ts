@@ -8,7 +8,7 @@
  * first test passes a string where a number is declared and the handler
  * receives it unchallenged.
  */
-import { customAction } from '@camstack/types'
+import { customAction } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import { CustomActionRegistry } from '../../custom-action-registry.js'

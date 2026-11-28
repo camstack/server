@@ -15,7 +15,7 @@ D634, D782, D787–D789, D794, D797.
 
 ## 0. Threat model and scoring
 
-CamStack is homelab-first: one hub, a few agents, a LAN full of IoT devices
+Dominevo is homelab-first: one hub, a few agents, a LAN full of IoT devices
 (cameras are the classic compromised LAN host), and — for most operators — the
 admin UI published to the internet through a Cloudflare tunnel (`cloudflared`
 dials `https://127.0.0.1:<port>`,
@@ -338,7 +338,7 @@ Verified:
   `cleanupOrphans` removes them (`local-auth.addon.ts:149`). Its TOTP row
   also survives (§4).
 - Share links can be revoked through the API only; no UI lists them.
-- `camstack login` sends only the password (`packages/cli/src/commands/auth.ts:445`),
+- `dominevo login` sends only the password (`packages/cli/src/commands/auth.ts:445`),
   so it fails for any account with 2FA — the operator's own admin account
   included. Ops scripts fall back to UI-created scoped tokens.
 
@@ -353,7 +353,7 @@ Fixes:
 2. **Revoke on delete (S).** `deleteUser` revokes the user's scoped tokens,
    OAuth sessions and TOTP row in the same call; `validate` also refuses a
    token whose owner is gone. A share-link list with Revoke on My access.
-   `camstack login` gains the TOTP / passkey step.
+   `dominevo login` gains the TOTP / passkey step.
 3. **Delete dead credentials (S).** Remove `createServiceToken`, the
    `type: 'api_key'` branch, and — after one release of "list/revoke only" —
    the legacy API-key store.
@@ -432,7 +432,7 @@ and DB readable only by hub-main (L — the runners would lose direct DB access
 they may rely on); (b) Node's permission model (`--permission`,
 `--allow-fs-read`) per runner (M, Node ≥ 22; native addons and `child_process`
 need explicit grants); (c) keep the trust model and make it explicit:
-signed addon packages from the CamStack registry only, third-party addons
+signed addon packages from the Dominevo registry only, third-party addons
 behind an "untrusted code" confirmation. Recommendation: **(c) now, (b)
 next**, (a) only if third-party addons become a product.
 

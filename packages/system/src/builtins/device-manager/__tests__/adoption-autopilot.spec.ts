@@ -10,7 +10,7 @@ import {
   type AdoptionStatus,
   type DiscoveredChildDevice,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { AdoptionAutopilot, type AutopilotProvider } from '../adoption-autopilot.js'
 import {

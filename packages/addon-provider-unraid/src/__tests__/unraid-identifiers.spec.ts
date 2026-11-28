@@ -11,7 +11,7 @@ import {
   type IScopedLogger,
   mergeIdentifiers,
   type SetIdentifiersInput,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { UnraidServerIdentity, UnraidVmInfo } from '../unraid-client-contract.js'
 import { createLiveUnraidClient, type UnraidApiSource } from '../unraid-client-live.js'

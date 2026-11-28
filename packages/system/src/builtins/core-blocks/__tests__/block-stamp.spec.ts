@@ -1,4 +1,4 @@
-import { StaleStampError } from '@camstack/types'
+import { StaleStampError } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { staleBlockRefusal } from '../block-stamp.js'
 

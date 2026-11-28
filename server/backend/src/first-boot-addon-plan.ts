@@ -5,7 +5,7 @@
  *
  * Operator decisions, 2026-08-12/13:
  *
- * - the docker seed stays for `@camstack/server` and the SYSTEM packages, as
+ * - the docker seed stays for `@dominevo/server` and the SYSTEM packages, as
  *   the first-boot fallback source; every other addon is single-copy, always,
  *   installed during the initial boot;
  * - **no pinning at all** — *"il sistema è designato per essere

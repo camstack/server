@@ -23,7 +23,7 @@ import {
   type IUserPasskeysProvider,
   type RecordsAccess,
   resolveHubAddressRoles,
-} from '@camstack/types'
+} from '@dominevo/types'
 // Import AFTER the mock declaration so the addon picks up our stub.
 import { AuthWebauthnAddon } from '../auth-webauthn.addon.js'
 import {

@@ -1,4 +1,4 @@
-import { formatReading, type ReadingQuantity } from '@camstack/types'
+import { formatReading, type ReadingQuantity } from '@dominevo/types'
 import type { ReactElement } from 'react'
 import { type UiTextFn, useUiText } from '../../../../contexts/ui-text'
 import { useUnitPreferences } from '../../../../contexts/unit-preferences'

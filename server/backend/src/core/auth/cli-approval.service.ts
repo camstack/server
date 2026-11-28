@@ -1,7 +1,7 @@
-import { userError } from '@camstack/types'
+import { userError } from '@dominevo/types'
 /**
  * CliApprovalService — the browser-approval login of a terminal client
- * (`camstack login`, the MCP `setup_login`), in the shape of RFC 8628.
+ * (`dominevo login`, the MCP `setup_login`), in the shape of RFC 8628.
  *
  * Flow: the CLI calls `begin` (public, rate limited) and gets a short user
  * code to show the operator and a long device secret it keeps. The operator
@@ -18,7 +18,7 @@ import { userError } from '@camstack/types'
  */
 import * as crypto from 'node:crypto'
 
-/** Wire prefix of the device secret (`cda_` = CamStack Device Approval; redeemable once for a session). */
+/** Wire prefix of the device secret (`cda_` = Dominevo Device Approval; redeemable once for a session). */
 export const CLI_APPROVAL_SECRET_PREFIX = 'cda_'
 export const CLI_APPROVAL_TTL_MS = 5 * 60_000
 export const CLI_APPROVAL_INTERVAL_SEC = 3

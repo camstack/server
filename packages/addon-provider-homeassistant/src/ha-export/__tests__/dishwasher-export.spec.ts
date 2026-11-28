@@ -1,4 +1,4 @@
-import { DishwasherStatusSchema, type DishwasherStatus } from '@camstack/types'
+import { DishwasherStatusSchema, type DishwasherStatus } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { CAP_ENTITY_MAP } from '../entity-catalog.js'
 import { projectCapSlice } from '../state-projector.js'

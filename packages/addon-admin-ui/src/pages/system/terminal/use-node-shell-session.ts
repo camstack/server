@@ -13,7 +13,7 @@
  * Nothing is reattached: opening a node's section always starts a fresh,
  * audited session.
  */
-import { useTerminalSessionClose, useTerminalSessionOpenSession } from '@camstack/ui-library'
+import { useTerminalSessionClose, useTerminalSessionOpenSession } from '@dominevo/ui-library'
 import { useEffect, useRef, useState } from 'react'
 
 export const SERVER_SHELL_PROFILE_ID = 'server-shell'

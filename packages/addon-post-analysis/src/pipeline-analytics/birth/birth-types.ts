@@ -8,7 +8,7 @@ import type {
   FrameHandle,
   FrameResult,
   IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { BirthConfirmationRun, ConfirmationOutcome } from '../confirmation-gate.js'
 import type { ConfirmationGateSettings } from '../confirmation-gate-settings.js'
 import type { SessionDetector } from '../confirmation-session-detector.js'

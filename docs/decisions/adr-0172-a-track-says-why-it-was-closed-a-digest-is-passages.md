@@ -38,7 +38,7 @@ subject to the stationary registry. It simply threw the answer away.
 
 The second choice was where the answer lives. `Track` is a Zod shape in
 `packages/types`, which is `external` to the addon build and travels inside the
-published `@camstack/server` closure: a field added there is not live until a
+published `@dominevo/server` closure: a field added there is not live until a
 framework train is installed, and until it lands the cap schema *silently strips*
 it. The summary rule schema is in the addon for exactly this reason (see
 `summary-rule.ts`), and the marker belongs beside it.
@@ -49,7 +49,7 @@ it. The summary rule schema is in the addon for exactly this reason (see
 takes a `TrackCloseReason` and writes it to the `closedReason` column; a track
 that expires on its TTL leaves the field absent. The column, the type
 (`PersistedTrack extends Track`) and both readers live in `addon-post-analysis`,
-never in `packages/types` — the marker is live on the next `camstack deploy`, and
+never in `packages/types` — the marker is live on the next `dominevo deploy`, and
 promoting it later is additive.
 
 **A summary digest is made of PASSAGES.** `filterSummaryCandidates` drops

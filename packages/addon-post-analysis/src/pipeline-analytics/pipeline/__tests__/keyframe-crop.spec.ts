@@ -1,4 +1,4 @@
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { mockFirstCall } from '../../../__tests__/support/vitest-mock.js'
 import { describe, expect, it, vi } from 'vitest'
 import type { KeyFrameCropDeps } from '../keyframe-crop.js'

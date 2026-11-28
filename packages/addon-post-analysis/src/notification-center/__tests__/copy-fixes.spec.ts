@@ -2,7 +2,7 @@
  * Shipped sentences name the event. An operator template and a hub Texts
  * override still win; these cases cover only the defaults.
  */
-import { DeviceType, EventCategory, type AlarmArmMode, type SystemEvent } from '@camstack/types'
+import { DeviceType, EventCategory, type AlarmArmMode, type SystemEvent } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { alarmTransition } from '../alarm/alarm-transitions.js'
 import type { NcDeviceLookup } from '../device-directory.js'

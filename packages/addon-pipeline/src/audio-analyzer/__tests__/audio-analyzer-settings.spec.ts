@@ -15,8 +15,8 @@ import type {
   EventFilter,
   IScopedLogger,
   IAudioAnalyzer,
-} from '@camstack/types'
-import { normalizeAddonInitResult } from '@camstack/types'
+} from '@dominevo/types'
+import { normalizeAddonInitResult } from '@dominevo/types'
 
 function makeSilentLogger(): IScopedLogger {
   const noop = (): void => {

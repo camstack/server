@@ -7,7 +7,7 @@
  * reaches the provider. `null` does — it
  * is how an attachment is removed.
  */
-import type { CapabilityDefinition } from '@camstack/types'
+import type { CapabilityDefinition } from '@dominevo/types'
 import {
   ACCESS_ROLES,
   buildRoleScopes,
@@ -15,7 +15,7 @@ import {
   pipelineOrchestratorCapability,
   resolveMethodAuth,
   type TokenScope,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { buildCapRouterForTest, invokeProcedure, makeCtx } from './harness.js'
 

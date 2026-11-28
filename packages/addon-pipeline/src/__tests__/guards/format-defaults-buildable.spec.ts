@@ -1,4 +1,4 @@
-import type { StepDefinition } from '@camstack/types'
+import type { StepDefinition } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { getStepDefinition } from '../../detection-pipeline/registry/step-definitions.js'
 import {

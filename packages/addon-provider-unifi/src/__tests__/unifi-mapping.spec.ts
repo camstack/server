@@ -4,7 +4,7 @@
  * local account can switch it, and no power-cycle (a restart through PoE is the powered device's
  * `power-source`); the per-port switch + power-cycle button it replaced are retired.
  */
-import { formatReading } from '@camstack/types'
+import { formatReading } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { UnifiFeatureDescriptor } from '../config.js'
 import {

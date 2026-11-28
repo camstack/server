@@ -26,15 +26,15 @@ const EMPTY = '# Changelog\n\n## [Unreleased]\n'
 
 beforeEach(() => {
   root = fs.mkdtempSync(path.join(os.tmpdir(), 'changelog-guard-'))
-  writePackage('packages/alpha', { name: '@camstack/alpha', version: '1.0.0' }, EMPTY)
+  writePackage('packages/alpha', { name: '@dominevo/alpha', version: '1.0.0' }, EMPTY)
   writePackage(
     'packages/beta',
-    { name: '@camstack/beta', version: '2.0.0' },
+    { name: '@dominevo/beta', version: '2.0.0' },
     addEntry(EMPTY, 'Beta does more.'),
   )
   writePackage(
     'packages/hidden',
-    { name: '@camstack/hidden', version: '0.1.0', private: true },
+    { name: '@dominevo/hidden', version: '0.1.0', private: true },
     EMPTY,
   )
 })
@@ -167,12 +167,12 @@ describe('misplacedEntries', () => {
     const message = describeMisplaced([
       {
         dir: 'packages/alpha',
-        name: '@camstack/alpha',
+        name: '@dominevo/alpha',
         line: `- ${'x'.repeat(200)}`,
         heading: '## [1.2.0] - 2026-10-30',
       },
     ])
-    expect(message).toContain('@camstack/alpha')
+    expect(message).toContain('@dominevo/alpha')
     expect(message).toContain('## [1.2.0] - 2026-10-30')
     expect(message).toContain('move it under ## [Unreleased]')
     expect(message).not.toContain('x'.repeat(101))

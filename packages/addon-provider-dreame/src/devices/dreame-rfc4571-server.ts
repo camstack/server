@@ -30,7 +30,7 @@ import {
   parseAdtsHeader,
   Rfc4571Muxer,
 } from '@apocaliss92/nodelink-js'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 const VIDEO_PT = 96
 const AUDIO_PT = 97

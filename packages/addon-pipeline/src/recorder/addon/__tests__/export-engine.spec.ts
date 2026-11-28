@@ -1,5 +1,5 @@
-import type { ExportRecord, IScopedLogger } from '@camstack/types'
-import { EventCategory } from '@camstack/types'
+import type { ExportRecord, IScopedLogger } from '@dominevo/types'
+import { EventCategory } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { EXPORT_MIN_PLAUSIBLE_BYTES, ExportEngine } from '../export-engine.js'
 import { getExportRecord, type RecordingExportsState, upsertExport } from '../export-store.js'

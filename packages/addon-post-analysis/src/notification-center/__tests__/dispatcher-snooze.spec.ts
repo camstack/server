@@ -12,7 +12,7 @@
  * Plus the digest path, which reuses the same target catalog so a summary can
  * never reach a destination the snooze never touched.
  */
-import type { NcSnooze } from '@camstack/types'
+import type { NcSnooze } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import {

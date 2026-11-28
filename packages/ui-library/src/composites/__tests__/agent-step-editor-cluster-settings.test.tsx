@@ -6,7 +6,7 @@
  */
 import { afterEach, describe, expect, it } from 'vitest'
 import { cleanup, render, screen } from '@testing-library/react'
-import type { PipelineAddonSchema, DeviceStepConfig } from '@camstack/types'
+import type { PipelineAddonSchema, DeviceStepConfig } from '@dominevo/types'
 import { AgentStepEditor } from '../agent-step-editor'
 
 const FACE_EMBEDDING: PipelineAddonSchema = {

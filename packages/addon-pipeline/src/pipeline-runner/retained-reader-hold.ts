@@ -1,4 +1,4 @@
-import type { FrameHandle } from '@camstack/types'
+import type { FrameHandle } from '@dominevo/types'
 
 /** The one thing {@link withRetainedReader} needs from the retained store. */
 export interface RetainedReaderSource {

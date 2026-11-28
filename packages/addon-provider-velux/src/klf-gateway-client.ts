@@ -1,6 +1,6 @@
 import { Socket } from 'node:net'
 import type { ConnectionOptions } from 'node:tls'
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IScopedLogger } from '@dominevo/types'
 import {
   Connection,
   Gateway,

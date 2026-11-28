@@ -108,7 +108,7 @@ trade-off is the visible one: **first contact requires a form.**
 
 ### 1.3 What we copy and what we deliberately do not
 
-| my.home-assistant.io | CamStack central link | why the divergence |
+| my.home-assistant.io | Dominevo central link | why the divergence |
 | --- | --- | --- |
 | static site, no backend | same | the whole point — nothing to run, nothing to breach |
 | instance URL in `localStorage`, never in the link | hub URL in `localStorage`, **optionally seeded by `?hub=`** (§3.3, §6) | our links come from the user's *own hub*, not from public docs — the hub already knows its URL and can save the user the form |
@@ -260,7 +260,7 @@ The page reads `localStorage.camstackHubUrl`, validates it is still a
 well-formed `https://` origin, strips `hub` from the query, and issues
 `location.replace(hub + '/viewer/camstack' + path + query)`. `replace`, not
 `assign`: the interstitial must not pollute the back button. A tiny static
-frame ("Opening your CamStack…" with the target host named, plus a "change
+frame ("Opening your Dominevo…" with the target host named, plus a "change
 hub" link) renders behind the redirect for the sub-second it is visible and
 becomes the error surface if the stored value fails validation.
 
@@ -310,8 +310,8 @@ The two candidates, honestly compared:
 | | Cloudflare Pages on `zentik.app` | route on the Zentik notifier backend |
 | --- | --- | --- |
 | what runs | nothing — static files on a CDN | a NestJS app in a self-hosted container (`zentik-notifier/backend`, which serves its frontend from `/public`) |
-| blast radius of an outage | Cloudflare's | every CamStack notification tap, for every user, coupled to one homelab deployment |
-| release cadence | its own (`sites/central-link/` in this repo, §2.2) | Zentik's — a CamStack link change would ride Zentik's docker releases |
+| blast radius of an outage | Cloudflare's | every Dominevo notification tap, for every user, coupled to one homelab deployment |
+| release cadence | its own (`sites/central-link/` in this repo, §2.2) | Zentik's — a Dominevo link change would ride Zentik's docker releases |
 | `.well-known` content-type / cache control | `_headers` file, trivial | NestJS static-serving config in a foreign repo |
 | cost | free tier, comfortably | already paid, but see blast radius |
 
@@ -319,7 +319,7 @@ The two candidates, honestly compared:
 and the `camstack.zentik.app` DNS record already exists — pointing it at a
 Pages project is a CNAME flip. The deciding argument is coupling, not cost:
 this page is in the critical path of *every* notification tap for *every*
-CamStack install, and the Zentik notifier backend is one self-hosted service
+Dominevo install, and the Zentik notifier backend is one self-hosted service
 among many. The redirect logic is ~100 lines of dependency-free vanilla JS
 with no build-time framework — the only build step is the well-known
 generation of §2.2. (Precedent honesty: Zentik itself serves its well-known
@@ -407,7 +407,7 @@ plan** — that constraint shaped §2.1 and it held.
 ### Left to the operator
 
 - **O1 — confirm the domain.** Everything above assumes
-  `camstack.zentik.app` because the shipped entitlement names it. If CamStack
+  `camstack.zentik.app` because the shipped entitlement names it. If Dominevo
   is ever to live on its own zone (`camstack.app`?), that is a store release
   and a different plan — decide before phase 1, not after.
 - **O2 — the `hub=` default.** §6 argues include-by-default is

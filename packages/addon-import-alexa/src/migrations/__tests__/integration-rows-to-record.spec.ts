@@ -11,7 +11,7 @@ import {
   type IScopedLogger,
   makeInMemoryRecords,
   runAddonMigrations,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { alexaBrokersEntryKind } from '../../broker-record-kinds.js'
 import {

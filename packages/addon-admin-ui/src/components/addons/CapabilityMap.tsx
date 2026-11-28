@@ -1,6 +1,6 @@
 import { CheckCircle, Loader2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { Button, Checkbox } from '@camstack/ui-library'
+import { Button, Checkbox } from '@dominevo/ui-library'
 
 // ---------------------------------------------------------------------------
 // Types

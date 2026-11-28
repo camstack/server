@@ -1,17 +1,17 @@
 #!/usr/bin/env node
 /**
- * pin-meta-deps — make a meta-package's @camstack/* dependencies reproducible.
+ * pin-meta-deps — make a meta-package's @dominevo/* dependencies reproducible.
  *
- * The meta-package (@camstack/server — the single root package for every
+ * The meta-package (@dominevo/server — the single root package for every
  * node role) declares its
- * @camstack/* deps as "*" so npm-workspaces links the local package during
+ * @dominevo/* deps as "*" so npm-workspaces links the local package during
  * development regardless of version. That "*" is ALSO what ships to npm, so
- * `npm install @camstack/server@latest` (the Docker image build) resolves each
+ * `npm install @dominevo/server@latest` (the Docker image build) resolves each
  * addon to whatever is newest at build time — builds are not reproducible.
  *
- * This tool rewrites a meta-package.json's @camstack/* deps to the EXACT
+ * This tool rewrites a meta-package.json's @dominevo/* deps to the EXACT
  * versions currently declared by the workspace packages, so the published
- * tarball pins its transitive @camstack set.
+ * tarball pins its transitive @dominevo set.
  *
  * ── INTENDED USAGE (CI publish only) ──────────────────────────────────────
  * Run AFTER the version-bump step and IMMEDIATELY BEFORE `npm publish` of the
@@ -53,8 +53,8 @@ export function readWorkspaceVersions(repoRoot) {
 }
 
 /**
- * Return a NEW dependencies object with every @camstack/* entry repinned to the
- * exact version from `versions`. Non-@camstack deps and @camstack deps with no
+ * Return a NEW dependencies object with every @dominevo/* entry repinned to the
+ * exact version from `versions`. Non-@dominevo deps and @dominevo deps with no
  * known workspace version are left untouched. Pure — does not mutate input.
  * @param {Record<string,string>|undefined} deps
  * @param {Map<string,string>} versions
@@ -65,7 +65,7 @@ export function computePinnedDeps(deps, versions) {
   const pinned = []
   const missing = []
   for (const [name, range] of Object.entries(deps ?? {})) {
-    if (!name.startsWith('@camstack/')) {
+    if (!name.startsWith('@dominevo/')) {
       out[name] = range
       continue
     }
@@ -104,7 +104,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   }
   const repoRoot = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..')
   const { pinned, missing } = pinMetaPackage(path.resolve(metaArg), repoRoot)
-  console.log(`[pin-meta-deps] ${metaArg}: pinned ${pinned.length} @camstack dep(s)`)
+  console.log(`[pin-meta-deps] ${metaArg}: pinned ${pinned.length} @dominevo dep(s)`)
   for (const p of pinned) console.log(`  ${p}`)
   if (missing.length > 0) {
     console.log(`[pin-meta-deps] left unpinned (no workspace version): ${missing.join(', ')}`)

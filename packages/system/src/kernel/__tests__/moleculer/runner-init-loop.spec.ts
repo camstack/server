@@ -1,4 +1,4 @@
-import { AddonMigrationsBlockedError } from '@camstack/types'
+import { AddonMigrationsBlockedError } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { allBlockedRefusal, runAddonInits } from '../../moleculer/runner-init-loop.js'
 

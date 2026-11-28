@@ -9,7 +9,7 @@ import {
   type CustomizeCatalogTarget,
   type CustomizeEventEdge,
   type DeviceType,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export interface PulseCatalogView {
   readonly id: string

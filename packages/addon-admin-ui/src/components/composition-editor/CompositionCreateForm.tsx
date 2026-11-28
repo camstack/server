@@ -4,8 +4,8 @@
  * The room is set later, on the device.
  */
 import { useCreateComposition } from '../../lib/create-composition'
-import { type Composition, groupTemplate } from '@camstack/types'
-import { useDeviceManagerListPersistedByAddon, useDeviceManagerSetName } from '@camstack/ui-library'
+import { type Composition, groupTemplate } from '@dominevo/types'
+import { useDeviceManagerListPersistedByAddon, useDeviceManagerSetName } from '@dominevo/ui-library'
 import type { TFunction } from 'i18next'
 import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'

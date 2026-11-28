@@ -5,7 +5,7 @@
  * created. These two hold when it already exists — a row written before the
  * guard, a future code path, or a provider that changes its own answer.
  */
-import type { StorageLocation } from '@camstack/types'
+import type { StorageLocation } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { canProbeOccupancyLocally, resolveRefusalFor } from '../access-guards.js'
 

@@ -19,7 +19,7 @@ covers:
 > That document's §8 named the cheapest experiment — *"print what already
 > exists"* — and predicted it would *"settle whether the 22 500 writes/s are
 > event fan-out or cap traffic."* The counters were wired today
-> (`@camstack/server`, `event-plane-report.ts`). This document is the reading.
+> (`@dominevo/server`, `event-plane-report.ts`). This document is the reading.
 >
 > **It settles the question, and the answer is the opposite of the one the
 > experiment was framed to confirm.** The fan-out is a large number of

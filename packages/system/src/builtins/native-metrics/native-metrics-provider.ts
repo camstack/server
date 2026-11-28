@@ -12,7 +12,7 @@ import type {
   PressureInfo,
   ProcessResourceInfo,
   SystemResourceSnapshot,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { computeDarwinMemory, parseVmStat } from './darwin-memory.js'
 import { findOnPath, readNvidiaGpu } from './gpu-probe.js'
 

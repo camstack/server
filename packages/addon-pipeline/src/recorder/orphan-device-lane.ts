@@ -48,7 +48,7 @@
  * plain oldest-first. Deferring relief by one sweep is free; deleting a live
  * camera's footage is not.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 /**
  * What a device-registry enumeration came back as.

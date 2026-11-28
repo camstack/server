@@ -24,7 +24,7 @@
  * completes the creation deterministically - there is no half-state that needs
  * a human.
  */
-import type { IScopedLogger, SecretsAccess } from '@camstack/types'
+import type { IScopedLogger, SecretsAccess } from '@dominevo/types'
 import {
   DEVICE_CA_FIELD,
   DEVICE_CA_KEY_REF,

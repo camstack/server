@@ -10,7 +10,7 @@
  *  - remove the per-processor try/catch in `TrackerSweep.run` (review H3):
  *    "one processor's throw is contained…" fails.
  */
-import type { FrameResult, ObjectDetection } from '@camstack/types'
+import type { FrameResult, ObjectDetection } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { FrameProcessor } from '../pipeline/frame-processor.js'
 import { sequentialTrackIdMinter } from '../pipeline/track-id.js'

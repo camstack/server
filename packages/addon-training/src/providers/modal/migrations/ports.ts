@@ -3,7 +3,7 @@ import {
   type MigrationApiV1,
   resolveSecretMarkers,
   RevConflictError,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { trainingAccountEntryKind } from '../training-account-record-kinds.js'
 import { accountIdOf, FLAT_ACCOUNT_ID } from './entries-to-records.js'
 import type { ModalCataloguePorts } from './index.js'

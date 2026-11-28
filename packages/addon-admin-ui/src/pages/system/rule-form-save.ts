@@ -16,7 +16,7 @@ import type {
   NcRuleKind,
   NcSchedule,
   NcSystemEventFamily,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   conditionVisibleForKind,
   NC_CONDITION_CATALOG,
@@ -25,7 +25,7 @@ import {
   ruleTriggerZoneIds,
   subjectHasPath,
   systemFamilyOfKind,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { pruneSystemEventForSave } from './notification-system-events'
 import { formToActions } from './notification-rule-actions'
 import { conditionSupportedByRule } from './rule-form-parsers'
@@ -130,7 +130,7 @@ export function withLocalConditionDescriptors(
  * touched (non-empty) AND that are VISIBLE for this rule's trigger **and kind**.
  *
  * Two dimensions, not one. `appliesTo` (the server's answer) drops a condition
- * the trigger does not evaluate; the KIND (`@camstack/types` → `rule-kinds.ts`) drops
+ * the trigger does not evaluate; the KIND (`@dominevo/types` → `rule-kinds.ts`) drops
  * one the sub-type cannot satisfy — the three device-event fields an occupancy
  * edge fails closed on, the detection fields a sound window carries none of.
  * Both drops are the same act and for the same reason: writing a condition the

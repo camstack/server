@@ -1,4 +1,4 @@
-import { RingBuffer } from '@camstack/types'
+import { RingBuffer } from '@dominevo/types'
 
 /**
  * A {@link RingBuffer} that can notify a single blocked consumer the moment an

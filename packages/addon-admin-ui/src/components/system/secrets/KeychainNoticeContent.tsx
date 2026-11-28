@@ -10,8 +10,8 @@ import {
   KEYCHAIN_RESET_TRIGGER_ACTOR,
   type KeychainResetRecord,
   type KeychainSecretMeta,
-} from '@camstack/types'
-import { Button } from '@camstack/ui-library'
+} from '@dominevo/types'
+import { Button } from '@dominevo/ui-library'
 import type { ReactNode } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { formatWhen } from './format'

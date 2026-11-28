@@ -36,7 +36,7 @@
  * Pure: the Fastify route in `main.ts` wires the deps and maps the outcome.
  */
 import { timingSafeEqual } from 'node:crypto'
-import { hasUrlScheme, type SsoBridgeClaimsSchema } from '@camstack/types'
+import { hasUrlScheme, type SsoBridgeClaimsSchema } from '@dominevo/types'
 import type { z } from 'zod'
 import { bridgeProviderAddonId } from './auth-provider-gate.js'
 import type { ExternalLinkIntent } from './external-link-intents.js'

@@ -4,7 +4,7 @@ import {
   type IScopedLogger,
   type StateRefreshReason,
   type VehicleRefreshResult,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { KiaConfig } from './config.js'
 import {
   type KiaBridge,

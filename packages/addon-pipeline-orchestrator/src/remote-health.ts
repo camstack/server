@@ -20,7 +20,7 @@
  * on a periodic cadence and the caller's per-device backoff bounds churn, so no
  * finer continuity tracking is needed here.
  */
-import type { PipelineAssignment } from '@camstack/types'
+import type { PipelineAssignment } from '@dominevo/types'
 
 /** Per-camera fps telemetry snapshot (mirror of the orchestrator's `cameraFpsMap` value). */
 export interface RemoteHealthFpsEntry {

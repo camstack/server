@@ -8,7 +8,7 @@
  * the counts move as the operator works. Zero counts are dimmed (and hidden on a
  * phone, where the strip would otherwise take three lines).
  */
-import { Checkbox, RetrainReviewBadge } from '@camstack/ui-library'
+import { Checkbox, RetrainReviewBadge } from '@dominevo/ui-library'
 import type { JSX } from 'react'
 import { useT } from '../../i18n/index.js'
 import { BOX_DIFF_KINDS, type BoxDiffKind, type LiveReview } from './lib/retrain-live-review.js'

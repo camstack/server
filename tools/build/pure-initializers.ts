@@ -1,7 +1,7 @@
 /**
  * `/* @__PURE__ *\/` on every top-level INITIALIZER call of a module (D1074).
  *
- * `@camstack/types` is inlined into each addon bundle (D15). Its modules are full of
+ * `@dominevo/types` is inlined into each addon bundle (D15). Its modules are full of
  * `const X = z.object(...)`, `const M = method(...)`, `const T = Object.freeze({...})`
  * and `.extend(...)` chains. A bundler cannot prove a call pure, so it keeps every
  * initializer whose binding nobody reads and the addon evaluates thousands of schemas

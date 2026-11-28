@@ -8,8 +8,8 @@
  * root declares it, the root's label IS the answer and the classifier is not
  * dispatched; when it does not, the enabled step runs its own model.
  */
-import type { ModelCatalogEntry, PipelineStepInputOutput } from '@camstack/types'
-import { USE_ROOT_MODEL_DEFAULTS } from '@camstack/types'
+import type { ModelCatalogEntry, PipelineStepInputOutput } from '@dominevo/types'
+import { USE_ROOT_MODEL_DEFAULTS } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { deriveDetailSteps } from '../../pipeline-runner/index.js'
 import { planRootSupplies } from '../../pipeline-runner/root-supply.js'

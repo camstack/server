@@ -14,7 +14,7 @@ import {
   useRegisteredHotkeys,
   type HotkeyCombo,
   type HotkeyPlatform,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 
 const KEY_LABELS: Readonly<Record<string, string>> = {

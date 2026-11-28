@@ -1,4 +1,4 @@
-import { type TargetKindCaps } from '@camstack/types'
+import { type TargetKindCaps } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { GROUP_CAPS } from '../group-descriptor.js'
 import { readMemberKinds } from '../member-kinds.js'

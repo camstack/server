@@ -6,7 +6,7 @@
  * `alert-error`, `alert-critical-resolved`). The form is the cluster form of the
  * `alerts` capability, and this page is its one home (`lib/cluster-settings-claims.ts`).
  */
-import { AddonScopedSettingsForm, TEXT_HINT, useSystem } from '@camstack/ui-library'
+import { AddonScopedSettingsForm, TEXT_HINT, useSystem } from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 
 const ALERT_CENTER_ADDON_ID = 'alert-center'

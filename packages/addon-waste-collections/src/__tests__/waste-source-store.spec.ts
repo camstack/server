@@ -1,4 +1,4 @@
-import { makeInMemoryRecords, REDACTED_SECRET } from '@camstack/types'
+import { makeInMemoryRecords, REDACTED_SECRET } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { wasteSourceEntryKind } from '../waste-source-record-kinds.js'
 import { WasteSourceStore } from '../waste-source-store.js'

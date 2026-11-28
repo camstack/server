@@ -2,7 +2,7 @@
  * Paginated thumbnail grid of corpus copies. Pending ≠ empty (D315).
  * Click reports `onOpenFrame` so FramesSection can open the annotate overlay.
  */
-import type { RetrainCorpusPageFrame } from '@camstack/types'
+import type { RetrainCorpusPageFrame } from '@dominevo/types'
 import {
   Badge,
   EmptyState,
@@ -10,7 +10,7 @@ import {
   Pagination,
   Skeleton,
   hubPath,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { ImageIcon } from 'lucide-react'
 import type { JSX } from 'react'
 import { useT } from '../../i18n/index.js'

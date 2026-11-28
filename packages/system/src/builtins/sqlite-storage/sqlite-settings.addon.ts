@@ -9,7 +9,7 @@ import {
   type DataStoreDatabase,
   type ProviderRegistration,
   migrationsCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   BaseAddon,
   bareAddonId,
@@ -21,7 +21,7 @@ import {
   RUNTIME_DEFAULTS,
   storageAdminCapability,
   vectorStoreCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   InlineOwnedFile,
   type OwnedFileDeps,
@@ -412,7 +412,7 @@ function migrationAccessOf(file: OwnedSqliteFile): MigrationFileAccess {
 
 function systemPackageVersion(): string {
   const require_ = createRequire(import.meta.url)
-  const parsed: unknown = require_('@camstack/server/system/package.json')
+  const parsed: unknown = require_('@dominevo/server/system/package.json')
   return typeof parsed === 'object' &&
     parsed !== null &&
     'version' in parsed &&

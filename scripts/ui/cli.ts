@@ -55,7 +55,7 @@ function find(catalogue: UiCatalogue, query: string): void {
     out()
   }
   const entries = rankEntries(catalogue.entries, query).slice(0, 12)
-  out(entries.length > 0 ? '@camstack/ui-library exports:' : 'No library export matches.')
+  out(entries.length > 0 ? '@dominevo/ui-library exports:' : 'No library export matches.')
   for (const e of entries) out(`  ${describeEntry(e)}`)
   const viewer = rankEntries(catalogue.viewerEntries, query).slice(0, 8)
   if (viewer.length > 0) {
@@ -90,7 +90,7 @@ function show(catalogue: UiCatalogue, name: string): void {
     pool.find((e) => e.name === name) ??
     pool.find((e) => e.name.toLowerCase() === name.toLowerCase())
   if (!entry) {
-    out(`"${name}" is not exported by @camstack/ui-library or the viewer kit.`)
+    out(`"${name}" is not exported by @dominevo/ui-library or the viewer kit.`)
     const near = rankEntries(pool, name).slice(0, 5)
     if (near.length > 0) out(`Did you mean: ${near.map((e) => e.name).join(', ')}?`)
     out(
@@ -103,7 +103,7 @@ function show(catalogue: UiCatalogue, name: string): void {
   out(
     entry.area === 'viewer'
       ? `  import { ${entry.name} } from '<relative>/components/ui/${path.basename(entry.file)}'  (viewer app)`
-      : `  import { ${entry.name} } from '@camstack/ui-library'`,
+      : `  import { ${entry.name} } from '@dominevo/ui-library'`,
   )
   if (entry.summary) out(`  ${entry.summary}`)
   if (entry.propsExtends && entry.propsExtends.length > 0) {

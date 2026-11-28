@@ -1,4 +1,4 @@
-import type { CompositionFieldsFeature } from '@camstack/types'
+import type { CompositionFieldsFeature } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   CUSTOMIZE_STORED_CASES,

@@ -43,8 +43,8 @@ import { rm, stat } from 'node:fs/promises'
 import { Readable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
 
-import type { IScopedLogger, PinnedFfmpegResolver } from '@camstack/types'
-import { resolvePinnedFfmpegSpawner } from '@camstack/types/node'
+import type { IScopedLogger, PinnedFfmpegResolver } from '@dominevo/types'
+import { resolvePinnedFfmpegSpawner } from '@dominevo/types/node'
 
 import type { AmcrestCgiClient } from '../amcrest-cgi-client.js'
 import type { ClipArtifactStore } from './clip-artifact-store.js'

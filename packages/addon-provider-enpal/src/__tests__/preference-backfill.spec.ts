@@ -11,7 +11,7 @@ import {
   DeviceType,
   type IDeviceRuntimeState,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { EnpalEquipmentDevice } from '../devices/enpal-equipment-device.js'
 import { backfillPrimaryChildPreference } from '../devices/enpal-preference-backfill.js'

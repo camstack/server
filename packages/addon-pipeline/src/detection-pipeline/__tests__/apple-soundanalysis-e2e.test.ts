@@ -32,11 +32,11 @@ const MODELS_DIR = path.join(ROOT, 'test-output/.models')
 // Logger
 // ---------------------------------------------------------------------------
 
-function createLogger(scope: string): import('@camstack/types').IScopedLogger {
+function createLogger(scope: string): import('@dominevo/types').IScopedLogger {
   const fmt = (level: string, msg: string): void => {
     console.log(`[${level}] [${scope}] ${msg}`)
   }
-  const logger: import('@camstack/types').IScopedLogger = {
+  const logger: import('@dominevo/types').IScopedLogger = {
     debug: (msg) => fmt('DBG', msg),
     info: (msg) => fmt('INF', msg),
     warn: (msg) => fmt('WRN', msg),

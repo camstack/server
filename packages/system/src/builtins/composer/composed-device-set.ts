@@ -17,7 +17,7 @@ import {
   type DeviceDeclaration,
   errMsg,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { ComposedDeviceHandle } from './composed-device.js'
 import type { ComposerDerivedSpec, PlannedBlock } from './composer-plan.js'
 import type { PersistedComposedRow } from './composition-declarations.js'

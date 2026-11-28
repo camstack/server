@@ -1,5 +1,5 @@
 /**
- * `camstack login <host>` by browser approval (D988) — the default when there
+ * `dominevo login <host>` by browser approval (D988) — the default when there
  * is no TTY (an assistant's shell, a service) or with `--browser`.
  *
  * The CLI asks the hub for a sign-in request and shows the operator a URL and a
@@ -10,7 +10,7 @@
  No password, no token and no secret is ever printed.
  */
 import { spawn } from 'node:child_process'
-import { normalizeHubAddress, saveSession, type SessionFile } from '@camstack/develop'
+import { normalizeHubAddress, saveSession, type SessionFile } from '@dominevo/develop'
 import { z } from 'zod'
 import { hubTrpcMutation } from '../http/hub-trpc.js'
 
@@ -36,7 +36,7 @@ const PollSchema = z.object({
 
 /** The fallback named when the approval cannot finish. */
 export const RETRY_LOGIN_HINT =
-  'Run `camstack login <host>` again; approve the new code in the admin UI.'
+  'Run `dominevo login <host>` again; approve the new code in the admin UI.'
 
 export interface ApprovalRequest {
   readonly server: string
@@ -179,7 +179,7 @@ export async function loginWithApproval(opts: ApprovalLoginOptions): Promise<App
   const sleep = opts.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)))
   const now = opts.now ?? Date.now
   const request = await beginApproval(opts.server, opts)
-  print('Open this page in a browser where you are signed in to CamStack:')
+  print('Open this page in a browser where you are signed in to Dominevo:')
   print(`  ${request.approvalUrl}`)
   print('Then type this code:')
   print(`  ${request.userCode}`)

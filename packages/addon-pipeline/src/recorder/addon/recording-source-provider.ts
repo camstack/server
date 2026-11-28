@@ -30,13 +30,13 @@ import type {
   RecordingSource,
   RecordingSourceAvailability,
   RecordingSourceOptions,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   CLIP_BROKER_PACED_RATES,
   deriveRecordingMode,
   errMsg,
   RECORDING_SOURCE_CAMSTACK,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { loadDeviceConfig } from './config-store.js'
 import {
   buildPlaybackManifest,
@@ -46,7 +46,7 @@ import {
 } from './recording-provider.js'
 
 /** What the picker calls us. */
-const OUR_LABEL = 'CamStack recordings'
+const OUR_LABEL = 'Dominevo recordings'
 
 /** Codec probe results per (deviceId, profile) — lives as long as the provider,
  *  exactly as the archive provider's own cache does. */
@@ -159,7 +159,7 @@ export function buildRecordingSourceProvider(deps: RecordingProviderDeps): IReco
         if (manifest.localMasterPath === null && manifest.playbackUrl === null) {
           return {
             kind: 'none',
-            reason: 'no CamStack footage covers this window on the recording node',
+            reason: 'no Dominevo footage covers this window on the recording node',
           }
         }
         return { kind: 'hls', manifest }

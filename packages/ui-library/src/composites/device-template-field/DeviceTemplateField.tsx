@@ -2,7 +2,7 @@ import {
   DEVICE_TEMPLATE_CATALOGUE,
   deviceTemplateCameraValues,
   deviceTemplateRootVariables,
-} from '@camstack/types/device-template-catalogue'
+} from '@dominevo/types/device-template-catalogue'
 import {
   type MutableRefObject,
   type ReactNode,
@@ -11,7 +11,7 @@ import {
   useRef,
   useState,
 } from 'react'
-import type { DeviceTemplateThisDevice } from '@camstack/types'
+import type { DeviceTemplateThisDevice } from '@dominevo/types'
 import { Braces, Info, Parentheses } from 'lucide-react'
 import { useUiText } from '../../contexts/ui-text'
 import {

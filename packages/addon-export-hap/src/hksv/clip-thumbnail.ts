@@ -23,7 +23,7 @@
  * D549 decision 5 refuses.
  */
 import type { spawn as nodeSpawn } from 'node:child_process'
-import type { PinnedFfmpegResolver } from '@camstack/types'
+import type { PinnedFfmpegResolver } from '@dominevo/types'
 
 import type { ClipFfmpegRun, ClipFfmpegRunner } from './clip-ffmpeg-run.js'
 import { createBoundedFfmpegRunner } from './clip-ffmpeg-run.js'

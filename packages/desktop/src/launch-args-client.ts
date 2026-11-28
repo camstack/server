@@ -77,7 +77,7 @@ export function launchArgsCandidates(dataDir: string, starterPath: string): read
       'server-root',
       'current',
       'node_modules',
-      '@camstack',
+      '@dominevo',
       'server',
       'dist',
       'launch-args.js',

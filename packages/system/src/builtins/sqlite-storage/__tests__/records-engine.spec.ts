@@ -19,7 +19,7 @@ import {
   makeSecretMarker,
   recordSecretRef,
   REDACTED_SECRET,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   declaration,

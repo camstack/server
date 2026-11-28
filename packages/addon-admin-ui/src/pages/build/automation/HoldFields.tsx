@@ -12,8 +12,8 @@
  * at all, which is not the same as a zero-second one.
  */
 
-import type { HoldMode, HoldSpec } from '@camstack/types'
-import { Input, Select, DurationInput } from '@camstack/ui-library'
+import type { HoldMode, HoldSpec } from '@dominevo/types'
+import { Input, Select, DurationInput } from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 import { PickerLabel } from './FieldPicker'
 

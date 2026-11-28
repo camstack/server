@@ -3,7 +3,7 @@
  * and health, and the collapsed admin Tools. A camera row opens the Cameras
  * section on that camera.
  */
-import { SectionCard } from '@camstack/ui-library'
+import { SectionCard } from '@dominevo/ui-library'
 import { Activity, Camera, HardDrive } from 'lucide-react'
 import { useEffect, type ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'

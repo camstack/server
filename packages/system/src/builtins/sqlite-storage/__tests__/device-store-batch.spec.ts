@@ -9,7 +9,7 @@
  * busiest read in the cluster. So these tests count `door.query` calls.
  */
 
-import type { ISettingsStoreProvider } from '@camstack/types'
+import type { ISettingsStoreProvider } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { createDoorSettingsView } from '../../../kernel/settings-door-view.js'
 import { resolveRowBound, SETTINGS_QUERY_DEFAULT_ROW_CAP } from '../query-bounds.js'

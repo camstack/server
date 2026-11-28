@@ -1,5 +1,5 @@
-import type { AppRouter } from '@camstack/sdk'
-import type { SystemTrpcClient } from '@camstack/ui-library'
+import type { AppRouter } from '@dominevo/sdk'
+import type { SystemTrpcClient } from '@dominevo/ui-library'
 import { createTRPCClient, TRPCClientError, type TRPCLink } from '@trpc/client'
 import { observable } from '@trpc/server/observable'
 

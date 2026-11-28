@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { DEFAULT_TOOLSETS, parseToolsets } from '../mcp/toolsets.js'
 
-describe('camstack mcp --toolsets', () => {
+describe('dominevo mcp --toolsets', () => {
   it('defaults to setup, ops, configure and support; develop is opt-in', () => {
     expect(parseToolsets(undefined)).toEqual({ ok: true, toolsets: DEFAULT_TOOLSETS })
     expect(parseToolsets('  ')).toEqual({ ok: true, toolsets: DEFAULT_TOOLSETS })

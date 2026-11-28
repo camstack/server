@@ -1,5 +1,5 @@
-import { userError } from '@camstack/types'
-import type { IPythonEnvironment, PythonProbeResult, PythonEnvReady } from '@camstack/types'
+import { userError } from '@dominevo/types'
+import type { IPythonEnvironment, PythonProbeResult, PythonEnvReady } from '@dominevo/types'
 import { execFile, spawn } from 'node:child_process'
 import type { ChildProcess } from 'node:child_process'
 import { promisify } from 'node:util'

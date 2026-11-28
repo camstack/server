@@ -21,7 +21,7 @@ import type {
   DeviceHistoryRangeDeleteResult,
   DeviceHistoryTierRows,
   IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { RollupEngine } from '../rollup/rollup-engine.js'
 import type { HistoryStore, SeriesRecord } from '../store/history-store.js'
 import type { SeriesRegistry } from '../store/series-registry.js'

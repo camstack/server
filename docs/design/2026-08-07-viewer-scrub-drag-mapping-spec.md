@@ -1,7 +1,7 @@
 # Viewer spec — velocity-adaptive scrub drag + instant timestamp label + timeline warm-up
 
 > Status: to implement in the VIEWER app (the `camstack/` submodule →
-> github.com/camstack/viewer.git, `src/`). The hub half is DONE on the
+> github.com/dominevo/viewer.git, `src/`). The hub half is DONE on the
 > `scrub-plan` work (D64): the feeder sweeps in both directions, reads GOPs by
 > byte range, and answers `{t:'warm'}`; the embed bridge already exposes
 > everything the viewer needs. This document is written so the viewer change
@@ -108,7 +108,7 @@ the `stream-broker` addon deploy, not with the viewer).
 
 ## Acceptance (drag a real timeline)
 
-On a live hub, Loki `container="CamStack"`:
+On a live hub, Loki `container="Dominevo"`:
 - a slow careful drag logs `scrub-feeder:pushed` with `mode=sweep dir=fwd`
   (forward) / `dir=back` (backward) — jumps only at the landing and on flings;
 - `scrub-feeder:drag-end` shows `sweeps + backSweeps ≫ jumps` for careful

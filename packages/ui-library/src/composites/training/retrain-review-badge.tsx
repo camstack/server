@@ -16,7 +16,7 @@
  */
 
 import type { ReactElement } from 'react'
-import type { RetrainReviewStatusName } from '@camstack/types'
+import type { RetrainReviewStatusName } from '@dominevo/types'
 import {
   Badge,
   type BadgeProps,

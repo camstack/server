@@ -7,8 +7,8 @@
  * Neutralisation: put the id back under `subject` and the "not 9" assertions flip
  * to `ok: true`.
  */
-import type { TokenScope } from '@camstack/types'
-import { DeviceType } from '@camstack/types'
+import type { TokenScope } from '@dominevo/types'
+import { DeviceType } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { checkScopeAccess, type DeviceScopeLookup } from '../scope-access.js'
 

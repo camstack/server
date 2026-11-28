@@ -19,8 +19,8 @@ import {
   useOsdManagerListTemplates,
   useOsdManagerUpsertTemplate,
   type DataColumn,
-} from '@camstack/ui-library'
-import type { OsdNamedTemplate } from '@camstack/types'
+} from '@dominevo/ui-library'
+import type { OsdNamedTemplate } from '@dominevo/types'
 import { Copy, Layers, Trash2 } from 'lucide-react'
 import { generateTemplateId } from '../template-id.js'
 import { translate, useT } from '../i18n/index.js'

@@ -77,8 +77,8 @@
  *   operator must intervene. Switching them on would run pipelines against
  *   crossed identities.
  */
-import type { CameraSwitchId } from '@camstack/types'
-import { CAMERA_SWITCH_ORDER } from '@camstack/types'
+import type { CameraSwitchId } from '@dominevo/types'
+import { CAMERA_SWITCH_ORDER } from '@dominevo/types'
 import type { SecretScopeReport } from './migrate-hardware-state.js'
 import { MigrationRefusedError } from './migration-refused.js'
 

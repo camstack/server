@@ -11,7 +11,7 @@
  */
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 
 vi.mock('../../device-controls/control-registry', () => ({
   resolveDeviceControl: (type: string) => ({

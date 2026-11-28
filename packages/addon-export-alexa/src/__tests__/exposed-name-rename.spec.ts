@@ -15,7 +15,7 @@ import {
   ExportNameRefusedError,
   type IScopedLogger,
   readExposedName,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { alexaNameValidator } from '../endpoints/alexa-name.js'
 import { buildGenericDeviceEndpoint } from '../endpoints/generic-device.js'

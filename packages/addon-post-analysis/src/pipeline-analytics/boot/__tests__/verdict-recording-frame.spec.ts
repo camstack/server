@@ -1,4 +1,4 @@
-import type { RetrainCollection } from '@camstack/types'
+import type { RetrainCollection } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { makeSilentLogger } from '../../__tests__/test-helpers.js'
 import {

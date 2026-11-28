@@ -10,9 +10,9 @@
  * `rootDeviceKey` names none either — and an unknown node yields no placement
  * at all rather than an invented one.
  */
-import type { FrameResult, TrackPlacement } from '@camstack/types'
+import type { FrameResult, TrackPlacement } from '@dominevo/types'
 
-export type { TrackPlacement } from '@camstack/types'
+export type { TrackPlacement } from '@dominevo/types'
 
 export function trackPlacementOf(
   frame: Pick<FrameResult, 'rootModelId' | 'rootDeviceKey'>,

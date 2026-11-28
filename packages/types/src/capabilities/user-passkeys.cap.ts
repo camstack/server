@@ -5,7 +5,7 @@ import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 /**
  * `user-passkeys` — per-user WebAuthn (passkey) enrollment + assertion.
  *
- * Implemented by the webauthn addon in `@camstack/addon-auth` (collection of one
+ * Implemented by the webauthn addon in `@dominevo/addon-auth` (collection of one
  * for now; the cap is collection-mode for forward compat with
  * provider-specific passkey stores).
  *

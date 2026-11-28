@@ -16,7 +16,7 @@
  * count as unknown, never 0. No `deviceKey` is invented for the runner: this
  * rewrites the REPORT, not the attach.
  */
-import type { RunnerLocalLoad } from '@camstack/types'
+import type { RunnerLocalLoad } from '@dominevo/types'
 
 /** The backend prefix of a `<backend>:<device>` key (bare `cpu` → `cpu`). */
 function backendOf(deviceKey: string): string {

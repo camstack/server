@@ -12,7 +12,7 @@
  * surface the tile was drawn on. A twin that carried the tile's bytes (or any
  * box) would pass a "was something written" check and still ship a rectangle.
  */
-import type { DecodedFrame, FrameHandle, IScopedLogger } from '@camstack/types'
+import type { DecodedFrame, FrameHandle, IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { drawBoxedFrame } from '../../../shared/frame/box-drawer.js'
 import { MEDIA_QUALITY } from '../../../shared/frame/media-quality.js'

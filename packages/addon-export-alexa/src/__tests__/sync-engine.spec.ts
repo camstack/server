@@ -7,7 +7,7 @@ function ep(id: string): AlexaEndpoint {
     endpointId: id,
     friendlyName: id,
     description: 'd',
-    manufacturerName: 'CamStack',
+    manufacturerName: 'Dominevo',
     displayCategories: ['CAMERA'],
     capabilities: [{ type: 'AlexaInterface', interface: 'Alexa', version: '3' }],
   }

@@ -13,7 +13,7 @@ import {
   type AppNavBadge,
   type IAppsAggregatorProvider,
   type ProviderRegistration,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { aggregateApps, type AppSourceEntry } from './aggregate-apps.js'
 
 export class AppsAggregatorAddon extends BaseAddon {

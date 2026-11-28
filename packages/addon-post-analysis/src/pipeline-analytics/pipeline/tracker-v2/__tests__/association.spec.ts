@@ -46,7 +46,7 @@
  * loop: "a coasting owner never wins a box by margin over a gated active
  * tracklet" fails (and the tracker's double-crossing scene with it).
  */
-import { APPEARANCE_BIN_COUNT, type AppearanceDescriptor, type BoundingBox } from '@camstack/types'
+import { APPEARANCE_BIN_COUNT, type AppearanceDescriptor, type BoundingBox } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { foldAppearance } from '../appearance.js'
 import {

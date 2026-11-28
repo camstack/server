@@ -5,7 +5,7 @@
  * All three share a cursor.
  */
 import { useMemo } from 'react'
-import type { DeviceHistoryQueryManyEntry } from '@camstack/types'
+import type { DeviceHistoryQueryManyEntry } from '@dominevo/types'
 import {
   BarSeries,
   EmptyState,
@@ -24,7 +24,7 @@ import {
   type HistoryWindow,
   type StateRowDef,
   type TimeSeriesDef,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { LineChart } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import {

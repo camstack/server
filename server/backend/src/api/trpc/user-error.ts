@@ -1,5 +1,5 @@
 import { TRPCError } from '@trpc/server'
-import { userError, type TranslationParams } from '@camstack/types'
+import { userError, type TranslationParams } from '@dominevo/types'
 
 type TrpcErrorCode = ConstructorParameters<typeof TRPCError>[0]['code']
 

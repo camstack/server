@@ -13,7 +13,7 @@ import {
   MEDIA_PLAYER_MAX_STEPS,
   type RemoteConfig,
   REMOTE_MAX_REPEAT,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { remoteCallRedirect } from '../remote-call-redirect.js'
 import { REMOTE_REPEAT_GAP_MS, RemoteService } from '../remote-service.js'

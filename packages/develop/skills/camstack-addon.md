@@ -1,6 +1,6 @@
 ---
 name: camstack-addon
-description: Create or change a CamStack addon (plugin) — a device provider, notifier, storage or log destination, pipeline stage, exporter, a builtin, or any new `camstack.addons[]` manifest entry. Covers the silent wiring misses (vite entries, `super({})`), forked vs in-process behaviour, the two per-device settings stores, custom actions, device-page widgets, `camstack deploy` and its traps (installs, may not respawn, ships what is built), and how to prove the new code is the code running. Use for "new addon", "add a provider", "my addon change has no effect", "the addon is running but nothing happens".
+description: Create or change a Dominevo addon (plugin) — a device provider, notifier, storage or log destination, pipeline stage, exporter, a builtin, or any new `camstack.addons[]` manifest entry. Covers the silent wiring misses (vite entries, `super({})`), forked vs in-process behaviour, the two per-device settings stores, custom actions, device-page widgets, `dominevo deploy` and its traps (installs, may not respawn, ships what is built), and how to prove the new code is the code running. Use for "new addon", "add a provider", "my addon change has no effect", "the addon is running but nothing happens".
 ---
 
 # Creating or changing an addon
@@ -17,10 +17,10 @@ crashes) and `docs/architecture/addon-custom-actions.md`.
 ## Tooling (prefer this over hand-copying)
 
 ```bash
-camstack develop scaffold addon <name> [--kind empty|provider|notifier|osd|post-analysis|device-integration|service-integration|exporter]
-camstack develop extend <existing-addon> --entry <new-id>
-camstack develop find-example <topic>
-camstack develop validate <name-or-path>
+dominevo develop scaffold addon <name> [--kind empty|provider|notifier|osd|post-analysis|device-integration|service-integration|exporter]
+dominevo develop extend <existing-addon> --entry <new-id>
+dominevo develop find-example <topic>
+dominevo develop validate <name-or-path>
 ```
 
 The three integration kinds start from a typed instance record
@@ -35,7 +35,7 @@ Real implementations to study: `packages/addon-provider-enpal`,
 the public `addon-examples` packages `example-device-integration`,
 `example-service-integration` and `example-exporter`.
 
-Nx equivalent (same idea): `nx g @camstack/nx-plugin:addon <name>`.
+Nx equivalent (same idea): `nx g @dominevo/nx-plugin:addon <name>`.
 The develop scaffold also writes `vite.config.ts` `entries` — the miss that
 fails only at runtime.
 
@@ -43,9 +43,9 @@ fails only at runtime.
 
 - **A builtin** (`packages/system/src/builtins/<name>/`) if the kernel cannot
   function without it, or it must exist on every node with no install step.
-  Builtins ship inside the `@camstack/server` closure.
+  Builtins ship inside the `@dominevo/server` closure.
 - **Its own package** (`packages/addon-<name>/`) otherwise. Install is then the
-  opt-in, and it updates via `camstack deploy` independently of the framework.
+  opt-in, and it updates via `dominevo deploy` independently of the framework.
 
 Read `docs/architecture/addon-lifecycle.md` first if you are unsure.
 
@@ -110,7 +110,7 @@ Rules that bite:
   credential for a spawned child: the `camstack-secrets` skill. Never read a
   credential from the environment.
 - **An addon that keeps a cloud session reports it, it does not alert by hand.**
-  Create an `IntegrationSessionReporter` (`@camstack/types`) with a `classify(err)`
+  Create an `IntegrationSessionReporter` (`@dominevo/types`) with a `classify(err)`
   that returns a `SessionLossReason` only when the cloud ended OUR session
   (kicked, token refused, sign-in rejected) and `null` for network and per-device
   errors; `bind()` it in `onInitialize`, call `failure(id, err)` / `ok(id)` from
@@ -137,7 +137,7 @@ Manifest fields worth knowing: `protected: true` blocks uninstall ·
 
 **`icon` is a promise the hub must keep.** It is an asset PATH inside the
 package (`assets/icon.svg`, or `assets/<addonId>/icon.svg` when one package ships
-several addons — `@camstack/server` does this for every builtin), and the folder
+several addons — `@dominevo/server` does this for every builtin), and the folder
 must be in `files` or `npm pack` drops it. The Admin UI requests
 `/api/addon-assets/<addonId>/<icon>` only for an addon that declares one
 (`addon-admin-ui/src/lib/addon-icons.ts`); everything else draws a glyph with no
@@ -217,19 +217,19 @@ it under the new version. A publish of a changed package with no entry fails
 
 ## 7. Ship it — and prove the new code is the code running
 
-An addon runs from its DEPLOYED copy under `<dataDir>/addons/@camstack/<name>/`
+An addon runs from its DEPLOYED copy under `<dataDir>/addons/@dominevo/<name>/`
 (in a workspace dev hub, the data dir under `server/backend`), never from
 `packages/<name>/dist`. Editing and rebuilding has **no runtime effect** until
-you deploy. A **builtin** travels inside `@camstack/server` instead — the
+you deploy. A **builtin** travels inside `@dominevo/server` instead — the
 `camstack-server-change` skill (D16).
 
 ```bash
-camstack deploy packages/addon-<name>                 # to the hub; or: camstack deploy <name>
-camstack deploy packages/addon-<name> -n <nodeId>     # to one agent — one node at a time
-camstack deploy packages/addon-<name> --no-verify     # then poll /health yourself (below)
+dominevo deploy packages/addon-<name>                 # to the hub; or: dominevo deploy <name>
+dominevo deploy packages/addon-<name> -n <nodeId>     # to one agent — one node at a time
+dominevo deploy packages/addon-<name> --no-verify     # then poll /health yourself (below)
 ```
 
-Auth is the `camstack login` session (one login per hub, see the `hub-access`
+Auth is the `dominevo login` session (one login per hub, see the `hub-access`
 skill) and nothing else; `-s <url>` names the hub. Full reference:
 `docs/architecture/update-and-release.md` §"Deploying an addon during
 development", which also has the stale-addon detector to run after a rebase.
@@ -287,7 +287,7 @@ Multi-entry packages (auth, cloudflare, …) need a new id, source file, manifes
 row, **and** vite `entries` key. Prefer:
 
 ```bash
-camstack develop extend <package> --entry <new-id>
+dominevo develop extend <package> --entry <new-id>
 ```
 
 ## Integration traps
@@ -409,8 +409,8 @@ the component in `HOST_WIDGETS`
 **Weigh the cost honestly before minting a cap for this.** A new cap is a
 framework change: `npm run codegen`, the two hand-edits in
 `packages/types/src/capabilities/index.ts`, and it reaches a node only inside a
-published `@camstack/server` (D16).
-`camstack deploy <your-addon>` will NOT make the widget appear, and neither will
+published `@dominevo/server` (D16).
+`dominevo deploy <your-addon>` will NOT make the widget appear, and neither will
 deploying `admin-ui` — the cap carrying the section does not exist there yet.
 
 ### An OWNED cap — your addon returns the section
@@ -475,7 +475,7 @@ Two more that bite either way:
   `WELL_KNOWN_TAB_MAP` (`packages/types/src/interfaces/config-ui.ts`) or the UI
   renders the raw tab id as the label. Use an existing tab unless you also add
   the entry — and note that the tab's label, icon and position in the bar are a
-  `@camstack/types` constant, so they are a framework publish whichever
+  `@dominevo/types` constant, so they are a framework publish whichever
   mechanism declares the section.
 - **If the addon owns the device, make the cap `deviceNative`** and register it
   from the device class, so the widget asks *the camera* through the ordinary

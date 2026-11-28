@@ -7,7 +7,7 @@ import type {
   CalendarListEventsInput,
   ICalendarSourceProvider,
   IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { WasteCollectionEntry, WasteSourceConfig } from './waste-types.js'
 
 export interface WasteCalendarSourceDeps {

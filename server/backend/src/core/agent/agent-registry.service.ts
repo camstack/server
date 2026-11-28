@@ -4,7 +4,7 @@ import {
   callWithServiceDiscovery,
   getProcessAgentHttpsNames,
   localSupportedPythonRuntimes,
-} from '@camstack/server/system'
+} from '@dominevo/server/system'
 import type {
   AgentCapability,
   AgentListItem,
@@ -13,8 +13,8 @@ import type {
   IScopedLogger,
   NodeDirectory,
   NodeLiveness,
-} from '@camstack/types'
-import { type AddonPlacement, EventCategory, resolveAddonPlacement } from '@camstack/types'
+} from '@dominevo/types'
+import { type AddonPlacement, EventCategory, resolveAddonPlacement } from '@dominevo/types'
 import type { AddonRegistryService } from '../addon/addon-registry.service'
 import { CapabilityService } from '../capability/capability.service'
 import { EventBusService } from '../events/event-bus.service'
@@ -161,7 +161,7 @@ export const AGENT_BACKFILL_RPC_TIMEOUT_MS = 300_000
 
 /**
  * Package name of the system/infrastructure builtins. Addons shipped in
- * `@camstack/server/system` (filesystem-storage, storage-orchestrator,
+ * `@dominevo/server/system` (filesystem-storage, storage-orchestrator,
  * sqlite-settings, hub-forwarder, metrics-native, console-logging, …) are
  * bootstrap infrastructure that EVERY node — hub and agent alike — runs
  * in-process. They are never `$agent.deploy`-pushed and must NEVER be
@@ -175,8 +175,8 @@ export const AGENT_BACKFILL_RPC_TIMEOUT_MS = 300_000
  * `AGENT_PACKAGES` bootstrap, NEVER hub-managed deploy targets, so the
  * reconcile must never undeploy them (they are absent from the hub's
  * installed-addon set and would otherwise look "stale"):
- *   - `@camstack/server/system`        — storage/settings/metrics/logging builtins.
- *   - `@camstack/addon-agent-ui` — the agent's own status dashboard
+ *   - `@dominevo/server/system`        — storage/settings/metrics/logging builtins.
+ *   - `@dominevo/addon-agent-ui` — the agent's own status dashboard
  *     (placement: agent-only; the hub never installs it, so it is missing
  *     from `hubPlacements`). The hub's deploy planner already SKIPS
  *     agent-only addons, so undeploying one is a reconcile asymmetry bug.
@@ -187,8 +187,8 @@ export const AGENT_BACKFILL_RPC_TIMEOUT_MS = 300_000
  * skip them, so a small local set keeps the two concerns decoupled.
  */
 const AGENT_BOOTSTRAP_PACKAGES: ReadonlySet<string> = new Set([
-  '@camstack/server',
-  '@camstack/addon-agent-ui',
+  '@dominevo/server',
+  '@dominevo/addon-agent-ui',
 ])
 
 /**
@@ -197,7 +197,7 @@ const AGENT_BOOTSTRAP_PACKAGES: ReadonlySet<string> = new Set([
  * and keeps it at the hub's version — though the stale sweep above still never
  * undeploys it as "not installed on the hub".
  */
-const CONVERGENCE_BOOTSTRAP: ReadonlySet<string> = new Set(['@camstack/server'])
+const CONVERGENCE_BOOTSTRAP: ReadonlySet<string> = new Set(['@dominevo/server'])
 
 /** The fixed schedule of the convergence round over every online node (D982). */
 export const ADDON_CONVERGENCE_INTERVAL_MS = 10 * 60_000
@@ -406,7 +406,7 @@ export class AgentRegistryService {
   /** The server version each node last reported on `$agent.status`; `null` = reported none. */
   private readonly nodeServerVersions = new Map<string, string | null>()
 
-  /** The `@camstack/server` version `nodeId` last reported on reconcile; `null` when none. */
+  /** The `@dominevo/server` version `nodeId` last reported on reconcile; `null` when none. */
   nodeServerVersion(nodeId: string): string | null {
     return this.nodeServerVersions.get(nodeId) ?? null
   }
@@ -537,7 +537,7 @@ export class AgentRegistryService {
 
   /**
    * The operator delivered a package to ONE node on purpose (`updatePackage` with
-   * a `nodeId`, `camstack deploy -n`): that lifts its tombstone, so the desired
+   * a `nodeId`, `dominevo deploy -n`): that lifts its tombstone, so the desired
    * set wants it there again.
    */
   async noteExplicitDelivery(nodeId: string, packageName: string): Promise<void> {
@@ -1012,7 +1012,7 @@ export class AgentRegistryService {
    * Version-skew exception: a decl-id the hub has never heard of is NOT
    * stale when the hub already ships that addon's PACKAGE. A newer agent
    * bundle can add a decl-id within a package the hub also ships (e.g. a
-   * new `decoder-nodeav` inside `@camstack/addon-pipeline`); undeploying
+   * new `decoder-nodeav` inside `@dominevo/addon-pipeline`); undeploying
    * it would delete the whole shared bundle dir on the agent and crash
    * every sibling runner. Only a decl-id whose PACKAGE is absent from the
    * hub is treated as genuinely stale.
@@ -1110,7 +1110,7 @@ export class AgentRegistryService {
       const stale = agentAddons.filter((addon) => {
         if (!sweepsStale) return false
         // Agent bootstrap infrastructure (storage/settings/metrics/logging from
-        // `@camstack/server/system`, plus the agent-only `addon-agent-ui` dashboard)
+        // `@dominevo/server/system`, plus the agent-only `addon-agent-ui` dashboard)
         // runs on every node as bootstrap infrastructure — never hub-managed
         // deploy targets, must never be undeployed. Without this guard the
         // reconcile tears down the agent's own builtins (they aren't in the
@@ -1291,7 +1291,7 @@ export class AgentRegistryService {
     }
 
     // GATE 2 — the delivery window. A roster gap the hub itself opened is not
-    // evidence a node is missing anything (`camstack deploy … -n <agent>` was
+    // evidence a node is missing anything (`dominevo deploy … -n <agent>` was
     // reverted ~1.5s later on 2026-08-07).
     const suppression = this.deliveryLedger.suppressionFor(agentId)
     if (suppression !== null) {
@@ -1903,7 +1903,7 @@ export class AgentRegistryService {
   }
 }
 
-/** The `@camstack/server` version a node reported on `$agent.status`; `null` when it reported none. */
+/** The `@dominevo/server` version a node reported on `$agent.status`; `null` when it reported none. */
 function extractAgentServerVersion(statusRaw: unknown): string | null {
   if (statusRaw === null || typeof statusRaw !== 'object') return null
   const version = (statusRaw as { serverVersion?: unknown }).serverVersion

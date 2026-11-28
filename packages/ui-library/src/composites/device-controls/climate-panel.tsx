@@ -6,7 +6,7 @@ import { useDeviceCommand } from '../../hooks/use-device-command.js'
 import { cn } from '../../lib/cn.js'
 import { useUiText } from '../../contexts/ui-text.js'
 import type { ControlPanelProps } from './types.js'
-import type { ClimateControlStatus, HvacMode } from '@camstack/types'
+import type { ClimateControlStatus, HvacMode } from '@dominevo/types'
 
 /** Step size for target ± buttons; defaults to 1 °C when unset or invalid. */
 export function resolveClimateTempStep(tempStep: number | null | undefined): number {

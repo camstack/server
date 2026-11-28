@@ -4,7 +4,7 @@
  * fleet-wide vocabulary when no device is picked, and a stored category the
  * device does not declare stays selected, flagged.
  */
-import { EventCategory } from '@camstack/types'
+import { EventCategory } from '@dominevo/types'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'

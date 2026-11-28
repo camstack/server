@@ -34,12 +34,12 @@ import {
   useSystemDebugWatch,
   useSystemGetLoggingSettings,
   useSystemSetLoggingSettings,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import {
   DEBUG_WATCH_REARM_EVERY_MS,
   type DebugWatchState,
   type DiagnosticWindow,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { AdminPage } from '../../components/AdminPage'
 import { ARM_BUTTON, ARM_CHOICES_MS, LogChannelRow } from './LogChannelRow'
 import { channelsToRearm, formatRemaining, groupChannelsByAddon } from './log-watch.helpers'

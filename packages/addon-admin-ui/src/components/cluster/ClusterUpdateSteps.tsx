@@ -1,6 +1,6 @@
 import type { JSX } from 'react'
-import type { ClusterUpdateStep, ClusterUpdateStepStatus } from '@camstack/types'
-import { StatusBadge } from '@camstack/ui-library'
+import type { ClusterUpdateStep, ClusterUpdateStepStatus } from '@dominevo/types'
+import { StatusBadge } from '@dominevo/ui-library'
 import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
 import { stepMark } from '../../lib/cluster-update-view'

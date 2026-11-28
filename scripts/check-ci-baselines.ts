@@ -349,7 +349,7 @@ const HEADER = {
  * ## Why this runs BEFORE any bucket
  *
  * On 2026-08-27 this script reported `typecheck: 5 package(s) got worse` —
- * `@camstack/server/system` (27 errors), `addon-provider-ecowitt` (17),
+ * `@dominevo/server/system` (27 errors), `addon-provider-ecowitt` (17),
  * `addon-pipeline-orchestrator` (6), `addon-smtp-nodemailer` (2), `addon-auth`
  * (1). None of them were regressions. **Four different agents each spent time
  * proving the errors were not theirs**, because a ratchet that says "you made
@@ -403,9 +403,9 @@ function unresolvedWorkspaceDeps(): readonly UnresolvedDep[] {
       ) as WorkspaceManifest
       const declared = { ...manifest.dependencies, ...manifest.devDependencies }
       for (const dep of Object.keys(declared)) {
-        // `@camstack/*` are workspace links, not installs — a missing one is a
+        // `@dominevo/*` are workspace links, not installs — a missing one is a
         // different (and much louder) problem than an unreproduced tree.
-        if (dep.startsWith('@camstack/')) continue
+        if (dep.startsWith('@dominevo/')) continue
         if (!resolvesFrom(dirPath, dep)) out.push({ workspace: manifest.name ?? pkg, dep })
       }
     }

@@ -1,4 +1,4 @@
-import type { HubNodeRegistry } from '@camstack/server/system'
+import type { HubNodeRegistry } from '@dominevo/server/system'
 
 /**
  * Does `nodeId` (an agent) host the runner `runnerId`? Read from what the node itself

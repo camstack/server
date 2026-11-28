@@ -6,8 +6,8 @@
  * controller owns the lifecycle (start on band-active, stop on band-inactive /
  * shutdown) and the watcher that consumes the segments this writer emits.
  */
-import type { IScopedLogger } from '@camstack/types'
-import { NO_COST_CLAIM, type ChildCostClaimHandle } from '@camstack/types/node'
+import type { IScopedLogger } from '@dominevo/types'
+import { NO_COST_CLAIM, type ChildCostClaimHandle } from '@dominevo/types/node'
 import { buildPassthroughArgs, type PassthroughArgs } from './ffmpeg-args.js'
 import { readDialRefusal, type DialRefusal } from './dial-refusal.js'
 import { readSpawnFailure } from './spawn-failure.js'

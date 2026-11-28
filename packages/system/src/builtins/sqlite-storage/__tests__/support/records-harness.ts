@@ -5,7 +5,7 @@
  * production runs, never on a hand-spelled copy (D447).
  */
 import Database from 'better-sqlite3'
-import type { IScopedLogger, RecordKindDeclaration } from '@camstack/types'
+import type { IScopedLogger, RecordKindDeclaration } from '@dominevo/types'
 import { RecordsEngine } from '../../records/records-engine.js'
 
 export function silentLogger(lines: string[] = []): IScopedLogger {

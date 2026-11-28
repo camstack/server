@@ -1,4 +1,4 @@
-import { errMsg, type DeviceManagerApi, type IScopedLogger } from '@camstack/types'
+import { errMsg, type DeviceManagerApi, type IScopedLogger } from '@dominevo/types'
 import { UNRAID_SYSTEM } from './config.js'
 import { UNRAID_INSTANCE_ID } from './unraid-discovery.js'
 import type { UnraidSnapshot } from './unraid-client-contract.js'

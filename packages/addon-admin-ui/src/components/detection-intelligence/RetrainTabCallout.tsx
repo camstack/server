@@ -2,7 +2,7 @@
  * Points operators from the Events feed at the Training addon page —
  * where tracks marked for training are annotated and sent to cloud jobs.
  */
-import { Button, Card, TEXT_HINT } from '@camstack/ui-library'
+import { Button, Card, TEXT_HINT } from '@dominevo/ui-library'
 import { GraduationCap } from 'lucide-react'
 import type { JSX } from 'react'
 import { useNavigate } from 'react-router-dom'

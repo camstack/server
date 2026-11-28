@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { cascadeRemoveDevicesForBroker } from '../ha-broker-device-cascade.js'
-import type { IScopedLogger, IDeviceRegistry, DeviceManagerApi, IDevice } from '@camstack/types'
+import type { IScopedLogger, IDeviceRegistry, DeviceManagerApi, IDevice } from '@dominevo/types'
 
 const logger: IScopedLogger = {
   debug() {},

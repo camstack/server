@@ -4,7 +4,7 @@
  * share placement holds for it (`getEffectiveShares`) and the sessions it runs
  * now (`getPlacementStats`). Pure, so the state vocabulary is tested once.
  */
-import type { EffectiveNodeShare, NodeInferenceDevice, PlacementNodeStats } from '@camstack/types'
+import type { EffectiveNodeShare, NodeInferenceDevice, PlacementNodeStats } from '@dominevo/types'
 
 /**
  * What a row says about its device, first-reason-wins:

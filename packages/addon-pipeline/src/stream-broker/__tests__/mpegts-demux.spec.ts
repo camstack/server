@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
-import type { EncodedPacket } from '@camstack/types'
+import type { EncodedPacket } from '@dominevo/types'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { type MpegTsCodecInfo, MpegTsDemux } from '../rtsp/mpegts-demux.js'
 

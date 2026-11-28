@@ -11,7 +11,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ExternalLink, Loader2, LogIn } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { Button, ErrorBox } from '@camstack/ui-library'
+import { Button, ErrorBox } from '@dominevo/ui-library'
 import {
   cancelBrokerSignIn,
   commitBrokerSignIn,

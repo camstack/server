@@ -6,7 +6,7 @@
  *
  * A worker entry is a separate bundle (`dist/file-host-worker.js`, wired in
  * `vite.config.ts` next to the checkpoint and snapshot workers). It imports no
- * kernel code: the backend, the protocol and `@camstack/types`, nothing else.
+ * kernel code: the backend, the protocol and `@dominevo/types`, nothing else.
  *
  * What it does NOT own: the WAL checkpoint, the `-shm` canary and the snapshot
  * of this file run in their own threads, started by the main thread's
@@ -19,7 +19,7 @@
  * with `tags: { database }`.
  */
 import { threadId, parentPort, workerData } from 'node:worker_threads'
-import type { IScopedLogger, LogExtras, LogTags } from '@camstack/types'
+import type { IScopedLogger, LogExtras, LogTags } from '@dominevo/types'
 import {
   callControl,
   callData,

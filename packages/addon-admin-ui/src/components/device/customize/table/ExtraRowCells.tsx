@@ -8,7 +8,7 @@ import {
   type CompositionFieldRead,
   type DeviceInfo,
   runtimeFieldUnit,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   Badge,
   Button,
@@ -21,7 +21,7 @@ import {
   IconButton,
   useDeviceLabel,
   useDeviceStateGetCapSlice,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Pencil, Trash2 } from 'lucide-react'
 import { type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'

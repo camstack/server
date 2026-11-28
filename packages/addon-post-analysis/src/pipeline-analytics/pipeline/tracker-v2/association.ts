@@ -28,7 +28,7 @@
  * name (the runner's face label is `embedding:512d`); identity is a per-track
  * verdict and is L2's question.
  */
-import type { AppearanceDescriptor, BoundingBox } from '@camstack/types'
+import type { AppearanceDescriptor, BoundingBox } from '@dominevo/types'
 import { type AppearanceAggregate, distanceToAggregate } from './appearance.js'
 import { type AssignedPair, FORBIDDEN, minCostAssignment } from './assignment.js'
 import {

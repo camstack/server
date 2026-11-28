@@ -9,7 +9,7 @@ import {
   type HeatPumpPower,
   heatPumpInstantCop,
   heatPumpPeriodCop,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { EnergyFlows, EnergySourceSplit, EnergyToday } from '../scenes/energy/model'
 
 /** Derived daily facts. Null is a missing input, not a stand-in for zero. */

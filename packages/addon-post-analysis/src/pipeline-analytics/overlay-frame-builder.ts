@@ -16,7 +16,7 @@
  * Pure + transport-free: state access is injected (overlayFor / labelFor) and
  * the current time (`nowMs`) is passed by the caller — never read inside here.
  */
-import type { ObjectDetection, ScoredLabel, TrackState } from '@camstack/types'
+import type { ObjectDetection, ScoredLabel, TrackState } from '@dominevo/types'
 import type { TrackedDetectionOut } from './pipeline/frame-processor.js'
 import type { OverlayDetailState, PixelBbox } from './overlay-state.js'
 

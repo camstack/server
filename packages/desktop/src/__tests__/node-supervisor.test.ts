@@ -12,7 +12,7 @@ const NOW = 1_700_000_000_000
 describe('classifyNodeExit', () => {
   const freshMarker: RestartIntentMarker = {
     requestedAtMs: NOW - 3_000,
-    reason: 'server-update: @camstack/server@1.2.3',
+    reason: 'server-update: @dominevo/server@1.2.3',
   }
 
   it('classifies a parent-initiated stop as parent-intentional (no marker consulted)', () => {

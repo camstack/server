@@ -5,7 +5,7 @@
  * to stand in for the reading. An answered snapshot with no primary
  * field is quiet — it must not say the value is still on its way.
  */
-import { COMPOSER_ADDON_ID } from '@camstack/types'
+import { COMPOSER_ADDON_ID } from '@dominevo/types'
 import type { SensorDescriptor } from './sensor-value-atom'
 
 export type SnapshotStatus = 'pending' | 'error' | 'success'

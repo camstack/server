@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import {
   BROKER_MEM_INTERVAL_MS,
   consumerChurn,

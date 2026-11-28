@@ -4,7 +4,7 @@
  * and resolve a nullable date range into a concrete [since, until] window.
  * All functions return new structures — no input mutation.
  */
-import type { KeyEvent } from '@camstack/types'
+import type { KeyEvent } from '@dominevo/types'
 
 /**
  * One feed row = one TRACK (`getKeyEvents` returns one entry per completed

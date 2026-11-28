@@ -68,7 +68,7 @@ treat `eventMedia` as a third migration class in Phase B (same machinery).
 | | |
 | --- | --- |
 | Effect | Destroys live high footage (~3.7 TB) and any DB pointers that still name the old roots; recording gap for every camera until writers re-attach. |
-| DB reality | High/mid footage is path-derived (recorder index); `eventMedia` rows **do** carry `locationId` and must be relocated in the safe order (blob → stamp → delete). Blind SQLite edits while CamStack runs are forbidden (D679). |
+| DB reality | High/mid footage is path-derived (recorder index); `eventMedia` rows **do** carry `locationId` and must be relocated in the safe order (blob → stamp → delete). Blind SQLite edits while Dominevo runs are forbidden (D679). |
 | Verdict | **Only** if the operator accepts total loss of high archive and a maintenance window. Not the default. |
 
 ### C — Drain / migrate with the product (recommended)
@@ -83,7 +83,7 @@ treat `eventMedia` as a third migration class in Phase B (same machinery).
 
 ## 3. Recommended procedure (checklist — do not run yet)
 
-Host prep (Unraid) is outside CamStack: assemble the four NVR disks, one
+Host prep (Unraid) is outside Dominevo: assemble the four NVR disks, one
 filesystem mount per location root (or one mount per disk), **distinct physical
 roots** — two `recordings` locations must never share a root (D389).
 
@@ -144,7 +144,7 @@ Only when Phase A residue for `recordings` from
 ### Phase C — Hygiene
 
 - `storageMigration.cleanupStart` (orphans / ghost ledger).
-- Do **not** format `/recordings-2` until CamStack shows the old recordings
+- Do **not** format `/recordings-2` until Dominevo shows the old recordings
   location gone and no process holds files there (`lsof` / Unraid).
 - Refresh occupancy; confirm placement / a sample camera for each class.
 
@@ -153,7 +153,7 @@ Only when Phase A residue for `recordings` from
 ## 4. What NOT to do
 
 - Format or `rm -rf` a live location root while the location is `active`.
-- Hand-edit SQLite / open the live DB with `sqlite3` or `fs` while CamStack runs.
+- Hand-edit SQLite / open the live DB with `sqlite3` or `fs` while Dominevo runs.
 - Put two locations of the **same type** on one physical root.
 - Use `config.readOnly` or invent a second mode field — only `StorageLocation.mode`
   via the storage-location-mode path (D385).

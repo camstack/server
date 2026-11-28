@@ -1,4 +1,4 @@
-import { EVENT_PAD_MS, MAX_CLIP_EVENT_IDS } from '@camstack/types'
+import { EVENT_PAD_MS, MAX_CLIP_EVENT_IDS } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   clipIdFor,
@@ -684,7 +684,7 @@ describe('createVideoclipsProvider — listSources', () => {
 })
 
 // R5: the default provider is wired with the SHARED canonical pad from
-// @camstack/types — not a locally re-declared 5s/10s literal.
+// @dominevo/types — not a locally re-declared 5s/10s literal.
 describe('eventsToClips with the shared EVENT_PAD_MS', () => {
   it('pads clip windows -5s/+10s around the event timestamp', () => {
     const clips = eventsToClips(

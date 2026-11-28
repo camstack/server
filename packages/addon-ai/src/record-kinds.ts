@@ -12,7 +12,7 @@ import {
   LlmProfileKindSchema,
   LlmProfileSchema,
   RECORD_MAX_DATA_BYTES,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { StoredConversationSchema } from './test-chat/chat-schema.js'
 
 const DAY_MS = 24 * 60 * 60 * 1000

@@ -20,12 +20,12 @@ import {
   type AddonPageProps,
   type DataColumn,
   Button,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import {
   CLUSTER_MODEL_SCOPED_STEPS,
   type ClusterModelScopedStep,
   type ClusterStepModels,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { setClusterStepModel } from '../../ui/api.js'
 import { clusterModelPatch } from '../../ui/installed-activation.js'
 import {

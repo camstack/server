@@ -50,7 +50,7 @@ beforeEach(() => {
   runningPkgPath = path.join(tmp, 'running-package.json')
   fs.writeFileSync(
     runningPkgPath,
-    JSON.stringify({ name: '@camstack/server', version: '1.1.50' }),
+    JSON.stringify({ name: '@dominevo/server', version: '1.1.50' }),
     'utf-8',
   )
   restarts = []
@@ -73,7 +73,7 @@ function makeInstallStub(version: string): NpmExecFn {
       fs.writeFileSync(path.join(pkgDir, 'dist', 'launcher.js'), '// entry', 'utf-8')
       fs.writeFileSync(
         path.join(pkgDir, 'package.json'),
-        JSON.stringify({ name: '@camstack/server', version }),
+        JSON.stringify({ name: '@dominevo/server', version }),
         'utf-8',
       )
       for (const rel of [
@@ -121,7 +121,7 @@ function makeInstallStubNoNatives(version: string): NpmExecFn {
       fs.writeFileSync(path.join(pkgDir, 'dist', 'launcher.js'), '// entry', 'utf-8')
       fs.writeFileSync(
         path.join(pkgDir, 'package.json'),
-        JSON.stringify({ name: '@camstack/server', version }),
+        JSON.stringify({ name: '@dominevo/server', version }),
         'utf-8',
       )
     }
@@ -160,7 +160,7 @@ describe('applyServerUpdate (single-copy stage + swap-on-restart)', () => {
   it('hands the restart seam the version the node is LEAVING, not only the target', async () => {
     // The `.restart-pending` marker is written by the seam, read after the
     // reboot and turned into the operator's "Server aggiornato" notification.
-    // On 2026-08-19 that notification said only "@camstack/server sul nodo hub
+    // On 2026-08-19 that notification said only "@dominevo/server sul nodo hub
     // è stato aggiornato": the marker carried `toVersion=1.2.138` and no
     // `fromVersion`, because the reason STRING was the only channel and it can
     // only spell one version. The new process cannot recover the old one — it
@@ -170,7 +170,7 @@ describe('applyServerUpdate (single-copy stage + swap-on-restart)', () => {
     expect(res.accepted, res.message).toBe(true)
     expect(restarts).toHaveLength(1)
     expect(restarts[0]?.update).toEqual({
-      packageName: '@camstack/server',
+      packageName: '@dominevo/server',
       fromVersion: '1.1.50',
       toVersion: '1.1.60',
     })
@@ -218,7 +218,7 @@ describe('applyServerUpdate (single-copy stage + swap-on-restart)', () => {
         fs.writeFileSync(path.join(pkgDir, 'dist', 'launcher.js'), '// entry', 'utf-8')
         fs.writeFileSync(
           path.join(pkgDir, 'package.json'),
-          JSON.stringify({ name: '@camstack/server', version: '1.1.60' }),
+          JSON.stringify({ name: '@dominevo/server', version: '1.1.60' }),
           'utf-8',
         )
       }
@@ -351,7 +351,7 @@ describe('image contract (seed vs the release the contract delivers)', () => {
     fs.mkdirSync(seedDir, { recursive: true })
     fs.writeFileSync(
       path.join(seedDir, 'package.json'),
-      JSON.stringify({ name: '@camstack/server', version }),
+      JSON.stringify({ name: '@dominevo/server', version }),
       'utf-8',
     )
     return seedDir

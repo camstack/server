@@ -1,10 +1,10 @@
 import { useCallback, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import type { CameraDetectionSource } from '@camstack/types'
+import type { CameraDetectionSource } from '@dominevo/types'
 import {
   usePipelineOrchestratorGetCameraDetectionSource,
   usePipelineOrchestratorSetCameraDetectionSource,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 
 const QUERY_KEY = [['pipelineOrchestrator', 'getCameraDetectionSource']] as const
 

@@ -1,13 +1,13 @@
 /**
  * `NcRuleAiStore` — the durable AI section of the ORDINARY rules, keyed by rule id.
  *
- * A SIDE TABLE and not a second opinion. `NcRule` lives in `@camstack/types`;
+ * A SIDE TABLE and not a second opinion. `NcRule` lives in `@dominevo/types`;
  * the addon inlines its own copy, but the hub's cap router validates rule input
- * against the copy `@camstack/server/system` inlines, so a new key on it is silently
- * stripped at save until a `@camstack/server` release carrying it is installed
+ * against the copy `@dominevo/server/system` inlines, so a new key on it is silently
+ * stripped at save until a `@dominevo/server` release carrying it is installed
  * (`summary/summary-rule.ts` documents the three cascaded bugs that taught
  * this). Keeping the block here makes it live on the next
- * `camstack deploy packages/addon-post-analysis` instead.
+ * `dominevo deploy packages/addon-post-analysis` instead.
  *
  * Nothing else in this repo stores whether a rule narrates itself, so there is
  * no authority for this table to disagree with — the D62 hazard is a switch
@@ -23,7 +23,7 @@
  * `DurableLedger`. Owner stamp: `pipeline-analytics` (the hosting addon).
  */
 
-import type { IScopedLogger, RecordKindHandle, RecordsAccess } from '@camstack/types'
+import type { IScopedLogger, RecordKindHandle, RecordsAccess } from '@dominevo/types'
 import { ncRecordKinds, type RuleAiBody } from './record-kinds.js'
 import { type NcRuleAi, NcRuleAiSchema } from './rule-ai.js'
 

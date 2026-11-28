@@ -24,7 +24,7 @@ import type {
   IScopedLogger,
   PoolModelConfig,
   PipelineDefaultStep,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { PoolModelLoadError, type SharedInferencePool } from './shared-inference-pool.js'
 import { flattenEnabledVideoSteps } from './step-utils.js'
 import {

@@ -9,14 +9,10 @@
  * logged, was a credential leak waiting for one bad value. Every error the
  * provider returns or logs goes through `stripUrls` first.
  */
-import type { IScopedLogger, LogExtras, Target } from '@camstack/types'
+import type { IScopedLogger, LogExtras, Target } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { NotifierAdapter } from '../adapters/adapter.js'
-import {
-  createNotificationOutputProvider as createNotificationOutputProvider,
-  type HttpSender,
-  stripUrls,
-} from '../provider.js'
+import { createNotificationOutputProvider, type HttpSender, stripUrls } from '../provider.js'
 import { TargetStore } from '../target-store.js'
 import { makeNotifiersRecords } from './fake-records.js'
 

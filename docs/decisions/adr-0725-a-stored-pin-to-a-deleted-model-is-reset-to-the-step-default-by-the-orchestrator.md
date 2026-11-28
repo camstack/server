@@ -52,7 +52,7 @@ should reset on its own.
 ## Decision
 
 A stored step pin whose id was deleted from that step's catalog
-(`REMOVED_MODEL_IDS` in `@camstack/types`) is reset, unless a registered custom
+(`REMOVED_MODEL_IDS` in `@dominevo/types`) is reset, unless a registered custom
 model (the `custom-model-registry` collection, i.e. Model Studio) carries the
 same id for the same step. Resetting a pin means dropping it from the store, so
 the step follows its default. The pin is never rewritten to the default's id.
@@ -109,7 +109,7 @@ build for the accelerator). Its button says the choice applies on Save.
 - `custom-model-registry` is a collection. If its provider (Model Studio) is
   installed but has not registered yet when the boot sweep runs, the answer is
   an empty list, and a custom model sharing a deleted catalog id would be reset.
-  This is accepted: Model Studio never mints an id that is also a CamStack
+  This is accepted: Model Studio never mints an id that is also a Dominevo
   catalog id, so the collision takes an operator naming his import after a
   deleted model.
 - Templates and the wholesale `pipelineByAgent` override are not swept.

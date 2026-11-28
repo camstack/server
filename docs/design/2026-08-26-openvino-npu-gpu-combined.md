@@ -32,7 +32,7 @@ covers:
 ## 0. The answer in one paragraph
 
 **No, it is not worth it, and on the incident that generated the question it would have done
-worse.** A CamStack pool is **one Python process**
+worse.** A Dominevo pool is **one Python process**
 (`runtimes.ts:196`, `numWorkers: 1`). Merging NPU and GPU under `AUTO`, `MULTI` or
 `HETERO` means hosting the two accelerators **in the same process**. The
 2026-08-25 failure is not an exception of the GPU plugin: it is
@@ -244,7 +244,7 @@ on the specific failure of 2026-08-25.
 | Mode | What OpenVINO does | Effect on the GPU abort | Effect on the rest |
 | --- | --- | --- | --- |
 | `AUTO` (default, LATENCY) | Compiles on the highest-priority candidate; with `ENABLE_STARTUP_FALLBACK` it serves on CPU during the JIT and then hands over | The NPU wins the priority: **the GPU is never compiled** → the abort does not happen… because the GPU is never used | Equivalent to **turning the GPU off**, but losing pin, per-device telemetry and per-device capacity. And it brings back the CPU→accelerator handover that already broke production (`score_8`) |
-| `AUTO` + `CUMULATIVE_THROUGHPUT` | Compiles on **all** devices and distributes the requests | **The abort happens**, inside the process that also hosts the NPU → **both are lost** | `EXECUTION_DEVICES` becomes a set: CamStack's per-device capacity and telemetry stop having meaning |
+| `AUTO` + `CUMULATIVE_THROUGHPUT` | Compiles on **all** devices and distributes the requests | **The abort happens**, inside the process that also hosts the NPU → **both are lost** | `EXECUTION_DEVICES` becomes a set: Dominevo's per-device capacity and telemetry stop having meaning |
 | `MULTI:NPU,GPU` | Compiles on **every** listed device at load, round-robin on the requests | **The abort happens**, same process → **both are lost** | Doubles compilation time and memory per spawn; the memory watchdog covers two accelerators with a single threshold |
 | `HETERO:NPU,GPU` | Partitions the **operators of a single graph** among devices | Compiles subgraphs on **both** → the abort happens, same process → **both are lost** | It is not load balancing: it solves nothing of what the operator wants. Moreover `_static_batch_required` (D202) is per-candidate (`inference_pool.py:552-566`) and `HETERO` has no candidates: the rule "the NPU rejects a dynamic dimension" has nowhere to apply |
 

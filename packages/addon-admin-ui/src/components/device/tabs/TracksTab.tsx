@@ -9,10 +9,10 @@ import {
   ChevronRight,
   AlertCircle,
 } from 'lucide-react'
-import type { Track } from '@camstack/types'
-import { useDeviceProxy, useSystem, Button, DataTable } from '@camstack/ui-library'
+import type { Track } from '@dominevo/types'
+import { useDeviceProxy, useSystem, Button, DataTable } from '@dominevo/ui-library'
 import { Trans, useTranslation } from 'react-i18next'
-import { formatNumeric } from '@camstack/ui-library'
+import { formatNumeric } from '@dominevo/ui-library'
 
 /**
  * TracksTab — replaces the legacy TrackTrailTab. Reads from the

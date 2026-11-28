@@ -18,7 +18,7 @@
  * exists is released, once the record's own credential has been confirmed to resolve. Only when
  * the sweep found nothing either does the step report `already-done`.
  */
-import type { MigrationProcedureResult, SecretMarker } from '@camstack/types'
+import type { MigrationProcedureResult, SecretMarker } from '@dominevo/types'
 import { legacyLocationSecretRef } from './legacy-location-secret-refs.js'
 
 /** One location row's legacy credentials: config key to the marker that names the old ref. */

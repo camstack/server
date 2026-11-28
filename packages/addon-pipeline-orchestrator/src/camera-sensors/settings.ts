@@ -9,7 +9,7 @@ import {
   type CameraSensorsConfig,
   CameraSensorsConfigSchema,
   errMsg,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export type CameraSensorsSetting =
   | { readonly state: 'not-configured' }

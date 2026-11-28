@@ -1,4 +1,4 @@
-import type { IEventBus, EventSource, SystemEvent } from '@camstack/types'
+import type { IEventBus, EventSource, SystemEvent } from '@dominevo/types'
 
 /**
  * Walks the parent chain for every device-sourced event and re-emits a

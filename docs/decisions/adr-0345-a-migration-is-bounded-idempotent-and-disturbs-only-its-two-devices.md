@@ -103,8 +103,8 @@ restart survives only as the per-addon FALLBACK when a reload fails
   for an unavailable switch says "not available", which `classify()` maps to
   `not-offered` even when the reason was `source-unreachable` — a dead
   camera's camera-plane switches can escape `sourceStillLive`.
-- All of it is framework-tier (`@camstack/types` + `@camstack/system`): live
-  only via a `@camstack/server` release, not via any `camstack deploy`.
+- All of it is framework-tier (`@dominevo/types` + `@dominevo/system`): live
+  only via a `@dominevo/server` release, not via any `dominevo deploy`.
   Against an older runner the reload RPC fails and the fallback restart
   preserves the old guarantee.
 

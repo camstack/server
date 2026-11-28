@@ -3,12 +3,12 @@
  * player's source picker offers, declared by the operator — a button is never a
  * source on its own. Edits go through the pure model; nothing is saved here.
  */
-import type { RemoteConfig, RemoteSource } from '@camstack/types'
+import type { RemoteConfig, RemoteSource } from '@dominevo/types'
 import {
   REMOTE_STEP_DELAY_MAX_MS,
   REMOTE_STEP_DELAY_MIN_MS,
   remoteSourceSteps,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   Badge,
   Button,
@@ -19,7 +19,7 @@ import {
   IconButton,
   Input,
   DurationInput,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { ArrowDown, ArrowUp, ListVideo, Pencil, Plus, Trash2 } from 'lucide-react'
 import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'

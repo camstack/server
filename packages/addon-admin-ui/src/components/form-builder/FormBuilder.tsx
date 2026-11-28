@@ -4,8 +4,8 @@ import {
   isFieldVisible,
   OptionSelect,
   type OptionSelectOption,
-} from '@camstack/ui-library'
-import type { NcSchedule } from '@camstack/types'
+} from '@dominevo/ui-library'
+import type { NcSchedule } from '@dominevo/types'
 import { useState } from 'react'
 import type {
   ConfigField,

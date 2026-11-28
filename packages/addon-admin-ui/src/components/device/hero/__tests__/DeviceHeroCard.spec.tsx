@@ -4,8 +4,8 @@
  * with its consumables chip and its History button, and no legacy fallback when
  * the model draws nothing. Mounted with the real module over a stand-in hub.
  */
-import { buildHeroModel } from '@camstack/types'
-import { ThemeProvider } from '@camstack/ui-library'
+import { buildHeroModel } from '@dominevo/types'
+import { ThemeProvider } from '@dominevo/ui-library'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
@@ -46,8 +46,8 @@ const WASHER = buildHeroModel({
 
 const hub = vi.hoisted(() => ({ model: null as unknown }))
 
-vi.mock('@camstack/ui-library', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@camstack/ui-library')>()
+vi.mock('@dominevo/ui-library', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dominevo/ui-library')>()
   const { fakeSystemClient } = await import(
     '../../../../modules/device-detail/__tests__/fake-system-client'
   )

@@ -1,5 +1,5 @@
 import type { ReolinkBaichuanApi } from '@apocaliss92/nodelink-js'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import {
   type HubConnectionRead,
   type ReolinkHubConnection,

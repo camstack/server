@@ -1,6 +1,6 @@
 {
-  "name": "@camstack/addon-post-analysis",
-  "version": "1.2.734",
+  "name": "@dominevo/addon-post-analysis",
+  "version": "0.1.0",
   "description": "Post-Analysis bundle — enrichment, embedding-encoder, pipeline-analytics. Multi-entry npm package shipping addons that consume pipeline output.",
   "keywords": [
     "camstack",
@@ -14,12 +14,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/camstack/server.git",
+    "url": "https://github.com/dominevo/server.git",
     "directory": "packages/addon-post-analysis"
   },
   "homepage": "https://camstack-docs.zentik.app",
   "bugs": {
-    "url": "https://github.com/camstack/server/issues"
+    "url": "https://github.com/dominevo/server/issues"
   },
   "main": "./dist/pipeline-analytics/index.js",
   "exports": {
@@ -143,7 +143,7 @@
       }
     ],
     "requires": {
-      "server": ">=1.2.974"
+      "server": ">=0.1.0"
     }
   },
   "scripts": {
@@ -157,7 +157,7 @@
     "publish:npm": "npm publish --access public"
   },
   "peerDependencies": {
-    "@camstack/types": "*",
+    "@dominevo/types": "0.1.0",
     "react": ">=18",
     "react-dom": ">=18"
   },
@@ -167,8 +167,8 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@camstack/types": "*",
-    "@camstack/ui-library": "*",
+    "@dominevo/types": "0.1.0",
+    "@dominevo/ui-library": "0.1.0",
     "@module-federation/vite": "^1.16.9",
     "@vitejs/plugin-react": "^6.0.2",
     "lucide-react": "^0.576.0",
@@ -178,7 +178,7 @@
   },
   "nx": {
     "implicitDependencies": [
-      "@camstack/server-framework"
+      "@dominevo/server-framework"
     ]
   }
 }

@@ -1,4 +1,4 @@
-import type { CamProfile, ClipWake } from '@camstack/types'
+import type { CamProfile, ClipWake } from '@dominevo/types'
 import type { ClipReadArgs } from './clip-cap-input.js'
 import { indexClipMp4, type ClipIndexRefusalReason, type ClipMp4Index } from './clip-mp4-index.js'
 import type { LocateResult } from './recorded-feeder.js'

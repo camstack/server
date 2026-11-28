@@ -36,8 +36,8 @@
  * timelapse would show the operator motion that never happened.
  */
 
-import type { ExportDenseRange } from '@camstack/types'
-import { TIMELAPSE_DENSE_FLOOR_SEC } from '@camstack/types'
+import type { ExportDenseRange } from '@dominevo/types'
+import { TIMELAPSE_DENSE_FLOOR_SEC } from '@dominevo/types'
 
 /**
  * Dense cadence as a fraction of the base when the rule states none.

@@ -11,9 +11,9 @@
  * operator toggled by accident must not cost the operator the value they typed.
  */
 
-import type { AutomationConditionOperator, DeviceIsLeaf } from '@camstack/types'
-import { baseUnitForQuantity } from '@camstack/types'
-import { QuantityValueInput, Select, typedToStored } from '@camstack/ui-library'
+import type { AutomationConditionOperator, DeviceIsLeaf } from '@dominevo/types'
+import { baseUnitForQuantity } from '@dominevo/types'
+import { QuantityValueInput, Select, typedToStored } from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 import type { AutomationDevice } from './automation-data'
 import { HoldFields } from './HoldFields'

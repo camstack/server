@@ -27,7 +27,7 @@
  * the id/media is absent, still loading, or errored.
  */
 
-import { Button, Dialog, DialogContent, useFaceGalleryGetFaceMedia } from '@camstack/ui-library'
+import { Button, Dialog, DialogContent, useFaceGalleryGetFaceMedia } from '@dominevo/ui-library'
 import { Crop, ImageOff, Loader2, Scan, Trash2, UserCheck, UserX } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { authedFetchBlob, mediaIdPath } from '../../lib/authed-media.js'

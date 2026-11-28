@@ -100,7 +100,7 @@ way.
   is never called — four inert lines (`log-channels`, `login-method`,
   `load-contribution`, `failure-contribution`) that would otherwise have
   changed shape inside a slice that is about the mount.
-- Ships on the framework train (`@camstack/types` + `@camstack/system`); no
+- Ships on the framework train (`@dominevo/types` + `@dominevo/system`); no
   method signature changed, so no SDK regeneration and no viewer release.
 
 ## Enforcement

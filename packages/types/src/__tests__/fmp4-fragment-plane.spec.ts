@@ -2,7 +2,7 @@
  * Fmp4FragmentPlane — the DUAL-USE seam.
  *
  * The operator's requirement for HKSV (roadmap 4b) was that the live fMP4
- * source be built so a HomeKit-triggered recording ALSO lands in CamStack as a
+ * source be built so a HomeKit-triggered recording ALSO lands in Dominevo as a
  * videoclip source: one fragmenter, two consumers. Every test here is about
  * that property or about the two contracts a second consumer must not be able
  * to break — the retained initialisation segment, and `isLast`.

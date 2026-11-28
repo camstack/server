@@ -10,7 +10,7 @@ import {
   NcRuleSchema,
   NcSystemEventKindSchema,
   type NcSystemEventKind,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { describe, expect, it } from 'vitest'
 import {

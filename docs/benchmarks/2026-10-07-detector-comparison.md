@@ -1,12 +1,12 @@
 # Object detectors × hardware — measured comparison
 
-Measured on 2026-10-07 on a live CamStack cluster: a hub with an Intel Core Ultra 7 265K (NPU "AI Boost", Intel iGPU, 20-core CPU, a Coral USB Edge TPU), an agent on an Intel N100 (UHD iGPU, 4 cores), a Mac mini M2 agent, and an M3 Pro laptop standing in for "Apple Silicon" where the Mac mini could not be measured.
+Measured on 2026-10-07 on a live Dominevo cluster: a hub with an Intel Core Ultra 7 265K (NPU "AI Boost", Intel iGPU, 20-core CPU, a Coral USB Edge TPU), an agent on an Intel N100 (UHD iGPU, 4 cores), a Mac mini M2 agent, and an M3 Pro laptop standing in for "Apple Silicon" where the Mac mini could not be measured.
 
 ## How it was measured
 
 - **Frames**: 409 real frames from 28 cameras (960×540 scene frames of tracked objects plus 95 motion snapshots; 115 night/IR frames; mixed indoor, outdoor, parking).
 - **Ground truth**: two large reference detectors (YOLO26-X at 1280 px and RT-DETR-X at 640 px) are run on every frame; an object counts when both agree (or one is very confident). Uncertain boxes are "don't care". This is a pseudo ground truth — good for ranking models and setting floors, not an absolute mAP.
-- **Pipeline-identical decode**: every candidate runs through CamStack's own preprocessing (downscale to the model's content size, letterbox with grey padding) and its own YOLO/SSD decoder and NMS (pool floor 0.05, IoU 0.45). OpenVINO models are compiled exactly as the inference pool does (uint8 input with the /255 folded into the graph, `PERFORMANCE_HINT=LATENCY`, device-default precision).
+- **Pipeline-identical decode**: every candidate runs through Dominevo's own preprocessing (downscale to the model's content size, letterbox with grey padding) and its own YOLO/SSD decoder and NMS (pool floor 0.05, IoU 0.45). OpenVINO models are compiled exactly as the inference pool does (uint8 input with the /255 folded into the graph, `PERFORMANCE_HINT=LATENCY`, device-default precision).
 - **Production reference**: `yolov9m-320-int8` with floors person 0.65 / vehicle 0.50 / animal 0.50 (the current default root).
 - **Latency**: single-request p50 over 40 calls after warm-up on a fixed 960×540 frame (inference only: no decode, no IPC), plus throughput with 4 requests in flight for 2 s ("fps"). Runs were short and interleaved with live detection on the same accelerators.
 - **Load during measurement**: hub load average ≈ 6 on 20 cores with 1–2 cameras detecting on the NPU/iGPU; N100 load average 6–19 on 4 cores (CI jobs were running) — **the N100 CPU column is pessimistic by roughly 2–4×** and its iGPU column is somewhat affected; M3 Pro load ≈ 6–9 on 12 cores (the YOLO26 Core ML cells marked ‡ were measured later the same day at load 7–29, see (e); the YOLOv9 Core ML cells marked § are the FP16 packages, measured after D743 at load 7–9, see (f)).

@@ -15,7 +15,7 @@
  * with a "no" and no reason.
  */
 
-import { Badge, Button } from '@camstack/ui-library'
+import { Badge, Button } from '@dominevo/ui-library'
 import { AlertCircle, CheckCircle, Copy } from 'lucide-react'
 import { useState } from 'react'
 

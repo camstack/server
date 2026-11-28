@@ -14,7 +14,7 @@ import {
   SettingRow,
   useServerManagementGetLaunchOverrides,
   useServerManagementSetLaunchOverrides,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 
 const MIN_MB = 512
 const MAX_MB = 65536

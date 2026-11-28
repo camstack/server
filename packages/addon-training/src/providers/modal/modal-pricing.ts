@@ -5,7 +5,7 @@
  * region multipliers are Modal's documented surcharge for pinning a region;
  * whether the Starter plan may pin one at all is unverified (spike A0).
  */
-import type { TrainingGpuOption, TrainingRegionOption } from '@camstack/types'
+import type { TrainingGpuOption, TrainingRegionOption } from '@dominevo/types'
 
 export const MODAL_GPUS: readonly TrainingGpuOption[] = [
   { id: 'T4', label: 'NVIDIA T4 (16 GB)', usdPerHour: 0.59, vramGb: 16 },

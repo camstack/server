@@ -13,7 +13,7 @@
  *  - **the export plan asks for each track's events ONCE.** They are needed
  *    twice (the count, and `events.json`) and the seam is a real query.
  */
-import type { MediaFileInfo, ObjectEvent, Track } from '@camstack/types'
+import type { MediaFileInfo, ObjectEvent, Track } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { makeTestMediaFileInfo } from '../../../__tests__/support/media-file.js'
 import { makeTestObjectEvent } from '../../../__tests__/support/events.js'

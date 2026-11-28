@@ -5,7 +5,7 @@
  * published as down with that typed reason (the orchestrator then frees the CPU)
  * instead of retrying the load behind a backoff forever.
  */
-import type { IScopedLogger, PipelineDefaultStep, PoolModelConfig } from '@camstack/types'
+import type { IScopedLogger, PipelineDefaultStep, PoolModelConfig } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { EngineFactory } from '../engine/engine-factory.js'
 import { PipelineModelManager, type PoolModelSource } from '../engine/pipeline-model-manager.js'

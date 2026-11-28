@@ -60,31 +60,31 @@ const TYPECHECK_SCRIPT =
  *  - desktop: two specs import `scripts/*.mjs`, typed by inference from the JS.
  */
 export const SPEC_CONFIG_OVERRIDES: Readonly<Record<string, Readonly<Record<string, unknown>>>> = {
-  '@camstack/server-framework': { rootDir: '.' },
-  '@camstack/types': { rootDir: '.' },
-  '@camstack/addon-pipeline': { rootDir: '../..' },
+  '@dominevo/server-framework': { rootDir: '.' },
+  '@dominevo/types': { rootDir: '.' },
+  '@dominevo/addon-pipeline': { rootDir: '../..' },
   // The SMTP migration spec mounts the hub's real SQLite migration engine from the sibling package.
-  '@camstack/addon-smtp-nodemailer': { rootDir: '../..' },
+  '@dominevo/addon-smtp-nodemailer': { rootDir: '../..' },
   // The Cloudflare tunnel migration spec mounts the same engine.
-  '@camstack/addon-cloudflare': { rootDir: '../..' },
+  '@dominevo/addon-cloudflare': { rootDir: '../..' },
   // The MQTT broker and Alexa migration specs mount the same engine.
-  '@camstack/addon-mqtt-broker': { rootDir: '../..' },
-  '@camstack/addon-export-alexa': { rootDir: '../..' },
+  '@dominevo/addon-mqtt-broker': { rootDir: '../..' },
+  '@dominevo/addon-export-alexa': { rootDir: '../..' },
   // The Google exposure-migration spec mounts the same engine.
-  '@camstack/addon-export-google': { rootDir: '../..' },
+  '@dominevo/addon-export-google': { rootDir: '../..' },
   // The Home Assistant flatten-migration spec mounts the real records and migration engines.
-  '@camstack/addon-provider-homeassistant': { rootDir: '../..' },
+  '@dominevo/addon-provider-homeassistant': { rootDir: '../..' },
   // The settings-migration specs mount the sibling package's real `addon-settings` ledger fixture.
-  '@camstack/addon-export-hap': { rootDir: '../..' },
-  '@camstack/addon-provider-onvif': { rootDir: '../..' },
-  '@camstack/addon-pipeline-orchestrator': { rootDir: '../..' },
-  '@camstack/addon-post-analysis': { rootDir: '../..' },
-  '@camstack/desktop': { allowJs: true },
+  '@dominevo/addon-export-hap': { rootDir: '../..' },
+  '@dominevo/addon-provider-onvif': { rootDir: '../..' },
+  '@dominevo/addon-pipeline-orchestrator': { rootDir: '../..' },
+  '@dominevo/addon-post-analysis': { rootDir: '../..' },
+  '@dominevo/desktop': { allowJs: true },
 }
 
 /** The base a spec config extends: the package's build config. */
 const SPEC_CONFIG_BASES: Readonly<Record<string, string>> = {
-  '@camstack/desktop': './tsconfig.main.json',
+  '@dominevo/desktop': './tsconfig.main.json',
 }
 
 export interface SpecTypecheckFacts {
@@ -146,20 +146,20 @@ export function judgeSpecTypecheck(facts: SpecTypecheckFacts): readonly string[]
  * Ambient declarations a TEST file may make. Test files join the production
  * program (D695), and an ambient `declare module 'x'` OVERRIDES the real
  * resolution of `x` for every file in it — verified: a shorthand
- * `declare module '@camstack/types'` in a backend test silently typed the
- * whole program's `@camstack/types` imports as `any`. So: matcher type
+ * `declare module '@dominevo/types'` in a backend test silently typed the
+ * whole program's `@dominevo/types` imports as `any`. So: matcher type
  * augmentation only, plus the backend's untyped-addon shim, which is allowed
  * only while no production file of that package imports those modules.
  */
 const ALLOWED_TEST_REFERENCE_TYPES: ReadonlySet<string> = new Set(['@testing-library/jest-dom'])
 const ALLOWED_TEST_MODULE_AUGMENTATIONS: ReadonlySet<string> = new Set(['vitest'])
 const ALLOWED_TEST_SHORTHAND_MODULES: Readonly<Record<string, ReadonlySet<string>>> = {
-  '@camstack/server': new Set([
-    '@camstack/addon-admin-ui/server/addon',
-    '@camstack/addon-auth/oidc',
-    '@camstack/addon-benchmark',
-    '@camstack/addon-mqtt-broker',
-    '@camstack/addon-pipeline/stream-broker',
+  '@dominevo/server': new Set([
+    '@dominevo/addon-admin-ui/server/addon',
+    '@dominevo/addon-auth/oidc',
+    '@dominevo/addon-benchmark',
+    '@dominevo/addon-mqtt-broker',
+    '@dominevo/addon-pipeline/stream-broker',
   ]),
 }
 

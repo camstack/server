@@ -21,8 +21,8 @@
  * Conservative on purpose: a refused legitimate mint costs a sentence in the
  * error; an accepted escalation costs the hub.
  */
-import type { CredentialScope, MethodAccess, ShareViewGrant, UserScope } from '@camstack/types'
-import { ADMIN_SCOPE, capabilityScopesOf, scopesGrantAdmin } from '@camstack/types'
+import type { CredentialScope, MethodAccess, ShareViewGrant, UserScope } from '@dominevo/types'
+import { ADMIN_SCOPE, capabilityScopesOf, scopesGrantAdmin } from '@dominevo/types'
 import { filterViewableDeviceIds } from '../api/trpc/principal-visibility.js'
 import { checkScopeAccess, type DeviceScopeLookup } from '../api/trpc/scope-access.js'
 

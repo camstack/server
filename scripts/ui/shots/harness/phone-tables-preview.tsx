@@ -9,7 +9,7 @@ import { NodeLiveTab } from '@admin/components/pipeline/tabs/NodeLiveTab'
 import i18n from '@admin/i18n'
 import { AdminUiTextProvider } from '@admin/i18n/AdminUiTextProvider'
 import { EventsDebugTapes } from '@admin/pages/EventsDebugTapes'
-import type { ConfigObjectArrayField } from '@camstack/types'
+import type { ConfigObjectArrayField } from '@dominevo/types'
 import {
   ConfigFormField,
   ConfirmDialogProvider,
@@ -17,7 +17,7 @@ import {
   SystemProvider,
   ThemeProvider,
   trpc,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { type ReactElement, useState } from 'react'
 import { I18nextProvider } from 'react-i18next'

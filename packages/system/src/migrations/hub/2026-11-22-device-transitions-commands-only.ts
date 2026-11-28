@@ -14,7 +14,7 @@
  * Idempotent: a second run finds no retired outcome and no `device` row. A node that never
  * recorded a transition has no catalog row for the kind and nothing to do.
  */
-import type { MigrationMeta } from '@camstack/types'
+import type { MigrationMeta } from '@dominevo/types'
 import type {
   HubSqlMigration,
   MigrationDatabase,

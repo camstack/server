@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { DeviceTransition, TransitionActor } from '@camstack/types'
+import type { DeviceTransition, TransitionActor } from '@dominevo/types'
 import {
   actionNamesFromList,
   actuationActorLabel,

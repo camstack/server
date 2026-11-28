@@ -8,7 +8,7 @@ import {
   type GroupMember,
   type GroupMemberWhen,
   type NotificationField,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   Badge,
   DeviceValuePicker,
@@ -19,7 +19,7 @@ import {
   Switch,
   ToggleChipRow,
   DurationInput,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { ChevronDown, ChevronRight, Trash2 } from 'lucide-react'
 import { useState, type ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'

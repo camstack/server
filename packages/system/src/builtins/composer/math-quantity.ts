@@ -10,7 +10,7 @@ import {
   type HelperSpec,
   type IScopedLogger,
   type ReadingQuantity,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export interface MathQuantityBlock {
   readonly id: string

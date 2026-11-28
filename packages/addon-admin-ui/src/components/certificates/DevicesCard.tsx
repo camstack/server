@@ -11,7 +11,7 @@
  * Every state comes from an ANSWERED query (D315): reading, failed (with the
  * reason), and only an answer with no rows says "no devices".
  */
-import { trpc, useConfirm, usePrompt, useUserManagementListUsers } from '@camstack/ui-library'
+import { trpc, useConfirm, usePrompt, useUserManagementListUsers } from '@dominevo/ui-library'
 import { Ban, Pencil, Smartphone, Trash2 } from 'lucide-react'
 import { useMemo, useState, type ReactNode } from 'react'
 

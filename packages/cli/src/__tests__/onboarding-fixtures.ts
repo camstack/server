@@ -1,7 +1,7 @@
 /** Fake machines and an MCP client for the onboarding specs. */
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js'
-import { MutationGate, type HubClient } from '@camstack/develop'
+import { MutationGate, type HubClient } from '@dominevo/develop'
 import { hostCheck, type HostCheckReport } from '../host-check/host-check.js'
 import type { HostFs } from '../host-check/probe.js'
 import type { HostFacts } from '../host-check/sizing.js'
@@ -136,7 +136,7 @@ export function fakeHub(answers: HubAnswers, options: FakeHubOptions = {}): Fake
           tls: {},
           client,
           adminHint: tier === 'admin' ? null : 'log in as admin',
-          loginCommand: 'camstack login',
+          loginCommand: 'dominevo login',
         },
       }),
       gate: new MutationGate({ allowMutations: true, audit: () => {} }),

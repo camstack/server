@@ -13,8 +13,8 @@ import {
   TrackPuritySchema,
   type TrackRelation,
   TrackRelationSchema,
-} from '@camstack/types'
-import type { IScopedLogger } from '@camstack/types'
+} from '@dominevo/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { EventLedgerCollection } from './event-ledger-collection.js'
 
 /**

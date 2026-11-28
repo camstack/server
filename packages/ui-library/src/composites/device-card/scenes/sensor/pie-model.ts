@@ -5,7 +5,7 @@
  * (a pie past six wedges stops being legible). Everything here is pure: the scene
  * only paints it.
  */
-import { type HeroMeasurement, type HeroModel, isNotReported } from '@camstack/types'
+import { type HeroMeasurement, type HeroModel, isNotReported } from '@dominevo/types'
 
 /** The most readings a pie draws; one more and the card is a grid. */
 export const PIE_MAX_WEDGES = 6

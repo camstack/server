@@ -3,7 +3,7 @@ import { useDeviceCapability } from '../../hooks/use-device-capability'
 import { useDeviceCommand } from '../../hooks/use-device-command'
 import { useUiText } from '../../contexts/ui-text'
 import { cn } from '../../lib/cn'
-import type { SwitchStatus } from '@camstack/types'
+import type { SwitchStatus } from '@dominevo/types'
 import type { ControlPanelProps } from './types'
 
 export function SwitchPanel({ trpc, deviceId }: ControlPanelProps): ReactNode {

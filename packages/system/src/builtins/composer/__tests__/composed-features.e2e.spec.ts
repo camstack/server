@@ -8,8 +8,8 @@
  * bindings: after the apply that built the device, after a bindings change, and
  * gone again when the cap is unbound.
  */
-import { COMPOSER_ADDON_ID, CompositionSchema, DeclaredDevices, DeviceType } from '@camstack/types'
-import type { AddonApi, ComposerApplyInput, IEventBus, SystemEvent } from '@camstack/types'
+import { COMPOSER_ADDON_ID, CompositionSchema, DeclaredDevices, DeviceType } from '@dominevo/types'
+import type { AddonApi, ComposerApplyInput, IEventBus, SystemEvent } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { CapabilityRegistry } from '../../../kernel/capability-registry.js'
 import { DeviceRegistry } from '../../../kernel/device-registry.js'

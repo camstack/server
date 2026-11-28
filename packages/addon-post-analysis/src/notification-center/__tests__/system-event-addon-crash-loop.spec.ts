@@ -14,7 +14,7 @@
  *   3. the catalog RESOLVES both keys in every shipped language (a missing key
  *      renders an empty notification).
  */
-import { createEvent, EventCategory, type SystemEvent } from '@camstack/types'
+import { createEvent, EventCategory, type SystemEvent } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { NC_SYSTEM_EVENT_CATEGORIES } from '../../pipeline-analytics/runtime/wire-subscriptions.js'
 import type { NcDeviceLookup } from '../device-directory.js'

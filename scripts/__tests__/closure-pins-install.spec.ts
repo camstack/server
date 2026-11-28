@@ -1,5 +1,5 @@
 /**
- * #681 — the Docker image and the desktop build install `@camstack/server` with
+ * #681 — the Docker image and the desktop build install `@dominevo/server` with
  * a bare `npm install`; `scripts/closure-pins-install.mjs` resolves the version
  * once and writes the tarball's `closure-pins.json` as root `overrides` first.
  */
@@ -50,7 +50,10 @@ describe('closure-pins-install', () => {
   let logs: string[]
   beforeEach(() => {
     dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pins-install-'))
-    fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ name: 'hub', version: '1.0.0' }))
+    fs.writeFileSync(
+      path.join(dir, 'package.json'),
+      JSON.stringify({ name: 'hub', version: '1.0.0' }),
+    )
     logs = []
   })
   afterEach(() => fs.rmSync(dir, { recursive: true, force: true }))
@@ -64,7 +67,7 @@ describe('closure-pins-install', () => {
     expect(out).toEqual({ version: '9.9.9', pinned: true })
     expect(manifest().overrides).toEqual(PINS)
     expect(calls.args.filter((a) => a[0] === 'view')).toHaveLength(1)
-    expect(calls.args.find((a) => a[0] === 'pack')![1]).toBe('@camstack/server@9.9.9')
+    expect(calls.args.find((a) => a[0] === 'pack')![1]).toBe('@dominevo/server@9.9.9')
   })
 
   it('installs unpinned, with a named reason, when the tarball ships no file', async () => {
@@ -101,10 +104,18 @@ describe('closure-pins-install', () => {
     afterEach(() => fs.rmSync(bin, { recursive: true, force: true }))
 
     function runCli() {
-      return spawnSync(process.execPath, [path.join(ROOT, 'scripts/closure-pins-install.mjs'), dir, 'latest'], {
-        encoding: 'utf8',
-        env: { ...process.env, PATH: `${bin}${path.delimiter}${process.env['PATH'] ?? ''}`, CLOSURE_PINS_RETRY_MS: '1' },
-      })
+      return spawnSync(
+        process.execPath,
+        [path.join(ROOT, 'scripts/closure-pins-install.mjs'), dir, 'latest'],
+        {
+          encoding: 'utf8',
+          env: {
+            ...process.env,
+            PATH: `${bin}${path.delimiter}${process.env['PATH'] ?? ''}`,
+            CLOSURE_PINS_RETRY_MS: '1',
+          },
+        },
+      )
     }
     function stubNpm(body: string): void {
       const file = path.join(bin, 'npm')
@@ -117,7 +128,9 @@ describe('closure-pins-install', () => {
       const r = runCli()
       expect(r.status).toBe(0)
       expect(r.stdout).toBe('latest\n')
-      expect(r.stderr).toContain('UNPINNED: cannot resolve @camstack/server@latest after 3 attempts')
+      expect(r.stderr).toContain(
+        'UNPINNED: cannot resolve @dominevo/server@latest after 3 attempts',
+      )
       expect(manifest().overrides).toBeUndefined()
     })
 
@@ -142,8 +155,11 @@ process.exit(1)`)
   it('the Dockerfile and the desktop stage install through the helper', () => {
     const docker = fs.readFileSync(path.join(ROOT, 'Dockerfile'), 'utf8')
     expect(docker).toContain('closure-pins-install.mjs')
-    expect(docker).not.toMatch(/npm install[^\n]*@camstack\/server@latest/)
-    const stage = fs.readFileSync(path.join(ROOT, 'packages/desktop/scripts/stage-deps.mjs'), 'utf8')
+    expect(docker).not.toMatch(/npm install[^\n]*@dominevo\/server@latest/)
+    const stage = fs.readFileSync(
+      path.join(ROOT, 'packages/desktop/scripts/stage-deps.mjs'),
+      'utf8',
+    )
     expect(stage).toContain('closure-pins-install.mjs')
   })
 })

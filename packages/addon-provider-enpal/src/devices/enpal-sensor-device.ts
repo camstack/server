@@ -13,7 +13,7 @@ import {
   type NumericSensorStatus,
   powerMeterCapability,
   type PowerMeterStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { ENPAL_SYSTEM } from '../config.js'
 import { computeSlices, findSpec, type EnpalSpec, type SpecSlices } from '../enpal-catalog.js'

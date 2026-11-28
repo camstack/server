@@ -1,5 +1,5 @@
-import type { SecondFactorKind } from '@camstack/sdk'
-import { trpc, useThemeMode, Button, Input } from '@camstack/ui-library'
+import type { SecondFactorKind } from '@dominevo/sdk'
+import { trpc, useThemeMode, Button, Input } from '@dominevo/ui-library'
 import { ArrowLeft, Eye, EyeOff, Smartphone } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
@@ -497,7 +497,7 @@ export function LoginPage() {
                 href={appHandoff.mintedUrl}
                 className="inline-flex rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
               >
-                {t('login.openCamstack', 'Open CamStack')}
+                {t('login.openCamstack', 'Open Dominevo')}
               </a>
             </>
           )}
@@ -517,7 +517,7 @@ export function LoginPage() {
                 ? hubPath('/brand/logo-horizontal-light.svg')
                 : hubPath('/brand/logo-horizontal-dark.svg')
             }
-            alt={t('login.camstackAdmin', 'CamStack Admin')}
+            alt={t('login.camstackAdmin', 'Dominevo Admin')}
             className="h-12"
           />
         </div>

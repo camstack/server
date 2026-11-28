@@ -12,7 +12,7 @@ import {
   temperatureMeasurement,
   type DeviceDisplayOverride,
   type SourceInfo,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { formatControlDateTime } from '../../../lib/format-control-datetime'
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
@@ -204,7 +204,9 @@ describe('a Control row edits its primary control', () => {
   it('a date control with a shape is read out in the locale, not as the raw value', () => {
     answer([controlRow({ kind: 'datetime', value: '2026-11-12' })])
     render(
-      <ModelRowControl device={device({ sourceInfo: { id: 'd', system: 'ha', dateTimeShape: 'date' } })} />,
+      <ModelRowControl
+        device={device({ sourceInfo: { id: 'd', system: 'ha', dateTimeShape: 'date' } })}
+      />,
     )
     const text = screen.getByTestId('row-readout').textContent
     expect(text).toBe(formatControlDateTime('2026-11-12', 'date'))
@@ -260,7 +262,13 @@ describe('the wave E rows draw the projected model, the same one the card reads'
       caps: ['automation-control'],
       features: [],
       slices: {
-        'automation-control': { enabled: true, isRunning: false, lastTriggeredAt: 0, lastError: null, lastChangedAt: 0 },
+        'automation-control': {
+          enabled: true,
+          isRunning: false,
+          lastTriggeredAt: 0,
+          lastError: null,
+          lastChangedAt: 0,
+        },
       },
       now: 1_700_000_000_000,
       remoteCommands: null,

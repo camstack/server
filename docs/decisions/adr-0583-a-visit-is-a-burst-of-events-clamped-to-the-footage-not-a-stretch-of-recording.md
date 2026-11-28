@@ -144,7 +144,7 @@ Three things that are the decision rather than the code:
   wrong rows, because this list is newest-first. Nothing pinned that ordering
   until the revert proof came back green and a test was written for it.
 
-The constants live in the recorder addon, not `@camstack/types`: nothing else
+The constants live in the recorder addon, not `@dominevo/types`: nothing else
 reads them, and putting them in the framework would make a list-density tweak a
 publish and three node updates.
 

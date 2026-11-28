@@ -6,7 +6,7 @@
  *
  * Disarm: drop the `super.onProbe()` call and the first case fails.
  */
-import { type DeviceContext, DeviceType, type IDeviceRuntimeState } from '@camstack/types'
+import { type DeviceContext, DeviceType, type IDeviceRuntimeState } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { HikvisionCamera } from '../hikvision-camera.js'
 

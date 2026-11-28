@@ -10,7 +10,7 @@
  *
  * Pure of timers and I/O: `tick(now)` is driven by the caller (a `setInterval` in `main.ts`).
  */
-import type { MembershipAnswer } from '@camstack/server/system'
+import type { MembershipAnswer } from '@dominevo/server/system'
 import type { HubMembershipResult } from './hub-membership-client'
 
 export interface AgentMembershipWatchDeps {

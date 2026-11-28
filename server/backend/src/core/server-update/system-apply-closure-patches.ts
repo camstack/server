@@ -4,7 +4,7 @@
  *
  * ## Why this exists
  *
- * `@camstack/server` applies its `closure-postinstall` patches (D478 — werift)
+ * `@dominevo/server` applies its `closure-postinstall` patches (D478 — werift)
  * from its `postinstall`. npm 12 blocks a dependency's install scripts unless
  * the installing manifest allow-lists it, and the block is a WARNING, not an
  * error: the install succeeds, the patch silently does not land, and the only
@@ -37,7 +37,7 @@ import { execFile } from 'node:child_process'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { promisify } from 'node:util'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 const execFileAsync = promisify(execFile)
 
@@ -45,7 +45,7 @@ const execFileAsync = promisify(execFile)
 export type ApplyClosurePatchesFn = (closureDir: string) => Promise<void>
 
 /** Where the published root package keeps its applier, inside a closure. */
-const APPLIER_REL = ['node_modules', '@camstack', 'server', 'scripts', 'closure-postinstall.mjs']
+const APPLIER_REL = ['node_modules', '@dominevo', 'server', 'scripts', 'closure-postinstall.mjs']
 
 /** A patch pass must never be the slow part of an update. */
 const APPLY_TIMEOUT_MS = 60_000

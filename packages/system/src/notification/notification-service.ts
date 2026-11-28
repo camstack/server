@@ -2,9 +2,9 @@ import type {
   INotificationOutputProvider,
   RoutedNotification,
   ICapabilityRegistry,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { IScopedLogger } from '../logging/scoped-logger.js'
-import { errMsg } from '@camstack/types'
+import { errMsg } from '@dominevo/types'
 
 /**
  * A routing destination: one target (`targetId`) owned by one provider

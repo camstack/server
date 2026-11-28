@@ -12,7 +12,7 @@ import {
   type Composition,
   type CompositionFieldSource,
   type CompositionSourceRef,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { draftFromComposition, type EditorDraft, newDraft } from './draft-reducer'
 
 export const COMPOSITION_TEMPLATE_IDS = ['room', 'converted-sensor', 'derived-binary'] as const

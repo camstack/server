@@ -1,4 +1,4 @@
-import { type LlmRuntimeCompleteInput, type ManagedRuntimeConfig, nodePin } from '@camstack/types'
+import { type LlmRuntimeCompleteInput, type ManagedRuntimeConfig, nodePin } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { createRuntimeClient, type RuntimeApi } from '../runtime-client.js'
 

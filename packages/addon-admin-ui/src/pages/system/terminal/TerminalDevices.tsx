@@ -18,7 +18,7 @@
  * a session opened elsewhere can be reattached (the pty outlives the browser tab).
  */
 
-import type { TerminalSessionInfo } from '@camstack/types'
+import type { TerminalSessionInfo } from '@dominevo/types'
 import {
   Badge,
   Button,
@@ -34,7 +34,7 @@ import {
   useTerminalSessionListProfiles,
   useTerminalSessionListSessions,
   useTerminalSessionOpenSession,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import {
   Cable,
   ChevronDown,

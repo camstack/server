@@ -16,7 +16,7 @@
  * handler in isolation.
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { StatusOverlayAnswer } from '@camstack/types'
+import type { StatusOverlayAnswer } from '@dominevo/types'
 import { createLocalTransport } from '../../transport/create-local-transport.js'
 import { LocalChildRegistry } from '../../transport/local-child-registry.js'
 import type { CapCallMessage, ChildCapDescriptor } from '../../transport/child-cap-protocol.js'

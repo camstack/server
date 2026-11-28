@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { IrMediumSchema, type IrMedium } from '@camstack/types'
+import { IrMediumSchema, type IrMedium } from '@dominevo/types'
 import type { EspServiceInfo } from './esphome-link.js'
 
 /** Medium of a transmitter the override does not name: ESPHome blasters are infrared. */

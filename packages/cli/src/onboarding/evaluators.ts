@@ -11,7 +11,7 @@
  * `missing` means the READ ANSWERED and the thing is not there. A read that
  * failed is `unknown` with its reason, never `missing` (D315).
  */
-import { mayWriteToLocation, ruleKindOf, type NcRuleKind } from '@camstack/types'
+import { mayWriteToLocation, ruleKindOf, type NcRuleKind } from '@dominevo/types'
 import type { Read } from '../mcp/ops-hub.js'
 import { volumeKey } from '../mcp/setup-locations.js'
 import { remoteReachable, type CameraSetupFact, type RuleFact } from '../mcp/setup-wizard-reads.js'

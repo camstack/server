@@ -4,7 +4,7 @@
  * extraction 5): only the visibility of the entry point changed, and the
  * once-per-process "no ledger" flag moved with the only code that reads it.
  */
-import type { AddonContext } from '@camstack/types'
+import type { AddonContext } from '@dominevo/types'
 import type { ConfirmationDecision } from '../confirmation-gate.js'
 import type { SessionDetector } from '../confirmation-session-detector.js'
 import type { FrameState } from '../frame/frame-state.js'

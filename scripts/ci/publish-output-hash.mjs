@@ -1,6 +1,6 @@
 /**
  * Content hash of a package tarball, with the stamps a rebuild always
- * changes taken out: the package's own version, every `@camstack/*`
+ * changes taken out: the package's own version, every `@dominevo/*`
  * version it records, absolute build paths, the content hash vite puts
  * in a filename when those bytes change, and a bare
  * `import "@module-federation/runtime"` the share config already marks
@@ -103,12 +103,12 @@ function stableStringify(value) {
 function starCamstackDeps(section) {
   const next = {};
   for (const [name, spec] of Object.entries(section)) {
-    next[name] = name.startsWith("@camstack/") ? "*" : spec;
+    next[name] = name.startsWith("@dominevo/") ? "*" : spec;
   }
   return next;
 }
 
-/** Top-level version and `@camstack/*` specs. Nested manifest versions stay. */
+/** Top-level version and `@dominevo/*` specs. Nested manifest versions stay. */
 export function normalisePackageJsonText(text) {
   const parsed = JSON.parse(text);
   const next = { ...parsed, version: VERSION_PLACEHOLDER };
@@ -122,8 +122,8 @@ export function normalisePackageJsonText(text) {
 export function embeddedCamstackVersions(files) {
   const found = [];
   const patterns = [
-    /@camstack\/[a-z0-9-]+[^@]{0,240}?version:\s*["'](\d+\.\d+\.\d+(?:-[0-9A-Za-z.]+)?)["']/g,
-    /version:\s*["'](\d+\.\d+\.\d+(?:-[0-9A-Za-z.]+)?)["'][^@]{0,240}?@camstack\/[a-z0-9-]+/g,
+    /@dominevo\/[a-z0-9-]+[^@]{0,240}?version:\s*["'](\d+\.\d+\.\d+(?:-[0-9A-Za-z.]+)?)["']/g,
+    /version:\s*["'](\d+\.\d+\.\d+(?:-[0-9A-Za-z.]+)?)["'][^@]{0,240}?@dominevo\/[a-z0-9-]+/g,
   ];
   for (const file of files) {
     if (!isTextPath(file.path)) continue;
@@ -154,7 +154,7 @@ export function versionStampsFromPackageJson(packageJson) {
   for (const section of DEP_SECTIONS) {
     for (const [name, spec] of Object.entries(packageJson[section] ?? {})) {
       if (
-        !name.startsWith("@camstack/") ||
+        !name.startsWith("@dominevo/") ||
         typeof spec !== "string" ||
         spec === "*"
       )
@@ -210,7 +210,7 @@ export function stripHostProvidedRuntimeImport(text) {
 }
 
 /**
- * `@camstack/types` is the framework's contract: a self-contained addon
+ * `@dominevo/types` is the framework's contract: a self-contained addon
  * bundles the part it uses, and a page remote's loadShare shim lists every
  * export of the host-provided copy. A types release changes both, yet no other
  * addon is republished for it (the framework closure supplies types at
@@ -223,7 +223,7 @@ const TYPES_SHIM_PATH = /_camstack_mf_\d+_types__loadShare__/;
 
 export function stripEmbeddedTypes(rel, text) {
   if (TYPES_SHIM_PATH.test(rel))
-    return "/* @camstack/types loadShare shim */\n";
+    return "/* @dominevo/types loadShare shim */\n";
   return text.replace(TYPES_REGION, "");
 }
 

@@ -14,7 +14,7 @@
  * The probe call is the observable: it is made against the stream the
  * subscription has chosen, one step before the attach.
  */
-import type { CameraDetectionConfig, CamProfile, IScopedLogger, LogExtras } from '@camstack/types'
+import type { CameraDetectionConfig, CamProfile, IScopedLogger, LogExtras } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   AudioSubscriptionController,

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import type { Zone } from '@camstack/types'
+import type { Zone } from '@dominevo/types'
 import { resolveStationaryEventZones } from '../stationary-event-zones.js'
 
 const topLeft: Zone = {

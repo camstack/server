@@ -30,7 +30,7 @@ import {
   type IScopedLogger,
   SetOscillationAxisInputSchema,
   type SetOscillationAxisInput,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 
 const FAN_CONTROL = 'fan-control'

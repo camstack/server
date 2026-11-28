@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent, within } from '@testing-library/react'
-import type { CamProfile, RecordingBand, RecordingConfig } from '@camstack/types'
+import type { CamProfile, RecordingBand, RecordingConfig } from '@dominevo/types'
 /** Only the search is faked: it answers what the hub would for the sensor caps. */
 const search = { lastQuery: undefined as unknown }
 const sensor = (id: number, name: string) => ({

@@ -731,7 +731,7 @@ perfectly and blows up at runtime.
       "id": "google-home-export",
       "category": "exports",
       "name": "Google Home Export",
-      "description": "Publishes exposed CamStack cameras to Google Home as a Cloud-to-cloud integration, streaming over WebRTC to Nest smart displays and Chromecast.",
+      "description": "Publishes exposed Dominevo cameras to Google Home as a Cloud-to-cloud integration, streaming over WebRTC to Nest smart displays and Chromecast.",
       "entry": "./dist/google-home-export.addon.js",
       "execution": { "placement": "hub-only" },
       "capabilities": [
@@ -766,7 +766,7 @@ const base: UserConfig = buildLibPreset({
       trace of Alexa's, with Google's prefixes:
 
 ```ts
-import type { OauthIntegrationDescriptor } from '@camstack/types'
+import type { OauthIntegrationDescriptor } from '@dominevo/types'
 
 /**
  * Google always redirects to a fixed URI per project. The `/r/` prefix is
@@ -1269,5 +1269,5 @@ does not allow is worse than one that names the limit.
 - [ ] Decision record in `docs/decisions/` (copy `template.md`): why
       no cloud shim in v1, and why **no Google credential committed**
       despite the precedent of `public-skill.ts`.
-- [ ] `camstack deploy packages/addon-export-google-home` — modifying `src/` and
+- [ ] `dominevo deploy packages/addon-export-google-home` — modifying `src/` and
       rebuilding `dist/` **has no effect at runtime** until a deploy is done.

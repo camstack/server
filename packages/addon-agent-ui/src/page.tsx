@@ -2,9 +2,9 @@
 /**
  * Agent status dashboard (standalone Vite app served by every agent).
  *
- * After editing this package: `npm run build -w @camstack/addon-agent-ui`,
- * then `camstack deploy addon-agent-ui` — the runner loads from
- * `<dataDir>/addons/@camstack/addon-agent-ui/dist/`, not the workspace copy.
+ * After editing this package: `npm run build -w @dominevo/addon-agent-ui`,
+ * then `dominevo deploy addon-agent-ui` — the runner loads from
+ * `<dataDir>/addons/@dominevo/addon-agent-ui/dist/`, not the workspace copy.
  */
 import './index.css'
 import {
@@ -15,7 +15,7 @@ import {
   Badge,
   Button,
   Card,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import {
   Activity,
   AlertTriangle,

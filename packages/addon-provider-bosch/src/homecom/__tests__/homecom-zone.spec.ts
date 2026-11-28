@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import type { HomeComBridgeZone } from '../homecom-bridge.js'
 import { bridgeSnapshot } from '../homecom-bridge-snapshot.js'
 import { buildHomeComCandidates, homeComDeviceType } from '../homecom-discovery.js'

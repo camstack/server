@@ -20,8 +20,8 @@
  * `logTokenExpiryRejection` renders it. The two are separate so the caller
  * owns how often it speaks; the signer re-reads on every mint.
  */
-import { DEFAULT_TOKEN_EXPIRY } from '@camstack/types'
-import type { IScopedLogger } from '@camstack/types'
+import { DEFAULT_TOKEN_EXPIRY } from '@dominevo/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 /**
  * The `ms`-compatible duration grammar `jsonwebtoken` accepts, MINUS the bare

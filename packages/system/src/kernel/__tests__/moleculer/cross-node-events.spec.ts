@@ -5,7 +5,7 @@ import { createTestCluster, waitUntil, type TestCluster } from './cluster-setup.
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import { EventCategory, type AddonDeclaration } from '@camstack/types'
+import { EventCategory, type AddonDeclaration } from '@dominevo/types'
 
 function tmpDir(label: string): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), `cross-node-${label}-`))

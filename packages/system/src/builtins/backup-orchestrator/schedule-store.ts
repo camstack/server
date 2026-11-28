@@ -11,7 +11,7 @@
  * The rows are the orchestrator's `schedules` records kind (D881); there is
  * no `backup_schedules` table any more (D902).
  */
-import type { DataStoreDatabase, RecordKindHandle } from '@camstack/types'
+import type { DataStoreDatabase, RecordKindHandle } from '@dominevo/types'
 import { readAllRows } from '../../records/read-all-rows.js'
 import { backupOrchestratorRecordKinds, type BackupScheduleBody } from './record-kinds.js'
 

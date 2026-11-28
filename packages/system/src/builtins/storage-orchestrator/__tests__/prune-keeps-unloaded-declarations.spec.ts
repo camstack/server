@@ -12,7 +12,7 @@ import type {
   StorageLocation,
   StorageLocationDeclaration,
   StorageLocationDeclarer,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import type { ILocationStore } from '../location-store.js'
 import { StorageOrchestratorService } from '../storage-orchestrator.service.js'
@@ -78,7 +78,7 @@ async function serviceWith(rows: StorageLocation[], seeded: string[]) {
 const unloaded = (addonId: string | null, ...declarations: StorageLocationDeclaration[]) =>
   ({
     addonId,
-    packageName: '@camstack/addon-x',
+    packageName: '@dominevo/addon-x',
     loaded: false,
     declarations,
   }) as const satisfies StorageLocationDeclarer

@@ -48,12 +48,12 @@ import type {
   AudioDetection,
   AudioResult,
   DecodedAudioChunkWire,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   AudioAnalysisResultSchema,
   audioChunkBytesPerSample,
   expandAudioChunkToF32le,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { z } from 'zod'
 
 /**

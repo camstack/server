@@ -3,7 +3,7 @@
  * beside its reader (`resolveBatteryRefreshIntervalMs`, used by the camera):
  * `scripts/check-settings-key-has-reader.ts` fails a key that is only declared.
  */
-import type { ConfigUISchema } from '@camstack/types'
+import type { ConfigUISchema } from '@dominevo/types'
 import {
   BATTERY_REFRESH_MINUTES_DEFAULT,
   BATTERY_REFRESH_MINUTES_KEY,

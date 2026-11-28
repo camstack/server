@@ -26,8 +26,8 @@ import {
   type NcSchedule,
   resolveModeDelays,
   resolveModeNotifyPolicy,
-} from '@camstack/types'
-import { Badge, Button, Switch, Select } from '@camstack/ui-library'
+} from '@dominevo/types'
+import { Badge, Button, Switch, Select } from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 import { Loader2, RotateCcw } from 'lucide-react'
 import { ALARM_DELAY_META, AlarmDelayField } from './alarm-delay-field'

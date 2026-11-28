@@ -8,10 +8,10 @@
  * lines a day on intel-1.2.509). The parent resolves the OFFER here and sends
  * it on `start`; the worker tries the platform order filtered by that offer.
  *
- * Kept free of `@camstack/types` VALUES: the child bundle imports the guard and
+ * Kept free of `@dominevo/types` VALUES: the child bundle imports the guard and
  * the candidate function, and must stay schema-free (D453).
  */
-import type { HwAccelBackend, IKernelHwAccel } from '@camstack/types'
+import type { HwAccelBackend, IKernelHwAccel } from '@dominevo/types'
 
 /**
  * The backends the resolver offers for decode, or `null` when nothing has

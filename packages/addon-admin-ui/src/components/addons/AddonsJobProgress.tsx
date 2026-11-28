@@ -18,9 +18,9 @@ import { useTranslation } from 'react-i18next'
  */
 import { useMemo } from 'react'
 import { AlertOctagon, Check, Clock, Loader2, SkipForward } from 'lucide-react'
-import { EventCategory } from '@camstack/types'
-import type { LifecycleJob, LifecycleJobState, TaskPhase } from '@camstack/types'
-import { useAddonsListJobs, useEventStreamMap } from '@camstack/ui-library'
+import { EventCategory } from '@dominevo/types'
+import type { LifecycleJob, LifecycleJobState, TaskPhase } from '@dominevo/types'
+import { useAddonsListJobs, useEventStreamMap } from '@dominevo/ui-library'
 
 // ---------------------------------------------------------------------------
 // Types

@@ -10,7 +10,7 @@ import {
   type IScopedLogger,
   type RecordKindHandle,
   type RecordsTransport,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   clusterAgentRecordKinds,
   type ClusterNodeHistoryBody,
@@ -140,77 +140,77 @@ describe('ClusterNodeHistoryStore', () => {
 
   it('records a package roster and reads it back', async () => {
     await f.store.recordPackages('agent-1', [
-      { name: '@camstack/addon-pipeline', version: '1.2.14' },
-      { name: '@camstack/addon-ai', version: '1.2.10' },
+      { name: '@dominevo/addon-pipeline', version: '1.2.14' },
+      { name: '@dominevo/addon-ai', version: '1.2.10' },
     ])
     expect(await f.store.getPackages('agent-1')).toEqual([
-      { name: '@camstack/addon-pipeline', version: '1.2.14' },
-      { name: '@camstack/addon-ai', version: '1.2.10' },
+      { name: '@dominevo/addon-pipeline', version: '1.2.14' },
+      { name: '@dominevo/addon-ai', version: '1.2.10' },
     ])
   })
 
   it('recordPackages GROWS the roster — a wiped node cannot erase its own record', async () => {
     await f.store.recordPackages('agent-1', [
-      { name: '@camstack/addon-pipeline', version: '1.2.14' },
-      { name: '@camstack/addon-ai', version: '1.2.10' },
+      { name: '@dominevo/addon-pipeline', version: '1.2.14' },
+      { name: '@dominevo/addon-ai', version: '1.2.10' },
     ])
     // The node comes back wiped, declaring only its bootstrap package.
     await f.store.recordPackages('agent-1', [
-      { name: '@camstack/addon-pipeline', version: '1.2.14' },
+      { name: '@dominevo/addon-pipeline', version: '1.2.14' },
     ])
     expect((await f.store.getPackages('agent-1')).map((p) => p.name)).toEqual([
-      '@camstack/addon-pipeline',
-      '@camstack/addon-ai',
+      '@dominevo/addon-pipeline',
+      '@dominevo/addon-ai',
     ])
   })
 
   it("recordPackages takes the node's declared version on a re-report", async () => {
-    await f.store.recordPackages('agent-1', [{ name: '@camstack/addon-ai', version: '1.0.0' }])
-    await f.store.recordPackages('agent-1', [{ name: '@camstack/addon-ai', version: '2.0.0' }])
+    await f.store.recordPackages('agent-1', [{ name: '@dominevo/addon-ai', version: '1.0.0' }])
+    await f.store.recordPackages('agent-1', [{ name: '@dominevo/addon-ai', version: '2.0.0' }])
     expect(await f.store.getPackages('agent-1')).toEqual([
-      { name: '@camstack/addon-ai', version: '2.0.0' },
+      { name: '@dominevo/addon-ai', version: '2.0.0' },
     ])
   })
 
   it('prunePackages is the only shrink, and leaves the rest intact', async () => {
     await f.store.recordPackages('agent-1', [
-      { name: '@camstack/addon-pipeline', version: '1.2.14' },
-      { name: '@camstack/addon-ai', version: '1.2.10' },
+      { name: '@dominevo/addon-pipeline', version: '1.2.14' },
+      { name: '@dominevo/addon-ai', version: '1.2.10' },
     ])
-    await f.store.prunePackages('agent-1', ['@camstack/addon-ai'])
+    await f.store.prunePackages('agent-1', ['@dominevo/addon-ai'])
     expect((await f.store.getPackages('agent-1')).map((p) => p.name)).toEqual([
-      '@camstack/addon-pipeline',
+      '@dominevo/addon-pipeline',
     ])
   })
 
   it('snapshot carries the roster forward — a topology poll must not erase it', async () => {
-    await f.store.recordPackages('agent-1', [{ name: '@camstack/addon-ai', version: '1.2.10' }])
+    await f.store.recordPackages('agent-1', [{ name: '@dominevo/addon-ai', version: '1.2.10' }])
     // `listNodes()` snapshots a descriptor that carries no package roster.
     await f.store.snapshot(descriptor('agent-1'))
     expect(await f.store.getPackages('agent-1')).toEqual([
-      { name: '@camstack/addon-ai', version: '1.2.10' },
+      { name: '@dominevo/addon-ai', version: '1.2.10' },
     ])
     expect((await f.store.getAll())[0]!.hostname).toBe('agent-1.local')
   })
 
   it('tombstones persist, survive a topology snapshot, and an explicit delivery lifts one', async () => {
-    await f.store.addTombstones('agent-1', ['@camstack/addon-terminal', '@camstack/addon-ai'])
+    await f.store.addTombstones('agent-1', ['@dominevo/addon-terminal', '@dominevo/addon-ai'])
     // `listNodes()` snapshots a descriptor that carries no tombstones.
     await f.store.snapshot(descriptor('agent-1'))
     expect([...(await f.store.getTombstones('agent-1'))].sort()).toEqual([
-      '@camstack/addon-ai',
-      '@camstack/addon-terminal',
+      '@dominevo/addon-ai',
+      '@dominevo/addon-terminal',
     ])
 
-    await f.store.clearTombstones('agent-1', ['@camstack/addon-ai'])
-    expect([...(await f.store.getTombstones('agent-1'))]).toEqual(['@camstack/addon-terminal'])
+    await f.store.clearTombstones('agent-1', ['@dominevo/addon-ai'])
+    expect([...(await f.store.getTombstones('agent-1'))]).toEqual(['@dominevo/addon-terminal'])
   })
 
   it('a roster record neither adds nor erases a tombstone', async () => {
-    await f.store.addTombstones('agent-1', ['@camstack/addon-terminal'])
-    await f.store.recordPackages('agent-1', [{ name: '@camstack/addon-ai', version: '1.0.0' }])
-    await f.store.prunePackages('agent-1', ['@camstack/addon-ai'])
-    expect([...(await f.store.getTombstones('agent-1'))]).toEqual(['@camstack/addon-terminal'])
+    await f.store.addTombstones('agent-1', ['@dominevo/addon-terminal'])
+    await f.store.recordPackages('agent-1', [{ name: '@dominevo/addon-ai', version: '1.0.0' }])
+    await f.store.prunePackages('agent-1', ['@dominevo/addon-ai'])
+    expect([...(await f.store.getTombstones('agent-1'))]).toEqual(['@dominevo/addon-terminal'])
   })
 
   it('reports an empty roster for a node the hub has never recorded', async () => {
@@ -290,8 +290,8 @@ describe('ClusterNodeHistoryStore', () => {
       const unbound = new ClusterNodeHistoryStore(noopLogger())
       await unbound.snapshot(descriptor('agent-1'))
       await unbound.touch('agent-1')
-      await unbound.recordPackages('agent-1', [{ name: '@camstack/addon-ai', version: '1.0.0' }])
-      await unbound.prunePackages('agent-1', ['@camstack/addon-ai'])
+      await unbound.recordPackages('agent-1', [{ name: '@dominevo/addon-ai', version: '1.0.0' }])
+      await unbound.prunePackages('agent-1', ['@dominevo/addon-ai'])
       expect(await unbound.forget('agent-1')).toBe('store-unavailable')
       expect(await unbound.tryGetAll()).toBeNull()
       expect(await unbound.getAll()).toEqual([])

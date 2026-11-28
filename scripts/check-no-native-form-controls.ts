@@ -5,7 +5,7 @@
  * A raw `<select>`, `<input>`, `<textarea>` or `<button>` in a page or widget
  * looks and behaves differently from its neighbours (focus ring, disabled
  * state, search, dark theme) and escapes every fix made to the wrapped
- * primitive. `@camstack/ui-library` owns the wrapped ones (`Select`,
+ * primitive. `@dominevo/ui-library` owns the wrapped ones (`Select`,
  * `OptionSelect`, `Input`, `Textarea`, `Checkbox`, `Switch`, `Button`, ...),
  * so it is the only place a native element may appear.
  *

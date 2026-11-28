@@ -10,7 +10,7 @@ import {
   kindServesCap,
   type IntegrationInstance,
   type IntegrationInstanceDescription,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { useSystem } from '../contexts/system-context'
 import { useAddonsListCapabilityProviders } from '../generated/system-hooks'
 

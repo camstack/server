@@ -12,7 +12,7 @@
  * answers once, and every later read is the stored answer. An operator
  * re-running it is `run()`.
  */
-import type { IScopedLogger, RunnerBootCheck } from '@camstack/types'
+import type { IScopedLogger, RunnerBootCheck } from '@dominevo/types'
 
 /** The slice of a `$process.list` row the check reads. */
 export interface RunnerStateRow {

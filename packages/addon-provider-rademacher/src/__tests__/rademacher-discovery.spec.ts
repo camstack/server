@@ -1,4 +1,4 @@
-import { DeviceType, deviceAdminLinkCapability, rebootCapability } from '@camstack/types'
+import { DeviceType, deviceAdminLinkCapability, rebootCapability } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   type AdoptableCover,

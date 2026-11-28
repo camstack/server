@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { WidgetPanel } from '@camstack/ui-library'
+import { WidgetPanel } from '@dominevo/ui-library'
 import { Activity, Users, Video } from 'lucide-react'
 
 const Frame = ({ children }: { children: ReactNode }) => (

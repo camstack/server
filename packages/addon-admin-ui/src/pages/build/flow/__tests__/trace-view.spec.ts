@@ -1,4 +1,4 @@
-import type { AutomationRunTrace } from '@camstack/types'
+import type { AutomationRunTrace } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   runFailures,

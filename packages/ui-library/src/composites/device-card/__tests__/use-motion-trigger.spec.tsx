@@ -3,7 +3,7 @@
  * The shared hook behind every connected card's "on motion" corner: the served
  * slice only, nothing without the binding or the method, one send per change.
  */
-import type { MotionTriggerRuntimeState } from '@camstack/types'
+import type { MotionTriggerRuntimeState } from '@dominevo/types'
 import { act, cleanup, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useMotionTrigger } from '../connected/use-motion-trigger'

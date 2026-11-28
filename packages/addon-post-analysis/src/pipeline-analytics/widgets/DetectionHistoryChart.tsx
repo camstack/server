@@ -17,7 +17,7 @@
 import { useEffect, useId, useMemo, useState } from 'react'
 import { Eye } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
-import type { ObjectEvent } from '@camstack/types'
+import type { ObjectEvent } from '@dominevo/types'
 import {
   BarSeries,
   SectionCard,
@@ -26,7 +26,7 @@ import {
   useSystem,
   type BarBucket,
   type BarLayerDef,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { formatRangeLabel, humanBucket } from './chart-utils'
 import { useT } from '../../i18n/index.js'
 

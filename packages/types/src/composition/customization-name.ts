@@ -1,7 +1,7 @@
 /**
  * The stored name of the implicit block that customizes an existing device
  * (D663). The ONLY composition file that imports `node:crypto`, which is why it
- * is exported from `@camstack/types/node` and never from the browser barrel.
+ * is exported from `@dominevo/types/node` and never from the browser barrel.
  */
 import { createHash } from 'node:crypto'
 import {

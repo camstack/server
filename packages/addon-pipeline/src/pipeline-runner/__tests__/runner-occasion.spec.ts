@@ -14,7 +14,7 @@
  * was. This spec pins each producer to its occasion, end to end through the
  * result callback — the only surface a consumer reads.
  */
-import type { DecodedFrame, FrameResult, InferenceOccasion } from '@camstack/types'
+import type { DecodedFrame, FrameResult, InferenceOccasion } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import type { RunnerConfig } from '../runner.js'

@@ -11,7 +11,7 @@
  * the walk is how this door would hit the 60 s UDS deadline.
  */
 import { randomUUID } from 'node:crypto'
-import type { SettingsStoreClient } from '@camstack/types'
+import type { SettingsStoreClient } from '@dominevo/types'
 import { MEDIA_COLLECTION } from '../store/media-store.js'
 import { OBJECT_EVENTS_COLLECTION } from '../store/event-store.js'
 import { TRACKS_COLLECTION } from '../store/track-store.js'

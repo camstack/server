@@ -1,7 +1,7 @@
 /**
  * icon-picker — the ONE control for choosing an icon, wherever admin-ui asks.
  *
- * One view over the ONE icon catalog (`@camstack/types`' `icon-catalog`, D854):
+ * One view over the ONE icon catalog (`@dominevo/types`' `icon-catalog`, D854):
  * every lucide icon both surfaces can draw, filed under its primary lucide
  * category, searched over the key, the Italian/English overlay and lucide's own
  * English tags. There is no curated section and no per-caller subset — a device
@@ -42,7 +42,7 @@ import {
   iconCategoryLabel,
   iconsInCategory,
   searchIcons,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { LucideIcon } from 'lucide-react'
 import { type JSX, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchFieldHotkey } from '../hotkeys/use-search-field-hotkey'

@@ -5,7 +5,7 @@
  */
 import { ServiceBroker, type Middleware } from 'moleculer'
 import { afterEach, describe, expect, it } from 'vitest'
-import type { SystemEvent } from '@camstack/types'
+import type { SystemEvent } from '@dominevo/types'
 import {
   createAgentEventScope,
   isPeerEventPacket,

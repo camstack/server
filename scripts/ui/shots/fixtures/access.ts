@@ -141,7 +141,7 @@ const UA = {
   safariMac:
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15',
   firefoxMac: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14.5; rv:131.0) Gecko/20100101 Firefox/131.0',
-  ios: 'CamStack/1.0.590 CFNetwork/1568.100.1 Darwin/24.0.0',
+  ios: 'Dominevo/1.0.590 CFNetwork/1568.100.1 Darwin/24.0.0',
   chromeWin:
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
   android: 'okhttp/4.12.0',
@@ -190,7 +190,7 @@ const OWN_SESSIONS = [
     'ses-2',
     'u-admin',
     'passkey',
-    'CamStack app on iPhone',
+    'Dominevo app on iPhone',
     '192.0.2.64',
     12 * D,
     25 * MINUTE,

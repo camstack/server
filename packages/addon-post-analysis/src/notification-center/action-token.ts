@@ -29,7 +29,7 @@
  */
 
 import { createHmac, timingSafeEqual } from 'node:crypto'
-import type { AlarmArmMode, MediaFileKind } from '@camstack/types'
+import type { AlarmArmMode, MediaFileKind } from '@dominevo/types'
 import type { BboxRect } from '../pipeline-analytics/pipeline/zones/geometry.js'
 import { ARM_ANYWAY_TTL_MS } from './alarm/alarm-arm-guard.js'
 

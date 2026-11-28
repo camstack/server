@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { useState } from 'react'
 import { useT } from '../../i18n/index.js'
-import { Button, Checkbox, Input, Select } from '@camstack/ui-library'
+import { Button, Checkbox, Input, Select } from '@dominevo/ui-library'
 
 /**
  * Pure-UI geometry/zoom helper for the derived-stream transform editor.

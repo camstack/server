@@ -20,7 +20,7 @@ back, and gave the admin UI a bounded jittered ladder to come back on. The
 viewer shipped D569/D570 the same day and got neither: a tile whose still is
 deferred draws its class glyph and waits for the next refetch.
 
-Re-measured on 592 on 2026-09-20, against `@camstack/server@1.2.357` with
+Re-measured on 592 on 2026-09-20, against `@dominevo/server@1.2.357` with
 `provider-reolink` deployed, firing one page of 60 mint URLs in parallel
 exactly as a first paint does:
 
@@ -49,11 +49,11 @@ recording, because they are what closes the question:
 
 | route | what the code says |
 | --- | --- |
-| `import` from `@camstack/ui-library` | it is a **DOM** component library and `src/**` is React Native. Already named in `src/live/stream-debug-sample.ts`. Closed outright. |
-| `import` from `@camstack/types` | possible in principle — the viewer already imports runtime VALUES from it (`ruleKindSpec`, `DeviceType`, `CamProfileSchema`), so the boundary is precedented. But the viewer resolves `@camstack/*` from the PUBLISHED packages by design, and the version it holds is **`@camstack/types@1.2.235`** against a hub on `1.2.357`. `grep -r CLIP_STILL node_modules/@camstack/types` finds nothing: D563's header constants are not in the package this app has. |
+| `import` from `@dominevo/ui-library` | it is a **DOM** component library and `src/**` is React Native. Already named in `src/live/stream-debug-sample.ts`. Closed outright. |
+| `import` from `@dominevo/types` | possible in principle — the viewer already imports runtime VALUES from it (`ruleKindSpec`, `DeviceType`, `CamProfileSchema`), so the boundary is precedented. But the viewer resolves `@dominevo/*` from the PUBLISHED packages by design, and the version it holds is **`@dominevo/types@1.2.235`** against a hub on `1.2.357`. `grep -r CLIP_STILL node_modules/@dominevo/types` finds nothing: D563's header constants are not in the package this app has. |
 
 So "share the rule" is not an import. It is: move the policy into
-`@camstack/types`, publish `@camstack/types`, bump the viewer's dependency 122
+`@dominevo/types`, publish `@dominevo/types`, bump the viewer's dependency 122
 versions, OTA. And it stays a two-train change for ever after — every later
 tweak of the curve would need a types publish before the viewer could see it,
 where the admin UI gets it on the orchestrator train it already rides. The
@@ -103,15 +103,15 @@ Every one of those states carries the text as an `accessibilityLabel` as well,
 because at 96 px a caption is two lines of 9 px and sometimes there is no room
 for it at all.
 
-**The merge into `@camstack/types` is the right end state and is not blocked on
-anything but a publish.** It is worth doing the next time `@camstack/types` is
+**The merge into `@dominevo/types` is the right end state and is not blocked on
+anything but a publish.** It is worth doing the next time `@dominevo/types` is
 published AND the viewer's dependency is bumped — both, or it is not a merge.
 Until then the guard is what holds the line, and it holds it where the edit
 actually happens.
 
 ## Consequences
 
-- Two copies of five numbers, for as long as the viewer's `@camstack/types` is
+- Two copies of five numbers, for as long as the viewer's `@dominevo/types` is
   122 versions behind. The guard makes the drift loud; it does not make the
   duplicate free.
 - The guard compares against the sibling `camstack-server` checkout. That is

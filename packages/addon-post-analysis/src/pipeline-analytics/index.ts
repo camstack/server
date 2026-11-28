@@ -1,9 +1,9 @@
-// Host-resolved (`@camstack/server/system` is external to every addon bundle): this
+// Host-resolved (`@dominevo/server/system` is external to every addon bundle): this
 // process gets the monitor from the installed server closure, not from its own
 // dist. Deploy order is closure first, addon second. The `/addon-utils` subpath
 // and never the barrel — the barrel drags the whole kernel (~64MB of heap) into
 // a runner. See D417.
-import { startEventLoopStallMonitor } from '@camstack/server/system/addon-utils'
+import { startEventLoopStallMonitor } from '@dominevo/server/system/addon-utils'
 import {
   createDisplayPalettePainter,
   readDisplayPalette,
@@ -103,7 +103,7 @@ import type {
   TrackSource,
   TrackZoneFilter,
   Unsubscribe,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   addonWidgetsSourceCapability,
   armRemovalReconcile,
@@ -138,7 +138,7 @@ import {
   startMoverUnderClearance,
   storageOccupancyCapability,
   zoneAnalyticsCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { MotionEpisodeTracker } from './motion-episode-tracker.js'
 
 /** The `storage-occupancy` request shape, derived from the cap's provider
@@ -630,7 +630,7 @@ import type {
   MediaLocationCensusInput,
   Zone,
   ZoneRule,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { NcEventMedia, NcEventMediaRequest } from '../notification-center/dispatcher.js'
 import { EventMediaService } from '../notification-center/event-media/event-media-service.js'
 import {
@@ -807,7 +807,7 @@ const DEFAULT_ASSIST_MIN_SCORE = 0.3
  */
 const RETRAIN_EXPORT_MAX = 20_000
 
-import { AnalyticsLtsSeriesSchema, defineAddonMigrations } from '@camstack/types'
+import { AnalyticsLtsSeriesSchema, defineAddonMigrations } from '@dominevo/types'
 import { ncRecordKinds } from '../notification-center/record-kinds.js'
 import {
   ADDON_MIGRATIONS,
@@ -1378,7 +1378,7 @@ const AUDIO_EVENT_HEARTBEAT_MS = 5_000
 // Motion no longer uses a heartbeat (D475): one row per EPISODE
 // (`MotionEpisodeTracker`), opened on the first rising edge and UPDATEd once
 // at close with `durationMs` + `edges` — see `motion-episode.ts` and
-// `motion-episode-tracker.ts`. `MOTION_CLOSE_AFTER_MS` (`@camstack/types`,
+// `motion-episode-tracker.ts`. `MOTION_CLOSE_AFTER_MS` (`@dominevo/types`,
 // `motion.cap.ts`) is the close delay; there is no separate heartbeat
 // constant to keep in sync with it any more.
 
@@ -5840,7 +5840,7 @@ export default class PipelineAnalyticsAddon
     // PREFLIGHT, and it earns its place. The gallery is a tenant of the
     // `artifacts` class, so what must resolve is that class's one location.
     // A storage location is seeded from the addon manifest only when a
-    // `storage-provider` registers — an event a plain `camstack deploy` does
+    // `storage-provider` registers — an event a plain `dominevo deploy` does
     // not raise — so on the deploy that introduces `artifacts` it can be
     // undeclared until the node restarts (or the operator creates it), and
     // every enrolled-gallery write would then throw. That refusal is the
@@ -11214,7 +11214,7 @@ export default class PipelineAnalyticsAddon
     )
 
     // VERSION SKEW, not a design choice: this addon deploys on its own, so it
-    // can be running against a hub whose `@camstack/server` closure predates
+    // can be running against a hub whose `@dominevo/server` closure predates
     // the two batch methods. That hub rejects them, and the per-device path is
     // the honest thing to do rather than answering an empty vocabulary for
     // every camera. It is logged at warn precisely so it does not become the

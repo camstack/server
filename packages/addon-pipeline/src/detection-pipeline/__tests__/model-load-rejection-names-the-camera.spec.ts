@@ -17,7 +17,7 @@
  *  - a model whose compile times out twice on a device is refused by name,
  *    and the device keeps serving every other model.
  */
-import type { IScopedLogger, PipelineDefaultStep, PoolModelConfig } from '@camstack/types'
+import type { IScopedLogger, PipelineDefaultStep, PoolModelConfig } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { EngineFactory } from '../engine/engine-factory.js'
 import { MODEL_LOAD_BACKOFF_INITIAL_MS } from '../engine/model-load-governor.js'

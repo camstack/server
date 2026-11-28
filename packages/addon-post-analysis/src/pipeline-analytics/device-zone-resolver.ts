@@ -28,7 +28,7 @@
  * the next minute, which an operator reads as "the zone stopped working".
  */
 
-import type { Zone } from '@camstack/types'
+import type { Zone } from '@dominevo/types'
 
 /**
  * How long a catalogue read from the capability is trusted. Only consulted when

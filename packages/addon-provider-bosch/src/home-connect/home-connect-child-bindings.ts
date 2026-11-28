@@ -4,8 +4,8 @@ import type {
   EnumSensorStatus,
   NumericSensorStatus,
   PowerMeterStatus,
-} from '@camstack/types'
-import { DeviceRole, ingestReading, quantityFromUnit } from '@camstack/types'
+} from '@dominevo/types'
+import { DeviceRole, ingestReading, quantityFromUnit } from '@dominevo/types'
 import type {
   HomeConnectDescriptionStore,
   HomeConnectEntityView,

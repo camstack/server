@@ -8,14 +8,14 @@ import * as path from 'node:path'
 import { Server as TlsServer } from 'node:tls'
 // Boot-time capability declaration runs over the auto-generated
 // `ALL_CAPABILITY_DEFINITIONS` array — every `*.cap.ts` file that ships
-// with `@camstack/types` is included automatically. Adding a new cap
+// with `@dominevo/types` is included automatically. Adding a new cap
 // requires no edit to this file: drop the `*.cap.ts` and re-run
 // `npx tsx scripts/generate-capability-router-types.ts`. The previous
 // hand-curated list silently dropped caps (zones, zone-rules,
 // zone-analytics, audio-metrics — see git for the regression).
-// Sourced from `@camstack/server/system` (not `@camstack/types`) so the hub's
-// capability surface refreshes on `camstack deploy packages/system` with no new
-// server image. `@camstack/types` is never deployed to the hub.
+// Sourced from `@dominevo/server/system` (not `@dominevo/types`) so the hub's
+// capability surface refreshes on `dominevo deploy packages/system` with no new
+// server image. `@dominevo/types` is never deployed to the hub.
 import {
   AddonRouteRegistry,
   ALL_CAPABILITY_DEFINITIONS,
@@ -41,8 +41,8 @@ import {
   signalAllRunnerGroups,
   startEventLoopStallMonitor,
   startHeapWatch,
-} from '@camstack/server/system'
-import { CALLER_USERNAME_HEADER, type ILocalNetworkProvider } from '@camstack/types'
+} from '@dominevo/server/system'
+import { CALLER_USERNAME_HEADER, type ILocalNetworkProvider } from '@dominevo/types'
 import fastifyCompress from '@fastify/compress'
 import fastifyCookie from '@fastify/cookie'
 import { fastifyTRPCPlugin } from '@trpc/server/adapters/fastify'
@@ -360,7 +360,7 @@ async function bootstrap() {
   const heapReclaim = heapReclaimer === undefined ? undefined : { reclaim: heapReclaimer }
   // ...and the budget the heartbeat alarms on. hub-main has no manifest to declare one in, and
   // the entrypoint that would be the obvious alternative is the least deployable surface here —
-  // the image never carries this repo's backend. So the number lives in `@camstack/server`,
+  // the image never carries this repo's backend. So the number lives in `@dominevo/server`,
   // which is what `applyServerUpdate` replaces, for exactly the reason the heartbeat itself is
   // started from this file. See `hubMainRssBudget` for why 4096, and why it is expected to fire.
   //
@@ -543,7 +543,7 @@ async function bootstrap() {
       app.get(AgentRegistryService),
     )
     console.log('[bootstrap] Addon upload route registered at POST /api/addons/upload')
-    // Dev server-deploy channel gateway (`camstack deploy-server`). MUST be
+    // Dev server-deploy channel gateway (`dominevo deploy-server`). MUST be
     // registered AFTER registerAddonUploadRoute — it reuses the multipart
     // plugin that route installs on this instance.
     registerServerUploadRoute(fastify, {
@@ -1870,7 +1870,7 @@ async function bootstrap() {
 
   const logger = app.get(LoggingService).createLogger('System')
   const protocol = tlsOptions ? 'https' : 'http'
-  logger.info('CamStack server listening', {
+  logger.info('Dominevo server listening', {
     meta: { protocol, host, port, trpcRegistered },
   })
 
@@ -1925,7 +1925,7 @@ async function bootstrap() {
   app.get(RunnerBootCheckService).scheduleAfterBoot()
 
   // The hub reached ready — when this boot is the PROBATION boot of a freshly
-  // staged @camstack/server root, promote it (currentVersion ← pending, N-1
+  // staged @dominevo/server root, promote it (currentVersion ← pending, N-1
   // retained for rollback) and disarm the starter's crash-loop auto-rollback.
   try {
     const confirm = app.get(ServerUpdateService).confirmBootHealthy()

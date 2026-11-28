@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { NcScheduleWindow, TimeWindow } from '@camstack/types'
+import type { NcScheduleWindow, TimeWindow } from '@dominevo/types'
 import {
   bandOfTimeWindow,
   ncWindowOfTimeWindow,

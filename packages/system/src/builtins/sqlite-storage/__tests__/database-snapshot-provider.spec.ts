@@ -5,7 +5,7 @@
  * The defect this pins: `listDatabases` answered the settings file only, so a
  * file created at runtime (`events`, `history`) was never offered to a backup.
  */
-import type { DatabaseSnapshotResult, DataStoreDatabase } from '@camstack/types'
+import type { DatabaseSnapshotResult, DataStoreDatabase } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   DatabaseSnapshotProvider,

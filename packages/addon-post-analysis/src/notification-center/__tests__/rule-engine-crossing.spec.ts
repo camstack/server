@@ -14,8 +14,8 @@
  *    longer in the record's membership by the time the exit is confirmed.
  */
 
-import type { NcRule, ObjectEvent } from '@camstack/types'
-import { NcRuleInputSchema, NcRuleSchema } from '@camstack/types'
+import type { NcRule, ObjectEvent } from '@dominevo/types'
+import { NcRuleInputSchema, NcRuleSchema } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { evaluateRule, type NcRuleSubject, subjectFromObjectEvent } from '../rule-engine.js'
 

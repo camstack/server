@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { DeviceType, DeviceRole } from '@camstack/types'
+import { DeviceType, DeviceRole } from '@dominevo/types'
 import {
   DEVICE_TYPE_META,
   DEVICE_ROLE_META,

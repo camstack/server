@@ -20,7 +20,7 @@ import {
 import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { SearchDomain, SearchItem, SearchResultGroup } from '../../lib/global-search'
-import { Button } from '@camstack/ui-library'
+import { Button } from '@dominevo/ui-library'
 
 const DOMAIN_META: Record<SearchDomain, { readonly labelKey: string; readonly icon: LucideIcon }> =
   {

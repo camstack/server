@@ -13,7 +13,7 @@ import {
   type AddonContext,
   type KeychainResolveResult,
   type KeychainTransport,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { WyzeProviderAddon } from '../addon.js'
 

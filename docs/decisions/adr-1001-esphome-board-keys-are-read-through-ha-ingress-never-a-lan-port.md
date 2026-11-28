@@ -17,7 +17,7 @@ YAML under the ESPHome Builder add-on that runs inside Home Assistant. The
 operator was copying each key by hand. The Builder serves a dashboard that can
 return a board's resolved config (`json-config`), but it listens on a plain,
 unauthenticated port (6052) when that port is published: anyone on the LAN can
-read every YAML secret, Wi-Fi passphrase included. Publishing it for CamStack
+read every YAML secret, Wi-Fi passphrase included. Publishing it for Dominevo
 would have opened that to the whole network, and a second credential would have
 been needed to guard it.
 

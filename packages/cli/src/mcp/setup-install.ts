@@ -98,7 +98,7 @@ const CONTAINER_ROUTES: readonly HostKind[] = ['docker-compose', 'docker']
 
 const Q_HOST: Question = {
   id: 'hostKind',
-  question: 'Where will CamStack run?',
+  question: 'Where will Dominevo run?',
   options: ['docker-compose', 'docker', 'unraid', 'proxmox-lxc', 'macos-desktop'],
 }
 const Q_ROLE: Question = {
@@ -108,7 +108,7 @@ const Q_ROLE: Question = {
 }
 const Q_ACCEL: Question = {
   id: 'accelerator',
-  question: `Which accelerator does this host have? Run \`camstack host-check\` (or setup_host_check) on that host to find out. The image variants:\n${renderVariantTable().join('\n')}\nAnswer with the variant name (intel, intel-legacy, amd, nvidia, nvidia-legacy), or coral / cpu when the host has none of those.`,
+  question: `Which accelerator does this host have? Run \`dominevo host-check\` (or setup_host_check) on that host to find out. The image variants:\n${renderVariantTable().join('\n')}\nAnswer with the variant name (intel, intel-legacy, amd, nvidia, nvidia-legacy), or coral / cpu when the host has none of those.`,
   options: ['intel', 'intel-legacy', 'amd', 'nvidia', 'nvidia-legacy', 'coral', 'cpu'],
 }
 const Q_PATHS: Question = {
@@ -117,7 +117,7 @@ const Q_PATHS: Question = {
     'Host paths as {data, recordings} (optionally backups). Recordings is the one that grows: put it on a roomy disk.',
   options: [],
   format:
-    'an object { data: <host path>, recordings: <host path>, backups?: <host path> }, absolute paths on the machine that will run CamStack',
+    'an object { data: <host path>, recordings: <host path>, backups?: <host path> }, absolute paths on the machine that will run Dominevo',
   example: '{ "data": "/srv/camstack/data", "recordings": "/mnt/disk2/camstack/recordings" }',
 }
 
@@ -176,7 +176,7 @@ const ReleaseSchema = z.object({
   tag_name: z.string(),
   assets: z.array(z.object({ name: z.string(), browser_download_url: z.string() })),
 })
-const DMG = /^CamStack-[0-9][0-9A-Za-z.-]*-(arm64|x64)\.dmg$/
+const DMG = /^Dominevo-[0-9][0-9A-Za-z.-]*-(arm64|x64)\.dmg$/
 
 function acceleratorEdits(accelerator: Accelerator, role: Role): readonly string[] {
   const note = `Image tag ${IMAGE_TAG_BY_ACCELERATOR[accelerator]} for ${accelerator}. ${NO_BARE_LATEST}`
@@ -299,7 +299,7 @@ async function proxmoxGuide(input: ResolvedInput, fetchFn: FetchFn): Promise<Ins
     steps: [
       'Run on the Proxmox HOST (needs `pct`), not inside a container. It asks nothing: everything is an environment variable (defaults: VMID 200 hub / 201 agent, 8 cores, 8 GB, 64 GB disk, bridge vmbr0).',
       `${vars.join(' ')} bash -c "$(curl -fsSL ${url})"`,
-      'It builds an Ubuntu 24.04 LXC with Docker, passes through the accelerators the host has (PASS_ACCEL=none skips it) and starts CamStack.',
+      'It builds an Ubuntu 24.04 LXC with Docker, passes through the accelerators the host has (PASS_ACCEL=none skips it) and starts Dominevo.',
       ...first,
     ],
     files: [
@@ -315,7 +315,7 @@ async function proxmoxGuide(input: ResolvedInput, fetchFn: FetchFn): Promise<Ins
       ...variantEdits(input.accelerator),
       ...(isNvidiaAccelerator(input.accelerator)
         ? [
-            'NVIDIA in an LXC: the installer passes only /dev/dri. Add the /dev/nvidia* nodes to the CT (`camstack host-check` inside it lists them) and install nvidia-container-toolkit inside the CT, then run the container with --gpus all.',
+            'NVIDIA in an LXC: the installer passes only /dev/dri. Add the /dev/nvidia* nodes to the CT (`dominevo host-check` inside it lists them) and install nvidia-container-toolkit inside the CT, then run the container with --gpus all.',
           ]
         : []),
     ],
@@ -349,7 +349,7 @@ async function macGuide(input: ResolvedInput, fetchFn: FetchFn): Promise<Install
   return ready(input, null, {
     steps: [
       `Download the disk image for your Mac from release ${release.tag_name}: ${dmgs.map((a) => `${a.name} (${a.browser_download_url})`).join(' or ')}. Apple silicon (M1 and later) takes arm64; Intel takes x64. The CamStackViewer files are a different app.`,
-      'Drag CamStack into Applications and open it.',
+      'Drag Dominevo into Applications and open it.',
       `The setup window asks what this Mac should be: choose ${input.role === 'hub' ? 'Hub (full server)' : 'Agent (worker)'}, then Save and start.`,
       ...first,
     ],

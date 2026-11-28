@@ -8,17 +8,17 @@ describe('AddonUpdateCoalescer', () => {
     const coalescer = new AddonUpdateCoalescer(flush)
 
     coalescer.observe({
-      packageName: '@camstack/addon-pipeline',
+      packageName: '@dominevo/addon-pipeline',
       fromVersion: '1.2.3',
       toVersion: '1.2.4',
     })
     coalescer.observe({
-      packageName: '@camstack/addon-pipeline',
+      packageName: '@dominevo/addon-pipeline',
       fromVersion: '1.2.3',
       toVersion: '1.2.4',
     })
     coalescer.observe({
-      packageName: '@camstack/addon-provider-reolink',
+      packageName: '@dominevo/addon-provider-reolink',
       fromVersion: '1.0.0',
       toVersion: '1.0.1',
     })
@@ -30,12 +30,12 @@ describe('AddonUpdateCoalescer', () => {
     expect(flush).toHaveBeenCalledTimes(1)
     expect(flush.mock.calls[0]![0]).toEqual([
       {
-        packageName: '@camstack/addon-pipeline',
+        packageName: '@dominevo/addon-pipeline',
         fromVersion: '1.2.3',
         toVersion: '1.2.4',
       },
       {
-        packageName: '@camstack/addon-provider-reolink',
+        packageName: '@dominevo/addon-provider-reolink',
         fromVersion: '1.0.0',
         toVersion: '1.0.1',
       },
@@ -50,13 +50,13 @@ describe('AddonUpdateCoalescer', () => {
     const coalescer = new AddonUpdateCoalescer(flush)
 
     coalescer.observe({
-      packageName: '@camstack/addon-pipeline',
+      packageName: '@dominevo/addon-pipeline',
       fromVersion: '1.0.0',
       toVersion: '1.0.1',
     })
     vi.advanceTimersByTime(20_000)
     coalescer.observe({
-      packageName: '@camstack/addon-post-analysis',
+      packageName: '@dominevo/addon-post-analysis',
       fromVersion: '1.0.0',
       toVersion: '1.0.1',
     })

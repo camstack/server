@@ -14,7 +14,7 @@
  *    box in detection space, which is what a detail dispatch on the parcel
  *    scales from.
  */
-import type { FrameHandle } from '@camstack/types'
+import type { FrameHandle } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { deliveredWideCentralSquareLayout } from '../../../shared/frame/wide-central-square-crop.js'
 import { KEYFRAME_NATIVE_MAX_WIDTH } from '../key-frame-capture.js'

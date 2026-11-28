@@ -7,7 +7,7 @@
  *  - a timelapse produces a still/GIF preview and a clip, no buttons;
  *  - a calendar digest produces text only.
  */
-import type { NcTargetAttachment } from '@camstack/types'
+import type { NcTargetAttachment } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   surfaceAttachmentKinds,

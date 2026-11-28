@@ -1,5 +1,5 @@
 /**
- * The built-in "public" CamStack Alexa skill.
+ * The built-in "public" Dominevo Alexa skill.
  *
  * Only its skill id lives here — an identifier, not a credential. Until D753
  * this file also carried the skill's Login With Amazon "Send Alexa Events"

@@ -40,7 +40,7 @@ reply, so a send can never be confirmed. An IR appliance does not answer either.
    `running-state` cap when the device has one, else from a native media-player
    reading, else from the assumption. An assumption is persisted in the device
    store, never in history, and a UI must show it as a guess.
-4. **The SmartIR parser is single.** `parseSmartIr` in `@camstack/types/ir`
+4. **The SmartIR parser is single.** `parseSmartIr` in `@dominevo/types/ir`
    reads a file (Raw and Pronto); the remote only turns its result into bindings
    (`smartIrDraft`). The admin UI runs both and saves the result on the cap; the
    server never receives a code file.

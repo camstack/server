@@ -11,7 +11,7 @@ import {
   ingestReading,
   quantityFromUnit,
   type ReadingQuantity,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { HmValue, ValueChangedEvent } from 'nodehomematic'
 import { HmChildDevice, hmChildSchema } from './hm-child-device.js'
 import { changeStamp, type HmValueOrigin } from './hm-change-stamp.js'

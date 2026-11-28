@@ -8,7 +8,7 @@ import {
   DeviceRole,
   type HvacMode,
   type InferNativeProvider,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { homeComConnections } from '../homecom-gateway.js'
 import { registerHomeComStateRefresh } from './homecom-state-refresh.js'
 import { climateSliceFromCircuit } from '../homecom-domain-mapping.js'

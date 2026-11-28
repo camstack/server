@@ -11,7 +11,7 @@
  * Bounded: anything older than 24 h is dropped. A hub restart starts a new
  * window, and the snapshot says how much of the window it actually covers.
  */
-import type { PlacementDeviceStats, PlacementNodeStats } from '@camstack/types'
+import type { PlacementDeviceStats, PlacementNodeStats } from '@dominevo/types'
 
 const RETAIN_MS = 24 * 60 * 60 * 1000
 

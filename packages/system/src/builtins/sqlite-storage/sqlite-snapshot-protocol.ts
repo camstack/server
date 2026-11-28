@@ -3,7 +3,7 @@
  * snapshot worker thread (D693). Pure: no driver, no kernel — the worker bundle
  * imports it, and so does the main thread.
  */
-import type { DatabaseSnapshotTable } from '@camstack/types'
+import type { DatabaseSnapshotTable } from '@dominevo/types'
 
 /** `workerData` of one snapshot thread. The `kind` tells it apart from any other worker. */
 export interface SnapshotWorkerData {

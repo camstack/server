@@ -47,8 +47,8 @@
  * pick) are the caller's; the log lines are the caller's too, shaped from the
  * reason this returns.
  */
-import type { AudioStreamPick, CamProfile } from '@camstack/types'
-import { CAM_PROFILE_ORDER } from '@camstack/types'
+import type { AudioStreamPick, CamProfile } from '@dominevo/types'
+import { CAM_PROFILE_ORDER } from '@dominevo/types'
 
 /**
  * Rung order for an audio consumer: cheapest first. The inverse of
@@ -73,7 +73,7 @@ export function isDerivedCamStream(camStreamId: string): boolean {
 }
 
 /**
- * The operator's per-camera audio rung, re-exported from `@camstack/types`
+ * The operator's per-camera audio rung, re-exported from `@dominevo/types`
  * where the schema that validates it on the wire lives. `auto` is a REAL
  * value, not an absent one: it means "the lowest available native rung", which
  * is the rule this module implements. Absent storage reads as `auto` — see

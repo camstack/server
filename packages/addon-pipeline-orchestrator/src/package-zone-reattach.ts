@@ -8,7 +8,7 @@
  * camera is already elected onto — a bare re-resolve here used to gate on the
  * node DEFAULT format and drop the device's provisioning and jump roster.
  */
-import { errMsg, type IScopedLogger, type RunnerCameraConfig } from '@camstack/types'
+import { errMsg, type IScopedLogger, type RunnerCameraConfig } from '@dominevo/types'
 import { type AttachPipelineOutcome, withAttachPipeline } from './attach-pipeline.js'
 import type { PlacementLedger } from './placement-ledger.js'
 

@@ -1,7 +1,7 @@
 import type { Socket } from 'node:net'
 import type { CapActionChannelObserver } from './cap-action-census.js'
 import { encodeFrame, encodeFrameHead, FrameDecoder } from './frame-codec.js'
-import { ErrorI18nPayloadSchema, readErrorI18n, type ErrorI18nPayload } from '@camstack/types/addon'
+import { ErrorI18nPayloadSchema, readErrorI18n, type ErrorI18nPayload } from '@dominevo/types/addon'
 import { PeerAnsweredError } from './peer-answered-error.js'
 
 /** A peer's `i18n` is untrusted wire data: a malformed one is dropped, the message still travels. */

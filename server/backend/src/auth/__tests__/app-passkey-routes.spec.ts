@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import type { IUserPasskeysProvider } from '@camstack/types'
+import type { IUserPasskeysProvider } from '@dominevo/types'
 import Fastify, { type FastifyInstance } from 'fastify'
 import { afterEach, describe, expect, it } from 'vitest'
 import { HandoffCodeService, pkceChallenge } from '../../core/auth/handoff-code.service.js'

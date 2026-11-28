@@ -607,7 +607,7 @@ export interface ConfigMultiSelectField extends ConfigFieldBase {
 /**
  * Friendly timezone picker. The stored value is an IANA timezone id
  * (e.g. 'Europe/Rome'); the renderer mounts the shared
- * `<TimezoneSelector>` from `@camstack/ui-library`, grouping the curated
+ * `<TimezoneSelector>` from `@dominevo/ui-library`, grouping the curated
  * `TIMEZONES` catalogue by region. DST is implied by the chosen zone —
  * there is no separate DST control. Consumers (device providers) resolve
  * the id via `findTimezone(id)` to obtain the standard offset + DST rule.
@@ -922,7 +922,7 @@ export interface ConfigSubTabsField extends ConfigFieldBase {
 
 /**
  * Read-only QR code — renders an arbitrary string as a scannable QR
- * image via the shared `<QrCode>` component in `@camstack/ui-library`.
+ * image via the shared `<QrCode>` component in `@dominevo/ui-library`.
  *
  * Use for per-device pairing surfaces (HomeKit `X-HM://…` URI, OAuth
  * device-flow user code, etc.). When `value` is empty / absent the

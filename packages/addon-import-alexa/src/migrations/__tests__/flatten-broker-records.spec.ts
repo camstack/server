@@ -10,7 +10,7 @@ import {
   flattenPortsOver,
   makeInMemoryRecords,
   recordSecretRef,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { alexaBrokersEntryKind } from '../../broker-record-kinds.js'

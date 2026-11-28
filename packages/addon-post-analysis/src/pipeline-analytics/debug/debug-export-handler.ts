@@ -24,7 +24,7 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import type { DataPlaneHandler, IScopedLogger } from '@camstack/types'
+import type { DataPlaneHandler, IScopedLogger } from '@dominevo/types'
 import { MAX_EXPORT_BYTES } from './debug-actions.js'
 import {
   DEBUG_ANALYSIS_ENTRY,

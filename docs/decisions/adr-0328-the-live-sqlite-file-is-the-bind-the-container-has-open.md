@@ -40,7 +40,7 @@ on shfs" halves still hold. Only the *path* it named is stale.
 ## Decision
 
 **The live SQLite file is the one behind the container's
-`sqlite-settings` bind, identified by `docker inspect` on `CamStack`, never by
+`sqlite-settings` bind, identified by `docker inspect` on `Dominevo`, never by
 a path that happens to contain `camstack.db`.**
 
 On this hub that bind is:
@@ -52,7 +52,7 @@ On this hub that bind is:
 Rules:
 
 - Never open that file — or any sibling `camstack.db` — with sqlite3 while
-  CamStack is running. Not `mode=ro`. Not `VACUUM INTO`. The 2026-08-19
+  Dominevo is running. Not `mode=ro`. Not `VACUUM INTO`. The 2026-08-19
   corruption was a writer via a second connection.
 - A cleanup, VACUUM or integrity_check runs only with the container
   **stopped**, against the bind source `docker inspect` just named, and
@@ -60,7 +60,7 @@ Rules:
 - `/mnt/cache/appdata/camstack/addons-data/sqlite-settings/camstack.db` is
   not a backup of mixed. Treat it as a different database that happens to
   share a name.
-- `/data/addons/@camstack/system` must not exist. A shadow copy of the
+- `/data/addons/@dominevo/system` must not exist. A shadow copy of the
   kernel there silently wins over the published closure.
 
 ## Consequences
@@ -68,7 +68,7 @@ Rules:
 - D147's measured path (`/mnt/cache/.../camstack.db`) is historical. Docs
   that still name it as live (load-ledger 2026-08-27, older skill text) are
   wrong and will send the next session to the stale copy.
-- Unraid Appdata Backup still skips CamStack (`skip: yes`). The mixed bind
+- Unraid Appdata Backup still skips Dominevo (`skip: yes`). The mixed bind
   is even further outside that plugin's walk than the cache path was.
 - Reformatting a recordings volume does not touch this file. Wiping
   `/mnt/mixed/camstack/media` would: that tree is `/media-fast` inside the
@@ -78,12 +78,12 @@ Rules:
 
 Nothing in CI can see the hub's mounts. Review-only, plus the ops skill and
 `CLAUDE.md`. The test is: before any sqlite3 invocation, `docker inspect
-CamStack` names the bind, and `docker inspect -f '{{.State.Running}}'` is
+Dominevo` names the bind, and `docker inspect -f '{{.State.Running}}'` is
 `false`.
 
 ## Amendment 2026-09-29 — the same rule holds inside the container (D679)
 
-"Never open the live file while CamStack runs" also binds CamStack itself.
+"Never open the live file while Dominevo runs" also binds Dominevo itself.
 It covers any process other than the `hub/sqlite-settings` runner: the
 nightly backup opened the live database from hub-main, and that open is what
 SIGBUSed the runner. It also covers the runner, which must never open the

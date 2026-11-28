@@ -6,7 +6,7 @@
  * PackageStillnessTracker. A downscaled preview is logged and dropped.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { StationaryBbox } from '../stationary/stationary-types.js'
 import {
   PACKAGE_SCENE_DIFF_LOOK_GAP_MS,

@@ -7,7 +7,7 @@
  * the window, not a currently-armed switch, so a camera switched off after
  * capturing a scenario must still be promotable here.
  */
-import { Button, Input, Select } from '@camstack/ui-library'
+import { Button, Input, Select } from '@dominevo/ui-library'
 import { Loader2 } from 'lucide-react'
 import { type JSX, useState } from 'react'
 import {

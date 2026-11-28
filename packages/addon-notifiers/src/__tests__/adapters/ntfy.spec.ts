@@ -6,8 +6,8 @@
  * asserts the EXACT `HttpRequestPlan` `buildRequest` emits — url / method /
  * headers / body. No network is touched.
  */
-import type { Notification } from '@camstack/types'
-import { prepareNotification } from '@camstack/types'
+import type { Notification } from '@dominevo/types'
+import { prepareNotification } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { HttpRequestPlan, TargetConfig } from '../../adapters/adapter.js'
 import { ntfyAdapter } from '../../adapters/ntfy.js'

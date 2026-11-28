@@ -30,8 +30,8 @@ import type {
   NcRuleTarget,
   NcTargetOverrides,
   TimelapseTemplate,
-} from '@camstack/types'
-import { DEFAULT_TIMELAPSE_PREVIEW_TEXT } from '@camstack/types'
+} from '@dominevo/types'
+import { DEFAULT_TIMELAPSE_PREVIEW_TEXT } from '@dominevo/types'
 import { ncClockText } from '../clock-text.js'
 import { renderTemplate } from '../dispatcher.js'
 import { escapeLiteralMarkup, holdVars } from '../render-template.js'

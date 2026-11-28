@@ -9,7 +9,7 @@
  */
 import { describe, it, expect } from 'vitest'
 import { checkScopeAccess } from '../scope-access.js'
-import type { TokenScope } from '@camstack/types'
+import type { TokenScope } from '@dominevo/types'
 
 function scope(
   type: 'addon' | 'capability',

@@ -1,6 +1,6 @@
 import { EventEmitter } from 'node:events'
 import * as fs from 'node:fs/promises'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { scrubSecrets, withSpeakSecretFiles } from '../speak/secret-file.js'
 import { recordWorkerCrash, startAlexaWorker, type WorkerChild } from '../speak/worker-client.js'

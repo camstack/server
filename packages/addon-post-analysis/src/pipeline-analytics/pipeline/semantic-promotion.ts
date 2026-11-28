@@ -26,7 +26,7 @@
  * already carries (`TrackDetailFrame.bbox` / the recognizer's candidate bbox).
  */
 
-import type { FrameHandle, IScopedLogger } from '@camstack/types'
+import type { FrameHandle, IScopedLogger } from '@dominevo/types'
 import {
   canvasFillFraction,
   centralSquareContainmentFraction,

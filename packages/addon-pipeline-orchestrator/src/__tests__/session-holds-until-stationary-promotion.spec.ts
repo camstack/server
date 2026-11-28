@@ -41,9 +41,9 @@
  * appears as "the frames stop noting presence" — the post-analysis half is
  * pinned in `pipeline-analytics/__tests__/frame-tracked-presence.spec.ts`.
  */
-import { CAMERA_TRIGGER } from '@camstack/types'
+import { CAMERA_TRIGGER } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { CameraDetectionConfig, IScopedLogger, LogExtras, LogTags } from '@camstack/types'
+import type { CameraDetectionConfig, IScopedLogger, LogExtras, LogTags } from '@dominevo/types'
 import { decideSessionLifecycle } from '../dispatch-reconcile.js'
 import {
   DEFAULT_MAX_SESSION_HOLD_MS,

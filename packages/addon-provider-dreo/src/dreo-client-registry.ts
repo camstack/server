@@ -14,7 +14,7 @@
  * + library (no leak): the registry only starts/stops managers.
  */
 
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IScopedLogger } from '@dominevo/types'
 import { type DreoConfig } from './config.js'
 import {
   DreoIntegrationManager,

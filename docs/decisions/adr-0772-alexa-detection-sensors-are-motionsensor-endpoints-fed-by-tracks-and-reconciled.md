@@ -57,7 +57,7 @@ user's Alexa sensor and the routines built on it.
   operator routine triggers and Activity entries in every locale.
 - With the switch on, each exposed camera adds up to four endpoints; Amazon's
   limit is 300 per account.
-- The class list is the timeline lanes' list, so Alexa and CamStack agree on
+- The class list is the timeline lanes' list, so Alexa and Dominevo agree on
   what a camera detects.
 
 ## Enforcement

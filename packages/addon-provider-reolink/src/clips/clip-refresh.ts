@@ -58,7 +58,7 @@
  * the other half: it marks the rows stale so the next read retries, and it
  * SAYS which branch dropped the work, per camera.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import {
   type ClipPrefetchMode,
   type ClipPrefetchOutcome,

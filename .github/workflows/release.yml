@@ -1,7 +1,7 @@
-name: Release — CamStack (Docker + Electron)
+name: Release — Dominevo (Docker + Electron)
 run-name: "Release ${{ inputs.publish_release && 'publish' || inputs.version_type }}"
 
-# Single workflow that produces every artifact for the single CamStack
+# Single workflow that produces every artifact for the single Dominevo
 # product — ONE Docker image + ONE desktop app, each selecting hub vs
 # agent at runtime (CAMSTACK_ROLE). Triggered ONLY by workflow_dispatch,
 # and the first job refuses any ref other than refs/heads/main.
@@ -12,8 +12,8 @@ run-name: "Release ${{ inputs.publish_release && 'publish' || inputs.version_typ
 #
 # `vX.Y.Z` is the PRODUCT version (image tags, desktop app, GitHub
 # release), starting at 0.1.0 and labelled beta while the major is 0.
-# It is not `@camstack/server`'s version. The image and the desktop app
-# both install `@camstack/server@latest`; the job records that closure
+# It is not `@dominevo/server`'s version. The image and the desktop app
+# both install `@dominevo/server@latest`; the job records that closure
 # as an image label and a release-note line (D943). The Expo viewer app
 # stays on its own 1.0.x line and is not built here.
 #
@@ -34,15 +34,15 @@ run-name: "Release ${{ inputs.publish_release && 'publish' || inputs.version_typ
 #     (multi_arch=true workflow_dispatch input adds linux/arm64 via QEMU)
 #
 #   ── Desktop installers ───────────────────────────────────────────────
-#     CamStack-X.Y.Z-arm64.dmg          (macOS Apple Silicon)
-#     CamStack-X.Y.Z-x64.dmg            (macOS Intel)
-#     CamStack-Setup-X.Y.Z.exe          (Windows — when a win runner exists)
-#     CamStack-X.Y.Z-x64.AppImage       (Linux x64)
-#     CamStack-X.Y.Z-amd64.deb          (Linux Debian)
+#     Dominevo-X.Y.Z-arm64.dmg          (macOS Apple Silicon)
+#     Dominevo-X.Y.Z-x64.dmg            (macOS Intel)
+#     Dominevo-Setup-X.Y.Z.exe          (Windows — when a win runner exists)
+#     Dominevo-X.Y.Z-x64.AppImage       (Linux x64)
+#     Dominevo-X.Y.Z-amd64.deb          (Linux Debian)
 #
 #   ── electron-updater feeds (ONE per product per platform — ADR-0584) ──
-#     latest-mac.yml  latest.yml  latest-linux.yml   (CamStack, channel `latest`)
-#     viewer-mac.yml  viewer.yml  viewer-linux.yml   (CamStack Viewer, channel `viewer`)
+#     latest-mac.yml  latest.yml  latest-linux.yml   (Dominevo, channel `latest`)
+#     viewer-mac.yml  viewer.yml  viewer-linux.yml   (Dominevo Viewer, channel `viewer`)
 #
 #   ── Single GitHub Release ────────────────────────────────────────────
 #     Auto-generated release notes (commit diff vs prior tag) + full
@@ -79,7 +79,7 @@ on:
         options: [all, mac, linux]
         default: all
       dry_run:
-        description: "Derive the product version and the baked @camstack/server only — do not build or publish"
+        description: "Derive the product version and the baked @dominevo/server only — do not build or publish"
         required: false
         type: boolean
         default: false
@@ -133,7 +133,7 @@ jobs:
           node -e '
             const filter = process.argv[1];
             const L = (a) => JSON.stringify(a);
-            // ONE desktop product (packages/desktop) — the single CamStack
+            // ONE desktop product (packages/desktop) — the single Dominevo
             // app selects hub vs agent at runtime via CAMSTACK_ROLE. Three
             // legs: mac arm64 + mac x64 (cross-built on the two arm64 Mac
             // mini runners, one arch each — staging fetches the target-arch
@@ -145,7 +145,7 @@ jobs:
             // OVERRIDES the CLI --arm64/--x64 flag, so each mac leg would
             // build BOTH arch DMGs from its single-arch CS_NODE_ARCH staging
             // — the "twin" DMG carries the WRONG-arch bundled node, and the
-            // CamStack-* upload glob makes the last-finishing leg overwrite
+            // Dominevo-* upload glob makes the last-finishing leg overwrite
             // the sibling leg asset (v1.2.3: published arm64.dmg contained
             // x64 node — built by the x64 leg, which finished last). NOTE:
             // this comment lives inside a bash single-quoted string — no
@@ -154,7 +154,7 @@ jobs:
             // source: electron-builder.viewer.json, no extraResources, so
             // stage_closure is false and the closure step is skipped
             // entirely. They own the CamStackViewer-* glob and nothing else
-            // does — sharing CamStack-* is the v1.2.3 overwrite described
+            // does — sharing Dominevo-* is the v1.2.3 overwrite described
             // above, and scripts/check-viewer-build-carries-no-server.ts
             // fails the build if that name is ever reused.
             //
@@ -163,9 +163,9 @@ jobs:
             // re-create the twin-DMG collision this file was bitten by. The
             // viewer config declares its own mac arch for the same reason.
             const all = [
-              {target:"desktop",workspace:"packages/desktop",artifact_glob:"CamStack-*",feed_glob:"latest*.yml",output_dir:"release",platform:"linux",arch:"x64",builder_flags:"--linux",runner_labels:L(["self-hosted","linux","x64","ci-release"])},
-              {target:"desktop",workspace:"packages/desktop",artifact_glob:"CamStack-*",feed_glob:"latest*.yml",output_dir:"release",platform:"mac",arch:"arm64",builder_flags:"--mac --arm64",runner_labels:L(["self-hosted","macos","arm64"])},
-              {target:"desktop",workspace:"packages/desktop",artifact_glob:"CamStack-*",feed_glob:"latest*.yml",output_dir:"release",platform:"mac",arch:"x64",builder_flags:"--mac --x64",runner_labels:L(["self-hosted","macos","arm64"])},
+              {target:"desktop",workspace:"packages/desktop",artifact_glob:"Dominevo-*",feed_glob:"latest*.yml",output_dir:"release",platform:"linux",arch:"x64",builder_flags:"--linux",runner_labels:L(["self-hosted","linux","x64","ci-release"])},
+              {target:"desktop",workspace:"packages/desktop",artifact_glob:"Dominevo-*",feed_glob:"latest*.yml",output_dir:"release",platform:"mac",arch:"arm64",builder_flags:"--mac --arm64",runner_labels:L(["self-hosted","macos","arm64"])},
+              {target:"desktop",workspace:"packages/desktop",artifact_glob:"Dominevo-*",feed_glob:"latest*.yml",output_dir:"release",platform:"mac",arch:"x64",builder_flags:"--mac --x64",runner_labels:L(["self-hosted","macos","arm64"])},
               {target:"desktop-viewer",workspace:"packages/desktop",artifact_glob:"CamStackViewer-*",feed_glob:"viewer*.yml",output_dir:"release-viewer",platform:"linux",arch:"x64",stage_closure:"false",builder_flags:"--linux --config electron-builder.viewer.json",runner_labels:L(["self-hosted","linux","x64","ci-release"])},
               {target:"desktop-viewer",workspace:"packages/desktop",artifact_glob:"CamStackViewer-*",feed_glob:"viewer*.yml",output_dir:"release-viewer",platform:"mac",arch:"arm64",stage_closure:"false",builder_flags:"--mac --arm64 --config electron-builder.viewer.json",runner_labels:L(["self-hosted","macos","arm64"])},
             ];
@@ -184,11 +184,11 @@ jobs:
           # Logic: scripts/ci/product-release.mjs, pinned by
           # scripts/__tests__/product-release.spec.ts.
           node scripts/ci/product-release.mjs
-      - name: Resolve the baked @camstack/server (npm latest)
+      - name: Resolve the baked @dominevo/server (npm latest)
         id: npm
         run: |
           # The product version is not an npm version. Both the image and
-          # the desktop app install @camstack/server@latest; this step
+          # the desktop app install @dominevo/server@latest; this step
           # records which closure that is. A missing dist-tag fails closed.
           # Logic: scripts/ci/verify-release-npm.mjs, pinned by
           # scripts/__tests__/verify-release-npm.spec.ts.
@@ -219,7 +219,7 @@ jobs:
         run: |
           echo "product=${{ steps.version.outputs.version }}"
           echo "release_name=${{ steps.version.outputs.release_name }}"
-          echo "server=@camstack/server@${{ steps.npm.outputs.server_version }} (npm latest)"
+          echo "server=@dominevo/server@${{ steps.npm.outputs.server_version }} (npm latest)"
           if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
             echo "dry_run=true — no image, installer, or GitHub release will be published"
           fi
@@ -266,9 +266,9 @@ jobs:
 
           DOWNGRADE_NOTE=$(node --input-type=module -e "import { desktopDowngradeNote } from './scripts/ci/product-release.mjs'; const note = desktopDowngradeNote(process.env.VERSION); if (note) console.log(note)")
           {
-            echo "## CamStack \`v${VERSION}\`"
+            echo "## Dominevo \`v${VERSION}\`"
             echo ""
-            echo "Baked closure: \`@camstack/server@${SERVER_VERSION}\` (npm \`latest\` at build time)."
+            echo "Baked closure: \`@dominevo/server@${SERVER_VERSION}\` (npm \`latest\` at build time)."
             echo ""
             if [ -n "$DOWNGRADE_NOTE" ]; then
               echo "$DOWNGRADE_NOTE"
@@ -322,7 +322,7 @@ jobs:
           # assets to this draft as they finish.
           draft: true
 
-  # ── Step 2 — Docker image (single CamStack image, hub OR agent) ──
+  # ── Step 2 — Docker image (single Dominevo image, hub OR agent) ──
   #
   # ONE image name `ghcr.io/<owner>/camstack` from the single `Dockerfile`:
   # hub vs agent at runtime via CAMSTACK_ROLE; accel variant via `--target`
@@ -343,36 +343,36 @@ jobs:
             dockerfile: Dockerfile
             target: intel
             image: camstack
-            title: CamStack
-            description: CamStack node (Intel VA/NPU) — hub or agent via CAMSTACK_ROLE
+            title: Dominevo
+            description: Dominevo node (Intel VA/NPU) — hub or agent via CAMSTACK_ROLE
           - accel: amd
             runner: ci-release
             dockerfile: Dockerfile
             target: amd
             image: camstack
-            title: CamStack (AMD)
-            description: CamStack node (AMD Mesa VA/Vulkan) — hub or agent via CAMSTACK_ROLE
+            title: Dominevo (AMD)
+            description: Dominevo node (AMD Mesa VA/Vulkan) — hub or agent via CAMSTACK_ROLE
           - accel: intel-legacy
             runner: ci-release
             dockerfile: Dockerfile
             target: intel-legacy
             image: camstack
-            title: CamStack (Intel legacy)
-            description: CamStack node (Intel Gen8-Gen11 iGPU, legacy compute runtime) — hub or agent via CAMSTACK_ROLE
+            title: Dominevo (Intel legacy)
+            description: Dominevo node (Intel Gen8-Gen11 iGPU, legacy compute runtime) — hub or agent via CAMSTACK_ROLE
           - accel: nvidia
             runner: ci-release
             dockerfile: Dockerfile
             target: nvidia
             image: camstack
-            title: CamStack (NVIDIA)
-            description: CamStack node (NVIDIA Turing and newer, CUDA 12) — needs the NVIDIA Container Toolkit
+            title: Dominevo (NVIDIA)
+            description: Dominevo node (NVIDIA Turing and newer, CUDA 12) — needs the NVIDIA Container Toolkit
           - accel: nvidia-legacy
             runner: ci-release
             dockerfile: Dockerfile
             target: nvidia-legacy
             image: camstack
-            title: CamStack (NVIDIA legacy)
-            description: CamStack node (NVIDIA Pascal/Maxwell, CUDA 11.8) — needs the NVIDIA Container Toolkit
+            title: Dominevo (NVIDIA legacy)
+            description: Dominevo node (NVIDIA Pascal/Maxwell, CUDA 11.8) — needs the NVIDIA Container Toolkit
     runs-on: [self-hosted, linux, x64, docker, "${{ matrix.runner }}"]
     # docker/build-push-action@v6 uploads a "build summary" record as a GitHub
     # Actions artifact by default. We don't use it (images go to GHCR; the
@@ -445,13 +445,13 @@ jobs:
         id: repo
         run: echo "owner=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
 
-      - name: Build and push CamStack Docker image
+      - name: Build and push Dominevo Docker image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./${{ matrix.dockerfile }}
           target: ${{ matrix.target }}
-          # Registry-install: the image installs `@camstack/server@latest`.
+          # Registry-install: the image installs `@dominevo/server@latest`.
           # PRODUCT_VERSION is the product release (the tag), baked as
           # CAMSTACK_PRODUCT_VERSION for the About line. It is not the
           # npm version — that is the server_version label below.
@@ -491,7 +491,7 @@ jobs:
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
             org.opencontainers.image.variant=${{ matrix.accel }}
 
-  # ── Step 3 — Electron desktop bundles (single CamStack app × Mac/Linux) ──
+  # ── Step 3 — Electron desktop bundles (single Dominevo app × Mac/Linux) ──
   build-electron:
     needs: [derive-version, create-release]
     # Runs after create-release on a publish, and without it on an artifact
@@ -511,7 +511,7 @@ jobs:
     #   1. register it with labels `self-hosted,windows,x64`;
     #   2. add {target:"desktop",...,platform:"win",arch:"x64",builder_flags:"--win",
     #      runner_labels:L(["self-hosted","windows","x64"])} to the matrix above;
-    #   3. add the `latest.yml` feed + `CamStack-Setup-*.exe` to the publish step
+    #   3. add the `latest.yml` feed + `Dominevo-Setup-*.exe` to the publish step
     #      and to scripts/check-desktop-update-feeds.ts, then run the install
     #      steps of the Windows page on that VM BEFORE enabling the leg.
     #
@@ -594,7 +594,7 @@ jobs:
         run: |
           # Keep workspace install — packages/desktop is `private: true` and
           # imports workspace types directly. But SKIP the heavy nx build of all
-          # packages: @camstack/server etc. are installed from npm in the next
+          # packages: @dominevo/server etc. are installed from npm in the next
           # step (stage-deps).
           # Self-hosted hygiene: the persistent workspace can hold a partially
           # cleaned node_modules (ENOTEMPTY on native-module dirs), which makes
@@ -633,7 +633,7 @@ jobs:
         if: runner.os == 'Linux'
         shell: bash
         run: |
-          # A native module in the @camstack/server closure (node-pty via
+          # A native module in the @dominevo/server closure (node-pty via
           # addon-terminal) has no linux-x64 prebuild for this Node ABI, so
           # stage-deps source-compiles it. Under Node 24, node-gyp's default
           # C++ standard is gnu++20, which the runner's default GCC 9 rejects
@@ -744,7 +744,7 @@ jobs:
           # x64 legs also pass their own arch — a no-op that matches the host.
           CS_NODE_ARCH: ${{ matrix.arch }}
         run: |
-          # Registry-install: the single @camstack/server closure (server + all
+          # Registry-install: the single @dominevo/server closure (server + all
           # addons + node_modules + native prebuilds) is fetched from public npm
           # and staged into packages/desktop/.deps by stage-deps. NO source
           # build, NO nx. ONE closure serves both roles — the desktop app picks
@@ -890,7 +890,7 @@ jobs:
           #
           # `--config.extraMetadata.version` overrides the package.json
           # version used in artifactName so the .dmg/.exe/.AppImage
-          # filenames match the git tag (e.g. CamStack-0.1.1-arm64.dmg
+          # filenames match the git tag (e.g. Dominevo-0.1.1-arm64.dmg
           # under the v0.1.1 release, not the package.json's stale 0.1.0).
           #
           # electron-builder is a devDependency of packages/desktop. npm
@@ -1217,9 +1217,9 @@ jobs:
           OWNER_LC="${{ steps.repo.outputs.owner }}"
           IMG="${{ env.REGISTRY }}/${OWNER_LC}/camstack"
           {
-            echo "## CamStack — Release \`v${VERSION}\`"
+            echo "## Dominevo — Release \`v${VERSION}\`"
             echo ""
-            echo "Baked closure: \`@camstack/server@${SERVER_VERSION}\` (npm \`latest\`)."
+            echo "Baked closure: \`@dominevo/server@${SERVER_VERSION}\` (npm \`latest\`)."
             if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
               echo ""
               echo "Dry run — derive only. Nothing was built or published."
@@ -1233,5 +1233,5 @@ jobs:
             echo ""
             echo "### Desktop installers"
             echo "Available on the release page:"
-            echo "- \`CamStack-${VERSION}-arm64.dmg\` / \`CamStack-${VERSION}-x64.dmg\` / \`CamStack-${VERSION}-x64.AppImage\` / \`CamStack-${VERSION}-amd64.deb\`"
+            echo "- \`Dominevo-${VERSION}-arm64.dmg\` / \`Dominevo-${VERSION}-x64.dmg\` / \`Dominevo-${VERSION}-x64.AppImage\` / \`Dominevo-${VERSION}-amd64.deb\`"
           } >> $GITHUB_STEP_SUMMARY

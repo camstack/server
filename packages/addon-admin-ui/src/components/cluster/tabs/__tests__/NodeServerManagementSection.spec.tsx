@@ -10,7 +10,7 @@
  */
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, act } from '@testing-library/react'
-import type { ImageContract } from '@camstack/types'
+import type { ImageContract } from '@dominevo/types'
 
 const applySpy = vi.fn().mockResolvedValue({ accepted: true, restarting: true })
 const restartSpy = vi.fn().mockResolvedValue({ accepted: true, restarting: true })
@@ -22,8 +22,8 @@ const contractHolder = vi.hoisted(() => ({ current: null as ImageContract | null
 
 function statusFor(_isHub: boolean) {
   return {
-    // Both roles run the single @camstack/server root (hub vs agent = CAMSTACK_ROLE).
-    packageName: '@camstack/server',
+    // Both roles run the single @dominevo/server root (hub vs agent = CAMSTACK_ROLE).
+    packageName: '@dominevo/server',
     runningVersion: '1.1.41',
     nodeRuntimeVersion: 'v22.11.0',
     activeVersion: '1.1.41',
@@ -41,9 +41,9 @@ function statusFor(_isHub: boolean) {
   }
 }
 
-vi.mock('@camstack/ui-library', async () => {
+vi.mock('@dominevo/ui-library', async () => {
   const actual =
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+    await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return {
     Button: actual.Button,
     Input: actual.Input,
@@ -82,7 +82,7 @@ const HUB = {
   name: 'Hub',
   isHub: true,
   isOnline: true,
-  rootPackage: { name: '@camstack/server', version: '1.1.41' },
+  rootPackage: { name: '@dominevo/server', version: '1.1.41' },
 }
 
 describe('NodeServerManagementSection', () => {
@@ -120,7 +120,7 @@ describe('NodeServerManagementSection', () => {
           name: 'Agent One',
           isHub: false,
           isOnline: false,
-          rootPackage: { name: '@camstack/server', version: '1.1.40' },
+          rootPackage: { name: '@dominevo/server', version: '1.1.40' },
         }}
       />,
     )

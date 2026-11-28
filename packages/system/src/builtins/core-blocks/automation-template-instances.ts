@@ -32,7 +32,7 @@ import {
   type IScopedLogger,
   type TemplateAutomationUser,
   type UnitResolver,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export interface AutomationTemplateInstances {
   /** The automations whose recipe links to the template. */

@@ -8,8 +8,8 @@
  * at the boundary — an action id outside `NavigationActionIdSchema` never
  * reaches a provider.
  */
-import type { INavigationProvider } from '@camstack/types'
-import { NAVIGATION_ACTION_CATALOG } from '@camstack/types'
+import type { INavigationProvider } from '@dominevo/types'
+import { NAVIGATION_ACTION_CATALOG } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { buildCapRouterForTest, checkAuthMatrix, invokeProcedure, makeCtx } from './harness.js'
 

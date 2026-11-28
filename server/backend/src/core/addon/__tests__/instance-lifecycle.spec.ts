@@ -4,7 +4,7 @@
  * candidate, the D1016 gate, the rollback, the device cascade, the fixed-builtin and link refusals,
  * and the `IntegrationDeleted` event.
  */
-import { IntegrationRegistry } from '@camstack/server/system'
+import { IntegrationRegistry } from '@dominevo/server/system'
 import {
   createRecordsAccess,
   EventCategory,
@@ -14,7 +14,7 @@ import {
   type IntegrationTestConnectionResult,
   type IScopedLogger,
   SERVICE_INSTANCE_INFO_KEY,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { TRPCError } from '@trpc/server'
 import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest'
 import { integrationRegistryRecordKinds } from '../../../../../../packages/system/src/builtins/sqlite-storage/integration-record-kinds.js'

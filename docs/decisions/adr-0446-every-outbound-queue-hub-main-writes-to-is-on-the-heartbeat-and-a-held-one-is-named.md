@@ -21,7 +21,7 @@ live set consisted of, and it is answered from the `[mem]` lines of the two
 boots that followed — not from a snapshot, which this repository forbids.
 
 **The live set was accounted for by two boots four hours apart.** The crashed
-closure (`@camstack/server` 1.2.266) restarted at 01:33 in the same container
+closure (`@dominevo/server` 1.2.266) restarted at 01:33 in the same container
 with the same 39 runners: post-GC `heapUsed` was **1 311–1 381 MB within two
 minutes of boot** and 1 365 MB an hour later. The 1.2.269 closure (D444: no
 addon bundle evaluated inside hub-main) restarted at 05:34 in the same
@@ -31,7 +31,7 @@ is the one change between the two closures, and it is the bundle evaluation
 D443 had sampled at "9.3 MB" — a sampling profile sees what was allocated in
 its window, not what a module graph pins. Over the evening the floor moved in
 steps of 30–80 MB at 19:38, 20:33, 22:07 and 22:52 — every one a
-`camstack deploy` re-evaluating a bundle — for ~250 MB more. So of the
+`dominevo deploy` re-evaluating a bundle — for ~250 MB more. So of the
 2 491 MB: ~690 MB is what a hub-main needs; ~870 MB was bundle evaluation
 (gone with D444); ~88 MB was the phone's WebSocket queue (bounded by D444);
 ~95 MB is the residue of the ArrayBuffer episode below; ~750 MB accumulated
@@ -113,10 +113,10 @@ and the brk residue, and removing it buys no live set.
 
 ## Consequences
 
-- None of this ships with `camstack deploy`: `socket-channel.ts`,
+- None of this ships with `dominevo deploy`: `socket-channel.ts`,
   `local-child-registry.ts`, `socket-plane-report.ts`, `heap-watch.ts` and
-  the two new modules are `@camstack/system`; the probe wiring is
-  `server/backend/src/main.ts`. All ride one published `@camstack/server`
+  the two new modules are `@dominevo/system`; the probe wiring is
+  `server/backend/src/main.ts`. All ride one published `@dominevo/server`
   (D16). Until then the episode owner stays unnamed and the D444 census is
   the only instrument armed.
 - The `[mem] hub-main` line grows by two to five fields, APPENDED after

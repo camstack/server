@@ -14,8 +14,8 @@
  * to (superseding the removed `auth.listProviders`).
  */
 
-import type { CapabilityRegistry } from '@camstack/server/system'
-import type { ILoginMethodProvider, IScopedLogger } from '@camstack/types'
+import type { CapabilityRegistry } from '@dominevo/server/system'
+import type { ILoginMethodProvider, IScopedLogger } from '@dominevo/types'
 import {
   advertisedHubOrigins,
   DEVICE_CERT_SIGNATURE,
@@ -32,7 +32,7 @@ import {
   UserScopeSchema,
   ViewerFeatureIdSchema,
   WidgetLoginMethodSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { TRPCError } from '@trpc/server'
 import { z } from 'zod'
 import type { AuthNetworkPolicy } from '../../auth/auth-network-policy.js'
@@ -98,7 +98,7 @@ import {
 import { createDeviceCertProcedures } from './auth-device-cert.procedures.js'
 import { createSessionProcedures } from './auth-sessions.procedures.js'
 import { serverNameReaderFor } from './server-name.js'
-import { capabilityScopesOf, userError } from '@camstack/types'
+import { capabilityScopesOf, userError } from '@dominevo/types'
 import { trpcUserError } from '../trpc/user-error.js'
 
 /**

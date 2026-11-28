@@ -9,7 +9,7 @@ import {
   type InferNativeProvider,
   type MotionStatus,
   type PowerMeterStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { ValueChangedEvent } from 'nodehomematic'
 import { sensorRoleOf } from './hm-entity-spec.js'
 import { HmChildDevice, hmChildSchema } from './hm-child-device.js'

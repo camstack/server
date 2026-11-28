@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { AddonPageProps } from '@camstack/ui-library'
+import type { AddonPageProps } from '@dominevo/ui-library'
 import { setClusterStepModel } from '../ui/api.js'
 
 describe('setClusterStepModel', () => {

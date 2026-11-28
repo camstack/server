@@ -9,7 +9,7 @@ import {
   type DeviceContext,
   resyncCapability,
   resyncThroughAdoption,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { childConfigFor, childFactoryFor, deviceTypeOf, roleOf } from '../esphome-child-spec.js'
 import { planBoard, type ChildPlan } from '../esphome-entity-spec.js'
 import { espIrOverrides } from '../esphome-ir-overrides.js'

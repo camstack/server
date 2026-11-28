@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { ConfirmDialogProvider } from '@camstack/ui-library'
+import { ConfirmDialogProvider } from '@dominevo/ui-library'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const testMutate = vi.hoisted(() => vi.fn())
@@ -9,8 +9,8 @@ const testVerdict = vi.hoisted(() => ({
 }))
 const customMutate = vi.hoisted(() => vi.fn())
 
-vi.mock('@camstack/ui-library', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@camstack/ui-library')>()),
+vi.mock('@dominevo/ui-library', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@dominevo/ui-library')>()),
   useIntegrationInstancesTestInstance: (opts: {
     onSuccess?: (r: { success: boolean; status: string }) => void
   }) => ({

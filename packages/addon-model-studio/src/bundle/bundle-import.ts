@@ -29,7 +29,7 @@ import {
   type ModelFormatEntry,
   type PeerBytesOpenResult,
   type PeerBytesTicket,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { extractBundleTar } from './bundle-tar.js'
 
 const LOCAL_SCHEME = 'camstack-local://'

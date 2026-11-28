@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { DeviceRole, DeviceType } from '@camstack/types'
+import { DeviceRole, DeviceType } from '@dominevo/types'
 import { TimedRunRowControl } from '../timed-run-row-control'
 import { QUICK_RUN_SAVE_DEBOUNCE_MS } from '../timed-run-quick-model'
 

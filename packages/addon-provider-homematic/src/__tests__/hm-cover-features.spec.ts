@@ -9,7 +9,7 @@ import {
   DeviceFeature,
   DeviceType,
   type IDeviceRuntimeState,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { HmActuatorDevice } from '../devices/hm-actuator-device.js'
 

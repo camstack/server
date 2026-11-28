@@ -13,8 +13,8 @@
  * (3) is the one that would be missed: a mute that only touched live brokers
  * would test green all day and quietly lapse on the next respawn.
  */
-import type { IScopedLogger } from '@camstack/types'
-import { makeSourceBrokerId } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
+import { makeSourceBrokerId } from '@dominevo/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { DeviceOverride } from '../stream-broker/stream-broker-manager.js'

@@ -3,7 +3,7 @@
  * A section whose every field is hidden by `showWhen` is not drawn: a per-provider section of a
  * provider that is not selected would otherwise be a bare header.
  */
-import type { ConfigUISchema } from '@camstack/types'
+import type { ConfigUISchema } from '@dominevo/types'
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { ConfigFormBuilder } from '../config-form-builder.js'

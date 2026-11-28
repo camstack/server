@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { DeviceRole, DeviceType, type DeviceInfo } from '@camstack/types'
-import { deviceTypeMeta } from '@camstack/ui-library'
+import { DeviceRole, DeviceType, type DeviceInfo } from '@dominevo/types'
+import { deviceTypeMeta } from '@dominevo/ui-library'
 import { Camera, GitBranch } from 'lucide-react'
 import type { AddonPageInfo } from '../../layouts/AddonPageLoader'
 import { filterSearchItems, flattenSearchResults } from '../global-search'
@@ -147,7 +147,7 @@ describe('buildDeviceSearchItems', () => {
     // Compared against `deviceTypeMeta` itself (the single source of truth),
     // not a directly-imported lucide component — a bare `lucide-react`
     // import in THIS file can resolve to a different module instance than
-    // the copy `@camstack/ui-library` bundles, which would make an
+    // the copy `@dominevo/ui-library` bundles, which would make an
     // `Object.is` check against it flaky for reasons unrelated to the code
     // under test.
     expect(camera?.icon).toBe(deviceTypeMeta(DeviceType.Camera).icon)

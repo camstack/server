@@ -1,4 +1,4 @@
-import type { DeviceSearchRequires } from '@camstack/types'
+import type { DeviceSearchRequires } from '@dominevo/types'
 import { type ReactNode, useState } from 'react'
 import { useUiText } from '../../contexts/ui-text'
 import { useIsPhone } from '../../hooks/use-is-mobile'

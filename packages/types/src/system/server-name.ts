@@ -50,7 +50,7 @@ export const ServerNameInfoSchema = z.object({
 export type ServerNameInfo = z.infer<typeof ServerNameInfoSchema>
 
 /** What an unset name shows when the hostname says nothing about the hub. */
-export const SERVER_NAME_FALLBACK = 'CamStack'
+export const SERVER_NAME_FALLBACK = 'Dominevo'
 
 /** A container id: Docker's default hostname (12 hex chars, or the full 64). */
 const CONTAINER_ID_PATTERN = /^(?:[0-9a-f]{12}|[0-9a-f]{64})$/

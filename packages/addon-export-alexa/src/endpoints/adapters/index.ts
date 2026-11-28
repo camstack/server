@@ -4,7 +4,7 @@
  * Adding a cap to Alexa is adding its adapter here — in order: the first
  * adapter with a category decides the endpoint's display category.
  */
-import { applianceExport, type AddonApi, type IScopedLogger } from '@camstack/types'
+import { applianceExport, type AddonApi, type IScopedLogger } from '@dominevo/types'
 import type { AlexaCapability, AlexaDisplayCategory } from '../types.js'
 import { climateAdapter } from './climate.js'
 import { contactAdapter } from './contact.js'

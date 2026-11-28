@@ -69,8 +69,8 @@
  * `pace()` awaited between probe batches. Work it does not finish is left for
  * the next pass and REPORTED, never silently dropped.
  */
-import { errMsg } from '@camstack/types'
-import type { IScopedLogger } from '@camstack/types'
+import { errMsg } from '@dominevo/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { physicalRootKey } from './eviction-domain.js'
 import type { RealpathSync } from './eviction-domain.js'
 import { locationForHydratedProfile } from './roots.js'

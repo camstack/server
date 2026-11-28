@@ -27,13 +27,13 @@ hours. This page exists because it has cost them.
 
 | What | Channel | Reaches a node when |
 | --- | --- | --- |
-| **Framework** (`types`, `sdk`, `ui-library`, and the private `server-framework` shipped as `@camstack/server/system`) | inside the `@camstack/server` tarball and dependency closure | a root-package install runs |
-| **Addons** | `<dataDir>/addons/` | `camstack deploy`, or the Admin UI Addons page |
+| **Framework** (`types`, `sdk`, `ui-library`, and the private `server-framework` shipped as `@dominevo/server/system`) | inside the `@dominevo/server` tarball and dependency closure | a root-package install runs |
+| **Addons** | `<dataDir>/addons/` | `dominevo deploy`, or the Admin UI Addons page |
 
 **One published framework package ([D989](../decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md)).**
 The old system package is no longer published; its dist is built into
 `server/backend/system/` by `scripts/sync-system-into-server.mjs` <!-- drift-ok: build output directory, created by the sync script, not tracked --> and travels in
-the `@camstack/server` tarball. Each addon declares `camstack.requires.server`, the
+the `@dominevo/server` tarball. Each addon declares `camstack.requires.server`, the
 server declares `requires.addons` / `requires.wrapper`, wrappers declare
 `requires.server`; the publish workflow stamps them after the version bump
 (`scripts/ci/stamp-requires.mjs`). A delivery whose minimum is unmet is refused (or
@@ -49,7 +49,7 @@ per package, derived from the closure — check it rather than guessing.
 Every node, whatever its role, loads addons from exactly one directory:
 
 ```
-$CAMSTACK_ADDONS_DIR  (defaults to <dataDir>/addons)  →  <root>/@camstack/<pkg>/
+$CAMSTACK_ADDONS_DIR  (defaults to <dataDir>/addons)  →  <root>/@dominevo/<pkg>/
 ```
 
 `AddonLoader.loadFromDirectory` is the only reader and it takes ONE directory —
@@ -59,22 +59,22 @@ package is absent. So the topology is a property of `<dataDir>`, and every
 
 | Role | THE data root | THE addon root |
 | --- | --- | --- |
-| Hub (docker) | `/data` | `/data/addons/@camstack` |
-| Agent (docker) | `/data` | `/data/addons/@camstack` |
-| Desktop / Electron agent | `<userData>/data` — i.e. `~/Library/Application Support/@camstack/<appId>/data` | `<userData>/data/addons/@camstack` |
-| Dev | `server/backend/camstack-data` <!-- drift-ok: gitignored runtime data dir, created on first run, not present in a fresh checkout --> | `…/camstack-data/addons/@camstack` |
+| Hub (docker) | `/data` | `/data/addons/@dominevo` |
+| Agent (docker) | `/data` | `/data/addons/@dominevo` |
+| Desktop / Electron agent | `<userData>/data` — i.e. `~/Library/Application Support/@dominevo/<appId>/data` | `<userData>/data/addons/@dominevo` |
+| Dev | `server/backend/camstack-data` <!-- drift-ok: gitignored runtime data dir, created on first run, not present in a fresh checkout --> | `…/camstack-data/addons/@dominevo` |
 
 **What may write it**
 
 | Writer | What it writes | When |
 | --- | --- | --- |
-| `camstack deploy` / Admin UI upload | one package | operator gesture |
+| `dominevo deploy` / Admin UI upload | one package | operator gesture |
 | `propagateToAgents` / `deployToAgent` | one package, via `deliverAddonToAgent` | a hub install fans out |
 | the addon back-fill | packages the node's declared roster is missing, and packages whose live version differs from the hub's installed version (either direction, D942). The agent does not read npm | a node registers, hub boots, or `clusterNodes.repairNodeAddons` |
-| `ensureRequiredPackages` (bootstrap) | the bootstrap set: missing packages at registry `latest`, and an npm-source copy whose version differs from `latest` (either direction, D942). A workspace/bundled seed and a closure-provided `@camstack/server/system` are left alone. An unreadable registry changes nothing | every boot |
+| `ensureRequiredPackages` (bootstrap) | the bootstrap set: missing packages at registry `latest`, and an npm-source copy whose version differs from `latest` (either direction, D942). A workspace/bundled seed and a closure-provided `@dominevo/server/system` are left alone. An unreadable registry changes nothing | every boot |
 | ~~the image seed~~ | **gone** ([D129](../decisions/adr-0129.md), 2026-08-13) — the image carries no addon tree, so `ensureRequiredPackages` fetches a missing bootstrap addon from npm at `latest` | — |
 
-**Nothing writes `@camstack/server/system` into an addon root any more.** Since
+**Nothing writes `@dominevo/server/system` into an addon root any more.** Since
 [D107](../decisions/adr-0107.md) an agent loads the builtins from the closure it
 is running, exactly as the hub has since 2026-07-18. The retired
 `seedBuiltinsFromClosure` wrote that copy **only when absent** — it guaranteed one
@@ -93,7 +93,7 @@ pin and no adopt-by-semver).
 **The SYSTEM fallback stays — served out of the ONE baked tree.**
 `/opt/camstack-hub` is what a node boots from when its closure is broken, and the
 entrypoint re-creates `<dataDir>/framework` on exactly ONE
-condition — no `@camstack/server/system` under `server-root/current` — printing
+condition — no `@dominevo/server/system` under `server-root/current` — printing
 `FALLBACK` when it does. It used to re-create the tree whenever the tree itself
 was missing, which is why the 509 MB purged on 2026-08-12 was back after the
 next restart. In steady state a node holds ONE copy and the post-boot sweep
@@ -104,7 +104,7 @@ that block from the Dockerfile and runs it — shell in an image is otherwise
 untestable from here.
 
 **There is no second baked tree any more.** `/opt/camstack-seed-framework` was a
-SECOND npm install of the same `@camstack/{system,types,sdk}` plus the hoisted
+SECOND npm install of the same `@dominevo/{system,types,sdk}` plus the hoisted
 natives, existing only to be copied into `$FRAMEWORK_DIR` on that fallback boot:
 510 MB beside a 930 MB `/opt/camstack-hub`, and the THIRD copy of every framework
 package — which is what made the [D45](../decisions/adr-0045.md) inventory report
@@ -113,23 +113,23 @@ re-cut after the first slice amputated the runtime stage), because
 it was redundant by inspection: `/opt/camstack-hub/node_modules` already hoists
 `better-sqlite3`, `node-av`, `sharp` and `zod` at its root — the exact reason the
 second tree was built that way — and already holds the three framework packages
-as dependencies of `@camstack/server`. The fallback now copies that one tree and
-then **replaces** its `@camstack` scope with `system`/`types`/`sdk` alone; merging
-it would put `@camstack/server` and every baked addon into the framework dir, a
+as dependencies of `@dominevo/server`. The fallback now copies that one tree and
+then **replaces** its `@dominevo` scope with `system`/`types`/`sdk` alone; merging
+it would put `@dominevo/server` and every baked addon into the framework dir, a
 fresh set of shadow copies. A framework package missing from the
 baked tree is fatal for that boot and says so, rather than letting the node start
 and fail resolution with an error that names nothing. The
 `/opt/camstack-seed-version` fingerprint is now hashed over that same tree, so it
-covers every baked `@camstack/*` instead of only system/types/sdk — it moves on
+covers every baked `@dominevo/*` instead of only system/types/sdk — it moves on
 more changes than before, which is the conservative direction.
 
 **What may NEVER write it**
 
-- `@camstack/server/system`, `types`, `sdk`, `ui-library`. They are
+- `@dominevo/server/system`, `types`, `sdk`, `ui-library`. They are
   host-provided ([D15](../decisions/adr-0015.md)) and belong in the closure. A
   copy under `addons/` WINS over the closure and never updates —
   `shouldSkipClosureProvidedSeed` refuses to seed one, and
-  `<dataDir>/addons/@camstack/system` is absent on hub and on `agent-a`
+  `<dataDir>/addons/@dominevo/system` is absent on hub and on `agent-a`
   by design.
 - `shm-ring` — deleted ([D763](../decisions/adr-0763-the-decoder-cap-is-a-hwaccel-answer-and-shm-ring-and-decoder-ffmpeg-are-deleted.md));
   it had left the closure with
@@ -139,13 +139,13 @@ more changes than before, which is the conservative direction.
 - Anything at all, by hand. **A rename is an install, not an archive**
   ([D90](../decisions/adr-0090.md)). Three consumers key on the `package.json`
   inside a directory and ignore the directory's name: the loader (its skip list
-  is keyed on the PACKAGE name, so `@camstack/server/system.bak-pre-unshadow` was not
+  is keyed on the PACKAGE name, so `@dominevo/server/system.bak-pre-unshadow` was not
   skipped), the agent's `resolveAddonPackageDirs`, and
   `AddonManifest.reconcileFromDisk`. On 2026-08-07 the `agent-a` agent's
   main process held five live mappings of `better_sqlite3.node` out of a
   17-day-old copy; on 2026-08-08 the Mac agent had **no**
-  `addons/@camstack/system` directory at all and still reported
-  `@camstack/server/system 1.2.3` — read out of `system.bak-pre-1272-…` while running a
+  `addons/@dominevo/system` directory at all and still reported
+  `@dominevo/server/system 1.2.3` — read out of `system.bak-pre-1272-…` while running a
   1.2.61 closure.
 
   Two gates now close this, and neither deletes anything: `reconcileFromDisk`
@@ -169,12 +169,12 @@ refuse a boot**, and `scripts/check-inventory-never-fatal.ts` keeps it that way
 
 | Guard | Answers |
 | --- | --- |
-| `package-inventory.ts` ([D45](../decisions/adr-0045.md)) | how many copies of `@camstack/server/system` / `types` / `sdk` exist under the roots THIS node resolves through |
+| `package-inventory.ts` ([D45](../decisions/adr-0045.md)) | how many copies of `@dominevo/server/system` / `types` / `sdk` exist under the roots THIS node resolves through |
 | `addon-root-inventory.ts` | whether a whole RIVAL data root exists on this machine — a retired Electron app id, the pre-Electron `~/camstack-agent-data` |
 
 The second exists because the first structurally cannot see it: its roots are
 all derived from the active `<dataDir>`. Measured on the Mac agent 2026-08-07:
-four `addons/@camstack` trees on one disk holding `addon-pipeline` at 1.2.43
+four `addons/@dominevo` trees on one disk holding `addon-pipeline` at 1.2.43
 (live), 1.1.70, 1.1.59 and 1.1.1. Four true answers to "what version is on the
 Mac"; an hour was spent on one of the three nothing had loaded since June.
 
@@ -186,15 +186,15 @@ Mac"; an hour was spent on one of the three nothing had loaded since June.
 
 **Editing `packages/<addon>/src/…` and rebuilding `packages/<addon>/dist/` is not
 enough.** A running node loads addons from
-`server/backend/camstack-data/addons/@camstack/<addon>/dist/`. Until you deploy,
+`server/backend/camstack-data/addons/@dominevo/<addon>/dist/`. Until you deploy,
 the live runner keeps loading the **old installed copy**: log lines you added never
 appear, refactors never run, and you can debug stale code for a long time without
 suspecting it.
 
 ```bash
-camstack deploy packages/addon-pipeline-orchestrator
-camstack deploy pipeline-orchestrator          # workspace-name shortcut
-camstack deploy <pkg> -n <nodeId>              # to a specific agent (hub is default)
+dominevo deploy packages/addon-pipeline-orchestrator
+dominevo deploy pipeline-orchestrator          # workspace-name shortcut
+dominevo deploy <pkg> -n <nodeId>              # to a specific agent (hub is default)
 ```
 
 `CrashSupervisor` respawns the runner after install — no manual kill.
@@ -203,18 +203,18 @@ The CLI's `-n` flag is the **working** channel for agent addon deploys.
 `nodes.deployAddon` does **not** ship bundles.
 
 Auth comes from the login session at `~/.camstack/<host>.json`, created by
-`camstack login` — every hub command (`deploy`, `deploy-server`, `dev`, `watch`)
+`dominevo login` — every hub command (`deploy`, `deploy-server`, `dev`, `watch`)
 picks it up for the target server with no flags. The session is the only
 credential (D1101; skill `hub-access`): there is no token flag or variable. A
-401/403 means: run `camstack login` again.
+401/403 means: run `dominevo login` again.
 
 To find every stale addon after a rebase — compare installed vs workspace mtime:
 
 ```bash
 for d in packages/addon-*; do
   name=$(basename "$d")
-  installed=$(stat -f "%Sm" "server/backend/camstack-data/addons/@camstack/$name/dist/index.mjs" 2>/dev/null \
-            || stat -f "%Sm" "server/backend/camstack-data/addons/@camstack/$name/dist/index.js" 2>/dev/null)
+  installed=$(stat -f "%Sm" "server/backend/camstack-data/addons/@dominevo/$name/dist/index.mjs" 2>/dev/null \
+            || stat -f "%Sm" "server/backend/camstack-data/addons/@dominevo/$name/dist/index.js" 2>/dev/null)
   workspace=$(stat -f "%Sm" "$d/dist/index.mjs" 2>/dev/null \
             || stat -f "%Sm" "$d/dist/index.js" 2>/dev/null \
             || stat -f "%Sm" "$d"/dist/*.addon.js 2>/dev/null | head -1)
@@ -230,7 +230,7 @@ behaves like before" → almost always a stale installed copy.
 
 ## Deploying a framework change in development
 
-A framework package ships differently: `camstack deploy packages/types` works
+A framework package ships differently: `dominevo deploy packages/types` works
 because `syncFrameworkDist` mirrors the package's `dist/` into the hub closure and
 restarts. In production it needs a publish.
 
@@ -239,16 +239,16 @@ existing method needs only the providing addon redeployed.
 
 **Builtins load from the closure, on both roles.** The hub
 (`server/backend/src/core/addon/addon-registry.service.ts`, `bootstrap`:
-`resolveHubClosurePackageDir('@camstack/server/system')`, then
-`loadFromDirectory(addonsDir, ['@camstack/server/system'])`) and the agent
+`resolveHubClosurePackageDir('@dominevo/server/system')`, then
+`loadFromDirectory(addonsDir, ['@dominevo/server/system'])`) and the agent
 (`bootCoreAddons` in `server/backend/src/agent/main.ts` →
 `planAgentAddonScan` in `server/backend/src/agent/addon-scan.ts`) both load the
-`@camstack/server/system` builtins from the running closure and SKIP any
-`<addonsDir>/@camstack/system` copy. Forked runners resolve `@camstack/*`
+`@dominevo/server/system` builtins from the running closure and SKIP any
+`<addonsDir>/@dominevo/system` copy. Forked runners resolve `@dominevo/*`
 through the closure too (`registerFrameworkResolver` with
 `CAMSTACK_FRAMEWORK_DIR`, set by the launcher to the active root). So
 `applyServerUpdate`'s own restart refreshes the builtins; no second restart is
-needed, and `updatePackage({name:'@camstack/server/system', nodeId})` is no longer how
+needed, and `updatePackage({name:'@dominevo/server/system', nodeId})` is no longer how
 an agent's builtins are refreshed.
 
 This replaced the model [D87](../decisions/adr-0087.md) describes, in which an
@@ -258,16 +258,16 @@ because "Update all" on an agent had been silently updating the hub instead
 ([D106](../decisions/adr-0106.md)) — the drift that motivated loading from the
 closure. Two residues remain:
 
-- **The agent fallback.** When the closure cannot resolve `@camstack/server/system`,
+- **The agent fallback.** When the closure cannot resolve `@dominevo/server/system`,
   the agent logs `not resolvable from the running closure — falling back to
   the addon-root copy` and loads whatever copy is on disk. That line in an
   agent's boot log means its builtins may be stale.
 - **A stale copy is still read by the hub's hot-load scan.**
   `loadNewAddons` (same file) rescans the whole addons dir with no skip list
   and refreshes the metadata of already-registered entries from it — so a
-  leftover `<addonsDir>/@camstack/system` is still worth removing.
+  leftover `<addonsDir>/@dominevo/system` is still worth removing.
 
-Read the `[launcher] resolved @camstack/server/system@… from <path>` line for what it
+Read the `[launcher] resolved @dominevo/server/system@… from <path>` line for what it
 says and no more: which copy the LAUNCHER resolves for its own imports.
 
 ## What ships in an addon — and why `addons/` has no `node_modules`
@@ -279,7 +279,7 @@ removes them from the installed `package.json` so the installer runs **no**
 per-addon `npm install`. `RUNTIME_NATIVE_KEEP` is empty: a self-contained dist
 requires nothing from a local `node_modules`.
 
-**The inlined `@camstack/types` is tree-shaken** ([D1074](../decisions/adr-1074-the-types-package-is-tree-shaken-into-addon-bundles-and-three-guards-not-the-heap-budget-hold-it.md),
+**The inlined `@dominevo/types` is tree-shaken** ([D1074](../decisions/adr-1074-the-types-package-is-tree-shaken-into-addon-bundles-and-three-guards-not-the-heap-budget-hold-it.md),
 amends [D15](../decisions/adr-0015.md) and [D28](../decisions/adr-0028.md)). `packages/types`
 also emits `dist/esm/` (one file per module, reached through the `module` export
 condition by a bundler; Node and vitest keep the bundled files), declares `"sideEffects": false`, and a
@@ -292,7 +292,7 @@ The heap budget (`scripts/addon-dist-footprint-budgets.json`) is the backstop.
 
 The only exception is a **true native** (`.node`) or a lib that ships optional
 natives that cannot be bundled. Those are **host-external**: declared once as a
-dependency of `@camstack/server` (so they live in the framework closure) and
+dependency of `@dominevo/server` (so they live in the framework closure) and
 listed in `HOST_EXTERNAL_SPECIFIERS`, whose resolver hook
 (`packages/system/src/kernel/moleculer/framework-resolver-hook.mjs`) redirects an
 addon's import into `frameworkDir/node_modules`. The set is
@@ -304,13 +304,13 @@ bootstrap-isolated copies (`host-externals.ts`, the zero-dep starter
 guard in `host-externals.spec.ts` pins them equal.
 
 **Host-external does not imply "in the closure".** A list entry is a routing
-rule; the dependency is what supplies bytes. `@camstack/shm-ring` sat in all
+rule; the dependency is what supplies bytes. `@dominevo/shm-ring` sat in all
 three lists for seven weeks after it left the closure
 ([D184](../decisions/adr-0184-the-closure-carries-no-package-nothing-imports.md))
 and resolved to nothing on a fresh node; it was deleted with
 [D763](../decisions/adr-0763-the-decoder-cap-is-a-hwaccel-answer-and-shm-ring-and-decoder-ffmpeg-are-deleted.md).
 
-Consequence: the version is whatever `@camstack/server` pins — an addon cannot
+Consequence: the version is whatever `@dominevo/server` pins — an addon cannot
 choose its own native version. In return, `addons/` carries only bundled code, so
 the backup can tar the whole folder with no exclusion list ([D27](../decisions/adr-0027.md)).
 
@@ -321,7 +321,7 @@ the backup can tar the whole folder with no exclusion list ([D27](../decisions/a
 
 One hub-side job updates the cluster. The admin UI (Nodes → Update all, and
 Addons → Update server when an addon is held because the server is too old),
-the CLI (`camstack cluster-update`) and the MCP (`ops_update_apply`) all call
+the CLI (`dominevo cluster-update`) and the MCP (`ops_update_apply`) all call
 the `cluster-update` capability. None of them loops over nodes itself.
 
 `previewClusterUpdate` is what a start would do, plus a typed refusal when it
@@ -344,7 +344,7 @@ The UI, the CLI and the MCP all follow the job that way.
 
 ## Updating a node
 
-`applyServerUpdate` runs `npm install @camstack/server@X` into
+`applyServerUpdate` runs `npm install @dominevo/server@X` into
 `<dataDir>/server-root/.staging-*`, arms a pending root-swap marker and restarts;
 the starter swaps it into `current/` at boot.
 
@@ -353,14 +353,14 @@ stores tarballs under `server-root/dev-uploads/<version>/` via
 `POST /api/server-upload`. Agents get the same layout through
 `POST /api/server-upload/propagate` (`$agent.stageDevUploads`, hub-http pull —
 [D825](../decisions/adr-0825-dev-server-uploads-reach-agents-through-hub-propagate-not-host-copy.md)),
-then `applyServerUpdate` with `nodeId`. CLI: `camstack deploy-server --all` /
+then `applyServerUpdate` with `nodeId`. CLI: `dominevo deploy-server --all` /
 `-n <nodeId>`. Host copy of `dev-uploads` is emergency-only.
 
 One copy only — no probation boot, no N-1 retention, no automatic rollback
 ([D17](../decisions/adr-0017.md)). Recovery from a bad version is an explicit
 update to a known-good one.
 
-The stage/apply engine is shared: `RootUpdateService` in `@camstack/node-root`, with
+The stage/apply engine is shared: `RootUpdateService` in `@dominevo/node-root`, with
 the hub binding its parameters in `ServerUpdateService`. Both roles use it so they
 cannot drift ([D16](../decisions/adr-0016.md)).
 
@@ -416,7 +416,7 @@ unreachable.
 
 **The patch pass does not go through npm, and the interpreter is
 `process.execPath`.** npm 12 blocks a dependency's install scripts by default and
-still exits 0, so `@camstack/server`'s `postinstall` — the thing that applies
+still exits 0, so `@dominevo/server`'s `postinstall` — the thing that applies
 those patches — silently did not run on the Mac-mini agent, which had bootstrapped
 npm 12.0.1 while hub and agent-a stayed on npm 11. That node sat two
 versions behind with no symptom but the validator's refusal. Both halves are
@@ -473,7 +473,7 @@ first-boot installer holds an addon the running server would reject. Agent: the
 reconcile (`delivery-requirements.ts`) judges `server-too-old` and
 `addon-too-old` from the live roster. Starter: a closure whose server is below
 the starter's hosted range boots the baked seed and logs both versions.
-`camstack deploy --closure` stamps `requires.addons` from the workspace, so a
+`dominevo deploy --closure` stamps `requires.addons` from the workspace, so a
 dev closure is judged like a published one. Every unsupported or refused addon
 logs a line naming both versions. The agent judges its own addons the same way
 (`stale-addon-gate`) and spawns them all.
@@ -511,13 +511,13 @@ states are still computed, still warn-logged, still exported.
 
 ### An agent follows its own closure (2026-10-28)
 
-The hub is no longer the only thing that moves an agent's `@camstack/server` closure. Each agent
+The hub is no longer the only thing that moves an agent's `@dominevo/server` closure. Each agent
 keeps it current itself (`server/backend/src/agent/agent-self-update.ts`), through the same
 `AgentUpdateService` stage + apply + `scheduleAgentRestart` path the hub drives (lifecycle =
 respawn, D5). A freshly installed desktop agent boots the seed baked into the app and, unpaired,
 had no hub to receive a fix from.
 
-- **Target.** Unpaired: the npm `latest` of `@camstack/server`. Paired: the version the HUB runs,
+- **Target.** Unpaired: the npm `latest` of `@dominevo/server`. Paired: the version the HUB runs,
   carried on the `$hub.registerNode` ack (`hubServerVersion`) — never npm latest, so there is no
   hub/agent skew. A hub too old to say its version leaves the agent where it is, and that is logged.
 - **When.** Unpaired: at boot. Paired: on the first registration ack. Then every
@@ -532,29 +532,29 @@ had no hub to receive a fix from.
 
 ## A registry install is pinned to the tested third-party versions (#681)
 
-`@camstack/server` ships `closure-pins.json`: every third-party package of its
+`@dominevo/server` ships `closure-pins.json`: every third-party package of its
 production closure (the server, its addons, `sdk`, `types`, `ui-library`) at the
-exact version the repo lockfile tested, no `@camstack/*` entry.
+exact version the repo lockfile tested, no `@dominevo/*` entry.
 `scripts/gen-closure-pins.mjs` writes it from `prepack`, so `npm pack`, `npm
-publish` and `camstack deploy --closure` all carry it; the file is git-ignored,
+publish` and `dominevo deploy --closure` all carry it; the file is git-ignored,
 so a commit cannot hold pins that disagree with the lockfile. A name the closure
 resolves to more than one version is left out (an override is by name).
 
 `RootUpdateService` reads it before a REGISTRY install (`npm pack
-@camstack/server@<target>` into a temp dir, then `package/closure-pins.json`)
+@dominevo/server@<target>` into a temp dir, then `package/closure-pins.json`)
 and writes it as `overrides` into the staging `package.json`. A target without
 the file, or a failed pack, installs unpinned as before and logs `closure
 install unpinned`.
 
 The dev-uploads branch reads the same file from the uploaded server tarball and
-merges it into the synthetic `overrides` (the `@camstack/*` `file:` entries win
+merges it into the synthetic `overrides` (the `@dominevo/*` `file:` entries win
 on overlap). With valid pins the install passes no `--before`. A tarball
 without a usable pins file keeps the interim bound, `--before = build time + 5
 min` (`DevUploadManifest.buildTimeMs`), and logs why; a rejected file warns.
 
 Why not an `npm-shrinkwrap.json` inside the server: npm honours `overrides` only
 in the ROOT project, and a shrinkwrap in a dependency nests the whole tree under
-`node_modules/@camstack/server/` and installs none of the `@camstack/*` addons
+`node_modules/@dominevo/server/` and installs none of the `@dominevo/*` addons
 it does not list. Measured: pinned `@trpc/server` 11.18.0 at the root with the
 addons beside it, unpinned 11.31.0.
 
@@ -564,7 +564,7 @@ The Docker image and the desktop build install the closure outside the node
 updater, so they go through `scripts/closure-pins-install.mjs`: it resolves
 `latest` once, packs that exact version, writes its `closure-pins.json` as root
 `overrides` into the install dir and prints the version; the install then uses
-`@camstack/server@<that version>`. The Dockerfile COPYs the helper and
+`@dominevo/server@<that version>`. The Dockerfile COPYs the helper and
 `packages/node-root/src/closure-pins.ts` (the shared parser, read by Node's type
 stripping) into the fetch stage; `packages/desktop/scripts/stage-deps.mjs` runs
 the same helper. A release without the file installs unpinned and the build
@@ -578,7 +578,7 @@ only what never changes under it: `ctx.migrationApi` (`MigrationApiV1`, `package
 An addon writes `this.runMigrations(CATALOGUE, (api) => ports)`; the hub catalogue is engine-level
 and reads no addon surface. The API is append-only (`check-migration-api-append-only`, pinned in
 `scripts/migration-api-contract.json`); a breaking change is `migration-api.v2` beside v1. A
-migration source reads no `ctx` and imports `@camstack/types`, zod and local files only
+migration source reads no `ctx` and imports `@dominevo/types`, zod and local files only
 (`check-migration-ports-surface`). A catalogue that still needs something V1 lacks is named in
 `scripts/migration-ports-surface-pending.json`, which only shrinks. The replay spec
 (`migration-catalogue-replay.spec.ts`) runs the hub catalogue over hand-written old-release data
@@ -665,11 +665,11 @@ None of those four checks loads the built bundle. The fault existed only there.
 Three distinct shapes of this hit the same session:
 
 - **The nx cache served a `dist` built before the change.** A passing
-  `camstack deploy` was not evidence the bundle still built; it shipped an old
+  `dominevo deploy` was not evidence the bundle still built; it shipped an old
   one. Build with `--skip-nx-cache` and confirm a marker from your change is in
   `dist/` before trusting a deploy (§"nx-cache can bake STALE code" in
   `camstack-homelab-ops`).
-- **A deploy ran from an uncommitted tree.** `camstack deploy` packs the
+- **A deploy ran from an uncommitted tree.** `dominevo deploy` packs the
   working directory, not `HEAD`. Commit first, then deploy — the reverse leaves
   a hub running code that exists nowhere in git.
 - **The fault only appears on a RE-deploy.** See below.
@@ -715,7 +715,7 @@ share one shape: **the update reported success and did not happen.**
 
 ### `--cluster` silently deployed to the hub alone
 
-`camstack deploy --cluster` printed *"no online agents found, pushing to hub
+`dominevo deploy --cluster` printed *"no online agents found, pushing to hub
 only"* while `agent-a` was online, logging, and accepting the very same
 tarball via `-n agent-a`.
 
@@ -741,17 +741,17 @@ of falling back to hub-only. Guarded by
 
 ### The back-fill un-deployed every agent deploy, 1.5 seconds later
 
-**This is the one that cost the day.** `camstack deploy packages/addon-pipeline
+**This is the one that cost the day.** `dominevo deploy packages/addon-pipeline
 -n agent-a` landed the correct bytes — verified by hash — and ~1.5s later
 the node's `dist/` held a *different* build under the *same* version. It looked
 exactly like a stale tarball cache. There is no cache.
 
-`@camstack/addon-pipeline@1.2.43` existed as **two different bundles**: the one
+`@dominevo/addon-pipeline@1.2.43` existed as **two different bundles**: the one
 built in the workspace and the one published to npm. The deploy's own
 `$agent.reload` briefly empties the node's reported addon roster (`$agent.deploy`
 evicts the package's declaration ids from `loadedAddons`). The hub's reconcile
 reads that roster, concludes the package is MISSING, and the addon back-fill
-repairs the node — by `npm pack @camstack/addon-pipeline@1.2.43`, i.e. **the
+repairs the node — by `npm pack @dominevo/addon-pipeline@1.2.43`, i.e. **the
 registry's build**, installed straight over the one just delivered.
 
 The seam's own comment said "bytes come from the hub's own resolution of the
@@ -762,7 +762,7 @@ measure the bytes.
 Evidence (hub stdout, three deploys in 40 minutes):
 
 ```
-[agent-registry] Back-fill agent-a: delivered @camstack/addon-pipeline@1.2.43
+[agent-registry] Back-fill agent-a: delivered @dominevo/addon-pipeline@1.2.43
 ```
 
 — once after each deploy, and the published 1.2.43's
@@ -814,7 +814,7 @@ when the automatic gates decline.
 
 ### `-n <agent>` was silently redirected to the hub
 
-`camstack deploy <pkg> -n agent-a` printed `✓ agent-a` while the hub
+`dominevo deploy <pkg> -n agent-a` printed `✓ agent-a` while the hub
 logged `hub install OK`. The named node was never addressed.
 
 `data.fields` is the multipart plugin's live busboy body, populated as parsing
@@ -833,8 +833,8 @@ in `addon-upload.spec.ts` (it fails against the pre-fix read order) and
 
 ### `-n <agent>` installed the bundle and never loaded it
 
-`camstack deploy packages/addon-pipeline -n agent-a` printed
-`✓ agent-a: @camstack/addon-pipeline@1.2.43` four times on 2026-08-07
+`dominevo deploy packages/addon-pipeline -n agent-a` printed
+`✓ agent-a: @dominevo/addon-pipeline@1.2.43` four times on 2026-08-07
 while the node went on executing the previous dist. It was blamed on a stale
 tarball cache. There is no tarball cache: the agent verifies bytes **and**
 sha256 before unpacking (`fetch-bundle-from-hub.ts`), and a marker file planted
@@ -895,7 +895,7 @@ The call blocks while the hub restarts, so the client sees a 60s timeout (or a
 arrive says what happened in `outcome`; `staged` means the old version is still
 the one answering you.
 
-`camstack deploy`'s post-deploy health gate has the same problem: it probes
+`dominevo deploy`'s post-deploy health gate has the same problem: it probes
 `/health` while the addon is restarting, gets a 502, and reports
 `1/1 target(s) failed` **after the install already succeeded**. Use
 `--no-verify` and poll `/health` separately.
@@ -904,15 +904,15 @@ the one answering you.
 
 `applyServerUpdate` replaces `<dataDir>/server-root/current`. It does **not**
 replace the starter: hub-main is
-`/opt/camstack-hub/node_modules/@camstack/server/dist/starter.js`, baked into
+`/opt/camstack-hub/node_modules/@dominevo/server/dist/starter.js`, baked into
 the image. Code added to `starter-core.ts` deployed cleanly and produced
 **zero** output, because the running starter was still the image's copy.
 
 The converse trap (2026-09-19): `/proc/<pid>/cmdline` of hub-main names that
 seed path on EVERY boot, and the seed's `package.json` next to it carries the
 image version — that is not what the process loaded. What it loaded is the
-starter's `booting @camstack/server@X from /data/server-root/current` line, the
-launcher's `resolved @camstack/server/system@… from …` line, and `bootMode` /
+starter's `booting @dominevo/server@X from /data/server-root/current` line, the
+launcher's `resolved @dominevo/server/system@… from …` line, and `bootMode` /
 `activeVersion` / `runningVersion` on `getServerPackageStatus`. Reading the
 version off the cmdline path diagnosed a running hub as a version behind.
 
@@ -923,25 +923,25 @@ version off the cmdline path diagnosed a running hub as a version behind.
 
 ### Not every workspace package is in the closure
 
-`@camstack/node-root` is `private: true` and is **absent** from
-`<dataDir>/server-root/current/node_modules/@camstack/`. `server/backend`'s
+`@dominevo/node-root` is `private: true` and is **absent** from
+`<dataDir>/server-root/current/node_modules/@dominevo/`. `server/backend`'s
 `main.js` is `tsc` output, not a bundle, so importing that package from
 `main.ts` would have been an unresolvable `require` at boot — it would have
 broken the hub, not merely the feature. Verify before importing:
 
 ```bash
-ssh <hub> 'docker exec CamStack ls /data/server-root/current/node_modules/@camstack/'
+ssh <hub> 'docker exec Dominevo ls /data/server-root/current/node_modules/@dominevo/'
 ```
 
 ### The product release is not the npm version
 
 `vX.Y.Z` is the product: image tags, the desktop app, the GitHub release. It
 restarts at **0.1.0 beta** and lives in `product-version.json` (the same number
-in `packages/desktop/package.json`). `@camstack/*` stay on 1.2.x. The viewer
+in `packages/desktop/package.json`). `@dominevo/*` stay on 1.2.x. The viewer
 app stays on 1.0.x and this workflow does not build it.
 [D943](../decisions/adr-0943-the-product-release-is-not-the-npm-version.md).
 
-Both the image and the desktop app install `@camstack/server@latest`
+Both the image and the desktop app install `@dominevo/server@latest`
 (`Dockerfile`, `packages/desktop/scripts/stage-deps.mjs`). The release records
 that closure — image label `io.camstack.server.version`, and a line in the
 release notes. `scripts/ci/verify-release-npm.mjs` fails closed when `latest`
@@ -951,12 +951,12 @@ Image tags stay accel-prefixed: `<variant>-X.Y.Z` and `<variant>-latest` for
 the five variants `intel`, `intel-legacy`, `amd`, `nvidia`, `nvidia-legacy`. A
 bare `:X.Y.Z` would name several accelerator images. The variant → hardware
 table is one object, `IMAGE_VARIANT_TABLE` in `packages/cli/src/mcp/image-variants.ts`;
-the install guide, `camstack host-check` and `support_diagnose_accelerator` read it.
+the install guide, `dominevo host-check` and `support_diagnose_accelerator` read it.
 
 An install of the desktop app or the Electron viewer shell that is still on
 1.2.x will not auto-update to 0.1.0 (electron-updater treats it as a downgrade).
 Reinstall once. Later releases on this line use the same feeds (`latest`,
-`viewer`). The release name is `CamStack X.Y.Z beta` while the major is 0.
+`viewer`). The release name is `Dominevo X.Y.Z beta` while the major is 0.
 
 ### `npm run publish` — affected only. Never `--all`.
 
@@ -983,10 +983,10 @@ two steps — a shell timeout, a killed terminal — **the registry moves and gi
 does not**, and the next `affected` run computes its diff from a stale tag. This
 happened twice on 2026-08-29. Recovery is to commit the already-bumped
 `package.json`s with a `chore(release):` message and tag manually; verify with
-`npm view @camstack/server version` against `server/backend/package.json`.
+`npm view @dominevo/server version` against `server/backend/package.json`.
 
 The order is **publish → tag → build**, and it went wrong because
-`scripts/publish.sh` scanned `packages/*` ONLY, so `@camstack/server` (which
+`scripts/publish.sh` scanned `packages/*` ONLY, so `@dominevo/server` (which
 lives in `server/backend`) was invisible to it. `npm run publish -- --all`
 reported nine packages and silently omitted the one the release depends on.
 
@@ -1027,19 +1027,19 @@ home runner still leaves a Docker or Electron leg `queued`.
 
 ### Deploying from a laptop
 
-`camstack deploy` defaults to a LAN address that a laptop on Tailscale cannot
+`dominevo deploy` defaults to a LAN address that a laptop on Tailscale cannot
 reach (`ETIMEDOUT 192.168.x.x:4443`). Log in to the public endpoint once and
 name it; every tool then uses that session:
 
 ```bash
-camstack login https://camstack.<local-user>.top
-camstack deploy packages/<pkg> --server https://camstack.<local-user>.top -n <nodeId>
+dominevo login https://camstack.<local-user>.top
+dominevo deploy packages/<pkg> --server https://camstack.<local-user>.top -n <nodeId>
 ```
 
 ## Release order for a camera's motion path (D673, D696)
 
 A camera's motion runs through these pieces:
-- the server (framework, and `camera-grid` inside `@camstack/server/system`);
+- the server (framework, and `camera-grid` inside `@dominevo/server/system`);
 - the orchestrator (the camera-sensors bridge, and the ONLY writer of a
   camera's `motion` slice);
 - the camera providers (the raw `ProviderMotion` push, and no longer any write
@@ -1049,7 +1049,7 @@ A camera's motion runs through these pieces:
 
 ### What the server step really installs (the closure)
 
-**Three of those pieces are not separate steps.** `@camstack/server` declares
+**Three of those pieces are not separate steps.** `@dominevo/server` declares
 eight addons as dependencies (`server/backend/package.json`), and its launcher
 RE-ALIGNS every installed bootstrap addon to the closure's copy at boot
 (`server/backend/src/launcher.ts`, `planAddonRealignment` in
@@ -1062,7 +1062,7 @@ is strictly newer AND the installed copy predates the closure:
 | agent | `addon-pipeline`, `addon-decoder-nodeav`, `addon-agent-ui` (`camstack.agentBootstrapAddons`) |
 
 The publish pins each to the version of the same run (`pin-root-deps`):
-`@camstack/server` 1.2.430 carried `addon-pipeline` 1.2.315,
+`@dominevo/server` 1.2.430 carried `addon-pipeline` 1.2.315,
 `addon-pipeline-orchestrator` 1.2.272 and `addon-admin-ui` 1.2.299. So the
 runner, the orchestrator and the admin UI move AT THE SERVER STEP, on every
 node that runs them. Only the camera providers are a step of their own.
@@ -1106,7 +1106,7 @@ no-op when the server step re-aligned it.
   provider step waits for a version READ LIVE:
 
   **Preflight, before the provider step (reads only):**
-  1. `addons.listPackages` — the entry `name: "@camstack/addon-pipeline-orchestrator"`
+  1. `addons.listPackages` — the entry `name: "@dominevo/addon-pipeline-orchestrator"`
      has `version` at or above the floor (1.2.272). This is the version
      INSTALLED on the hub's disk, not the running process's; after a deploy
      the addon has restarted, so the two agree;
@@ -1115,7 +1115,7 @@ no-op when the server step re-aligned it.
      entry without the field is an old runner).
 
   **Stop rule:** either read short, and the providers do not ship.
-- **`camera-grid` stays deferred and unsplit.** It is in `@camstack/server/system`, so
+- **`camera-grid` stays deferred and unsplit.** It is in `@dominevo/server/system`, so
   it moves with the server; the orchestrator moves at the same boot only when
   the re-alignment re-aligns it, so the server cannot assume an orchestrator
   at the floor. `camera-grid` keeps emitting `MotionOnMotionChanged`
@@ -1138,7 +1138,7 @@ bus, keyed `<node>/<childId>` (a provider is its own runner, so `hub/provider-hi
 - `WorkerOffline` when the LIVE connection closes, after the hub unregistered
   the child (a superseded connection's close emits nothing).
 
-**This is a framework change.** It is live only once a `@camstack/server`
+**This is a framework change.** It is live only once a `@dominevo/server`
 carrying it is installed (hub and agents). Before that, nothing tells the
 provider gate that a provider restarted: see the rollback rules.
 
@@ -1228,7 +1228,7 @@ The released D696 providers (Hikvision 1.2.136, Amcrest 0.2.125, Reolink
 1.2.167, Wyze 0.2.122) write no slice but do NOT carry the field, so the
 provider gate reads them as old. The field is said by `BaseDeviceProvider`,
 which every provider bundles, so the publish that carries this change rebuilds
-them with it (the `@camstack/types` cascade).
+them with it (the `@dominevo/types` cascade).
 
 - **Ship the four rebuilt providers BEFORE the server that carries the gate —
   only when the preflight above passes**: the hub's installed orchestrator is
@@ -1330,12 +1330,12 @@ none of them back, see above):
 
 ## The trap worth naming
 
-A framework fix is **not** live until a `@camstack/server` version containing it is
-installed. A published `@camstack/server/system@1.2.13` sitting in the registry while the
-running `@camstack/server@1.2.10` pins `system@1.2.9` means the fix is not
+A framework fix is **not** live until a `@dominevo/server` version containing it is
+installed. A published `@dominevo/server/system@1.2.13` sitting in the registry while the
+running `@dominevo/server@1.2.10` pins `system@1.2.9` means the fix is not
 deployed — even though the package exists and the bundle hash changed.
 
-So: publishing a framework fix means publishing `@camstack/server` too, even when
+So: publishing a framework fix means publishing `@dominevo/server` too, even when
 nothing under `server/backend/` changed. **The publish workflow now does that for
 every package in the server's dependency closure** — `types`, `system`, `sdk`,
 `ui-library` and the closure addons alike — derived from `server/backend`'s own
@@ -1396,16 +1396,16 @@ reachable as `npm run publish`) is a local escape hatch, not the route.
 - **`affected` (default)** publishes only packages whose own files changed — a
   change to `types` / `ui-library` republishes just that library, not its
   ~40 dependents.
-- **The closure cascade: anything `@camstack/server` depends on drags
-  `@camstack/server` with it.** Narrow from 2026-08-15 (`@camstack/server/system`
-  only), generalised on 2026-09-17. `@camstack/server` is the single root package
+- **The closure cascade: anything `@dominevo/server` depends on drags
+  `@dominevo/server` with it.** Narrow from 2026-08-15 (`@dominevo/server/system`
+  only), generalised on 2026-09-17. `@dominevo/server` is the single root package
   a node installs and the ONLY one published with exact pins
   (`pin-root-deps.mjs`), so a change to a closure member reaches a node through a
   new server and through **nothing else**: publish the library alone and every
   node stays pinned to the previous version, `updateAvailable` stays false, and a
   green publish job reads as deployed. The set is derived from `server/backend`'s
   own `dependencies` — a hand-written list of what is in the closure is exactly
-  what goes stale — and the job **fails** if `@camstack/server` is missing from
+  what goes stale — and the job **fails** if `@dominevo/server` is missing from
   the workspace index. Packages outside the closure (`cli`,
   every independently deployed addon) still publish alone.
 - **A bundle candidate publishes only when its built output changes.** The
@@ -1426,7 +1426,7 @@ reachable as `npm run publish`) is a local escape hatch, not the route.
   the workflow prints those decisions and does not publish.
 - **Dependent cascade (opt-in, rarely right).** It publishes everything that
   DEPENDS on a changed library — a dozen addons that pin nothing, declare
-  `@camstack/*` as `"*"`, and resolve whatever the closure installed. It was
+  `@dominevo/*` as `"*"`, and resolve whatever the closure installed. It was
   being used as the workaround for the gap the closure cascade now closes, and it
   bumped 11 packages for a one-file `ui-library` change on 2026-09-17. Turn it on
   only when a dependent's PUBLISHED tarball must change without its own files
@@ -1455,10 +1455,10 @@ each bought with a bad release (2026-09-14):
   reads a caught-up registry and picks a free slot; accepting costs a silent
   no-op release that leaves no trace anywhere.
 - **The closure ships only if the rest of the run did.** `pin-root-deps.mjs`
-  pins `@camstack/*` to the versions this run publishes whether or not they land,
-  so a run with any earlier failure would ship a `@camstack/server` nobody can
+  pins `@dominevo/*` to the versions this run publishes whether or not they land,
+  so a run with any earlier failure would ship a `@dominevo/server` nobody can
   install — the symptom being an `ETARGET` at staging time on every node, twenty
-  minutes and one deploy chain from its cause. `@camstack/server` is therefore
+  minutes and one deploy chain from its cause. `@dominevo/server` is therefore
   refused outright when `FAILED > 0`. The gate asks what this RUN knows; an
   earlier version of it looked the pins up on the registry and would have refused
   the perfectly good `server@1.2.294` during exactly the seven-minute window
@@ -1488,7 +1488,7 @@ product version (`product-version.json` and `packages/desktop/package.json`,
 the same number) on that commit first.
 
 ```bash
-gh workflow run "Release — CamStack (Docker + Electron)" --ref main -f publish_release=true
+gh workflow run "Release — Dominevo (Docker + Electron)" --ref main -f publish_release=true
 ```
 
 `publish_release` defaults to false. That run is an artifact build: installers
@@ -1497,7 +1497,7 @@ stay on the home runner, there is no GitHub release, and `version_type`
 always has. `dry_run=true` stops after derive.
 
 ```bash
-gh workflow run "Release — CamStack (Docker + Electron)" --ref main \
+gh workflow run "Release — Dominevo (Docker + Electron)" --ref main \
   -f dry_run=true -f version_type=patch
 ```
 
@@ -1506,9 +1506,9 @@ Docker and Electron stay on the home runners (group `release`):
 
 | Job | Runner | What it does |
 | --- | --- | --- |
-| `derive-version` | `ubuntu-latest` | refuses any ref other than `refs/heads/main`. `publish_release` reads `product-version.json` and refuses when `v<version>` already exists; an artifact run bumps by `version_type`. Then `scripts/ci/verify-release-npm.mjs` records `@camstack/server@latest` — see *The product release is not the npm version*, above |
+| `derive-version` | `ubuntu-latest` | refuses any ref other than `refs/heads/main`. `publish_release` reads `product-version.json` and refuses when `v<version>` already exists; an artifact run bumps by `version_type`. Then `scripts/ci/verify-release-npm.mjs` records `@dominevo/server@latest` — see *The product release is not the npm version*, above |
 | `create-release` | `ubuntu-latest` | publish only: creates tag `v<version>` on `github.sha` and the GitHub Release **as a draft**, notes from `git log <previous v-tag>..HEAD` |
-| `build-docker` | `[self-hosted, linux, x64, docker, ci-release]` | buildx pushes `ghcr.io/camstack/camstack:intel-<version>` **and** `:intel-latest` (and the `amd-` pair) to GHCR with `GITHUB_TOKEN`; linux/amd64 unless `multi_arch` |
+| `build-docker` | `[self-hosted, linux, x64, docker, ci-release]` | buildx pushes `ghcr.io/dominevo/dominevo:intel-<version>` **and** `:intel-latest` (and the `amd-` pair) to GHCR with `GITHUB_TOKEN`; linux/amd64 unless `multi_arch` |
 | `build-electron` | `[self-hosted, linux, x64, ci-release]`, `[self-hosted, macos, arm64]` | FIVE legs, in PARALLEL: the full desktop product (mac arm64, mac x64, linux x64) **and** the viewer shell (`CamStackViewer-*`, mac arm64 + linux x64, `electron-builder.viewer.json`, no staged closure). One release, one version (D429). A publish uploads each leg to the draft; an artifact run leaves the files on the runner |
 | `publish-release` | `ubuntu-latest` | `gh release edit --draft=false`, the only thing that makes the release visible. A failed Docker or Electron leg leaves the draft |
 
@@ -1522,7 +1522,7 @@ the job ends. `max-parallel: 1` was tried when one release attached ~2.2 GB at
 once and is gone: it cost wall clock and moved no bytes.
 
 The Electron viewer shell is built in this same release, at the **product**
-version (D429), not at `@camstack/server`'s version. It is a shell that loads
+version (D429), not at `@dominevo/server`'s version. It is a shell that loads
 `/viewer/camstack/` from the hub at runtime, so a viewer app change never needs
 a new shell build — `ship-viewer.mjs` owns that path (OTA, the orchestrator's
 web bundle, the submodule pin). The viewer **app** stays on its own 1.0.x line
@@ -1540,8 +1540,8 @@ and the viewer is `viewer`:
 
 | | mac | linux x64 | windows |
 | --- | --- | --- | --- |
-| CamStack | `latest-mac.yml` | `latest-linux.yml` | `latest.yml` |
-| CamStack Viewer | `viewer-mac.yml` | `viewer-linux.yml` | `viewer.yml` |
+| Dominevo | `latest-mac.yml` | `latest-linux.yml` | `latest.yml` |
+| Dominevo Viewer | `viewer-mac.yml` | `viewer-linux.yml` | `viewer.yml` |
 
 The channel is one value read by both halves — electron-builder names the feed
 after it, and `initAutoUpdater` hands the same constant to
@@ -1612,15 +1612,15 @@ such names, seven of them published before the 2026-05-21 history reset and so
 not recoverable from this repo's git at all.
 
 **A package name tells you nothing about an addon.** One package declares many
-addons: `@camstack/addon-pipeline` carries six manifest entries,
-`@camstack/addon-provider-homeassistant` two, `@camstack/addon-cloudflare` two.
+addons: `@dominevo/addon-pipeline` carries six manifest entries,
+`@dominevo/addon-provider-homeassistant` two, `@dominevo/addon-cloudflare` two.
 So the two failure modes are opposite and must be told apart before anything is
 retired:
 
 | Case | Example | Verdict |
 | --- | --- | --- |
-| Package gone, its addon ids **absorbed** by another package | `@camstack/core` → all 18 ids now declared by `@camstack/server/system` | retirable — the ids MOVED |
-| Package gone, its addon ids **deleted** | `@camstack/addon-analytics` — id `analytics` exists nowhere | retirable — say so, it is a removal not a move |
+| Package gone, its addon ids **absorbed** by another package | `@dominevo/core` → all 18 ids now declared by `@dominevo/server/system` | retirable — the ids MOVED |
+| Package gone, its addon ids **deleted** | `@dominevo/addon-analytics` — id `analytics` exists nowhere | retirable — say so, it is a removal not a move |
 | Package alive, an addon id it used to declare gone | any bundle that dropped an entry | NOT a package question |
 | Package gone, ids gone, **but a copy is still deployed** | `advanced-notifier` | do **not** unpublish — see below |
 
@@ -1628,10 +1628,10 @@ Answering that needs four sets, not two:
 
 | Set | What | How to get it |
 | --- | --- | --- |
-| **A** | every `@camstack/*` on npm, **including deprecated** | `npm access list packages @camstack` — the registry's *search* endpoint omits deprecated packages, so it silently under-reports exactly the ones you are auditing |
+| **A** | every `@dominevo/*` on npm, **including deprecated** | `npm access list packages @dominevo` — the registry's *search* endpoint omits deprecated packages, so it silently under-reports exactly the ones you are auditing |
 | **B** | workspace package names | every `packages/*/package.json` + `server/*/package.json` `name` |
 | **C** | workspace **addon ids** | every `camstack.addons[].id` across all of B — one package, many ids |
-| **D** | ids and packages actually **deployed** | `<dataDir>/addons/@camstack/**` on each node **and** `nodes.topology` — a deployed copy can exist unregistered, and a registered addon can be running from a directory that no longer exists |
+| **D** | ids and packages actually **deployed** | `<dataDir>/addons/@dominevo/**` on each node **and** `nodes.topology` — a deployed copy can exist unregistered, and a registered addon can be running from a directory that no longer exists |
 
 `scripts/check-npm-orphan-packages.ts` keeps A ⊆ B ∪ retired from rotting again:
 anything npm still presents as current must be buildable from this workspace, or
@@ -1641,13 +1641,13 @@ be recorded as deliberately retired with a note saying where the behaviour went.
 The audit found exactly two, both on the hub, both still `running` because the
 process was started before their directories were renamed aside:
 
-- `advanced-notifier` (`@camstack/addon-advanced-notifier@1.2.4`, ids
+- `advanced-notifier` (`@dominevo/addon-advanced-notifier@1.2.4`, ids
   `advanced-notifier` + `notification-output`) — deleted from the workspace in, **never published to npm**, and still deployed on the agent
   (`agent-a`, 1.2.0, unregistered there). The quarantined directory on the
   hub is the last complete copy in existence.
-- `export-ha-mqtt` (`@camstack/addon-export-ha-mqtt@1.2.10`, cap
+- `export-ha-mqtt` (`@dominevo/addon-export-ha-mqtt@1.2.10`, cap
   `device-export`) — superseded by `homeassistant-export` in
-  `@camstack/addon-provider-homeassistant`. This one *is* on npm, so the tarball
+  `@dominevo/addon-provider-homeassistant`. This one *is* on npm, so the tarball
   is the recoverable copy.
 
 For anything in that bucket the order is fixed: **un-deploy first, restart the

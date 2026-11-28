@@ -13,7 +13,7 @@ import {
   generateMeshCa,
   issueMeshLeafForNode,
   mintAgentUiUnlockTicket,
-} from '@camstack/server/system'
+} from '@dominevo/server/system'
 import type { ServiceBroker } from 'moleculer'
 import { afterAll, describe, expect, it } from 'vitest'
 import { createAgentHttpServer } from '../agent-http.js'

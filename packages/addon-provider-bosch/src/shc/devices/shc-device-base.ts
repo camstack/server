@@ -5,7 +5,7 @@ import {
   type DeviceContext,
   type DeviceFeature,
   type DeviceRole,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { shcConnections } from '../shc-gateway.js'
 import type { ShcClient } from '../shc-client.js'
 

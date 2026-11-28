@@ -32,9 +32,9 @@ import {
   type NodeMeasuredCapacity,
   type NodeBenchmarkPlanInput,
   type NodeBenchmarkPreflight,
-} from '@camstack/types'
+} from '@dominevo/types'
 
-export type { DeviceRunsModel } from '@camstack/types'
+export type { DeviceRunsModel } from '@dominevo/types'
 
 /**
  * `nodeId\0deviceKey` of every device that has a usable result: a fresh

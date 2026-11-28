@@ -37,7 +37,7 @@ interface RegisteredNativeCap {
 }
 
 /**
- * A node's runtime-updatable ROOT package identity (`@camstack/server` — the
+ * A node's runtime-updatable ROOT package identity (`@dominevo/server` — the
  * single root package for every node role) — carried in the `registerNode`
  * manifest so the hub knows every node's exact software version (design:
  * runtime-updatable node packages, "visibility"). Version skew is SEEN in
@@ -72,7 +72,7 @@ interface RegisterNodeParams {
 interface RegisterNodeResult {
   readonly ok: true
   /**
-   * The `@camstack/server` version the HUB runs, when it knows it. Lets an agent align its own
+   * The `@dominevo/server` version the HUB runs, when it knows it. Lets an agent align its own
    * closure to the hub's without a second call; absent from an older hub.
    */
   readonly hubServerVersion?: string

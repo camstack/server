@@ -5,20 +5,20 @@ describe('shouldEvictMissingOnDisk', () => {
   const onDisk = (...ids: string[]): ReadonlySet<string> => new Set(ids)
 
   it('evicts an installed addon that is no longer on disk', () => {
-    const entry: EvictionCandidate = { source: 'installed', packageName: '@camstack/addon-ai' }
+    const entry: EvictionCandidate = { source: 'installed', packageName: '@dominevo/addon-ai' }
     expect(shouldEvictMissingOnDisk(entry, 'ai', onDisk())).toBe(true)
   })
 
   it('keeps an installed addon still present on disk', () => {
-    const entry: EvictionCandidate = { source: 'installed', packageName: '@camstack/addon-ai' }
+    const entry: EvictionCandidate = { source: 'installed', packageName: '@dominevo/addon-ai' }
     expect(shouldEvictMissingOnDisk(entry, 'ai', onDisk('ai'))).toBe(false)
   })
 
-  it('NEVER evicts a @camstack/server/system builtin, even when absent from onDiskIds', () => {
+  it('NEVER evicts a @dominevo/server/system builtin, even when absent from onDiskIds', () => {
     // freshLoader scans addonsDir only, so builtins are never in onDiskIds.
     // This is the loki-logging regression: a deploy of an unrelated addon
     // must not unregister a builtin.
-    const loki: EvictionCandidate = { source: 'installed', packageName: '@camstack/server' }
+    const loki: EvictionCandidate = { source: 'installed', packageName: '@dominevo/server' }
     expect(shouldEvictMissingOnDisk(loki, 'loki-logging', onDisk('ai', 'device-manager'))).toBe(
       false,
     )

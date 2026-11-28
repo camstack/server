@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { AddonPageProps } from '@camstack/ui-library'
-import type { LabelDefinition, ModelConvertMetadata, ModelOutputFormat } from '@camstack/types'
+import type { AddonPageProps } from '@dominevo/ui-library'
+import type { LabelDefinition, ModelConvertMetadata, ModelOutputFormat } from '@dominevo/types'
 import {
   convertModel,
   recommendConvertNode,
@@ -25,7 +25,7 @@ import {
   isDisplayNameInvalid,
 } from '../components/DisplayNameField.js'
 import { useT } from '../i18n/index.js'
-import { Button, Select } from '@camstack/ui-library'
+import { Button, Select } from '@dominevo/ui-library'
 
 interface ConvertTabProps {
   readonly trpc: AddonPageProps['trpc']

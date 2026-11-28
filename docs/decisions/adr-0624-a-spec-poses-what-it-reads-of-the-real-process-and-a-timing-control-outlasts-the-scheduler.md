@@ -11,7 +11,7 @@ applies-to:
 
 ## Context
 
-Two `@camstack/system` specs were red on `main` after the batch of 2026-09-23
+Two `@dominevo/system` specs were red on `main` after the batch of 2026-09-23
 (D622) had cleared everything else, and neither was flaky in the sense the word
 usually carries. Each was reading the machine it ran on and asserting the
 result.
@@ -41,7 +41,7 @@ four pings in 40 ms. Locally the same window shows ~3 000 pings and a longest
 pause under 0.5 ms, and 24 busy-loop processes on 12 cores do not change the
 verdict. The runner is different in kind, not degree: each self-hosted runner
 container is `--cpus=1` (`cpu.max 100000 100000`) on a 4-core N100 that also
-hosts a second runner and the CamStack agent, and its cgroup had been
+hosts a second runner and the Dominevo agent, and its cgroup had been
 throttled in **224 526 of 402 955** periods (56 %; 383 613 of 703 983 on the
 other, 54 %). A throttled cgroup freezes every thread until the 100 ms period
 ends. `ci.yml` calls that machine "a 4-core N100" — `nproc` inside the

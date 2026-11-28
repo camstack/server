@@ -18,7 +18,7 @@ applies-to:
 
 ## Context
 
-The operator asked for the clips CamStack did not record to appear beside the
+The operator asked for the clips Dominevo did not record to appear beside the
 ones it did — a Reolink camera's SD card, a Home Hub's storage, and HomeKit's.
 [D549](adr-0549-an-external-clip-catalog-is-another-videoclips-provider-served-by-the-devices-owner-and-listed-beside-the-others.md)
 settled the shape for all of them: additional providers of the one `videoclips`
@@ -106,7 +106,7 @@ works around it.
    the re-read is) and revalidated after 60 s so a missed event self-heals,
    which is D49's shape.
 4. **Retention is a bounded recent window, because HomeKit's own is
-   unreadable.** There is no read-back, so CamStack can never ask "does iOS
+   unreadable.** There is no read-back, so Dominevo can never ask "does iOS
    still hold this one?" and mirror it; pretending otherwise is the second
    authority D62 keeps charging for.
 

@@ -5,7 +5,7 @@
  * answers `null` in production, so each pin below is what keeps the form from going blank.
  */
 import * as jestDomMatchers from '@testing-library/jest-dom/matchers'
-import type { ConfigUISchemaWithValues } from '@camstack/types'
+import type { ConfigUISchemaWithValues } from '@dominevo/types'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
@@ -43,8 +43,8 @@ const query = vi.fn(async (input: { addonId: string }) => {
 })
 const mutate = vi.fn(async () => ({ success: true }))
 
-vi.mock('@camstack/ui-library', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@camstack/ui-library')>()
+vi.mock('@dominevo/ui-library', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dominevo/ui-library')>()
   return {
     ...actual,
     useSystem: () => ({

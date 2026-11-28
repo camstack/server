@@ -6,7 +6,7 @@ import {
   type TarballFetch,
 } from '../package-docs.js'
 
-const NAME = '@camstack/addon-example'
+const NAME = '@dominevo/addon-example'
 const TARBALL = 'https://registry.example/addon-example-1.2.0.tgz'
 
 function packument(readme: string): RegistryFetch {
@@ -80,7 +80,7 @@ describe('package docs', () => {
       fetchPackument: vi.fn(
         async (): Promise<RegistryFetch> => ({
           ok: false,
-          message: 'registry GET @camstack/addon-example → 503',
+          message: 'registry GET @dominevo/addon-example → 503',
         }),
       ),
     })
@@ -90,7 +90,7 @@ describe('package docs', () => {
 
     expect(docs.readme).toEqual({
       status: 'error',
-      message: 'registry GET @camstack/addon-example → 503',
+      message: 'registry GET @dominevo/addon-example → 503',
     })
     expect(docs.changelog).toEqual(docs.readme)
     expect(docs.readme).not.toEqual({ status: 'ok', markdown: '' })

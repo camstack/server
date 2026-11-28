@@ -3,7 +3,7 @@
  * the node's default pool when that pool is a device the election excluded
  * (#610).
  */
-import type { NodeInferenceDevices } from '@camstack/types'
+import type { NodeInferenceDevices } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { chooseNodeDevice } from '../node-device-election.js'
 

@@ -20,7 +20,7 @@ import {
   moveIntegrationRowsToRecords,
   REDACTED_SECRET,
   type RecordKindHandle,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 
 /** The kind a Bosch entry declares: only what the migration and the instances read from it. */

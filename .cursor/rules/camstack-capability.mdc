@@ -1,5 +1,5 @@
 ---
-description: CamStack capability change end to end — cap schema, codegen, registerProvider, bindings, CAP_INPUT_DEFAULTS, what to publish
+description: Dominevo capability change end to end — cap schema, codegen, registerProvider, bindings, CAP_INPUT_DEFAULTS, what to publish
 globs: packages/types/src/capabilities/**, packages/types/src/generated/**, scripts/codegen.ts, scripts/generate-*.ts
 alwaysApply: false
 ---

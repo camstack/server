@@ -6,7 +6,7 @@ import {
   type DeviceContext,
   type InferNativeProvider,
   type WaterHeaterStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { homeComConnections } from '../homecom-gateway.js'
 import { registerHomeComStateRefresh } from './homecom-state-refresh.js'
 import { waterHeaterSliceFromDhw } from '../homecom-domain-mapping.js'

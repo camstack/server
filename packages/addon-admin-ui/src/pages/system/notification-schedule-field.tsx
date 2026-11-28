@@ -22,7 +22,7 @@ import {
   type NcScheduleWindow,
   type NcSummarySendTime,
   type TimeWindow,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { Plus, Trash2 } from 'lucide-react'
 
 import { HINT_CLASS } from './notification-condition-widgets'
@@ -40,7 +40,7 @@ import {
   ncWindowOfTimeWindow,
   TimeWindowInput,
   timeWindowOfNcWindow,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 
 export type ScheduleFieldMode = 'windows' | 'times'
 

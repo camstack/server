@@ -7,7 +7,7 @@ import {
   defineAddonMigrations,
   makeInMemoryRecords,
   type MigrationOwnerResult,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { trainingAccountEntryKind } from '../../training-account-record-kinds.js'
 import {

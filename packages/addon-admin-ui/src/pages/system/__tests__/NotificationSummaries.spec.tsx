@@ -11,8 +11,8 @@
  * (so it may not be one click), it aims at an EXPLICIT window (so a motion rule
  * that has seen nothing still produces something to look at), and Delete asks.
  */
-import { selectOption, selectOptionLabels, waitForSelectRows } from '@camstack/ui-library/testing'
-import { ConfirmDialogProvider } from '@camstack/ui-library'
+import { selectOption, selectOptionLabels, waitForSelectRows } from '@dominevo/ui-library/testing'
+import { ConfirmDialogProvider } from '@dominevo/ui-library'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { TemplateHubTrpc } from '../../../test-setup/device-template-hub'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
@@ -103,8 +103,8 @@ vi.mock('../use-notification-targets', () => ({
   useNotificationTargets: () => ({ data: [], isError: false }),
 }))
 
-vi.mock('@camstack/ui-library', async () => {
-  const real = await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+vi.mock('@dominevo/ui-library', async () => {
+  const real = await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return {
     ...real,
     // The real field reads the target-kind catalogue through a tRPC React

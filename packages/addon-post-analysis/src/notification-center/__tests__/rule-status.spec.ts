@@ -13,7 +13,7 @@
  *    owed and is not.
  */
 
-import type { NcOccupancyCondition, NcSchedule } from '@camstack/types'
+import type { NcOccupancyCondition, NcSchedule } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { NcOccupancyProbe } from '../occupancy-dry-run.js'
 import { type OccupancyStateRow, occupancyKey } from '../occupancy-watcher.js'

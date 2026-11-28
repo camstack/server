@@ -32,8 +32,8 @@ import type {
   RecordingOnboardStatus,
   RecordTrigger,
   RecordWindow,
-} from '@camstack/types'
-import { WEEKLY_MASK_LENGTH, weeklyMaskToWindows, windowsToWeeklyMask } from '@camstack/types'
+} from '@dominevo/types'
+import { WEEKLY_MASK_LENGTH, weeklyMaskToWindows, windowsToWeeklyMask } from '@dominevo/types'
 
 /** `getRecordCfg` (cmd 54), as the cameras answer it. */
 export interface ReolinkRecordCfgLike {
@@ -282,8 +282,8 @@ export function buildOnboardStatus(input: {
  */
 export const REOLINK_PRE_RECORD_ON_SECONDS = 10
 
-/** Why a Reolink camera cannot be written until CamStack has read it. */
-export const REOLINK_NOT_READ_REASON = 'CamStack has not read this camera yet'
+/** Why a Reolink camera cannot be written until Dominevo has read it. */
+export const REOLINK_NOT_READ_REASON = 'Dominevo has not read this camera yet'
 
 /**
  * Why the schedule is unwritable when one trigger occupies several rows.
@@ -298,7 +298,7 @@ export const REOLINK_NOT_READ_REASON = 'CamStack has not read this camera yet'
  * such a camera rather than writable and destructive.
  */
 export const REOLINK_MERGED_ROWS_REASON =
-  'this camera stores several rules of the same kind (one row per configured rule) and CamStack cannot tell them apart, so writing the schedule would overwrite all of them with one mask'
+  'this camera stores several rules of the same kind (one row per configured rule) and Dominevo cannot tell them apart, so writing the schedule would overwrite all of them with one mask'
 
 /** How many rows each trigger occupies, from the camera's own list. */
 function rowsPerTrigger(
@@ -390,7 +390,7 @@ export function buildOnboardOptions(input: {
   const scheduleSupport =
     unreadable > 0
       ? refuse(
-          `CamStack could not read ${String(unreadable)} of this camera's schedule rows, and a write would replace what it could not show`,
+          `Dominevo could not read ${String(unreadable)} of this camera's schedule rows, and a write would replace what it could not show`,
         )
       : merged.length > 0
         ? refuse(REOLINK_MERGED_ROWS_REASON)

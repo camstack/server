@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, act } from '@testing-library/react'
-import type { PetFeederStatus } from '@camstack/types'
+import type { PetFeederStatus } from '@dominevo/types'
 import { PetFeederInlineControl, PetFeederHeroCard, resolveBowlReading } from '../pet-feeder-panel'
 import { UnitPreferencesProvider } from '../../../contexts/unit-preferences'
 

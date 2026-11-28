@@ -4,7 +4,7 @@
  * latest-wins budget eviction, key identity (evicted → null), full-frame crop,
  * ROI crop + downscale, and the opaque RAM-key handle shape.
  */
-import type { DecodedFrame, IScopedLogger } from '@camstack/types'
+import type { DecodedFrame, IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 
 import {

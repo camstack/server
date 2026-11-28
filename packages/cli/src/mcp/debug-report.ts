@@ -10,8 +10,8 @@
  * It writes nothing and calls no mutation. Secrets are scrubbed twice: log
  * lines here, and the whole answer by the shared output scrub.
  */
-import type { HubClient } from '@camstack/develop'
-import { CameraStreamSchema, ProfileSlotSchema } from '@camstack/types'
+import type { HubClient } from '@dominevo/develop'
+import { CameraStreamSchema, ProfileSlotSchema } from '@dominevo/types'
 import { z } from 'zod'
 import type { McpContext } from './context.js'
 import { readViewerLines, type ClientLogsResult } from './client-logs.js'

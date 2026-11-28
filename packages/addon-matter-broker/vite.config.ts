@@ -6,7 +6,7 @@ export default buildLibPreset({
     addon: 'src/addon.ts',
   },
   // `@matter/main` + `@matter/nodejs` are the matter.js controller implementation;
-  // they bundle inline so the addon ships self-contained (only @camstack/kernel +
+  // they bundle inline so the addon ships self-contained (only @dominevo/kernel +
   // node builtins stay external). See tools/build/vite-lib.preset.ts.
   externals: 'self-contained',
 })

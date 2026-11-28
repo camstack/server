@@ -15,7 +15,7 @@
  * Disarm: make the touch `kind.put({ id, data: { ...row.data, lastUsedAt } })`
  * again → both rows below come back live.
  */
-import { makeInMemoryRecords } from '@camstack/types'
+import { makeInMemoryRecords } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { CredentialTokenService } from '../credential-token.service.js'
 import { coreAuthRecordKinds } from '../record-kinds.js'

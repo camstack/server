@@ -4,10 +4,10 @@
  * ## Why an `addons.custom` action and not a `faceGallery` cap method
  *
  * Same reason `photo.*`, `embedding.*` and `debug.*` ride this bridge: a cap
- * method's wire schema lives in `@camstack/types`, which travels inside the
- * `@camstack/server` closure, so a new one is not callable until a server train
+ * method's wire schema lives in `@dominevo/types`, which travels inside the
+ * `@dominevo/server` closure, so a new one is not callable until a server train
  * ships — however current the addon is. Here the schema lives in the addon's
- * own dist and the hub forwards an opaque envelope, so `camstack deploy` is the
+ * own dist and the hub forwards an opaque envelope, so `dominevo deploy` is the
  * whole delivery.
  *
  * ## Why re-embedding is an explicit flag and not a fallback
@@ -23,7 +23,7 @@
  * See `face-rescore.ts` for why the number already on the track is stale by
  * construction — that is the whole reason this action exists.
  */
-import { customAction, defineCustomActions } from '@camstack/types'
+import { customAction, defineCustomActions } from '@dominevo/types'
 import { z } from 'zod'
 import { FaceRescoreJobStatusSchema } from './face-rescore-job-status.js'
 

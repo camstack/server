@@ -11,8 +11,8 @@
  * contract, not the provider.
  */
 
-import type { EventVocabularyEntry, EventVocabularySource } from '@camstack/types'
-import { findVocabularyEntry } from '@camstack/types'
+import type { EventVocabularyEntry, EventVocabularySource } from '@dominevo/types'
+import { findVocabularyEntry } from '@dominevo/types'
 import i18n from '../../../i18n/index'
 
 /** The `lastEvent` shape this module reads (a structural subset of `EventFire`). */

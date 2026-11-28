@@ -7,7 +7,7 @@
  * denying the whole list.
  */
 
-import type { IStorageProviderImpl, StorageProviderInfoSchema } from '@camstack/types'
+import type { IStorageProviderImpl, StorageProviderInfoSchema } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import type { z } from 'zod'
 import { collectProviderInfos } from '../provider-discovery.js'

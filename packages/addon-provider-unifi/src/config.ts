@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import type { ConfigUISchema } from '@camstack/types'
+import type { ConfigUISchema } from '@dominevo/types'
 
 /** The device-registry `system` tag every UniFi device carries. */
 export const UNIFI_SYSTEM = 'unifi'
@@ -97,7 +97,7 @@ export const unifiFeatureDescriptorSchema = z.object({
 export type UnifiFeatureDescriptor = z.infer<typeof unifiFeatureDescriptorSchema>
 
 /**
- * Persisted config for one infra {@link import('@camstack/types').DeviceType.Container}
+ * Persisted config for one infra {@link import('@dominevo/types').DeviceType.Container}
  * device (USER DIRECTIVE: each infra switch / AP / gateway is a Container that
  * exposes its features). `integrationId` selects the parent controller's live
  * client; `infraNativeId` is the controller device id; `features[]` is the

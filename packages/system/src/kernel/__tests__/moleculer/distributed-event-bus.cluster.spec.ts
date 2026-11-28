@@ -35,7 +35,7 @@ import {
   createAddonContext,
   registerEventBusService,
 } from '../../moleculer/addon-context-factory.js'
-import type { AddonDeclaration, SystemEvent } from '@camstack/types'
+import type { AddonDeclaration, SystemEvent } from '@dominevo/types'
 // `AddonContext` was used only by the "mesh:" test disabled below
 // (2026-09-14) — re-add it to this import if that test is re-enabled.
 

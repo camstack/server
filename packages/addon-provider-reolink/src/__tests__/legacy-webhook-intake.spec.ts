@@ -1,5 +1,5 @@
 import type { AddressInfo } from 'node:net'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import {
   LEGACY_WEBHOOK_RETIRE_AFTER,

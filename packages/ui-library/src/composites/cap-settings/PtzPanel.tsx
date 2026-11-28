@@ -12,7 +12,7 @@
  */
 import { useCallback, useEffect, useState, type JSX } from 'react'
 import { Move } from 'lucide-react'
-import type { PtzStatus } from '@camstack/types'
+import type { PtzStatus } from '@dominevo/types'
 import { useSystem } from '../../contexts/system-context'
 import { useUiText } from '../../contexts/ui-text'
 import { usePTZ } from '../../hooks/use-ptz'

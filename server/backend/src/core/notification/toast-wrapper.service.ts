@@ -1,5 +1,5 @@
-import { ToastService } from '@camstack/server/system'
-import type { Toast } from '@camstack/types'
+import { ToastService } from '@dominevo/server/system'
+import type { Toast } from '@dominevo/types'
 
 /**
  * NestJS-injectable wrapper around the core ToastService.

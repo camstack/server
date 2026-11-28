@@ -5,7 +5,7 @@
  * An extension whose editor is a modal of its own (the remote) opens that
  * modal directly — no card in between (planning#464).
  */
-import type { DeviceInfo } from '@camstack/types'
+import type { DeviceInfo } from '@dominevo/types'
 import {
   Button,
   Dialog,
@@ -14,7 +14,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { AssignmentFacts } from '../assignment-availability'

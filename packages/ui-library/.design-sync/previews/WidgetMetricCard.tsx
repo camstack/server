@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { WidgetMetricCard } from '@camstack/ui-library'
+import { WidgetMetricCard } from '@dominevo/ui-library'
 import { Clock, Film, HardDrive, Video } from 'lucide-react'
 
 const Frame = ({ children }: { children: ReactNode }) => (

@@ -74,12 +74,12 @@
  *     global outlives an addon respawn, and an addon respawn is exactly the
  *     event after which a stale verdict must not survive.
  *
- * ## Why it lives here and not in `@camstack/types`
+ * ## Why it lives here and not in `@dominevo/types`
  *
  * `addon-export-hap` has the identical gap (its `failedBackend` memo forgets on
  * the same 60 s cadence) and this is deliberately NOT shared with it yet: a
- * framework package is only live once a `@camstack/server` containing it is
- * installed, whereas this ships with `camstack deploy packages/addon-pipeline`.
+ * framework package is only live once a `@dominevo/server` containing it is
+ * installed, whereas this ships with `dominevo deploy packages/addon-pipeline`.
  * The cross-PROCESS gap D67 names — addons may not import each other and no cap
  * carries "this backend is dead on this node right now" — is unchanged either
  * way; what is closed here is the broker's own repetition of the cost.

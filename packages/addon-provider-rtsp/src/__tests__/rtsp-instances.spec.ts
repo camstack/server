@@ -1,4 +1,4 @@
-import { defaultIntegrationMigrations, makeInMemoryRecords } from '@camstack/types'
+import { defaultIntegrationMigrations, makeInMemoryRecords } from '@dominevo/types'
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { buildRtspInstances, rtspConnectionsEntryKind, rtspRecordKinds } from '../rtsp-instances.js'

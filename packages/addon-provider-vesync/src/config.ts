@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import type { ConfigOption, ConfigUISchema, StateRefreshPolicy } from '@camstack/types'
+import type { ConfigOption, ConfigUISchema, StateRefreshPolicy } from '@dominevo/types'
 
 /** The device-registry `system` tag every VeSync device carries. */
 export const VESYNC_SYSTEM = 'vesync' as const
@@ -95,7 +95,7 @@ export type VeSyncConnectionConfig = z.infer<typeof vesyncConnectionSchema>
  * Persisted config every VeSync purifier carries. `purifierNativeId` resolves the
  * live snapshot; `integrationId` selects the account. `accountId` is the legacy hub
  * stableId a migration keeps on the blob and nothing reads. The purifier is a
- * {@link import('@camstack/types').DeviceType.Fan} that registers `switch` +
+ * {@link import('@dominevo/types').DeviceType.Fan} that registers `switch` +
  * `fan-control` and fans out accessory children.
  */
 export const vesyncPurifierSchema = z.object({
@@ -112,7 +112,7 @@ export type VeSyncPurifierConfig = z.infer<typeof vesyncPurifierSchema>
 /**
  * Persisted config every VeSync humidifier carries. `humidifierNativeId` resolves the
  * live snapshot; `integrationId` selects the account. A
- * {@link import('@camstack/types').DeviceType.Humidifier} that registers `humidifier`
+ * {@link import('@dominevo/types').DeviceType.Humidifier} that registers `humidifier`
  * and fans out accessory children (display switch, humidity + water-low sensors).
  */
 export const vesyncHumidifierSchema = z.object({

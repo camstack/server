@@ -23,7 +23,7 @@ target.
 
 One `Dockerfile`, one npm `fetch` stage, a shared `runtime-common`, and two
 final stages: `intel` and `amd`. CI builds both (`docker build --target …`) and
-publishes `ghcr.io/camstack/camstack:{intel,amd}-<version>` plus the matching
+publishes `ghcr.io/dominevo/dominevo:{intel,amd}-<version>` plus the matching
 `-latest` tags. Unraid stays on `intel-*`. Proxmox / AMD APU hosts use `amd-*`.
 Hub vs agent remains `CAMSTACK_ROLE` on either variant.
 

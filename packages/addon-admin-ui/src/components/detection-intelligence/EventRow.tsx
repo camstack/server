@@ -15,7 +15,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { ImageOff, Info, Play, type LucideIcon } from 'lucide-react'
 import type { JSX } from 'react'
 import { useTranslation } from 'react-i18next'

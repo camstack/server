@@ -1,4 +1,4 @@
-import { DeviceFeature, type AddonApi, type IScopedLogger } from '@camstack/types'
+import { DeviceFeature, type AddonApi, type IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { StreamBrokerManager } from '../stream-broker/stream-broker-manager.js'
 

@@ -11,8 +11,8 @@
  * `device-enabled`), their own subject family (`device-switch:<id>`, so the
  * switch does not share a dedup slot with liveness), and their own sentences.
  */
-import type { SystemEvent } from '@camstack/types'
-import { DeviceType } from '@camstack/types'
+import type { SystemEvent } from '@dominevo/types'
+import { DeviceType } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { NcDeviceLookup } from '../device-directory.js'
 import { incomingFromSystemEvent } from '../event-intake.js'

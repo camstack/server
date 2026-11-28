@@ -20,7 +20,7 @@
  * CAMSTACK_ADMIN_USER / CAMSTACK_ADMIN_PASS on the next boot (an empty
  * table is a first boot).
  */
-import type { SettingsStoreClient } from '@camstack/types'
+import type { SettingsStoreClient } from '@dominevo/types'
 import { ADMIN_TOKENS_COLLECTION, ADMIN_TOKENS_COLUMNS } from '../../auth/legacy-token-tables.js'
 import {
   DEVICE_CREDENTIALS_COLLECTION,

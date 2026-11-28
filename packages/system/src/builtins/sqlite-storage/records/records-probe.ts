@@ -17,7 +17,7 @@
  * kind, and what its spec runs over a deliberately broken one.
  */
 import Database from 'better-sqlite3'
-import type { DefinedRecordKind, IScopedLogger, RecordKindDeclaration } from '@camstack/types'
+import type { DefinedRecordKind, IScopedLogger, RecordKindDeclaration } from '@dominevo/types'
 import { planOf, tableColumnReads } from './records-explain.js'
 import { RecordsEngine } from './records-engine.js'
 

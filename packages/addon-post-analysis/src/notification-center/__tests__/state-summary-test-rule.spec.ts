@@ -13,10 +13,10 @@
  * under a test record id that no real window can take; nothing to report is an
  * ANSWER, never a silence.
  */
-import type { InMemoryRecords } from '@camstack/types'
+import type { InMemoryRecords } from '@dominevo/types'
 import { ncRecordKinds } from '../record-kinds.js'
 import { makeNcRecords, ncTable } from './support/nc-test-deps.js'
-import { DeviceType, NcRuleInputSchema, scheduleForSendTimes } from '@camstack/types'
+import { DeviceType, NcRuleInputSchema, scheduleForSendTimes } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import type { NcTargetRef } from '../dispatcher.js'

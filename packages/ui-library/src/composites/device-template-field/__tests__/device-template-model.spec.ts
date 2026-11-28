@@ -13,7 +13,7 @@ import {
   templateSuggestTrigger,
   textForDeviceCheck,
 } from '../device-template-model'
-import type { DeviceTemplateParam } from '@camstack/types/device-template-catalogue'
+import type { DeviceTemplateParam } from '@dominevo/types/device-template-catalogue'
 
 describe('parseTemplateSegments', () => {
   it('splits text and device references, and re-joins to the input', () => {

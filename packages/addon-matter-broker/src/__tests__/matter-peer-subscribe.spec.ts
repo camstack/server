@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { subscribableFromPeer } from '../matter-peer-subscribe.js'
 
 interface WarnLine {

@@ -5,7 +5,7 @@
  * released only after its record holds one, and a second run changes nothing. Real SQLite for the
  * settings (the hand-written seed), in-memory records.
  */
-import { makeInMemoryRecords, REDACTED_SECRET } from '@camstack/types'
+import { makeInMemoryRecords, REDACTED_SECRET } from '@dominevo/types'
 import Database from 'better-sqlite3'
 import { describe, expect, it } from 'vitest'
 import { trainingAccountEntryKind } from '../../training-account-record-kinds.js'

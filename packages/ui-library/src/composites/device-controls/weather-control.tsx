@@ -36,7 +36,7 @@ import {
   formatReading,
   type ReadingQuantity,
   type WeatherStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { useUnitPreferences } from '../../contexts/unit-preferences'
 import { preferenceForQuantity, type UnitPreferences } from '../../lib/unit-preferences'
 import { useDeviceCapability } from '../../hooks/use-device-capability'

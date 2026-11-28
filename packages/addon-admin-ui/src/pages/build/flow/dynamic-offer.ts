@@ -10,7 +10,7 @@
  * missing list must never block saving a step the operator can still type.
  */
 
-import type { DynamicOfferAnswer, LooseVocabOffer } from '@camstack/types'
+import type { DynamicOfferAnswer, LooseVocabOffer } from '@dominevo/types'
 
 export type DynamicOffer = Extract<LooseVocabOffer, { readonly kind: 'dynamic' }>
 

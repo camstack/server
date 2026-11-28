@@ -12,7 +12,7 @@
  *    the camera woke while it was running, the pump has already been stopped
  *    and the frame must be dropped rather than started on top of live media.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { SentryPump, type SentryFrame } from '../sentry-pump.js'
 

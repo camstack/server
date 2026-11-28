@@ -18,7 +18,7 @@
  *
  * The same argument applies to the format as to the rate, so the plane carries
  * the source BYTES and whoever needs floats expands them where it needs them:
- * `expandAudioChunkToF32le` in `@camstack/types`, called by the consumer's
+ * `expandAudioChunkToF32le` in `@dominevo/types`, called by the consumer's
  * window accumulator — and, for a subscriber that did not declare it can read
  * coded bytes, by `AudioChunkPlane` itself. Measured cost of the expansion
  * where it now lands: 11.6 µs per one-second window per camera, and it is
@@ -31,7 +31,7 @@
  * the broker only serves them to a subscription whose `accept` named them.
  */
 
-import type { AudioChunkFormat, DecodedAudioChunk } from '@camstack/types'
+import type { AudioChunkFormat, DecodedAudioChunk } from '@dominevo/types'
 
 export type AudioCodec = 'PCMU' | 'PCMA'
 

@@ -10,7 +10,7 @@ import type {
   LlmUsageRollup,
   RecordKindHandle,
   RecordsAccess,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { aiRecordKinds, UsageBodySchema, type UsageBody } from '../record-kinds.js'
 import { readAllRows } from '../record-pages.js'
 import type { UsageFilter, UsageRecorder, UsageRowInput } from './usage-port.js'

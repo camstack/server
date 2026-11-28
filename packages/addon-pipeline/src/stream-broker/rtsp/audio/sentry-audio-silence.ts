@@ -38,7 +38,7 @@
  * suppression it re-anchors, so a track that was quiet for an hour does not
  * resume an hour in the past.
  */
-import type { IScopedLogger, LogTags } from '@camstack/types'
+import type { IScopedLogger, LogTags } from '@dominevo/types'
 
 import {
   buildG711SilenceRtp,

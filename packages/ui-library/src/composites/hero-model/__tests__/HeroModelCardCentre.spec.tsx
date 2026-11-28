@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { HeroModelCard } from '../HeroModelCard'
-import { DeviceRole } from '@camstack/types'
+import { DeviceRole } from '@dominevo/types'
 import { TEST_LABELS, buildModel } from './fixtures'
 
 const host = (run = vi.fn()) => ({ lang: 'en' as const, labels: TEST_LABELS, busy: false, run })

@@ -31,7 +31,7 @@ numbers; the Auto-tune column is NOT filled from them (§4).
 | (a) IREE + `iree-amd-aie` | not runnable | **no-go** | No releases, no wheels (README: build IREE from source with the plugin, pinned `xdna-driver` commit `20e1f74` ≠ the in-tree driver here); CI uploads only Actions artifacts, last green `ci-linux` 2026-06-02 (expired), last commit on `main` 2026-06-03 — dormant; e2e tests cover matmul/conv, no detector. A full LLVM+IREE build on 6 cores / 8 GB next to the CI runners is out of budget. |
 | (b) mlir-aie / IRON | **ran** | toolchain **works**, detector **no** | `mlir_aie` 1.4.4 + `llvm-aie` nightly wheels install on Python 3.12; `programming_examples/basic/vector_scalar_add` built with Peano and **PASS**ed on `[0000:66:00.1] RyzenAI-npu1` through XRT 2.27 + in-tree `amdxdna` (needed `cmake ≥ 3.30` from pip). No ONNX front-end: `programming_examples/ml` holds hand-written conv2d/resnet/mobilenet kernels. A YOLO on this path is a kernel-authoring project, not an integration. |
 | (c) Older Ryzen AI with Phoenix on Linux | not applicable | **no-go** | Release notes never list PHX/HPT for Linux in any version (1.5–1.8); Linux support starts at Strix. Confirms the 2026-10-10 fingerprint abort. |
-| (d) Windows VM + NPU passthrough | not built | **feasible, ask first** | `66:00.1` (NPU) is alone in IOMMU group 25 (`66:00.0` dummy function in group 24), PVE 9.2.2, so `vfio-pci` passthrough of the NPU function is clean and the iGPU stays on the host. Ryzen AI on Windows supports Phoenix (CNN INT8). Needs: a Windows ISO + licence (operator), and a CamStack **Windows node** (none exists) — the NPU would serve nothing until that product exists. |
+| (d) Windows VM + NPU passthrough | not built | **feasible, ask first** | `66:00.1` (NPU) is alone in IOMMU group 25 (`66:00.0` dummy function in group 24), PVE 9.2.2, so `vfio-pci` passthrough of the NPU function is clean and the iGPU stays on the host. Ryzen AI on Windows supports Phoenix (CNN INT8). Needs: a Windows ISO + licence (operator), and a Dominevo **Windows node** (none exists) — the NPU would serve nothing until that product exists. |
 
 Value check: the NPU is ~10 TOPS INT8 for CNNs; after §2 the iGPU already
 does yolov9t-320 in 13 ms and m-320 in 52 ms. **No `vitisai:npu` / `iree:npu`
@@ -39,12 +39,12 @@ device is added.**
 
 ## 2. iGPU — the "weak WebGPU" was a permission
 
-### 2.1 The EP is fast; CamStack never reached the GPU
+### 2.1 The EP is fast; Dominevo never reached the GPU
 
 Standalone ORT WebGPU EP (lab venv, as root), warm p50 of `session.run`,
 letterboxed `3-persons.jpg`:
 
-| Model | WebGPU ms | CPU ORT ms | 10-10 CamStack table ms |
+| Model | WebGPU ms | CPU ORT ms | 10-10 Dominevo table ms |
 | --- | ---: | ---: | ---: |
 | yolov9t-320 | **12.7** | 21.9 | 192 |
 | yolov9t-640 | **31.5** | 114 | 660 |
@@ -87,7 +87,7 @@ does with a radeon ICD whose node it cannot open. Dawn never reports it.
   again (it raises `EP library is already registered`; the next session then
   segfaults in `_create_inference_session`). Registering once: same model
   twice, different models, run-then-create, delete-then-create — all fine.
-  CamStack's loader re-registered per session and swallowed the raise.
+  Dominevo's loader re-registered per session and swallowed the raise.
 - Three sessions in one process, `run()` from three threads: **abort**
   unserialised; **17.6 / 18.3 / 37.9 ms** (t, t, s) under one lock.
 - EP options (`enableGraphCapture`, `validationMode=disabled`,
@@ -118,7 +118,7 @@ does with a radeon ICD whose node it cannot open. Dawn never reports it.
 
 Applied on CT201 by hand (entrypoint is bind-mounted from
 `/opt/camstack/docker-entrypoint.sh`; the loader copied into
-`/data/addons/@camstack/addon-pipeline/python/`, originals kept as
+`/data/addons/@dominevo/addon-pipeline/python/`, originals kept as
 `*.bak-20261013`) and the container restarted:
 
 | | before | after |
@@ -129,7 +129,7 @@ Applied on CT201 by hand (entrypoint is bind-mounted from
 | `gpu_busy_percent`, 60 s with sessions | 0 / 0 | mean 26.6, max 52 |
 | busiest WebGPU child | 219 % CPU | ≤ 3 % CPU |
 
-The addon change still needs a real `camstack deploy … -n agent-b` and
+The addon change still needs a real `dominevo deploy … -n agent-b` and
 the entrypoint fix an `amd-*` image build; the hand patch is what is running.
 
 ## 3. GPU section summary

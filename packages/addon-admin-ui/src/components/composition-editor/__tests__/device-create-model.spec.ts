@@ -3,7 +3,7 @@ import {
   DeviceType,
   type HelperMember,
   mediaPlayerExtensionCommands,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { createNeedOf, nakedComposition, sourceRequestOf } from '../device-create-model'
 

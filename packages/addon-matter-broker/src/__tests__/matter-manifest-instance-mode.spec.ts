@@ -4,7 +4,7 @@
  * provider's answer, but the manifest is what shows when the provider is not up yet.
  */
 import { readFileSync } from 'node:fs'
-import { makeInMemoryRecords } from '@camstack/types'
+import { makeInMemoryRecords } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { matterConnectionsEntryKind } from '../broker-record-kinds.js'
 import { buildMatterInstances } from '../matter-instances.js'

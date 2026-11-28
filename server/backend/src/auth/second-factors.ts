@@ -14,7 +14,7 @@
  * no passkey factor) so it can never block a login; a TOTP status failure
  * still propagates — fail-open there would silently skip an enrolled factor.
  */
-import type { IUserPasskeysProvider } from '@camstack/types'
+import type { IUserPasskeysProvider } from '@dominevo/types'
 import { z } from 'zod'
 import { passkeySecondFactorOptedIn, userHasPasskey } from './passkey-provider.js'
 

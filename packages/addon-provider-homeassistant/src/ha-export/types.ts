@@ -19,7 +19,7 @@
  * documented exception ({@link syntheticDeviceKeyFor}).
  */
 
-import type { ReadingQuantity, WebrtcStreamTarget } from '@camstack/types'
+import type { ReadingQuantity, WebrtcStreamTarget } from '@dominevo/types'
 import type { ItemEntity } from './item-entities.js'
 
 /**
@@ -203,7 +203,7 @@ export interface HaDeviceBlock {
 export interface HaDevicePlan {
   /** The `device_id` on the wire — also `dev.ids[0]`. Never the numeric id. */
   readonly deviceKey: string
-  /** CamStack's numeric device id, or `null` for a synthetic device. */
+  /** Dominevo's numeric device id, or `null` for a synthetic device. */
   readonly deviceId: number | null
   readonly dev: HaDeviceBlock
   readonly cmps: HaCmps

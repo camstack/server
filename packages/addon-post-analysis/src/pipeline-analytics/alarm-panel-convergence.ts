@@ -28,7 +28,7 @@
  * alarm surface empty.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 /**
  * One declaration pass. Resolves `true` once there is nothing left to converge

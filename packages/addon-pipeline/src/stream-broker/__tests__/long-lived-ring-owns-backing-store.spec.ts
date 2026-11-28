@@ -14,7 +14,7 @@
 import { isSlabView, SLAB_BYTES } from '../stream-broker/slab-pool'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import type { EncodedPacket, IScopedLogger, StreamSource } from '@camstack/types'
+import type { EncodedPacket, IScopedLogger, StreamSource } from '@dominevo/types'
 
 import { EncodedRingBuffer } from '../stream-broker/encoded-ring-buffer.js'
 import { StreamBroker } from '../stream-broker/stream-broker.js'

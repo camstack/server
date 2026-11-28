@@ -3,7 +3,7 @@ import {
   createSecretsAccess,
   type KeychainResolveResult,
   type KeychainTransport,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { verifyAgentUiUnlockTicket } from '../../../kernel/moleculer/agent-ui-unlock.js'
 import {

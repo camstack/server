@@ -9,9 +9,9 @@
  * accidental pick costs at most one row.
  */
 
-import type { AutomationLeaf, AutomationLeafContext } from '@camstack/types'
-import { isEventLeaf } from '@camstack/types'
-import { Badge, Button } from '@camstack/ui-library'
+import type { AutomationLeaf, AutomationLeafContext } from '@dominevo/types'
+import { isEventLeaf } from '@dominevo/types'
+import { Badge, Button } from '@dominevo/ui-library'
 import { Trash2 } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'

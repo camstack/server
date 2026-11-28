@@ -6,8 +6,8 @@
  * change is a draft the tab's one Save writes; the server's refusal of a link
  * that would also take a field one of the readings stores is shown on Save.
  */
-import type { DeviceInfo } from '@camstack/types'
-import { Badge, IconButton } from '@camstack/ui-library'
+import type { DeviceInfo } from '@dominevo/types'
+import { Badge, IconButton } from '@dominevo/ui-library'
 import { Pencil, Trash2 } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'

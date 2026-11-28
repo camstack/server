@@ -15,7 +15,7 @@
  * from**, so a later change of any of them — a cap bound or unbound, a role, a
  * rename — rebuilds it, and nothing else does.
  */
-import { canonicalHash } from '@camstack/types/node'
+import { canonicalHash } from '@dominevo/types/node'
 
 import { withRecordabilityToken } from '../hksv/recordability-token.js'
 import { hapExportableCapNames } from '../mappers/builders/generic/cap-service-table.js'

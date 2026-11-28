@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { cleanup, render, screen } from '@testing-library/react'
-import type { PowerMeterStatus } from '@camstack/types'
+import type { PowerMeterStatus } from '@dominevo/types'
 import { PowerMeterLine, formatEnergyKwh, formatPowerWatts } from '../PowerMeterLine'
 import { HOST_WIDGETS } from '../../../widgets/host-widgets'
 

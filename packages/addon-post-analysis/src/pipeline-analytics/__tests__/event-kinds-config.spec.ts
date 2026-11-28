@@ -9,8 +9,8 @@
  */
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
-import type { CameraPipelineConfig } from '@camstack/types'
-import { FIRST_LEVEL_MACRO_CLASSES } from '@camstack/types'
+import type { CameraPipelineConfig } from '@dominevo/types'
+import { FIRST_LEVEL_MACRO_CLASSES } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { emittableFromPipelineConfig, NO_EMITTABLE } from '../services/event-kinds-config.js'
 

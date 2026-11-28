@@ -6,14 +6,14 @@
  * mutating the shared StepDefinition (plus catalog public stays COCO_TO_MACRO).
  */
 import { describe, expect, it } from 'vitest'
-import { COCO_TO_MACRO } from '@camstack/types'
+import { COCO_TO_MACRO } from '@dominevo/types'
 import type {
   DetectionCatalogClassMap,
   IInferenceEngine,
   ModelCatalogEntry,
   PipelineDefaultStep,
   StepDefinition,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { makeModelCatalogEntry } from '../../../__tests__/support/model-catalog-entry.js'
 
 import { getStepDefinition } from '../../registry/step-definitions.js'

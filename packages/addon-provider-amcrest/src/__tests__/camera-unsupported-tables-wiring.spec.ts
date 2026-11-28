@@ -12,7 +12,7 @@ import {
   type IDeviceRuntimeState,
   type InferNativeProvider,
   imageSettingsCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { AmcrestCamera } from '../amcrest-camera.js'

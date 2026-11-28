@@ -4,7 +4,7 @@ import {
   type DiscoveryCandidate,
   type DiscoveryHit,
   type DiscoveryMode,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export interface ShcDiscoveredHost {
   readonly host: string

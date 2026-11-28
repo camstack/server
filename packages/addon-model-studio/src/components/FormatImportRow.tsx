@@ -2,14 +2,14 @@
  * Shared Import action row: per-format Import / imported / blocked + optional
  * cluster presence chips (node · format).
  */
-import type { ModelFormat } from '@camstack/types'
+import type { ModelFormat } from '@dominevo/types'
 import { formatMB, type ModelNodePresence } from '../ui/model-studio-ui.js'
 import {
   isPluginCatalogImported,
   pluginCatalogImportBlockedReason,
 } from '../plugin-catalog/plugin-catalog-catalog-selectors.js'
 import { useT } from '../i18n/index.js'
-import { Button } from '@camstack/ui-library'
+import { Button } from '@dominevo/ui-library'
 
 const FORMAT_LABEL: Readonly<Record<string, string>> = {
   onnx: 'ONNX',

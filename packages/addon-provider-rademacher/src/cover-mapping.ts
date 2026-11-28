@@ -1,4 +1,4 @@
-import type { CoverState, CoverStatus } from '@camstack/types'
+import type { CoverState, CoverStatus } from '@dominevo/types'
 
 /**
  * Pure mapping from a Rademacher HomePilot roller-shutter snapshot to the

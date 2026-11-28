@@ -19,7 +19,7 @@
  * idle window to find, and the key may reach this route from a listing older
  * than the gate.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 import type { ReolinkClipRow } from './clip-catalog.js'
 import type {

@@ -16,7 +16,7 @@
  * untouched. This file pins both halves.
  */
 import { describe, it, expect } from 'vitest'
-import type { ConfigField, ConfigMultiSelectField } from '@camstack/types'
+import type { ConfigField, ConfigMultiSelectField } from '@dominevo/types'
 
 import { getStep } from '../registry/step-definitions.js'
 

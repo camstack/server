@@ -18,12 +18,12 @@ import {
   type SmtpInboundMessage,
   parseSmtpSinceKey,
   type InstanceUserFinder,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { ListenerFactory, ListenerSpec } from './inbound-listener.js'
 import { type DraftMessage, MessageRing } from './inbound-ring.js'
 import type { MailboxBody } from './mailbox-record-kinds.js'
 
-/** The cap's broker status (the bare `BrokerState` name is another type in `@camstack/types`). */
+/** The cap's broker status (the bare `BrokerState` name is another type in `@dominevo/types`). */
 type BrokerState = UnifiedBrokerStatus
 
 export interface MessageEmission {

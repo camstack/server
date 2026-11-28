@@ -11,8 +11,8 @@
  * precondition on what was read. A row that already carries a `nodeId`, is not an object, or has
  * no `@<nodeId>` suffix is left alone, so a second run edits nothing.
  */
-import { nodeIdOfScopedKey } from '@camstack/types/addon'
-import { preconditionOf, type MigrationMeta } from '@camstack/types'
+import { nodeIdOfScopedKey } from '@dominevo/types/addon'
+import { preconditionOf, type MigrationMeta } from '@dominevo/types'
 import type {
   HubPlanMigration,
   MigrationDatabase,

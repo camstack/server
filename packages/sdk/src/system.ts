@@ -20,7 +20,7 @@ import {
   type TRPCClient,
 } from '@trpc/client'
 import superjson from 'superjson'
-import { SystemMirror, createSystemProxy } from '@camstack/types/client'
+import { SystemMirror, createSystemProxy } from '@dominevo/types/client'
 import type {
   DeviceBinding,
   DeviceProxy,
@@ -31,7 +31,7 @@ import type {
   SystemProxy,
   AddonApi,
   PasskeySummary,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { BackendAppRouter } from './backend-router.js'
 import type { BackendConnectionState } from './types.js'
 import { jwtExpiresAt } from './session-keeper.js'
@@ -1048,7 +1048,7 @@ export class System {
    * misbehaving consumer cannot tear down the WS subscription.
    *
    * Categories should be values from the `EventCategory` enum
-   * (`@camstack/types`) — passing a raw string works for forward-compat
+   * (`@dominevo/types`) — passing a raw string works for forward-compat
    * but loses type safety. The SDK forwards the value verbatim to the
    * server's `live.onEvent` subscription.
    *

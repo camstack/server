@@ -12,7 +12,7 @@ import type {
   StreamSourceEntry,
   Timezone,
   Weekday,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   ACCESSORY_LABEL,
   type AccessoryChildSpec,
@@ -78,7 +78,7 @@ import {
   summarisePrivacyAudio,
   TIMEZONES,
   userError,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import {
   createAccessoryDevice,
@@ -2475,7 +2475,7 @@ export class HikvisionCamera
         // Server-built form: camera-probed availability + current
         // per-profile config (status slice, refreshed if stale).
         // `buildStreamParamsConfigSchema` is the shared, addon-free
-        // schema-shaper in `@camstack/types` — Reolink feeds it the
+        // schema-shaper in `@dominevo/types` — Reolink feeds it the
         // same way so both cameras emit a structurally identical form.
         const opts = await this.probeStreamParamsOptions(cameraNumber)
         await bridge.ensureFresh()
@@ -3082,7 +3082,7 @@ export class HikvisionCamera
     const CAP_NAME = 'recording-onboard' as const
 
     const emptyStatus = (): RecordingOnboardStatus => ({
-      storage: { kind: 'unknown', reason: 'CamStack has not read this camera yet.' },
+      storage: { kind: 'unknown', reason: 'Dominevo has not read this camera yet.' },
       tracks: [],
       primaryTrackId: null,
       enabled: null,
@@ -5452,7 +5452,7 @@ function timezoneAbbrev(tz: Timezone): string {
 function posixOffsetString(eastMinutes: number): string {
   // POSIX TZ offsets are west-positive: the value is what you ADD to
   // local time to reach UTC, i.e. the negation of the east-positive
-  // convention used throughout `@camstack/types`.
+  // convention used throughout `@dominevo/types`.
   const posixMinutes = -eastMinutes
   const sign = posixMinutes < 0 ? '-' : ''
   const abs = Math.abs(posixMinutes)

@@ -8,7 +8,7 @@
  * D554). Shared by the clips section and the Archive review lanes so both
  * spell the same control the same way.
  */
-import type { Clip, ClipSource } from '@camstack/types'
+import type { Clip, ClipSource } from '@dominevo/types'
 
 /** One provider a surface may ask for clips, and the sources it serves. */
 export interface ClipProviderOption {

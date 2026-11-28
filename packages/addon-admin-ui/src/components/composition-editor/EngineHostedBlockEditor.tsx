@@ -10,8 +10,8 @@ import {
   compileHelper,
   type CropHelperSpec,
   type EngineHostedHelperSpec,
-} from '@camstack/types'
-import { Button, CameraGridLayoutEditor, ErrorBox } from '@camstack/ui-library'
+} from '@dominevo/types'
+import { Button, CameraGridLayoutEditor, ErrorBox } from '@dominevo/ui-library'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CropCameraEditor, type CropValue } from './CropCameraEditor'

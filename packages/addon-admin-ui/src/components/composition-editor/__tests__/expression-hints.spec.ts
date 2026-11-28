@@ -1,4 +1,4 @@
-import { BUILTIN_SIGNATURES } from '@camstack/ui-library'
+import { BUILTIN_SIGNATURES } from '@dominevo/ui-library'
 import { describe, expect, it } from 'vitest'
 import en from '../../../i18n/en.json'
 import it_ from '../../../i18n/it.json'

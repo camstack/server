@@ -3,8 +3,8 @@
  * earlier build wrote through `updateGlobalSettings`. A probe an old build stored is read by the new
  * code (boot does not re-probe), and a re-probe overwrites only this node's key.
  */
-import type { ConfigFieldWithValue, ConfigUISchemaWithValues } from '@camstack/types'
-import { fakeAddonContext } from '@camstack/types/testing'
+import type { ConfigFieldWithValue, ConfigUISchemaWithValues } from '@dominevo/types'
+import { fakeAddonContext } from '@dominevo/types/testing'
 import { describe, expect, it } from 'vitest'
 import { AudioAnalyzerAddon } from '../addons/analyzer/index.js'
 

@@ -3,7 +3,7 @@
  * `triggered-by` row sits anywhere in the rules or in a step's condition, far
  * from the tree it names: the editor provides the tree once, here.
  */
-import type { AutomationWhen } from '@camstack/types'
+import type { AutomationWhen } from '@dominevo/types'
 import { createContext, type ReactNode, useContext, useMemo } from 'react'
 import { type TriggerRow, triggerRowsOf } from './triggered-by-model'
 

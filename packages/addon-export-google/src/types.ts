@@ -15,7 +15,7 @@
  * masks in the UI only, and `addonSettings.getScopedSettings` returns the
  * stored value in plaintext to any admin caller.
  */
-import { ExportSetupSchema } from '@camstack/types'
+import { ExportSetupSchema } from '@dominevo/types'
 import type { z } from 'zod'
 
 export interface ExposedDeviceEntry {

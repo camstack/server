@@ -3,7 +3,7 @@
  * by its position and what it is; a chosen id no row carries is shown as
  * missing; with no trigger rows it says so instead of showing nothing.
  */
-import type { AutomationWhen, TriggeredByLeaf } from '@camstack/types'
+import type { AutomationWhen, TriggeredByLeaf } from '@dominevo/types'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { useState } from 'react'
 import { describe, expect, it } from 'vitest'

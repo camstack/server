@@ -29,7 +29,7 @@
  * undecided crosses" goes RED; translate fusions on drain instead of on push:
  * "a fusion queued at the step keeps its own time" goes RED.
  */
-import type { BoundingBox, SpatialDetection } from '@camstack/types'
+import type { BoundingBox, SpatialDetection } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { sequentialTrackIdMinter } from '../../track-id.js'
 import { TrackerV2 } from '../tracker-v2.js'

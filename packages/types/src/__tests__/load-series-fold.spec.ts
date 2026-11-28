@@ -2,7 +2,7 @@
  * The peak-preserving reduction.
  *
  * This spec lives in `packages/types` ON PURPOSE. The fold is consumed by
- * `packages/system` through the built `@camstack/types` dist, so a spec over
+ * `packages/system` through the built `@dominevo/types` dist, so a spec over
  * there exercises the LAST BUILD and not the source: disarming `reducePoints`
  * and re-running the system suite leaves it green, which is exactly the
  * "a test that passes for the wrong reason" trap. Here the import is relative

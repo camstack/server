@@ -437,7 +437,7 @@ so it must be planned separately.
 | Lines added | ≈200 (`llm-client.ts`) + ≈60 (guard) |
 | **Lock-in** | mitigated by the interface: the library appears in no public signature. `LlmGenerateResult` and `StreamChunk` stay ours |
 | **Library breaking change** | one major every ~6 months, **cost = one file**, with an official codemod available. To be pinned exactly and updated deliberately, never in an automatic bump |
-| **Bundle** | to be measured in Phase 0. addon-ai's `dist` would go from 2.3 MB to an estimated 3.5-4 MB, against the 6.5-7.6 MB of the two neighbouring addons: acceptable, but it must be measured because `camstack deploy` ships it to every node |
+| **Bundle** | to be measured in Phase 0. addon-ai's `dist` would go from 2.3 MB to an estimated 3.5-4 MB, against the 6.5-7.6 MB of the two neighbouring addons: acceptable, but it must be measured because `dominevo deploy` ships it to every node |
 | **Silent degradation** | openai-compatible structured output (§2.3.3) is the only one that resembles the bugs this repo pays for. Test on the request body, mandatory |
 | **CJS/ESM** | the most concrete risk and the first one to be measured |
 

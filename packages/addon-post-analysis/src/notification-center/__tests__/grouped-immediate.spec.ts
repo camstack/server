@@ -9,7 +9,7 @@
  * and 11 (shutdown, record) are Task 9b's.
  */
 
-import type { NcRuleInput, ObjectEvent } from '@camstack/types'
+import type { NcRuleInput, ObjectEvent } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import type { NcTargetRef } from '../dispatcher.js'
 import { isGroupV2 } from '../grouped/grouped-payload.js'

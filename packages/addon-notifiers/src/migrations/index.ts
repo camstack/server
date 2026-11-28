@@ -1,4 +1,4 @@
-import type { AddonMigration } from '@camstack/types'
+import type { AddonMigration } from '@dominevo/types'
 import { EMAIL_SEND_WITH_ID, linkEmailSenders } from './email-send-with.js'
 import {
   moveNotifierTargets,

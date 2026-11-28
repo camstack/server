@@ -11,7 +11,7 @@
  * marker is on the operator's own lines.
  */
 
-import { useSystem, useThemeMode } from '@camstack/ui-library'
+import { useSystem, useThemeMode } from '@dominevo/ui-library'
 import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { CodeEditor, type EditorExtraLib } from './CodeEditor'

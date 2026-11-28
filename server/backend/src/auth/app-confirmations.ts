@@ -1,6 +1,6 @@
-import { userError } from '@camstack/types'
+import { userError } from '@dominevo/types'
 /**
- * Pending "Sign in the CamStack app as <user>?" confirmations (D858).
+ * Pending "Sign in the Dominevo app as <user>?" confirmations (D858).
  *
  * A custom URL scheme can be claimed by any app on the phone, so a browser leg
  * that ends in `camstack://…?code=…` could hand a code to an app the user never
@@ -17,7 +17,7 @@ import { userError } from '@camstack/types'
  * In-memory only: a hub restart simply means the person signs in again.
  */
 import * as crypto from 'node:crypto'
-import type { AppFlowRequest } from '@camstack/types'
+import type { AppFlowRequest } from '@dominevo/types'
 
 export const APP_CONFIRM_TTL_MS = 120_000
 const MAX_PENDING = 500

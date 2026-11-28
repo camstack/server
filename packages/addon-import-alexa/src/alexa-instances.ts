@@ -7,7 +7,7 @@ import {
   buildLinkedInstances,
   type RecordIntegrationInstances,
   type RecordsAccess,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { type AlexaConnectionBody, alexaConnectionsEntryKind } from './broker-record-kinds.js'
 
 export function buildAlexaInstances(

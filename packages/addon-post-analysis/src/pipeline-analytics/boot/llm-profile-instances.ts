@@ -3,7 +3,7 @@
  * `integration-instances` of the `ai` provider (functionCap `llm`), and the flat form values
  * carry the facts a picker or a vision gate needs. The `llm` cap keeps no profile read.
  */
-import type { IntegrationInstance } from '@camstack/types'
+import type { IntegrationInstance } from '@dominevo/types'
 
 const AI_ADDON_ID = 'ai'
 

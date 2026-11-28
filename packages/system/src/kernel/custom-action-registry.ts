@@ -4,11 +4,11 @@ import type {
   CustomActionCatalogDescriptor,
   CustomActionSpec,
   CustomActionsSpec,
-} from '@camstack/types'
+} from '@dominevo/types'
 // The VALUE comes from the light subpath, not the barrel: this module is in the
 // addon-runner closure, and a runtime import of the root barrel builds the whole
 // schema graph in every forked runner (D28).
-import { describeCustomActions } from '@camstack/types/addon'
+import { describeCustomActions } from '@dominevo/types/addon'
 
 type Handler = (action: string, input: unknown, caller?: CustomActionCaller) => Promise<unknown>
 

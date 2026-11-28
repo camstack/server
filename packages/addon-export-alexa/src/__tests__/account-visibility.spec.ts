@@ -3,7 +3,7 @@
  * the linking user's grant, with D49's asymmetry — a gain applies at once, a
  * loss that would DELETE endpoints (and the user's routines) needs two reads.
  */
-import type { DeviceMetaLike, IScopedLogger, TokenScope } from '@camstack/types'
+import type { DeviceMetaLike, IScopedLogger, TokenScope } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { AlexaAccessGate, type AlexaUserGrant } from '../access/access-gate.js'
 import {

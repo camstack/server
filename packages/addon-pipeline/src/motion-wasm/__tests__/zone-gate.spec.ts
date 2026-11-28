@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import type { Zone, ZoneRule } from '@camstack/types'
+import type { Zone, ZoneRule } from '@dominevo/types'
 import { gateMotionRegions } from '../zone-gate.js'
 
 const FRAME_W = 1000

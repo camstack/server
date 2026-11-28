@@ -5,7 +5,7 @@
  * own step switch, so the election and the attach can never disagree about
  * where the root may run.
  */
-import type { InferenceDeviceDescriptor } from '@camstack/types'
+import type { InferenceDeviceDescriptor } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import PipelineOrchestratorAddon from '../index.js'
 import {

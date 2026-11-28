@@ -1,4 +1,4 @@
-import type { ObjectEvent, ObjectEventDraft } from '@camstack/types'
+import type { ObjectEvent, ObjectEventDraft } from '@dominevo/types'
 
 /** Build an {@link ObjectEventDraft} for `EventStore.insertObject` — strips `id`. */
 export function makeTestObjectEventDraft(overrides: Partial<ObjectEvent> = {}): ObjectEventDraft {

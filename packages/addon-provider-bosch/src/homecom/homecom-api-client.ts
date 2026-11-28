@@ -1,4 +1,4 @@
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { HomeComConfig } from './config.js'
 import { HOMECOM_GATEWAYS_PATH, HOMECOM_POINTT_API_ORIGIN, homeComApiBase } from './config.js'
 import {

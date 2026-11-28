@@ -18,8 +18,8 @@
 import { useMemo, useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { SlidersHorizontal, CheckCircle, AlertCircle } from 'lucide-react'
-import type { CapabilityInfo } from '@camstack/types'
-import { ErrorBox, useSystem } from '@camstack/ui-library'
+import type { CapabilityInfo } from '@dominevo/types'
+import { ErrorBox, useSystem } from '@dominevo/ui-library'
 import { AdminPage } from '../../components/AdminPage'
 import {
   CapabilityMap,

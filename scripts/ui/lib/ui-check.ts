@@ -212,7 +212,7 @@ function hexMessage(hex: string, tokens: HexTokenMap): string {
 }
 
 const ICON_TITLE_MESSAGE =
-  'icon-only control in a table cell uses native `title` → wrap it in `Tooltip` / `TooltipTrigger` / `TooltipContent` from @camstack/ui-library'
+  'icon-only control in a table cell uses native `title` → wrap it in `Tooltip` / `TooltipTrigger` / `TooltipContent` from @dominevo/ui-library'
 
 const TABLE_CELL_FILE = /(?:table|cell)\.[jt]sx$/i
 
@@ -396,7 +396,7 @@ export function semanticFindings(file: string, source: string): UiFinding[] {
 }
 
 /**
- * `libraryComponents`: the names `@camstack/ui-library` exports as components.
+ * `libraryComponents`: the names `@dominevo/ui-library` exports as components.
  * A file outside the library that EXPORTS a component of the same name is a
  * local look-alike (admin-ui's `shared/StatusBadge.tsx` beside the library's
  * `StatusBadge`) — the second answer to a question the library already answers.
@@ -490,7 +490,7 @@ export function checkUiSource(
           lineNo,
           'inline-confirm-state',
           m[0],
-          "inline destructive confirm → `useConfirm` from @camstack/ui-library: `await confirm({ title, message: <names the item>, confirmLabel, variant: 'danger' })` (modal, danger variant)",
+          "inline destructive confirm → `useConfirm` from @dominevo/ui-library: `await confirm({ title, message: <names the item>, confirmLabel, variant: 'danger' })` (modal, danger variant)",
         )
       }
     }
@@ -499,7 +499,7 @@ export function checkUiSource(
         lineNo,
         'native-dialog-call',
         m[0],
-        `window.${m[1]}() → \`use${m[1][0].toUpperCase()}${m[1].slice(1)}\` from @camstack/ui-library (needs \`ConfirmDialogProvider\`)`,
+        `window.${m[1]}() → \`use${m[1][0].toUpperCase()}${m[1].slice(1)}\` from @dominevo/ui-library (needs \`ConfirmDialogProvider\`)`,
       )
     }
   }
@@ -515,7 +515,7 @@ export function checkUiSource(
           index + 1,
           'shadows-library',
           m[1],
-          `local ${m[1]} duplicates the library's \`${m[1]}\` → import it from @camstack/ui-library, or extend it with a prop`,
+          `local ${m[1]} duplicates the library's \`${m[1]}\` → import it from @dominevo/ui-library, or extend it with a prop`,
         )
       }
     }

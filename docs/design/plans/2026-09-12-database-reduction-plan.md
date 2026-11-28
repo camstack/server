@@ -289,12 +289,12 @@ grows, and the session found all three:
 6. **G** — deleting a table that the code does not declare is the only item
    that is truly trivial.
 
-A note on method, paid for today: `applyServerUpdate` updates `@camstack/server`,
+A note on method, paid for today: `applyServerUpdate` updates `@dominevo/server`,
 **not the addons**. The hub loads the addons from `/data/addons`, and an old copy
 there wins over the closure. The migration made a column `INTEGER` that
 addon 1.2.223 still declared `TEXT`, and for six minutes every event insert
 failed with `datatype mismatch`. The third step of the chain —
-`camstack deploy` — is not optional when a migration and a schema have
+`dominevo deploy` — is not optional when a migration and a schema have
 to meet.
 
 ## Complete audit of the keys: 58 `TEXT`, only one is worth the migration

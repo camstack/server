@@ -16,7 +16,7 @@ import {
   type FieldOutcome,
   type RecordKindHandle,
   type SourceReading,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   makeRecordsWorld,

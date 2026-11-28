@@ -77,7 +77,7 @@ import {
   TimelapseRulePatchSchema,
   TimelapseRuleSchema,
   servedTemplateVars,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { isDeepStrictEqual } from 'node:util'
 import { z } from 'zod'
 import { type NcAlarmArmOutcome, NcAlarmArmOutcomeSchema } from './alarm/alarm-arm-guard.js'
@@ -293,15 +293,15 @@ export const ncActions = defineCustomActions({
    *
    * A pair of its own rather than two more keys on the rule CRUD, and that is
    * the whole point of the design. The addon builds self-contained and INLINES
-   * `@camstack/types`, so its own copy of `NcRuleInputSchema` is never the
+   * `@dominevo/types`, so its own copy of `NcRuleInputSchema` is never the
    * problem and nothing here fails at load. The coupling is the HUB: the cap
    * route (`notificationRules.createRule` / `updateRule`, which the admin
-   * editor uses) validates input against the copy of `@camstack/types` that
-   * `@camstack/server/system` inlines (`bundleTypesMainEntry`), so a new key on
-   * `NcRuleInputSchema` is SILENTLY STRIPPED there until a `@camstack/server`
+   * editor uses) validates input against the copy of `@dominevo/types` that
+   * `@dominevo/server/system` inlines (`bundleTypesMainEntry`), so a new key on
+   * `NcRuleInputSchema` is SILENTLY STRIPPED there until a `@dominevo/server`
    * release carrying it is installed. These two validate only here, against a
    * schema that lives in the addon (`rule-ai.ts`), so a field added to it is
-   * live on the next `camstack deploy packages/addon-post-analysis`.
+   * live on the next `dominevo deploy packages/addon-post-analysis`.
    *
    * Scoped exactly as the rule CRUD is: reading needs a rule the caller can
    * SEE, writing needs one they own (admins bypass ownership, never the caller
@@ -486,7 +486,7 @@ export const ncActions = defineCustomActions({
    * durable. See `test-event.ts` for what it does and does not do.
    *
    * A bridge action rather than a cap method, deliberately: it needs no
-   * codegen, no `@camstack/server/system` republish and no place on a release train,
+   * codegen, no `@dominevo/server/system` republish and no place on a release train,
    * so the tester can ship and change at the speed of the addon it tests.
    *
    * `auth: 'admin'` because an injection DELIVERS: it reaches every target the
@@ -629,7 +629,7 @@ export const ncActions = defineCustomActions({
   // above. Deliberately NOT cap methods, and for one more reason than the
   // timelapse had: the rule SCHEMA itself lives in this addon (see
   // `summary/summary-rule.ts`), so a field added to it is live on the next
-  // `camstack deploy` rather than on the next framework train.
+  // `dominevo deploy` rather than on the next framework train.
   'nc.listSummaryRules': customAction(
     z.object({}),
     z.object({

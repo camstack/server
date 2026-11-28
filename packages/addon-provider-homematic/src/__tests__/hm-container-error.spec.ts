@@ -3,7 +3,7 @@
  * cap of its container: cold until a service flag has a value, then driven by
  * the CCU's value events, and never declared by a device with no MAINTENANCE.
  */
-import { type DeviceContext, DeviceType, type IDeviceRuntimeState } from '@camstack/types'
+import { type DeviceContext, DeviceType, type IDeviceRuntimeState } from '@dominevo/types'
 import type { HmDevice, Homematic, ValueChangedEvent } from 'nodehomematic'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { HmContainerDevice } from '../devices/hm-container-device.js'

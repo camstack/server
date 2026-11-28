@@ -16,7 +16,7 @@ import type {
   IScopedLogger,
   LlmGenerateResult,
   LlmRuntimeAppleCompleteInput,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { HelperOutcome, HelperRequestOptions } from './afm-helper.js'
 import {
   type AfmGenerateRequest,

@@ -3,8 +3,8 @@
  * with the reconcile that heals a dropped `end`, and nothing at all while the
  * integration switch is off.
  */
-import type { AddonContext } from '@camstack/types'
-import { EventCategory } from '@camstack/types'
+import type { AddonContext } from '@dominevo/types'
+import { EventCategory } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { DetectionSensorFeed } from '../detection-sensors/detection-feed.js'
 import { quietLogger } from './helpers/fake-device-api.js'

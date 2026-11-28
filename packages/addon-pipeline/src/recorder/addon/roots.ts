@@ -19,14 +19,14 @@ import type {
   IScopedLogger,
   StorageLocationMode,
   StorageLocationStateSource,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   errMsg,
   mayReadLocation,
   mayWriteToLocation,
   modeMayWrite,
   resolveLocationMode,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { RecordingIndex } from '../recording-index.js'
 import type { WalkedHourOutcome } from './segment-hour-ledger.js'
 

@@ -7,17 +7,17 @@
  *
  * Why this exists (2026-08-18 audit): the pools leak over hours — measured
  * 97 / 78 / 171 / 689 MB with the 689 MB one climbing ~7 MB per 30 min —
- * then get OOM-killed (anon-rss 3.8 GB inside the CamStack cgroup at 11:45,
+ * then get OOM-killed (anon-rss 3.8 GB inside the Dominevo cgroup at 11:45,
  * 8.8 GB host-wide at 17:02, same day), respawn at ~100 MB and repeat. The
  * host is 62 GiB with NO swap and the pressure killed the co-hosted Home
  * Assistant VM twice. The kernel was the only bound; this module makes the
  * bound ours, and makes every step of the ramp visible in Loki.
  *
- * Placement: this lives in `@camstack/types` because BOTH `addon-pipeline`
+ * Placement: this lives in `@dominevo/types` because BOTH `addon-pipeline`
  * and `addon-post-analysis` need it, addons must not import each other, and
- * self-contained addon bundles INLINE the bare `@camstack/types` entry at
+ * self-contained addon bundles INLINE the bare `@dominevo/types` entry at
  * build time (see tools/build/vite-lib.preset.ts) — so the code ships with a
- * plain `camstack deploy` of each addon, no framework train required. It is
+ * plain `dominevo deploy` of each addon, no framework train required. It is
  * deliberately free of Node imports (`fs`, `child_process`): the pure policy
  * below is also consumed through the types index that UI builds import.
  * The `/proc` READ lives in each addon; the parse lives here.

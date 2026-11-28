@@ -1,5 +1,5 @@
 import { createServer, type Server } from 'node:http'
-import type { DataPlaneHandler, IScopedLogger } from '@camstack/types'
+import type { DataPlaneHandler, IScopedLogger } from '@dominevo/types'
 import type { WebhookCamera } from './webhook-plane.js'
 
 /**

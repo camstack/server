@@ -28,7 +28,7 @@
  * transition zoned→unzoned is corroborated.
  */
 import { describe, it, expect, vi } from 'vitest'
-import type { IScopedLogger, ZoneRule } from '@camstack/types'
+import type { IScopedLogger, ZoneRule } from '@dominevo/types'
 
 import { PackageZoneGate } from '../package-zone-gate.js'
 import type { ZoneRulesRead } from '../zone-rules-provider.js'

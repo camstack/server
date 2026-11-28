@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import { haDeviceToCandidate } from '../ha-candidate-mapper.js'
 import type { HaDiscoveredDevice } from '../ha-discovery-types.js'
 

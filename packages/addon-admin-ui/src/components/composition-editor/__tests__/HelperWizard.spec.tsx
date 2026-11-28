@@ -2,7 +2,7 @@
  * Helper steps keep what was chosen. A different template is the only reset.
  * Create ends with two saves: open the new device, or stay and start another.
  */
-import { selectOption } from '@camstack/ui-library/testing'
+import { selectOption } from '@dominevo/ui-library/testing'
 import { fireEvent, render, screen } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { MemoryRouter } from 'react-router-dom'
@@ -51,8 +51,8 @@ vi.mock('../TerminalCameraPicker', () => ({
 }))
 
 // The engine's own cells editor reads the camera over tRPC; its behaviour is its own spec's.
-vi.mock('@camstack/ui-library', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@camstack/ui-library')>()),
+vi.mock('@dominevo/ui-library', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@dominevo/ui-library')>()),
   CameraGridLayoutEditor: ({ deviceId }: { readonly deviceId: number }) => (
     <div data-testid="grid-layout-editor" data-device={deviceId} />
   ),

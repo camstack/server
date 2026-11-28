@@ -33,7 +33,7 @@ import type {
   Track,
   TrackEnvelope,
   ZoneCrossing,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { ActionStepsOf } from './snooze-exempt.js'
 import {
   canonicalStoredDeviceType,
@@ -45,7 +45,7 @@ import {
   ruleBelongsToAlarm as sharedRuleBelongsToAlarm,
   subKindsOf,
   systemEventFilterApplies,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   displayLabel,
   type LabelKind,
@@ -499,7 +499,7 @@ export interface NcRuleSubject {
    *  Only rules that belong to the alarm read it ({@link ruleBelongsToAlarm}). */
   readonly sensorEdge?: NcSensorEdge
   /** DEVICE-EVENT: true = a boolean sensor went HIGH (water, smoke, open…),
-   *  false = it cleared (D640, `@camstack/types` → `sensorRaisedOf`). Absent
+   *  false = it cleared (D640, `@dominevo/types` → `sensorRaisedOf`). Absent
    *  for a kind with no raise and for an unreadable slice — a
    *  `sensorTransition` condition then PASSES (never silence on a bad read). */
   readonly sensorRaised?: boolean
@@ -1365,7 +1365,7 @@ export function ruleHasRecognitionScope(rule: NcEvaluableRule): boolean {
 
 /**
  * A rule "belongs to the alarm" when its `deviceState` gate names ANY device's
- * `armed_*` word — CamStack's own panel or any other, e.g. an HA-mirrored
+ * `armed_*` word — Dominevo's own panel or any other, e.g. an HA-mirrored
  * alarm panel — or when an ENABLED `onTrigger` sequence pulls the panel's
  * trigger itself. Such a rule fires on an opening's OPENING edge only: closing
  * a window while armed is not an intrusion (D630).
@@ -1380,7 +1380,7 @@ export function ruleHasRecognitionScope(rule: NcEvaluableRule): boolean {
  * catalog on save, so a new key would be dropped by the first edit.
  */
 export function ruleBelongsToAlarm(rule: NcEvaluableRule, actionStepsOf?: ActionStepsOf): boolean {
-  // The predicate itself lives in `@camstack/types` (`alarm-membership.ts`) so
+  // The predicate itself lives in `@dominevo/types` (`alarm-membership.ts`) so
   // the editors' D640 warning asks the very same question.
   return sharedRuleBelongsToAlarm({
     conditions: rule.conditions,
@@ -1489,7 +1489,7 @@ export type NcSystemEventExclusion = 'kinds' | NcSystemEventExcludingFilter
  * Match one system subject against one rule's system-event condition.
  *
  * EVERY NARROWING FILTER IS SCOPED TO ITS KIND FAMILY, and the scoping is not
- * decided here: `systemEventFilterApplies` (in `@camstack/types`) is the one
+ * decided here: `systemEventFilterApplies` (in `@dominevo/types`) is the one
  * statement of it, and both rule editors compute their filter visibility from
  * the same predicate. A filter outside a kind's family is IGNORED — never an
  * exclusion. It used to be an exclusion, and that made the operator's
@@ -1987,13 +1987,13 @@ export function evaluateRule(
 // ── Schedule ────────────────────────────────────────────────────────
 
 /**
- * Schedule evaluation moved to `@camstack/types` when the OSD manager
+ * Schedule evaluation moved to `@dominevo/types` when the OSD manager
  * became a second consumer of the same `NcSchedule` vocabulary (addons
  * never import each other, so the only other option was a copy). Re-exported
  * here because callers — including `timelapse/window-machine.ts` — import it
  * from this module.
  */
-export { isScheduleActive } from '@camstack/types'
+export { isScheduleActive } from '@dominevo/types'
 
 // ── Plate fuzzy matching ────────────────────────────────────────────
 

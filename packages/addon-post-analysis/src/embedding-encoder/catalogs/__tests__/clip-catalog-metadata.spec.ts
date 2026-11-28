@@ -1,4 +1,4 @@
-import { ClipModelMetaSchema, CLIP_VECTOR_INDEX_PATTERN } from '@camstack/types'
+import { ClipModelMetaSchema, CLIP_VECTOR_INDEX_PATTERN } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   BUILTIN_CLIP_MODELS,

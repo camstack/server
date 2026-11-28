@@ -10,7 +10,7 @@ import {
   Skeleton,
   useIntegrationsGetAvailableTypes,
   useIntegrationsList,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Plug } from 'lucide-react'
 import { useMemo, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'

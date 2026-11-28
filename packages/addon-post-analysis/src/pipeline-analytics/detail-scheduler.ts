@@ -1,4 +1,4 @@
-import type { DetailStepAnnounce } from '@camstack/types'
+import type { DetailStepAnnounce } from '@dominevo/types'
 
 /** A scheduling decision — the caller dispatches the named step for the named track. */
 export interface DetailRequest {

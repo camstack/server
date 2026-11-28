@@ -7,8 +7,8 @@
  */
 import * as jestDomMatchers from '@testing-library/jest-dom/matchers'
 import { fireEvent, render, screen } from '@testing-library/react'
-import { selectOption, selectOptionLabels } from '@camstack/ui-library/testing'
-import type { Clip, ClipSource } from '@camstack/types'
+import { selectOption, selectOptionLabels } from '@dominevo/ui-library/testing'
+import type { Clip, ClipSource } from '@dominevo/types'
 import type { ReactNode } from 'react'
 import { useEffect } from 'react'
 import { MemoryRouter } from 'react-router-dom'
@@ -107,8 +107,8 @@ interface PassProps {
   readonly children?: ReactNode
 }
 
-vi.mock('@camstack/ui-library', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@camstack/ui-library')>()
+vi.mock('@dominevo/ui-library', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dominevo/ui-library')>()
   const Pass = ({ children }: PassProps) => <>{children}</>
   return {
     ...actual,

@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 /**
- * A client tool reaches a hub through ONE credential: the `camstack login`
+ * A client tool reaches a hub through ONE credential: the `dominevo login`
  * session (D1101). Every other way is retired, and anything that depended on
  * one was migrated, not exempted.
  *
@@ -13,7 +13,7 @@
  *     a script never logs in with a password, it reads the session.
  *
  * NOT refused: the agent JOIN token. It is a node's identity at first pairing,
- * not a client login, so `agent.ts`, the `camstack agent` usage text in `main.ts`,
+ * not a client login, so `agent.ts`, the `dominevo agent` usage text in `main.ts`,
  * `dev-cluster.sh` and `dev-agent-only.sh` keep `--token` / `CAMSTACK_HUB_TOKEN`
  * on lines marked `agent-join:line` / between `agent-join:begin` and `agent-join:end`.
  *
@@ -148,11 +148,11 @@ function main(): number {
     return 0
   }
   console.error(
-    `check-single-client-login: ${findings.length} line(s) reach a hub another way than the \`camstack login\` session (D1101):`,
+    `check-single-client-login: ${findings.length} line(s) reach a hub another way than the \`dominevo login\` session (D1101):`,
   )
   for (const f of findings) console.error(`  ${f.file}:${f.line} [${f.rule}]  ${f.text}`)
   console.error(
-    '\nRun `camstack login <host>` once; a script calls resolveHubAuth() from scripts/hub/credentials.mjs, a package uses resolveFreshCredentials.',
+    '\nRun `dominevo login <host>` once; a script calls resolveHubAuth() from scripts/hub/credentials.mjs, a package uses resolveFreshCredentials.',
   )
   return 1
 }

@@ -12,7 +12,7 @@
  * inherited number AFTER it.
  */
 import { describe, expect, it } from 'vitest'
-import { CAMERA_SWITCH_ORDER, type CameraSwitchId } from '@camstack/types'
+import { CAMERA_SWITCH_ORDER, type CameraSwitchId } from '@dominevo/types'
 import {
   type MigrateDeviceDeps,
   type MigrationLogLevel,

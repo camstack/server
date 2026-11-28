@@ -13,7 +13,7 @@ import {
   type ConfigSectionWithValues,
   type DeviceType,
   EXTENSION_HOST_DEVICE_TYPES,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export const EXTENSIONS_PANEL_WIDGET_ID = 'host/extensions-panel'
 

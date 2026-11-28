@@ -11,7 +11,7 @@ import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 import { promisify } from 'node:util'
-import { parseAcceleratorFactsJson, type AcceleratorCompute } from '@camstack/types'
+import { parseAcceleratorFactsJson, type AcceleratorCompute } from '@dominevo/types'
 
 /** Same name `accelerator_facts.FACTS_FILENAME` writes under the system temp dir. */
 export const ACCELERATOR_FACTS_FILENAME = 'camstack-accelerator-facts.json'
@@ -56,7 +56,7 @@ export function findAcceleratorFactsScript(
   const candidates: string[] = []
   if (typeof dataDir === 'string' && dataDir !== '') {
     candidates.push(
-      path.join(dataDir, 'addons', '@camstack', 'addon-pipeline', 'python', 'accelerator_facts.py'),
+      path.join(dataDir, 'addons', '@dominevo', 'addon-pipeline', 'python', 'accelerator_facts.py'),
     )
   }
   candidates.push(path.join(cwd, 'packages', 'addon-pipeline', 'python', 'accelerator_facts.py'))

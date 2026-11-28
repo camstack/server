@@ -4,7 +4,7 @@ import {
   isSecretMarker,
   isSecretMarkerLike,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { buildSignInGuideFields, type SignInGuideInput } from '../shared/sign-in-guide.js'
 import { HOME_CONNECT_REDIRECT_URI } from '../shared/sign-in-redirects.js'
 

@@ -14,8 +14,8 @@
  * fake fork.
  */
 
-import type { DecodedFrame, FrameViewSpec, IScopedLogger } from '@camstack/types'
-import { errMsg } from '@camstack/types'
+import type { DecodedFrame, FrameViewSpec, IScopedLogger } from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
 import { resolveFrameViewGeometry } from './frame-view-geometry.js'
 import type { LocalFrameRegistry } from './local-frame-registry.js'
 import type { WorkerLeaseKnobs } from './native-lease-knobs.js'

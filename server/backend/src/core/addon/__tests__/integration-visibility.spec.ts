@@ -1,4 +1,4 @@
-import type { IIntegrationRegistry, Integration, IScopedLogger } from '@camstack/types'
+import type { IIntegrationRegistry, Integration, IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, type Mock, vi } from 'vitest'
 import { createFilteredIntegrationRegistry } from '../integration-visibility.js'
 

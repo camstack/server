@@ -14,7 +14,7 @@ import {
   DeviceRole,
   DeviceType,
   type IDeviceRuntimeState,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { HmCustomEntity, HmDevice, Homematic } from 'nodehomematic'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { HmContainerDevice } from '../devices/hm-container-device.js'
@@ -412,7 +412,7 @@ describe('HmContainerDevice device page panel', () => {
     const section = dev.getSettingsUISchema().sections[1]
     const table = section?.fields.find((field) => field.type === 'object-array')
     expect(table?.type === 'object-array' ? table.value : null).toEqual([
-      { key: 'Key 1', central: 'warn', program: 'CamStack: Wall switch events', links: '—' },
+      { key: 'Key 1', central: 'warn', program: 'Dominevo: Wall switch events', links: '—' },
       { key: 'Key 2', central: 'ok', program: '—', links: '—' },
     ])
     const buttons = section?.fields.flatMap((field) =>

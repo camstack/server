@@ -6,8 +6,8 @@ import type {
   ModelCatalogEntry,
   ModelConvertInput,
   ModelConvertMetadata,
-} from '@camstack/types'
-import { ConvertArtifactSchema } from '@camstack/types'
+} from '@dominevo/types'
+import { ConvertArtifactSchema } from '@dominevo/types'
 
 // ---------------------------------------------------------------------------
 // Progress

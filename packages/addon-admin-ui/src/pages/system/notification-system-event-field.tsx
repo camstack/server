@@ -22,14 +22,14 @@
  * `mixed`, and the family would flip mid-edit.
  */
 
-import type { NcSystemEventCondition, NcSystemEventFamily } from '@camstack/types'
+import type { NcSystemEventCondition, NcSystemEventFamily } from '@dominevo/types'
 import {
   isSystemEventFamily,
   NC_CONSUMABLE_LOW_PERCENT_DEFAULT,
   NC_SYSTEM_EVENT_FAMILIES,
   ruleKindSpec,
-} from '@camstack/types'
-import { Input, Select, Button } from '@camstack/ui-library'
+} from '@dominevo/types'
+import { Input, Select, Button } from '@dominevo/ui-library'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 

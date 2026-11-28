@@ -32,7 +32,7 @@
  * moving", and a second number here would be a second authority disagreeing
  * with the first on exactly the cameras that make up the grid.
  */
-import { MOTION_CLOSE_AFTER_MS } from '@camstack/types'
+import { MOTION_CLOSE_AFTER_MS } from '@dominevo/types'
 
 /**
  * How long an audio reading counts as current.

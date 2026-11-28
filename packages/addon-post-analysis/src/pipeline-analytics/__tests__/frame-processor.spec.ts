@@ -19,7 +19,7 @@ import type {
   ObjectEventDraft,
   Zone,
   ZoneRule,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { defined } from '../../__tests__/support/vitest-mock.js'
 import { FrameProcessor } from '../pipeline/frame-processor.js'

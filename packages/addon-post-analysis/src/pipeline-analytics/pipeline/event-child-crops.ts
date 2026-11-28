@@ -16,7 +16,7 @@
  *     while rejecting accidental near-misses between distinct objects.
  */
 
-import type { ObjectDetection } from '@camstack/types'
+import type { ObjectDetection } from '@dominevo/types'
 
 /** Pixel-space bounding box with (x,y,w,h) semantics — matches ObjectEvent.bbox. */
 export interface PixelBox {

@@ -9,7 +9,7 @@ import {
   errMsg,
   type IConnectionProbe,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** What a successful probe learned about the hub. */
 export interface RademacherProbeResult {

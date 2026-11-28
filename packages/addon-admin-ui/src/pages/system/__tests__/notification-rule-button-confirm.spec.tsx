@@ -3,7 +3,7 @@
  * A rule button's "Ask for confirmation" switch (planning#669): off → on writes
  * `confirm: true` on the button, on → off CLEARS the field (never `false`).
  */
-import type { NcRuleNotificationButton } from '@camstack/types'
+import type { NcRuleNotificationButton } from '@dominevo/types'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'

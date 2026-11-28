@@ -8,7 +8,7 @@ import {
   SOURCE_CAP_ACTIVE_FIELD,
   type CustomizeCatalogTarget,
   type CustomizeCatalogTransform,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { DeviceSnapshot, WireableCatalog } from '../source-picker-model'
 import { readPath } from '../source-picker-model'
 import {

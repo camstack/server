@@ -10,7 +10,7 @@
  * ceremony that hides which four actually matter.
  */
 
-import type { CameraMetrics, IScopedLogger, RunnerCameraConfig } from '@camstack/types'
+import type { CameraMetrics, IScopedLogger, RunnerCameraConfig } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { DEFAULT_NODE_STRESS_THRESHOLDS } from '../node-stress.js'
 import { NodeStressController } from '../node-stress-controller.js'

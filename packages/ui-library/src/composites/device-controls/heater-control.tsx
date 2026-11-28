@@ -15,7 +15,7 @@
  */
 import { Flame } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { DeviceRole, DeviceType, timedRunLimitOf } from '@camstack/types'
+import { DeviceRole, DeviceType, timedRunLimitOf } from '@dominevo/types'
 import { useUiText } from '../../contexts/ui-text'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
 import { useDeviceCommand } from '../../hooks/use-device-command'

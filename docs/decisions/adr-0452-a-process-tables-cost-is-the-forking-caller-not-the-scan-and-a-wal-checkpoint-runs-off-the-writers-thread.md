@@ -130,10 +130,10 @@ profiler had been filing as a slow `set`.
 ## Consequences
 
 - Every number above was measured OUTSIDE the running closure - because
-  none of this ships with `camstack deploy`. The process-reading modules,
-  the GPU probe and the sqlite-storage changes are all `@camstack/system`;
+  none of this ships with `dominevo deploy`. The process-reading modules,
+  the GPU probe and the sqlite-storage changes are all `@dominevo/system`;
   the moleculer process-service fix is in the same package. All ride the
-  next published `@camstack/server` (D16). Until then hub-main keeps
+  next published `@dominevo/server` (D16). Until then hub-main keeps
   forking `ps` and `nvidia-smi`, and the settings thread keeps paying the
   in-commit checkpoint - this record names both costs so the next session
   does not re-measure them from zero, and the figures above are the

@@ -1,4 +1,4 @@
-import { type AutomationRecipe, AutomationWhenSchema, type TimeIsLeaf } from '@camstack/types'
+import { type AutomationRecipe, AutomationWhenSchema, type TimeIsLeaf } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   recipeSiteError,

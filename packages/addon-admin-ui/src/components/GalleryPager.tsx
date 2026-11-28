@@ -4,7 +4,7 @@
  *
  * Mirrors the ui-library `<Pagination>` used by the device list, but that
  * component is internal to the `device-list` composite and NOT re-exported from
- * `@camstack/ui-library`, so admin-ui carries its own small copy here rather
+ * `@dominevo/ui-library`, so admin-ui carries its own small copy here rather
  * than widening the library's public surface (which would need a ui-library
  * build + deploy). Returns `null` when everything fits on one page.
  *
@@ -13,7 +13,7 @@
 import { type JSX } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { Button } from '@camstack/ui-library'
+import { Button } from '@dominevo/ui-library'
 
 export interface GalleryPagerProps {
   readonly currentPage: number // 1-indexed

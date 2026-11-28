@@ -5,7 +5,7 @@
  * through an existing cap method with its own Zod schema; this file adds no
  * path of its own.
  */
-import { runGated, type GatedResult, type GatedToolSpec, type HubClient } from '@camstack/develop'
+import { runGated, type GatedResult, type GatedToolSpec, type HubClient } from '@dominevo/develop'
 import { z } from 'zod'
 import type { McpContext } from './context.js'
 import { resolveLinkBase } from './ops-events.js'

@@ -71,7 +71,7 @@ The UI reports what happened, because the method returns `{ moved }` — a silen
 count is how "it did nothing" and "it did everything" come to look the same.
 
 This is a cap change, so it reaches a node only through a published
-`@camstack/server` (D16). Until then the admin UI running against an older hub
+`@dominevo/server` (D16). Until then the admin UI running against an older hub
 will get a method-not-found on rename; the three-call sequence is gone and is
 not coming back as a fallback, because a fallback that reproduces the split-fleet
 hazard is worse than an error that names it.

@@ -20,7 +20,7 @@ describe('resolvePublishSet', () => {
   it('rebuilds every package that BUNDLES ui-library’s source, not just ui-library', () => {
     // The failure this exists for: ui-library@1.2.178 reached npm and all three
     // nodes, and the browser showed the previous editor — admin-ui aliases
-    // `@camstack/ui-library` to `../ui-library/src` and holds a COPY.
+    // `@dominevo/ui-library` to `../ui-library/src` and holds a COPY.
     const set = resolvePublishSet(['packages/ui-library/src/widgets/host-widgets.ts'], ROOT)
     expect(set).toContain('packages/ui-library')
     expect(set).toContain('packages/addon-admin-ui')
@@ -29,7 +29,7 @@ describe('resolvePublishSet', () => {
     expect(set).toContain('server/backend')
   })
 
-  it('drags @camstack/server in for any closure member', { timeout: 30_000 }, () => {
+  it('drags @dominevo/server in for any closure member', { timeout: 30_000 }, () => {
     for (const file of [
       'packages/types/src/capabilities/ptz.cap.ts',
       'packages/system/src/kernel/capability-registry.ts',

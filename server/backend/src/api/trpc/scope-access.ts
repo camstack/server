@@ -24,14 +24,14 @@
  *      method's required `access` flavour.
  *   4. No matching scope → FORBIDDEN with a human-readable reason.
  */
-import { METHOD_ACCESS_MAP } from '@camstack/server/system'
+import { METHOD_ACCESS_MAP } from '@dominevo/server/system'
 import type {
   DeviceMetaLike,
   DeviceTokenScope,
   MethodAccess,
   UserScope,
   ViewerTokenScope,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   deviceSelectorMatches,
   featureOfRole,
@@ -40,7 +40,7 @@ import {
   viewerAdmitsDevice,
   viewerHoldsRole,
   viewerScopeOf,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export type ScopeAccessResult = { ok: true; access: MethodAccess } | { ok: false; reason: string }
 

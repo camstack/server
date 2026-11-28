@@ -9,7 +9,7 @@
  * topology `engines`, but nothing ever filled it — every node rendered "—".
  */
 import * as os from 'node:os'
-import { supportedRuntimes, type GpuInfo, type HardwareInfo, type NpuInfo } from '@camstack/types'
+import { supportedRuntimes, type GpuInfo, type HardwareInfo, type NpuInfo } from '@dominevo/types'
 import { probePlatform } from '../hwaccel/hwaccel-resolver.js'
 import { mapSignalsToInferenceHardware } from './inference-resolver.js'
 

@@ -2,7 +2,7 @@
  * Modal provider entries — one credentials + defaults row per operator
  * account. Pure helpers so the store is unit-tested without BaseAddon.
  */
-import type { SecretClearInstruction } from '@camstack/types'
+import type { SecretClearInstruction } from '@dominevo/types'
 
 export const MODAL_TYPE_ID = 'modal'
 export const DEFAULT_MODAL_ENTRY_NAME = 'Default'

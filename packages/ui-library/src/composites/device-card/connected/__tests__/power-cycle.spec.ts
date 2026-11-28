@@ -1,4 +1,4 @@
-import { SWITCH_DEFAULT_OPTIONS } from '@camstack/types'
+import { SWITCH_DEFAULT_OPTIONS } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { powerCycleDeclared } from '../use-power-cycle'
 

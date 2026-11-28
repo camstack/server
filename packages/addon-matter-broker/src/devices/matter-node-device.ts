@@ -14,7 +14,7 @@ import {
   type IDevice,
   resyncCapability,
   resyncThroughAdoption,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { matterNodes } from '../matter-gateway.js'
 import { matterMesh } from '../matter-mesh.js'
 import { endpointsEqual, mappableEndpoints } from '../matter-node-reconcile.js'

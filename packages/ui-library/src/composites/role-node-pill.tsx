@@ -4,7 +4,7 @@ import { useUiText } from '../contexts/ui-text'
  * Audio) and a trailing node-colour dot. Without a role: colour icon + name
  * only (Nodes selector and similar).
  */
-import type { NodeColorId } from '@camstack/types'
+import type { NodeColorId } from '@dominevo/types'
 import type { JSX, ReactNode } from 'react'
 import { Pin } from 'lucide-react'
 import { cn } from '../lib/cn'

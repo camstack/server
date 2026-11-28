@@ -3,7 +3,7 @@ import { missingDeclarations, type PackageFacts } from '../check-requires-declar
 
 const addon = (camstack: Record<string, unknown>): PackageFacts => ({
   dir: 'packages/addon-x',
-  name: '@camstack/addon-x',
+  name: '@dominevo/addon-x',
   private: false,
   camstack,
 })
@@ -11,7 +11,7 @@ const addon = (camstack: Record<string, unknown>): PackageFacts => ({
 describe('check-requires-declared (D989)', () => {
   it('refuses a published addon with no declaration', () => {
     expect(missingDeclarations([addon({ addons: [] })])).toEqual([
-      'packages/addon-x (@camstack/addon-x) declares no camstack.requires.server',
+      'packages/addon-x (@dominevo/addon-x) declares no camstack.requires.server',
     ])
   })
 
@@ -30,7 +30,7 @@ describe('check-requires-declared (D989)', () => {
   it('holds the wrappers to the same rule', () => {
     const wrapper: PackageFacts = {
       dir: 'packages/desktop',
-      name: '@camstack/desktop',
+      name: '@dominevo/desktop',
       private: true,
       camstack: null,
     }
@@ -42,13 +42,13 @@ describe('check-requires-declared (D989)', () => {
       missingDeclarations([
         {
           dir: 'packages/system',
-          name: '@camstack/server-framework',
+          name: '@dominevo/server-framework',
           private: true,
           camstack: { addons: [] },
         },
         {
           dir: 'server/backend',
-          name: '@camstack/server',
+          name: '@dominevo/server',
           private: false,
           camstack: { addons: [] },
         },

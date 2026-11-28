@@ -14,7 +14,7 @@ import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node
 import { join } from 'node:path'
 import { WyzeCloud } from '@apocaliss92/wyze-bridge-js'
 import type { WyzeCamera, WyzeCloudSession, WyzeEvent } from '@apocaliss92/wyze-bridge-js'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 export interface WyzeCredentials {
   readonly email: string

@@ -1,4 +1,4 @@
-import { type Integration, SERVICE_INSTANCE_INFO_KEY } from '@camstack/types'
+import { type Integration, SERVICE_INSTANCE_INFO_KEY } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { buildIntegrationsProvider } from '../../api/core/cap-providers'
 

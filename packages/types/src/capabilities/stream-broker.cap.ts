@@ -210,7 +210,7 @@ export const BrokerConsumerAttributionSchema = z
      * from the tRPC request context (browser sessions).
      */
     userAgent: z.string().optional(),
-    /** Authenticated user id (CamStack OAuth subject) when known. */
+    /** Authenticated user id (Dominevo OAuth subject) when known. */
     userId: z.string().optional(),
     /** Higher-level session identifier (Alexa Echo sessionId, HAP session, …). */
     sessionId: z.string().optional(),
@@ -428,7 +428,7 @@ export const EgressTranscodeRequestSchema = z.object({
    * Operator/consumer override for decode hardware. ABSENT is the normal case
    * and the one that matters: the broker then resolves the backend from the
    * DECODER ADDON's per-node `probedBestHwaccel` (see
-   * `@camstack/types` `ffmpeg/hwaccel.ts`), which is the ranking known to work
+   * `@dominevo/types` `ffmpeg/hwaccel.ts`), which is the ranking known to work
    * on this hardware — never the raw kernel resolver's qsv-first order.
    */
   decodeHwAccel: z.enum(['auto', 'none', 'videotoolbox', 'vaapi', 'qsv', 'cuda']).optional(),
@@ -857,7 +857,7 @@ export const streamBrokerCapability = {
     /**
      * THE ffmpeg primitive. Acquire an encoded stream matching a structured
      * encode plan; the broker builds the argv through the ONE builder
-     * (`@camstack/types` `ffmpeg/invocation.ts`), resolves decode hardware from
+     * (`@dominevo/types` `ffmpeg/invocation.ts`), resolves decode hardware from
      * the DECODER ADDON's per-node ranking, and returns a dialable RTSP url.
      *
      * **Refcounted and deduplicated on EXACT match.** Two requesters whose

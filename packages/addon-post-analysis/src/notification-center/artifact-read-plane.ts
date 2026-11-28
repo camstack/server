@@ -33,7 +33,7 @@
  * `event-media`.
  */
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { NcArtifactIndex, NcArtifactRecord } from './artifact-index.js'
 import type { NcArtifactStore } from './artifact-store.js'
 

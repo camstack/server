@@ -46,7 +46,7 @@ catalogued in [common-components.md](common-components.md).
   `AddonPageLoader` (`packages/addon-admin-ui/src/layouts/AddonPageLoader.tsx`)
   registers the remote and renders the default export of `./page` with
   `AddonPageProps` — `{ trpc, theme: { isDark }, navigate }`. React,
-  react-query, tRPC and `@camstack/ui-library` are SHARED with the host, so
+  react-query, tRPC and `@dominevo/ui-library` are SHARED with the host, so
   the page imports the library, never a copy, and cannot import admin-ui
   components. `mountAddonPage` runs the same page standalone for development
   (`packages/addon-model-studio/vite.page.config.ts` is the reference).
@@ -454,7 +454,7 @@ chip nobody carries ignored — rendered by the bar as named `role="group"`s.
 
 ### Charts: the library chart family, never a hand-drawn one
 
-Every chart over time is one of `@camstack/ui-library`'s chart family
+Every chart over time is one of `@dominevo/ui-library`'s chart family
 (`packages/ui-library/src/composites/charts/`, uPlot underneath, D899):
 
 | Need | Component |

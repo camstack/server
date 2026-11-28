@@ -117,7 +117,7 @@ describe('ClipsSection — the band it asks for on a real first paint', () => {
       data: [
         {
           source: 'analytics',
-          label: 'CamStack recordings',
+          label: 'Dominevo recordings',
           addonId: 'recorder',
           availability: { state: 'ok' },
         },
@@ -142,7 +142,7 @@ describe('ClipsSection — moving the band re-asks the list', () => {
       data: [
         {
           source: 'analytics',
-          label: 'CamStack recordings',
+          label: 'Dominevo recordings',
           addonId: 'recorder',
           availability: { state: 'ok' },
         },
@@ -196,7 +196,7 @@ describe('ClipsSection — the four states survive the move', () => {
       data: [
         {
           source: 'analytics',
-          label: 'CamStack recordings',
+          label: 'Dominevo recordings',
           addonId: 'recorder',
           availability: { state: 'ok' },
         },

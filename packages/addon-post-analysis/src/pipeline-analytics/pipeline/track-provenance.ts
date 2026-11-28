@@ -7,7 +7,7 @@
  * no pipeline root produced (a camera's onboard detector), in which case the
  * track keeps NO model id rather than an invented one.
  */
-import type { FrameResult } from '@camstack/types'
+import type { FrameResult } from '@dominevo/types'
 
 export interface TrackProvenance {
   readonly modelId?: string

@@ -4,7 +4,7 @@
  * is unusable for the required purpose is a CALLER error (`bad-request`), not
  * "nothing configured".
  */
-import type { LlmDefault, LlmGenerateErr, LlmProfile } from '@camstack/types'
+import type { LlmDefault, LlmGenerateErr, LlmProfile } from '@dominevo/types'
 
 export type LlmPurpose = 'text' | 'vision'
 

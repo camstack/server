@@ -5,8 +5,8 @@
  * so on the event, by id and name — never the `analyzer` the attach used to
  * claim (D672 rule 11 as amended 2026-10-06).
  */
-import { EventCategory } from '@camstack/types'
-import type { RunnerCameraConfig } from '@camstack/types'
+import { EventCategory } from '@dominevo/types'
+import type { RunnerCameraConfig } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { makeRunnerCameraConfig } from '../../__tests__/support/runner-camera-config.js'
 import PipelineRunnerAddon from '../index.js'

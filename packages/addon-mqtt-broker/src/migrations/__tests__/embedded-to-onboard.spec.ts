@@ -1,4 +1,4 @@
-import { defineAddonMigrations, makeInMemoryRecords } from '@camstack/types'
+import { defineAddonMigrations, makeInMemoryRecords } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { mqttBrokersEntryKind } from '../../broker-record-kinds.js'
 import { planDropEmbeddedKeys } from '../embedded-to-onboard.js'

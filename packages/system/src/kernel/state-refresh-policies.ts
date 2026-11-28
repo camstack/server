@@ -12,7 +12,7 @@
  * The device-manager's scheduler subscribes and reconciles its schedules on
  * every change. Memory only: a restart re-registers every cap.
  */
-import type { StateRefreshPolicy } from '@camstack/types'
+import type { StateRefreshPolicy } from '@dominevo/types'
 import type { ChildCapDescriptor } from './transport/child-cap-protocol.js'
 
 /** The cap a policy is stated on. */

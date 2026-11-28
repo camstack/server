@@ -32,7 +32,7 @@
  *     materialise, so there is nothing left to race.
  */
 import { describe, expect, it } from 'vitest'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { RecordingIndex } from '../../recording-index.js'
 import { segmentRelPath } from '../../segment-path.js'
 import type { SegmentRow } from '../../types.js'

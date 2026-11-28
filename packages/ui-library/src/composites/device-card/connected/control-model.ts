@@ -1,4 +1,4 @@
-import type { ControlKind, ControlSetValueInput, ControlStatus } from '@camstack/types'
+import type { ControlKind, ControlSetValueInput, ControlStatus } from '@dominevo/types'
 import type { ControlDateTimeFormat } from '../../../lib/format-control-datetime'
 import {
   type NumericControlDisplay,

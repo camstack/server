@@ -11,7 +11,7 @@ import type {
   RetrainCorpusKpiCameraRow,
   RetrainFrameWorkState,
   RetrainMacroClass,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export type {
   RetrainCorpusFilter,
@@ -19,7 +19,7 @@ export type {
   RetrainCorpusKpiCameraRow,
   RetrainCorpusPage,
   RetrainFrameWorkState,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export {
   RetrainCorpusFilterSchema,
@@ -27,7 +27,7 @@ export {
   RetrainCorpusKpiSchema,
   RetrainCorpusPageSchema,
   RetrainFrameWorkStateSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** The `{ complete }` slice {@link workStateOf} reads from a frame row. */
 export interface RetrainFrameWorkStateInput {

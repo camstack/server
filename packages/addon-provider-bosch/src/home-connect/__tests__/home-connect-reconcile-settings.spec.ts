@@ -1,4 +1,4 @@
-import { isSecretMarker, makeSecretMarker, type IScopedLogger } from '@camstack/types'
+import { isSecretMarker, makeSecretMarker, type IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { homeConnectSettingsGap, logHomeConnectSettingsGap } from '../config.js'
 

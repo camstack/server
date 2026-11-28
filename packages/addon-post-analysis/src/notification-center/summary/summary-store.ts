@@ -12,7 +12,7 @@
  */
 
 import { randomUUID } from 'node:crypto'
-import type { IScopedLogger, RecordKindHandle, RecordsAccess } from '@camstack/types'
+import type { IScopedLogger, RecordKindHandle, RecordsAccess } from '@dominevo/types'
 import { ncRecordKinds, type SummaryRuleBody } from '../record-kinds.js'
 import { type NcRereadResult, rereadRecordRow } from '../durable-reread.js'
 import {

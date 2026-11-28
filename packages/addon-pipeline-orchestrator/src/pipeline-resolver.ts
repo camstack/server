@@ -38,8 +38,8 @@ import type {
   PipelineSlotSchema,
   PipelineStepInputOutput,
   StepClusterMode,
-} from '@camstack/types'
-import { stepModelRunsOnFormat } from '@camstack/types'
+} from '@dominevo/types'
+import { stepModelRunsOnFormat } from '@dominevo/types'
 
 /**
  * The `package-detection` root step id. Zone-driven activation

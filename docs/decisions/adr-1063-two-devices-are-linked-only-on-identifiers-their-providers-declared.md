@@ -19,7 +19,7 @@ applies-to:
 
 ## Context
 
-A camera powered by a UniFi PoE port appears twice in CamStack: as the camera
+A camera powered by a UniFi PoE port appears twice in Dominevo: as the camera
 (from its own integration) and as the port (from the UniFi integration). The
 port can power-cycle the camera, but nothing connects the two, so the camera's
 "restart" can never reach the port. D356 forbade linking on a guess — the

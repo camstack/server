@@ -2,7 +2,7 @@
  * The protection criterion, in two units — and the ONE GB unit the whole repo
  * now speaks.
  */
-import { STORAGE_BYTES_PER_GB } from '@camstack/types'
+import { STORAGE_BYTES_PER_GB } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { resolveMinFreePercent } from '../location-protection.js'
 

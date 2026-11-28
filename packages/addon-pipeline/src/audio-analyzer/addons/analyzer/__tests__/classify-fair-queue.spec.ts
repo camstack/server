@@ -17,7 +17,7 @@
  *      never shaped like "classified, nothing above the floor" (D393).
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { AudioChunkInput, IScopedLogger } from '@camstack/types'
+import type { AudioChunkInput, IScopedLogger } from '@dominevo/types'
 import { AudioAnalyzerProvider } from '../index.js'
 import type {
   AudioBackend,

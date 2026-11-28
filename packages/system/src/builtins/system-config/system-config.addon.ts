@@ -1,4 +1,4 @@
-import type { AddonInitResult, ConfigUISchema, ConfigUISchemaWithValues } from '@camstack/types'
+import type { AddonInitResult, ConfigUISchema, ConfigUISchemaWithValues } from '@dominevo/types'
 import {
   BaseAddon,
   DEFAULT_TOKEN_EXPIRY,
@@ -7,7 +7,7 @@ import {
   SERVER_NAME_MAX_LENGTH,
   ServerNameSchema,
   shortHostname,
-} from '@camstack/types'
+} from '@dominevo/types'
 import os from 'node:os'
 import { parseCidrList, readCidrSetting } from '../../auth/cidr.js'
 import { InvalidCorsOriginError, parseOriginList, readOriginSetting } from '../../auth/origin.js'
@@ -85,7 +85,7 @@ import { systemConfigRecordKinds } from './record-kinds.js'
  *     surface" addon — its sole purpose is to expose the yml sections
  *     through the new three-level settings API.
  *
- * This addon is declared in `@camstack/server/system`'s package.json `camstack.addons[]`
+ * This addon is declared in `@dominevo/server/system`'s package.json `camstack.addons[]`
  * and loaded automatically via AddonLoader like any other core built-in.
  */
 

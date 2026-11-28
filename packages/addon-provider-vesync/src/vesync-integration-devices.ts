@@ -1,4 +1,4 @@
-import { errMsg, type DeviceManagerApi, type IScopedLogger } from '@camstack/types'
+import { errMsg, type DeviceManagerApi, type IScopedLogger } from '@dominevo/types'
 import { VESYNC_SYSTEM } from './config.js'
 
 export interface OnlineTarget {

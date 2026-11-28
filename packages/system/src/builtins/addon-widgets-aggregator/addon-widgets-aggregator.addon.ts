@@ -16,7 +16,7 @@
  *
  * Why a builtin: same reasoning as `addon-pages-aggregator`. The
  * aggregator is the de-facto "addon-widgets provider" — addons own caps,
- * not the server. Living in `@camstack/server/system/builtins` keeps the surface
+ * not the server. Living in `@dominevo/server/system/builtins` keeps the surface
  * symmetrical with `system-config`, `local-auth`, etc.
  */
 import * as path from 'node:path'
@@ -30,7 +30,7 @@ import {
   type IAddonWidgetsAggregatorProvider,
   type IAddonWidgetsSourceProvider,
   type ProviderRegistration,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { settleSourcesWithTimeout } from '../shared/settle-sources.js'
 
 interface ResolvedPaths {
@@ -309,7 +309,7 @@ export class AddonWidgetsAggregatorAddon extends BaseAddon {
   private resolveBundlePath(addonId: string, bundle: string): string | null {
     const paths = this.resolvedPaths
     if (!paths) return null
-    const addonDistPath = path.join(paths.addonsDir, '@camstack', `addon-${addonId}`, 'dist')
+    const addonDistPath = path.join(paths.addonsDir, '@dominevo', `addon-${addonId}`, 'dist')
     const resolvedBase = path.resolve(addonDistPath)
     const resolvedFile = path.resolve(addonDistPath, bundle)
     if (!resolvedFile.startsWith(resolvedBase + path.sep) && resolvedFile !== resolvedBase) {

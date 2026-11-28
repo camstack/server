@@ -1,5 +1,5 @@
 /**
- * @deprecated Use DeviceType from '@camstack/types/device' instead.
+ * @deprecated Use DeviceType from '@dominevo/types/device' instead.
  * This file is kept for backwards compatibility during migration.
  */
 

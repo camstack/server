@@ -10,7 +10,7 @@
  * the tier's message. An admin reaching the same inputs proves the refusal is the
  * tier's, not a parse failure.
  */
-import type { CapabilityDefinition } from '@camstack/types'
+import type { CapabilityDefinition } from '@dominevo/types'
 import {
   ACCESS_ROLES,
   buildRoleScopes,
@@ -18,7 +18,7 @@ import {
   deviceHistoryCapability,
   resolveMethodAuth,
   type TokenScope,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { buildCapRouterForTest, invokeProcedure, makeCtx } from './harness.js'
 

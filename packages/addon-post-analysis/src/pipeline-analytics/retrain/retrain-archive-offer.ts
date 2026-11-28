@@ -10,7 +10,7 @@
  * at once — so a slow home uplink never buffers the dataset in memory.
  */
 import type { IncomingMessage } from 'node:http'
-import type { PeerBytesHandlerResponse } from '@camstack/types'
+import type { PeerBytesHandlerResponse } from '@dominevo/types'
 import type { RetrainArchiveSink } from './retrain-archive-writer.js'
 
 /** A reader silent this long is gone; the body is cut. */

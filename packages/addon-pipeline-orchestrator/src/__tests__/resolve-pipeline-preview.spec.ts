@@ -9,7 +9,7 @@
  * eligible: face-detection has an openvino build and no tflite one, so the
  * preview shows it only when it went through the election.
  */
-import type { PipelineStepInputOutput } from '@camstack/types'
+import type { PipelineStepInputOutput } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import PipelineOrchestratorAddon from '../index.js'
 import { CORAL_GPU_CATALOG, GPU } from './attach-pipeline-fixtures.js'

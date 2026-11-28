@@ -39,7 +39,7 @@ export const MeshPowerSchema = z.enum(['mains', 'battery', 'unknown'])
 export type MeshPower = z.infer<typeof MeshPowerSchema>
 
 export const MeshNodeSchema = z.object({
-  /** The CamStack device of the node, `null` for a peer this provider did not commission. */
+  /** The Dominevo device of the node, `null` for a peer this provider did not commission. */
   deviceId: z.number().int().nonnegative().nullable(),
   /** Stable key within the provider; the endpoint of every link names one. */
   nodeKey: z.string().min(1),

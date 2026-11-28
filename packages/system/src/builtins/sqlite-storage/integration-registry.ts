@@ -4,8 +4,8 @@ import type {
   Integration,
   RecordKindHandle,
   RecordsAccess,
-} from '@camstack/types'
-import { bareAddonId, parseJsonObject } from '@camstack/types'
+} from '@dominevo/types'
+import { bareAddonId, parseJsonObject } from '@dominevo/types'
 import { readAllRows } from '../../records/read-all-rows.js'
 import { integrationRegistryRecordKinds, type IntegrationBody } from './integration-record-kinds.js'
 

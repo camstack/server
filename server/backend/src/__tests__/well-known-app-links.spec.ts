@@ -7,17 +7,18 @@ describe('buildAppLinkFiles', () => {
     const { appleAppSiteAssociation } = buildAppLinkFiles([])
     const json = JSON.stringify(appleAppSiteAssociation)
     expect(json).toContain('/viewer/camstack/*')
+    expect(json).toContain('C3F24V5NS5.app.dominevo.viewer')
     expect(json).toContain('C3F24V5NS5.com.apocaliss92.camstack')
     expect(json).not.toContain('"/*"')
   })
 
-  it('assetlinks carries both packages and the provided fingerprints verbatim', () => {
+  it('assetlinks carries the Dominevo package and the previous two and the provided fingerprints verbatim', () => {
     const fp =
       'AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99:AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99'
     const { assetLinks } = buildAppLinkFiles([fp])
-    expect(assetLinks).toHaveLength(2)
+    expect(assetLinks).toHaveLength(3)
     expect(assetLinks[0]).toMatchObject({
-      target: { package_name: 'com.apocaliss92.camstack', sha256_cert_fingerprints: [fp] },
+      target: { package_name: 'app.dominevo.viewer', sha256_cert_fingerprints: [fp] },
     })
   })
 })

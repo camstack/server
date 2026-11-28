@@ -15,7 +15,7 @@
  */
 
 import type { ServerResponse } from 'node:http'
-import { createEvent, NcRuleInputSchema } from '@camstack/types'
+import { createEvent, NcRuleInputSchema } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import { NcActionPlane } from '../action-plane.js'
@@ -231,14 +231,14 @@ afterEach(async () => {
 describe('an addon-update notification carries a button that applies it', () => {
   it('names how many packages and which node, and is a background call', async () => {
     const h = await makeHarness({
-      updatable: ['@camstack/addon-terminal', '@camstack/addon-recorder', '@camstack/addon-ai'],
+      updatable: ['@dominevo/addon-terminal', '@dominevo/addon-recorder', '@dominevo/addon-ai'],
     })
     await deliver(
       h,
       updateAvailable([
-        { name: '@camstack/addon-terminal', node: 'agent-a' },
-        { name: '@camstack/addon-recorder', node: 'agent-a' },
-        { name: '@camstack/addon-ai', node: 'agent-a' },
+        { name: '@dominevo/addon-terminal', node: 'agent-a' },
+        { name: '@dominevo/addon-recorder', node: 'agent-a' },
+        { name: '@dominevo/addon-ai', node: 'agent-a' },
       ]),
     )
 
@@ -256,32 +256,32 @@ describe('an addon-update notification carries a button that applies it', () => 
 
   it('applies exactly the packages the row named, on the node it named', async () => {
     const h = await makeHarness({
-      updatable: ['@camstack/addon-terminal', '@camstack/addon-recorder'],
+      updatable: ['@dominevo/addon-terminal', '@dominevo/addon-recorder'],
     })
     await deliver(
       h,
       updateAvailable([
-        { name: '@camstack/addon-terminal', node: 'agent-a' },
-        { name: '@camstack/addon-recorder', node: 'agent-a' },
+        { name: '@dominevo/addon-terminal', node: 'agent-a' },
+        { name: '@dominevo/addon-recorder', node: 'agent-a' },
       ]),
     )
     await tap(h, updateButton(h.sends)!.url!)
 
     expect(h.applied).toEqual([
-      { packageName: '@camstack/addon-terminal', nodeId: 'agent-a' },
-      { packageName: '@camstack/addon-recorder', nodeId: 'agent-a' },
+      { packageName: '@dominevo/addon-terminal', nodeId: 'agent-a' },
+      { packageName: '@dominevo/addon-recorder', nodeId: 'agent-a' },
     ])
   })
 
   it('tells the operator it started, and then what actually landed', async () => {
     const h = await makeHarness({
-      updatable: ['@camstack/addon-terminal', '@camstack/addon-recorder'],
+      updatable: ['@dominevo/addon-terminal', '@dominevo/addon-recorder'],
     })
     await deliver(
       h,
       updateAvailable([
-        { name: '@camstack/addon-terminal', node: 'agent-a' },
-        { name: '@camstack/addon-recorder', node: 'agent-a' },
+        { name: '@dominevo/addon-terminal', node: 'agent-a' },
+        { name: '@dominevo/addon-recorder', node: 'agent-a' },
       ]),
     )
     const before = h.sends.length
@@ -295,8 +295,8 @@ describe('an addon-update notification carries a button that applies it', () => 
   })
 
   it('states NO version — the one resolver reads that back at apply time (D313)', async () => {
-    const h = await makeHarness({ updatable: ['@camstack/addon-terminal'] })
-    await deliver(h, updateAvailable([{ name: '@camstack/addon-terminal', node: 'hub' }]))
+    const h = await makeHarness({ updatable: ['@dominevo/addon-terminal'] })
+    await deliver(h, updateAvailable([{ name: '@dominevo/addon-terminal', node: 'hub' }]))
     const before = h.sends.length
     await tap(h, updateButton(h.sends)!.url!)
 
@@ -312,8 +312,8 @@ describe('an addon-update notification carries a button that applies it', () => 
 
 describe('a second tap changes nothing', () => {
   it('spends the button once — the second tap says so and applies nothing more', async () => {
-    const h = await makeHarness({ updatable: ['@camstack/addon-terminal'] })
-    await deliver(h, updateAvailable([{ name: '@camstack/addon-terminal', node: 'hub' }]))
+    const h = await makeHarness({ updatable: ['@dominevo/addon-terminal'] })
+    await deliver(h, updateAvailable([{ name: '@dominevo/addon-terminal', node: 'hub' }]))
     const url = updateButton(h.sends)!.url!
 
     expect(await tap(h, url)).toContain('Done')
@@ -327,18 +327,18 @@ describe('a second tap changes nothing', () => {
     // The operator applied two of the three from the Addons page before
     // tapping. A button that reported "3 updated" would be reporting work it
     // did not do.
-    const h = await makeHarness({ updatable: ['@camstack/addon-ai'] })
+    const h = await makeHarness({ updatable: ['@dominevo/addon-ai'] })
     await deliver(
       h,
       updateAvailable([
-        { name: '@camstack/addon-terminal', node: 'agent-a' },
-        { name: '@camstack/addon-recorder', node: 'agent-a' },
-        { name: '@camstack/addon-ai', node: 'agent-a' },
+        { name: '@dominevo/addon-terminal', node: 'agent-a' },
+        { name: '@dominevo/addon-recorder', node: 'agent-a' },
+        { name: '@dominevo/addon-ai', node: 'agent-a' },
       ]),
     )
     await tap(h, updateButton(h.sends)!.url!)
 
-    expect(h.applied).toEqual([{ packageName: '@camstack/addon-ai', nodeId: 'agent-a' }])
+    expect(h.applied).toEqual([{ packageName: '@dominevo/addon-ai', nodeId: 'agent-a' }])
     expect(h.sends.at(-1)?.notification.body).toBe(
       'agent-a: 1 updated, 2 already current, 0 failed',
     )
@@ -346,7 +346,7 @@ describe('a second tap changes nothing', () => {
 
   it('applies NOTHING when the registry says everything is current, and says so', async () => {
     const h = await makeHarness({ updatable: [] })
-    await deliver(h, updateAvailable([{ name: '@camstack/addon-terminal', node: 'hub' }]))
+    await deliver(h, updateAvailable([{ name: '@dominevo/addon-terminal', node: 'hub' }]))
     const before = h.sends.length
     await tap(h, updateButton(h.sends)!.url!)
 
@@ -358,26 +358,26 @@ describe('a second tap changes nothing', () => {
 
   it('changes nothing when it cannot read what needs updating', async () => {
     const h = await makeHarness({ updatable: 'throw' })
-    await deliver(h, updateAvailable([{ name: '@camstack/addon-terminal', node: 'hub' }]))
+    await deliver(h, updateAvailable([{ name: '@dominevo/addon-terminal', node: 'hub' }]))
     const before = h.sends.length
     expect(await tap(h, updateButton(h.sends)!.url!)).toContain('did not work')
 
     expect(h.applied).toEqual([])
     expect(h.sends.slice(before).map((send) => send.notification.body)).toEqual([
-      'Could not read what needs updating on hub — nothing was changed. Open CamStack.',
+      'Could not read what needs updating on hub — nothing was changed. Open Dominevo.',
     ])
   })
 
   it('reports a failure as a failure, naming the package', async () => {
     const h = await makeHarness({
-      updatable: ['@camstack/addon-terminal', '@camstack/addon-recorder'],
-      failing: ['@camstack/addon-recorder'],
+      updatable: ['@dominevo/addon-terminal', '@dominevo/addon-recorder'],
+      failing: ['@dominevo/addon-recorder'],
     })
     await deliver(
       h,
       updateAvailable([
-        { name: '@camstack/addon-terminal', node: 'hub' },
-        { name: '@camstack/addon-recorder', node: 'hub' },
+        { name: '@dominevo/addon-terminal', node: 'hub' },
+        { name: '@dominevo/addon-recorder', node: 'hub' },
       ]),
     )
     const before = h.sends.length
@@ -385,14 +385,14 @@ describe('a second tap changes nothing', () => {
 
     const bodies = h.sends.slice(before).map((send) => send.notification.body)
     expect(bodies.at(-1)).toBe(
-      'hub: 1 updated, 0 already current, 1 failed\n@camstack/addon-recorder',
+      'hub: 1 updated, 0 already current, 1 failed\n@dominevo/addon-recorder',
     )
   })
 })
 
 describe('what the button REFUSES to be', () => {
   it('a row that spans several nodes gets no button — and still gets its notification', async () => {
-    const h = await makeHarness({ updatable: ['@camstack/addon-terminal'] })
+    const h = await makeHarness({ updatable: ['@dominevo/addon-terminal'] })
     // Two nodes in one row: the intake sets no single `nodeId`, and a button
     // that restarted addons on a node it could not name would be the blunt
     // fleet action nobody asked for.
@@ -402,18 +402,18 @@ describe('what the button REFUSES to be', () => {
         { type: 'core', id: 'updates' },
         {
           target: 'addon',
-          packageName: '@camstack/addon-terminal',
+          packageName: '@dominevo/addon-terminal',
           currentVersion: '0.1.47',
           latestVersion: '0.1.51',
           packages: [
             {
-              packageName: '@camstack/addon-terminal',
+              packageName: '@dominevo/addon-terminal',
               currentVersion: '0.1.47',
               latestVersion: '0.1.51',
               nodeId: 'hub',
             },
             {
-              packageName: '@camstack/addon-recorder',
+              packageName: '@dominevo/addon-recorder',
               currentVersion: '0.1.1',
               latestVersion: '0.1.2',
               nodeId: 'agent-a',
@@ -434,8 +434,8 @@ describe('what the button REFUSES to be', () => {
   it("a NODE's own server update does not carry the addon-update button", async () => {
     // The server-update family is a different grant (D325). This button still
     // refuses that kind — applying addons is not applying a node reboot.
-    const h = await makeHarness({ updatable: ['@camstack/server'] })
-    await deliver(h, updateAvailable([{ name: '@camstack/server', node: 'hub' }], 'server'))
+    const h = await makeHarness({ updatable: ['@dominevo/server'] })
+    await deliver(h, updateAvailable([{ name: '@dominevo/server', node: 'hub' }], 'server'))
 
     expect(h.sends).toHaveLength(1)
     expect(updateButton(h.sends)).toBeUndefined()
@@ -445,8 +445,8 @@ describe('what the button REFUSES to be', () => {
     // The mute buttons already refuse an unowned target. This one refuses for a
     // stronger reason: a sequence button is authored per rule, this one appears
     // on every addon-update notification, so nobody chose it per button.
-    const h = await makeHarness({ unowned: true, updatable: ['@camstack/addon-terminal'] })
-    await deliver(h, updateAvailable([{ name: '@camstack/addon-terminal', node: 'hub' }]))
+    const h = await makeHarness({ unowned: true, updatable: ['@dominevo/addon-terminal'] })
+    await deliver(h, updateAvailable([{ name: '@dominevo/addon-terminal', node: 'hub' }]))
 
     expect(h.sends).toHaveLength(1)
     expect(updateButton(h.sends)).toBeUndefined()
@@ -455,8 +455,8 @@ describe('what the button REFUSES to be', () => {
   })
 
   it('a loopback-only install loses the button, never the notification', async () => {
-    const h = await makeHarness({ baseUrl: null, updatable: ['@camstack/addon-terminal'] })
-    await deliver(h, updateAvailable([{ name: '@camstack/addon-terminal', node: 'hub' }]))
+    const h = await makeHarness({ baseUrl: null, updatable: ['@dominevo/addon-terminal'] })
+    await deliver(h, updateAvailable([{ name: '@dominevo/addon-terminal', node: 'hub' }]))
 
     expect(h.sends).toHaveLength(1)
     expect(h.sends[0]?.notification.actions ?? []).toEqual([])

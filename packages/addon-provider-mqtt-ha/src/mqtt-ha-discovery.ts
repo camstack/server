@@ -1,4 +1,4 @@
-import { DeviceType, type DiscoveredChildDevice } from '@camstack/types'
+import { DeviceType, type DiscoveredChildDevice } from '@dominevo/types'
 import type { MqttHaDiscoveredEntity } from './mqtt-ha-discovery-types.js'
 import { groupEntitiesByDevice, type MqttHaPhysicalDevice } from './mqtt-ha-device-grouping.js'
 import { planMqttHaContainer, type MqttHaContainerPlan } from './mqtt-ha-container-plan.js'

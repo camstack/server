@@ -1,4 +1,4 @@
-import type { AddonMigration } from '@camstack/types'
+import type { AddonMigration } from '@dominevo/types'
 import { type HubNodeFieldsPorts, planHubNodeFields } from './hub-node-fields.js'
 import { type FixedPinPorts, moveFixedPinToKeychain } from './fixed-pin-to-keychain.js'
 import {

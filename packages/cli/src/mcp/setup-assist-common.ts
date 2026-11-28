@@ -7,8 +7,8 @@
  * yields another one — an operator who confirms a proposal confirms THAT body.
  */
 import { createHash } from 'node:crypto'
-import { canonicalJson } from '@camstack/develop'
-import type { HubConnection } from '@camstack/develop'
+import { canonicalJson } from '@dominevo/develop'
+import type { HubConnection } from '@dominevo/develop'
 import type { RefusedResult } from './ops-hub.js'
 
 export const READ_CONCURRENCY = 6

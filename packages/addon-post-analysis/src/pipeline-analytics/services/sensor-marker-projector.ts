@@ -45,7 +45,7 @@
  * hands the row to the notification centre, and why the snapshot here is bounded
  * ({@link SENSOR_MARKER_SNAPSHOT_TIMEOUT_MS}): the press is waiting on it.
  */
-import { EVENT_KIND_BY_CAP, errMsg } from '@camstack/types'
+import { EVENT_KIND_BY_CAP, errMsg } from '@dominevo/types'
 import {
   type LinkedCamerasCache,
   resolveSensorEventCameras,

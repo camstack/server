@@ -8,8 +8,8 @@
  * `mergeAggregates` is re-exported from the addon module to preserve the
  * existing public export surface the test-suite imports.
  */
-import { WELL_KNOWN_TAB_MAP } from '@camstack/types'
-import type { ConfigUISchemaWithValues } from '@camstack/types'
+import { WELL_KNOWN_TAB_MAP } from '@dominevo/types'
+import type { ConfigUISchemaWithValues } from '@dominevo/types'
 import type { AggregateSection, AggregateTabDecl, ContributionShape } from './device-meta-types.js'
 
 // ── Aggregator merge ─────────────────────────────────────────────────────────

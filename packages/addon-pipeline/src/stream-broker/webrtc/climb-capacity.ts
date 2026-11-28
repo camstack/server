@@ -16,7 +16,7 @@
  * (`adaptive-downlink.ts`: mid 2.5 Mbps, high 8 Mbps — already headroom-
  * inclusive), never against 0 (D393).
  */
-import type { CamProfile } from '@camstack/types'
+import type { CamProfile } from '@dominevo/types'
 
 /** What the controller holds about the link's capacity, kbps; null = unknown. */
 export interface CapacityEvidence {

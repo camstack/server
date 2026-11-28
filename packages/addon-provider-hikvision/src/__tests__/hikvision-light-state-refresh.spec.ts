@@ -4,7 +4,7 @@
  * slice shows.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { brightnessCapability, switchCapability } from '@camstack/types'
+import { brightnessCapability, switchCapability } from '@dominevo/types'
 import { HikvisionLightAccessory } from '../accessories/light.js'
 
 interface Supplement {

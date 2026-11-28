@@ -11,7 +11,7 @@
  * controls (which need a live trpc client).
  */
 import { describe, it, expect, vi } from 'vitest'
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import { render, screen } from '@testing-library/react'
 
 vi.mock('../control-registry', () => ({

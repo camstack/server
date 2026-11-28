@@ -20,8 +20,8 @@ import {
   CLUSTER_MODEL_SCOPED_STEPS,
   type ClusterModelScopedStep,
   pickClusterStepModels,
-} from '@camstack/types'
-import { TEXT_HINT, useAddonSettingsGetScopedSettings } from '@camstack/ui-library'
+} from '@dominevo/types'
+import { TEXT_HINT, useAddonSettingsGetScopedSettings } from '@dominevo/ui-library'
 import { clusterStepSettingsHref } from './pipeline-links'
 import { Trans, useTranslation } from 'react-i18next'
 

@@ -41,7 +41,7 @@ import { NcSummaryStore } from './summary/summary-store.js'
 import { TimelapseStore } from './timelapse/timelapse-store.js'
 import { AddonUpdateCoalescer } from './update-complete-coalescer.js'
 import { NcZoneOwnershipCache } from './zone-owner-cache.js'
-import type { Alert, AlertEpisodePhase, IScopedLogger, SystemEvent } from '@camstack/types'
+import type { Alert, AlertEpisodePhase, IScopedLogger, SystemEvent } from '@dominevo/types'
 import {
   EventCategory,
   alertEpisodeEdgeKind,
@@ -53,7 +53,7 @@ import {
   isAlertEpisodeOpen,
   isAnnouncedAlertEpisode,
   parseAlertEpisodePayload,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { NotificationCenterDeps } from './index.js'
 
 /**

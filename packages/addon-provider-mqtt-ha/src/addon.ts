@@ -14,7 +14,7 @@ import {
   type IDeviceAdoptionProvider,
   type SystemEvent,
   rowsDepsOver,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   buildMqttHaInstances,
   MQTT_HA_MIGRATIONS,

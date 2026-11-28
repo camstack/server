@@ -27,8 +27,8 @@ import type {
   StorageLocationDeclaration,
   StorageLocationDeclarer,
   SystemEvent,
-} from '@camstack/types'
-import { EventCategory } from '@camstack/types'
+} from '@dominevo/types'
+import { EventCategory } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { StorageOrchestratorAddon } from '../storage-orchestrator.addon.js'
 import { seededLocationRecords, type SeedLocationRow } from './support/seeded-location-records.js'
@@ -123,7 +123,7 @@ async function boot(withBus: boolean, preloaded: readonly SeedLocationRow[]): Pr
       listStorageLocationDeclarers: (): StorageLocationDeclarer[] => [
         {
           addonId: 'recorder',
-          packageName: '@camstack/addon-recorder',
+          packageName: '@dominevo/addon-recorder',
           loaded: true,
           declarations: [...DECLARATIONS],
         },

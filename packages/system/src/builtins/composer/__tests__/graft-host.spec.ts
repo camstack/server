@@ -4,7 +4,7 @@
  * cap's `composedMethods`, and removed through the context's optional
  * `unregisterNativeCap` — only ever what the host itself registered.
  */
-import type { CapabilityDefinition, DeviceContext } from '@camstack/types'
+import type { CapabilityDefinition, DeviceContext } from '@dominevo/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { GraftHost, type GraftProvider } from '../graft-host.js'
 import { LOOKUP_CAP, type RecordingLogger, recordingLogger } from './fixtures.js'

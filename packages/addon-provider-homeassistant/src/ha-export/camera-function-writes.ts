@@ -6,7 +6,7 @@
  * `scripts/check-switch-successor-surfaces.ts` points to as the successor of the
  * deprecated pair `getCameraSwitches` / `setCameraSwitch` (D113 phase 4).
  */
-import { nodePin } from '@camstack/types'
+import { nodePin } from '@dominevo/types'
 import type { CameraFunctionWrite } from './camera-functions.js'
 
 /** The slice of `ctx.api` that this write uses. Injected, so it is testable. */

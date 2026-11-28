@@ -5,7 +5,7 @@
  */
 import type { NetworkInterfaceInfo } from 'node:os'
 import type { HubMdnsAnnouncement } from '../hub-mdns.js'
-import type { ILocalNetworkProvider, IScopedLogger } from '@camstack/types'
+import type { ILocalNetworkProvider, IScopedLogger } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { stubAddonContext } from './addon-context-stub.js'
 import { makeMigrationsApi } from './migrations-api.js'

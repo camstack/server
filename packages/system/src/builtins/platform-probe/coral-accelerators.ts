@@ -1,11 +1,11 @@
 import fs from 'node:fs'
-import type { CoralBusUnits, CoralInfo, CoralUnavailableUnits } from '@camstack/types'
+import type { CoralBusUnits, CoralInfo, CoralUnavailableUnits } from '@dominevo/types'
 import {
   chooseEdgetpuDelegate,
   EDGETPU_LIB_ENV,
   nodeDataRootFromEnv,
   type EdgetpuDelegateLookup,
-} from '@camstack/types/node'
+} from '@dominevo/types/node'
 
 /**
  * Filesystem seam for Coral Edge TPU detection (USB and PCIe/M.2) — mirrors

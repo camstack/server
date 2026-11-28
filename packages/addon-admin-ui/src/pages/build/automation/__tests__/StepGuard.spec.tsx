@@ -3,7 +3,7 @@
  * tree on the step, the Else list carries steps without an `if` of their own,
  * and switching it off leaves a plain step.
  */
-import type { AutomationAction } from '@camstack/types'
+import type { AutomationAction } from '@dominevo/types'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { useState } from 'react'

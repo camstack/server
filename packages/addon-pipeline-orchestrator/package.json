@@ -1,6 +1,6 @@
 {
-  "name": "@camstack/addon-pipeline-orchestrator",
-  "version": "1.2.731",
+  "name": "@dominevo/addon-pipeline-orchestrator",
+  "version": "0.1.0",
   "description": "Hub-side camera-to-agent load balancer — tracks runner capacity and dispatches attachCamera calls to the optimal pipeline-runner instance",
   "keywords": [
     "camstack",
@@ -13,12 +13,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/camstack/server.git",
+    "url": "https://github.com/dominevo/server.git",
     "directory": "packages/addon-pipeline-orchestrator"
   },
   "homepage": "https://camstack-docs.zentik.app",
   "bugs": {
-    "url": "https://github.com/camstack/server/issues"
+    "url": "https://github.com/dominevo/server/issues"
   },
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -79,7 +79,7 @@
       }
     ],
     "requires": {
-      "server": ">=1.2.973"
+      "server": ">=0.1.0"
     }
   },
   "files": [
@@ -97,13 +97,13 @@
     "test": "vitest run"
   },
   "peerDependencies": {
-    "@camstack/types": "*",
+    "@dominevo/types": "0.1.0",
     "react": ">=18",
     "react-dom": ">=18"
   },
   "devDependencies": {
-    "@camstack/types": "*",
-    "@camstack/ui-library": "*",
+    "@dominevo/types": "0.1.0",
+    "@dominevo/ui-library": "0.1.0",
     "@module-federation/vite": "^1.16.9",
     "@vitejs/plugin-react": "^6.0.2",
     "konva": "^10.2.3",
@@ -121,7 +121,7 @@
   },
   "nx": {
     "implicitDependencies": [
-      "@camstack/server-framework"
+      "@dominevo/server-framework"
     ]
   }
 }

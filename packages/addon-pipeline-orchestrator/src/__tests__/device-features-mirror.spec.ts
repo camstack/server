@@ -1,4 +1,4 @@
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { DeviceFeaturesMirror, type DeviceFeaturesRead } from '../device-features-mirror.js'
 

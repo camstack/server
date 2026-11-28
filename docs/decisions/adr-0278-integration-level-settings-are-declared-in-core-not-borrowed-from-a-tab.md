@@ -27,7 +27,7 @@ not guessed: `ConfigSectionWithValuesSchema`
 (`packages/types/src/capabilities/addon-settings.cap.ts:18`) is a Zod object,
 tRPC parses every cap response through `.output(...)`, and Zod 4 strips unknown
 keys — so a new section field reaches no browser until a `*.cap.ts` edit,
-`npm run codegen` **and** a published `@camstack/server` have all shipped. `tab`
+`npm run codegen` **and** a published `@dominevo/server` have all shipped. `tab`
 was already on the wire. The choice bought an addon-level deploy by borrowing a
 field, and that trade was the mistake.
 
@@ -121,7 +121,7 @@ controls with one label writing two tables.
 ## Consequences
 
 - **A framework publish is required.** `getIntegrationSettings` is a new cap
-  method, so `packages/types`, `packages/system` and `@camstack/server` must ship
+  method, so `packages/types`, `packages/system` and `@dominevo/server` must ship
   before the surface works. An `admin-ui` + `provider-reolink` deploy alone
   leaves it inert — the panel would call a method the hub's router does not
   expose. This is the cost D268 avoided and it is now paid deliberately.

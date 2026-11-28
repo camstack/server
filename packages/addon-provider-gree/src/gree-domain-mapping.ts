@@ -1,8 +1,8 @@
-import type { HvacMode as CapHvacMode } from '@camstack/types'
+import type { HvacMode as CapHvacMode } from '@dominevo/types'
 import { FanSpeed, HvacMode, HorizontalSwing, VerticalSwing } from '@apocaliss92/nodegree'
 
 /**
- * Pure mapping between the `@apocaliss92/nodegree` AC enums and the CamStack
+ * Pure mapping between the `@apocaliss92/nodegree` AC enums and the Dominevo
  * `climate-control` / `fan-control` cap vocabularies. Kept side-effect-free so it
  * is fully unit-testable without a UDP socket.
  */

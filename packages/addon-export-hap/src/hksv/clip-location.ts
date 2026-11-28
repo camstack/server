@@ -56,8 +56,8 @@
  * doorbell self-heals. A read that fails changes nothing that is already known
  * (D49) — it just refuses this clip.
  */
-import type { IScopedLogger, StorageLocationMode } from '@camstack/types'
-import { mayWriteToLocation, resolveLocationMode } from '@camstack/types'
+import type { IScopedLogger, StorageLocationMode } from '@dominevo/types'
+import { mayWriteToLocation, resolveLocationMode } from '@dominevo/types'
 
 /** The declared id. Deployment-wide; see the docblock for why it is new. */
 export const HOMEKIT_CLIPS_LOCATION_TYPE = 'homekitClips'

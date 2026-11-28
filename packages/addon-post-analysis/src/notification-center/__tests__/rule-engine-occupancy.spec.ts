@@ -16,8 +16,8 @@
  *    and an occupancy rule never fires on a non-occupancy subject.
  */
 
-import type { NcRule, SensorEvent } from '@camstack/types'
-import { NcRuleInputSchema, NcRuleSchema } from '@camstack/types'
+import type { NcRule, SensorEvent } from '@dominevo/types'
+import { NcRuleInputSchema, NcRuleSchema } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { OccupancyEdge } from '../occupancy-watcher.js'
 import { evaluateRule, subjectFromOccupancyEvent, subjectFromSensorEvent } from '../rule-engine.js'

@@ -11,7 +11,7 @@
  * A lane that could not answer says so in its own row; an empty bar is only
  * drawn for a source that answered with nothing.
  */
-import type { Clip } from '@camstack/types'
+import type { Clip } from '@dominevo/types'
 import type { JSX } from 'react'
 import { useVideoclipsListClips } from '../../generated/system-hooks.js'
 import { useUiText } from '../../contexts/ui-text.js'

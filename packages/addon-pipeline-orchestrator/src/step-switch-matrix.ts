@@ -21,8 +21,8 @@ import type {
   StepClusterMode,
   StepSwitchCell,
   StepSwitchMatrix,
-} from '@camstack/types'
-import { isRootSuppliableStepId, resolveRootSupply } from '@camstack/types'
+} from '@dominevo/types'
+import { isRootSuppliableStepId, resolveRootSupply } from '@dominevo/types'
 import { deviceDisabledSteps, nodeDeviceBase, type NodeStepSource } from './node-step-settings.js'
 import {
   effectiveClusterStepMode,

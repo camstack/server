@@ -31,7 +31,7 @@
  * returned uninstall runs on shutdown so a registry that outlives this addon
  * does not keep asking a dead mirror.
  */
-import type { ICapabilityRegistry, IScopedLogger, StatusOverlayAnswer } from '@camstack/types'
+import type { ICapabilityRegistry, IScopedLogger, StatusOverlayAnswer } from '@dominevo/types'
 import type { DeviceManagerSettings } from './device-meta-store.js'
 import { defaultSchemaFor } from './device-state-claim-views.js'
 import type { ClaimsIndexView, DeviceStateMirror } from './device-state-mirror.js'

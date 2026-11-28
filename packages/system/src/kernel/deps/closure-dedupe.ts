@@ -33,8 +33,8 @@
  */
 import * as fs from 'node:fs'
 import * as path from 'node:path'
-import type { IScopedLogger } from '@camstack/types'
-import { asJsonObject, asString, errMsg, parseJsonUnknown } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
+import { asJsonObject, asString, errMsg, parseJsonUnknown } from '@dominevo/types'
 
 // ---------------------------------------------------------------------------
 // Conservative semver
@@ -180,7 +180,7 @@ export function planClosureDedupe(input: ClosureDedupeInput): ClosureDedupePlan 
   const links: ClosureLink[] = []
   const keeps: ClosureKeep[] = []
   for (const candidate of input.candidates) {
-    if (candidate.name.startsWith('@camstack/')) {
+    if (candidate.name.startsWith('@dominevo/')) {
       keeps.push({ name: candidate.name, reason: 'camstack-package' })
       continue
     }

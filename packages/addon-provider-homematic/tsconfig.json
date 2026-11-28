@@ -11,10 +11,10 @@
       "DOM.Iterable"
     ],
     "paths": {
-      "@camstack/types": [
+      "@dominevo/types": [
         "../types/src/index.ts"
       ],
-      "@camstack/ui-library": [
+      "@dominevo/ui-library": [
         "../ui-library/src/index.ts"
       ]
     },

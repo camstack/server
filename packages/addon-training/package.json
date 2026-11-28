@@ -1,7 +1,7 @@
 {
-  "name": "@camstack/addon-training",
-  "version": "0.1.142",
-  "description": "Cloud training for CamStack: fine-tune the root detector on your own frames, on your own GPU-cloud account",
+  "name": "@dominevo/addon-training",
+  "version": "0.1.0",
+  "description": "Cloud training for Dominevo: fine-tune the root detector on your own frames, on your own GPU-cloud account",
   "keywords": [
     "camstack",
     "addon",
@@ -14,12 +14,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/camstack/server.git",
+    "url": "https://github.com/dominevo/server.git",
     "directory": "packages/addon-training"
   },
   "homepage": "https://camstack-docs.zentik.app",
   "bugs": {
-    "url": "https://github.com/camstack/server/issues"
+    "url": "https://github.com/dominevo/server/issues"
   },
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -69,7 +69,7 @@
         "id": "training-modal",
         "category": "system",
         "name": "Modal",
-        "description": "Runs CamStack training jobs on your Modal account (modal.com, $30 of free credit a month on the Starter plan). Inert until you enter a Modal token",
+        "description": "Runs Dominevo training jobs on your Modal account (modal.com, $30 of free credit a month on the Starter plan). Inert until you enter a Modal token",
         "version": "1.0.0",
         "entry": "./dist/providers/modal/training-modal.addon.js",
         "execution": {
@@ -88,9 +88,9 @@
       }
     ],
     "requires": {
-      "server": ">=1.2.968",
+      "server": ">=0.1.0",
       "addons": {
-        "@camstack/addon-admin-ui": ">=1.2.760"
+        "@dominevo/addon-admin-ui": ">=0.1.0"
       }
     }
   },
@@ -108,14 +108,14 @@
     "publish:npm": "npm publish --access public"
   },
   "peerDependencies": {
-    "@camstack/types": "*"
+    "@dominevo/types": "0.1.0"
   },
   "dependencies": {
     "modal": "0.11.0"
   },
   "devDependencies": {
-    "@camstack/types": "*",
-    "@camstack/ui-library": "*",
+    "@dominevo/types": "0.1.0",
+    "@dominevo/ui-library": "0.1.0",
     "@module-federation/runtime": "^2.4.0",
     "@module-federation/vite": "^1.16.9",
     "@tailwindcss/vite": "^4.2.0",

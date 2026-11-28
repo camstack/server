@@ -10,7 +10,7 @@
  * a `deviceId` tag render an inline device chip so the operator can
  * tell WHICH camera a dispatch line refers to at a glance.
  */
-import { LogStream } from '@camstack/ui-library'
+import { LogStream } from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 
 const ORCHESTRATOR_ADDON_ID = 'pipeline-orchestrator'

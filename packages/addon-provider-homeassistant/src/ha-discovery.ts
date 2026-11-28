@@ -3,7 +3,7 @@ import {
   type DiscoveryCandidate,
   type SourceInfo,
   type EnumSensorDateTimeFormat,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { mapHaEntityToCamStack } from './ha-domain-mapping.js'
 import type { HaEntityState } from './ha-types.js'
 import type { HaEntityCategory } from './ha-discovery-types.js'

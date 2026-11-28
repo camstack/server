@@ -3,7 +3,7 @@ import {
   type DeviceManagerApi,
   type IDeviceRegistry,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** The three members this helper touches on a device; test fakes satisfy it structurally. */
 export interface OfflineTarget {

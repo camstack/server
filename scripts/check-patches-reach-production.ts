@@ -9,7 +9,7 @@
  * else. Whether the patched behaviour exists on a live node depends entirely on
  * how the patched package travels, and this repository ships both answers:
  *
- *  - `moleculer` is INLINED by rolldown into `@camstack/server/system/dist`, so the
+ *  - `moleculer` is INLINED by rolldown into `@dominevo/server/system/dist`, so the
  *    patch is inside the published tarball and inside the live closure. Fine —
  *    and provably so.
  *  - `werift` is NOT bundled: three addons resolve it at runtime from the
@@ -39,7 +39,7 @@
  *     - `bundled`   — each `bundledInto` artifact exists and contains every
  *       marker, AND the patched package is not listed as an external of that
  *       package's vite build (the one edit that would silently un-bundle it);
- *     - `closure-postinstall` — `@camstack/server` carries the `postinstall`
+ *     - `closure-postinstall` — `@dominevo/server` carries the `postinstall`
  *       and ships the applier in `files`; the built payload under
  *       `dist/closure-patches/` (when present) is byte-identical to
  *       `patches/`; and every workspace package that declares the patched
@@ -194,14 +194,14 @@ function checkClosurePostinstall(
   const scripts = asRecord(serverPkg['scripts'])
   if (typeof scripts['postinstall'] !== 'string' || !scripts['postinstall'].includes(APPLIER_REL)) {
     fail(
-      `${entry.patch}: reach "closure-postinstall" needs @camstack/server to run ` +
+      `${entry.patch}: reach "closure-postinstall" needs @dominevo/server to run ` +
         `${APPLIER_REL} from its postinstall — it does not`,
     )
   }
   const files = Array.isArray(serverPkg['files']) ? (serverPkg['files'] as readonly unknown[]) : []
   if (!files.includes(APPLIER_REL)) {
     fail(
-      `${entry.patch}: @camstack/server's "files" must include ${APPLIER_REL}, ` +
+      `${entry.patch}: @dominevo/server's "files" must include ${APPLIER_REL}, ` +
         'or the applier is not in the published tarball',
     )
   }
@@ -250,7 +250,11 @@ function checkClosurePostinstall(
   // pins nests that copy under the addon, and a transitive peer range
   // (node-av@6.2 peers werift >=0.24.3) is then free to hoist a newer one to
   // the top level — exactly where the applier looks (1.2.723 was refused).
-  const rootProblem = closureRootPinProblem(asRecord(serverPkg['dependencies']), entry.package, pinned)
+  const rootProblem = closureRootPinProblem(
+    asRecord(serverPkg['dependencies']),
+    entry.package,
+    pinned,
+  )
   if (rootProblem !== null) fail(`${entry.patch}: ${rootProblem}`)
   const declared = new Set(entry.declaredBy ?? [])
   for (const declarer of declarers) {

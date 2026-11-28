@@ -28,7 +28,7 @@
  * This is presentation, feeds no index, and routing it through there would add
  * a second cutter to the one thing D52 keeps single.
  */
-import type { DetectionBoundingBox } from '@camstack/types'
+import type { DetectionBoundingBox } from '@dominevo/types'
 import type { NormalizedRect } from './grid-filter-graph.js'
 
 /** One place a source appears: the part taken, and where that part lands. */

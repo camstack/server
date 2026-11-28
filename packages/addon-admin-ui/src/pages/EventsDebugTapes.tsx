@@ -38,7 +38,7 @@ import {
   useDeviceManagerListAll,
   useIsPhone,
   useSystem,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useQuery } from '@tanstack/react-query'
 import { Download, Trash2, Unlock } from 'lucide-react'
 import { type JSX, useMemo, useState } from 'react'

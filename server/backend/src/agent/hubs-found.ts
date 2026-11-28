@@ -8,7 +8,7 @@
  * snapshot is cached, a refresh is explicit, and concurrent refreshes share
  * one scan.
  */
-import type { DiscoverHubsDeps, HubCandidate } from '@camstack/develop/hub-discovery'
+import type { DiscoverHubsDeps, HubCandidate } from '@dominevo/develop/hub-discovery'
 import { deriveHubUrlFromHubAddress } from './derive-hub-url.js'
 
 /** Label of the configured hub in {@link FoundHub.sources}. */
@@ -69,7 +69,7 @@ function toFoundHub(candidate: HubCandidate): FoundHub {
 
 async function defaultDiscover(deps: DiscoverHubsDeps): Promise<readonly HubCandidate[]> {
   // Lazy: the socket library is only loaded when an operator asks.
-  const { discoverHubs } = await import('@camstack/develop/hub-discovery')
+  const { discoverHubs } = await import('@dominevo/develop/hub-discovery')
   return discoverHubs(deps)
 }
 

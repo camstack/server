@@ -23,12 +23,12 @@ import type {
   ModelFormat,
   ObjectDetection,
   StepDefinition,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   DEFAULT_DETAIL_CROP_CONVENTION,
   deriveDetailCropRect,
   REMOVED_MODEL_IDS,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { modelServability, runStatelessStep, type StatelessStepDeps } from '../stateless-step.js'
 

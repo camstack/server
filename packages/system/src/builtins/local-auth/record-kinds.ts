@@ -18,7 +18,7 @@ import {
   ScopedTokenSchema,
   TokenScopeSchema,
   UserRecordSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import type { IsolatedRecordKinds } from '../records-isolated.js'
 import { AUTH_AUDIT_COLLECTION } from '../../auth/auth-audit-log.js'

@@ -9,7 +9,7 @@
  * closure is arbitrary code execution (security review 2026-10-21).
  */
 import { hubCredentialVerifier } from './trpc/trpc.context.js'
-import type { CredentialTokenClaims } from '@camstack/types'
+import type { CredentialTokenClaims } from '@dominevo/types'
 import type { VerifiedJwtClaims } from '../auth/credential-verifier.js'
 
 /** Structural slice of `AuthService` the guard needs (session JWT and minted-token verification). */

@@ -15,7 +15,7 @@
  *    feed. Arming now needs positive evidence (`hasAudioSource`); the read
  *    that produces it fails OPEN (the stage is diagnostic).
  */
-import type { RunnerCameraConfig } from '@camstack/types'
+import type { RunnerCameraConfig } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { buildWatchdogCamera, type WatchdogAudioSource } from '../watchdog-camera.js'
 

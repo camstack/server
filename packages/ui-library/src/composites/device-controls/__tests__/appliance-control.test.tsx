@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render } from '@testing-library/react'
-import type { RunningStateStatus } from '@camstack/types'
+import type { RunningStateStatus } from '@dominevo/types'
 import { ApplianceInlineControl } from '../appliance-control'
 
 let running: RunningStateStatus | undefined

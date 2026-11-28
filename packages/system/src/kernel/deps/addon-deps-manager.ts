@@ -1,6 +1,6 @@
 import { join } from 'node:path'
 import * as fs from 'node:fs'
-import type { IScopedLogger, IAddonDepsManager } from '@camstack/types'
+import type { IScopedLogger, IAddonDepsManager } from '@dominevo/types'
 import {
   declaresEdgetpuDelegate,
   ensureBinary,
@@ -10,18 +10,18 @@ import {
   installPythonPackages,
   installPythonRequirements,
   type InstallRequirementsOptions,
-} from '@camstack/types/node'
+} from '@dominevo/types/node'
 
 /**
  * Canonical implementation of `IAddonDepsManager`, injected into every
  * addon context via `ctx.deps`. Wraps the binary/ffmpeg/python utilities
- * that live in `@camstack/types` behind the addon-safe interface — addons
- * never import `@camstack/types` directly for these utilities, which
+ * that live in `@dominevo/types` behind the addon-safe interface — addons
+ * never import `@dominevo/types` directly for these utilities, which
  * keeps the `no-restricted-imports` lint boundary intact.
  *
- * History note: previously these utilities lived in `@camstack/server/system` and
+ * History note: previously these utilities lived in `@dominevo/server/system` and
  * had to be dynamically imported (kernel cannot static-import core
- * because core depends on kernel). They were lifted to `@camstack/types`
+ * because core depends on kernel). They were lifted to `@dominevo/types`
  * in 2026-05 specifically to break that cycle.
  *
  * Shared per-node store (2026-06): base binaries (Python, ffmpeg, downloaded

@@ -17,7 +17,7 @@
  * precisely the defect.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import type { DeviceRowBackend } from '../device-row-store.js'
 import { DeviceRowStore, deviceRowBackendOf } from '../device-row-store.js'

@@ -4,7 +4,7 @@
  * adapter lists the devices (alias, caps) from the device rows and hands the
  * mirror the sources `templateMirrorSources` names.
  */
-import type { ConditionMirror, DeviceTemplateView, MirrorSource } from '@camstack/types'
+import type { ConditionMirror, DeviceTemplateView, MirrorSource } from '@dominevo/types'
 import type { DeviceTemplateResolver } from './template-renderer.js'
 
 /** One device a template may name. */

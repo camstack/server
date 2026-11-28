@@ -21,8 +21,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 /** One declaration file handed to the compiler. */
 export interface EditorExtraLib {
   /** Virtual path. Imports resolve against these, so the path matters:
-   *  `file:///node_modules/@camstack/types/index.d.ts` makes
-   *  `import … from '@camstack/types'` resolve. */
+   *  `file:///node_modules/@dominevo/types/index.d.ts` makes
+   *  `import … from '@dominevo/types'` resolve. */
   readonly filePath: string
   readonly content: string
 }

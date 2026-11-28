@@ -57,7 +57,15 @@ export function buildDeviceSignatureMessage(input: {
   return [DEVICE_SIGNATURE_MESSAGE_VERSION, input.purpose, input.origin, input.nonce].join('\n')
 }
 
-/** The deep link a QR carries: `camstack://enroll?hub=<origin>&code=<code>`. */
+/** The app schemes an enrollment link may carry: the current app and dev client, and the previous store app. */
+const ENROLLMENT_PROTOCOLS: readonly string[] = [
+  'dominevo:',
+  'dominevo.dev:',
+  'camstack:',
+  'camstack.dev:',
+]
+
+/** The deep link a QR carries: `dominevo://enroll?hub=<origin>&code=<code>`. */
 export function buildDeviceEnrollmentLink(input: {
   readonly hub?: string
   readonly code: string
@@ -66,7 +74,7 @@ export function buildDeviceEnrollmentLink(input: {
   const query = new URLSearchParams()
   if (input.hub !== undefined) query.set('hub', input.hub)
   query.set('code', input.code)
-  return `${input.scheme ?? 'camstack'}://enroll?${query.toString()}`
+  return `${input.scheme ?? 'dominevo'}://enroll?${query.toString()}`
 }
 
 /** Parse an enrollment deep link; `null` when it is not one. `hub` is absent when the link names none. */
@@ -79,7 +87,7 @@ export function parseDeviceEnrollmentLink(
   } catch {
     return null
   }
-  if (url.protocol !== 'camstack:' && url.protocol !== 'camstack.dev:') return null
+  if (!ENROLLMENT_PROTOCOLS.includes(url.protocol)) return null
   if (url.hostname !== 'enroll') return null
   const code = url.searchParams.get('code')
   if (code === null || code === '') return null
@@ -286,7 +294,7 @@ export const StartEnrollmentOutputSchema = z.object({
   /** Shown once; only its hash is kept. */
   code: z.string(),
   expiresAt: z.number(),
-  /** `camstack://enroll?hub=…&code=…` — what the QR encodes. */
+  /** `dominevo://enroll?hub=…&code=…` — what the QR encodes. */
   enrollUrl: z.string(),
   /** The hub origin in the link, or `null` when the hub could not name one (the link then has no `hub`). */
   hubOrigin: z.string().nullable(),

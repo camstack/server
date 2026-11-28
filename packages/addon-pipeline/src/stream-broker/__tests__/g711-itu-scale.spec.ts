@@ -1,4 +1,4 @@
-import { expandAudioChunkToF32le } from '@camstack/types'
+import { expandAudioChunkToF32le } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { alawToPcm, mulawToPcm } from '../stream-broker/g711-mulaw.js'
 import { AudioRtpDecoder } from '../rtsp/audio-rtp-decoder.js'
@@ -59,7 +59,7 @@ function ituAlaw(code: number): number {
  * THIS SPEC WAS DISARMED BY ITS OWN AUTHOR'S ASSUMPTION, and it is worth
  * saying how. D459 claimed it "goes through the decoder, not through the table
  * functions, so it keeps guarding the behaviour wherever the tables end up
- * living — including after D455's move into `@camstack/types`." D455 did not
+ * living — including after D455's move into `@dominevo/types`." D455 did not
  * only move the tables: it stopped `AudioRtpDecoder` decoding at all. The
  * decoder emits the CODED payload now, one byte per sample, and this helper
  * read those bytes as Float32 — 256 codes came back as 64 "samples", the

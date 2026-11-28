@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Power, Bell } from 'lucide-react'
-import { useDeviceProxy, useDeviceStateSlice, useSystem, Button } from '@camstack/ui-library'
+import { useDeviceProxy, useDeviceStateSlice, useSystem, Button } from '@dominevo/ui-library'
 import { formatRelativeTime } from './format'
 import type { HeroProps } from './HeroRegistry'
 import { MotionTriggerToggle } from './MotionTriggerToggle'

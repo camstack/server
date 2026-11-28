@@ -3,7 +3,7 @@
  * RECLASSIFIED box used to carry next to the one it carries now. Pure. Anything
  * but a reclassified box with a known original says nothing (`null`).
  */
-import type { RetrainMacroClass } from '@camstack/types'
+import type { RetrainMacroClass } from '@dominevo/types'
 import type { BoxDiff } from './retrain-live-review.js'
 
 export interface OriginalClassText {

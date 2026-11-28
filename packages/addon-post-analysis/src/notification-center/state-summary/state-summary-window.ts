@@ -26,7 +26,7 @@
  * A window is owed by its CLOSE, whenever it opened: a rule armed in the middle
  * of a window is sent at that window's close (review M1).
  */
-import { isScheduleActive, type NcSchedule } from '@camstack/types'
+import { isScheduleActive, type NcSchedule } from '@dominevo/types'
 import type { ClosedWindow } from '../timelapse/window-bounds.js'
 import { addDays, zonedDayOf, zonedInstant } from './zoned-clock.js'
 

@@ -6,9 +6,9 @@
  * cycle back through the page.
  */
 
-import type { NcRule, NcSnooze } from '@camstack/types'
-import { ruleKindOf, ruleKindSpec } from '@camstack/types'
-import type { DataColumn } from '@camstack/ui-library'
+import type { NcRule, NcSnooze } from '@dominevo/types'
+import { ruleKindOf, ruleKindSpec } from '@dominevo/types'
+import type { DataColumn } from '@dominevo/ui-library'
 import {
   Badge,
   Button,
@@ -16,7 +16,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Copy, FlaskConical } from 'lucide-react'
 import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
@@ -42,7 +42,7 @@ export interface RuleColumnsDeps {
   /** Every snooze window the caller can see — the Snooze column reads it. */
   readonly snoozes: readonly NcSnooze[]
   /** The Actions the hub lists — snooze exemption reads the steps of the ones a rule runs. */
-  readonly actions: readonly import('@camstack/types').ActionEntry[]
+  readonly actions: readonly import('@dominevo/types').ActionEntry[]
   readonly deletePending: boolean
   readonly onToggle: (rule: NcRule, enabled: boolean) => void
   readonly onDuplicate: (rule: NcRule) => void

@@ -1,4 +1,4 @@
-import type { DecodedFrame, FrameRef, FrameViewSpec } from '@camstack/types'
+import type { DecodedFrame, FrameRef, FrameViewSpec } from '@dominevo/types'
 import type { FrameReleaseReason, LocalFrameRegistry } from './local-frame-registry.js'
 import type { RetainedContentFallback } from './retained-frame-store.js'
 

@@ -1,5 +1,5 @@
 /**
- * The in-memory records world (`makeInMemoryRecords`, `@camstack/types`) and the
+ * The in-memory records world (`makeInMemoryRecords`, `@dominevo/types`) and the
  * REAL engine (`RecordsEngine` behind `RecordsProvider`, SQLite in memory) answer
  * the same cases the same way — refusals included. Every spec that builds a store
  * on the in-memory world is only as honest as this file: a rule the engine
@@ -22,7 +22,7 @@ import {
   RevConflictError,
   UnindexedFilterError,
   UnknownRecordKindError,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
 import { makeFakeKeychain, makeRecordsWorld } from './support/records-world.js'

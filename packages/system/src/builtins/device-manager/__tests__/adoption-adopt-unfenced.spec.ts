@@ -6,7 +6,7 @@
  * `allocateDeviceId` refused the pair for the whole 5-minute TTL. An allocate
  * that is NOT that operator action stays refused.
  */
-import type { ICapabilityRegistry, IDeviceManagerProvider } from '@camstack/types'
+import type { ICapabilityRegistry, IDeviceManagerProvider } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { asDevice, FakeDevice, setup } from './device-manager-harness.js'
 

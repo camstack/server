@@ -13,7 +13,7 @@ import {
   useDeviceHistoryDeleteOrphanSeries,
   useDeviceHistoryListOrphanSeries,
   useDeviceManagerListAll,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 import { OrphanSeriesDialog } from './OrphanSeriesDialog'
 import type { OrphanDeleteCall } from './orphan-series-model'

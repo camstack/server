@@ -7,12 +7,12 @@
  * is a separate device-provider concern and does not change this addon's cap.
  *
  * Its own package (not a builtin) because it carries a native dependency
- * (`node-pty`) and should update via `camstack deploy` independently of the
+ * (`node-pty`) and should update via `dominevo deploy` independently of the
  * framework, exactly like the node-av decoder addon.
  */
 
 import { execFile } from 'node:child_process'
-import type { AddonDataPlaneHandle, AddonInitResult, ConfigUISchema } from '@camstack/types'
+import type { AddonDataPlaneHandle, AddonInitResult, ConfigUISchema } from '@dominevo/types'
 import {
   BaseAddon,
   bareAddonId,
@@ -26,7 +26,7 @@ import {
   legacySweepDone,
   sweepLegacyEngineRows,
   terminalSessionCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { cursesShimDir, cursesShimDirExists, resolveGlancesCursesShimEnv } from './curses-shim.js'
 import { sanitizeProfileSettings, spawnArgsForInstance } from './profile-settings.js'
 import { ADDON_MIGRATIONS, INSTANCES_TO_RECORDS_ID, terminalPortsOver } from './migrations/index.js'
@@ -938,7 +938,7 @@ export class TerminalAddon extends BaseAddon<TerminalAddonConfig> {
           id: 'terminal-glances',
           title: 'Glances camera',
           description:
-            'Cross-platform curses monitor, installed automatically into CamStack embedded Python. Glances is the most expensive built-in profile — it only runs while somebody is watching, but while it runs it costs real CPU. See the Arguments help below before widening it.',
+            'Cross-platform curses monitor, installed automatically into Dominevo embedded Python. Glances is the most expensive built-in profile — it only runs while somebody is watching, but while it runs it costs real CPU. See the Arguments help below before widening it.',
           columns: 2,
           fields: [
             this.field({

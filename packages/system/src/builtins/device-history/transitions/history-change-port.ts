@@ -3,7 +3,7 @@
  * have a series, and their raw points. A field with no series (its cap has no `history` block)
  * has no derived row.
  */
-import { auditedFields, type DeviceHistoryKind, type IScopedLogger } from '@camstack/types'
+import { auditedFields, type DeviceHistoryKind, type IScopedLogger } from '@dominevo/types'
 import { CAP_KEY_PREFIX, capSeriesKey } from '../capture/capture-engine.js'
 import type { HistoryQuery } from '../query/history-query.js'
 import type { SeriesRegistry } from '../store/series-registry.js'

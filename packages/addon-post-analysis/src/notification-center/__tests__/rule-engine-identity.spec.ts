@@ -12,8 +12,8 @@
  * nobody in particular.
  */
 
-import type { NcRuleInput, ObjectEvent } from '@camstack/types'
-import { NcRuleInputSchema } from '@camstack/types'
+import type { NcRuleInput, ObjectEvent } from '@dominevo/types'
+import { NcRuleInputSchema } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { evaluateRule, subjectFromObjectEvent } from '../rule-engine.js'
 

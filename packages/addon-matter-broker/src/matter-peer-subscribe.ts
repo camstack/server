@@ -10,7 +10,7 @@
 
 import { Seconds } from '@matter/general'
 import { PeerSet, Subscribe } from '@matter/protocol'
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IScopedLogger } from '@dominevo/types'
 import type { MatterAttributeReport } from './matter-controller.js'
 import { readAllPeerAttributes } from './matter-peer-read.js'
 import {

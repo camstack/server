@@ -9,7 +9,7 @@
  * shipped the thumbnail for `crop`, the boxed firstFrame for `scene-boxes`
  * (`frame: 'boxed'`), and the keyFrame only for `clean`.
  */
-import type { IScopedLogger, MediaFile, NcMediaImage } from '@camstack/types'
+import type { IScopedLogger, MediaFile, NcMediaImage } from '@dominevo/types'
 import sharp from 'sharp'
 import { describe, expect, it } from 'vitest'
 import { makeTestMediaFile } from '../../__tests__/support/media-file.js'

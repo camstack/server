@@ -5,7 +5,7 @@ import { performRawRead, type RawReadDeps } from '../raw-read'
  * Auto-focus is a question only a PTZ camera can answer.
  *
  * Measured on device 3825 ("Magicam", an Argus MagiCam behind a Home Hub) on
- * 2026-09-19, sweeping every read CamStack performs: fifteen of sixteen
+ * 2026-09-19, sweeping every read Dominevo performs: fifteen of sixteen
  * answered, and exactly one did not —
  *
  *   autofocus  FAIL  PCAP-derived settings GET failed for cmdId=224

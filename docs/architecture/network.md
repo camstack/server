@@ -71,7 +71,7 @@ nothing qualifies; callers report that instead of substituting `127.0.0.1`.
 
 | Role | Cardinality | Meaning | Automatic pick |
 | --- | --- | --- | --- |
-| `appConnections` | many | What the CamStack apps race when connecting | Every LAN IPv4 plus the stable public tunnel. Never IPv6, mesh, loopback or custom. A flagged set none of which is up falls back to automatic |
+| `appConnections` | many | What the Dominevo apps race when connecting | Every LAN IPv4 plus the stable public tunnel. Never IPv6, mesh, loopback or custom. A flagged set none of which is up falls back to automatic |
 | `notificationTaps` | one | ONLY where tapping a notification opens | The app link; a hub address may be flagged. The app link is accepted by this role only |
 | `publicEndpoint` | one | Every URL that must work from outside the home network: sign-in links, OIDC and OAuth2 callbacks, the passkey relying party, account linking, notification buttons, attachments and media links | In order: public tunnel, then mesh, then a LAN IPv4 literal, then any plausible LAN address |
 | `internal` | one | What agents and LAN devices download from: addon bundles, models, a camera relay's broker host, Home Assistant media | LAN IPv4 literal, then any plausible LAN address, then mesh. Never a public tunnel |
@@ -158,13 +158,13 @@ Cap methods (`local-network.cap.ts`): `getAddresses`, `addCustomAddress`,
 | Camera relay broker host | `internal` | A broker on another node dials it | `addon-provider-dreame/src/devices/dreame-camera-stream.ts` |
 | SMTP | `internal` | Host for the mail client | `addon-smtp-nodemailer/src/smtp.addon.ts` |
 
-The CamStack apps race the `appConnections` set (`getViewerEndpoints`, a
+The Dominevo apps race the `appConnections` set (`getViewerEndpoints`, a
 deprecated-setter sibling of `getAddresses`).
 
 ## 6. Discovery over mDNS (D838)
 
 The hub publishes ONE `_camstack._tcp` service for its HTTPS endpoint, so
-`camstack login`, `camstack discover` and an agent's local UI find it on the LAN.
+`dominevo login`, `dominevo discover` and an agent's local UI find it on the LAN.
 The TXT record carries `nodeId`, `version`, `role=hub`, `url` and `hubId`; `url` is
 the `internal` role, never ranked again by the advertiser
 (`packages/system/src/builtins/local-network/hub-mdns.ts`). Finding a hub grants

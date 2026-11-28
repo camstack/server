@@ -6,14 +6,14 @@
  * read that answered. Every edit changes the tab's draft list (planning#675):
  * the tab's Save writes it, Discard restores what the fan stores.
  */
-import type { DeviceInfo, FanPreset } from '@camstack/types'
+import type { DeviceInfo, FanPreset } from '@dominevo/types'
 import {
   Badge,
   Button,
   IconButton,
   useConfirm,
   useFanPresetsGetPresets,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Fan, Pencil, Plus, Trash2 } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'

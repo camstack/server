@@ -31,7 +31,7 @@ import { TimelapseScheduler } from './timelapse/timelapse-scheduler.js'
 import { TimelapseStore } from './timelapse/timelapse-store.js'
 import { AddonUpdateCoalescer } from './update-complete-coalescer.js'
 import { NcZoneOwnershipCache } from './zone-owner-cache.js'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { NotificationCenterDeps } from './index.js'
 
 export const DEFAULT_DRAIN_INTERVAL_MS = 2_000

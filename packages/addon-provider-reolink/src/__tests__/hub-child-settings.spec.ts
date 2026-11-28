@@ -4,7 +4,7 @@
  * connection with a typed reason, and never dial or link with its own stored address/credentials.
  */
 import { ReolinkBaichuanApi } from '@apocaliss92/nodelink-js'
-import type { ConfigUISchema } from '@camstack/types'
+import type { ConfigUISchema } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { judgeHubChildPatch, HubChildPatchRefusedError } from '../hub-child-settings.js'
 import { ReolinkCamera } from '../reolink-camera.js'

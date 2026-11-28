@@ -79,13 +79,13 @@ export class AddonApiFactory {
    */
   async createDirectCaller(
     options: DirectCallerOptions,
-  ): Promise<import('@camstack/types').AddonApi> {
+  ): Promise<import('@dominevo/types').AddonApi> {
     const { initTRPC } = await import('@trpc/server')
     const t = initTRPC.create()
     type RouterLike = Parameters<typeof t.createCallerFactory>[0]
     const callerFactory = t.createCallerFactory(options.router as RouterLike)
     type CallerContext = Parameters<ReturnType<typeof t.createCallerFactory>>[0]
     const caller = callerFactory(options.context as CallerContext)
-    return wrapCallerAsClient<import('@camstack/types').AddonApi>(caller)
+    return wrapCallerAsClient<import('@dominevo/types').AddonApi>(caller)
   }
 }

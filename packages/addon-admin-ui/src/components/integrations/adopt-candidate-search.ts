@@ -1,4 +1,4 @@
-import type { DiscoveredChildDevice } from '@camstack/types'
+import type { DiscoveredChildDevice } from '@dominevo/types'
 
 /**
  * Build the searchable text for an adoption candidate.

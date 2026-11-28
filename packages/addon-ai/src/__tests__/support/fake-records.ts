@@ -25,7 +25,7 @@ import {
   type RecordsTransport,
   type RecordView,
   recordSecretRef,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { aiRecordKinds } from '../../record-kinds.js'
 import { type FakeKeychain, makeFakeKeychain } from './fake-keychain.js'
 

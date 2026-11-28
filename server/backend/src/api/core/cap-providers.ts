@@ -34,14 +34,14 @@ import type {
   MeshTransport,
   NotificationService,
   ToastService,
-} from '@camstack/server/system'
+} from '@dominevo/server/system'
 import {
   asBrokerLike,
   getCapUsageRegistry,
   getLoggingGate,
   getProcessNodeMeshTransport,
   type BrokerLike,
-} from '@camstack/server/system'
+} from '@dominevo/server/system'
 import type {
   AgentListItem,
   CapabilityMethodAuth,
@@ -61,8 +61,8 @@ import type {
   IToastProvider,
   Toast,
   TopologyNode,
-} from '@camstack/types'
-import { bareAddonId, SERVICE_INSTANCE_INFO_KEY } from '@camstack/types'
+} from '@dominevo/types'
+import { bareAddonId, SERVICE_INSTANCE_INFO_KEY } from '@dominevo/types'
 import { TRPCError } from '@trpc/server'
 import {
   deleteRegisteredInstance,
@@ -592,7 +592,7 @@ async function computeTopologyInternal(
       processes: [mainProcess, ...childProcesses],
       categories: categoriesProjection,
       // Runtime-updatable node packages: the node's root-package identity
-      // (hub: the running @camstack/server; agents: their registerNode
+      // (hub: the running @dominevo/server; agents: their registerNode
       // manifest via HubNodeRegistry). Null when unknown.
       rootPackage: getNodeRootPackage?.(node.info.id, node.isHub) ?? null,
       // Mesh mTLS Release A: observed by the hub's transporter (certificate CN),
@@ -656,7 +656,7 @@ export type NodeRegistrationLookup = (nodeId: string) => boolean
 
 /**
  * Build the standard {@link NodeRootPackageLookup}: hub rows come from the
- * running `@camstack/server` package (ServerUpdateService), agent rows from
+ * running `@dominevo/server` package (ServerUpdateService), agent rows from
  * the `registerNode`-fed HubNodeRegistry (via MoleculerService).
  */
 export function createNodeRootPackageLookup(
@@ -1407,7 +1407,7 @@ const UNRESOLVED_HINT_LIMIT = 40
  * Explain a `(addonId, action)` that did not resolve, by NAMING what does.
  *
  * `addons.custom` keys on the MANIFEST addon id (`camstack.addons[].id`), which
- * is routinely not the npm package name — `@camstack/addon-post-analysis` ships
+ * is routinely not the npm package name — `@dominevo/addon-post-analysis` ships
  * `pipeline-analytics` and `embedding-encoder`, and neither is the package. A
  * bare "has no custom action X" is then indistinguishable from "the addon is
  * broken", "the deploy did not land" or "the catalog never registered", and the
@@ -1492,8 +1492,8 @@ function isHubNode(nodeId: string): boolean {
  * we keep only entries that carry both a package name and a version so
  * the hub can diff them against npm.
  *
- * `@camstack/server/system` is KEPT, and it is one of the most important entries here.
- * On an agent, `addons/@camstack/server/system` is the only copy of the builtin infra
+ * `@dominevo/server/system` is KEPT, and it is one of the most important entries here.
+ * On an agent, `addons/@dominevo/server/system` is the only copy of the builtin infra
  * ([D87](../../../../docs/decisions/adr-0087.md)), so a pending update on it is
  * a true, actionable signal: the node's infra is behind the closure it runs
  * against. Both agents sat 17 versions behind that way until 2026-08-11. Do not
@@ -1770,8 +1770,8 @@ export function buildAddonsProvider(
         }
         return { success: false, error: task?.error ?? 'update failed', jobId }
       }
-      // `@camstack/server/system` DELIBERATELY travels this way to an agent, and it is
-      // the only way it can. On the hub, `addons/@camstack/server/system` is a shadow
+      // `@dominevo/server/system` DELIBERATELY travels this way to an agent, and it is
+      // the only way it can. On the hub, `addons/@dominevo/server/system` is a shadow
       // of the closure; on an AGENT it is THE ONLY COPY of the builtin infra —
       // `bootCoreAddons` scans the addon root and nothing else, and the image
       // seed excludes the framework set on purpose ([D87](../../../../docs/decisions/adr-0087.md)).
@@ -1781,7 +1781,7 @@ export function buildAddonsProvider(
       // because the log shipper was in the same package.
       //
       // So do NOT add a framework guard here. A 2026-08-11 attempt to do so read
-      // the launcher's `resolved @camstack/server/system@… from <activeRoot>` line as
+      // the launcher's `resolved @dominevo/server/system@… from <activeRoot>` line as
       // proof that nothing loads the addon-root copy. That line answers which
       // copy the LAUNCHER resolves for its own imports — a different consumer
       // from `bootCoreAddons`. Same trap D45 names: a version is a property of a

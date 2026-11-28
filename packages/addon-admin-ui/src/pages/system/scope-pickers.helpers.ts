@@ -13,12 +13,12 @@
  * scope-pickers.helpers.ts` (admin) and `camstack/src/components/
  * notifications/scope-pickers.helpers.ts` (viewer), so the two UIs judge the
  * same stored node the same way. The projection itself (`nodePickerItems`,
- * `packagePickerItems`) is shared from `@camstack/types`; what each side keeps
+ * `packagePickerItems`) is shared from `@dominevo/types`; what each side keeps
  * apart is `device-fleet-view.ts`. `scripts/check-device-selection-in-sync.ts`
  * fails the commit when the copies differ; edit both.
  */
-import { nodePickerItems, packagePickerItems } from '@camstack/types/client'
-import type { NcInstalledPackageLike, NodeDirectory } from '@camstack/types'
+import { nodePickerItems, packagePickerItems } from '@dominevo/types/client'
+import type { NcInstalledPackageLike, NodeDirectory } from '@dominevo/types'
 import type { PickerFleetView } from './device-fleet-view.js'
 import type { PickerId, PickerItem } from './device-picker-model.js'
 import type { DeviceListState } from './device-selection.js'

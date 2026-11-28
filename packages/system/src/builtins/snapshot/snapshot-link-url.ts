@@ -46,7 +46,7 @@
  * Pure and side-effect-free; the addon owns the secret and the clock. Unit
  * tested in `__tests__/snapshot-link-url.spec.ts`.
  */
-import { signExpiringUrl, verifyExpiringUrl } from '@camstack/types/node'
+import { signExpiringUrl, verifyExpiringUrl } from '@dominevo/types/node'
 
 /**
  * How long a minted link stays valid.

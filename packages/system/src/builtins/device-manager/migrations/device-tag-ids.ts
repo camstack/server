@@ -16,7 +16,7 @@ import {
   preconditionOf,
   tagIdFromKey,
   tagKey,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { DEVICE_ROWS_COLLECTION } from '../device-row-store.js'
 
 export const DEVICE_TAG_IDS_ID = 'device-manager/2026-11-23-device-tag-ids'

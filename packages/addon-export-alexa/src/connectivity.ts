@@ -7,8 +7,8 @@
  * view that would most likely work; saying OK costs, at worst, one directive
  * that then fails with its own error. The failure is logged.
  */
-import type { AddonApi, IScopedLogger } from '@camstack/types'
-import { errMsg } from '@camstack/types'
+import type { AddonApi, IScopedLogger } from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
 import { z } from 'zod'
 
 /** The one field read off the `device-status` slice (its wire output is

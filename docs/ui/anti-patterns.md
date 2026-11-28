@@ -62,7 +62,7 @@ Delete / Cancel" in place (the Custom devices, Scripts and Automations rows,
 the batch toolbar and the scene reference gallery did this). It shifts the
 layout, is easy to click through, and does not name what is destroyed on a
 phone. `ui:check` flags the state hook as `inline-confirm-state`.
-→ `useConfirm` (`@camstack/ui-library`): `await confirm({ title, message:
+→ `useConfirm` (`@dominevo/ui-library`): `await confirm({ title, message:
 <names the item>, confirmLabel, variant: 'danger' })`; example
 `useConfirmRemove` in `components/device/customize/`.
 

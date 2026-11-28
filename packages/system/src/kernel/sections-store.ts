@@ -8,7 +8,7 @@
  * the keys the store may answer ({@link storeMayAnswer}); the rest of such a
  * section is the environment and built-in defaults and lives in the hub process alone.
  */
-import type { ISettingsStoreProvider } from '@camstack/types'
+import type { ISettingsStoreProvider } from '@dominevo/types'
 import { storeMayAnswer } from './system-settings-policy.js'
 import { loadSystemSettingsPrefix } from './settings-door-view.js'
 

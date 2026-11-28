@@ -19,7 +19,7 @@ import type {
   IScopedLogger,
   PipelineAssignment,
   RunnerCameraConfig,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { CameraStatusService } from '../camera-status-service.js'
 import type { AudioNodeAssignment } from '../orchestrator-types.js'

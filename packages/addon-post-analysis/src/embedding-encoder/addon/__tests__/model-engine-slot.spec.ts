@@ -8,7 +8,7 @@ import {
   EMBEDDING_REQUIREMENTS_UNAVAILABLE,
   embeddingRefusalOf,
   isEmbeddingModelFailed,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { CrashBudget } from '../crash-budget.js'
 import { ModelEngineSlot } from '../model-engine-slot.js'

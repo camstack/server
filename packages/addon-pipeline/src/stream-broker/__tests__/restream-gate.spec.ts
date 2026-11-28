@@ -8,7 +8,7 @@
  * never persisted. On recovery the external entry switches to the stored token
  * without tearing a broker or the alias down.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import * as net from 'node:net'
 import { isClusterLocalAddress, RtspListenServer } from '../rtsp/rtsp-listen-server.js'

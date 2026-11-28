@@ -5,7 +5,7 @@ import type { CapabilitySummary } from '../types.js'
 
 /**
  * Parse capability definitions from `*.cap.ts` source text.
- * Avoids importing `@camstack/types` so this works on a clean checkout
+ * Avoids importing `@dominevo/types` so this works on a clean checkout
  * before packages are built.
  */
 export function listCapabilities(workspaceRoot: string): readonly CapabilitySummary[] {

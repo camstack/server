@@ -14,7 +14,7 @@ import {
   type CustomizeCatalogSource,
   type CustomizeCatalogTarget,
   type DeviceSearchRequires,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { sourceFor } from '../source-for'
 import { vocabularyCapTitle, vocabularyFieldLabel } from '../vocabulary-field-label'
 import { declarationSourceForField, type ScalarFieldOffer } from '../scalar/scalar-fit'

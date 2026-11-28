@@ -43,8 +43,8 @@ const mocks = vi.hoisted(() => ({
   deleteTracks: vi.fn(async (_vars: DeleteVars) => undefined),
 }))
 
-vi.mock('@camstack/ui-library', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@camstack/ui-library')>()
+vi.mock('@dominevo/ui-library', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dominevo/ui-library')>()
   return {
     ...actual,
     useAlert: () => vi.fn(),

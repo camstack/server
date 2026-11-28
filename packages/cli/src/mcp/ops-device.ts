@@ -11,7 +11,7 @@
 import { z } from 'zod'
 import type { McpContext } from './context.js'
 import { cap, readQuery, withHub, type NoSessionResult, type Read } from './ops-hub.js'
-import type { HubClient } from '@camstack/develop'
+import type { HubClient } from '@dominevo/develop'
 
 const DeviceSchema = z.looseObject({
   id: z.number(),

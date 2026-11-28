@@ -17,7 +17,7 @@
  *
  * Both are idempotent.
  */
-import type { MigrationProcedureResult } from '@camstack/types'
+import type { MigrationProcedureResult } from '@dominevo/types'
 import type { HaInstanceRecordPorts, HaInstanceValues } from './ha-instance-settings.js'
 import type { HaInstanceClearPorts, HaInstanceRow } from './legacy-integration-rows.js'
 

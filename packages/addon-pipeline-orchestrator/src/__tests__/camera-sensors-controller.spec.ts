@@ -6,7 +6,7 @@
  * never "not configured" (R18, D315); and a refresh that lands after stop()
  * applies nothing.
  */
-import { type CameraSensorsConfig, type IScopedLogger, type MotionSources } from '@camstack/types'
+import { type CameraSensorsConfig, type IScopedLogger, type MotionSources } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { CameraSensorsController, type CameraIdsRead } from '../camera-sensors/controller.js'
 import type {

@@ -18,7 +18,7 @@
  * Enrolled (`assigned`) rows are exempt from every one of these.
  */
 
-import type { FaceSortDirection, FaceSortField, IScopedLogger } from '@camstack/types'
+import type { FaceSortDirection, FaceSortField, IScopedLogger } from '@dominevo/types'
 import type { TrackCascadeLeafCount } from '../pipeline/delete-track-cascade.js'
 import type { TrackFusionLeafCount, TrackFusionRequest } from '../pipeline/track-fusion-leaf.js'
 import type { EmbeddingConversionSpec } from './embedding-json-conversion.js'

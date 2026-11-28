@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { LogStream } from '@camstack/ui-library'
+import { LogStream } from '@dominevo/ui-library'
 
 interface LogsTabProps {
   readonly deviceId: number

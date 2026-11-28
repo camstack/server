@@ -10,7 +10,7 @@
  * (it proves the person at this page is at the agent). On the agent's own
  * machine (the status view then carries the PIN) the field is hidden.
  */
-import { Badge, Button, ErrorBox, FormField, Input } from '@camstack/ui-library'
+import { Badge, Button, ErrorBox, FormField, Input } from '@dominevo/ui-library'
 import { Check, ShieldQuestion, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Trans, useT } from './i18n'

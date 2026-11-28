@@ -2,7 +2,7 @@
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import type { AddonContext, IUserManagementProvider } from '@camstack/types'
+import type { AddonContext, IUserManagementProvider } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   getUserManagementInternal,
@@ -170,7 +170,7 @@ describe('local-auth — credential lifecycle', () => {
       isAdmin: false,
     })
     const credentials = providersList.find((p) => p.capability.name === 'device-credentials')
-      ?.provider as import('@camstack/types').IDeviceCredentialsProvider
+      ?.provider as import('@dominevo/types').IDeviceCredentialsProvider
     const pair = await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, [
       'sign',
       'verify',
@@ -213,7 +213,7 @@ describe('local-auth — credential lifecycle', () => {
       isAdmin: false,
     })
     const credentials = providersList.find((p) => p.capability.name === 'device-credentials')
-      ?.provider as import('@camstack/types').IDeviceCredentialsProvider
+      ?.provider as import('@dominevo/types').IDeviceCredentialsProvider
     const pair = await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, [
       'sign',
       'verify',

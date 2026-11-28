@@ -9,7 +9,7 @@ import type {
   IDeviceRunsProvider,
   RecordKindHandle,
   RecordWhere,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 interface Window {
   readonly atFrom?: number | undefined

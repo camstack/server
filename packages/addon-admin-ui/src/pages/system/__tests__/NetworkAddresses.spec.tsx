@@ -1,10 +1,10 @@
 /**
  * The Network Addresses page: the Allowed addresses card and ONE Addresses
- * table. The notification-taps role is chosen only in that table (the CamStack
+ * table. The notification-taps role is chosen only in that table (the Dominevo
  * app link is a row there), so the page carries no separate notification-link
  * card and never asks the hub for the notification endpoint on its own.
  */
-import type { HubAddressBook } from '@camstack/types'
+import type { HubAddressBook } from '@dominevo/types'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
@@ -31,8 +31,8 @@ const mocks = vi.hoisted(() => {
   return { book, query, mutation, getNotificationEndpoint }
 })
 
-vi.mock('@camstack/ui-library', async () => {
-  const real = await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+vi.mock('@dominevo/ui-library', async () => {
+  const real = await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return {
     ...real,
     useLocalNetworkList: mocks.query({ interfaces: [] }),

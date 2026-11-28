@@ -1,4 +1,4 @@
-import type { FrameHandle, IScopedLogger } from '@camstack/types'
+import type { FrameHandle, IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import type { TrackedDetectionOut } from '../pipeline/frame-processor.js'
 import { createKeyFrameCrop } from '../pipeline/keyframe-crop.js'
@@ -310,7 +310,7 @@ describe('PlateRecognizer — durable keyFrame-derived crop fallback (live captu
       frameHandle: {
         shmId: 's',
         nodeId: 'n',
-      } as unknown as import('@camstack/types').FrameHandle,
+      } as unknown as import('@dominevo/types').FrameHandle,
     })
 
   it('recovers the crop from the keyFrame when the live capture missed', async () => {

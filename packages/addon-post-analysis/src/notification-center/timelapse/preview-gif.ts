@@ -33,7 +33,7 @@
  * the still image rather than to no picture at all.
  */
 import { Buffer } from 'node:buffer'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import sharp from 'sharp'
 import {
   buildPreviewFrameArgs,

@@ -5,7 +5,7 @@
  */
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
-import type { NcSchedule } from '@camstack/types'
+import type { NcSchedule } from '@dominevo/types'
 import { ScheduleField } from '../notification-schedule-field'
 
 const SCHEDULE: NcSchedule = {

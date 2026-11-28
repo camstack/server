@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { Loader2, Activity } from 'lucide-react'
 
-import { useDeviceManagerGetDeviceAggregate } from '@camstack/ui-library'
+import { useDeviceManagerGetDeviceAggregate } from '@dominevo/ui-library'
 import { useEventInvalidation } from '../../../hooks/useEventInvalidation'
 import { FormBuilder } from '../../form-builder/FormBuilder'
 import type {

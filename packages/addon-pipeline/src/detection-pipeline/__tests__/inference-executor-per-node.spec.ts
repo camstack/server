@@ -31,7 +31,7 @@ import type {
   IScopedLogger,
   ProviderRegistration,
   SystemEvent,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** Every field key of the Inference-executor section, in schema order. */
 const EXECUTOR_FIELD_KEYS = [

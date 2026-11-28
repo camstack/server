@@ -6,7 +6,7 @@ import type {
   AddonDeploySource,
   RegisterNodeParams,
   RegisterNodeResult,
-} from '@camstack/server/system'
+} from '@dominevo/server/system'
 import {
   asBrokerLike,
   isAddonDeploySource,
@@ -14,12 +14,12 @@ import {
   mapSignalsToInferenceHardware,
   probePlatform,
   resolveHwAccel,
-} from '@camstack/server/system'
-import type { AgentHealth, IMetricsProvider, IScopedLogger } from '@camstack/types'
+} from '@dominevo/server/system'
+import type { AgentHealth, IMetricsProvider, IScopedLogger } from '@dominevo/types'
 
 /** What `$agent.status` and `$agent.health` read from the metrics provider. */
 export type StatusMetricsSource = Pick<IMetricsProvider, 'getCached'>
-import { coralUsableUnits } from '@camstack/types'
+import { coralUsableUnits } from '@dominevo/types'
 import type { Context, ServiceBroker, ServiceSchema } from 'moleculer'
 import { Errors } from 'moleculer'
 import { applyDeployedBundle } from './agent-deploy-swap.js'
@@ -98,8 +98,8 @@ interface ProcessRestartResult {
  * otherwise. Mirrors the hub reconcile's `AGENT_BOOTSTRAP_PACKAGES`.
  */
 const DEFAULT_AGENT_BOOTSTRAP_PACKAGES: ReadonlySet<string> = new Set([
-  '@camstack/server',
-  '@camstack/addon-agent-ui',
+  '@dominevo/server',
+  '@dominevo/addon-agent-ui',
 ])
 
 /** Timeout for the agent-local `$process.restart` delegation. */
@@ -197,7 +197,7 @@ interface AgentServiceDeps {
    * PUSH. The agent's registration fires on agent boot, on a child's
    * `$agent.registerNode`, on every settled mesh join and on the hub's
    * `$agent.requestRegistration` — and nowhere else.
-   * `$agent.reload` (which every `camstack deploy` to this agent ends in)
+   * `$agent.reload` (which every `dominevo deploy` to this agent ends in)
    * mutates `loadedAddons` AND the capability registry without any of those
    * happening, so a capability the node GAINS after boot stays invisible
    * to the hub until the next agent restart or hub reconnect. The hub's
@@ -230,7 +230,7 @@ interface AgentServiceDeps {
   readonly installFromNpm?: (packageName: string, version: string) => Promise<void>
   /**
    * Install a deployed `.tgz` bundle through the agent's `AddonInstaller`
-   * (`installFromTgz`): staged extract → `@camstack/*` manifest strip →
+   * (`installFromTgz`): staged extract → `@dominevo/*` manifest strip →
    * runtime-deps `npm install` (FATAL on failure) → manifest-driven native
    * deps → atomic rename swap. Wired by agent-bootstrap. When absent the
    * deploy handler falls back to the plain tar swap (`applyDeployedBundle`) —
@@ -239,7 +239,7 @@ interface AgentServiceDeps {
    */
   readonly installBundleTgz?: (tgzPath: string) => Promise<{ name: string; version: string }>
   /**
-   * Packages this node bootstraps itself (`@camstack/server/system` +
+   * Packages this node bootstraps itself (`@dominevo/server/system` +
    * `AddonInstaller.AGENT_PACKAGES`) — `$agent.undeploy` refuses them.
    */
   readonly bootstrapPackages?: ReadonlySet<string>

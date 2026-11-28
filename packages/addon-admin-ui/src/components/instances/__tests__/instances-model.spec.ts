@@ -3,7 +3,7 @@
  * out. An unanswered query is never an empty list (D315), and an edit sends only what changed.
  */
 import { describe, expect, it } from 'vitest'
-import type { IntegrationInstanceDescription, IntegrationInstanceKind } from '@camstack/types'
+import type { IntegrationInstanceDescription, IntegrationInstanceKind } from '@dominevo/types'
 import {
   addonDescriptions,
   providerNamesByAddon,

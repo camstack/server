@@ -31,10 +31,10 @@ import {
   type PlayerConnectionState,
   type PlayerWebrtcTarget,
   type WebrtcTarget,
-} from '@camstack/ui-library'
-import { createSystem, type System } from '@camstack/sdk'
+} from '@dominevo/ui-library'
+import { createSystem, type System } from '@dominevo/sdk'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { CamProfileSchema } from '@camstack/types'
+import { CamProfileSchema } from '@dominevo/types'
 import { useTranslation } from 'react-i18next'
 
 // ── Injected-config contract (validated at the boundary) ───────────────────

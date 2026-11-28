@@ -1,5 +1,5 @@
 import * as crypto from 'node:crypto'
-import type { RecordKindHandle, TokenScope } from '@camstack/types'
+import type { RecordKindHandle, TokenScope } from '@dominevo/types'
 import { readAllRows } from '../../records/read-all-rows.js'
 import type { OauthSessionBody } from './record-kinds.js'
 import { localAuthRecordKinds } from './record-kinds.js'

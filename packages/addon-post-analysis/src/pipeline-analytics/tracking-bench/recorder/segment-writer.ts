@@ -18,7 +18,7 @@ import path from 'node:path'
 import type { Writable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
 import { createGzip } from 'node:zlib'
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IScopedLogger } from '@dominevo/types'
 import { encodeTapeLine } from '../tape-codec.js'
 import type { TapeEndReason, TapeGap, TapeRecord } from '../tape-schema.js'
 

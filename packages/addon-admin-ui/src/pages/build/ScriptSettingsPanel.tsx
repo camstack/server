@@ -15,7 +15,7 @@
  *   - `refresh-unifi-catalog` — traffic routes / VPN clients / LAN / gateways
  */
 
-import type { ConfigUISchemaWithValues } from '@camstack/types'
+import type { ConfigUISchemaWithValues } from '@dominevo/types'
 import {
   Button,
   useCoreBlocksGet,
@@ -24,7 +24,7 @@ import {
   useCoreBlocksSetEnabled,
   useCoreBlocksUpdateBlockSettings,
   useSystem,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Loader2 } from 'lucide-react'
 import { useCallback, useMemo, useState, type ReactNode } from 'react'
 import { FormBuilder } from '../../components/form-builder/FormBuilder'

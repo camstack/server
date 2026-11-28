@@ -16,7 +16,7 @@ import type {
   RetrainExportLayout,
   RetrainTrainingCorpusResolveResult,
   TrainingCorpusSelection,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { JobStore } from './stores.js'
 
 /** One provider addon, as the engine calls it (the cap's provider shape). */

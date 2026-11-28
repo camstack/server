@@ -5,7 +5,7 @@
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import type { MdnsHub } from '@camstack/develop/hub-discovery'
+import type { MdnsHub } from '@dominevo/develop/hub-discovery'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   REJECTED_CANDIDATE_WARN_INTERVAL_MS,
@@ -211,7 +211,9 @@ describe('the production pinned-CA check (no injected authenticate)', () => {
     const outcome = await rediscoverPairedHub({ configPath, log, browse: browseOf(announce()) })
     return outcome.kind
   }
-  const answer = (a: Extract<HubMembershipResult, { kind: 'answer' }>['answer']): HubMembershipResult => ({
+  const answer = (
+    a: Extract<HubMembershipResult, { kind: 'answer' }>['answer'],
+  ): HubMembershipResult => ({
     kind: 'answer',
     answer: a,
   })

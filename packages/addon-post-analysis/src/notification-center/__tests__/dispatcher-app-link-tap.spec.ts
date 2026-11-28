@@ -5,7 +5,7 @@
  * `/viewer/camstack/camera/…`; an admin destination always uses the **Public
  * endpoint**, never the taps address and never the app form.
  */
-import type { MediaFile, ViewerLinkBase } from '@camstack/types'
+import type { MediaFile, ViewerLinkBase } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import { NcDispatcher, type NcSendInput, type NcTargetRef } from '../dispatcher.js'

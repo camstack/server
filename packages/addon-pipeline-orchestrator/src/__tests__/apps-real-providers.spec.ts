@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import type { IAppSourceProvider } from '@camstack/types'
+import type { IAppSourceProvider } from '@dominevo/types'
 import { aggregateApps } from '../../../system/src/builtins/apps-aggregator/aggregate-apps.js'
 import { buildAdminApp } from '../../../addon-admin-ui/src/server/admin-app'
 import { createViewerAppSourceProvider } from '../viewer-app-source.js'

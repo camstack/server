@@ -14,7 +14,7 @@
  * one line. Admin only, Bearer auth, like the backup download.
  */
 
-import type { LogEntry, LogReadEntry, LogReadQuery } from '@camstack/types'
+import type { LogEntry, LogReadEntry, LogReadQuery } from '@dominevo/types'
 import type { FastifyInstance } from 'fastify'
 import {
   exportLogEntries,

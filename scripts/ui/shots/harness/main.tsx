@@ -6,9 +6,9 @@
  *   ?theme=light|dark     the theme provider's stored mode
  * Both are kept in sessionStorage so in-app navigation keeps them.
  */
-import * as Sdk from '@camstack/sdk'
-import * as Types from '@camstack/types'
-import * as UiLibrary from '@camstack/ui-library'
+import * as Sdk from '@dominevo/sdk'
+import * as Types from '@dominevo/types'
+import * as UiLibrary from '@dominevo/ui-library'
 import { createRoot } from 'react-dom/client'
 
 declare global {

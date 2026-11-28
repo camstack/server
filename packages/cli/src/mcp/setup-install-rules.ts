@@ -63,13 +63,13 @@ export const TEMPLATE_URLS = {
     hub: `${RAW}/unraid-templates/main/templates/camstack.xml`,
     agent: `${RAW}/unraid-templates/main/templates/camstack-agent.xml`,
   },
-  latestRelease: 'https://api.github.com/repos/camstack/server/releases/latest',
+  latestRelease: 'https://api.github.com/repos/dominevo/server/releases/latest',
 } as const
 
-export const IMAGE_REPOSITORY = 'ghcr.io/camstack/camstack'
+export const IMAGE_REPOSITORY = 'ghcr.io/dominevo/dominevo'
 
 /**
- * Rules from the public install docs, `camstack/docs`
+ * Rules from the public install docs, `dominevo/docs`
  * `content/docs/installation/index.mdx` ("Choosing a tag" and "What must be
  * true, and why"). That repository is private, so the rules are encoded here:
  * re-read the page when it changes.
@@ -89,7 +89,7 @@ export const IMAGE_TAG_BY_ACCELERATOR: Readonly<Record<Accelerator, string>> = {
 export const NO_BARE_LATEST =
   'There is no bare :latest tag: use <variant>-<version> or <variant>-latest (intel, intel-legacy, amd, nvidia, nvidia-legacy), and never mix variants across vendors.'
 
-/** Settings whose absence breaks CamStack in ways that do not look like the setting. */
+/** Settings whose absence breaks Dominevo in ways that do not look like the setting. */
 export const MUST_NOT_OMIT: readonly string[] = [
   '--pids-limit=8192 (pids_limit: 8192): the default 2048 counts threads and silently stops media on a busy hub.',
   'CAMSTACK_MEDIA_ROOT=/recordings: without it recordings land in /data and fill the cache drive.',
@@ -131,7 +131,7 @@ export const COMPOSE_MARKERS_BY_ACCELERATOR: Readonly<Record<Accelerator, readon
 export function firstRunHub(host: string): readonly string[] {
   return [
     `Open https://${host}:4443 (a self-signed certificate: accept the browser warning).`,
-    'Sign in as admin / changeme; CamStack asks for a new password at once. Change it now.',
-    `Then, where your MCP client runs: camstack login ${host}`,
+    'Sign in as admin / changeme; Dominevo asks for a new password at once. Change it now.',
+    `Then, where your MCP client runs: dominevo login ${host}`,
   ]
 }

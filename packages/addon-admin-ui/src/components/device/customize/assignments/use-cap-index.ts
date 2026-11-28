@@ -3,7 +3,7 @@
  * `listDeviceIdsByCaps` per cap (≤ 10, cached) — never a `getBindings` per
  * device (D648: up to 5.24 s each). Answered only when every cap answered (D315).
  */
-import { trpc } from '@camstack/ui-library'
+import { trpc } from '@dominevo/ui-library'
 import type { Known } from '../known'
 import { capIndexOf } from './assignment-candidates'
 

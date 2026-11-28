@@ -2,7 +2,7 @@
  * The controller box as a Gateway device, on a stub device context (the one
  * boundary a spec fakes): what it registers and how it follows the session.
  */
-import { type DeviceContext, DeviceType, type IDeviceRuntimeState } from '@camstack/types'
+import { type DeviceContext, DeviceType, type IDeviceRuntimeState } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { ShcGatewayDevice } from '../devices/shc-gateway-device.js'
 import { shcConnections } from '../shc-gateway.js'

@@ -1,5 +1,5 @@
 import { useState, type ReactElement } from 'react'
-import type { IrLearnResult } from '@camstack/types'
+import type { IrLearnResult } from '@dominevo/types'
 import { useTrpcClient } from '../../../contexts/system-context'
 import { useUiText } from '../../../contexts/ui-text'
 import { useIrTransmitterGetInfo, useIrTransmitterLearn } from '../../../generated/system-hooks'

@@ -9,7 +9,7 @@
  * absent (free text stays) and logs; it is never an empty list (D393, D315).
  */
 import { z } from 'zod'
-import type { FieldEnumSource, ICapabilityRegistry, IScopedLogger } from '@camstack/types'
+import type { FieldEnumSource, ICapabilityRegistry, IScopedLogger } from '@dominevo/types'
 
 const RecordSchema = z.record(z.string(), z.unknown())
 

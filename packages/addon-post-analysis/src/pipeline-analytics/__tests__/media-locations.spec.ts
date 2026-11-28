@@ -1,4 +1,4 @@
-import type { StorageLocationMode } from '@camstack/types'
+import type { StorageLocationMode } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { type MediaLocation, pickWritableMediaLocation } from '../media-locations.js'
 

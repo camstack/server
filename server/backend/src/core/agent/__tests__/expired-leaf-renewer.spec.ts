@@ -3,7 +3,7 @@
  * only once it has registered (until then it has no capability to prepare a CSR), once at a time,
  * and a node that never registers is reported rather than retried.
  */
-import type { RenewMeshResult } from '@camstack/server/system'
+import type { RenewMeshResult } from '@dominevo/server/system'
 import { describe, expect, it, vi } from 'vitest'
 import { createExpiredLeafRenewer } from '../expired-leaf-renewer'
 

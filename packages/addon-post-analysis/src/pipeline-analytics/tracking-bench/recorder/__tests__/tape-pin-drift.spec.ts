@@ -15,7 +15,7 @@
  * set-based statement (`whereNot: { benchPinned: true }` for a pin) — "a
  * reconcile with no drift writes nothing" fails (2 rows rewritten).
  */
-import type { SettingsStoreClient } from '@camstack/types'
+import type { SettingsStoreClient } from '@dominevo/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { makeAnalyticsWorld } from '../../../__tests__/fake-records.js'
 import {

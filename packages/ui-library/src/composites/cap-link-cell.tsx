@@ -5,7 +5,7 @@
  * the refusal the server gave. It stores nothing itself: the caller owns the
  * `capLink` feature and reacts to `onChange`.
  */
-import type { CapLinkState } from '@camstack/types'
+import type { CapLinkState } from '@dominevo/types'
 import type { JSX } from 'react'
 import { useUiText } from '../contexts/ui-text'
 import { Badge } from '../primitives/badge'

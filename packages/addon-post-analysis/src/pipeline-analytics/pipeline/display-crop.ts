@@ -32,7 +32,7 @@
  * Pure factory: all IO is injected so the fallback-order contract is unit-tested
  * in isolation from the addon boot closure.
  */
-import type { FrameHandle, IScopedLogger } from '@camstack/types'
+import type { FrameHandle, IScopedLogger } from '@dominevo/types'
 import { padBbox } from './bbox-pad.js'
 
 /** A bounding box in a frame's own pixel space. */

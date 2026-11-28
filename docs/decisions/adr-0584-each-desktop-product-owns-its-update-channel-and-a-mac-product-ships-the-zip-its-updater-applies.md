@@ -15,8 +15,8 @@ last-verified: 2026-10-02
 ## Context
 
 The desktop shell builds TWO products from one source tree (D402): the full
-`CamStack`, which stages the whole `@camstack/server` closure, and the reduced
-`CamStack Viewer`, which stages nothing and spawns no node process.
+`Dominevo`, which stages the whole `@dominevo/server` closure, and the reduced
+`Dominevo Viewer`, which stages nothing and spawns no node process.
 
 Both declared the same publish block — `github / camstack / server`, no
 `channel` — and both attach their assets to the SAME GitHub release.
@@ -30,7 +30,7 @@ version: 1.2.338
 path: CamStackViewer-1.2.338-arm64.dmg
 ```
 
-That is `latest-mac.yml` — the file the **full** app reads. The full CamStack
+That is `latest-mac.yml` — the file the **full** app reads. The full Dominevo
 app's macOS updater was pointed at the reduced product, on every install in the
 field, for every release since the viewer leg was added (2026-09-09).
 
@@ -38,7 +38,7 @@ It has not yet turned a hub into a viewer, and the reason is an accident.
 `MacUpdater.doDownloadUpdate` resolves the feed's files, keeps only the ones
 matching the running arch, and calls `findFile(files, "zip", …)` — Squirrel.Mac
 applies a **zip**, never a dmg. The viewer declared `mac.target: [{target:
-"dmg"}]`, so the release holds `CamStack-1.2.338-arm64.zip` but no
+"dmg"}]`, so the release holds `Dominevo-1.2.338-arm64.zip` but no
 `CamStackViewer-*.zip`, and the full app threw `ERR_UPDATER_ZIP_FILE_NOT_FOUND`
 instead of installing the wrong product over the right one. The viewer's own
 updater failed the same way, for the same reason — it detected an update it
@@ -76,7 +76,7 @@ mac target with electron-updater in it ships `zip` alongside `dmg`, because a
 dmg-only feed is an update that downloads and cannot apply — and that zip is
 only safe once the channels are separate.
 
-The full app keeps `latest` deliberately, and it is not symmetry: every CamStack
+The full app keeps `latest` deliberately, and it is not symmetry: every Dominevo
 install in the field carries an `app-update.yml` with no channel in it and will
 ask for `latest-*.yml` forever. Leaving the full product there rescues that
 installed base the moment the viewer stops overwriting its feed; moving it would
@@ -88,18 +88,18 @@ strand it.
 
   | product | platform | before | after |
   | --- | --- | --- | --- |
-  | CamStack | mac | `latest-mac.yml` | `latest-mac.yml` |
-  | CamStack | linux x64 | `latest-linux.yml` | `latest-linux.yml` |
-  | CamStack | windows | `latest.yml` | `latest.yml` |
-  | CamStack Viewer | mac | `latest-mac.yml` ⟵ collision | `viewer-mac.yml` |
-  | CamStack Viewer | linux x64 | `latest-linux.yml` ⟵ collision | `viewer-linux.yml` |
-  | CamStack Viewer | windows | `latest.yml` (would collide) | `viewer.yml` |
+  | Dominevo | mac | `latest-mac.yml` | `latest-mac.yml` |
+  | Dominevo | linux x64 | `latest-linux.yml` | `latest-linux.yml` |
+  | Dominevo | windows | `latest.yml` | `latest.yml` |
+  | Dominevo Viewer | mac | `latest-mac.yml` ⟵ collision | `viewer-mac.yml` |
+  | Dominevo Viewer | linux x64 | `latest-linux.yml` ⟵ collision | `viewer-linux.yml` |
+  | Dominevo Viewer | windows | `latest.yml` (would collide) | `viewer.yml` |
 
 - **Viewer installs made before this change are stranded, and must not be left
   to auto-update.** Their baked `app-update.yml` has no channel, so they will
   keep asking for `latest-mac.yml` — which from the next release names the FULL
-  CamStack zip, and, the zip now being present, Squirrel.Mac would apply it.
-  A viewer would become a CamStack. The product is twelve days old and lives on
+  Dominevo zip, and, the zip now being present, Squirrel.Mac would apply it.
+  A viewer would become a Dominevo. The product is twelve days old and lives on
   the operator's own machines: those installs get replaced from the release page
   once, by hand. This is the one-time cost of having shipped two products on one
   feed name, and it is paid on the smaller, newer base rather than the larger,

@@ -10,7 +10,7 @@
  */
 
 import { describe, expect, it } from 'vitest'
-import { encodeVectorBase64 } from '@camstack/types'
+import { encodeVectorBase64 } from '@dominevo/types'
 import { makeFakeVectorStore, makeSilentLogger } from '../../__tests__/test-helpers.js'
 import { ObjectEmbeddingStore } from '../object-embedding-store.js'
 import {

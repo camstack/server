@@ -5,7 +5,7 @@
  * provider surface (caller-stamped CRUD, target validation, testRule).
  */
 
-import type { InMemoryRecords } from '@camstack/types'
+import type { InMemoryRecords } from '@dominevo/types'
 import { ncRecordKinds } from '../record-kinds.js'
 import { ncPruneWindowsPort, makeNcRecords, ncTable } from './support/nc-test-deps.js'
 import type {
@@ -14,8 +14,8 @@ import type {
   NcRuleInput,
   ObjectEvent,
   Track,
-} from '@camstack/types'
-import { NcRuleInputSchema } from '@camstack/types'
+} from '@dominevo/types'
+import { NcRuleInputSchema } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   type FakeSettingsStore,

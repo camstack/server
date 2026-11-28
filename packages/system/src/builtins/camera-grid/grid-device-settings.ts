@@ -22,7 +22,7 @@
  * returning `null` is how it keeps the Recording tab off a device that is not
  * a camera.
  */
-import type { ConfigUISchema } from '@camstack/types'
+import type { ConfigUISchema } from '@dominevo/types'
 
 /** The widget id, registered in `ui-library`'s `HOST_WIDGETS`. */
 export const GRID_LAYOUT_WIDGET_ID = 'host/camera-grid-layout'

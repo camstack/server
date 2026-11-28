@@ -1,7 +1,7 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import { makeFakeSettingsStore, mergeSilentLogger } from '../../__tests__/test-helpers.js'
 import { OBJECT_EVENTS_COLLECTION } from '../../store/event-store.js'

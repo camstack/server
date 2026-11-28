@@ -28,7 +28,7 @@ import {
   useNotificationRulesListDeviceMutes,
   useNotificationRulesSetDeviceMuted,
   Button,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { BellOff, BellRing } from 'lucide-react'
 import { useCallback, useState } from 'react'

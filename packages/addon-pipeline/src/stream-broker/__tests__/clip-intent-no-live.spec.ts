@@ -1,7 +1,7 @@
 /**
  * A clip-intent session never touches live (#566).
  *
- * A CamStack clip is a file on our own storage. Opening it must not dial the
+ * A Dominevo clip is a file on our own storage. Opening it must not dial the
  * camera: on a sleeping battery camera every live subscription is a wake, and
  * a cold broker made the session wait 2.5 s on parameter sets the camera will
  * never send before the clip request could even reach the server.
@@ -24,7 +24,7 @@ import type {
   IStreamBroker,
   Unsubscribe,
   WebrtcStreamTarget,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { BrokerWebrtcServer } from '../webrtc/broker-webrtc-server.js'
 import { ControlMessageSchema } from '../recorded/control-protocol.js'
 

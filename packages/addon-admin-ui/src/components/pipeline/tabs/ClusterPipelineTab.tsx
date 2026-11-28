@@ -16,8 +16,8 @@ import {
   Skeleton,
   TEXT_HINT,
   usePipelineExecutorGetSchema,
-} from '@camstack/ui-library'
-import type { StepTreeNode } from '@camstack/ui-library'
+} from '@dominevo/ui-library'
+import type { StepTreeNode } from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 import {
   ClusterStepRowAction,

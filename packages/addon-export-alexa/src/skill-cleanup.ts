@@ -4,7 +4,7 @@
  * keychain markers bound to that row), what it exposed, and its hidden state (ingress token,
  * push mirrors). Without this a later skill minted on the same id would inherit them.
  */
-import type { RecordKindHandle } from '@camstack/types'
+import type { RecordKindHandle } from '@dominevo/types'
 import type { SkillExportsBody, SkillLinksBody, SkillStateBody } from './skill-records.js'
 
 export interface SkillRowHandles {

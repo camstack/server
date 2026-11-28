@@ -1,11 +1,11 @@
 ---
 name: camstack-docs
-description: Keep CamStack's documentation true after any change — a new addon, a capability, a UI surface, a fix, a decision, a skill. Use at the END of every piece of work ("do the docs need updating?"), before writing an ADR, when a generated docs file conflicts in a rebase, when `npm run docs:check` is red, or when adding/editing a repo skill or an AGENTS.md. Says which docs exist, which are generated and must never be hand-edited, and how to regenerate them.
+description: Keep Dominevo's documentation true after any change — a new addon, a capability, a UI surface, a fix, a decision, a skill. Use at the END of every piece of work ("do the docs need updating?"), before writing an ADR, when a generated docs file conflicts in a rebase, when `npm run docs:check` is red, or when adding/editing a repo skill or an AGENTS.md. Says which docs exist, which are generated and must never be hand-edited, and how to regenerate them.
 ---
 
 # Keeping the docs true (repository overlay)
 
-The canonical PUBLIC text is `packages/develop/skills/camstack-docs.md` (shipped with `@camstack/develop`; `camstack develop skill camstack-docs`): the generic rules for any addon author. This file is the REPOSITORY-specific procedure on top of it (ADR ladder, `docs:check`, skill pointers, the public docs repo) and keeps none of the pack's headings. `scripts/check-skill-pack-sync.ts` enforces that.
+The canonical PUBLIC text is `packages/develop/skills/camstack-docs.md` (shipped with `@dominevo/develop`; `dominevo develop skill camstack-docs`): the generic rules for any addon author. This file is the REPOSITORY-specific procedure on top of it (ADR ladder, `docs:check`, skill pointers, the public docs repo) and keeps none of the pack's headings. `scripts/check-skill-pack-sync.ts` enforces that.
 
 The rule, from [D19](../../../docs/decisions/adr-0019.md): **anything derivable
 from the repository is generated; anything else is prose and is guarded.** Your
@@ -66,7 +66,7 @@ git add docs/reference docs/decisions/index.md AGENTS.md .cursor/rules
 | `.claude/skills/<id>/SKILL.md` | procedures (§6) |
 
 There is no internal docs site in this repository. The **public** user documentation is a separate repository,
-`camstack/docs` (Next.js + fumadocs) — §8.
+`dominevo/docs` (Next.js + fumadocs) — §8.
 
 ## 3. Decide what to write — stop at the first yes
 
@@ -189,7 +189,7 @@ docs:check: <output tail — green>
 
 ## 8. Did you change what a PUBLIC page describes?
 
-The public site is the `camstack/docs` repository (a local clone usually sits
+The public site is the `dominevo/docs` repository (a local clone usually sits
 next to this one, pages under `content/docs/**.mdx`). Its pages carry the same
 `applies-to:` / `covers:` / `last-verified:` frontmatter, with globs relative to
 THIS repo (`camstack/…` is the viewer) — [D751](../../../docs/decisions/adr-0751-a-public-docs-page-claims-the-server-code-it-describes-and-its-staleness-is-a-reminder.md).

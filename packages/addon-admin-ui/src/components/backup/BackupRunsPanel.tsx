@@ -23,7 +23,7 @@
  * D315: an unanswered query must not render as "no runs" — the panel
  * distinguishes pending ("Checking…") from an answered-empty list.
  */
-import type { BackupRun } from '@camstack/types'
+import type { BackupRun } from '@dominevo/types'
 import {
   useBackupCancel,
   useBackupListRuns,
@@ -31,7 +31,7 @@ import {
   Button,
   DataTable,
   type DataColumn,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import type { TFunction } from 'i18next'
 import {
   Ban,

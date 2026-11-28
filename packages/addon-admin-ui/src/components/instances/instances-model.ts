@@ -12,7 +12,7 @@ import {
   type IntegrationInstanceDescription,
   type IntegrationInstanceKind,
   type IntegrationInstanceMode,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { ConfigUISchema } from '../../types/config-ui'
 
 /** One provider of the function cap (`log-destination`, `smtp-provider`). */

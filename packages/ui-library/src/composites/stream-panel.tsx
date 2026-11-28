@@ -10,7 +10,7 @@
  */
 import { Select } from '../primitives/select'
 import { useState, useMemo, useRef, useEffect, useCallback, type ReactNode, type JSX } from 'react'
-import type { CamProfile, WebrtcSessionDebug } from '@camstack/types'
+import type { CamProfile, WebrtcSessionDebug } from '@dominevo/types'
 import type { QualityOption } from './hls-quality'
 import type { ApplyDownlinkProbe } from './adaptive-downlink'
 import {
@@ -24,7 +24,7 @@ import {
 import { HlsVideo } from './hls-video'
 import { DetectionOverlay } from './detection-overlay'
 import type { DeviceDetections } from '../hooks/use-device-detections'
-import type { StationaryOverlayBox } from '@camstack/types'
+import type { StationaryOverlayBox } from '@dominevo/types'
 import { usePlayerToolbarButtons } from '../contexts/player-overlays'
 import { useUiText } from '../contexts/ui-text'
 import { useRecordedPlayback } from '../contexts/recorded-playback'

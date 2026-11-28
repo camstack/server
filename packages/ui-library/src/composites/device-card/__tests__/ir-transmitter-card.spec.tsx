@@ -3,7 +3,7 @@
  * The IR transmitter card: unknown state is a dash, a read empty slice says
  * never, and a learn shows the code or the translated refusal.
  */
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { defaultUiText } from '../../../contexts/ui-text'

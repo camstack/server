@@ -14,7 +14,7 @@
  * it is accepted or corrected.
  */
 
-import { RetrainReviewBadge } from '@camstack/ui-library'
+import { RetrainReviewBadge } from '@dominevo/ui-library'
 import type { JSX } from 'react'
 import { Trans } from '../../i18n/index.js'
 import { boxLook } from './lib/retrain-box-look.js'

@@ -7,7 +7,7 @@ import {
   useLiveEvent,
   useThemeMode,
   Button,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import {
   DisplayPaletteGate,
   DisplayPaletteNotice,
@@ -80,7 +80,7 @@ export function AppLayout() {
   const { info: serverName } = useServerName()
   useEffect(() => {
     document.title =
-      serverName === null ? 'CamStack Admin' : `${serverName.name} \u00b7 CamStack Admin`
+      serverName === null ? 'Dominevo Admin' : `${serverName.name} \u00b7 Dominevo Admin`
   }, [serverName])
   // Accurate connection model: the store behind this hook verifies hub
   // liveness with a hub-only probe (`GET /health`, no fan-out to agent
@@ -407,7 +407,7 @@ export function AppLayout() {
                 ? hubPath('/brand/logo-horizontal-light.svg')
                 : hubPath('/brand/logo-horizontal-dark.svg')
             }
-            alt={t('layouts.appLayout.camstackAdmin', 'CamStack Admin')}
+            alt={t('layouts.appLayout.camstackAdmin', 'Dominevo Admin')}
             className="h-9 flex-1 min-w-0"
           />
         )}
@@ -685,7 +685,7 @@ export function AppLayout() {
                       ? hubPath('/brand/logo-horizontal-light.svg')
                       : hubPath('/brand/logo-horizontal-dark.svg')
                   }
-                  alt={t('layouts.appLayout.camstack', 'CamStack')}
+                  alt={t('layouts.appLayout.camstack', 'Dominevo')}
                   className="h-7"
                 />
               </div>

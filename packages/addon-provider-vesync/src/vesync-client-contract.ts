@@ -22,7 +22,7 @@
 
 /**
  * Immutable snapshot of one VeSync air purifier at a point in time. The device
- * layer maps these fields onto the CamStack cap slices:
+ * layer maps these fields onto the Dominevo cap slices:
  *   - `power`            → `switch` (main on/off) on the Fan device
  *   - `speedPercent` / `preset` / `availablePresets` / `percentageStep`
  *                        → `fan-control` on the Fan device

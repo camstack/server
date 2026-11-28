@@ -7,8 +7,8 @@ import type {
   IEventBus,
   IScopedLogger,
   SystemEvent,
-} from '@camstack/types'
-import { EventCategory, method as capMethod } from '@camstack/types'
+} from '@dominevo/types'
+import { EventCategory, method as capMethod } from '@dominevo/types'
 import { z } from 'zod'
 import { DeviceRegistry } from '../../device-registry.js'
 import { CapabilityRegistry } from '../../capability-registry.js'
@@ -107,11 +107,11 @@ function asDevice(d: unknown): IDevice {
 
 /** A device + getAccessoryChildren test double, narrowed at the boundary. */
 function asAccessoryParent(d: unknown): IDevice & {
-  getAccessoryChildren: () => readonly import('@camstack/types').AccessoryChildSpec[]
+  getAccessoryChildren: () => readonly import('@dominevo/types').AccessoryChildSpec[]
 } {
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- test double
   return d as unknown as IDevice & {
-    getAccessoryChildren: () => readonly import('@camstack/types').AccessoryChildSpec[]
+    getAccessoryChildren: () => readonly import('@dominevo/types').AccessoryChildSpec[]
   }
 }
 
@@ -212,7 +212,7 @@ const FakeDeviceCtor = class {
     /* noop */
   }
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- test double
-} as unknown as import('@camstack/types').DeviceConstructor<IDevice>
+} as unknown as import('@dominevo/types').DeviceConstructor<IDevice>
 
 describe('createBrokerDeviceManagerApi (worker-side)', () => {
   let registry: DeviceRegistry
@@ -707,11 +707,11 @@ describe('createBrokerDeviceManagerApi (worker-side)', () => {
       async applySettingsPatch(_patch: Record<string, unknown>): Promise<void> {
         /* noop */
       }
-    } as unknown as import('@camstack/types').DeviceConstructor<IDevice>
+    } as unknown as import('@dominevo/types').DeviceConstructor<IDevice>
 
     calls.length = 0
     await deviceApi.create('blind-1', MinimalDeviceCtor, {}, null, {
-      type: 'cover' as import('@camstack/types').DeviceType,
+      type: 'cover' as import('@dominevo/types').DeviceType,
       name: 'Living Room Blind',
     })
 
@@ -771,11 +771,11 @@ describe('createBrokerDeviceManagerApi (worker-side)', () => {
       async applySettingsPatch(_patch: Record<string, unknown>): Promise<void> {
         /* noop */
       }
-    } as unknown as import('@camstack/types').DeviceConstructor<IDevice>
+    } as unknown as import('@dominevo/types').DeviceConstructor<IDevice>
 
     calls.length = 0
     await deviceApi.create('ha-cam-1', MinimalDeviceCtor, {}, null, {
-      type: 'camera' as import('@camstack/types').DeviceType,
+      type: 'camera' as import('@dominevo/types').DeviceType,
       name: 'HA Camera',
       integrationId: 'ha-integration-abc',
     })
@@ -836,11 +836,11 @@ describe('createBrokerDeviceManagerApi (worker-side)', () => {
       async applySettingsPatch(_patch: Record<string, unknown>): Promise<void> {
         /* noop */
       }
-    } as unknown as import('@camstack/types').DeviceConstructor<IDevice>
+    } as unknown as import('@dominevo/types').DeviceConstructor<IDevice>
 
     calls.length = 0
     await deviceApi.create('rtsp-cam-1', MinimalDeviceCtor, {}, null, {
-      type: 'camera' as import('@camstack/types').DeviceType,
+      type: 'camera' as import('@dominevo/types').DeviceType,
       name: 'RTSP Camera',
     })
 
@@ -870,10 +870,10 @@ describe('createBrokerDeviceManagerApi (worker-side)', () => {
       capabilityRegistry,
     })
 
-    const childSpec: import('@camstack/types').AccessoryChildSpec = {
+    const childSpec: import('@dominevo/types').AccessoryChildSpec = {
       stableIdSuffix: 'acc-cover',
       meta: {
-        type: 'cover' as import('@camstack/types').DeviceType,
+        type: 'cover' as import('@dominevo/types').DeviceType,
         name: 'Test Cover Child',
         integrationId: 'int_x',
       },
@@ -883,7 +883,7 @@ describe('createBrokerDeviceManagerApi (worker-side)', () => {
           id: ctx.id,
           stableId: ctx.stableId,
           parentDeviceId: null,
-          type: 'cover' as import('@camstack/types').DeviceType,
+          type: 'cover' as import('@dominevo/types').DeviceType,
           name: 'Test Cover Child',
           online: true,
           features: [],
@@ -895,13 +895,13 @@ describe('createBrokerDeviceManagerApi (worker-side)', () => {
     }
 
     const parentId = fakeDeviceIdCounter++
-    const parentDevice: import('@camstack/types').IDevice & {
-      getAccessoryChildren: () => readonly import('@camstack/types').AccessoryChildSpec[]
+    const parentDevice: import('@dominevo/types').IDevice & {
+      getAccessoryChildren: () => readonly import('@dominevo/types').AccessoryChildSpec[]
     } = asAccessoryParent({
       id: parentId,
       stableId: 'parent-cover-hub',
       parentDeviceId: null,
-      type: 'container' as import('@camstack/types').DeviceType,
+      type: 'container' as import('@dominevo/types').DeviceType,
       name: 'Parent Hub',
       online: true,
       features: [],
@@ -953,10 +953,10 @@ describe('createBrokerDeviceManagerApi (worker-side)', () => {
       capabilityRegistry,
     })
 
-    const childSpec: import('@camstack/types').AccessoryChildSpec = {
+    const childSpec: import('@dominevo/types').AccessoryChildSpec = {
       stableIdSuffix: 'acc-sensor',
       meta: {
-        type: 'sensor' as import('@camstack/types').DeviceType,
+        type: 'sensor' as import('@dominevo/types').DeviceType,
         name: 'Test Sensor Child',
         integrationId: 'int_y',
         role: 'numeric-sensor',
@@ -967,7 +967,7 @@ describe('createBrokerDeviceManagerApi (worker-side)', () => {
           id: ctx.id,
           stableId: ctx.stableId,
           parentDeviceId: null,
-          type: 'sensor' as import('@camstack/types').DeviceType,
+          type: 'sensor' as import('@dominevo/types').DeviceType,
           name: 'Test Sensor Child',
           online: true,
           features: [],
@@ -979,13 +979,13 @@ describe('createBrokerDeviceManagerApi (worker-side)', () => {
     }
 
     const parentId = fakeDeviceIdCounter++
-    const parentDevice: import('@camstack/types').IDevice & {
-      getAccessoryChildren: () => readonly import('@camstack/types').AccessoryChildSpec[]
+    const parentDevice: import('@dominevo/types').IDevice & {
+      getAccessoryChildren: () => readonly import('@dominevo/types').AccessoryChildSpec[]
     } = asAccessoryParent({
       id: parentId,
       stableId: 'parent-sensor-hub',
       parentDeviceId: null,
-      type: 'container' as import('@camstack/types').DeviceType,
+      type: 'container' as import('@dominevo/types').DeviceType,
       name: 'Parent Hub',
       online: true,
       features: [],
@@ -1018,10 +1018,10 @@ describe('createBrokerDeviceManagerApi (worker-side)', () => {
     // (including restore); name, location and role are first-spawn-only, so the
     // operator's edits survive a restore.
 
-    const childSpec: import('@camstack/types').AccessoryChildSpec = {
+    const childSpec: import('@dominevo/types').AccessoryChildSpec = {
       stableIdSuffix: 'acc-sensor',
       meta: {
-        type: 'sensor' as import('@camstack/types').DeviceType,
+        type: 'sensor' as import('@dominevo/types').DeviceType,
         name: 'Test Sensor Child',
         location: 'Living Room',
         integrationId: 'int_restore',
@@ -1034,7 +1034,7 @@ describe('createBrokerDeviceManagerApi (worker-side)', () => {
           id: ctx.id,
           stableId: ctx.stableId,
           parentDeviceId: null,
-          type: 'sensor' as import('@camstack/types').DeviceType,
+          type: 'sensor' as import('@dominevo/types').DeviceType,
           name: 'Test Sensor Child',
           online: true,
           features: [],
@@ -1050,11 +1050,11 @@ describe('createBrokerDeviceManagerApi (worker-side)', () => {
     // childStableId ('parent-restore-hub-acc-sensor'). This puts us into the
     // restore branch (first-spawn gate is SKIPPED).
     const childStableId = 'parent-restore-hub-acc-sensor'
-    const restoredMeta: import('@camstack/types').DeviceMeta = {
+    const restoredMeta: import('@dominevo/types').DeviceMeta = {
       id: 999,
       stableId: childStableId,
       addonId: 'provider-ha',
-      type: 'sensor' as import('@camstack/types').DeviceType,
+      type: 'sensor' as import('@dominevo/types').DeviceType,
       name: 'My Custom Sensor', // operator renamed — different from childStableId
       location: 'Kitchen', // operator edited
       // Operator-set role. D1033: a row with NO role gets the provider's on
@@ -1109,13 +1109,13 @@ describe('createBrokerDeviceManagerApi (worker-side)', () => {
     })
 
     const parentId = fakeDeviceIdCounter++
-    const parentDevice: import('@camstack/types').IDevice & {
-      getAccessoryChildren: () => readonly import('@camstack/types').AccessoryChildSpec[]
+    const parentDevice: import('@dominevo/types').IDevice & {
+      getAccessoryChildren: () => readonly import('@dominevo/types').AccessoryChildSpec[]
     } = asAccessoryParent({
       id: parentId,
       stableId: 'parent-restore-hub',
       parentDeviceId: null,
-      type: 'container' as import('@camstack/types').DeviceType,
+      type: 'container' as import('@dominevo/types').DeviceType,
       name: 'Parent Hub',
       online: true,
       features: [],
@@ -1169,16 +1169,16 @@ describe('createBrokerDeviceManagerApi (worker-side)', () => {
     const parentStableId = 'parent-prune-hub'
     const keepStableId = `${parentStableId}-keep` // matches the lone spec → kept
 
-    const keepSpec: import('@camstack/types').AccessoryChildSpec = {
+    const keepSpec: import('@dominevo/types').AccessoryChildSpec = {
       stableIdSuffix: 'keep',
-      meta: { type: 'sensor' as import('@camstack/types').DeviceType, name: 'Keep' },
+      meta: { type: 'sensor' as import('@dominevo/types').DeviceType, name: 'Keep' },
       config: {},
       factory: (ctx) =>
         asDevice({
           id: ctx.id,
           stableId: ctx.stableId,
           parentDeviceId: null,
-          type: 'sensor' as import('@camstack/types').DeviceType,
+          type: 'sensor' as import('@dominevo/types').DeviceType,
           name: 'Keep',
           online: true,
           features: [],
@@ -1242,13 +1242,13 @@ describe('createBrokerDeviceManagerApi (worker-side)', () => {
       capabilityRegistry: new CapabilityRegistry(makeFakeLogger()),
     })
 
-    const parentDevice: import('@camstack/types').IDevice & {
-      getAccessoryChildren: () => readonly import('@camstack/types').AccessoryChildSpec[]
+    const parentDevice: import('@dominevo/types').IDevice & {
+      getAccessoryChildren: () => readonly import('@dominevo/types').AccessoryChildSpec[]
     } = asAccessoryParent({
       id: PARENT_ID,
       stableId: parentStableId,
       parentDeviceId: null,
-      type: 'container' as import('@camstack/types').DeviceType,
+      type: 'container' as import('@dominevo/types').DeviceType,
       name: 'Parent Hub',
       online: true,
       features: [],
@@ -1333,7 +1333,7 @@ describe('createBrokerDeviceManagerApi (worker-side)', () => {
         id,
         stableId: `wave-${id}`,
         parentDeviceId: null,
-        type: 'sensor' as import('@camstack/types').DeviceType,
+        type: 'sensor' as import('@dominevo/types').DeviceType,
         name: `Wave ${id}`,
         online: true,
         features: [],
@@ -1411,7 +1411,7 @@ describe('createBrokerDeviceManagerApi (worker-side)', () => {
       id: parentId,
       stableId: 'esp:ir-transmitter-camera:board',
       parentDeviceId: null,
-      type: 'container' as import('@camstack/types').DeviceType,
+      type: 'container' as import('@dominevo/types').DeviceType,
       name: 'IR camera',
       online: true,
       features: [],
@@ -1431,16 +1431,16 @@ describe('createBrokerDeviceManagerApi (worker-side)', () => {
           {
             stableIdSuffix: 'button-menu',
             meta: {
-              type: 'button' as import('@camstack/types').DeviceType,
+              type: 'button' as import('@dominevo/types').DeviceType,
               name: 'Menu',
             },
             config: {},
-            factory: (ctx: import('@camstack/types').DeviceContext) =>
+            factory: (ctx: import('@dominevo/types').DeviceContext) =>
               asDevice({
                 id: ctx.id,
                 stableId: ctx.stableId,
                 parentDeviceId: parentId,
-                type: 'button' as import('@camstack/types').DeviceType,
+                type: 'button' as import('@dominevo/types').DeviceType,
                 name: 'Menu',
                 online: true,
                 features: [],
@@ -1489,7 +1489,7 @@ describe('createBrokerDeviceManagerApi (worker-side)', () => {
 
     const childFactory =
       (suffix: string) =>
-      (ctx: import('@camstack/types').DeviceContext): import('@camstack/types').IDevice => {
+      (ctx: import('@dominevo/types').DeviceContext): import('@dominevo/types').IDevice => {
         if (suffix === FAILING_SUFFIX) {
           throw new Error(`factory blew up for ${suffix}`)
         }
@@ -1497,7 +1497,7 @@ describe('createBrokerDeviceManagerApi (worker-side)', () => {
           id: ctx.id,
           stableId: ctx.stableId,
           parentDeviceId: null,
-          type: 'sensor' as import('@camstack/types').DeviceType,
+          type: 'sensor' as import('@dominevo/types').DeviceType,
           name: ctx.stableId,
           online: true,
           features: [],
@@ -1508,14 +1508,14 @@ describe('createBrokerDeviceManagerApi (worker-side)', () => {
         })
       }
 
-    const specs: import('@camstack/types').AccessoryChildSpec[] = Array.from(
+    const specs: import('@dominevo/types').AccessoryChildSpec[] = Array.from(
       { length: SPEC_COUNT },
       (_, i) => {
         const suffix = `acc-${i}`
         return {
           stableIdSuffix: suffix,
           meta: {
-            type: 'sensor' as import('@camstack/types').DeviceType,
+            type: 'sensor' as import('@dominevo/types').DeviceType,
             name: `Sensor ${i}`,
             role: 'numeric-sensor',
           },
@@ -1569,13 +1569,13 @@ describe('createBrokerDeviceManagerApi (worker-side)', () => {
     })
 
     const parentId = fakeDeviceIdCounter++
-    const parentDevice: import('@camstack/types').IDevice & {
-      getAccessoryChildren: () => readonly import('@camstack/types').AccessoryChildSpec[]
+    const parentDevice: import('@dominevo/types').IDevice & {
+      getAccessoryChildren: () => readonly import('@dominevo/types').AccessoryChildSpec[]
     } = asAccessoryParent({
       id: parentId,
       stableId: parentStableId,
       parentDeviceId: null,
-      type: 'container' as import('@camstack/types').DeviceType,
+      type: 'container' as import('@dominevo/types').DeviceType,
       name: 'Parent Hub',
       online: true,
       features: [],
@@ -1627,17 +1627,17 @@ describe('createBrokerDeviceManagerApi (worker-side)', () => {
     const PARENT_ID = 700
 
     const configStore = new Map<number, Record<string, unknown>>()
-    const metaStore = new Map<number, import('@camstack/types').DeviceMeta>()
+    const metaStore = new Map<number, import('@dominevo/types').DeviceMeta>()
 
     const baseMeta = (
       id: number,
       stableId: string,
       name: string,
-    ): import('@camstack/types').DeviceMeta => ({
+    ): import('@dominevo/types').DeviceMeta => ({
       id,
       stableId,
       addonId: 'provider-generic',
-      type: 'sensor' as import('@camstack/types').DeviceType,
+      type: 'sensor' as import('@dominevo/types').DeviceType,
       name,
       location: null,
       disabled: false,
@@ -1648,17 +1648,17 @@ describe('createBrokerDeviceManagerApi (worker-side)', () => {
     // The factory the kernel stores at spawn — picks the class FROM ctx config.
     // `built` records every instance it produces so we can assert which one ends
     // up in the registry after the rebuild.
-    const built: Array<{ kind: string; instance: import('@camstack/types').IDevice }> = []
+    const built: Array<{ kind: string; instance: import('@dominevo/types').IDevice }> = []
     const makeChild = (
-      ctx: import('@camstack/types').DeviceContext,
-    ): import('@camstack/types').IDevice => {
+      ctx: import('@dominevo/types').DeviceContext,
+    ): import('@dominevo/types').IDevice => {
       const rawKind = ctx.persistedConfig?.['kind']
       const kind = typeof rawKind === 'string' ? rawKind : 'A'
-      const instance: import('@camstack/types').IDevice = asDevice({
+      const instance: import('@dominevo/types').IDevice = asDevice({
         id: ctx.id,
         stableId: ctx.stableId,
         parentDeviceId: ctx.parentDeviceId ?? null,
-        type: 'sensor' as import('@camstack/types').DeviceType,
+        type: 'sensor' as import('@dominevo/types').DeviceType,
         name: ctx.deviceMeta?.name ?? ctx.stableId,
         online: true,
         features: [],
@@ -1671,10 +1671,10 @@ describe('createBrokerDeviceManagerApi (worker-side)', () => {
       return instance
     }
 
-    const childSpec: import('@camstack/types').AccessoryChildSpec = {
+    const childSpec: import('@dominevo/types').AccessoryChildSpec = {
       stableIdSuffix: 'acc-sensor',
       meta: {
-        type: 'sensor' as import('@camstack/types').DeviceType,
+        type: 'sensor' as import('@dominevo/types').DeviceType,
         name: 'Living Room Sensor',
         role: 'enum-sensor',
       },
@@ -1748,13 +1748,13 @@ describe('createBrokerDeviceManagerApi (worker-side)', () => {
       capabilityRegistry: new CapabilityRegistry(makeFakeLogger()),
     })
 
-    const parentDevice: import('@camstack/types').IDevice & {
-      getAccessoryChildren: () => readonly import('@camstack/types').AccessoryChildSpec[]
+    const parentDevice: import('@dominevo/types').IDevice & {
+      getAccessoryChildren: () => readonly import('@dominevo/types').AccessoryChildSpec[]
     } = asAccessoryParent({
       id: PARENT_ID,
       stableId: 'parent-generic',
       parentDeviceId: null,
-      type: 'container' as import('@camstack/types').DeviceType,
+      type: 'container' as import('@dominevo/types').DeviceType,
       name: 'Parent',
       online: true,
       features: [],
@@ -1875,7 +1875,7 @@ describe('createBrokerDeviceManagerApi (worker-side)', () => {
         id: fakeDeviceIdCounter++,
         stableId,
         parentDeviceId: null,
-        type: 'camera' as import('@camstack/types').DeviceType,
+        type: 'camera' as import('@dominevo/types').DeviceType,
         name: stableId,
         online: true,
         features: [] as readonly string[],

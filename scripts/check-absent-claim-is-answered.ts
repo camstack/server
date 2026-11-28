@@ -44,7 +44,7 @@
  *     the answer it does not like.
  *
  * SCOPE: UI trees only — a `.tsx` file, or a `.ts` file that imports React or
- * `@camstack/ui-library`, under `packages/addon-<name>/src` or
+ * `@dominevo/ui-library`, under `packages/addon-<name>/src` or
  * `packages/ui-library/src`. An addon's BACKEND half says "not installed" about
  * plenty of things (a missing python runtime, a codec, an intercom peer) with
  * no query and no operator on the other end; those are a different sentence.
@@ -147,7 +147,7 @@ function walk(dir: string, out: string[]): void {
 function isUiSource(full: string): boolean {
   if (full.endsWith('.tsx')) return true
   const source = fs.readFileSync(full, 'utf8')
-  return /from ['"]react['"]|from ['"]@camstack\/ui-library['"]/.test(source)
+  return /from ['"]react['"]|from ['"]@dominevo\/ui-library['"]/.test(source)
 }
 
 /**

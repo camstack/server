@@ -8,7 +8,7 @@
  * The swap now writes the configs with their markers unchanged and runs the
  * crash-idempotent repair, so a crash while the secrets move loses nothing.
  */
-import { isSecretMarker } from '@camstack/types'
+import { isSecretMarker } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   assertNoCrossedSecretScopes,

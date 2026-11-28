@@ -68,7 +68,7 @@
  */
 
 import { randomUUID } from 'node:crypto'
-import type { IScopedLogger, MediaFileBytes, MediaFileKind } from '@camstack/types'
+import type { IScopedLogger, MediaFileBytes, MediaFileKind } from '@dominevo/types'
 import { nextUnstoredMediaId } from './unstored-media-id.js'
 import {
   downscaleFullFrameJpeg,

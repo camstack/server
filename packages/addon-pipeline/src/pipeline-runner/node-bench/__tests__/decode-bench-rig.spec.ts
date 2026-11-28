@@ -6,7 +6,7 @@
  * stream refused before its fork when the node is out of RAM, and every
  * worker stopped at close.
  */
-import type { IScopedLogger, NodeDecodeProfile } from '@camstack/types'
+import type { IScopedLogger, NodeDecodeProfile } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { ForkedChildLike } from '../../../session-decode/session-decode-coordinator.js'
 import { testLease } from '../../../session-decode/__tests__/test-lease-knobs.js'

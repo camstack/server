@@ -20,7 +20,7 @@ ACTIONS (dock, spot-clean, follow-pet, go-to-point, …). Those are a different
 physical model, so this is a NEW cap, not an overload of `ptz`.
 
 `navigation` is the SOURCE OF TRUTH. Two consumers adapt FROM it: (1) a native
-CamStack navigation panel, data-driven from `listActions` / `getFeatures`; and
+Dominevo navigation panel, data-driven from `listActions` / `getFeatures`; and
 (2) the PTZ surface, via a thin adapter that mimics `ptz` from `navigation`.
 
 ## The cap shape

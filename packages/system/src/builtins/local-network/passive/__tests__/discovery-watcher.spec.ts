@@ -1,4 +1,4 @@
-import type { DiscoveryObservation, IScopedLogger, LogExtras } from '@camstack/types'
+import type { DiscoveryObservation, IScopedLogger, LogExtras } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   DiscoveryWatcher,

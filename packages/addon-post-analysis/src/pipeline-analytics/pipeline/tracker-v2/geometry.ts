@@ -2,7 +2,7 @@
  * Box arithmetic for tracker v2 (D683). Pure. One copy: L1 and L2 both
  * measure with these, so "overlap" means one thing everywhere.
  */
-import type { BoundingBox } from '@camstack/types'
+import type { BoundingBox } from '@dominevo/types'
 
 export interface Point {
   readonly x: number

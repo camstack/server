@@ -1,8 +1,8 @@
 # Home Assistant onboarding over OAuth — generalising the Alexa linking server
 
 > Status: **implemented hub-side, TRAIN-BOUND**, 2026-08-08. Every hub change in
-> this document is in `server/backend` + `@camstack/system` + `@camstack/types`,
-> so none of it is live until a `@camstack/server` train ships. The Home
+> this document is in `server/backend` + `@dominevo/system` + `@dominevo/types`,
+> so none of it is live until a `@dominevo/server` train ships. The Home
 > Assistant component half lives in `camstack/homeassistant-component` and
 > degrades to the existing username/password flow against a hub that predates
 > the train. Read with
@@ -27,9 +27,9 @@ client.
 | --- | --- | --- |
 | `GET/POST /api/oauth2/authorize`, `POST /api/oauth2/token` | `server/backend/src/api/oauth2/oauth2-routes.ts` | core backend — **train** |
 | consent page | `server/backend/src/api/oauth2/consent-page.ts` | core backend — **train** |
-| code / access / refresh grant logic | `packages/system/src/builtins/local-auth/oauth-grants.ts` | `@camstack/system` — **train** |
-| session records (list + revoke, admin UI) | `packages/system/src/builtins/local-auth/oauth-session-manager.ts` | `@camstack/system` — **train** |
-| `user-management.oauth*` cap methods | `packages/types/src/capabilities/user-management.cap.ts` | `@camstack/types` — **train** |
+| code / access / refresh grant logic | `packages/system/src/builtins/local-auth/oauth-grants.ts` | `@dominevo/system` — **train** |
+| session records (list + revoke, admin UI) | `packages/system/src/builtins/local-auth/oauth-session-manager.ts` | `@dominevo/system` — **train** |
+| `user-management.oauth*` cap methods | `packages/types/src/capabilities/user-management.cap.ts` | `@dominevo/types` — **train** |
 | "I am a linkable client" declaration | `oauth-integration` collection cap, provided by `addon-export-alexa` **and** `homeassistant-export` | addon — deployable |
 
 Shape of the existing flow, unchanged by this work:
@@ -129,7 +129,7 @@ reason. **This is what makes the component releasable before the hub train.**
 
 > **Amended 2026-08-09 ([D101](../decisions/adr-0101.md)).** As first shipped,
 > the `homeassistant` descriptor was registered by the **`local-auth` builtin**
-> inside `@camstack/system`, on the reasoning that Home Assistant had no addon
+> inside `@dominevo/system`, on the reasoning that Home Assistant had no addon
 > of its own — the component being a client of the hub's tRPC API rather than an
 > exporter. That premise expired when `homeassistant-export` shipped: the
 > component IS that addon's counterpart, and pins

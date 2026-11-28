@@ -7,7 +7,7 @@
 import { copyFileSync, existsSync, readdirSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import type { MigrationMeta } from '@camstack/types'
+import type { MigrationMeta } from '@dominevo/types'
 import Database from 'better-sqlite3'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { MigrationEngine } from '../migrations/migration-engine.js'

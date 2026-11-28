@@ -1,7 +1,7 @@
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import type { IEventBus, IScopedLogger, SystemEvent } from '@camstack/types'
+import type { IEventBus, IScopedLogger, SystemEvent } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { serverRootDir, writeDesktopAppState } from '../../../server-root/index.js'
 import { ServerUpdateService } from '../server-update.service.js'
@@ -23,7 +23,7 @@ beforeEach(() => {
   tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'hub-desktop-announce-'))
   fs.writeFileSync(
     path.join(tmp, 'running.json'),
-    JSON.stringify({ name: '@camstack/server', version: '1.2.32' }),
+    JSON.stringify({ name: '@dominevo/server', version: '1.2.32' }),
     'utf-8',
   )
 })
@@ -67,7 +67,7 @@ describe('the hub announces its desktop shell updating itself', () => {
       data: {
         kind: 'framework-update',
         what: 'desktop-shell',
-        packageName: 'CamStack desktop app',
+        packageName: 'Dominevo desktop app',
         fromVersion: '1.2.10',
         toVersion: '1.2.11',
         nodeId: 'hub',

@@ -8,7 +8,7 @@
  * Absence of the keys is the marker; a rerun finds nothing and writes nothing. A read that fails
  * throws and nothing is written. The per-camera rows are still swept by the retention pass.
  */
-import { type MigrationPlan, preconditionOf } from '@camstack/types'
+import { type MigrationPlan, preconditionOf } from '@dominevo/types'
 import { PIPELINE_ANALYTICS_ID } from './split-enabled-key.js'
 
 export const RETIRED_SUGGESTION_KEY = 'suggestionMinCosine'

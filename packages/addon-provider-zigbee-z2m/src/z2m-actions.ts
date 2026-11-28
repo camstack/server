@@ -4,9 +4,9 @@
  * answers with `status: ok | error`; a refusal reaches the button as the server's own reason.
  * Every action is `auth: 'admin'`: they change the network.
  */
-import { customAction, defineCustomActions } from '@camstack/types'
+import { customAction, defineCustomActions } from '@dominevo/types'
 import { z } from 'zod'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { type Delay, realDelay, startFirmwareUpdate } from './z2m-firmware.js'
 import type { Z2mHub } from './z2m-hub.js'
 import { type Z2mDevice, Z2mOtaCheckSchema, Z2mUpdateStateSchema } from './z2m-protocol.js'

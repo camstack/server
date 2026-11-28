@@ -30,13 +30,13 @@ import {
   deriveRecordingMode,
   migrateLegacyDeviceSignalConfig,
   stripRetiredBandPreBufferSec,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type {
   RecordingConfig,
   RecordingModeSource,
   RecordingStorageMode,
   IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /**
  * READ is forgiving where the wire contract is strict — see the header.
@@ -319,7 +319,7 @@ export async function saveDeviceConfig(
 /**
  * The active recording mode for a config's bands — the value the `recording`
  * cap status reports. Thin alias over the canonical {@link deriveRecordingMode}
- * in `@camstack/types`, which the settings UI derives from too.
+ * in `@dominevo/types`, which the settings UI derives from too.
  */
 export function activeModeForConfig(config: RecordingModeSource): RecordingStorageMode {
   return deriveRecordingMode(config)

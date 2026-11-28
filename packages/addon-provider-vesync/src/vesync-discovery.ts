@@ -4,7 +4,7 @@ import {
   fanControlCapability,
   humidifierCapability,
   switchCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type {
   VeSyncDeviceSnapshot,
   VeSyncHumidifierSnapshot,
@@ -48,7 +48,7 @@ export interface BuildHumidifierCandidatesInput {
   readonly accountId: string
   readonly accountName: string
   readonly humidifiers: readonly VeSyncHumidifierSnapshot[]
-  /** Adopted CamStack device id PER humidifier `cid`, or null when not adopted. */
+  /** Adopted Dominevo device id PER humidifier `cid`, or null when not adopted. */
   readonly adoptedDeviceIdByCid: Readonly<Record<string, number | null>>
 }
 
@@ -84,7 +84,7 @@ export interface BuildPurifierCandidatesInput {
   readonly accountId: string
   readonly accountName: string
   readonly purifiers: readonly VeSyncPurifierSnapshot[]
-  /** Adopted CamStack device id PER purifier `cid`, or null when not adopted. */
+  /** Adopted Dominevo device id PER purifier `cid`, or null when not adopted. */
   readonly adoptedDeviceIdByCid: Readonly<Record<string, number | null>>
 }
 
@@ -131,7 +131,7 @@ export interface BuildVeSyncCandidatesInput {
   readonly online: boolean
   /** Every purifier and humidifier on the account. */
   readonly devices: readonly VeSyncDeviceSnapshot[]
-  /** Adopted CamStack device id per device `cid`, or null when not adopted. */
+  /** Adopted Dominevo device id per device `cid`, or null when not adopted. */
   readonly adoptedDeviceIdByCid: Readonly<Record<string, number | null>>
 }
 

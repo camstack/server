@@ -12,7 +12,7 @@
  * free-form `meta` and was therefore not queryable.
  */
 import { describe, it, expect, vi } from 'vitest'
-import type { IScopedLogger, LogExtras, LogTags } from '@camstack/types'
+import type { IScopedLogger, LogExtras, LogTags } from '@dominevo/types'
 import { handleInitiateSessionWithOffer, type RtcSessionContext } from '../handlers/rtc-session.js'
 import type { VerifiedDirectiveIdentity } from '../directive-router.js'
 import { describeDirectiveArrival } from '../http-server.js'

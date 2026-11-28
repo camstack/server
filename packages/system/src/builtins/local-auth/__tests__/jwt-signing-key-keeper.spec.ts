@@ -1,4 +1,4 @@
-import type { KeychainResolveEntry, SecretsAccess } from '@camstack/types'
+import type { KeychainResolveEntry, SecretsAccess } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   clearProcessJwtSigningKey,

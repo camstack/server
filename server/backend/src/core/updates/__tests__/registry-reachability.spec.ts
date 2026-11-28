@@ -1,4 +1,4 @@
-import type { Alert, IScopedLogger } from '@camstack/types'
+import type { Alert, IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   REGISTRY_UNREACHABLE_MIN_FAILURE_MS,

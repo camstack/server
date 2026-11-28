@@ -5,8 +5,8 @@
  * by its shape. There is no `legacy` field: a pre-D892 bearer is a 401
  * (D895, `legacy-bearer-refused.spec.ts`).
  */
-import { attachUserManagementInternal, type UserManagementInternal } from '@camstack/server/system'
-import type { CredentialTokenClaims } from '@camstack/types'
+import { attachUserManagementInternal, type UserManagementInternal } from '@dominevo/server/system'
+import type { CredentialTokenClaims } from '@dominevo/types'
 import Fastify from 'fastify'
 import { afterEach, describe, expect, it } from 'vitest'
 import { registerAuthWhoamiRoute } from '../auth-whoami.js'

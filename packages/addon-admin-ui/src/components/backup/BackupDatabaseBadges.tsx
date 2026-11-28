@@ -3,7 +3,7 @@
  * text (`SETTINGS · EVENTS · HISTORY`). One component for the schedule table,
  * the archive list and the restore wizard.
  */
-import type { DataStoreDatabase } from '@camstack/types'
+import type { DataStoreDatabase } from '@dominevo/types'
 import { databaseShortLabel } from './backup-databases'
 
 export interface BackupDatabaseBadgesProps {

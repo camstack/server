@@ -9,12 +9,12 @@
  * different engine, different output cadence. Both backends talk to a
  * persistent subprocess over the same length-prefixed wire protocol.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import * as path from 'node:path'
 import * as fs from 'node:fs'
-import { errMsg } from '@camstack/types'
-// eslint-disable-next-line no-restricted-imports -- `ensureModel` is a build-time dep, the same waiver detection-pipeline and the embedding encoder use for the shared model downloader in `@camstack/server/system`.
-import { ensureModel } from '@camstack/server/system/addon-utils'
+import { errMsg } from '@dominevo/types'
+// eslint-disable-next-line no-restricted-imports -- `ensureModel` is a build-time dep, the same waiver detection-pipeline and the embedding encoder use for the shared model downloader in `@dominevo/server/system`.
+import { ensureModel } from '@dominevo/server/system/addon-utils'
 import { AUDIO_CLASSIFIER_MODELS } from '../detection-pipeline/registry/model-catalogs.js'
 import { AudioSubprocessChannel, parseClassifyReply } from './audio-subprocess-channel.js'
 
@@ -140,7 +140,7 @@ export async function ensureYamnetFiles(modelsDir: string): Promise<YamnetFiles>
 function resolveAudioPythonDir(): string {
   const candidates: string[] = []
   try {
-    const pkgPath = require.resolve('@camstack/addon-pipeline/package.json')
+    const pkgPath = require.resolve('@dominevo/addon-pipeline/package.json')
     candidates.push(path.join(path.dirname(pkgPath), 'python'))
   } catch {
     // not resolvable in-tree before npm install
@@ -310,7 +310,7 @@ class AppleSoundAnalysisPipeline implements IAudioPipeline {
   /** Find pre-compiled binary or compile from Swift source. */
   private async resolveSwiftBinary(): Promise<string | null> {
     // Phase D bundle merge: audio-analyzer ships inside
-    // `@camstack/addon-pipeline/dist/audio-analyzer/`, with swift
+    // `@dominevo/addon-pipeline/dist/audio-analyzer/`, with swift
     // sources at the bundle's `swift/audio-analyzer/` sub-folder.
     // From `dist/audio-analyzer/index.js`, that's `../../swift/audio-analyzer`.
     const candidates = [

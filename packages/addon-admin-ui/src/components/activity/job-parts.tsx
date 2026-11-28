@@ -10,9 +10,9 @@ import {
   useJobsCancel,
   useSystem,
   useJobsDismiss,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
-import type { Job } from '@camstack/types'
+import type { Job } from '@dominevo/types'
 import { Loader2, X } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'

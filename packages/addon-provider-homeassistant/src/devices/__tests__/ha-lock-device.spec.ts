@@ -1,11 +1,11 @@
 import { describe, it, expect, vi } from 'vitest'
-import { DeviceType, type IDeviceRuntimeState } from '@camstack/types'
+import { DeviceType, type IDeviceRuntimeState } from '@dominevo/types'
 import { HaLockDevice } from '../ha-lock-device.js'
 
 function buildLockCtx(
   entityId: string,
   publishMutate = vi.fn(async () => null),
-): import('@camstack/types').DeviceContext {
+): import('@dominevo/types').DeviceContext {
   let runtimeStateRef: IDeviceRuntimeState | null = null
 
   return {
@@ -73,10 +73,10 @@ function buildLockCtx(
       addContext: vi.fn(),
       with: vi.fn(),
     },
-  } as unknown as import('@camstack/types').DeviceContext
+  } as unknown as import('@dominevo/types').DeviceContext
 }
 
-function getLockProvider(ctx: import('@camstack/types').DeviceContext): {
+function getLockProvider(ctx: import('@dominevo/types').DeviceContext): {
   lock: (i: { deviceId: number; code?: string }) => Promise<void>
   unlock: (i: { deviceId: number; code?: string }) => Promise<void>
   open: (i: { deviceId: number }) => Promise<void>

@@ -14,7 +14,7 @@
  *    operator.
  *  - **Aliases are never offered**, but a stored alias is shown as selected.
  */
-import { ICON_KEYS, iconsInCategory } from '@camstack/types'
+import { ICON_KEYS, iconsInCategory } from '@dominevo/types'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { Ban, MapPin } from 'lucide-react'
 import { beforeAll, describe, expect, it, vi } from 'vitest'

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { expandAudioChunkToF32le } from '@camstack/types'
+import { expandAudioChunkToF32le } from '@dominevo/types'
 import { AudioRtpDecoder } from '../rtsp/audio-rtp-decoder.js'
 
 /**
@@ -220,7 +220,7 @@ describe('AudioRtpDecoder', () => {
   })
 
   describe('μ-law decode correctness', () => {
-    // These guard the TABLE, which moved to `@camstack/types` when the decoder
+    // These guard the TABLE, which moved to `@dominevo/types` when the decoder
     // stopped decoding (D455). They are asserted through the chunk the decoder
     // emits so the path stays end to end: a decoder that mislabelled its codec
     // would fail here even with a correct table.

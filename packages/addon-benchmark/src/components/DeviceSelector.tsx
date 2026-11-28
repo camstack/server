@@ -5,7 +5,7 @@
  * device (D646) and went with it.
  */
 import { useT } from '../i18n/index.js'
-import { Button } from '@camstack/ui-library'
+import { Button } from '@dominevo/ui-library'
 
 export interface DeviceOption {
   readonly key: string

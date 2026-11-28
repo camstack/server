@@ -1,4 +1,4 @@
-import { defaultAddDeviceMode } from '@camstack/types'
+import { defaultAddDeviceMode } from '@dominevo/types'
 import {
   Breadcrumb,
   PageActions,
@@ -32,7 +32,7 @@ import {
   useIntegrationsUpdate,
   useSystem,
   Button,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   ArrowLeft,

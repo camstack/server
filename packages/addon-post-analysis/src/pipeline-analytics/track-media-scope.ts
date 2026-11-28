@@ -43,7 +43,7 @@
  * Pure: no store, no I/O. The facade supplies the rows.
  */
 
-import type { MediaFileKind } from '@camstack/types'
+import type { MediaFileKind } from '@dominevo/types'
 import {
   FACE_MEDIA_OWNER_PREFIX,
   type OwnerKind,

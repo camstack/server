@@ -7,7 +7,7 @@
  * which code came back. None asserts that a constant exists.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import type { AmcrestClipRow } from '../clip-search.js'
 import { type ClipStillGuard, createClipStillGuard } from '../clip-still-guard.js'

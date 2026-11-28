@@ -8,7 +8,7 @@
  * restored values. So a build whose load did not answer is REFUSED, by name,
  * with `tags.deviceId` — never quietly started empty (D49, D391).
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 /** Where the load was for — named on the refusal line. */
 export type RuntimeStateLoadPhase = 'create' | 'accessory-child' | 'rebuild' | 'context'

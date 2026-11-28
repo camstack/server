@@ -31,10 +31,10 @@
  * ## Why here and not in the types package
  *
  * These are the recorder's own density policy and nothing else reads them.
- * Putting them in `@camstack/types` would make a list-density tweak a
+ * Putting them in `@dominevo/types` would make a list-density tweak a
  * framework change: a publish and three node updates to move a number.
  */
-import type { Clip } from '@camstack/types'
+import type { Clip } from '@dominevo/types'
 
 /** Audio is constant on an outdoor camera — one row per five minutes. */
 export const AUDIO_QUIET_MS = 5 * 60_000

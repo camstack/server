@@ -3,7 +3,7 @@
  * a window over midnight says so, presets and weekdays work, and sun choices
  * are refused on a site without a location.
  */
-import { type TimeWindow, TimeWindowSchema } from '@camstack/types'
+import { type TimeWindow, TimeWindowSchema } from '@dominevo/types'
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { useState } from 'react'
 import { describe, expect, it } from 'vitest'

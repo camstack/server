@@ -57,7 +57,7 @@ describe('listCcuFaults', () => {
     expect(out.unreported).toEqual(['NEW'])
   })
 
-  it('carries the adopted CamStack device id and the since of the matching service message', async () => {
+  it('carries the adopted Dominevo device id and the since of the matching service message', async () => {
     const { deps } = fakeDeps({
       devices: () => [device('ABC', 'Lamp', { UNREACH: true })],
       serviceMessages: async () => [

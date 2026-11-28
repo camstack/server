@@ -6,7 +6,7 @@
  * where it already happens (the hooks the sidebar and the Devices /
  * Integrations pages already call) and this module only reshapes it.
  */
-import type { DeviceInfo } from '@camstack/types'
+import type { DeviceInfo } from '@dominevo/types'
 import {
   deviceNameNouns,
   indexDeviceNames,
@@ -14,7 +14,7 @@ import {
   resolveParentNames,
   deviceIntegrationResolver,
   deviceLeadIcon,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import type { AddonPageInfo } from '../layouts/AddonPageLoader'
 import { integrationDetailUrl } from './integration-instance-selection'
 import type { SearchItem } from './global-search'

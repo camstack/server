@@ -22,8 +22,8 @@
  * had to answer: the outbox is a DEDUP LEDGER, so a hydration moved off the
  * critical path must lose no notification and must duplicate none.
  */
-import type { InMemoryRecords, ObjectEvent } from '@camstack/types'
-import { NcRuleInputSchema } from '@camstack/types'
+import type { InMemoryRecords, ObjectEvent } from '@dominevo/types'
+import { NcRuleInputSchema } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import type { NcSendInput, NcTargetRef } from '../dispatcher.js'

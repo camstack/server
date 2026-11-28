@@ -12,7 +12,7 @@
  * forgot to fetch.
  */
 
-import type { AdoptionCandidateResult, IScopedLogger } from '@camstack/types'
+import type { AdoptionCandidateResult, IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import type { AdoptionJobProvider } from '../adoption-job-engine.js'
 import { AdoptionJobEngine } from '../adoption-job-engine.js'

@@ -23,8 +23,8 @@
  * operator chose for everything that must work away from home, which is what
  * a phone is. The ranking above only orders the rest of the list.
  */
-import type { ConnectionEndpoint } from '@camstack/types'
-import { CAMSTACK_APP_LINK_ORIGIN, toAppLinkHubOrigin } from '@camstack/types'
+import type { ConnectionEndpoint } from '@dominevo/types'
+import { CAMSTACK_APP_LINK_ORIGIN, toAppLinkHubOrigin } from '@dominevo/types'
 
 /** The central link domain + intent path the viewer app claims. */
 export const CENTRAL_CONNECT_URL = `${CAMSTACK_APP_LINK_ORIGIN}/connect`

@@ -3,7 +3,7 @@
  * VERBATIM — it must NOT re-validate/strip against the cap def's output
  * schema (Lever 1, 2026-07-11).
  *
- * WHY: the hub loads a framework-versioned `@camstack/types` that can lag a
+ * WHY: the hub loads a framework-versioned `@dominevo/types` that can lag a
  * freshly-deployed self-contained addon. Applying `.output(schema).parse()`
  * at the hub silently stripped fields the newer addon added — that is how
  * `models[].group.resolution` vanished from `pipelineExecutor.getSchema`.

@@ -29,7 +29,7 @@ import {
   type SendResult,
   type Target,
   type TargetKind,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { HttpRequestPlan, HttpResponseLike, NotifierAdapter } from './adapters/adapter.js'
 import {
   DEFAULT_MAX_ATTACHMENT_BYTES,
@@ -121,8 +121,8 @@ function errMsg(err: unknown): string {
 /** The canned notification `testTarget` sends when the caller omits a sample. */
 function cannedNotification(): Notification {
   return {
-    body: 'This is a CamStack test notification.',
-    title: 'CamStack',
+    body: 'This is a Dominevo test notification.',
+    title: 'Dominevo',
     format: 'text',
     priority: 3,
   }

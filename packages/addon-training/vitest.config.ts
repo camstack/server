@@ -10,12 +10,12 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@camstack/ui-library/testing': path.resolve(
+      '@dominevo/ui-library/testing': path.resolve(
         root,
         '../ui-library/src/testing/select-option.ts',
       ),
-      '@camstack/ui': path.resolve(root, '../ui-library/src/index.ts'),
-      '@camstack/ui-library': path.resolve(root, '../ui-library/src/index.ts'),
+      '@dominevo/ui': path.resolve(root, '../ui-library/src/index.ts'),
+      '@dominevo/ui-library': path.resolve(root, '../ui-library/src/index.ts'),
     },
   },
   test: {

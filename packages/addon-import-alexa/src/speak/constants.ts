@@ -1,4 +1,4 @@
-import type { LinkTarget } from '@camstack/types'
+import type { LinkTarget } from '@dominevo/types'
 
 /** Echo speech limits and the worker restart bound (same window as CrashSupervisor). */
 

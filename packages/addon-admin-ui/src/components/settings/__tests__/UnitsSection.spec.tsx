@@ -3,18 +3,18 @@
  * written through the account-preference hook, and nothing can be written
  * while the row is pending, failed to load, or unreadable.
  */
-import { selectOption } from '@camstack/ui-library/testing'
+import { selectOption } from '@dominevo/ui-library/testing'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { AccountUnitPreferencesState } from '@camstack/ui-library'
+import type { AccountUnitPreferencesState } from '@dominevo/ui-library'
 import i18n from '../../../i18n'
 
 let state: AccountUnitPreferencesState
 const update = vi.fn()
 
-vi.mock('@camstack/ui-library', async () => {
+vi.mock('@dominevo/ui-library', async () => {
   const actual =
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+    await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return { ...actual, useAccountUnitPreferences: () => state }
 })
 

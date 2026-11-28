@@ -9,7 +9,7 @@ import {
   generateAutomationBlock,
   LINKED_TRIGGER_TEMPLATE_ID,
   linkedTriggerValues,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { expandInstance } from '../../templates/template-values'
 import { isListedAutomation, isPlainScript, looksLikeAutomation } from '../recipe-from-code'

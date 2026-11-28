@@ -13,7 +13,7 @@
  * Disarm: the larger box (either variant): "the car turning in is refused by
  * reach" goes RED here, and (S) in `followup-102-scenes.spec.ts`.
  */
-import type { BoundingBox } from '@camstack/types'
+import type { BoundingBox } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { LINK_VEHICLE_REACH_DIAGONALS } from '../constants.js'
 import { diagonal } from '../geometry.js'

@@ -11,7 +11,7 @@
  *     complete window set and cannot half-apply.
  */
 import { describe, expect, it } from 'vitest'
-import type { ConfigField, RecordingOnboardOptions, RecordingOnboardStatus } from '@camstack/types'
+import type { ConfigField, RecordingOnboardOptions, RecordingOnboardStatus } from '@dominevo/types'
 import {
   RECORDING_ONBOARD_KEYS,
   buildRecordingOnboardConfigSchema,

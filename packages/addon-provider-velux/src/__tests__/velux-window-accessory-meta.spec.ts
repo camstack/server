@@ -10,7 +10,7 @@ import {
   DeviceRole,
   DeviceType,
   type IDeviceRuntimeState,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { VeluxWindowDevice } from '../devices/velux-window-device.js'
 

@@ -9,7 +9,7 @@ import {
   type DeviceContext,
   type IDeviceRuntimeState,
   type PowerMeterStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { HaSwitchDevice } from '../devices/ha-switch-device.js'
 
 type BusHandler = (event: { data: unknown }) => void

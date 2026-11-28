@@ -21,7 +21,7 @@ import {
   isSwitchFan,
   isSwitchHeater,
   isSwitchLight,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 import type { GoogleDeviceType, GoogleTraitName, SyncDevice } from './protocol.js'
 import { traitsForCaps } from './trait-catalog.js'
@@ -40,7 +40,7 @@ export interface ExportableDeviceFacts {
   readonly capNames: readonly string[]
 }
 
-const MANUFACTURER = 'CamStack'
+const MANUFACTURER = 'Dominevo'
 
 /**
  * Pick the Google device type. Trait-led, then type-led:
@@ -50,7 +50,7 @@ const MANUFACTURER = 'CamStack'
  * - otherwise the device is an on/off actuator, and only then do
  *   `DeviceType` and the switch's sub-role choose its type (operator decision
  *   2026-11-12: every switch sub-role is exported as its own type, OnOff only).
- *   The role is read only through the `@camstack/types` accessors:
+ *   The role is read only through the `@dominevo/types` accessors:
  *   an outlet is an OUTLET, a `switch-light` relay a LIGHT, a `switch-fan` a
  *   FAN, a `switch-heater` a HEATER (Google requires no trait of a heater, so
  *   OnOff alone is honest — no TemperatureSetting is declared). A helper

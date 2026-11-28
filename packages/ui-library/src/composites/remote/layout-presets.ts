@@ -17,7 +17,7 @@ import {
   type InsertOptions,
   insertComponent,
   type RemoteLayoutPayload,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { appIconKey } from './app-brand-icons'
 import { type ButtonSpec, buildLayout } from './layout-model'
 

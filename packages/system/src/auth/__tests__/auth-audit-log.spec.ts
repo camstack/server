@@ -1,4 +1,4 @@
-import type { SettingsStoreClient } from '@camstack/types'
+import type { SettingsStoreClient } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { makeStore } from '../../builtins/local-auth/__tests__/memory-settings-store.js'
 import { AuthAuditLog } from '../auth-audit-log.js'

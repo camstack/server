@@ -12,8 +12,8 @@ import {
   DialogHeader,
   DialogTitle,
   useBackupTrigger,
-} from '@camstack/ui-library'
-import type { DataStoreDatabase } from '@camstack/types'
+} from '@dominevo/ui-library'
+import type { DataStoreDatabase } from '@dominevo/types'
 import { useQueryClient } from '@tanstack/react-query'
 import { Loader2, Play } from 'lucide-react'
 import { useState } from 'react'

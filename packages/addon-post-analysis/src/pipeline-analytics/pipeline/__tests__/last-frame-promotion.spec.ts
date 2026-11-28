@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import type { MediaFile } from '@camstack/types'
+import type { MediaFile } from '@dominevo/types'
 import { makeTestMediaFile } from '../../../__tests__/support/media-file.js'
 import { decideLastFramePromotion } from '../last-frame-promotion.js'
 

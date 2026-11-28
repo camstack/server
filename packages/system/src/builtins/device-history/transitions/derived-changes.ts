@@ -7,7 +7,7 @@
  * without a store. Boolean and enum series are change-only; a gauge is as dense as its capture
  * interval, and the burst rule (`change-coalescing.ts`) nets it to one change per field.
  */
-import type { DeviceHistoryKind, TransitionValue } from '@camstack/types'
+import type { DeviceHistoryKind, TransitionValue } from '@dominevo/types'
 import {
   coalesceChanges,
   fieldKey,

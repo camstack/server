@@ -29,8 +29,8 @@
 import type { ChildProcess } from 'node:child_process'
 import { rm, stat } from 'node:fs/promises'
 
-import type { IScopedLogger, PinnedFfmpegResolver } from '@camstack/types'
-import { type PinnedFfmpegSpawnAnswer, resolvePinnedFfmpegSpawner } from '@camstack/types/node'
+import type { IScopedLogger, PinnedFfmpegResolver } from '@dominevo/types'
+import { type PinnedFfmpegSpawnAnswer, resolvePinnedFfmpegSpawner } from '@dominevo/types/node'
 import type { ClipArtifactStore } from './clip-artifact-store.js'
 import type { HikvisionClipRow } from './clip-catalog.js'
 import { estimateReplayFps } from './clip-replay-rate.js'

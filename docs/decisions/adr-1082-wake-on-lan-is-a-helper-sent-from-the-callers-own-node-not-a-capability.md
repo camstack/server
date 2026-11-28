@@ -15,7 +15,7 @@ Waking a machine is one UDP datagram on its own broadcast domain. A capability w
 
 ## Decision
 
-The packet builder is pure and lives in `@camstack/types`; the sender is in `@camstack/types/node` and is called by the addon on the node that is on the machine's network. Refusals are typed (malformed MAC, no usable target, send failure). Success means the packet was sent, never that the machine is awake.
+The packet builder is pure and lives in `@dominevo/types`; the sender is in `@dominevo/types/node` and is called by the addon on the node that is on the machine's network. Refusals are typed (malformed MAC, no usable target, send failure). Success means the packet was sent, never that the machine is awake.
 
 ## Consequences
 

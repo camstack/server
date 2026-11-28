@@ -5,7 +5,7 @@
  * a builtin added to the engine without a hint fails CI, and a mockup's `for`
  * (which does not exist) can never be offered.
  */
-import { EXPRESSION_BUILTIN_NAMES, EXPRESSION_INJECTED_NOW } from '@camstack/types'
+import { EXPRESSION_BUILTIN_NAMES, EXPRESSION_INJECTED_NOW } from '@dominevo/types'
 
 export type SuggestionKind = 'binding' | 'now' | 'builtin'
 

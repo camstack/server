@@ -1,4 +1,4 @@
-import type { CamStreamDescriptor } from '@camstack/types'
+import type { CamStreamDescriptor } from '@dominevo/types'
 
 /**
  * How long the broker lets a Home Hub child's session run before it re-dials on

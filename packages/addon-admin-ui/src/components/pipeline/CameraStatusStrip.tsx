@@ -14,7 +14,7 @@ import {
   getPhaseVisual,
   usePipelineOrchestratorGetPipelineAssignments,
   useUiText,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 
 import { useDeviceList } from '../../hooks/useDevice'
 import {
@@ -22,7 +22,7 @@ import {
   useCameraMetricsSnapshots,
 } from './assignments/use-camera-metrics'
 import { useTranslation } from 'react-i18next'
-import { formatNumeric } from '@camstack/ui-library'
+import { formatNumeric } from '@dominevo/ui-library'
 
 interface CameraStatusStripProps {
   /**

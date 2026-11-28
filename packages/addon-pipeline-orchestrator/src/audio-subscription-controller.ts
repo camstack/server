@@ -68,8 +68,8 @@ import type {
   ReadinessTransition,
   RunnerCameraConfig,
   Unsubscribe,
-} from '@camstack/types'
-import { errMsg, makeSourceBrokerId, nodePin } from '@camstack/types'
+} from '@dominevo/types'
+import { errMsg, makeSourceBrokerId, nodePin } from '@dominevo/types'
 import { type AudioNodeLoad, balanceAudio } from './audio-load-balancer.js'
 import { selectAudioCamStream } from './audio-stream-selection.js'
 import type { AudioTrackProbe } from './audio-track-probe.js'

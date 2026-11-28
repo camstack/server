@@ -14,7 +14,7 @@
  *     post-Python accelerator-visible flip), on the same node scope.
  *   - onShutdown emits `down`.
  */
-import type { SystemEvent } from '@camstack/types'
+import type { SystemEvent } from '@dominevo/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const hoisted = vi.hoisted(() => {

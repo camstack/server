@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Camera, Check } from 'lucide-react'
 
-import { useDeviceManagerDiscoverDevices, Button } from '@camstack/ui-library'
+import { useDeviceManagerDiscoverDevices, Button } from '@dominevo/ui-library'
 interface DeviceDiscoveryStepProps {
   providerId: string
   onImport: (externalIds: readonly string[]) => void

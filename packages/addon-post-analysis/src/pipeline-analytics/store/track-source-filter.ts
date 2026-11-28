@@ -25,7 +25,7 @@
  * could not read, and that is what made "Sensor" and "Audio" select the same
  * 116 rows on the live hub.
  */
-import { type TrackSource, TrackSourceSchema } from '@camstack/types'
+import { type TrackSource, TrackSourceSchema } from '@dominevo/types'
 
 /** Every source the build knows. Derived from the schema, never restated — a
  *  source added to the enum must not need a second edit here to be filterable. */

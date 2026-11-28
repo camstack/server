@@ -1,5 +1,5 @@
 /**
- * `@camstack/types/client` (D721) re-exports values the viewer reads at
+ * `@dominevo/types/client` (D721) re-exports values the viewer reads at
  * runtime. A name that stopped existing in the barrel would be `undefined`
  * in the viewer, not a build error there — so every name must resolve here.
  */
@@ -16,7 +16,7 @@ describe('the client entry', () => {
     expect(undefinedNames).toEqual([])
   })
 
-  it('carries what @camstack/sdk imports at runtime', () => {
+  it('carries what @dominevo/sdk imports at runtime', () => {
     expect(typeof client.SystemMirror).toBe('function')
     expect(typeof client.createSystemProxy).toBe('function')
   })

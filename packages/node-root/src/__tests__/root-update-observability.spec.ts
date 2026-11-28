@@ -1,7 +1,7 @@
 /**
  * `applyServerUpdate` observability contract.
  *
- * WHY THIS FILE EXISTS. On 2026-09-01 the hub sat on `@camstack/server@1.2.201`
+ * WHY THIS FILE EXISTS. On 2026-09-01 the hub sat on `@dominevo/server@1.2.201`
  * while both agents reached 1.2.205. The operator ran the update from the
  * cluster page and again from the node card; 12 hours of hub logs contained
  * not one line about staging, npm, a closure or a swap. The engine has SIX
@@ -87,7 +87,7 @@ beforeEach(() => {
   runningPkgPath = path.join(tmp, 'running-package.json')
   fs.writeFileSync(
     runningPkgPath,
-    JSON.stringify({ name: '@camstack/server', version: '1.1.50' }),
+    JSON.stringify({ name: '@dominevo/server', version: '1.1.50' }),
     'utf-8',
   )
   logger = makeRecordingLogger()

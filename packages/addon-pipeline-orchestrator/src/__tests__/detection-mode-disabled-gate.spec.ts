@@ -26,7 +26,7 @@
  * audio on must keep its audio subscription.
  */
 
-import type { CameraDetectionConfig, StreamSourceEntry } from '@camstack/types'
+import type { CameraDetectionConfig, StreamSourceEntry } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import PipelineOrchestratorAddon from '../index.js'
 import {

@@ -19,7 +19,7 @@
  *    stubs onto an `AddonApi` shape that `BindingCache` + the stores
  *    consume.
  */
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import type {
   AddonApi,
   DeviceInfo,
@@ -31,7 +31,7 @@ import type {
   SettingsStoreClient,
   SystemEvent,
   TopologyNode,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   cosineSimilarity,
   decodeVectorBase64,
@@ -39,8 +39,8 @@ import {
   type VectorMetadata,
   vectorDimFromBase64,
   vectorIndexDimConflictError,
-} from '@camstack/types'
-import type { RecordsAccess } from '@camstack/types'
+} from '@dominevo/types'
+import type { RecordsAccess } from '@dominevo/types'
 import { randomUUID } from 'node:crypto'
 import sharp from 'sharp'
 import { makeAnalyticsRecords, type FakeRecords } from './fake-records.js'

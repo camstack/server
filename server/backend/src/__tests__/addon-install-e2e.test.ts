@@ -22,7 +22,7 @@ describe('Addon Directory Loading', () => {
   })
 
   it('AddonInstaller initializes the addons directory', async () => {
-    const { AddonInstaller } = await import('@camstack/server/system')
+    const { AddonInstaller } = await import('@dominevo/server/system')
 
     // Constructor creates the addons directory if it doesn't exist
     const installer = new AddonInstaller({
@@ -35,7 +35,7 @@ describe('Addon Directory Loading', () => {
   })
 
   it('AddonInstaller lists installed addon packages', async () => {
-    const { AddonInstaller } = await import('@camstack/server/system')
+    const { AddonInstaller } = await import('@dominevo/server/system')
 
     // Create a mock addon directory
     const addonDir = path.join(TEST_ADDONS_DIR, 'addon-test')
@@ -43,7 +43,7 @@ describe('Addon Directory Loading', () => {
     fs.writeFileSync(
       path.join(addonDir, 'package.json'),
       JSON.stringify({
-        name: '@camstack/addon-test',
+        name: '@dominevo/addon-test',
         version: '1.0.0',
         camstack: { addons: [{ id: 'test', entry: './dist/index.js', slot: 'detector' }] },
       }),
@@ -54,7 +54,7 @@ describe('Addon Directory Loading', () => {
 
     expect(installed).toHaveLength(1)
     expect(installed[0]).toMatchObject({
-      name: '@camstack/addon-test',
+      name: '@dominevo/addon-test',
       version: '1.0.0',
     })
 
@@ -63,7 +63,7 @@ describe('Addon Directory Loading', () => {
   })
 
   it('AddonLoader scans addons directory and loads packages', async () => {
-    const { AddonLoader } = await import('@camstack/server/system')
+    const { AddonLoader } = await import('@dominevo/server/system')
 
     const loader = new AddonLoader()
 

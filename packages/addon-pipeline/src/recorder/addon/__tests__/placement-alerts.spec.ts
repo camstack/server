@@ -3,7 +3,7 @@
  * location that cannot be written is CRITICAL (notification rules key on it).
  * Production raised a fresh `randomUUID()` per emit: 164 active rows in a few hours.
  */
-import type { Alert, IScopedLogger } from '@camstack/types'
+import type { Alert, IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { PlacementAlertPublisher, WriterRestartAlerts } from '../placement-alerts.js'
 

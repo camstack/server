@@ -15,7 +15,7 @@ import {
   useDeviceManagerGetDevice,
   useDeviceManagerListAll,
   useDeviceManagerUpdateConfig,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { useRef } from 'react'
 

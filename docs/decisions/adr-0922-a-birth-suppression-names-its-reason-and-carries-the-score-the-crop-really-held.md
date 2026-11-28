@@ -74,7 +74,7 @@ birth instant may suppress; no measurement is never a suppression.
   `below-detector-floor` box at 0.55 against a 0.4 bar). That is the point:
   it says the detector's floor, not the gate's bar, decided.
 - The cap's response schema grew a field: the API carries it once the
-  `@camstack/server` closure holding the new `@camstack/types` is applied; the
+  `@dominevo/server` closure holding the new `@dominevo/types` is applied; the
   row is written by the post-analysis addon as soon as that is deployed.
 
 ## Enforcement

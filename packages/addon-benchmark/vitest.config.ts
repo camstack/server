@@ -22,8 +22,8 @@ import { vitestWorkers } from '../../vitest.workers'
 export default defineConfig({
   resolve: {
     alias: {
-      '@camstack/ui': path.resolve(__dirname, '../ui-library/src/index.ts'),
-      '@camstack/ui-library': path.resolve(__dirname, '../ui-library/src'),
+      '@dominevo/ui': path.resolve(__dirname, '../ui-library/src/index.ts'),
+      '@dominevo/ui-library': path.resolve(__dirname, '../ui-library/src'),
     },
   },
   test: {

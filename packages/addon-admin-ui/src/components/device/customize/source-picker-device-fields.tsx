@@ -3,7 +3,7 @@
  * dialogs use {@link SourceSelector} instead (D944 §5).
  */
 import { liveWireableCatalog } from './source-picker-model'
-import type { CompositionFieldKind, CompositionSourceRef } from '@camstack/types'
+import type { CompositionFieldKind, CompositionSourceRef } from '@dominevo/types'
 import {
   Button,
   DeviceName,
@@ -11,7 +11,7 @@ import {
   useDeviceLabel,
   useDeviceManagerGetWireableFields,
   useDeviceStateGetSnapshot,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { SourcePick } from './source-picker-pick'

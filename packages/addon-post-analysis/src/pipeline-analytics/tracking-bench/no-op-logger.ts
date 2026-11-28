@@ -7,7 +7,7 @@
  * `embedding-encoder/shared/` (a different addon's source tree) so this
  * module stays inside its own subsystem.
  */
-import type { IScopedLogger, LogTags } from '@camstack/types'
+import type { IScopedLogger, LogTags } from '@dominevo/types'
 
 const noop = (): void => {
   /* intentional no-op */

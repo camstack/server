@@ -1,4 +1,4 @@
-import type { ActionTarget, AutomationCommandStep, DeviceType } from '@camstack/types'
+import type { ActionTarget, AutomationCommandStep, DeviceType } from '@dominevo/types'
 import { ChevronDown, ChevronLeft } from 'lucide-react'
 import { type JSX, type ReactNode, useState } from 'react'
 import { useUiText } from '../../contexts/ui-text'
@@ -92,7 +92,9 @@ const EMPTY_DRAFT: Draft = {
 }
 
 /** The target a draft names; undefined while nothing is chosen yet. */
-function draftTarget(draft: Pick<Draft, 'mode' | 'deviceIds' | 'deviceType' | 'roomId'>): ActionTarget | undefined {
+function draftTarget(
+  draft: Pick<Draft, 'mode' | 'deviceIds' | 'deviceType' | 'roomId'>,
+): ActionTarget | undefined {
   if (draft.mode === 'devices') {
     return draft.deviceIds.length === 0 ? undefined : { kind: 'devices', ids: [...draft.deviceIds] }
   }
@@ -106,7 +108,15 @@ function draftTarget(draft: Pick<Draft, 'mode' | 'deviceIds' | 'deviceType' | 'r
 function draftOfStep(step: AutomationCommandStep, index: number): Draft {
   const target = step.target
   if (target.kind === 'domain') {
-    return { ...EMPTY_DRAFT, mode: 'domain', deviceType: target.deviceType, roomId: target.roomId, step, index, page: 'action' }
+    return {
+      ...EMPTY_DRAFT,
+      mode: 'domain',
+      deviceType: target.deviceType,
+      roomId: target.roomId,
+      step,
+      index,
+      page: 'action',
+    }
   }
   return {
     ...EMPTY_DRAFT,
@@ -192,7 +202,7 @@ export function DeviceActionPicker(props: DeviceActionPickerProps): JSX.Element 
     props.onChange(
       current.index === null
         ? [...props.value, current.step]
-        : props.value.map((v, i) => (i === current.index ? current.step ?? v : v)),
+        : props.value.map((v, i) => (i === current.index ? (current.step ?? v) : v)),
     )
     close()
   }
@@ -255,7 +265,11 @@ export function DeviceActionPicker(props: DeviceActionPickerProps): JSX.Element 
                 appearance="pills"
                 value={current.mode}
                 onValueChange={(mode) =>
-                  setDraft({ ...current, step: undefined, mode: mode === 'domain' ? 'domain' : 'devices' })
+                  setDraft({
+                    ...current,
+                    step: undefined,
+                    mode: mode === 'domain' ? 'domain' : 'devices',
+                  })
                 }
               >
                 <TabsList className="px-3">

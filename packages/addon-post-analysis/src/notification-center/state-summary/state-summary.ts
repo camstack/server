@@ -14,7 +14,7 @@
  * news. Every word is a catalog key, so the summary is in the notification
  * language.
  */
-import type { NcRule, NcRuleInput } from '@camstack/types'
+import type { NcRule, NcRuleInput } from '@dominevo/types'
 import { ncClockText } from '../clock-text.js'
 import { frozenDeviceLabel, type NcDeviceNameResolver } from '../device-directory.js'
 import { evaluateRule, NC_SYSTEM_DEVICE_ID, type NcRuleSubject } from '../rule-engine.js'

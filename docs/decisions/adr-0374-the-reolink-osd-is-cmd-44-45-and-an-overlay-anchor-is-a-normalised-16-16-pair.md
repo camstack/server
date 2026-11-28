@@ -12,7 +12,7 @@ applies-to:
 ## Context
 
 An operator reported that for device 3825 ("Camera stanza caldaia", a
-battery camera on channel 3 of a Reolink Home Hub) the OSD flags in CamStack
+battery camera on channel 3 of a Reolink Home Hub) the OSD flags in Dominevo
 "do not match the camera at all", and that the overlay position could not be
 changed.
 
@@ -87,7 +87,7 @@ background-colour flag, or the anchor of the overlay that was not moved.
   implemented today only by the Amcrest provider) is deliberately NOT also
   registered by Reolink. Two surfaces writing the same firmware state is the
   D62 failure mode; the driver's settings section stays the single knob.
-- A snapshot pulled through CamStack does not show these overlays burned into
+- A snapshot pulled through Dominevo does not show these overlays burned into
   the frame, so a change is verified against the camera's own read-back, not
   against a JPEG.
 

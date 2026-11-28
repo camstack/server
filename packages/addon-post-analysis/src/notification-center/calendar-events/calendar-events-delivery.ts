@@ -5,7 +5,7 @@
  * spans no camera. Text is frozen at enqueue, in the hub language.
  */
 
-import type { CalendarEvent, IScopedLogger, NcRuleTarget, NcTargetOverrides } from '@camstack/types'
+import type { CalendarEvent, IScopedLogger, NcRuleTarget, NcTargetOverrides } from '@dominevo/types'
 import type { NcOutboxEnqueueInput, NcOutboxPayload } from '../outbox.js'
 import { NC_SYSTEM_DEVICE_ID } from '../rule-engine.js'
 import { renderTemplate } from '../render-template.js'

@@ -13,7 +13,7 @@ import {
   type FanPreset,
   type IScopedLogger,
   type SetOscillationAxisInput,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   type FanPresetsFanControl,
   FanPresetsService,

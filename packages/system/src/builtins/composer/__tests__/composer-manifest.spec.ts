@@ -11,7 +11,7 @@
  */
 import { readFileSync } from 'node:fs'
 import * as path from 'node:path'
-import { COMPOSER_RUNNER_ID, isIsolatedBuiltin, resolveRunnerId } from '@camstack/types'
+import { COMPOSER_RUNNER_ID, isIsolatedBuiltin, resolveRunnerId } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { isRecord } from '../../shared/device-state-changed.js'
 

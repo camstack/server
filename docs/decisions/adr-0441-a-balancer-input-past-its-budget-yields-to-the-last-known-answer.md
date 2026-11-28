@@ -60,7 +60,7 @@ hub-main writes 8–11 MB/s of responses. The spawns are `native-metrics`
 of a 5.8 GB RSS process.
 
 None of that is fixable from an addon today. The kernel changes ride a
-published `@camstack/server` (D16) and the heap growth needs a snapshot the
+published `@dominevo/server` (D16) and the heap growth needs a snapshot the
 live hub cannot afford. What an addon CAN do is refuse to let a dispatch wait
 on hub-main for an input it already holds.
 

@@ -35,7 +35,7 @@ import {
   errMsg,
   type FieldClaimMode,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { z } from 'zod'
 import type {
   ComposedWriteTarget,

@@ -1,4 +1,4 @@
-import type { IBrokerProvider } from '@camstack/types'
+import type { IBrokerProvider } from '@dominevo/types'
 import type { AlexaBrokerEntry } from './config.js'
 import type { AlexaBrokerRegistry } from './alexa-broker-registry.js'
 

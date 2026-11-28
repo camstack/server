@@ -68,7 +68,7 @@ import {
   useSystem,
   useVideoclipsListClips,
   useVideoclipsListSources,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Film, ImageOff, Loader2, Trash2 } from 'lucide-react'
 import { type JSX, useCallback, useEffect, useMemo, useState } from 'react'
 import { useAuthedImage } from '../../lib/authed-media.js'
@@ -87,7 +87,7 @@ import type { TrackFlagsResult } from './use-track-flags.js'
 import { ZoomableImage } from './ZoomableImage.js'
 import { hubOrigin } from '../../lib/mount'
 import { useTranslation } from 'react-i18next'
-import { formatNumeric } from '@camstack/ui-library'
+import { formatNumeric } from '@dominevo/ui-library'
 
 /** Padding around the event window when searching for a covering clip. */
 const CLIP_PAD_MS = 15_000

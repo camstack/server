@@ -18,8 +18,8 @@ import {
   type ScalarRead,
   type ScalarSourcePresence,
   withoutKeyedArrayItem,
-} from '@camstack/types'
-import { Badge, Button, ErrorBox } from '@camstack/ui-library'
+} from '@dominevo/types'
+import { Badge, Button, ErrorBox } from '@dominevo/ui-library'
 import { Package, type LucideIcon } from 'lucide-react'
 import type { TFunction } from 'i18next'
 import { type ReactNode, useState } from 'react'

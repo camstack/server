@@ -11,7 +11,7 @@
  * | device override  | the cap's device form (D14)      | `addon-device-settings`                  |
  *
  * Pure functions, no I/O, no imports: a LEAF module, reachable from the light
- * `@camstack/types/addon` entry so a forked runner pulls no schema graph for it.
+ * `@dominevo/types/addon` entry so a forked runner pulls no schema graph for it.
  */
 
 /** The scopes a capability provider declares a schema for. */

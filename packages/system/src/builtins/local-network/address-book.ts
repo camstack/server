@@ -33,7 +33,7 @@ import {
   isAppLinkBase,
   resolveHubAddressRoles,
   type SingleHubAddressRole,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 
 export interface CustomAddress {
@@ -280,7 +280,7 @@ export interface AddressBookInputs {
   readonly rememberedPublicEndpoint?: string | null
 }
 
-/** Every role's answer — the resolvers from `@camstack/types`, nothing else. */
+/** Every role's answer — the resolvers from `@dominevo/types`, nothing else. */
 export function resolveRoles(
   state: AddressBookState,
   appPalette: readonly ConnectionEndpoint[],

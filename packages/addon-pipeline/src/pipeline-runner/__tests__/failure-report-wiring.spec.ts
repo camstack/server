@@ -7,7 +7,7 @@
  * many calls. Disarmed and re-armed during review (D277 § Enforcement).
  */
 import { describe, expect, it, vi } from 'vitest'
-import type { DecodedFrame, FrameResult } from '@camstack/types'
+import type { DecodedFrame, FrameResult } from '@dominevo/types'
 import {
   FAMILY_INFERENCE,
   REASON_INFERENCE_TIMEOUT,

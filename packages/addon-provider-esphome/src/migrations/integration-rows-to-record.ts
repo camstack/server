@@ -19,7 +19,7 @@ import {
   REDACTED_SECRET,
   type RowsIntegration,
   type RowsMigrationLog,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { type EspBrokerEntry, espBoardRowSchema, rowOfEntry } from '../config.js'
 import { type EspConnectionsBody, espConnectionsEntryKind } from '../esphome-instances.js'
 

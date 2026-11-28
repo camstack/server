@@ -4,7 +4,7 @@
  * the real runner. The lists must read back IDENTICAL (a marked per-device field survives), the
  * old keys go only after that read-back, a rerun changes nothing, and a failure keeps the keys.
  */
-import { makeInMemoryRecords } from '@camstack/types'
+import { makeInMemoryRecords } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { settingsFixture } from '../../../../system/src/builtins/sqlite-storage/__tests__/support/addon-settings-fixture.js'
 import { type HapBridgeExportsBody, hapBridgeExportsKind } from '../../hap-export-records.js'

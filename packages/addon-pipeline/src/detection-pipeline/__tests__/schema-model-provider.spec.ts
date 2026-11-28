@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 
 describe('buildSchemaSlots — model provider', () => {
-  it('forwards catalog provider onto each PipelineModelOption (CamStack when absent)', () => {
+  it('forwards catalog provider onto each PipelineModelOption (Dominevo when absent)', () => {
     const src = readFileSync(
       join(dirname(fileURLToPath(import.meta.url)), '../provider.ts'),
       'utf8',

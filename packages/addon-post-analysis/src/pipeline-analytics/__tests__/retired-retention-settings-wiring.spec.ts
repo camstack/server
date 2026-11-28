@@ -9,7 +9,7 @@
  * can observe: the WARN naming both numbers, and the keys gone from the store.
  */
 
-import type { AddonContext, IScopedLogger, LogExtras, LogTags } from '@camstack/types'
+import type { AddonContext, IScopedLogger, LogExtras, LogTags } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import PipelineAnalyticsAddon from '../index.js'
 import {

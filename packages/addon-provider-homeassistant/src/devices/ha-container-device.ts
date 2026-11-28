@@ -16,7 +16,7 @@ import {
   StoredDeviceTypeSchema,
   resyncCapability,
   resyncThroughAdoption,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { pickHaChildClass, tryPickHaChildClass } from '../ha-child-class-factory.js'
 import { deriveChildLayout } from '../ha-container-reconcile.js'
@@ -183,7 +183,7 @@ export function batteryEntityId(entities: readonly HaContainerEntity[]): string 
  *   system:        'homeassistant'  (literal, schema discriminator)
  *   brokerId:      the HA broker/integration id
  *   haDeviceId:    HA device registry id (used by adopt / restore)
- *   integrationId: optional CamStack integration id (stamped on children)
+ *   integrationId: optional Dominevo integration id (stamped on children)
  *   entities:      one entry per HA entity linked to this physical device
  *
  * The kernel handles the full lifecycle for each child: allocate id,

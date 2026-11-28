@@ -27,7 +27,7 @@ import {
   type StorageKind,
   TransactRefusedError,
   UnknownRecordKindError,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { OwnedSqliteFile } from '../owned-sqlite-file.js'
 import type { DropKindResult, KindRef } from './records-engine-types.js'
 import type { PlacementRouter } from '../placement-router.js'

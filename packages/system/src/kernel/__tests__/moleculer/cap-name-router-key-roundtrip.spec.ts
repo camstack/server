@@ -19,7 +19,7 @@
  * the next camelCase cap name fails here instead of in production.
  */
 import { describe, it, expect } from 'vitest'
-import { ALL_CAPABILITY_DEFINITIONS, kebabToCamel } from '@camstack/types'
+import { ALL_CAPABILITY_DEFINITIONS, kebabToCamel } from '@dominevo/types'
 import { ipcParentLink } from '../../moleculer/trpc-links.js'
 import type { CapCallInput } from '../../transport/index.js'
 

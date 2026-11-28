@@ -12,8 +12,8 @@
  */
 import { describe, it, expect, vi } from 'vitest'
 import { StreamBrokerManager } from '../stream-broker/stream-broker-manager.js'
-import type { AddonApi, CamProfile, IScopedLogger } from '@camstack/types'
-import { nodePin } from '@camstack/types'
+import type { AddonApi, CamProfile, IScopedLogger } from '@dominevo/types'
+import { nodePin } from '@dominevo/types'
 import type { IStreamBrokerWithSourceProvider } from '../webrtc/remote-encoded-source-broker.js'
 
 function makeLogger(): IScopedLogger {

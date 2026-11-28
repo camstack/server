@@ -18,7 +18,7 @@
  * D62's rule holds from the other side: nothing here renders a DISABLED button.
  */
 import { useEffect, useState } from 'react'
-import type { DeviceAdminLink, DeviceProxy } from '@camstack/types'
+import type { DeviceAdminLink, DeviceProxy } from '@dominevo/types'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
 import type { UseDeviceProxyTrpc } from '../../hooks/use-device-proxy'
 

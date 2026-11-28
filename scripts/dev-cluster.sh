@@ -2,7 +2,7 @@
 set -e
 
 # ============================================================================
-# dev-cluster.sh — Start a CamStack hub + local agent in one terminal
+# dev-cluster.sh — Start a Dominevo hub + local agent in one terminal
 #
 # Usage:
 #   npm run dev:cluster                    # Hub + 1 agent
@@ -44,7 +44,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 echo ""
-echo "  CamStack Dev Cluster"
+echo "  Dominevo Dev Cluster"
 echo "  ===================="
 echo "  Hub:    https://localhost:${HUB_PORT}"
 echo "  Agents: ${AGENT_COUNT}"

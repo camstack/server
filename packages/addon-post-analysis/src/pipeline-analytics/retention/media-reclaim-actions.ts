@@ -9,7 +9,7 @@
  * `mode` omitted means `report`. `reclaim` is a word that has to be typed.
  */
 
-import { customAction, defineCustomActions } from '@camstack/types'
+import { customAction, defineCustomActions } from '@dominevo/types'
 import { z } from 'zod'
 
 /**

@@ -1,4 +1,4 @@
-import type { RecordView, StorageKind } from '@camstack/types'
+import type { RecordView, StorageKind } from '@dominevo/types'
 import { Loader2 } from 'lucide-react'
 import { useMemo, useState, type JSX } from 'react'
 import { trpc } from '../../trpc-react'

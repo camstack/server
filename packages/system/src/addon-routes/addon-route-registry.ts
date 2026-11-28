@@ -1,4 +1,4 @@
-import { type IAddonHttpRoute, type IAddonRouteProvider, isAddonInstanceId } from '@camstack/types'
+import { type IAddonHttpRoute, type IAddonRouteProvider, isAddonInstanceId } from '@dominevo/types'
 
 interface RouteMatch {
   readonly route: IAddonHttpRoute

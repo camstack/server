@@ -29,7 +29,7 @@ const node = (id: string, isHub: boolean, ip: string) => ({
   addons: [],
   processes: [],
   categories: [],
-  rootPackage: { name: '@camstack/server', version: '0.0.0' },
+  rootPackage: { name: '@dominevo/server', version: '0.0.0' },
 })
 
 const PROFILES = [

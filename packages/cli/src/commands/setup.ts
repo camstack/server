@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process'
 import * as path from 'node:path'
 import * as fs from 'node:fs'
 import { parseArgs } from 'node:util'
-import { FFMPEG_PATH_ENV } from '@camstack/types'
+import { FFMPEG_PATH_ENV } from '@dominevo/types'
 
 /**
  * What setup says about ffmpeg. It used to run `ffmpeg -version` off PATH and

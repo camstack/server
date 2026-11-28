@@ -1,5 +1,5 @@
 /**
- * Option schema for the CamStack addon `deploy` executor.
+ * Option schema for the Dominevo addon `deploy` executor.
  * Mirrors `schema.json` (the Nx-facing JSON schema).
  */
 export interface DeployExecutorSchema {

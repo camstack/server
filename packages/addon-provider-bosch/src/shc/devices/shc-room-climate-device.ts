@@ -4,7 +4,7 @@ import {
   type ClimateControlStatus,
   type DeviceContext,
   type InferNativeProvider,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { climatePresetSelection, heatingProfilesFromSchedule } from '../shc-climate-schedules.js'
 import {
   buildRoomClimateModeBodies,

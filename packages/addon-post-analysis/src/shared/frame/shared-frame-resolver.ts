@@ -15,7 +15,7 @@
  * frame simply replaces the entry.
  */
 
-import type { FrameHandle } from '@camstack/types'
+import type { FrameHandle } from '@dominevo/types'
 
 export function frameHandleKey(h: FrameHandle): string {
   return `${h.nodeId}:${h.shmId}:${h.slot}:${h.seq}`

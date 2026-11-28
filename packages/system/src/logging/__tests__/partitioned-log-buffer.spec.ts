@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { DEFAULT_MAX_TOTAL_LOG_ENTRIES, PartitionedLogBuffer } from '../partitioned-log-buffer.js'
-import type { LogEntry, LogLevel } from '@camstack/types'
+import type { LogEntry, LogLevel } from '@dominevo/types'
 
 function entry(addonId: string | undefined, message: string, extra?: Partial<LogEntry>): LogEntry {
   return {

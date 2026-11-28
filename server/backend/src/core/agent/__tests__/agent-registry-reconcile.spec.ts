@@ -7,7 +7,7 @@ import { AgentRegistryService } from '../agent-registry.service'
 
 /**
  * Regression: the hub reconcile must NEVER undeploy the agent's own
- * `@camstack/server/system` infrastructure builtins. They are bootstrap
+ * `@dominevo/server/system` infrastructure builtins. They are bootstrap
  * infrastructure (storage/settings/metrics/logging) that runs on every
  * node and is absent from the hub's installed-addon set, so the naive
  * "not installed on hub → stale" rule wrongly flagged them and tore down
@@ -23,7 +23,7 @@ interface HubAddonRow {
 // NOT here (they are in-process infrastructure, never listed).
 const DEFAULT_HUB_ROWS: readonly HubAddonRow[] = [
   {
-    manifest: { id: 'onvif', packageName: '@camstack/addon-provider-onvif' },
+    manifest: { id: 'onvif', packageName: '@dominevo/addon-provider-onvif' },
     declaration: { id: 'onvif', execution: { placement: 'any-node' } },
   },
 ]
@@ -62,13 +62,13 @@ function makeService(
 }
 
 describe('AgentRegistryService.reconcileAgentAddons — system-builtin guard', () => {
-  it('does not undeploy @camstack/server/system builtins even though they are absent from the hub set', async () => {
+  it('does not undeploy @dominevo/server/system builtins even though they are absent from the hub set', async () => {
     const { service, undeployed } = makeService([
-      { id: 'filesystem-storage', packageName: '@camstack/server' },
-      { id: 'storage-orchestrator', packageName: '@camstack/server' },
-      { id: 'sqlite-settings', packageName: '@camstack/server' },
-      { id: 'metrics-native', packageName: '@camstack/server' },
-      { id: 'onvif', packageName: '@camstack/addon-provider-onvif' },
+      { id: 'filesystem-storage', packageName: '@dominevo/server' },
+      { id: 'storage-orchestrator', packageName: '@dominevo/server' },
+      { id: 'sqlite-settings', packageName: '@dominevo/server' },
+      { id: 'metrics-native', packageName: '@dominevo/server' },
+      { id: 'onvif', packageName: '@dominevo/addon-provider-onvif' },
     ])
 
     await service.reconcileAgentAddons('agent-a')
@@ -76,16 +76,16 @@ describe('AgentRegistryService.reconcileAgentAddons — system-builtin guard', (
     expect(undeployed).toEqual([])
   })
 
-  it('does not undeploy the agent-only @camstack/addon-agent-ui dashboard (absent from hub set)', async () => {
+  it('does not undeploy the agent-only @dominevo/addon-agent-ui dashboard (absent from hub set)', async () => {
     // agent-ui is agent-only bootstrap infra: seeded by the agent, never
     // installed on the hub, so it is missing from `hubPlacements`. Before the
     // AGENT_BOOTSTRAP_PACKAGES allowlist the reconcile undeployed it →
     // deleted its /data dir → its forked runner crash-looped on the missing
     // package until the circuit-breaker tripped.
     const { service, undeployed } = makeService([
-      { id: 'agent-ui', packageName: '@camstack/addon-agent-ui' },
-      { id: 'sqlite-settings', packageName: '@camstack/server' },
-      { id: 'onvif', packageName: '@camstack/addon-provider-onvif' },
+      { id: 'agent-ui', packageName: '@dominevo/addon-agent-ui' },
+      { id: 'sqlite-settings', packageName: '@dominevo/server' },
+      { id: 'onvif', packageName: '@dominevo/addon-provider-onvif' },
     ])
 
     await service.reconcileAgentAddons('agent-a')
@@ -95,8 +95,8 @@ describe('AgentRegistryService.reconcileAgentAddons — system-builtin guard', (
 
   it('still undeploys a genuinely stale addon that is not installed on the hub', async () => {
     const { service, undeployed } = makeService([
-      { id: 'sqlite-settings', packageName: '@camstack/server' },
-      { id: 'ghost-addon', packageName: '@camstack/addon-ghost' },
+      { id: 'sqlite-settings', packageName: '@dominevo/server' },
+      { id: 'ghost-addon', packageName: '@dominevo/addon-ghost' },
     ])
 
     await service.reconcileAgentAddons('agent-a')
@@ -110,7 +110,7 @@ describe('AgentRegistryService.reconcileAgentAddons — system-builtin guard', (
  *
  * When an agent runs a NEWER bundle of a package the hub also ships, the
  * agent can report a decl-id the older hub has never heard of (e.g. a new
- * `decoder-nodeav` addon added inside `@camstack/addon-pipeline`). The naive
+ * `decoder-nodeav` addon added inside `@dominevo/addon-pipeline`). The naive
  * "decl-id absent from hub → stale" rule undeployed it, and the agent's
  * undeploy handler removed the ENTIRE shared package dir — wiping every
  * sibling runner (decoder-ffmpeg, recorder, motion-wasm, …), which then
@@ -119,11 +119,11 @@ describe('AgentRegistryService.reconcileAgentAddons — system-builtin guard', (
 describe('AgentRegistryService.reconcileAgentAddons — version-skew package guard', () => {
   const PIPELINE_HUB_ROWS: readonly HubAddonRow[] = [
     {
-      manifest: { id: 'decoder-ffmpeg', packageName: '@camstack/addon-pipeline' },
+      manifest: { id: 'decoder-ffmpeg', packageName: '@dominevo/addon-pipeline' },
       declaration: { id: 'decoder-ffmpeg', execution: { placement: 'any-node' } },
     },
     {
-      manifest: { id: 'recorder', packageName: '@camstack/addon-pipeline' },
+      manifest: { id: 'recorder', packageName: '@dominevo/addon-pipeline' },
       declaration: { id: 'recorder', execution: { placement: 'any-node' } },
     },
   ]
@@ -132,9 +132,9 @@ describe('AgentRegistryService.reconcileAgentAddons — version-skew package gua
     const { service, undeployed } = makeService(
       [
         // Unknown to the hub — added by a newer addon-pipeline bundle on the agent.
-        { id: 'decoder-nodeav', packageName: '@camstack/addon-pipeline' },
+        { id: 'decoder-nodeav', packageName: '@dominevo/addon-pipeline' },
         // Known sibling from the same shared package.
-        { id: 'decoder-ffmpeg', packageName: '@camstack/addon-pipeline' },
+        { id: 'decoder-ffmpeg', packageName: '@dominevo/addon-pipeline' },
       ],
       PIPELINE_HUB_ROWS,
     )
@@ -147,8 +147,8 @@ describe('AgentRegistryService.reconcileAgentAddons — version-skew package gua
   it('still undeploys an addon whose PACKAGE is entirely absent from the hub', async () => {
     const { service, undeployed } = makeService(
       [
-        { id: 'decoder-ffmpeg', packageName: '@camstack/addon-pipeline' },
-        { id: 'ghost-addon', packageName: '@camstack/addon-ghost' },
+        { id: 'decoder-ffmpeg', packageName: '@dominevo/addon-pipeline' },
+        { id: 'ghost-addon', packageName: '@dominevo/addon-ghost' },
       ],
       PIPELINE_HUB_ROWS,
     )
@@ -162,14 +162,14 @@ describe('AgentRegistryService.reconcileAgentAddons — version-skew package gua
     const hubRows: readonly HubAddonRow[] = [
       ...PIPELINE_HUB_ROWS,
       {
-        manifest: { id: 'stream-broker', packageName: '@camstack/addon-pipeline' },
+        manifest: { id: 'stream-broker', packageName: '@dominevo/addon-pipeline' },
         declaration: { id: 'stream-broker', execution: { placement: 'hub-only' } },
       },
     ]
     const { service, undeployed } = makeService(
       [
-        { id: 'decoder-ffmpeg', packageName: '@camstack/addon-pipeline' },
-        { id: 'stream-broker', packageName: '@camstack/addon-pipeline' },
+        { id: 'decoder-ffmpeg', packageName: '@dominevo/addon-pipeline' },
+        { id: 'stream-broker', packageName: '@dominevo/addon-pipeline' },
       ],
       hubRows,
     )

@@ -20,8 +20,8 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { LogChannelDescriptor, LogChannelWindow } from '@camstack/types'
-import { LoggingGate } from '@camstack/server/system'
+import type { LogChannelDescriptor, LogChannelWindow } from '@dominevo/types'
+import { LoggingGate } from '@dominevo/server/system'
 import {
   buildLogChannelPlane,
   describeChannelWindows,

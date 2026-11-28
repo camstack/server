@@ -3,7 +3,7 @@
  * reads the declaration from the STAGED closure and refuses before it arms a
  * swap the node cannot live with.
  */
-import type { PackageRequires } from '@camstack/types'
+import type { PackageRequires } from '@dominevo/types'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
@@ -32,11 +32,11 @@ beforeEach(() => {
   fs.mkdirSync(seedDir, { recursive: true })
   fs.writeFileSync(
     path.join(seedDir, 'package.json'),
-    JSON.stringify({ name: '@camstack/server', version: '1.2.600' }),
+    JSON.stringify({ name: '@dominevo/server', version: '1.2.600' }),
   )
   fs.writeFileSync(
     path.join(tmp, 'running.json'),
-    JSON.stringify({ name: '@camstack/server', version: '1.2.600' }),
+    JSON.stringify({ name: '@dominevo/server', version: '1.2.600' }),
   )
   restarts = []
 })
@@ -52,7 +52,7 @@ function stageWith(version: string, requires: PackageRequires | undefined): NpmE
     fs.writeFileSync(
       path.join(pkgDir, 'package.json'),
       JSON.stringify({
-        name: '@camstack/server',
+        name: '@dominevo/server',
         version,
         ...(requires === undefined ? {} : { camstack: { requires } }),
       }),
@@ -129,19 +129,19 @@ describe('applyServerUpdate reads the staged closure requirements (D989)', () =>
   it('returns the addons to update with the server', async () => {
     const svc = make(
       stageWith('1.2.700', {
-        addons: { '@camstack/addon-a': '>=2.0.0', '@camstack/addon-b': '>=1.0.0' },
+        addons: { '@dominevo/addon-a': '>=2.0.0', '@dominevo/addon-b': '>=1.0.0' },
       }),
       {
         installedAddonVersions: () => ({
-          '@camstack/addon-a': '1.9.0',
-          '@camstack/addon-b': '1.0.0',
+          '@dominevo/addon-a': '1.9.0',
+          '@dominevo/addon-b': '1.0.0',
         }),
       },
     )
     const res = await svc.applyServerUpdate({ version: '1.2.700' })
     expect(res.accepted).toBe(true)
     expect(res.requiredAddonUpdates).toEqual([
-      { packageName: '@camstack/addon-a', required: '2.0.0', installed: '1.9.0' },
+      { packageName: '@dominevo/addon-a', required: '2.0.0', installed: '1.9.0' },
     ])
   })
 

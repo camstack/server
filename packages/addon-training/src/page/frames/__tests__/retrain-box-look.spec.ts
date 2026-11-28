@@ -1,7 +1,7 @@
 /**
  * Stroke colour = review diff, and it agrees with the badge of the same state.
  */
-import { retrainReviewBadgeLook } from '@camstack/ui-library'
+import { retrainReviewBadgeLook } from '@dominevo/ui-library'
 import { describe, expect, it } from 'vitest'
 import { boxLook } from '../lib/retrain-box-look.js'
 import { BOX_DIFF_KINDS, type BoxDiffKind } from '../lib/retrain-live-review.js'

@@ -1,12 +1,12 @@
 /**
  * `ensureNativePrebuilds` — the post-install native-prebuild ENSURE step the
- * shared `RootUpdateService` runs while staging a `@camstack/server` closure,
- * BEFORE its `findMissingNativePrebuilds` validator (in `@camstack/node-root`)
+ * shared `RootUpdateService` runs while staging a `@dominevo/server` closure,
+ * BEFORE its `findMissingNativePrebuilds` validator (in `@dominevo/node-root`)
  * decides whether to arm the swap.
  *
  * Why this exists (Mac desktop incident, 2026-07-21): a runtime
  * `applyServerUpdate` on a packaged desktop stages the closure with
- * `npm install @camstack/server@X` under the app's BUNDLED bare Node. The one
+ * `npm install @dominevo/server@X` under the app's BUNDLED bare Node. The one
  * TRADITIONAL (non-N-API) native, `better-sqlite3`, resolves its `.node` via
  * its `install` script `prebuild-install || node-gyp rebuild`. On a user's Mac
  * with no build toolchain (and where the auto `prebuild-install` does not
@@ -29,15 +29,15 @@
  * validator should still reject, not something a prebuild re-fetch can heal.
  *
  * Injected into the update service from the construction site so the zero-dep
- * `@camstack/node-root` layer never depends on npm/@camstack/server/system, and the
+ * `@dominevo/node-root` layer never depends on npm/@dominevo/server/system, and the
  * fetch is unit-testable with a fake fetcher.
  */
 import { execFile } from 'node:child_process'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { promisify } from 'node:util'
-import { errMsg } from '@camstack/types/addon'
-import type { IScopedLogger } from '@camstack/types'
+import { errMsg } from '@dominevo/types/addon'
+import type { IScopedLogger } from '@dominevo/types'
 
 const execFileAsync = promisify(execFile)
 

@@ -40,8 +40,8 @@
  * window are still suppressed, and every non-system subject keeps its key byte
  * for byte.
  */
-import type { InMemoryRecords } from '@camstack/types'
-import { createEvent, DeviceType, NcRuleInputSchema, type SystemEvent } from '@camstack/types'
+import type { InMemoryRecords } from '@dominevo/types'
+import { createEvent, DeviceType, NcRuleInputSchema, type SystemEvent } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import type { NcTargetRef } from '../dispatcher.js'

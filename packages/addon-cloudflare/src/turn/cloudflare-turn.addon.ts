@@ -13,7 +13,7 @@ import {
   isSecretFieldView,
   isSecretMarker,
   turnProviderCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { CloudflareTurnService } from './cloudflare-turn'
 import type { CloudflareTurnConfig, TestCredentialsResult } from './cloudflare-turn'
 import { cloudflareTurnActions, type CloudflareTurnActions } from './cloudflare-turn-actions'

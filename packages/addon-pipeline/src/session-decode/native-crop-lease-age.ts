@@ -38,7 +38,7 @@
  *
  * Deliberately a constant and not an operator knob: it is a property of the
  * pipeline, not of a node's hardware (same argument as the lease knobs in
- * `@camstack/types` `pipeline/native-lease.ts`), and a per-node value would
+ * `@dominevo/types` `pipeline/native-lease.ts`), and a per-node value would
  * make the same camera produce different crop quality depending on where the
  * balancer placed it.
  */
@@ -50,7 +50,7 @@
  * ## Ten seconds was tried on the fleet, and the fleet refused it
  *
  * The operator's number was ten seconds, chosen on the belief — stated in this
- * file's first version, and sourced from `@camstack/types`
+ * file's first version, and sourced from `@dominevo/types`
  * `pipeline/native-lease.ts` sizing prose rather than from a measurement of
  * THIS path — that a p90 ask lands at 4.3 s and a p50 at 367 ms. Deployed
  * 2026-09-09 ~14:00, it produced, on the hub, **3 371 `no-registry-entry`

@@ -32,7 +32,7 @@
  */
 import { ncRecordKinds } from '../record-kinds.js'
 import { makeNcRecords } from './support/nc-test-deps.js'
-import type { TimelapseRule } from '@camstack/types'
+import type { TimelapseRule } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import { NcSummaryCollector } from '../summary/summary-collector.js'

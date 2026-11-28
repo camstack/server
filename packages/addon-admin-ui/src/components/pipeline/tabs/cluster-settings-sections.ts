@@ -19,7 +19,7 @@ import {
   DETAIL_CROP_SECTION_ID,
   FACE_RESCORE_SECTION_ID,
   NATIVE_LEASE_SECTION_ID,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { SettingsFieldScope } from '../../../lib/settings-field-scope'
 import { PIPELINE_CLUSTER_FACE_ADDON, PIPELINE_CLUSTER_FACE_CAP } from '../pipeline-panel-addons'
 import i18n from '../../../i18n/index'

@@ -1,4 +1,4 @@
-import type { AutomationRunTrace } from '@camstack/types'
+import type { AutomationRunTrace } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { actionDeviceIds } from '../action-devices'
 import { QUICK_RUN_LIMIT, quickRunRows, runDurationParts, runEditorPath } from '../quick-runs'

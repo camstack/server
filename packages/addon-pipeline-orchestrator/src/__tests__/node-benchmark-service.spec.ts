@@ -13,7 +13,7 @@ import type {
   NodeBenchmarkRun,
   NodeBenchRunnerInputRaw,
   NodeBenchRunnerStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import type { NodeBenchmarkPersistence } from '../node-benchmark/node-benchmark-store.js'
 import {

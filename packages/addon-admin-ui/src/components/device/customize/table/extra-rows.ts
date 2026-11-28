@@ -8,8 +8,8 @@ import {
   decodeCompositionToCards,
   type CompositionFieldRead,
   type CompositionCardFieldEntry,
-} from '@camstack/types'
-import type { Composition } from '@camstack/types'
+} from '@dominevo/types'
+import type { Composition } from '@dominevo/types'
 import { configCardCaps } from '../config/ConfigCustomizeList'
 import { eventCardTargets } from '../event/event-targets'
 import { keyedArrayCardTargets } from '../keyed/KeyedArrayCard'

@@ -17,7 +17,7 @@
  * pending" is a fact about the decision, not about a render order.
  */
 import { describe, expect, it } from 'vitest'
-import type { Clip, ClipSource } from '@camstack/types'
+import type { Clip, ClipSource } from '@dominevo/types'
 import type { ClipBandPlan } from '../clip-band.js'
 import { resolveClipsView } from '../clip-view-state.js'
 

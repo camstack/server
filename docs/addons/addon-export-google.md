@@ -135,7 +135,7 @@ not verify the client secret
 
 ## Shipping
 
-`camstack deploy packages/addon-export-google`. Editing `src/` and rebuilding
+`dominevo deploy packages/addon-export-google`. Editing `src/` and rebuilding
 `dist/` has no runtime effect until you do. No new capability was added, so no
 framework publish train is required — the addon registers against the existing
 `device-export`, `addon-routes` and `oauth-integration` caps.

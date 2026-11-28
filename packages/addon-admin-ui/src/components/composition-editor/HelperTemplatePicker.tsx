@@ -7,8 +7,8 @@ import {
   GROUP_TEMPLATE_IDS,
   type GroupTemplateId,
   groupTemplate,
-} from '@camstack/types'
-import { deviceIconGlyph, GroupedTilePicker } from '@camstack/ui-library'
+} from '@dominevo/types'
+import { deviceIconGlyph, GroupedTilePicker } from '@dominevo/ui-library'
 import type { TFunction } from 'i18next'
 import {
   BarChart3,

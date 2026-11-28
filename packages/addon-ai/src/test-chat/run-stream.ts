@@ -34,7 +34,7 @@ import type {
   LlmGenerateResult,
   LlmProfile,
   MediaFileKind,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { httpConnectionOf } from '../kinds/http-connection.js'
 import type { UsageRowInput } from '../usage/usage-port.js'
 import {

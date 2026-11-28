@@ -23,7 +23,7 @@ import {
   type ModelCatalogEntry,
   type ModelFormat,
   type PostprocessorType,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { plusCatalogVariantGroup } from './plus-catalog-import.js'
 import { resolvePlusDecode } from './plus-decode.js'
 
@@ -238,7 +238,7 @@ export interface DetectorSupport {
  * What OUR cluster can do with a plus catalog `supportedDetectors[]` label.
  * Kept for diagnostics — the Import UI no longer asks the operator to pick
  * a detector: plus catalog downloads ONE artifact per training (`type` → onnx
- * or tflite), and OpenVINO/CoreML are CamStack converts from ONNX.
+ * or tflite), and OpenVINO/CoreML are Dominevo converts from ONNX.
  */
 export function detectorSupport(detector: string): DetectorSupport {
   switch (detector) {
@@ -281,14 +281,14 @@ export function detectorSupport(detector: string): DetectorSupport {
 }
 
 /**
- * Which CamStack engine can run a plus catalog build, or `null` when none can.
+ * Which Dominevo engine can run a plus catalog build, or `null` when none can.
  *
  *  - `neural`: an ONNX artifact (`onnx` / `openvino` detectors share it). It
  *    runs on onnxruntime and is converted to OpenVINO / CoreML here.
  *  - `coral`: an EdgeTPU-compiled tflite (`edgetpu`). The pool's ONLY tflite
  *    runtime binds the libedgetpu delegate, so it loads only on a Coral node.
  *  - `null`: everything else. A `cpu` build is a plain tflite meant for
- *    plus catalog's CPU detector — CamStack has no CPU tflite engine (the tflite
+ *    plus catalog's CPU detector — Dominevo has no CPU tflite engine (the tflite
  *    runtime refuses to start without a Coral, and on a Coral node it would
  *    run on the host CPU through the single serialised EdgeTPU lane, starving
  *    the real Coral models), so it is never offered. Hailo, RKNN, ROCm-only and

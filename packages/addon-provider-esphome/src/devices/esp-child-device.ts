@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { BaseDevice, type DeviceContext, type DeviceFeature } from '@camstack/types'
+import { BaseDevice, type DeviceContext, type DeviceFeature } from '@dominevo/types'
 import { espLinkHub } from '../esphome-link-hub.js'
 import type { EspCommand, EspLink, EspState } from '../esphome-link.js'
 import { registerEspStateRefresh } from '../esphome-state-refresh.js'

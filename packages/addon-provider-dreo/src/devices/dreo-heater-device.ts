@@ -5,7 +5,7 @@ import {
   type InferNativeProvider,
   type SwitchStatus,
   type TemperatureSensorStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { DreoChildDevice } from './dreo-child-device.js'
 
 const SWITCH_CAP = 'switch'

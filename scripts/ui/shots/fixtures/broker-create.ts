@@ -139,7 +139,7 @@ const manifestOf = (id: string, name: string) => ({
     id,
     name,
     version: '1.2.3',
-    packageName: `@camstack/addon-${id}`,
+    packageName: `@dominevo/addon-${id}`,
     packageVersion: '1.2.3',
     capabilities: ['broker', 'integration-instances'],
   },

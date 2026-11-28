@@ -17,7 +17,7 @@
  * the forked UDS bridge — `content-encoding: identity`, as the notifier sample
  * routes do).
  */
-import type { AddonHttpReply, AddonHttpRequest, IScopedLogger } from '@camstack/types'
+import type { AddonHttpReply, AddonHttpRequest, IScopedLogger } from '@dominevo/types'
 import type { SnapshotStore } from './snapshot-store.js'
 
 export interface SnapshotRouteDeps {

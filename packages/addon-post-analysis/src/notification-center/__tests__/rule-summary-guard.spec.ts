@@ -2,7 +2,7 @@
  * D647 — the save guard: a scheduled summary on device-events / system rules
  * only; the alarm stays instant. Judged on the MERGED rule on an update.
  */
-import { NcRuleInputSchema, scheduleForSendTimes, type NcRuleInput } from '@camstack/types'
+import { NcRuleInputSchema, scheduleForSendTimes, type NcRuleInput } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import {

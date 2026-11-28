@@ -18,8 +18,8 @@ import { federation } from '@module-federation/vite'
  * inside the right per-addon sub-folder.
  *
  * Shared deps: react / react-dom / @tanstack/react-query / @trpc/* /
- * @camstack/* — all marked `singleton`. Workspace packages
- * (`@camstack/{ui-library,sdk,types}`) additionally use `import: false`
+ * @dominevo/* — all marked `singleton`. Workspace packages
+ * (`@dominevo/{ui-library,sdk,types}`) additionally use `import: false`
  * so MF skips bundling a build-time fallback chunk for them. The
  * fallback would otherwise pull in each package's CJS dist (which
  * still contains top-level `require("zod")` calls baked in by tsup);
@@ -36,7 +36,7 @@ export default defineConfig({
       name: 'addon_stream_broker_widgets',
       filename: 'remoteEntry.js',
       // Disable MF DTS generation — it walks the exposed modules' imports
-      // through the `@camstack/*` → src aliases and leaks a `.d.ts` next to
+      // through the `@dominevo/*` → src aliases and leaks a `.d.ts` next to
       // every framework source file (Bug-1, guarded by
       // scripts/check-no-dts-in-src.sh). These widget types are not
       // consumed cross-package.
@@ -52,9 +52,9 @@ export default defineConfig({
         '@tanstack/react-query': { singleton: true, requiredVersion: false, import: false },
         '@trpc/client': { singleton: true, requiredVersion: false, import: false },
         '@trpc/react-query': { singleton: true, requiredVersion: false, import: false },
-        '@camstack/ui-library': { singleton: true, requiredVersion: false, import: false },
-        '@camstack/sdk': { singleton: true, requiredVersion: false, import: false },
-        '@camstack/types': { singleton: true, requiredVersion: false, import: false },
+        '@dominevo/ui-library': { singleton: true, requiredVersion: false, import: false },
+        '@dominevo/sdk': { singleton: true, requiredVersion: false, import: false },
+        '@dominevo/types': { singleton: true, requiredVersion: false, import: false },
       },
     }),
   ],

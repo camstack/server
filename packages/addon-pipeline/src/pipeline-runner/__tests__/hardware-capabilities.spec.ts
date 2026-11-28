@@ -2,7 +2,7 @@
  * `RunnerLocalLoad.hardware` — the block that reported a hardcoded
  * `hasGpu: false` on a node actively running OpenVINO on its Intel iGPU.
  */
-import { describeNvidia } from '@camstack/types'
+import { describeNvidia } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { summarizeRunnerHardware } from '../hardware-capabilities.js'
 

@@ -27,8 +27,8 @@
  * the per-device window (`key-frame-metrics.ts`) from one value.
  */
 
-import type { IScopedLogger } from '@camstack/types'
-import { errMsg } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
 import type { MediaSubjectBox } from '../store/media-store.js'
 
 /**

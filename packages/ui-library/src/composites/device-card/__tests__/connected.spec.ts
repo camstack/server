@@ -1,4 +1,4 @@
-import { CLIMATE_ROLES, DeviceRole, DeviceType, timedRunLimitOf } from '@camstack/types'
+import { CLIMATE_ROLES, DeviceRole, DeviceType, timedRunLimitOf } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { climateRoleOf } from '../connected/climate-model'
 import { connectedCardKindOf } from '../connected/ConnectedDeviceCard'

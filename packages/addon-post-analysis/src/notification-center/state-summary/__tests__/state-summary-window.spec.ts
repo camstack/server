@@ -1,4 +1,4 @@
-import { isScheduleActive, scheduleForSendTimes } from '@camstack/types'
+import { isScheduleActive, scheduleForSendTimes } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { decideStateSummary, NC_STATE_SUMMARY_GRACE_MS } from '../state-summary-window.js'
 

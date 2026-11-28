@@ -54,12 +54,12 @@ track applied (see §3).
 
 ## 2. Auth / how to talk to the hubs
 
-- Prefer: `camstack login <host>` (TTY). An **admin user’s login JWT** is enough
+- Prefer: `dominevo login <host>` (TTY). An **admin user’s login JWT** is enough
   for `hub.mjs` / ops MCP — **`--admin` / `csa_` is no longer required**.
 - `whoami` should show `admin: yes`, `kind: jwt`.
 - CA: `~/.camstack/<hub-ip>_4443.ca.pem` (prod), `…50_4443.ca.pem` (dev).
 - Order: **`.50` before prod** for any further offline SQLite / adopt / DROP.
-- Never open a live `.db` while CamStack runs (D679). Offline DROP = stop
+- Never open a live `.db` while Dominevo runs (D679). Offline DROP = stop
   container → sqlite3 / script → start → `/health` 200.
 
 ---
@@ -78,7 +78,7 @@ track applied (see §3).
 
 ### Post-analysis
 
-- Deployed **`@camstack/addon-post-analysis@1.2.606`** on hub + agents
+- Deployed **`@dominevo/addon-post-analysis@1.2.606`** on hub + agents
   (agent-a, Mac Mini, agent-b).
 - DurableLedger headers `deviceId` (`deviceIdOf` / body); write-behind `put`
   passes `row`. Hub logs: **0** `deviceId is required` after reload.
@@ -147,7 +147,7 @@ kinds), not by another DB split.
 4. Choose **one** ship channel:
    - Path A if durable registry state: push → Publish Packages
      (`include_dependents=false`; force system/server if caps/types) →
-     `applyServerUpdate` hub then every online agent → `camstack deploy` for
+     `applyServerUpdate` hub then every online agent → `dominevo deploy` for
      touched addons → verify versions.
    - Path B if still iterating closures: `deploy --closure` `.50` then prod,
      then addon deploys.
@@ -208,8 +208,8 @@ kinds), not by another DB split.
 
 ### D. Offline operator sequence (`.50` completely, then prod)
 
-What ships: a `@camstack/server` closure (the boot guard across files, the
-`transactFamily` check — `packages/system`) and `@camstack/addon-post-analysis`
+What ships: a `@dominevo/server` closure (the boot guard across files, the
+`transactFamily` check — `packages/system`) and `@dominevo/addon-post-analysis`
 (stores, kinds, boot declares). Nothing below runs against a live file (D679).
 
 1. **Snapshot, old build running:**
@@ -220,7 +220,7 @@ What ships: a `@camstack/server` closure (the boot guard across files, the
    applied, an OLD pipeline-analytics refuses to start anyway: the guard now
    sees the 522 outbox rows in events.db.)
 3. **Apply the closure** (`applyServerUpdate`, hub, then each agent by `nodeId`).
-4. **Deploy the new pipeline-analytics build** (`camstack deploy
+4. **Deploy the new pipeline-analytics build** (`dominevo deploy
    packages/addon-post-analysis`, hub + agents). It will NOT start yet — either
    `AdoptionPendingError` (outbox) or the gallery placement refusal. That is
    the guard, not a fault; the CrashSupervisor marks it failed.
@@ -288,8 +288,8 @@ What ships: a `@camstack/server` closure (the boot guard across files, the
 
 ```bash
 # Auth
-camstack login <hub-ip>          # admin JWT; no --admin
-camstack whoami -s https://<hub-ip>:4443
+dominevo login <hub-ip>          # admin JWT; no --admin
+dominevo whoami -s https://<hub-ip>:4443
 
 # Census
 export CAMSTACK_HUB_CA_FILE=~/.camstack/<hub-ip>_4443.ca.pem

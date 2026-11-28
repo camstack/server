@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import type { Accessory } from '@homebridge/hap-nodejs'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { firstExposedAccessorySetupUri } from '../hap-setup-uri.js'
 import type { Mapper } from '../mappers/types.js'
 

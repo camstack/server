@@ -2,30 +2,30 @@
   "tag": "v1.1.53",
   "date": "2026-07-13",
   "npm": {
-    "@camstack/server": "1.1.48",
-    "@camstack/agent": "1.1.37",
-    "@camstack/system": "1.1.39",
-    "@camstack/shm-ring": "1.0.21",
-    "@camstack/addon-pipeline": "1.1.50",
-    "@camstack/addon-admin-ui": "1.1.42",
-    "@camstack/addon-auth": "1.1.4",
-    "@camstack/addon-pipeline-orchestrator": "1.1.35 (npm copy is viewer-less — live hub runs hot-deployed 1.1.36 with embedded viewer; publish blocked on VIEWER_SSH_KEY secret)",
-    "@camstack/addon-export-hap": "1.1.20",
-    "@camstack/addon-mqtt-broker": "1.1.20",
-    "@camstack/addon-remote-storage": "1.1.21",
-    "@camstack/addon-provider-reolink": "1.1.22",
-    "@camstack/addon-provider-onvif": "1.1.22",
-    "@camstack/addon-provider-hikvision": "1.1.21",
-    "@camstack/addon-provider-amcrest": "0.1.7"
+    "@dominevo/server": "1.1.48",
+    "@dominevo/agent": "1.1.37",
+    "@dominevo/system": "1.1.39",
+    "@dominevo/shm-ring": "1.0.21",
+    "@dominevo/addon-pipeline": "1.1.50",
+    "@dominevo/addon-admin-ui": "1.1.42",
+    "@dominevo/addon-auth": "1.1.4",
+    "@dominevo/addon-pipeline-orchestrator": "1.1.35 (npm copy is viewer-less — live hub runs hot-deployed 1.1.36 with embedded viewer; publish blocked on VIEWER_SSH_KEY secret)",
+    "@dominevo/addon-export-hap": "1.1.20",
+    "@dominevo/addon-mqtt-broker": "1.1.20",
+    "@dominevo/addon-remote-storage": "1.1.21",
+    "@dominevo/addon-provider-reolink": "1.1.22",
+    "@dominevo/addon-provider-onvif": "1.1.22",
+    "@dominevo/addon-provider-hikvision": "1.1.21",
+    "@dominevo/addon-provider-amcrest": "0.1.7"
   },
   "serverClosurePinned": true,
   "images": {
-    "server": "ghcr.io/camstack/camstack-server:intel-1.1.53",
-    "agent": "ghcr.io/camstack/camstack-agent:intel-1.1.53",
+    "server": "ghcr.io/dominevo/camstack-server:intel-1.1.53",
+    "agent": "ghcr.io/dominevo/camstack-agent:intel-1.1.53",
     "note": "runtime image now includes python3/make/g++ (native-dep staging belt-and-braces)"
   },
   "viewer": {
-    "repo": "github.com/camstack/viewer",
+    "repo": "github.com/dominevo/viewer",
     "sha": "987edb7",
     "webDistServedFrom": "orchestrator assets (hot-deployed 1.1.36)",
     "version": "1.0.131"
@@ -39,8 +39,8 @@
     "otaCommit": "c40d774"
   },
   "liveClusterState": {
-    "hub": "@camstack/server 1.1.48 via FIRST live applyServerUpdate (bootMode data-root, seed 1.1.46); hot-deployed addon-pipeline 1.1.50 + orchestrator 1.1.36 + admin-ui 1.1.42 + auth 1.1.4",
-    "agent-a": "@camstack/agent 1.1.37 via applyServerUpdate (data-root)",
+    "hub": "@dominevo/server 1.1.48 via FIRST live applyServerUpdate (bootMode data-root, seed 1.1.46); hot-deployed addon-pipeline 1.1.50 + orchestrator 1.1.36 + admin-ui 1.1.42 + auth 1.1.4",
+    "agent-a": "@dominevo/agent 1.1.37 via applyServerUpdate (data-root)",
     "mac-mini-electron": "1.1.52 app — updates only via the v1.1.53 DMG from this release"
   },
   "highlights": [

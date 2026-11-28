@@ -1,4 +1,4 @@
-import type { DeviceHistoryQueryResult } from '@camstack/types'
+import type { DeviceHistoryQueryResult } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   counterDayTotal,

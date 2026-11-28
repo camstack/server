@@ -4,7 +4,7 @@
  * `config` comes back without any reserved key.
  */
 
-import { createRecordsAccess, createSecretsAccess, type StorageLocation } from '@camstack/types'
+import { createRecordsAccess, createSecretsAccess, type StorageLocation } from '@dominevo/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import {
   makeFakeKeychain,

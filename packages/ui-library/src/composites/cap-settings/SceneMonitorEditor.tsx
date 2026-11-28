@@ -49,7 +49,7 @@
  */
 
 import { useUiText } from '../../contexts/ui-text'
-import type { MaskShape, SceneMonitor, SceneMonitorStatus } from '@camstack/types'
+import type { MaskShape, SceneMonitor, SceneMonitorStatus } from '@dominevo/types'
 import { Camera, RotateCcw, Settings2, Trash2 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState, type JSX } from 'react'
 import { useSystem } from '../../contexts/system-context'

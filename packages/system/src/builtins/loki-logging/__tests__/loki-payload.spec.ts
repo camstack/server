@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import type { LogEntry } from '@camstack/types'
+import type { LogEntry } from '@dominevo/types'
 import {
   buildPushBody,
   formatLokiLine,

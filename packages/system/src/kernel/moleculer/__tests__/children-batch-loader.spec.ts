@@ -13,7 +13,7 @@
  * storm survives a green suite for months.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import type { ReconcileChildRow } from '../children-batch-loader.js'
 import {

@@ -5,7 +5,7 @@
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { MIN_SESSION_OPEN_MS } from '../session-dispatch-controller.js'
-import { createEvent, EventCategory } from '@camstack/types'
+import { createEvent, EventCategory } from '@dominevo/types'
 import { type CameraSensorsWire, wireCameraSensors } from './camera-sensors-harness.js'
 
 const CAM = 103

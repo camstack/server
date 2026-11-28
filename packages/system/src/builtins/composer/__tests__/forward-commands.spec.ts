@@ -2,7 +2,7 @@
  * The runtime of `forward` commands (D967): mapping, source resolution and the
  * typed refusal that names the source.
  */
-import { type CompositionFieldsFeature, CompositionSchema, DeviceType } from '@camstack/types'
+import { type CompositionFieldsFeature, CompositionSchema, DeviceType } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   ForwardCommands,
@@ -10,7 +10,7 @@ import {
   MediaPlayerUnsupportedError,
   forwardArguments,
 } from '../forward-commands.js'
-import { mediaPlayerExtensionCommands } from '@camstack/types'
+import { mediaPlayerExtensionCommands } from '@dominevo/types'
 import type { SourceResolution } from '../source-readings.js'
 import { recordingLogger } from './fixtures.js'
 

@@ -7,7 +7,7 @@
     "moduleResolution": "bundler",
     "declaration": true,
     "paths": {
-      "@camstack/types/device-template-catalogue": ["../types/dist/device-template-catalogue.d.ts"]
+      "@dominevo/types/device-template-catalogue": ["../types/dist/device-template-catalogue.d.ts"]
     }
   },
   "include": [

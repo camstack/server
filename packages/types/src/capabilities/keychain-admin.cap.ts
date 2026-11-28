@@ -21,7 +21,7 @@ import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /** Where the master key in use came from. */
 export const KeychainKeySourceKindSchema = z.enum([
-  /** `/run/secrets/camstack-master-key` — mounted by the operator, read-only for CamStack. */
+  /** `/run/secrets/camstack-master-key` — mounted by the operator, read-only for Dominevo. */
   'mounted-file',
   /** `/run/secrets/camstack-master-key.previous` — unlock-only, until a rotation moves off it. */
   'previous-mounted-file',

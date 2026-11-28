@@ -32,8 +32,8 @@ import type {
   TransportConnection,
   TransportEndpoint,
 } from './types.js'
-import type { Unsubscribe } from '@camstack/types'
-import { errMsg } from '@camstack/types'
+import type { Unsubscribe } from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
 
 /** Pending state while waiting for the handshake. */
 interface PendingConsumer {

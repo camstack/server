@@ -11,7 +11,7 @@ import {
   errMsg,
   expressionContainsBuiltinCall,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { capSeriesKey } from '../device-history/capture/capture-engine.js'
 import { DEFAULT_RETENTION } from '../device-history/retention/retention.js'
 import { DAY_MS } from '../device-history/time/bucket-time.js'

@@ -1,4 +1,4 @@
-import type { FeatureManifest, FeatureFlag } from '@camstack/types'
+import type { FeatureManifest, FeatureFlag } from '@dominevo/types'
 
 export type { FeatureManifest, FeatureFlag }
 

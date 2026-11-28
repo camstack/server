@@ -3,7 +3,7 @@ import {
   SMTP_RECIPIENT_CLAIMED,
   type SmtpInboundMessage,
   type SmtpInboundSettings,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   type BridgeCamera,

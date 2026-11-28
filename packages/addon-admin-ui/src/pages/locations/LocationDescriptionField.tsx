@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 
-import { LOCATION_DESCRIPTION_MAX } from '@camstack/types'
-import { Label, TEXT_HINT, Textarea } from '@camstack/ui-library'
+import { LOCATION_DESCRIPTION_MAX } from '@dominevo/types'
+import { Label, TEXT_HINT, Textarea } from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 
 /**

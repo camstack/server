@@ -19,7 +19,7 @@ import {
   type TrainingJobState,
   type TrainingRefusalReason,
   TrainingResultSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { findBaseModel } from './base-models.js'
 import { applyLogLines } from './job-progress.js'
 import { JobMutator } from './job-mutator.js'

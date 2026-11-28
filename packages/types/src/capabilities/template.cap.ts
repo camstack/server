@@ -25,7 +25,7 @@ export const TemplateRecordSchema = z.object({
   payload: z.unknown(),
   createdAt: z.number(),
   updatedAt: z.number(),
-  /** Shipped with CamStack (`builtin:` ids): listed beside the operator's, never updated or deleted. */
+  /** Shipped with Dominevo (`builtin:` ids): listed beside the operator's, never updated or deleted. */
   builtIn: z.literal(true).optional(),
   /** Operator tags (D1054). Absent = no tags. */
   tags: TagsFieldSchema.optional(),
@@ -62,7 +62,7 @@ export type TemplateAutomationUser = z.infer<typeof TemplateAutomationUserSchema
 export const TemplateDeleteResultSchema = z.discriminatedUnion('status', [
   z.object({ status: z.literal('deleted') }),
   z.object({ status: z.literal('not-found') }),
-  /** A built-in template: shipped with CamStack, never deleted. */
+  /** A built-in template: shipped with Dominevo, never deleted. */
   z.object({ status: z.literal('read-only') }),
   /** At least one of the two lists is non-empty. */
   z.object({

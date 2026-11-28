@@ -5,7 +5,7 @@
  * discord, webhook, zentik, whatsapp, email) behind one uniform cap surface.
  * Targets persist via the `settings-store` cap; the canonical notification is
  * degraded per each target's declared capabilities by the pure
- * `prepareNotification` engine in `@camstack/types`. The catalog is
+ * `prepareNotification` engine in `@dominevo/types`. The catalog is
  * `buildNotifierAdapters` (`adapters/registry.ts`); email uses `sendDirect` →
  * `smtp-provider`.
  */
@@ -25,7 +25,7 @@ import {
   publicEndpointReaderFrom,
   secretKeysOf,
   targetRowPortsOver,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { EMAIL_KIND, EMAIL_SENDER_CAP, type EmailSmtpClient } from './adapters/email.js'
 import { buildNotifierAdapters } from './adapters/registry.js'
 import { iconMediaTypeFor, iconRoutes, iconUrlFor } from './icon-routes.js'

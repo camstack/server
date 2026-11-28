@@ -32,7 +32,7 @@
  * therefore prefers the largest slot at or below 1080p and only reaches for a
  * bigger one if there is nothing else.
  */
-import type { RtspEntryLike } from '@camstack/types'
+import type { RtspEntryLike } from '@dominevo/types'
 
 /** The tallest frame the recording path will hold in its prebuffer. */
 export const MAX_RECORDING_HEIGHT = 1080

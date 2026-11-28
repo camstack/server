@@ -21,7 +21,7 @@
  * settings store + cap slice mirror; no Moleculer / runner required.
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import type { Zone, ZoneRule, IScopedLogger, DeviceProxy } from '@camstack/types'
+import type { Zone, ZoneRule, IScopedLogger, DeviceProxy } from '@dominevo/types'
 import { ZonesProvider } from '../zones-provider.js'
 import { ZoneRulesProvider } from '../zone-rules-provider.js'
 

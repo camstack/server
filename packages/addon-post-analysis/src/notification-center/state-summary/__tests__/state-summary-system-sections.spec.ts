@@ -11,7 +11,7 @@
  * - A rule saved with the pre-D708 kinds keeps working: sections are derived
  *   from the kinds, nothing is stored about them.
  */
-import { NcRuleInputSchema, type NcRule, type NcSystemEventKind } from '@camstack/types'
+import { NcRuleInputSchema, type NcRule, type NcSystemEventKind } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { systemEventTapPath } from '../../system-event-tap-url.js'
 import { NcTextCatalog } from '../../text-catalog.js'
@@ -42,13 +42,13 @@ function addonUpdate(nodeId: string, packageName: string): NcSystemStateRow {
 }
 
 const SERVER_UPDATE: NcSystemStateRow = {
-  key: 'update:server:hub:@camstack/server',
+  key: 'update:server:hub:@dominevo/server',
   kind: 'server-update-available',
   since: NOW - 120_000,
   nodeId: 'hub',
-  packageName: '@camstack/server',
+  packageName: '@dominevo/server',
   params: {
-    packageName: '@camstack/server',
+    packageName: '@dominevo/server',
     currentVersion: '1.2.377',
     latestVersion: '1.2.378',
     nodeId: 'hub',
@@ -97,9 +97,9 @@ function ports(over: Partial<NcStateSourcePorts> = {}): NcStateSourcePorts {
     alerts: () => [],
     liveness: () => [NODE_OFFLINE],
     state: () => [
-      addonUpdate('agent-unraid', '@camstack/addon-recorder'),
-      addonUpdate('hub', '@camstack/addon-onvif'),
-      addonUpdate('agent-mac', '@camstack/addon-recorder'),
+      addonUpdate('agent-unraid', '@dominevo/addon-recorder'),
+      addonUpdate('hub', '@dominevo/addon-onvif'),
+      addonUpdate('agent-mac', '@dominevo/addon-recorder'),
       SERVER_UPDATE,
       WRAPPER_UPDATE,
       CRASH_LOOP,
@@ -196,17 +196,17 @@ describe('D708 — system sections of a split state summary', () => {
     expect(bodyOf(subjects, 'addon-updates')).toBe(
       [
         'zz-hub:',
-        '• @camstack/addon-onvif 1.0.0 → 1.0.1',
+        '• @dominevo/addon-onvif 1.0.0 → 1.0.1',
         'agent-a:',
-        '• @camstack/addon-recorder 1.0.0 → 1.0.1',
+        '• @dominevo/addon-recorder 1.0.0 → 1.0.1',
         'Mac mini:',
-        '• @camstack/addon-recorder 1.0.0 → 1.0.1',
+        '• @dominevo/addon-recorder 1.0.0 → 1.0.1',
       ].join('\n'),
     )
     expect(bodyOf(subjects, 'updates')).toBe(
       [
         'zz-hub:',
-        '• @camstack/server 1.2.377 → 1.2.378',
+        '• @dominevo/server 1.2.377 → 1.2.378',
         'Mac mini:',
         '• Container 1.0 → 1.1',
       ].join('\n'),
@@ -215,7 +215,7 @@ describe('D708 — system sections of a split state summary', () => {
 
   it('the combined (one-message) text carries the same per-node blocks under the section title', () => {
     const { text } = rows('en')
-    expect(text.text).toContain('Addon updates:\nzz-hub:\n• @camstack/addon-onvif 1.0.0 → 1.0.1')
+    expect(text.text).toContain('Addon updates:\nzz-hub:\n• @dominevo/addon-onvif 1.0.0 → 1.0.1')
   })
 
   it('a node the directory does not name is headed by its id, and the hub id is first', () => {

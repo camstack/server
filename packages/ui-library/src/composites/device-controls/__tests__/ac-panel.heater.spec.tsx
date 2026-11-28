@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { climateOffersCooling, climateSetpointBounds, climateTargetFromFraction } from '../ac-panel'
-import type { HvacMode } from '@camstack/types'
+import type { HvacMode } from '@dominevo/types'
 
 describe('climate presentation', () => {
   it('treats heat/off/auto as a heater and cool as an air conditioner', () => {

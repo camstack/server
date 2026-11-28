@@ -3,7 +3,7 @@
  * device metadata from the device registry — the two authorities that own them.
  * Kept out of the addon class so the class stays a composition root.
  */
-import type { AddonContext } from '@camstack/types'
+import type { AddonContext } from '@dominevo/types'
 import { AlexaAccessGate } from './access-gate.js'
 
 export function createHubAccessGate(ctx: AddonContext): AlexaAccessGate {

@@ -1,4 +1,4 @@
-import type { AddonHttpRequest } from '@camstack/types'
+import type { AddonHttpRequest } from '@dominevo/types'
 import type { AddonRouteCaller } from '../../auth/addon-route-auth.js'
 
 /** What the hub's addon catch-all knows when it hands a request to a route handler. */

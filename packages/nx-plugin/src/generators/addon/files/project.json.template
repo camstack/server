@@ -1,5 +1,5 @@
 {
-  "name": "@camstack/addon-<%= fileName %>",
+  "name": "@dominevo/addon-<%= fileName %>",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "library",
   "sourceRoot": "<%= projectRoot %>/src",
@@ -12,7 +12,7 @@
       }
     },
     "deploy": {
-      "executor": "@camstack/nx-plugin:deploy",
+      "executor": "@dominevo/nx-plugin:deploy",
       "dependsOn": ["build"],
       "options": {}
     }

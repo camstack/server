@@ -13,10 +13,10 @@
  *   - the COCO / audio class maps (macro ↔ sub relationships)
  *
  * The DATA (serializable — parentKind / iconId / labelKey) lives here in
- * `@camstack/types`. Colour is NOT a second table: each entry's `color` is
- * the bundled CamStack display palette (D939). The effective cluster palette
+ * `@dominevo/types`. Colour is NOT a second table: each entry's `color` is
+ * the bundled Dominevo display palette (D939). The effective cluster palette
  * is the `display-palette` capability. The UI-side mapping `iconId → lucide
- * component` and `labelKey → t()` lives in `@camstack/ui-library`.
+ * component` and `labelKey → t()` lives in `@dominevo/ui-library`.
  *
  * Two levels only (v1 YAGNI): macro → sub. `person` is a leaf macro.
  */

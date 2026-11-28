@@ -12,8 +12,8 @@
  * must keep today's behaviour rather than invent a pass.
  */
 
-import type { NcRule } from '@camstack/types'
-import { NcRuleInputSchema, NcRuleSchema } from '@camstack/types'
+import type { NcRule } from '@dominevo/types'
+import { NcRuleInputSchema, NcRuleSchema } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { evaluateRule, type NcRuleSubject } from '../rule-engine.js'
 import {

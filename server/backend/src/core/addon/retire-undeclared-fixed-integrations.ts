@@ -12,8 +12,8 @@
  * addon is not installed is kept (it reconnects on reinstall), and a still-declared row (Terminal)
  * is never touched. An unreadable device list retires nothing: unknown is not zero.
  */
-import type { Integration } from '@camstack/types'
-import { errMsg } from '@camstack/types'
+import type { Integration } from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
 
 export const INTEGRATION_INSTANCES_CAP_NAME = 'integration-instances'
 

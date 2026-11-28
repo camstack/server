@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import PipelineRunnerAddon from '../index.js'
-import type { DecodedFrame } from '@camstack/types'
+import type { DecodedFrame } from '@dominevo/types'
 
 interface FakeRunner {
   enqueueDetectionFrame: ReturnType<typeof vi.fn>

@@ -112,9 +112,9 @@ const custom = vi.fn(async (call: CustomCall): Promise<unknown> => {
   }
 })
 
-vi.mock('@camstack/ui-library', async () => {
+vi.mock('@dominevo/ui-library', async () => {
   const actual =
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+    await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return {
     ...actual,
     useSystem: () => ({ trpcClient: { addons: { custom: { mutate: custom } } } }),
@@ -129,7 +129,7 @@ vi.mock('@camstack/ui-library', async () => {
   }
 })
 
-import { ConfirmDialogProvider } from '@camstack/ui-library'
+import { ConfirmDialogProvider } from '@dominevo/ui-library'
 import { EventsDebugTapes } from '../EventsDebugTapes'
 
 function renderSection() {

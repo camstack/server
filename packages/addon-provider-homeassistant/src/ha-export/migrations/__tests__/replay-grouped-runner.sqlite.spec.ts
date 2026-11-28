@@ -18,7 +18,7 @@ import {
   makeInMemoryRecords,
   resolveRunnerId,
   runAddonMigrations,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { createUdsAddonContext } from '../../../../../system/src/kernel/moleculer/addon-context-factory.js'
@@ -70,12 +70,12 @@ let addonsDir: string
 beforeEach(() => {
   h = makeHarness()
   addonsDir = mkdtempSync(path.join(os.tmpdir(), 'replay-addons-'))
-  mkdirSync(path.join(addonsDir, '@camstack', 'provider-homeassistant'), {
+  mkdirSync(path.join(addonsDir, '@dominevo', 'provider-homeassistant'), {
     recursive: true,
   })
   // The REAL manifest: the export's `execution.group` is what puts it in its own runner.
   writeFileSync(
-    path.join(addonsDir, '@camstack', 'provider-homeassistant', 'package.json'),
+    path.join(addonsDir, '@dominevo', 'provider-homeassistant', 'package.json'),
     readFileSync(MANIFEST, 'utf-8'),
   )
 })

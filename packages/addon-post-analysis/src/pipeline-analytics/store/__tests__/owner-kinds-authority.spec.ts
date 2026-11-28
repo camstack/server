@@ -1,6 +1,6 @@
 /**
  * D476 guard: `MediaStore.OWNER_KINDS` (the AUTHORITY on what may own media)
- * must stay a SUBSET of `@camstack/types`' `MEDIA_OWNER_TYPES` (the codec's
+ * must stay a SUBSET of `@dominevo/types`' `MEDIA_OWNER_TYPES` (the codec's
  * list, which `parseMediaOwnerKey` accepts).
  *
  * The codec's list was built from the prefixes actually present on the live
@@ -13,7 +13,7 @@
  * one without the other and this test fails immediately, in CI, rather than
  * waiting for the first key that owner kind writes.
  */
-import { MEDIA_OWNER_TYPES } from '@camstack/types'
+import { MEDIA_OWNER_TYPES } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { OWNER_KINDS } from '../media-store.js'
 

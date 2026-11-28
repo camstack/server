@@ -5,7 +5,7 @@
  *   npm run changelog:add -- <package> "<line>" [--type added|changed|fixed|removed]
  *
  * `<package>` is the directory name (`addon-ai`), the npm name
- * (`@camstack/addon-ai`) or a repo path. Write what changed for the OPERATOR,
+ * (`@dominevo/addon-ai`) or a repo path. Write what changed for the OPERATOR,
  * one line, in English. The Publish Packages workflow moves the entries under
  * the new version; `scripts/check-changelog-unreleased.ts` refuses a publish
  * of a changed package that has none.

@@ -2,7 +2,7 @@
  * Record kinds owned by `auth-webauthn` (records plan phase 6 / §2.8). The
  * legacy `auth-webauthn:*` collections they replaced are gone (D900).
  */
-import { defineRecordKinds } from '@camstack/types'
+import { defineRecordKinds } from '@dominevo/types'
 import { z } from 'zod'
 
 export const PasskeyBodySchema = z.object({

@@ -24,7 +24,7 @@
  * overloaded to mean three different kinds of id.
  */
 
-import { type ClipSearchStrictness, DeviceType, type ScoredObjectEvent } from '@camstack/types'
+import { type ClipSearchStrictness, DeviceType, type ScoredObjectEvent } from '@dominevo/types'
 import {
   DeviceValuePicker,
   eventKindLabel,
@@ -35,7 +35,7 @@ import {
   usePipelineAnalyticsSearchObjectEvents,
   useSearchFieldHotkey,
   Input,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Loader2, Search, X } from 'lucide-react'
 import { type JSX, useEffect, useMemo, useState, useRef } from 'react'
 import { EventCard } from './EventCard.js'

@@ -9,8 +9,8 @@
  * no longer standing in front of. D558 § 5.2 rule 3 names this as one of the
  * three ways the rule breaks without anybody meaning it.
  */
-import type { ExportClipSubject, ExportRecord } from '@camstack/types'
-import { clipExportFailureOf } from '@camstack/types'
+import type { ExportClipSubject, ExportRecord } from '@dominevo/types'
+import { clipExportFailureOf } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { reconcileInterruptedExports } from '../export-reconcile.js'
 import { getExportRecord, upsertExport } from '../export-store.js'

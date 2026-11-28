@@ -21,7 +21,7 @@
  * write-through skip the queue — the named test goes red.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { runtimeStatePolicyFor } from '@camstack/types'
+import { runtimeStatePolicyFor } from '@dominevo/types'
 import { isPlainRecord, OWNED_FIELDS_KEY } from '../field-ownership.js'
 import { flushDebounce, harness, type Harness } from './mirror-harness.js'
 

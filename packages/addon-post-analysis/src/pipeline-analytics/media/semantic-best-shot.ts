@@ -16,7 +16,7 @@ import type {
   EventMediaDispatcher,
   TrackSnapshotTarget,
 } from '../services/event-media-dispatcher.js'
-import type { AddonContext } from '@camstack/types'
+import type { AddonContext } from '@dominevo/types'
 import type { FrameMediaCapture } from './frame-media-capture.js'
 import { ENRICHMENT_CAPTURE_STALE_MS } from './capture-timing.js'
 

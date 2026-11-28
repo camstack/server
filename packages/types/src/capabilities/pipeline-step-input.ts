@@ -7,7 +7,7 @@
  * graph. An addon that only needs these two (the benchmark's `runPipelineTest`
  * action) paid ~130 MB of heap at load. `pipeline-executor.cap.ts` re-exports
  * them, so every existing import keeps working; addon server code takes them
- * from `@camstack/types/addon`.
+ * from `@dominevo/types/addon`.
  */
 import { z } from 'zod'
 import type { FrameResult } from '../types/detection.js'

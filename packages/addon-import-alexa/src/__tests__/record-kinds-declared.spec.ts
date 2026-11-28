@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { assertValidDeclaration } from '@camstack/types'
+import { assertValidDeclaration } from '@dominevo/types'
 import { alexaRecordKinds } from '../broker-record-kinds.js'
 
 describe('the record kinds import-alexa declares', () => {

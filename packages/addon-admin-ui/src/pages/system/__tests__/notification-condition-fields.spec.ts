@@ -6,8 +6,8 @@
  * degrade visibly, never silently — and must never be mapped onto a
  * neighbouring field.
  */
-import type { NcConditionDescriptor } from '@camstack/types'
-import { NC_CONDITION_CATALOG } from '@camstack/types'
+import type { NcConditionDescriptor } from '@dominevo/types'
+import { NC_CONDITION_CATALOG } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 
 import {

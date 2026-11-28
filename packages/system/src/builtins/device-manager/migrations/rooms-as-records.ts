@@ -31,7 +31,7 @@ import {
   type ZoneBody,
   zoneIdFromKey,
   locationIconKey,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { decodeAddonStore } from '../device-meta-types.js'
 import { DEVICE_ROWS_COLLECTION } from '../device-row-store.js'
 import { deviceManagerRecordKinds } from '../record-kinds.js'

@@ -26,7 +26,7 @@ import {
 } from '../session-decode-coordinator.js'
 import type { NativeCropRequester } from '../session-decode-pump.js'
 import { withRetainedReader } from '../../pipeline-runner/retained-reader-hold.js'
-import type { FrameRef } from '@camstack/types'
+import type { FrameRef } from '@dominevo/types'
 import { VIEW, makeLogger, scriptedChild, startAdmittingPump } from './scripted-decode-child.js'
 
 /** What the runner does with a frame that had a detection: park it, then let go. */

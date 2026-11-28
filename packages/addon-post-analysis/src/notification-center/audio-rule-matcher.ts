@@ -52,7 +52,7 @@ import {
   NC_AUDIO_CONFIRM_WINDOW_SEC_DEFAULT,
   type AudioClassifyOutcome,
   type NcAudioCondition,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /**
  * Minimum samples a LEVEL window must hold to be judged at all.
@@ -166,7 +166,7 @@ export function normalizeAudioLabel(label: string): string {
 /**
  * Map a rule condition onto a watched spec — and onto its MODE.
  *
- * The mode comes from `audioModeOf` in `@camstack/types`, the ONE place that
+ * The mode comes from `audioModeOf` in `@dominevo/types`, the ONE place that
  * question is answered, so the engine, the editors and this matcher cannot
  * disagree about what a stored rule means. `null` means FAIL CLOSED: neither
  * filter was given, so every sample would be a hit and the rule would confirm

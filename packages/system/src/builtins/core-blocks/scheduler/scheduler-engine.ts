@@ -42,7 +42,7 @@ import {
   vocabActionIdFor,
   type AutomationWhen,
   type DaylightPhaseReading,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { type DeviceTemplateDoor, stepRenderer } from '../device-template-door.js'
 import {
   conditionDeps,

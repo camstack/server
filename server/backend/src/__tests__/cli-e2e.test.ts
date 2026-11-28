@@ -1,5 +1,5 @@
 /**
- * CLI E2E tests — verify `camstack serve` and `camstack agent` boot correctly.
+ * CLI E2E tests — verify `dominevo serve` and `dominevo agent` boot correctly.
  *
  * These tests spawn real processes using the CLI entry point and verify:
  * - Server starts and responds on the configured port
@@ -8,7 +8,7 @@
  *
  * Uses random ports to avoid conflicts with running servers.
  *
- * The serve/agent tests require the full server build (@camstack/server/main.js)
+ * The serve/agent tests require the full server build (@dominevo/server/main.js)
  * and are gated behind CAMSTACK_TEST_CLI_FULL=true.
  */
 import { describe, it, expect, afterEach } from 'vitest'
@@ -67,7 +67,7 @@ describe('CLI E2E', () => {
   const fullTest = process.env.CAMSTACK_TEST_CLI_FULL === 'true' && CLI_EXISTS ? it : it.skip
 
   fullTest(
-    'camstack serve boots and responds on HTTPS',
+    'dominevo serve boots and responds on HTTPS',
     async () => {
       const port = randomPort()
       const proc = fork(CLI_PATH, ['serve', '--port', String(port), '--data', TEST_DATA_DIR], {
@@ -101,7 +101,7 @@ describe('CLI E2E', () => {
   )
 
   fullTest(
-    'camstack agent boots and stays alive',
+    'dominevo agent boots and stays alive',
     async () => {
       const proc = fork(
         CLI_PATH,

@@ -2,7 +2,7 @@
  * Pure formatting for the Cluster → Auto tune tab (D745): the plan's
  * reasons and changes as operator text. No React, no data fetching.
  */
-import type { AutoTunePlan, LatencySource } from '@camstack/types'
+import type { AutoTunePlan, LatencySource } from '@dominevo/types'
 import i18n from '../../../i18n/index'
 
 type NodePlan = AutoTunePlan['nodes'][number]

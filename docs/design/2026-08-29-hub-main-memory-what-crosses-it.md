@@ -23,7 +23,7 @@ covers:
 > poi va identificato cosa alloca. Oggi la composizione non è misurata."* [the telemetry must be shipped and read … then what allocates must be identified. Today the composition is not measured.] This
 > document is that measurement, taken 25 minutes after the heartbeat started
 > emitting for the first time ([D285](../decisions/adr-0285-a-mem-heartbeat-has-a-destination-or-it-does-not-exist.md),
-> `@camstack/server@1.2.186`). It answers §5e's first half and leaves the second
+> `@dominevo/server@1.2.186`). It answers §5e's first half and leaves the second
 > half — *which caller* — explicitly open, with the cheapest experiment named.
 
 **The one-line result.** hub-main's `arrayBuffers` reading is not a retained set
@@ -38,7 +38,7 @@ media-bytes problem, and on this evidence it is **not** a D9/D18 violation.
 ## 1 · What was measured, and with what
 
 Two independent instruments over the same wall-clock, on the live hub
-(container `CamStack`, hub-main host pid `806378`, in-container pid 7,
+(container `Dominevo`, hub-main host pid `806378`, in-container pid 7,
 `--max-old-space-size=3072`, uptime from 11:07Z):
 
 | Instrument | What it gives |

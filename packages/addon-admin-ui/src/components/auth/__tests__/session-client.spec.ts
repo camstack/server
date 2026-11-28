@@ -24,8 +24,8 @@ describe('describeClient', () => {
     [FIREFOX_WIN, 'Firefox on Windows'],
     [EDGE_WIN, 'Edge on Windows'],
     [CHROME_ANDROID, 'Chrome on Android'],
-    ['camstack/42 CFNetwork/1568.100.1 Darwin/24.0.0', 'CamStack app on iOS'],
-    ['okhttp/4.12.0', 'CamStack app on Android'],
+    ['camstack/42 CFNetwork/1568.100.1 Darwin/24.0.0', 'Dominevo app on iOS'],
+    ['okhttp/4.12.0', 'Dominevo app on Android'],
     ['node', 'Script (Node.js)'],
     ['curl/8.7.1', 'curl'],
   ])('%s → %s', (ua, label) => {

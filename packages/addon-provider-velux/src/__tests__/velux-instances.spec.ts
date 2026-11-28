@@ -8,8 +8,8 @@ import {
   integrationRowsMigration,
   integrationRowsPortsOver,
   makeInMemoryRecords,
-} from '@camstack/types'
-import { REDACTED_SECRET } from '@camstack/types'
+} from '@dominevo/types'
+import { REDACTED_SECRET } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { VeluxLoginRefusedError } from '../velux-client-contract.js'
 import { buildVeluxConnectionTestProvider } from '../velux-connection-test.js'

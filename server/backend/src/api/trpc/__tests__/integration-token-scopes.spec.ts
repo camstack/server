@@ -22,7 +22,7 @@
  * Neutralisation: drop the `principal.kind === 'session'` guard in
  * `resolveUser` and the first test flips back to `[]`.
  */
-import { capabilityScopesOf } from '@camstack/types'
+import { capabilityScopesOf } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { AddonRegistryService } from '../../../core/addon/addon-registry.service.js'
 import type { AuthService } from '../../../core/auth/auth.service.js'

@@ -1,10 +1,10 @@
 /**
  * AdminPage — thin wrapper around library `PageShell` for `/system/*`.
- * Prefer importing `PageShell` from `@camstack/ui-library` in new code.
+ * Prefer importing `PageShell` from `@dominevo/ui-library` in new code.
  */
 import type { ReactNode } from 'react'
 import type { LucideIcon } from 'lucide-react'
-import { PageShell } from '@camstack/ui-library'
+import { PageShell } from '@dominevo/ui-library'
 
 interface AdminPageProps {
   readonly icon?: LucideIcon

@@ -3,7 +3,7 @@ import {
   linkUserFinder,
   guardInstanceDelete,
   makeInMemoryRecords,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { matterBrokersEntryKind, matterConnectionsEntryKind } from '../broker-record-kinds.js'
 import { buildMatterAccountInstances } from '../matter-account-instances.js'

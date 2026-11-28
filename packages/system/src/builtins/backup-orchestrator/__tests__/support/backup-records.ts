@@ -2,7 +2,7 @@
  * The backup orchestrator's records on the REAL engine (in-memory SQLite),
  * for specs: the access an addon gets as `ctx.records`, and its kind handles.
  */
-import { createRecordsAccess, type RecordsAccess } from '@camstack/types'
+import { createRecordsAccess, type RecordsAccess } from '@dominevo/types'
 import { makeRecordsWorld } from '../../../sqlite-storage/__tests__/support/records-world.js'
 import {
   backupOrchestratorRecordKinds,

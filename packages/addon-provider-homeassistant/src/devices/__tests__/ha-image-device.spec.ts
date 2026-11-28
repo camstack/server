@@ -1,10 +1,10 @@
 import { describe, it, expect, vi } from 'vitest'
-import { DeviceType, type IDeviceRuntimeState } from '@camstack/types'
+import { DeviceType, type IDeviceRuntimeState } from '@dominevo/types'
 import { HaImageDevice } from '../ha-image-device.js'
 import type { HaEntityState } from '../../ha-types.js'
 
 interface BuildResult {
-  ctx: import('@camstack/types').DeviceContext
+  ctx: import('@dominevo/types').DeviceContext
   setCapStateCalls: Array<Record<string, unknown>>
   warnCalls: Array<unknown[]>
   getBrokerConfig: ReturnType<typeof vi.fn>
@@ -105,7 +105,7 @@ function buildImageCtx(
       addContext: vi.fn(),
       with: vi.fn(),
     },
-  } as unknown as import('@camstack/types').DeviceContext
+  } as unknown as import('@dominevo/types').DeviceContext
 
   return { ctx, setCapStateCalls, warnCalls, getBrokerConfig }
 }

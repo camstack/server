@@ -7,7 +7,7 @@
 // It never prints a secret value: only paths, refs, counts and ids.
 //
 // It talks to the hub's admin API with the operator's OWN session: run
-// `camstack login <host>` once as an admin (the shared resolver renews it;
+// `dominevo login <host>` once as an admin (the shared resolver renews it;
 // no other credential exists). Every write goes through the product's normal OPERATOR write
 // paths, which store a sent secret in the keychain and leave a marker:
 //   addon settings    addonSettings.updateScopedSettings
@@ -554,7 +554,7 @@ async function main() {
       : path.resolve('scratchpad/keychain-migration-state.json')
   // The hub serves a self-signed certificate.
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
-  // The operator's `camstack login` session (admin), via the shared resolver.
+  // The operator's `dominevo login` session (admin), via the shared resolver.
   const auth = await resolveHubAuth({
     server: hub,
   })

@@ -11,7 +11,7 @@ import {
   type HeatPumpCircuit,
   type HeatPumpStatus,
   type WaterHeaterStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { plugFixtures } from '../__fixtures__/plug'

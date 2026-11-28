@@ -1,4 +1,4 @@
-import { isSecretMarker, type SecretMarker } from '@camstack/types'
+import { isSecretMarker, type SecretMarker } from '@dominevo/types'
 import { z } from 'zod'
 import { hasUnresolvedCredential } from './waste-secrets.js'
 

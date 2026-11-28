@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { DeviceType, type IScopedLogger } from '@camstack/types'
+import { DeviceType, type IScopedLogger } from '@dominevo/types'
 import type { HomeConnectChildBinding } from '../home-connect-child-bindings.js'
 import {
   HomeConnectChildReconciler,

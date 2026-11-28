@@ -40,7 +40,7 @@ the closure also provides is replaced by a **symlink into the closure** —
 but ONLY when the closure version is identical, or satisfies every
 requirement range recorded for that package across the addon's own tree
 under a deliberately conservative parser (exact / caret / tilde; `*`, `>=`,
-unions, prereleases refuse). `@camstack/*` and declared
+unions, prereleases refuse). `@dominevo/*` and declared
 `camstack.nativeDependencies` are never linked. Refusal keeps the addon's
 own copy and is logged by name. Symlinks were verified on the hub to resolve
 for both `require()` and `import()` at any tree depth, and a dependency the

@@ -15,7 +15,7 @@
  * page asks for `end = t + 1` (Loki's end is exclusive) and skips the hashes.
  */
 import { z } from 'zod'
-import type { LogLevel, LogReadEntry, LogReadQuery, LogReadResult } from '@camstack/types'
+import type { LogLevel, LogReadEntry, LogReadQuery, LogReadResult } from '@dominevo/types'
 import { compileLogFilter, lineMatches, type ReadableLine } from '../../logging/log-read-filter.js'
 
 const LEVELS: readonly LogLevel[] = ['debug', 'info', 'warn', 'error']

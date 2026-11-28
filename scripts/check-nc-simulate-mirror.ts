@@ -7,7 +7,7 @@
  *
  * `nc.injectTestEvent` rides the generic `addons.custom` bridge, whose input
  * and output are `z.unknown()` on the wire. That is what makes bridge actions
- * cheap — no codegen, no `@camstack/server/system` republish, no release train — and
+ * cheap — no codegen, no `@dominevo/server/system` republish, no release train — and
  * it is also what removes every compile-time link between the two ends. The
  * admin UI cannot import addon source, so `NcSimulateInput` in
  * `notification-simulate.helpers.ts` is a HAND-WRITTEN mirror of
@@ -36,7 +36,7 @@
  * field to the UI without the server, or renaming one on either side, does.
  */
 
-import type { NcRule } from '@camstack/types'
+import type { NcRule } from '@dominevo/types'
 import { NcTestEventInputSchema } from '../packages/addon-post-analysis/src/notification-center/test-event.js'
 import {
   buildSimulateInput,

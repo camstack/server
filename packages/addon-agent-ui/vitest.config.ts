@@ -7,7 +7,7 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@camstack/ui-library': path.resolve(__dirname, '../ui-library/src'),
+      '@dominevo/ui-library': path.resolve(__dirname, '../ui-library/src'),
     },
   },
   test: {

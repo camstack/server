@@ -26,15 +26,15 @@ context, and a stated placement. Background analysis:
 | Step | Survivor | Coral | Status |
 | --- | --- | --- | --- |
 | object-detection | `ssd-mobilenet-v2-coco-edgetpu` (Apache-2.0) | is the survivor | Shipped, `defaultModelIdByFormat.tflite`. MobileDet stays a **plus catalog catalog import** (Model Studio), not promoted. |
-| bird-classifier | `bird-classifier` (AIY Birds V1, Apache-2.0) | `formats.tflite` = `tflite/bird-classifier_edgetpu.tflite`, compiled by CamStack from the Google int8 quant | **In the catalog** (2026-10-06, D710 addendum). Not live until the pipeline addon is deployed; set the Coral node's `jumpDeviceKey` first. |
-| animal-classifier | `animal-classifier` (Lite0, Apache-2.0) | compile CamStack int8 → edgetpu | **Deferred** (low value: once-per-track, the iGPU does it in ms, would swap against the root). |
+| bird-classifier | `bird-classifier` (AIY Birds V1, Apache-2.0) | `formats.tflite` = `tflite/bird-classifier_edgetpu.tflite`, compiled by Dominevo from the Google int8 quant | **In the catalog** (2026-10-06, D710 addendum). Not live until the pipeline addon is deployed; set the Coral node's `jumpDeviceKey` first. |
+| animal-classifier | `animal-classifier` (Lite0, Apache-2.0) | compile Dominevo int8 → edgetpu | **Deferred** (low value: once-per-track, the iGPU does it in ms, would swap against the root). |
 | vehicle-classifier | `vehicle-type-v1` (CC-BY-NC) | none — MobileNetV3 compiles poorly, and a Coral-only model is forbidden | **Retrain first**: [D711](../decisions/adr-0711-the-vehicle-classifier-survivor-is-trained-by-camstack-on-open-images-and-vehicle-type-v1-is-deleted.md) (proposed), plan [`2026-10-06-vehicle-classifier-licence-clean-retrain.md`](2026-10-06-vehicle-classifier-licence-clean-retrain.md). Coral build after it. |
 | face-detection | `yunet-2023mar` (MIT) | YuNet int8 → edgetpu | Spike only, unscheduled (landmark precision is the risk; 0.2 MB would not swap). |
 | face-embedding, clip-embedding | AuraFace, SigLIP2 | — | **Not admitted** (vector index; D52, D710). |
 | plate-ocr, package-detection | CCT, RF-DETR | — | **Not admitted** (calibrated per-char gate; DETR head). |
 | plate-detection | `yolox-tiny-plate` (open-lpr, Apache-2.0) | none — YOLOX's Focus stem fails `edgetpu_compiler` | **No Coral build** ([D719](../decisions/adr-0719-the-plate-detection-survivor-is-open-lpr-yolox-tiny-and-every-other-plate-detector-is-deleted.md)); the step jumps to another device of the node, as `yolov8n-plate` did. |
 
-Do not redistribute as CamStack Coral defaults: Ultralytics YOLO → edgetpu
+Do not redistribute as Dominevo Coral defaults: Ultralytics YOLO → edgetpu
 (AGPL-3.0 weights), plugin catalog YOLO ReLU tflite (GPL lineage, UNKNOWN per-model
 terms). Imports stay operator-driven with their licence notices. Note: the
 plugin catalog YOLOv9 tflite files emit six split-head tensors that the current

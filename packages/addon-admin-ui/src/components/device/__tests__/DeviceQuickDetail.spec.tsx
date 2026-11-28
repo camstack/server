@@ -5,7 +5,7 @@
  * with no legacy fallback and no separate History tab. Leaving for the full
  * detail page asks before dropping unsaved edits.
  */
-import { ConfirmDialogProvider, useDeviceQuickDetailOpen } from '@camstack/ui-library'
+import { ConfirmDialogProvider, useDeviceQuickDetailOpen } from '@dominevo/ui-library'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { type ReactNode, useEffect } from 'react'
@@ -37,8 +37,8 @@ const presence = vi.hoisted(() => ({
   bound: ['device-transitions'] as readonly string[],
 }))
 
-vi.mock('@camstack/ui-library', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@camstack/ui-library')>()
+vi.mock('@dominevo/ui-library', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dominevo/ui-library')>()
   return {
     ...actual,
     useDeviceManagerGetDevice: () => ({

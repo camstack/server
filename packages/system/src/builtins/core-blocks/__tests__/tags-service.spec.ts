@@ -10,13 +10,13 @@ import {
   type RecordKindHandle,
   type TagBody,
   tagIdFromKey,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ActionsStore } from '../actions-store.js'
 import { coreBlocksRecordKinds, type TemplateRowBody } from '../record-kinds.js'
 import { SchedulersStore } from '../scheduler/scheduler-store.js'
 import { type TagOwnerPort, TagOwnerUnreachableError } from '../tags-service.js'
-import type { TagRecord } from '@camstack/types'
+import type { TagRecord } from '@dominevo/types'
 import { buildTagsService, parseRuleTagOwnerId, ruleTagOwnerId } from '../tags-wiring.js'
 import { coreBlockRecordsHarness, recordingLogger } from './fixtures.js'
 import type { CoreBlockStore } from '../core-block-store.js'

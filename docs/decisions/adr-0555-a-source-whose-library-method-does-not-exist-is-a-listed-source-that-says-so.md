@@ -269,7 +269,7 @@ provider's own order (D554 decision 6).
   `listSources`, so once the choice persists an unticked source has no row to
   un-tick — the picker survives today only because its deny set is
   client-side. With one Reolink source the picker is now the camera's PROVIDER
-  choice ("show me the camera's own recordings, or only CamStack's"), which
+  choice ("show me the camera's own recordings, or only Dominevo's"), which
   makes the hole more visible, not less: switch the camera's recordings off and
   the row that would switch them back on is gone. The answer is almost
   certainly that `listSources` keeps every source and MARKS the disabled ones —

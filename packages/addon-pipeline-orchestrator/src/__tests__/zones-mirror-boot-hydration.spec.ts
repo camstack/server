@@ -16,7 +16,7 @@
  * that FAILS changes nothing (D49).
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import type { AddonApi, DeviceProxy, IScopedLogger, Zone } from '@camstack/types'
+import type { AddonApi, DeviceProxy, IScopedLogger, Zone } from '@dominevo/types'
 import { ZonesProvider } from '../zones-provider.js'
 import { ZoneRulesProvider } from '../zone-rules-provider.js'
 import { hydrateZoneMirrorsAtBoot } from '../zone-mirror-hydration.js'

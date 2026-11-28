@@ -15,7 +15,7 @@ applies-to:
 
 ## Context
 
-On 2026-10-08 `@camstack/addon-decoder-ffmpeg` was uninstalled from the hub
+On 2026-10-08 `@dominevo/addon-decoder-ffmpeg` was uninstalled from the hub
 through the admin UI and stayed installed on both agents — on `agent-a`
 (Docker) and on the macOS Electron agent — with its runner running and `decoder`
 still advertised. Nothing in the product could remove it:

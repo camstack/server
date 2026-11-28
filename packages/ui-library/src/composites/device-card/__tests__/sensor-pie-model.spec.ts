@@ -1,4 +1,4 @@
-import type { HeroMeasurement, HeroRow } from '@camstack/types'
+import type { HeroMeasurement, HeroRow } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { readingOf } from '../__fixtures__/pie-readings'
 import {

@@ -4,7 +4,7 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { ConfirmDialogProvider, type AddonPageProps } from '@camstack/ui-library'
+import { ConfirmDialogProvider, type AddonPageProps } from '@dominevo/ui-library'
 import ModelStudioPage from '../page.js'
 
 vi.mock('../components/NodeSelector.js', () => ({
@@ -13,9 +13,9 @@ vi.mock('../components/NodeSelector.js', () => ({
   ),
 }))
 
-vi.mock('@camstack/ui-library', async () => {
+vi.mock('@dominevo/ui-library', async () => {
   const actual =
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+    await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return {
     ...actual,
     useClusterNodes: () => ({

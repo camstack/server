@@ -29,7 +29,7 @@
  *  - `mergeContinuation` on the circle alone: "merges: the width flipped
  *    across the gap" goes RED.
  */
-import type { ObjectState } from '@camstack/types'
+import type { ObjectState } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 
 import { DEFAULT_STATE_ANALYZER_CONFIG, StateAnalyzer } from '../state-analyzer.js'

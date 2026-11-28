@@ -2,7 +2,7 @@
  * What the notification centre is wired with, and the alarm panel port it talks to.
  * Extracted from notification-center/index.ts. The class re-exports both.
  */
-import type { RetrainVerdictSubject } from '@camstack/types'
+import type { RetrainVerdictSubject } from '@dominevo/types'
 import type { NcAddonUpdateOutcome } from './addon-update-apply.js'
 import type { NcExclusionReading } from './alarm/alarm-exclusions.js'
 import type { NcAlarmInputBypassRecord } from './alarm/alarm-input-bypasses.js'
@@ -52,7 +52,7 @@ import type {
   RecordsAccess,
   SystemEvent,
   Track,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** What the retrain lifecycle answered to a mark request. */
 export type NcMarkForRetrainOutcome =

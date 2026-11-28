@@ -5,11 +5,11 @@
  * ## The gap this closes
  *
  * `<dataDir>/addons` is the only place an addon is ever loaded from — nothing
- * imports one from `@camstack/server`'s closure, on any role. So a server
+ * imports one from `@dominevo/server`'s closure, on any role. So a server
  * update carries new addon versions into a directory that runs nothing, and
  * no channel brings them to the one that does. Measured on the hub on
  * 2026-09-17: six addons behind the closure, `addon-auth` by nineteen versions,
- * every one of them dating from the last time somebody ran `camstack deploy`.
+ * every one of them dating from the last time somebody ran `dominevo deploy`.
  *
  * `planFirstBootAddons` was SUPPOSED to have computed this drift on every boot
  * for a month. It did not: it read the closure through

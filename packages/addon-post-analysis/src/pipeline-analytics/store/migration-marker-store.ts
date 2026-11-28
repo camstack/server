@@ -6,7 +6,7 @@
  * analytics store on every boot, so a write that fails is logged by the caller
  * and costs a re-scan, never correctness (every pass is idempotent).
  */
-import type { RecordKindHandle, RecordsAccess } from '@camstack/types'
+import type { RecordKindHandle, RecordsAccess } from '@dominevo/types'
 import { type MigrationMarkerBody, pipelineAnalyticsRecordKinds } from '../record-kinds.js'
 
 /** The seam the migration passes read and write through, so their specs need no engine. */

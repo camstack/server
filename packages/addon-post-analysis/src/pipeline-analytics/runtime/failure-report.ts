@@ -29,8 +29,8 @@
  * counter that makes them countable without reading them.
  */
 
-import { FailureCounters } from '@camstack/types'
-import type { FailureCounterSample } from '@camstack/types'
+import { FailureCounters } from '@dominevo/types'
+import type { FailureCounterSample } from '@dominevo/types'
 
 /**
  * The enrichment crop capture — face / plate / clip / detail-classifier.

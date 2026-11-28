@@ -14,7 +14,7 @@ import {
   type DeviceContext,
   type InferNativeProvider,
   type StateRefreshPolicy,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** The fastest cadence the core reads a feeder at (the old idle cadence; a 429 must not be hammered). */
 export const PETKIT_MIN_REFRESH_INTERVAL_MS = 30_000

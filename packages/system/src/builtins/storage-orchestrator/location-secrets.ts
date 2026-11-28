@@ -40,8 +40,8 @@
  * itself define, rather than nothing.
  */
 
-import type { StorageLocation } from '@camstack/types'
-import { collectSecretConfigKeys, REDACTED_SECRET } from '@camstack/types'
+import type { StorageLocation } from '@dominevo/types'
+import { collectSecretConfigKeys, REDACTED_SECRET } from '@dominevo/types'
 
 /**
  * The config keys the ORCHESTRATOR itself owns, as opposed to the ones a

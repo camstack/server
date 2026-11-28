@@ -3,8 +3,8 @@
  * that use it. A remote template declares no inputs and the server has no
  * "who uses this remote template" read, so it shows the kind and what exists.
  */
-import { AutomationTemplatePayloadSchema, type TemplateRecord } from '@camstack/types'
-import { Badge, Skeleton, useCoreBlocksList } from '@camstack/ui-library'
+import { AutomationTemplatePayloadSchema, type TemplateRecord } from '@dominevo/types'
+import { Badge, Skeleton, useCoreBlocksList } from '@dominevo/ui-library'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'

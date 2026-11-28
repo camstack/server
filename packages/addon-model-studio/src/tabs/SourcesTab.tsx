@@ -3,11 +3,11 @@
  * Operator-supplied upload/URL lives under Custom.
  */
 import { useState } from 'react'
-import type { AddonPageProps } from '@camstack/ui-library'
+import type { AddonPageProps } from '@dominevo/ui-library'
 import { PlusCatalogSection, type UploadPrefill } from './PlusCatalogSourceSections.js'
 import { PluginCatalogTab } from './PluginCatalogTab.js'
 import { Trans, useT } from '../i18n/index.js'
-import { Button } from '@camstack/ui-library'
+import { Button } from '@dominevo/ui-library'
 
 interface SourcesTabProps {
   readonly trpc: AddonPageProps['trpc']

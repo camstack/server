@@ -11,7 +11,7 @@
  * cannot be read holds EVERYTHING pending, and says so.
  */
 import { promises as fsp } from 'node:fs'
-import { errMsg } from '@camstack/types'
+import { errMsg } from '@dominevo/types'
 
 export const MIGRATION_HOLD_SUFFIX = '.migration-hold.json'
 

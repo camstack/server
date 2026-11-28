@@ -13,7 +13,7 @@ applies-to:
 ## Context
 
 The OSD incident (see the two 2026-09-04 session entries) cost hours for one
-structural reason: when CamStack's settings form and the camera disagreed
+structural reason: when Dominevo's settings form and the camera disagreed
 ("channel-name overlay ON" vs the camera's OFF), there was **no way to see the
 camera's own answer**. Every `deviceCache.*Snapshot` group is a projection —
 `osdSnapshot` keeps 7 fields of the lib's `OsdConfig` and discards the rest at
@@ -81,7 +81,7 @@ original fifteen slices shared. Both are now explicit in the catalog rather
 than implied:
 
 - **Not every belief lives in `deviceCache`.** There is no battery snapshot
-  field; what CamStack believes about charge is the `battery` capability's
+  field; what Dominevo believes about charge is the `battery` capability's
   runtime state — the same value `battery.getStatus` serves. A catalog entry
   therefore names a `BelievedSource` (a discriminated union: `deviceCache`
   with a `snapshotKey`, or `capRuntimeState`), and no fake cache key was

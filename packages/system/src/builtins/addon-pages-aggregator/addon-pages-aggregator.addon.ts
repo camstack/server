@@ -15,7 +15,7 @@
  *
  * Why a builtin rather than a cap-providers helper:
  *   - The aggregator is conceptually the "addon-pages provider" — addons
- *     own caps, not the server. Living in `@camstack/server/system/builtins` keeps
+ *     own caps, not the server. Living in `@dominevo/server/system/builtins` keeps
  *     the surface symmetrical with `system-config`, `local-auth`, etc.
  *   - Lets the aggregator subscribe to source readiness without piping a
  *     CapabilityRegistry handle through `RouterServices`.
@@ -32,7 +32,7 @@ import {
   type IAddonPageProvider,
   type IAddonPagesAggregatorProvider,
   type ProviderRegistration,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { settleSourcesWithTimeout } from '../shared/settle-sources.js'
 import { dedupePages } from './dedupe-pages.js'
 
@@ -267,7 +267,7 @@ export class AddonPagesAggregatorAddon extends BaseAddon {
   private resolveBundlePath(addonId: string, bundle: string): string | null {
     const paths = this.resolvedPaths
     if (!paths) return null
-    const addonDistPath = path.join(paths.addonsDir, '@camstack', `addon-${addonId}`, 'dist')
+    const addonDistPath = path.join(paths.addonsDir, '@dominevo', `addon-${addonId}`, 'dist')
     const resolvedBase = path.resolve(addonDistPath)
     const resolvedFile = path.resolve(addonDistPath, bundle)
     if (!resolvedFile.startsWith(resolvedBase + path.sep) && resolvedFile !== resolvedBase) {

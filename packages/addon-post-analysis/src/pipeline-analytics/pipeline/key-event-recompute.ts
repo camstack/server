@@ -10,7 +10,7 @@
  * from the concrete store classes and unit-testable with fakes.
  */
 
-import type { Track } from '@camstack/types'
+import type { Track } from '@dominevo/types'
 import { computeImportance } from './key-event-scoring.js'
 import { displayLabel } from './label-tier.js'
 

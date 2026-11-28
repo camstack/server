@@ -44,11 +44,11 @@ import {
   useMetricsProviderListNodeProcesses,
   type DataColumn,
   Button,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { formatBytes } from '../../../lib/format-size'
 import { PROCESS_CLASS_RANK, type ProcessClassification } from './process-class-rank'
 import { useTranslation } from 'react-i18next'
-import { formatNumeric } from '@camstack/ui-library'
+import { formatNumeric } from '@dominevo/ui-library'
 
 interface ProcessesTabProps {
   readonly nodeId: string

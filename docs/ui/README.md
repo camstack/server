@@ -1,9 +1,9 @@
 ---
-title: Building UI in CamStack
+title: Building UI in Dominevo
 last-verified: 2026-10-09
 ---
 
-# Building UI in CamStack
+# Building UI in Dominevo
 
 The rules for building a surface in either client. The architecture — how the
 admin UI is mounted, how data reaches it, where a settings schema lands — is
@@ -18,7 +18,7 @@ these pages are what the procedure reads.
 | Page | What it answers |
 | --- | --- |
 | [conventions.md](conventions.md) | The rules every change follows: library first, narrow viewports, overflow, the safe area, frozen-string tests, confirmation copy |
-| [common-components.md](common-components.md) | What exists in `@camstack/ui-library` and the viewer kit, and the colour tokens of both clients side by side |
+| [common-components.md](common-components.md) | What exists in `@dominevo/ui-library` and the viewer kit, and the colour tokens of both clients side by side |
 | [need-x-use-y.md](need-x-use-y.md) | "I need X" → the component, in each client. `npm run ui:find` searches this table |
 | [admin-patterns.md](admin-patterns.md) | Admin-ui and addon pages: Module Federation and addon-page CSS, `AdminPage`, `AdminTabs`, `InstancesTable`, tables, tall dialogs, System tabs, destructive changes |
 | [viewer.md](viewer.md) | The viewer (React Native) kit, `tokens.ts`, sheets, the embed player, i18n, and the co-design rule |
@@ -83,7 +83,7 @@ or `<button>` in `addon-admin-ui` or an addon page is refused by
 `scripts/check-no-native-form-controls.ts` (Checks workflow, pre-commit): use
 `Select` / `OptionSelect` / `Input` / `Checkbox` / `Button`. Existing files are
 pinned in `scripts/native-form-controls-baseline.json`; a file that drops below
-its pin lowers it with `--update`. A raw `<select>` is additionally refused anywhere in `addon-admin-ui` and `ui-library`, with no baseline, by `scripts/check-no-native-select.ts`: `Select` itself renders our own listbox (a `combobox` button plus a top-layer list), never the browser popup, and keeps the `value` / `onChange(e.target.value)` / `<option>` calling convention. A spec drives it with `selectOption(trigger, value)` (and reads rows with `selectOptionLabels` / `selectOptionValues`) from `@camstack/ui-library`, never `fireEvent.change`. A dropdown inside a control that already draws its box takes `<Select bare>`.
+its pin lowers it with `--update`. A raw `<select>` is additionally refused anywhere in `addon-admin-ui` and `ui-library`, with no baseline, by `scripts/check-no-native-select.ts`: `Select` itself renders our own listbox (a `combobox` button plus a top-layer list), never the browser popup, and keeps the `value` / `onChange(e.target.value)` / `<option>` calling convention. A spec drives it with `selectOption(trigger, value)` (and reads rows with `selectOptionLabels` / `selectOptionValues`) from `@dominevo/ui-library`, never `fireEvent.change`. A dropdown inside a control that already draws its box takes `<Select bare>`.
 
 `ui:check` is a developer tool. The pre-commit hook runs it on staged UI files
 and only prints; it is never a CI gate (operator decision, 2026-10-09). The

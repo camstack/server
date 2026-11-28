@@ -84,7 +84,7 @@ import {
   summarisePrivacyAudio,
   TIMEZONES,
   userError,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   BAICHUAN_WEBHOOK_URL_GENERATION,
   type BaichuanWebhookParamsResolver,
@@ -201,7 +201,7 @@ import type {
   InferNativeProvider,
   StreamCatalogState,
   StreamSourceEntry,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { createAccessoryDevice } from './accessories/index.js'
 import {
@@ -370,8 +370,8 @@ function coerceNumber(value: unknown): number | null {
 }
 
 import type { PtzGuardStatus } from '@apocaliss92/nodelink-js'
-import type { PtzHomePreset } from '@camstack/types'
-import { createDebugEmitter, type DebugEmitter } from '@camstack/types'
+import type { PtzHomePreset } from '@dominevo/types'
+import { createDebugEmitter, type DebugEmitter } from '@dominevo/types'
 import { isRecoverableBaichuanError } from './error-classifier.js'
 import {
   intercomFailureReport,
@@ -2194,7 +2194,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
   /**
    * Admin-only raw-read debug surface (D346): return the library's response
    * for one snapshot slice UNPROJECTED, next to the persisted snapshot and
-   * its freshness, so "what does the camera report vs what does CamStack
+   * its freshness, so "what does the camera report vs what does Dominevo
    * believe" is answerable without Baichuan tracing. Read-only by
    * construction (the slice enum maps onto an allow-list of lib `get*`
    * calls — see `raw-read.ts`), writes nothing back to the cache, and the
@@ -2399,7 +2399,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
    * enabled `hasFloodlight` via re-detection) appears on the next
    * parent register.
    */
-  override getAccessoryChildren(): import('@camstack/types').AccessoryChildrenAnswer {
+  override getAccessoryChildren(): import('@dominevo/types').AccessoryChildrenAnswer {
     // Pre-probe → no accessory specs. Spawning before the firmware's
     // ability table is read (live slice OR persisted deviceCache) would
     // land orphans on a re-probe that drops a flag (e.g. a firmware
@@ -2417,7 +2417,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       this.getProbeFlags<ReolinkProbeFlags>(),
       this.config.get('deviceCache'),
     )
-    const out: import('@camstack/types').AccessoryChildSpec[] = []
+    const out: import('@dominevo/types').AccessoryChildSpec[] = []
     const push = (kind: AccessoryKindValue, type: DeviceType, label: string): void => {
       out.push({
         stableIdSuffix: `acc-${kind}`,
@@ -5465,7 +5465,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       // spinner — on 3825 it sat on "Loading device aggregate…" until
       // something else woke the camera. These values move only when an
       // operator moves them, and every `set*` below re-reads the camera, so a
-      // CamStack write is its own invalidation and the window bounds only a
+      // Dominevo write is its own invalidation and the window bounds only a
       // change made in the Reolink app (D224, the shape `privacy-mask`
       // already uses).
       staleMs: OPERATOR_WRITTEN_STALE_MS,
@@ -5496,7 +5496,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
         // Server-built form: camera-probed availability (`getOptions`) +
         // current per-profile config (status slice, refreshed if stale).
         // `buildStreamParamsConfigSchema` is the shared, addon-free
-        // schema-shaper in `@camstack/types` — Hikvision feeds it the
+        // schema-shaper in `@dominevo/types` — Hikvision feeds it the
         // same way so both cameras emit a structurally identical form.
         const opts = await resolveOptions()
         await bridge.ensureFresh()
@@ -5670,7 +5670,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       // spinner — on 3825 it sat on "Loading device aggregate…" until
       // something else woke the camera. These values move only when an
       // operator moves them, and every `set*` below re-reads the camera, so a
-      // CamStack write is its own invalidation and the window bounds only a
+      // Dominevo write is its own invalidation and the window bounds only a
       // change made in the Reolink app (D224, the shape `privacy-mask`
       // already uses).
       staleMs: OPERATOR_WRITTEN_STALE_MS,
@@ -6223,7 +6223,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     const emptyStatus = (): RecordingOnboardStatus => ({
       storage: {
         kind: 'unknown',
-        reason: 'CamStack has not read this camera yet.',
+        reason: 'Dominevo has not read this camera yet.',
       },
       tracks: [],
       primaryTrackId: null,
@@ -6494,7 +6494,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       // spinner — on 3825 it sat on "Loading device aggregate…" until
       // something else woke the camera. These values move only when an
       // operator moves them, and every `set*` below re-reads the camera, so a
-      // CamStack write is its own invalidation and the window bounds only a
+      // Dominevo write is its own invalidation and the window bounds only a
       // change made in the Reolink app (D224, the shape `privacy-mask`
       // already uses).
       staleMs: OPERATOR_WRITTEN_STALE_MS,
@@ -6664,7 +6664,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       // spinner — on 3825 it sat on "Loading device aggregate…" until
       // something else woke the camera. These values move only when an
       // operator moves them, and every `set*` below re-reads the camera, so a
-      // CamStack write is its own invalidation and the window bounds only a
+      // Dominevo write is its own invalidation and the window bounds only a
       // change made in the Reolink app (D224, the shape `privacy-mask`
       // already uses).
       staleMs: OPERATOR_WRITTEN_STALE_MS,
@@ -7231,7 +7231,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       // spinner — on 3825 it sat on "Loading device aggregate…" until
       // something else woke the camera. These values move only when an
       // operator moves them, and every `set*` below re-reads the camera, so a
-      // CamStack write is its own invalidation and the window bounds only a
+      // Dominevo write is its own invalidation and the window bounds only a
       // change made in the Reolink app (D224, the shape `privacy-mask`
       // already uses).
       staleMs: OPERATOR_WRITTEN_STALE_MS,
@@ -9817,7 +9817,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     }
     // Tri-state OSD values from the snapshot ALONE: camera snapshot →
     // UNKNOWN (null). The config keeps no `osd*` copy to consult — a stored
-    // override shadowed the camera forever after one CamStack write
+    // override shadowed the camera forever after one Dominevo write
     // (D62-shape); a write invalidates the snapshot instead via the
     // post-save `osd` slice re-read. Computed once and used for BOTH the
     // section defaults and the hydration values so the two can never

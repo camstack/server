@@ -1,4 +1,4 @@
-import { NcTemplatePreviewInputSchema } from '@camstack/types'
+import { NcTemplatePreviewInputSchema } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { previewTemplate } from '../template-preview.js'
 import { NcTextCatalog } from '../text-catalog.js'

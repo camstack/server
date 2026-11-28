@@ -24,7 +24,7 @@ import type {
   DiscoveredTarget,
   PreparedAttachment,
   PreparedNotification,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { fetchWithTimeout } from '../http.js'
 import type { HttpRequestPlan, HttpNotifierAdapter, ProbeResult, TargetConfig } from './adapter.js'
 

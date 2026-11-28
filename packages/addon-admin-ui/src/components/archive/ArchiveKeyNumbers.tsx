@@ -3,7 +3,7 @@
  * history left at that rate, and the camera states. A number that could not be
  * read renders as an em dash with its reason in the footer, never as 0 (D393).
  */
-import { WidgetMetricCard } from '@camstack/ui-library'
+import { WidgetMetricCard } from '@dominevo/ui-library'
 import { Camera, Database, HardDrive, TrendingUp, TriangleAlert } from 'lucide-react'
 import { useMemo, type ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'

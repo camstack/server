@@ -27,7 +27,7 @@
  * (`targetValidValuesFor` → `null`) and translates optimistically, and the
  * builder logs the fact against the device id.
  */
-import type { AlarmArmMode } from '@camstack/types'
+import type { AlarmArmMode } from '@dominevo/types'
 import { Characteristic } from '@homebridge/hap-nodejs'
 
 import { alarmArmModeFor } from './security-state.js'

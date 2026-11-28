@@ -12,7 +12,7 @@ applies-to:
 
 Municipal waste calendars are already solved in the HACS integration
 `hacs_waste_collection_schedule`: hundreds of provider modules (API, ICS,
-HTML scrape) behind one `Source.fetch() → Collection` contract. CamStack
+HTML scrape) behind one `Source.fetch() → Collection` contract. Dominevo
 already aggregates calendars through `calendar-source` → builtin `calendars`.
 
 Two alternatives were rejected for v1:
@@ -36,7 +36,7 @@ set of vendored modules; updating the vendor updates the catalog.
 
 - The addon depends on the hub's embedded Python; without it it registers an
   empty calendar-source and logs a warning (no crash loop).
-- Upstream fixes arrive by re-vendoring, not by rewriting CamStack.
+- Upstream fixes arrive by re-vendoring, not by rewriting Dominevo.
 - Provider kwargs stay opaque JSON (`argsJson`) until a richer settings UI
   is designed against `PARAM_TRANSLATIONS`.
 

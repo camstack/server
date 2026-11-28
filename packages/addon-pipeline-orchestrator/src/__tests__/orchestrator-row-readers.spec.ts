@@ -7,7 +7,7 @@
  * the map (or merged both) fails by value, not by shape.
  */
 import { describe, expect, it } from 'vitest'
-import { createDurableState, type DurableState } from '@camstack/types'
+import { createDurableState, type DurableState } from '@dominevo/types'
 import type { ZodType } from 'zod'
 import { PipelineSettingsStore } from '../pipeline-settings-store.js'
 import { applyPatch, rowFakes } from './settings-store-row-fakes.js'

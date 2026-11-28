@@ -27,7 +27,7 @@ lived in hub-main, so `async set` still ran `Statement.run` before the promise
 settled. A timer-shaped `await` on the same isolate yields; the sqlite burst
 does not. That is the event-loop-churn spec.
 
-[D123](adr-0123.md) already taught the fork: a `@camstack/system` builtin may
+[D123](adr-0123.md) already taught the fork: a `@dominevo/system` builtin may
 declare `execution.isolate`. Snapshot uses it because capture and sharp do not
 belong on the API loop. The same record also said isolated builtins spawn AFTER
 in-process builtins, because everything they persist lives behind
@@ -38,7 +38,7 @@ empty-read failure, just with a fork in the way.
 
 A `worker_threads` wrapper inside hub-main was the other candidate. The
 connection cannot be shared, and a native abort still kills the process. Isolate
-is the CamStack-shaped move: one addon, one process, UDS `await` on the door.
+is the Dominevo-shaped move: one addon, one process, UDS `await` on the door.
 
 The UDS proxy for `data-store-provider` is not `ISettingsStore`
 (`getAllAddon` / `setDeviceRuntimeState` are not cap methods). ConfigManager

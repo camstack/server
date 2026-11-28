@@ -3,7 +3,7 @@
  *
  * One source tree ships twice (ADR-0402):
  *
- *   - `node`   — the full app. Stages the `@camstack/server` closure into
+ *   - `node`   — the full app. Stages the `@dominevo/server` closure into
  *                `Resources/` and runs a hub or an agent.
  *   - `viewer` — the reduced app (no closure, no Node runtime). It only ever
  *                watches a hub, so its role is fixed by CONSTRUCTION and its
@@ -44,7 +44,7 @@ export type DesktopProduct = 'node' | 'viewer'
 export const VIEWER_APP_NAME = 'camstack-viewer'
 
 /** `extraMetadata.productName` in `electron-builder.viewer.json`. */
-export const VIEWER_PRODUCT_NAME = 'CamStack Viewer'
+export const VIEWER_PRODUCT_NAME = 'Dominevo Viewer'
 
 /** Development-only product override; ignored in a packaged app. */
 export const PRODUCT_OVERRIDE_ENV_VAR = 'CAMSTACK_DESKTOP_PRODUCT'

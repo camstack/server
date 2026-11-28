@@ -24,7 +24,7 @@
  * test double (the integration-manager / registry inject it via `makeClient`).
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { AlexaRemoteClient } from './alexa-remote-client.js'
 import type { AmazonHttp } from './amazon-auth/http.js'
 import type { AlexaRegistration } from './amazon-auth/registration.js'
@@ -37,7 +37,7 @@ export interface AlexaAppliance {
   readonly name: string
   /** The Alexa capability interface names the appliance reports. */
   readonly interfaces: readonly string[]
-  /** Optional Alexa group / room the appliance belongs to (→ CamStack location). */
+  /** Optional Alexa group / room the appliance belongs to (→ Dominevo location). */
   readonly groupName?: string
   /** Manufacturer label when reported. */
   readonly manufacturer?: string

@@ -4,7 +4,7 @@
  * key frame read.
  */
 import { describe, expect, it } from 'vitest'
-import type { ModelCatalogEntry } from '@camstack/types'
+import type { ModelCatalogEntry } from '@dominevo/types'
 import { buildClipModelRegistry } from '../../shared/clip/clip-model-registry.js'
 import { CLIP_IMAGE_MODELS } from '../../embedding-encoder/catalogs/embedding-models.js'
 import { requireCompleteWipe, WIPE_INCOMPLETE } from '../embedding-actions.js'

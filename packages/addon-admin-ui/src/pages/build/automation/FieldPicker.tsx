@@ -15,7 +15,7 @@
  * forever without ever looking broken.
  */
 
-import { Button, ItemFormDialog, useDeviceManagerListAll } from '@camstack/ui-library'
+import { Button, ItemFormDialog, useDeviceManagerListAll } from '@dominevo/ui-library'
 import { ChevronDown } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'

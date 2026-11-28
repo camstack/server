@@ -7,8 +7,8 @@
  * the before/after baseline. A native popup cannot be captured, so a second,
  * listbox-sized select (`size`) paints the same options inline.
  */
-import type { DerivedEncodePreview, EncodeProfile } from '@camstack/types'
-import { Select, ThemeProvider } from '@camstack/ui-library'
+import type { DerivedEncodePreview, EncodeProfile } from '@dominevo/types'
+import { Select, ThemeProvider } from '@dominevo/ui-library'
 import { type ReactElement, useEffect, useRef, useState } from 'react'
 import type {
   ResultView,

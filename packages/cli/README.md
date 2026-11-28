@@ -1,6 +1,6 @@
-# CamStack CLI
+# Dominevo CLI
 
-CLI tool for managing and running CamStack server.
+CLI tool for managing and running Dominevo server.
 
 <!-- readme:generated:start (derived from the manifest; edit outside this block) -->
 
@@ -12,8 +12,8 @@ Package `camstack` on npm.
 
 ## Documentation
 
-- [docs/architecture/assisted-setup-mcp.md](https://github.com/camstack/server/blob/main/docs/architecture/assisted-setup-mcp.md)
-- [docs/architecture/authentication.md](https://github.com/camstack/server/blob/main/docs/architecture/authentication.md)
+- [docs/architecture/assisted-setup-mcp.md](https://github.com/dominevo/server/blob/main/docs/architecture/assisted-setup-mcp.md)
+- [docs/architecture/authentication.md](https://github.com/dominevo/server/blob/main/docs/architecture/authentication.md)
 
 See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
 
@@ -21,6 +21,6 @@ See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
 
 ## MCP: doctor, token files, restarts
 
-- `camstack mcp doctor` is a read-only check of Node (>= 24), the hub, its pinned CA, the login session, the token scope (admin or not) and the CLI version against npm. Each line is ok / fail / unknown with a fix hint, and no token is ever printed.
-- Every command reaches a hub through the `camstack login <host>` session, and nothing else: `--token`, `--token-file` and `$CAMSTACK_TOKEN` were removed (a removed flag fails with a message that says so). A headless service is logged in once, interactively (`--browser` prints a code to approve in the admin UI); the session then refreshes unattended.
-- MCP clients such as OpenCode keep running the old `camstack mcp` process: restart them after the CLI updates.
+- `dominevo mcp doctor` is a read-only check of Node (>= 24), the hub, its pinned CA, the login session, the token scope (admin or not) and the CLI version against npm. Each line is ok / fail / unknown with a fix hint, and no token is ever printed.
+- Every command reaches a hub through the `dominevo login <host>` session, and nothing else: `--token`, `--token-file` and `$CAMSTACK_TOKEN` were removed (a removed flag fails with a message that says so). A headless service is logged in once, interactively (`--browser` prints a code to approve in the admin UI); the session then refreshes unattended.
+- MCP clients such as OpenCode keep running the old `dominevo mcp` process: restart them after the CLI updates.

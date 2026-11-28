@@ -5,7 +5,7 @@
  * A measurement that failed is `null` and reads `—`, never `0` (D393). An open
  * run extends to `now`.
  */
-import type { DeviceRun, DeviceRunOutcome } from '@camstack/types'
+import type { DeviceRun, DeviceRunOutcome } from '@dominevo/types'
 import type { UiTextFn } from '../../contexts/ui-text'
 import { formatDurationMs } from '../../lib/format-duration'
 import type { ChartBand, ChartBandTone } from '../charts/chart-bands'

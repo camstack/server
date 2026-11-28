@@ -119,7 +119,7 @@ number of pick-ups with zero false departures.
 - On an opted-in camera, a pick-up is concluded within about 20–40 s of
   happening. The notification's anchored moment may then still be inside the
   clip ring, so the gif is cut from the ring and not the recordings (D686).
-- `@camstack/types` gained `FrameResult.packageLooked`. `addon-pipeline` stamps
+- `@dominevo/types` gained `FrameResult.packageLooked`. `addon-pipeline` stamps
   it, and `addon-post-analysis` reads it. A runner older than the field never
   stamps it, so no absence is ever attested: the early rule and the F4 sweep
   are inert and the TTL decides, exactly as before. The two addons need not

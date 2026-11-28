@@ -14,7 +14,7 @@
  *    old hardware's report.
  */
 import { describe, expect, it } from 'vitest'
-import type { MigrateDeviceResult, MigrateSwitchReport } from '@camstack/types'
+import type { MigrateDeviceResult, MigrateSwitchReport } from '@dominevo/types'
 
 import { buildMigrationReport } from '../migrate-device-report'
 

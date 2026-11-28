@@ -14,7 +14,7 @@
  * on-demand payload per notification (D9/D18).
  */
 import type { ChildProcess } from 'node:child_process'
-import { type CamProfile, type EncodedPacket, ffmpegRate } from '@camstack/types'
+import { type CamProfile, type EncodedPacket, ffmpegRate } from '@dominevo/types'
 import { convertH264ToAnnexB } from '../webrtc/h264-utils.js'
 import { convertH265ToAnnexB } from '../webrtc/h265-utils.js'
 import { annexBHasParameterSets } from './annexb-param-sets.js'
@@ -345,7 +345,7 @@ export function eventClipEncodeWidth(sourceWidth: number, speed: number): number
   return Math.min(source, EVENT_CLIP_ENCODE_MAX_WIDTH)
 }
 
-// `ffmpegRate` moved to `@camstack/types` with the gif chain that uses it
+// `ffmpegRate` moved to `@dominevo/types` with the gif chain that uses it
 // (D682); re-exported so existing importers of this module are unchanged.
 export { ffmpegRate }
 

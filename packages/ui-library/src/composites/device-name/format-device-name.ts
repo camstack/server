@@ -10,7 +10,7 @@ import {
   DeviceType,
   primaryChildPreferenceOf,
   resolveContainerPrimaryChild,
-} from '@camstack/types/client'
+} from '@dominevo/types/client'
 
 /** Middle dot used between a container and its noun, and before a room. */
 export const DEVICE_NAME_JOIN: string = ' · '

@@ -1,5 +1,5 @@
 /**
- * How much of each location CamStack ITSELF holds (D388) — the slice
+ * How much of each location Dominevo ITSELF holds (D388) — the slice
  * `listLocations` stamps from.
  *
  * ## Why this is a slice and not a call
@@ -22,7 +22,7 @@
  * orchestrator omits the field, and a UI omits the segment. A share drawn at
  * zero would claim we occupy nothing, which is a different and false statement.
  */
-import type { IScopedLogger, IStorageOccupancyProvider } from '@camstack/types'
+import type { IScopedLogger, IStorageOccupancyProvider } from '@dominevo/types'
 
 /** What one location's owners hold there, merged. */
 export interface LocationOwnedBytes {

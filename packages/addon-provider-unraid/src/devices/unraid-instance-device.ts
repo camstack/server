@@ -13,7 +13,7 @@ import {
   workloadCapability,
   resyncCapability,
   resyncThroughAdoption,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { UNRAID_SYSTEM } from '../config.js'
 import { UNRAID_INSTANCE_ID } from '../unraid-discovery.js'
 import { unraidInstances } from '../unraid-node-resolver.js'

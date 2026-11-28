@@ -1,6 +1,6 @@
 ---
 id: D1101
-title: A client tool authenticates to a hub through the camstack login session and nothing else
+title: A client tool authenticates to a hub through the dominevo login session and nothing else
 status: accepted
 date: 2026-11-25
 supersedes: D835
@@ -32,21 +32,21 @@ session renews itself.
 
 ## Decision
 
-A client tool reaches a hub through the `camstack login` session
+A client tool reaches a hub through the `dominevo login` session
 (`~/.camstack/<host>_<port>.json`, renewed by `session-refresh`) and no other
 credential. `--token`, `--token-file`, `$CAMSTACK_TOKEN`, `$CAMSTACK_HUB_TOKEN*`,
 token files, rc files and a password in a script are removed, and anything that
 depended on one is migrated, not exempted. The address (`--server`,
 `CAMSTACK_HUB_URL`, `scratchpad/.hub-url`, the session's hub) and the CA stay as
 D835 set them; TLS verification is never switched off. A removed flag fails with
-a message that says `camstack login`. An agent does not log in on its own.
+a message that says `dominevo login`. An agent does not log in on its own.
 The agent JOIN token is a node's identity, not a client login, and is untouched.
 
 ## Consequences
 
 A CI box or service logs in once by hand on that machine; there is no long-lived
 secret to mint, copy or rotate for it. A script that needs the hub asks
-`resolveHubAuth()` or calls `hub.mjs`; shell scripts wrap `camstack deploy`.
+`resolveHubAuth()` or calls `hub.mjs`; shell scripts wrap `dominevo deploy`.
 Scripts that spoke to endpoints that no longer exist were deleted rather than
 ported. The how-to is one skill, `hub-access`, which the other skills point at.
 

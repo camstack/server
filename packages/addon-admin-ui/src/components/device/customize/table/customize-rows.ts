@@ -11,7 +11,7 @@ import {
   type CustomizeCardinality,
   type CustomizeCatalog,
   type CustomizeCatalogTarget,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   type AssignmentAvailability,
   type AssignmentFacts,

@@ -29,7 +29,7 @@ import {
   type NodeBenchmarkRun,
   NodeBenchmarkRunSchema,
   type RecordsAccess,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { orchestratorRecordKinds } from '../record-kinds.js'
 
 // Re-export for the adoption script.

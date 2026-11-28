@@ -11,7 +11,7 @@ import {
   type SchedulerInput,
   type SchedulerOutcome,
   type SiteReading,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { makeRecordsWorld } from '../../sqlite-storage/__tests__/support/records-world.js'
 import type { DeviceTemplateDoor } from '../device-template-door.js'
 import type { StepConditionDoor } from '../step-condition-door.js'
@@ -96,7 +96,7 @@ export interface Harness {
   create(input: SchedulerInput): Promise<string>
   settle(): Promise<void>
   advanceTo(ms: number): Promise<void>
-  /** The device changes state on its own (not caused by CamStack). */
+  /** The device changes state on its own (not caused by Dominevo). */
   manual(deviceId: number, cap: string, slice: Record<string, unknown>): Promise<void>
   outcomes(id?: string): SchedulerOutcome[]
 }

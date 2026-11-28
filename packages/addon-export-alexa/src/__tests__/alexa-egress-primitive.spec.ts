@@ -41,7 +41,7 @@ import {
   buildFfmpegArgs,
   type EncodeProfile,
   invocationFromEncodeProfile,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 
 import {

@@ -14,7 +14,7 @@ import type {
   HealthDigest,
   IScopedLogger,
   PlacementNodeStats,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { BlindCameraSnapshot } from './detection-blind-monitor.js'
 import {
   buildHealthDigest,

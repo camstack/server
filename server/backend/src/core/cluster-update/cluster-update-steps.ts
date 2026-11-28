@@ -8,7 +8,7 @@ import type {
   ClusterUpdateFailureReason,
   ServerPackageStatus,
   ServerUpdateActionResult,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   errText,
   type ClusterAddonUpdate,

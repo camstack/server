@@ -20,7 +20,7 @@ import {
   type AutoTuneApplyResult,
   type AutoTunePlan,
   DEFAULT_MIN_SESSIONS_PER_DEVICE,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   Badge,
   Button,
@@ -39,7 +39,7 @@ import {
   useClusterNodes,
   usePipelineOrchestratorApplyAutoTune,
   usePipelineOrchestratorPlanAutoTune,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { nodeNamer } from '../assignments/assignment-rows'
 import {
   acceleratorLabel,

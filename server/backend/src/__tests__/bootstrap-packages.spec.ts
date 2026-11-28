@@ -4,10 +4,10 @@
  * `AddonInstaller.REQUIRED_PACKAGES` has its own coherence spec
  * (`packages/system/src/kernel/__tests__/addon-installer-required.spec.ts`),
  * but the HUB never boots through it: `launcher.ts` derives its own list from
- * the server package.json because the slim image strips the `@camstack/*`
+ * the server package.json because the slim image strips the `@dominevo/*`
  * symlinks. That second derivation dropped the
  * `camstack.agentOnlyBootstrapAddons` exclusion, so the hub npm-installed
- * `@camstack/addon-agent-ui` on every boot (observed live: manifest.json
+ * `@dominevo/addon-agent-ui` on every boot (observed live: manifest.json
  * entry with `source: "npm"`). Green suite, wrong function.
  *
  * The last test pins the real manifest, so re-adding an agent-only addon to
@@ -26,29 +26,29 @@ function backendPackage(): ServerBootstrapManifest {
 }
 
 describe('selectHubBootstrapPackages', () => {
-  it('keeps every @camstack/addon-* dep plus @camstack/server/system', () => {
+  it('keeps every @dominevo/addon-* dep plus @dominevo/server/system', () => {
     const selected = selectHubBootstrapPackages({
       dependencies: {
-        '@camstack/addon-admin-ui': '*',
-        '@camstack/server': '*',
-        '@camstack/types': '*',
+        '@dominevo/addon-admin-ui': '*',
+        '@dominevo/server': '*',
+        '@dominevo/types': '*',
         fastify: '^5',
       },
     })
-    expect([...selected].toSorted()).toEqual(['@camstack/addon-admin-ui', '@camstack/server'])
+    expect([...selected].toSorted()).toEqual(['@dominevo/addon-admin-ui', '@dominevo/server'])
   })
 
   it('excludes camstack.agentOnlyBootstrapAddons — the hub must never install them', () => {
     const selected = selectHubBootstrapPackages({
       dependencies: {
-        '@camstack/addon-admin-ui': '*',
-        '@camstack/addon-agent-ui': '*',
-        '@camstack/server': '*',
+        '@dominevo/addon-admin-ui': '*',
+        '@dominevo/addon-agent-ui': '*',
+        '@dominevo/server': '*',
       },
-      camstack: { agentOnlyBootstrapAddons: ['@camstack/addon-agent-ui'] },
+      camstack: { agentOnlyBootstrapAddons: ['@dominevo/addon-agent-ui'] },
     })
-    expect(selected).not.toContain('@camstack/addon-agent-ui')
-    expect([...selected].toSorted()).toEqual(['@camstack/addon-admin-ui', '@camstack/server'])
+    expect(selected).not.toContain('@dominevo/addon-agent-ui')
+    expect([...selected].toSorted()).toEqual(['@dominevo/addon-admin-ui', '@dominevo/server'])
   })
 
   it('tolerates a manifest with no deps and no camstack block', () => {
@@ -71,6 +71,6 @@ describe('selectHubBootstrapPackages', () => {
     // A fresh 1.2.619 dev hub booted 41 addons and no benchmark: Model Studio's
     // and the operator's measurements (`benchmark.runPipelineTest`) had nowhere
     // to run until someone installed it by hand.
-    expect(selectHubBootstrapPackages(backendPackage())).toContain('@camstack/addon-benchmark')
+    expect(selectHubBootstrapPackages(backendPackage())).toContain('@dominevo/addon-benchmark')
   })
 })

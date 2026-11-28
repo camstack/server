@@ -3,7 +3,7 @@
  * rule stored); OFF stores the opt-out. Turning it ON over a rule the operator
  * wrote asks first, because the rule goes.
  */
-import { Switch, useConfirm } from '@camstack/ui-library'
+import { Switch, useConfirm } from '@dominevo/ui-library'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { currentComposition } from '../customization-read'

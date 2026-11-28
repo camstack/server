@@ -16,7 +16,7 @@
  *
  * `ui-library` and the server's linked-devices expansion IMPORT it. Two
  * consumers cannot, and keep a checked copy instead: the viewer resolves
- * `@camstack/types` from its own `node_modules` (an installed release, where a
+ * `@dominevo/types` from its own `node_modules` (an installed release, where a
  * newly added export simply is not there), and the Home Assistant provider
  * expresses the same precedence over the `DeviceType` enum because it answers
  * a different question from the same ordering. `scripts/check-container-

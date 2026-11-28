@@ -25,7 +25,7 @@ import type {
   SceneMonitor,
   TaxonomyOption,
   TaxonomyPicker,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   audioIsFailClosed,
   audioLabelChoices,
@@ -50,8 +50,8 @@ import {
   NC_AUDIO_SAMPLING_MIN_SEC,
   patchAudio,
   toggleAudioLabel,
-} from '@camstack/types'
-import { EventKindGlyph, Input, Select, Button, Slider, DurationInput } from '@camstack/ui-library'
+} from '@dominevo/types'
+import { EventKindGlyph, Input, Select, Button, Slider, DurationInput } from '@dominevo/ui-library'
 import { Activity, Search, X, type LucideIcon } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'

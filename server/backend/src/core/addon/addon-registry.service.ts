@@ -13,7 +13,7 @@ import * as path from 'node:path'
 import type { GroupCandidate } from '../../agent/agent-group-runner.js'
 import { recordBootHealth } from './boot-health-snapshot.js'
 import { readHubStaleGateContext, reportHubAddonSupport } from './hub-addon-support.js'
-import type { DataPlaneSink, RegisteredChild } from '@camstack/server/system'
+import type { DataPlaneSink, RegisteredChild } from '@dominevo/server/system'
 import {
   AddonDepsManager,
   AddonHealthMonitor,
@@ -55,7 +55,7 @@ import {
   waitUntilReady,
   asBrokerLike,
   createMigrationApiOverContext,
-} from '@camstack/server/system'
+} from '@dominevo/server/system'
 import type {
   AddonContext,
   AddonDeclaration,
@@ -79,8 +79,8 @@ import type {
   RecordsAccess,
   RecordsTransport,
   SecretsAccess,
-} from '@camstack/types'
-import { createDebugEmitter } from '@camstack/types'
+} from '@dominevo/types'
+import { createDebugEmitter } from '@dominevo/types'
 import {
   ALL_CAPABILITY_DEFINITIONS,
   createDeviceProxy,
@@ -95,7 +95,7 @@ import {
   resolveAddonPlacement,
   resolveRunnerId,
   SHARE_VIEW_KINDS,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { createTRPCClient } from '@trpc/client'
 import { createHubAddonApi } from './hub-addon-api.js'
 import { CapabilityService } from '../capability/capability.service'
@@ -167,8 +167,8 @@ export interface EvictionCandidate {
  * Decide whether an in-memory addon entry should be evicted because it is no
  * longer on disk (the uninstall path in `loadNewAddons`).
  *
- * A `@camstack/server` builtin is NEVER evicted here: the fresh loader scans
- * `addonsDir` only (no `['@camstack/server']` closure include), so builtins
+ * A `@dominevo/server` builtin is NEVER evicted here: the fresh loader scans
+ * `addonsDir` only (no `['@dominevo/server']` closure include), so builtins
  * are never in `onDiskIds`, and their lifecycle is the server closure
  * (single-copy model), not the data/addons uninstall path. Omitting this guard
  * let a deploy of an unrelated addon silently unregister loki-logging on the
@@ -180,7 +180,7 @@ export function shouldEvictMissingOnDisk(
   onDiskIds: ReadonlySet<string>,
 ): boolean {
   return (
-    entry.source === 'installed' && entry.packageName !== '@camstack/server' && !onDiskIds.has(id)
+    entry.source === 'installed' && entry.packageName !== '@dominevo/server' && !onDiskIds.has(id)
   )
 }
 
@@ -204,7 +204,7 @@ export type AddonUpdatePayload = {
  * before — a first install, or a tree with no readable `package.json` — and
  * the key is then ABSENT, not present-and-empty. It used to arrive as the
  * literal `'0.0.0'`, which the notification centre printed verbatim: the
- * operator read "@camstack/addon-terminal 0.0.0 → latest" on his phone and
+ * operator read "@dominevo/addon-terminal 0.0.0 → latest" on his phone and
  * had no way to tell that neither number was real (2026-08-30). An absent key
  * the renderer leaves out is the honest form of "unknown"; a version-shaped
  * placeholder is a claim.
@@ -247,7 +247,7 @@ interface BrokerLike {
  * Type predicate: true when an `ISettingsBackend` also satisfies the
  * sync `ISettingsStore` contract (system/addon/device key-value ops)
  * that ConfigManager expects. The default `SqliteSettingsBackend` in
- * `@camstack/server` implements both surfaces; forked addon backends may
+ * `@dominevo/server` implements both surfaces; forked addon backends may
  * not, in which case we skip the ConfigService wiring.
  */
 function isSettingsStore(backend: ISettingsBackend): backend is ISettingsBackend & ISettingsStore {
@@ -275,8 +275,8 @@ function isSettingsStore(backend: ISettingsBackend): backend is ISettingsBackend
  */
 interface AddonRoutesInvoker {
   invoke(
-    input: import('@camstack/types').AddonRouteInvokeRequest,
-  ): Promise<import('@camstack/types').AddonRouteReplyEnvelope>
+    input: import('@dominevo/types').AddonRouteInvokeRequest,
+  ): Promise<import('@dominevo/types').AddonRouteReplyEnvelope>
 }
 
 /** Structural guard: true when an `addon-routes` provider also exposes `invoke`. */
@@ -284,25 +284,25 @@ function isAddonRoutesInvoker<T extends object>(provider: T): provider is T & Ad
   return typeof Reflect.get(provider, 'invoke') === 'function'
 }
 
-const ROUTE_METHODS: readonly import('@camstack/types').IAddonHttpRoute['method'][] = [
+const ROUTE_METHODS: readonly import('@dominevo/types').IAddonHttpRoute['method'][] = [
   'GET',
   'POST',
   'PUT',
   'DELETE',
 ]
-const ROUTE_ACCESS: readonly import('@camstack/types').RouteAccess[] = [
+const ROUTE_ACCESS: readonly import('@dominevo/types').RouteAccess[] = [
   'public',
   'authenticated',
   'admin',
 ]
 
-function asRouteMethod(value: string): import('@camstack/types').IAddonHttpRoute['method'] {
+function asRouteMethod(value: string): import('@dominevo/types').IAddonHttpRoute['method'] {
   const upper = value.toUpperCase()
   for (const m of ROUTE_METHODS) if (m === upper) return m
   throw new Error(`addon-routes: unsupported HTTP method "${value}"`)
 }
 
-function asRouteAccess(value: unknown): import('@camstack/types').RouteAccess {
+function asRouteAccess(value: unknown): import('@dominevo/types').RouteAccess {
   if (typeof value === 'string') {
     for (const a of ROUTE_ACCESS) if (a === value) return a
   }
@@ -317,11 +317,11 @@ function asRouteAccess(value: unknown): import('@camstack/types').RouteAccess {
  * `method`/`path`/`access`/`description` are present.
  */
 interface ParsedRouteDescriptor {
-  readonly method: import('@camstack/types').IAddonHttpRoute['method']
+  readonly method: import('@dominevo/types').IAddonHttpRoute['method']
   readonly path: string
-  readonly access: import('@camstack/types').RouteAccess
+  readonly access: import('@dominevo/types').RouteAccess
   readonly description?: string
-  readonly rateLimit?: import('@camstack/types').RouteRateLimit
+  readonly rateLimit?: import('@dominevo/types').RouteRateLimit
   readonly perInstance?: true
 }
 
@@ -360,11 +360,11 @@ export function parseSerializableRouteDescriptors(raw: unknown): readonly Parsed
  */
 export function parseDataPlaneEndpoints(
   raw: unknown,
-): readonly import('@camstack/types').AddonDataPlaneEndpoint[] {
+): readonly import('@dominevo/types').AddonDataPlaneEndpoint[] {
   if (!Array.isArray(raw)) {
     throw new Error('data-planes: child returned a non-array endpoint set')
   }
-  return raw.map((entry: unknown): import('@camstack/types').AddonDataPlaneEndpoint => {
+  return raw.map((entry: unknown): import('@dominevo/types').AddonDataPlaneEndpoint => {
     if (entry === null || typeof entry !== 'object') {
       throw new Error('data-planes: endpoint descriptor is not an object')
     }
@@ -392,16 +392,16 @@ export function parseDataPlaneEndpoints(
  */
 function parseDataPlaneShare(
   value: unknown,
-): readonly import('@camstack/types').ShareViewKind[] | undefined {
+): readonly import('@dominevo/types').ShareViewKind[] | undefined {
   if (value === undefined) return undefined
   if (!Array.isArray(value)) throw new Error('data-planes: `share` is not an array')
-  return value.map((kind: unknown): import('@camstack/types').ShareViewKind => {
+  return value.map((kind: unknown): import('@dominevo/types').ShareViewKind => {
     if (!isShareViewKind(kind)) throw new Error(`data-planes: unknown share kind ${String(kind)}`)
     return kind
   })
 }
 
-function isShareViewKind(value: unknown): value is import('@camstack/types').ShareViewKind {
+function isShareViewKind(value: unknown): value is import('@dominevo/types').ShareViewKind {
   return typeof value === 'string' && (SHARE_VIEW_KINDS as readonly string[]).includes(value)
 }
 
@@ -419,7 +419,7 @@ interface AddonEntry {
   readonly addon: ICamstackAddon
   initialized: boolean
   source: AddonSource
-  /** npm package name from package.json (e.g. '@camstack/addon-detection-pipeline') */
+  /** npm package name from package.json (e.g. '@dominevo/addon-detection-pipeline') */
   packageName: string
   /** npm package version from package.json */
   packageVersion: string
@@ -431,7 +431,7 @@ interface AddonEntry {
   declaredCapabilities: readonly CapabilityDeclaration[]
   /** Addon directory on disk */
   addonDir?: string
-  /** Full package.json declaration (AddonDeclaration from @camstack/types) */
+  /** Full package.json declaration (AddonDeclaration from @dominevo/types) */
   declaration?: AddonDeclaration
 }
 
@@ -534,13 +534,13 @@ export class AddonRegistryService {
   // and forked workers — `ctx.api` is uniform across all deployment
   // shapes. Lazily constructed so tests that don't wire the broker
   // still instantiate the service.
-  private brokerApi: import('@camstack/types').AddonApi | null = null
+  private brokerApi: import('@dominevo/types').AddonApi | null = null
   /**
    * In-process tRPC client over the broker — same `AddonApi` shape every
    * addon sees via `ctx.api`. Exposed as public so the REPL service can
    * build a `SystemManager` from it without crossing the network boundary.
    */
-  public getBrokerApi(): import('@camstack/types').AddonApi {
+  public getBrokerApi(): import('@dominevo/types').AddonApi {
     if (!this.brokerApi) {
       this.brokerApi = this.buildBrokerApi(undefined)
     }
@@ -554,7 +554,7 @@ export class AddonRegistryService {
    * client cannot: `metrics-native` was refused `declareSeries` ("the caller
    * addon could not be identified") on every sample.
    */
-  private getAddonApi(addonId: string): import('@camstack/types').AddonApi {
+  private getAddonApi(addonId: string): import('@dominevo/types').AddonApi {
     const cached = this.addonApis.get(addonId)
     if (cached) return cached
     const api = this.buildBrokerApi(addonId)
@@ -562,9 +562,9 @@ export class AddonRegistryService {
     return api
   }
 
-  private readonly addonApis = new Map<string, import('@camstack/types').AddonApi>()
+  private readonly addonApis = new Map<string, import('@dominevo/types').AddonApi>()
 
-  private buildBrokerApi(callerAddonId: string | undefined): import('@camstack/types').AddonApi {
+  private buildBrokerApi(callerAddonId: string | undefined): import('@dominevo/types').AddonApi {
     const reg = this.capabilityRegistry
     const resolver = {
       getByName: (capName: string): unknown | null =>
@@ -590,7 +590,7 @@ export class AddonRegistryService {
       return createHubAddonApi({ resolver, callerAddonId, links })
     }
     const client: unknown = createTRPCClient({ links: [localProviderLink(resolver), ...links] })
-    return client as import('@camstack/types').AddonApi
+    return client as import('@dominevo/types').AddonApi
   }
 
   // Common settings resolver (3-level: defaults → global → per-device).
@@ -601,7 +601,7 @@ export class AddonRegistryService {
   // Active capability providers (set by consumers when capabilities are wired)
   private activeStorageProvider: INewStorageProvider | null = null
   private activeSettingsBackend: ISettingsBackend | null = null
-  private integrationRegistry: import('@camstack/server/system').IntegrationRegistry | null = null
+  private integrationRegistry: import('@dominevo/server/system').IntegrationRegistry | null = null
   /** Why the integration registry is unset (records wiring failed or the records cap is absent). */
   private integrationRegistryUnavailable: string | null = null
   private clusterNodeHistoryStore: ClusterNodeHistoryStore | null = null
@@ -661,7 +661,7 @@ export class AddonRegistryService {
     // AddonLoadFailed / AddonLoadRecovered events consumed by
     // AlertCenter (see addon-health-monitor.ts spec).
     this.healthMonitor = new AddonHealthMonitor({
-      eventBus: this.eventBusService as import('@camstack/types').IEventBus,
+      eventBus: this.eventBusService as import('@dominevo/types').IEventBus,
       logger: this.loggingService.createLogger('AddonHealthMonitor'),
       retryFn: (packageName) => this.tryReloadPackage(packageName),
     })
@@ -832,19 +832,19 @@ export class AddonRegistryService {
 
     // 2. Load all addons from the addons directory (including core builtins).
     // Honors CAMSTACK_ADDONS_DIR (a `node_modules`-shaped dir on Docker/Electron
-    // so forked ESM addon runners resolve @camstack/* via walk-up — see the
+    // so forked ESM addon runners resolve @dominevo/* via walk-up — see the
     // launcher). Defaults to `<dataDir>/addons` for dev.
     const dataDir = path.resolve(process.env.CAMSTACK_DATA ?? 'camstack-data')
     const addonsDir = process.env.CAMSTACK_ADDONS_DIR ?? path.resolve(dataDir, 'addons')
 
     // Single-copy model (2026-07-18 collapse): the framework BUILTINS
-    // (`@camstack/server`: device-manager, snapshot, storage, settings, …) load
+    // (`@dominevo/server`: device-manager, snapshot, storage, settings, …) load
     // from the ACTIVE CLOSURE the hub itself runs from — resolved via the same
-    // walk-up hub-main uses — NOT from a physical `/data/addons/@camstack/server/system`
+    // walk-up hub-main uses — NOT from a physical `/data/addons/@dominevo/server/system`
     // copy. That copy drifted because no update channel refreshed it (the
     // recurring "+1 restart" / stale-builtin pain); there is now ONE copy and no
     // `syncSystemAddonsCopy` race. Non-framework addons still load from the
-    // addons dir unchanged. The addons-dir `@camstack/server` copy (if present,
+    // addons dir unchanged. The addons-dir `@dominevo/server` copy (if present,
     // seeded by the image entrypoint) is SKIPPED to avoid a double-load.
     const closureSystemDir = resolveBuiltinsDir()
     if (closureSystemDir) {
@@ -852,7 +852,7 @@ export class AddonRegistryService {
         await this.addonLoader.loadFromAddonDir(closureSystemDir)
       } catch (err) {
         this.logger.error(
-          'Failed to load @camstack/server/system builtins from the active closure',
+          'Failed to load @dominevo/server/system builtins from the active closure',
           {
             meta: { closureSystemDir, error: err instanceof Error ? err.message : String(err) },
           },
@@ -860,12 +860,12 @@ export class AddonRegistryService {
       }
     } else {
       this.logger.warn(
-        '@camstack/server/system not resolvable from the hub closure — builtins may be missing',
+        '@dominevo/server/system not resolvable from the hub closure — builtins may be missing',
       )
     }
 
     await this.addonLoader.loadFromDirectory(addonsDir, [
-      '@camstack/server',
+      '@dominevo/server',
       LEGACY_SYSTEM_PACKAGE_NAME,
     ])
 
@@ -880,7 +880,7 @@ export class AddonRegistryService {
     const loadedAddons = this.addonLoader.listAddons()
 
     // Self-heal a leftover from before the installer honoured placement:
-    // `@camstack/addon-agent-ui` sat in /data/addons on the live hub dated
+    // `@dominevo/addon-agent-ui` sat in /data/addons on the live hub dated
     // 2026-07-22, skipped by the loop below ever since, and therefore shown as
     // FAILED forever on a node where it cannot run. Fixing the installer was
     // necessary and not sufficient — nothing removed what was already there,
@@ -894,7 +894,7 @@ export class AddonRegistryService {
         })),
         'hub',
       ),
-      path.join(addonsDir, '@camstack'),
+      path.join(addonsDir, '@dominevo'),
       {
         info: (msg, meta) => this.logger.info(msg, { meta }),
         warn: (msg, meta) => this.logger.warn(msg, { meta }),
@@ -916,7 +916,7 @@ export class AddonRegistryService {
           this.capabilityRegistry.declareFromManifest(cap, registered.declaration.id)
         }
       }
-      // Create and store addon instance — cast from @camstack/types to server's
+      // Create and store addon instance — cast from @dominevo/types to server's
       // local ICamstackAddon (structurally compatible at runtime).
       // Wrap in try/catch so a single broken addon doesn't prevent the rest from loading.
       try {
@@ -936,11 +936,11 @@ export class AddonRegistryService {
           packageDisplayName: registered.packageDisplayName,
           ...(registered.bundle !== undefined ? { bundle: registered.bundle } : {}),
           declaredCapabilities: declCaps,
-          // @camstack/server/system builtins load from the active closure (single-copy
+          // @dominevo/server/system builtins load from the active closure (single-copy
           // model), not the inert addons-dir copy — point their dir there so
           // any dir-derived path (data dir, markers) resolves to the real copy.
           addonDir:
-            registered.packageName === '@camstack/server' && closureSystemDir
+            registered.packageName === '@dominevo/server' && closureSystemDir
               ? closureSystemDir
               : path.join(addonsDir, registered.packageName),
           declaration: registered.declaration,
@@ -963,7 +963,7 @@ export class AddonRegistryService {
     })
     // Platform probing is no longer orchestrated by the backend. The
     // `platform-probe` capability (shipped as a core builtin under
-    // `@camstack/server/system/dist/builtins/platform-probe/` since Phase B of
+    // `@dominevo/server/system/dist/builtins/platform-probe/` since Phase B of
     // the bundles refactor) exposes hardware + scored backends via
     // `ctx.api.platformProbe.*`; inference addons auto-configure
     // inside their own `onInitialize`.
@@ -1000,7 +1000,7 @@ export class AddonRegistryService {
     // genuinely has no cross-process provider and the fallback returns null — wrappers
     // cleanly fall through to their own secondary strategy.
     {
-      const { buildNativeCapProxy } = await import('@camstack/server/system')
+      const { buildNativeCapProxy } = await import('@dominevo/server/system')
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- moleculer types unresolvable; see `broker` getter docstring
       const broker = this.moleculer.broker
       this.capabilityRegistry.setNativeFallback(
@@ -1090,7 +1090,7 @@ export class AddonRegistryService {
     // one were declared — the mechanism stays available as an explicit
     // opt-in for future co-location needs.
     //
-    // `placement: 'agent-only'` addons and `@camstack/server` builtins are
+    // `placement: 'agent-only'` addons and `@dominevo/server` builtins are
     // excluded from the plan (filtered inside `buildAddonGroupPlan`) — except
     // a builtin declaring `execution.isolate`, which is spawned in two
     // waves (infra isolates BEFORE in-process builtins, consumers AFTER —
@@ -1137,7 +1137,7 @@ export class AddonRegistryService {
     const isolatedBuiltinIds = allIds.filter((id) => {
       const entry = this.addonEntries.get(id)
       return (
-        entry?.packageName === '@camstack/server' &&
+        entry?.packageName === '@dominevo/server' &&
         entry.declaration !== undefined &&
         isIsolatedBuiltin(entry.declaration)
       )
@@ -1150,7 +1150,7 @@ export class AddonRegistryService {
         return entry?.declaredCapabilities ?? []
       },
     )
-    // A core builtin is identified by `packageName === "@camstack/server"`,
+    // A core builtin is identified by `packageName === "@dominevo/server"`,
     // NOT by the absence of an `execution` declaration — a builtin may
     // still declare `execution` (e.g. `platform-probe`); the package
     // boundary is the selection criterion. The ONE exception is
@@ -1159,7 +1159,7 @@ export class AddonRegistryService {
     // failure surfaces as `addon.error`; quietly running the addon on the hub
     // instead would defeat the isolation on exactly the day it is needed.
     const isCoreBuiltin = (id: string): boolean =>
-      this.addonEntries.get(id)?.packageName === '@camstack/server' && !isolatedBuiltins.has(id)
+      this.addonEntries.get(id)?.packageName === '@dominevo/server' && !isolatedBuiltins.has(id)
 
     // Order is load-bearing (D234): forked addons `resolveConfig()` against
     // the settings door. Spawn them before the engine is in `getCollection`
@@ -1897,7 +1897,7 @@ export class AddonRegistryService {
     return this.integrationRegistryUnavailable
   }
 
-  getIntegrationRegistry(): import('@camstack/types').IIntegrationRegistry | null {
+  getIntegrationRegistry(): import('@dominevo/types').IIntegrationRegistry | null {
     if (!this.integrationRegistry) return null
     return this.createFilteredRegistry(this.integrationRegistry)
   }
@@ -1914,7 +1914,7 @@ export class AddonRegistryService {
   }
 
   /** Get the raw (unfiltered) registry — only for internal addon wiring */
-  getRawIntegrationRegistry(): import('@camstack/types').IIntegrationRegistry | null {
+  getRawIntegrationRegistry(): import('@dominevo/types').IIntegrationRegistry | null {
     return this.integrationRegistry
   }
 
@@ -1925,8 +1925,8 @@ export class AddonRegistryService {
    * `integration-visibility.ts`, on its own, with its own tests.
    */
   private createFilteredRegistry(
-    raw: import('@camstack/types').IIntegrationRegistry,
-  ): import('@camstack/types').IIntegrationRegistry {
+    raw: import('@dominevo/types').IIntegrationRegistry,
+  ): import('@dominevo/types').IIntegrationRegistry {
     return createFilteredIntegrationRegistry({
       raw,
       // The LIVE map, not a snapshot: an addon registered after this wrapper
@@ -1977,7 +1977,7 @@ export class AddonRegistryService {
 
   /**
    * Loads a package's optional `i18n/<lang>.json` catalogs (D863). The
-   * namespace is the package's short name (`@camstack/addon-provider-reolink`
+   * namespace is the package's short name (`@dominevo/addon-provider-reolink`
    * -> `provider-reolink`): one package may host several addons, and the
    * catalog lives with the package. A broken file is logged and ignored.
    */
@@ -2025,10 +2025,10 @@ export class AddonRegistryService {
     // subprocess. The runner-spawn pass during initial boot already
     // spawned every eligible addon; `initializeAddon` is the per-addon
     // entry point reached by the hot-load / restart flows (and by the
-    // Pass 1/2/3 in-process boot for `@camstack/server` builtins). Fork
+    // Pass 1/2/3 in-process boot for `@dominevo/server` builtins). Fork
     // only when the addon declares an `execution` block, ships an
     // on-disk `addonDir`, and is not `agent-only`; otherwise (only
-    // `@camstack/server` builtins reach the in-process path below) it
+    // `@dominevo/server` builtins reach the in-process path below) it
     // boots in-process on the hub.
     if (this.isForkedAddonEntry(entry)) {
       // D5 + co-location: a forked addon ALWAYS boots in a runner — there is
@@ -2231,7 +2231,7 @@ export class AddonRegistryService {
           return {
             id: row.id,
             stableId: row.stableId,
-            type: row.type as import('@camstack/types').DeviceType,
+            type: row.type as import('@dominevo/types').DeviceType,
             name: row.name,
             location: row.location ?? null,
             disabled: row.disabled ?? false,
@@ -2359,7 +2359,7 @@ export class AddonRegistryService {
   /**
    * Restart every addon a package declares, deduped by runner.
    *
-   * A package is not an addon: `@camstack/addon-pipeline` declares six
+   * A package is not an addon: `@dominevo/addon-pipeline` declares six
    * (`pipeline-runner`, `detection-pipeline`, `motion-wasm`,
    * `audio-analyzer`, `stream-broker`, `recorder`), and NONE of them is
    * called `pipeline`. Deriving a single addon id from the package name
@@ -2555,7 +2555,7 @@ export class AddonRegistryService {
 
       // D5: a forked addon ALWAYS restarts via `$process.restart` above
       // (process restart — no in-process hot-reload of a live forked
-      // addon). This branch is reached only by `@camstack/server` builtins
+      // addon). This branch is reached only by `@dominevo/server` builtins
       // — they have no runner and legitimately reload in-process:
       // shutdown, unregister, re-initialize, re-wire.
       if (entry.initialized && entry.addon.shutdown) {
@@ -2610,7 +2610,7 @@ export class AddonRegistryService {
       // `initializeAddon` threw — without this the addon is invisible-
       // broken: caps gone, health green, nothing on the Addons page.
       // The "operator sees the error via the mutation result" assumption
-      // only holds for a UI-clicked restart; a `camstack deploy` or a
+      // only holds for a UI-clicked restart; a `dominevo deploy` or a
       // `requiresRestart` auto-restart is fire-and-forget — the failure
       // would otherwise vanish. recordFailure also arms the retry loop.
       this.healthMonitor.recordFailure(entry.packageName, err, addonId)
@@ -2704,7 +2704,7 @@ export class AddonRegistryService {
    * Used by the static-file route handler that serves widget bundles
    * (`/api/addon-widgets/:addonId/*`) — post bundle merge, the addonId →
    * package-path mapping is no longer 1:1, so callers MUST go through
-   * the registry instead of guessing `addons/@camstack/addon-<id>/dist/`.
+   * the registry instead of guessing `addons/@dominevo/addon-<id>/dist/`.
    *
    * Returns null if the addonId is unknown or the entry's package.json
    * has no `entry` field. The returned `distDir` is an absolute path.
@@ -2749,7 +2749,7 @@ export class AddonRegistryService {
    * True when the entry boots in its own forked runner. This MUST mirror
    * the fork authority `buildAddonGroupPlan`, which spawns a runner for
    * every addon that ships an on-disk `addonDir` + a manifest
-   * `declaration`, is NOT a `@camstack/server` builtin, and is NOT
+   * `declaration`, is NOT a `@dominevo/server` builtin, and is NOT
    * `agent-only`. The `execution` block is OPTIONAL — an addon with no
    * `execution` declaration still forks on its own dedicated runner
    * (`resolveRunnerId` falls back to the addon id). Requiring `execution`
@@ -2758,7 +2758,7 @@ export class AddonRegistryService {
    * in-process by this predicate, so its route-mount took the co-located
    * path and received the async UDS cap proxy whose `getRoutes()` returns
    * a Promise (→ `getRoutes(...).map is not a function`). Only
-   * `@camstack/server` builtins boot in-process on the hub — except one that
+   * `@dominevo/server` builtins boot in-process on the hub — except one that
    * declares `execution.isolate`, which forks like anything else. Both
    * questions are answered by `runsInOwnRunner`, so the two can no longer
    * disagree. The type predicate narrows both `addonDir` and `declaration`
@@ -2832,7 +2832,7 @@ export class AddonRegistryService {
         return {
           manifest: {
             // Overlay the fresh on-disk declaration (refreshed by
-            // `loadNewAddons` on every `camstack deploy`) onto the live
+            // `loadNewAddons` on every `dominevo deploy`) onto the live
             // instance manifest, so a redeployed addon's new capabilities /
             // brokerKind surface here without a full backend restart. See
             // `overlayDeclaration` — this is what keeps Home Assistant
@@ -3114,7 +3114,7 @@ export class AddonRegistryService {
     // D5: every non-core addon lives in its own runner subprocess. The
     // uninstall consolidation is "stop the runner"; the runner exits and
     // re-handshakes the hub WITHOUT the removed addon (D3 machinery).
-    // `@camstack/server` builtins are excluded — see `shouldEvictMissingOnDisk`.
+    // `@dominevo/server` builtins are excluded — see `shouldEvictMissingOnDisk`.
     const onDiskIds = new Set(
       freshLoader.listAddons().map((a: { declaration: { id: string } }) => a.declaration.id),
     )
@@ -3147,7 +3147,7 @@ export class AddonRegistryService {
           }
         } else if (entry.initialized) {
           // Defensive fallback: a non-forked installed addon (every
-          // non-`@camstack/server` addon forks, and builtins are excluded
+          // non-`@dominevo/server` addon forks, and builtins are excluded
           // above, so this is not normally reached). Shut it down in-process.
           try {
             await entry.addon.shutdown()
@@ -3402,7 +3402,7 @@ export class AddonRegistryService {
     if (!routeProvider) return
 
     // ── Forked addon: fetch handler-stripped routes over UDS (F3) ──────
-    // EVERY non-`@camstack/server` addon forks (the fork authority is
+    // EVERY non-`@dominevo/server` addon forks (the fork authority is
     // `buildAddonGroupPlan`, which does NOT require an `execution` block — an
     // addon like `auth-oidc` with no `execution` still runs in its own
     // runner). `isForkedAddonEntry` now mirrors that rule. For a forked addon
@@ -3437,7 +3437,7 @@ export class AddonRegistryService {
       return
     }
 
-    // ── Co-located addon (`@camstack/server` builtin): live handlers, register
+    // ── Co-located addon (`@dominevo/server` builtin): live handlers, register
     // the provider directly. The route handlers run in-process against the
     // real Fastify reply, so no wire bridge is needed.
     addonRouteRegistry.registerRoutes(routeProvider.id, routeProvider)
@@ -3461,7 +3461,7 @@ export class AddonRegistryService {
    */
   private async mountForkedAddonRoutes(
     addonId: string,
-    routeProvider: import('@camstack/types').IAddonRouteProvider,
+    routeProvider: import('@dominevo/types').IAddonRouteProvider,
     addonRouteRegistry: AddonRouteRegistry,
   ): Promise<void> {
     // The cap-registry typed surface for `addon-routes` is the operator-facing
@@ -3470,7 +3470,7 @@ export class AddonRegistryService {
     // narrow it via a structural type guard (no cast).
     if (!isAddonRoutesInvoker(routeProvider)) {
       this.logger.warn(
-        'Forked addon-routes provider missing `invoke` method — routes will not dispatch. Use `buildAddonRouteProvider()` from @camstack/types.',
+        'Forked addon-routes provider missing `invoke` method — routes will not dispatch. Use `buildAddonRouteProvider()` from @dominevo/types.',
         { meta: { phase: 'v2', routeProviderId: routeProvider.id } },
       )
       return
@@ -3481,7 +3481,7 @@ export class AddonRegistryService {
       target: 'routes',
     })
     const descriptors = parseSerializableRouteDescriptors(rawRoutes)
-    const bridgeRoutes: import('@camstack/types').IAddonHttpRoute[] = descriptors.map((route) => ({
+    const bridgeRoutes: import('@dominevo/types').IAddonHttpRoute[] = descriptors.map((route) => ({
       method: route.method,
       path: route.path,
       access: route.access,
@@ -3685,11 +3685,11 @@ export class AddonRegistryService {
     // `device-manager` Moleculer service in-process — no network
     // hop. On a forked worker, the same proxy routes through the TCP
     // transport to the hub's service. Zero custom $hub.* actions needed.
-    const kernelStreamProbe: import('@camstack/types').IKernelStreamProbe = {
+    const kernelStreamProbe: import('@dominevo/types').IKernelStreamProbe = {
       probe: (url, options) => this.streamProbe.probe(url, options),
       probeField: (key, value) => this.streamProbe.probeField(key, value),
     }
-    const deviceManagerApi: import('@camstack/types').DeviceManagerApi =
+    const deviceManagerApi: import('@dominevo/types').DeviceManagerApi =
       createBrokerDeviceManagerApi({
         api: this.getBrokerApi(),
         addonId,
@@ -3766,7 +3766,7 @@ export class AddonRegistryService {
 
     const ctx: InternalAddonContext & {
       integrationRegistry?: unknown
-      capabilities: import('@camstack/types').CapabilitiesAccess
+      capabilities: import('@dominevo/types').CapabilitiesAccess
     } = {
       id: `addon:${addonId}`,
       logger,
@@ -3999,7 +3999,7 @@ export class AddonRegistryService {
    *     passes a live JS reference across a process boundary any more.
    *
    * Addons with `placement: 'agent-only'` are dropped (they don't run on
-   * the hub). `@camstack/server` builtins are dropped too — UNLESS the
+   * the hub). `@dominevo/server` builtins are dropped too — UNLESS the
    * manifest entry declares `execution.isolate: true`.
    *
    * The reason builtins stay in-process is that the infrastructure ones
@@ -4075,7 +4075,7 @@ export class AddonRegistryService {
   private runsInOwnRunner(entry: AddonEntry): boolean {
     if (!entry.declaration || !entry.addonDir) return false
     if (resolveAddonPlacement(entry.declaration) === 'agent-only') return false
-    if (entry.packageName !== '@camstack/server') return true
+    if (entry.packageName !== '@dominevo/server') return true
     return isIsolatedBuiltin(entry.declaration)
   }
 
@@ -4137,7 +4137,7 @@ export class AddonRegistryService {
     // Nothing about the runner is read from its bundle here (D444).
     for (const { addonId } of addons) {
       // Mark the entry initialized so the in-process core-builtin boot
-      // passes skip it (those passes only touch `@camstack/server`).
+      // passes skip it (those passes only touch `@dominevo/server`).
       const entry = this.addonEntries.get(addonId)
       if (entry) {
         entry.initialized = true
@@ -4434,7 +4434,7 @@ export class AddonRegistryService {
     addonId: string,
     action: string,
     input: unknown,
-    caller?: import('@camstack/types').CustomActionCaller,
+    caller?: import('@dominevo/types').CustomActionCaller,
   ): Promise<unknown> {
     return this.addonCallGateway.callForked(addonId, {
       target: 'custom',

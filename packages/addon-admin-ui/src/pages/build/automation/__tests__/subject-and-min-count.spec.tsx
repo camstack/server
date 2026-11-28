@@ -3,8 +3,8 @@
  * (falling back to the static map), and the stationary-present leaf exposes
  * `minCount` as the key's presence, never a stored default.
  */
-import { selectOptionLabels, waitForSelectRows } from '@camstack/ui-library/testing'
-import { DeviceType, type StationaryPresentLeaf } from '@camstack/types'
+import { selectOptionLabels, waitForSelectRows } from '@dominevo/ui-library/testing'
+import { DeviceType, type StationaryPresentLeaf } from '@dominevo/types'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { useState } from 'react'
@@ -30,9 +30,9 @@ vi.mock('../../../../../../ui-library/src/contexts/system-context.js', () => ({
   }),
 }))
 
-vi.mock('@camstack/ui-library', async () => {
+vi.mock('@dominevo/ui-library', async () => {
   const actual =
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+    await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return {
     ...actual,
     useZonesListZones: () => ({ data: [] }),

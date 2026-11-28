@@ -8,8 +8,8 @@ import { describe, expect, it, vi } from 'vitest'
 
 const lib = vi.hoisted(() => ({ fail: null as string | null, calls: [] as unknown[] }))
 
-vi.mock('@camstack/ui-library', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@camstack/ui-library')>()),
+vi.mock('@dominevo/ui-library', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@dominevo/ui-library')>()),
   useIntegrationInstancesSetInstanceEnabled: (o: {
     onSuccess?: () => void
     onError?: (e: Error) => void

@@ -1,4 +1,4 @@
-import { errMsg, type DeviceManagerApi, type IScopedLogger } from '@camstack/types'
+import { errMsg, type DeviceManagerApi, type IScopedLogger } from '@dominevo/types'
 import { UNIFI_SYSTEM } from './config.js'
 
 /**

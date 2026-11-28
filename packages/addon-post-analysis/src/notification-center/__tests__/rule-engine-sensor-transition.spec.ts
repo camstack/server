@@ -1,4 +1,4 @@
-import { NcRuleInputSchema, type SensorEvent } from '@camstack/types'
+import { NcRuleInputSchema, type SensorEvent } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { evaluateRule, presentConditionIds, subjectFromSensorEvent } from '../rule-engine.js'
 

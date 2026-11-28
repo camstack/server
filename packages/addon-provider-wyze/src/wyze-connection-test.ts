@@ -1,6 +1,6 @@
 import { WyzeCloud } from '@apocaliss92/wyze-bridge-js'
 import type { WyzeCamera } from '@apocaliss92/wyze-bridge-js'
-import { errMsg, type IConnectionProbe, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IConnectionProbe, type IScopedLogger } from '@dominevo/types'
 import { z } from 'zod'
 import type { WyzeCredentials } from './cloud-client.js'
 import { classifyCloudError } from './error-classifier.js'
@@ -76,9 +76,7 @@ export interface WyzeConnectionTestDeps {
   readonly logger: IScopedLogger
 }
 
-export function buildWyzeConnectionTestProvider(
-  deps: WyzeConnectionTestDeps,
-): IConnectionProbe {
+export function buildWyzeConnectionTestProvider(deps: WyzeConnectionTestDeps): IConnectionProbe {
   const { makeCloud, logger } = deps
 
   return {

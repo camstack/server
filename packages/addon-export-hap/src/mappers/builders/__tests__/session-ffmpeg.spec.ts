@@ -3,7 +3,7 @@
  * bare `'ffmpeg'` by design before — the host's binary. Without the pinned
  * build the start REFUSES, named per camera, before any broker round trip.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { requireSessionFfmpeg } from '../camera-streams.js'
 

@@ -1,4 +1,4 @@
-import { CAP_METHOD_NOT_IMPLEMENTED, commandOrigin } from '@camstack/types/addon'
+import { CAP_METHOD_NOT_IMPLEMENTED, commandOrigin } from '@dominevo/types/addon'
 import { runWithCapCallContext } from '../cap-call-scope.js'
 import type { CapCallInput } from '../transport/child-cap-protocol.js'
 
@@ -56,7 +56,7 @@ export interface ChildCapDispatchDeps {
   isProviderOptionalMethod(capName: string, method: string): boolean
 }
 
-/** The prefix lives in `@camstack/types` so an addon can recognise it too. */
+/** The prefix lives in `@dominevo/types` so an addon can recognise it too. */
 export { CAP_METHOD_NOT_IMPLEMENTED }
 
 /**

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import type { LinkCandidate } from '../device-linked-devices.js'
 import { planManualBackfill } from '../linked-devices-manual-backfill.js'
 

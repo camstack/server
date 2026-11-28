@@ -33,7 +33,7 @@ import {
   DeviceFeature,
   LockControlStatusSchema,
   SwitchStatusSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 import type { GoogleErrorCode, GoogleTraitName } from './protocol.js'
 

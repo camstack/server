@@ -15,7 +15,7 @@
  */
 import { useUiText, type UiTextFn } from '../../contexts/ui-text'
 import type { ReactNode } from 'react'
-import type { DeviceDisplayOverride, DeviceProxy, SliceHandle, SourceInfo } from '@camstack/types'
+import type { DeviceDisplayOverride, DeviceProxy, SliceHandle, SourceInfo } from '@dominevo/types'
 import { useDeviceProxy, useDeviceStateSlice } from '../../hooks/use-device-proxy'
 import {
   useDeviceManagerGetDevice,

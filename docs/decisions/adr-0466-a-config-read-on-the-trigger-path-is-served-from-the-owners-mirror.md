@@ -137,7 +137,7 @@ a minute, and a UI that shows a config must show the persisted one.
   doing its job are both silence — and the only visible difference is 1 800
   calls a minute on a runner nobody is watching. `storeReads` climbing back
   toward `served` is the regression signal.
-- This is `addon-pipeline` and ships with `camstack deploy addon-pipeline` —
+- This is `addon-pipeline` and ships with `dominevo deploy addon-pipeline` —
   the large bundle, whose hot deploy has wedged the listener before (D447). The
   operator decides when.
 - **Not fixed, and now named:** `get device-manager:devices` at 1 314/min

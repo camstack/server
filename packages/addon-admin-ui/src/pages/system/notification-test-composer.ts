@@ -24,7 +24,7 @@ import {
   type NotificationFormat,
   type TargetKindCaps,
   type TargetKindLevel,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { hubPath } from '../../lib/mount'
 import i18n from '../../i18n/index'
 
@@ -327,7 +327,7 @@ function buildRawPreset(caps: TargetKindCaps, preset: TestPresetId): TestFormSta
     case 'text':
       return {
         ...base,
-        title: 'CamStack', // i18n-ignore: brand name
+        title: 'Dominevo', // i18n-ignore: brand name
         body: i18n.t('helpers.notificationTestComposer.presetText'),
       }
 
@@ -350,7 +350,7 @@ function buildRawPreset(caps: TargetKindCaps, preset: TestPresetId): TestFormSta
       }))
       return {
         ...base,
-        title: 'CamStack', // i18n-ignore: brand name
+        title: 'Dominevo', // i18n-ignore: brand name
         body: i18n.t('helpers.notificationTestComposer.presetActions'),
         actions,
         ...(caps.clickUrl ? { clickUrl: '/' } : {}),
@@ -361,7 +361,7 @@ function buildRawPreset(caps: TargetKindCaps, preset: TestPresetId): TestFormSta
       const lvl = criticalLevel(caps)
       return {
         ...base,
-        title: 'CamStack', // i18n-ignore: brand name
+        title: 'Dominevo', // i18n-ignore: brand name
         body: i18n.t('helpers.notificationTestComposer.presetCritical'),
         priority: 5,
         level: lvl?.id ?? '',

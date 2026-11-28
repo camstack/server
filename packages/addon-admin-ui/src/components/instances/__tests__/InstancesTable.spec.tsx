@@ -5,7 +5,7 @@
  */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import type { ConfigUISchema } from '@camstack/types'
+import type { ConfigUISchema } from '@dominevo/types'
 import { Mail } from 'lucide-react'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -50,9 +50,9 @@ const FORM: ConfigUISchema = {
 
 const PASSWORD_VIEW = { $secret: 'ref', v: 1, set: true }
 
-vi.mock('@camstack/ui-library', async () => {
+vi.mock('@dominevo/ui-library', async () => {
   const actual =
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+    await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   const query = (slot: { data: ProviderRow[] | undefined; error: Error | null }) => ({
     data: slot.data,
     error: slot.error,
@@ -156,7 +156,7 @@ vi.mock('../use-set-instance-enabled', () => ({
   }),
 }))
 
-import { ConfirmDialogProvider, PageShell } from '@camstack/ui-library'
+import { ConfirmDialogProvider, PageShell } from '@dominevo/ui-library'
 import { StaticAddonIconsProvider } from '../../../contexts/addon-icons-context'
 import { InstancesTable, type InstancesTableProps } from '../InstancesTable'
 

@@ -1,4 +1,4 @@
-import { errMsg, OrphanIntegrationSweep, type IScopedLogger } from '@camstack/types'
+import { errMsg, OrphanIntegrationSweep, type IScopedLogger } from '@dominevo/types'
 
 export interface ReconcilerIntegration {
   readonly id: string

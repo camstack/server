@@ -29,7 +29,7 @@
  *
  * Pure: a queue with a clock argument and one frame transform.
  */
-import type { FrameResult, ObjectDetection } from '@camstack/types'
+import type { FrameResult, ObjectDetection } from '@dominevo/types'
 import type { SecondarySubject } from '../confirmation-gate.js'
 
 /**

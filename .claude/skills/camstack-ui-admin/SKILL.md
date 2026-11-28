@@ -1,9 +1,9 @@
 ---
 name: camstack-ui-admin
-description: CamStack admin UI, ui-library and addon pages (Module Federation remotes — Model Studio, Benchmark, OSD manager, Training — and widgets). Use with camstack-ui when adding or changing an admin page, a /system tab, a table, a dialog, a settings form, a secret field, an integration page, an addon page or a ui-library component; or when an addon page renders with missing styles. Covers AdminPage, AdminTabs, InstancesTable, DataTable, Dialog, the secret field, pickers and the @source / D747 addon-page CSS rule.
+description: Dominevo admin UI, ui-library and addon pages (Module Federation remotes — Model Studio, Benchmark, OSD manager, Training — and widgets). Use with camstack-ui when adding or changing an admin page, a /system tab, a table, a dialog, a settings form, a secret field, an integration page, an addon page or a ui-library component; or when an addon page renders with missing styles. Covers AdminPage, AdminTabs, InstancesTable, DataTable, Dialog, the secret field, pickers and the @source / D747 addon-page CSS rule.
 ---
 
-# CamStack UI — admin UI, ui-library, addon pages
+# Dominevo UI — admin UI, ui-library, addon pages
 
 Load the umbrella first: `camstack-ui` (`.claude/skills/camstack-ui/SKILL.md`)
 owns the workflow, the token map and the done-gate. This skill is the web
@@ -14,9 +14,9 @@ half. The rules behind each line are in `docs/ui/admin-patterns.md` and
 
 | File under | May import | Notes |
 | --- | --- | --- |
-| `packages/addon-admin-ui/src/` | `@camstack/ui-library` + admin-ui-local components | `AdminPage`, `AdminTabs`, `StableTabPanel`, `components/integration-hub/` are LOCAL |
+| `packages/addon-admin-ui/src/` | `@dominevo/ui-library` + admin-ui-local components | `AdminPage`, `AdminTabs`, `StableTabPanel`, `components/integration-hub/` are LOCAL |
 | `packages/ui-library/src/` | its own tree only | export new things from `src/primitives/index.ts` / `src/composites/index.ts`; `npm run ui:catalogue` |
-| an addon page (`packages/addon-<x>/src/page.tsx` …) | `@camstack/ui-library` only | a Module Federation remote; React, tRPC, react-query and the library are SHARED with the host |
+| an addon page (`packages/addon-<x>/src/page.tsx` …) | `@dominevo/ui-library` only | a Module Federation remote; React, tRPC, react-query and the library are SHARED with the host |
 
 **Addon pages (Module Federation).** Declared in the package's
 `package.json` → `camstack.addons[].pages[]` (`id`, `label`, `icon`, `path`,
@@ -103,7 +103,7 @@ right on its own dev server and broken in the hub.
 No English literal in an addon `.tsx`: strings live in
 `packages/addon-<x>/src/i18n/{en,it}.json` and are read with the `useT()` /
 `Trans` / `translate` that `createAddonI18n(ns, { en, it })` returns
-(`@camstack/ui-library`). The language is `<html lang>`, set by the admin. Plural
+(`@dominevo/ui-library`). The language is `<html lang>`, set by the admin. Plural
 keys are `key_one` / `key_other`; a sentence with inline elements is one `Trans`
 message, never concatenated fragments. Schema `label:` / `description:` and
 server error messages are out of scope. Add a key with

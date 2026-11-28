@@ -148,7 +148,7 @@ Consulted: <https://docs.ntfy.sh/publish/> (2026-08-18).
   `action`, `label`, `url`, `method`, `headers`, `body`, `intent`, `extras`,
   `value`, `clear`.
 - **Not supported:** per-action icons; a sound field; a TTL.
-- CamStack renders `view` and `http` and nothing else
+- Dominevo renders `view` and `http` and nothing else
   (`packages/addon-notifiers/src/adapters/ntfy.ts:102`). `broadcast` and `copy`
   are unused — `copy` would be a sensible future "copy the track id" button;
   `broadcast` is Android-only and out of scope.
@@ -163,16 +163,16 @@ which is the same source the adapter's header block was written from
 
 - `tapUrl` — *"Optional tap URL. If provided, will automatically set the
   tapAction to NAVIGATE with this URL."* **This is the on-click URL property the
-  operator is asking for, and CamStack already sets it** from `clickUrl`
+  operator is asking for, and Dominevo already sets it** from `clickUrl`
   (`packages/addon-notifiers/src/adapters/zentik.ts:487`).
 - `tapAction` — a full `NotificationActionDto`, i.e. the whole-notification tap
-  can be any action type, not just a URL. CamStack deliberately uses the
+  can be any action type, not just a URL. Dominevo deliberately uses the
   `tapUrl` shortcut instead (`packages/addon-notifiers/src/adapters/zentik.ts:40`).
 - `actions[]` of `NotificationActionDto` = `{ type, title, value, destructive,
   icon }`. `NotificationActionType` enum, read from the live schema:
   `NAVIGATE`, `BACKGROUND_CALL`, `MARK_AS_READ`, `SNOOZE`, `POSTPONE`,
   `OPEN_NOTIFICATION`, `WEBHOOK`, `DELETE`.
-- Also present and **entirely unused by CamStack**: `subtitle`, `groupId`,
+- Also present and **entirely unused by Dominevo**: `subtitle`, `groupId`,
   `collapseId` (APNS collapse-id — the replace-in-place `tag` we already compute
   and drop), `snoozes: number[]` and `postpones: number[]` (Zentik's own
   client-side snooze menus), `addMarkAsReadAction` / `addDeleteAction`
@@ -549,7 +549,7 @@ send before building on it — this is a mutation, so the operator runs it:
 
 ```bash
 node scripts/hub/hub.mjs POST notificationOutput.testTarget \
-  '{"addonId":"notifiers","targetId":"zentik-1784924941052","sample":{"body":"tap test — should open the CamStack app on camera 101","title":"CamStack tap test","clickUrl":"camstack://camera/101"}}'
+  '{"addonId":"notifiers","targetId":"zentik-1784924941052","sample":{"body":"tap test — should open the Dominevo app on camera 101","title":"Dominevo tap test","clickUrl":"camstack://camera/101"}}'
 ```
 
 Then tap it. If the app opens: `clickUrlKinds: ['app','web']` for zentik stands.

@@ -12,9 +12,9 @@
  * (its former byte-identical twin `collectDecoderNodeIds` was removed with
  * the per-camera 'Decoder Node' select — decode co-locates with detection).
  */
-import type { IEventBus, IngestOwner, IScopedLogger } from '@camstack/types'
-import { createEvent, errMsg, EventCategory } from '@camstack/types'
-import { eligibleUnderBenchmark } from '@camstack/types'
+import type { IEventBus, IngestOwner, IScopedLogger } from '@dominevo/types'
+import { createEvent, errMsg, EventCategory } from '@dominevo/types'
+import { eligibleUnderBenchmark } from '@dominevo/types'
 import { computeFrameSourceNodes } from './frame-source-eligibility.js'
 import { resolveIngestOwner } from './ingest-owner.js'
 import { deriveRemoteSourcingNodes, resolveSourceOwner } from './source-owner.js'

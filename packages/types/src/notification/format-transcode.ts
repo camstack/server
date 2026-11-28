@@ -1,7 +1,7 @@
 /**
  * Pure format transcoding for the notification degrade engine (Apprise-style).
  * No I/O — used by both the system `notifiers` addon and the HA addon (which
- * may not cross-import), so it lives in `@camstack/types`.
+ * may not cross-import), so it lives in `@dominevo/types`.
  */
 import type { NotificationFormat } from '../capabilities/notification-output.cap.js'
 

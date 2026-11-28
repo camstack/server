@@ -55,7 +55,7 @@ describe('hostExternalEntryUrls', () => {
         CAMSTACK_FRAMEWORK_DIR: '/data/framework',
         CAMSTACK_BUNDLED_ADDONS_DIR: '/res/addons',
       },
-      cwd: '/data/addons/@camstack/addon-pipeline',
+      cwd: '/data/addons/@dominevo/addon-pipeline',
       resolve: (anchorPath: string): string | null => {
         anchors.push(anchorPath)
         // Mirror a real layout: only the framework overlay and the plain bundle
@@ -71,7 +71,7 @@ describe('hostExternalEntryUrls', () => {
       '/data/framework/node_modules/__camstack_host_external_anchor__.cjs',
       '/res/node_modules/__camstack_host_external_anchor__.cjs',
       '/res/app.asar.unpacked/node_modules/__camstack_host_external_anchor__.cjs',
-      '/data/addons/@camstack/addon-pipeline/__camstack_host_external_anchor__.cjs',
+      '/data/addons/@dominevo/addon-pipeline/__camstack_host_external_anchor__.cjs',
     ])
     expect(urls).toEqual([FRAMEWORK_URL, BUNDLE_URL])
   })
@@ -79,14 +79,14 @@ describe('hostExternalEntryUrls', () => {
   it('finds the SAME electron Resources root when the seed dir is the closure scope dir', () => {
     // The packaged app stopped shipping a second `Resources/addons` tree
     // (2026-08-25) and now points `CAMSTACK_BUNDLED_ADDONS_DIR` at the closure's
-    // own scope dir, `<resources>/node_modules/@camstack`. A `path.dirname` of
+    // own scope dir, `<resources>/node_modules/@dominevo`. A `path.dirname` of
     // that is `<resources>/node_modules` — one level too deep — which would have
     // anchored at `<resources>/node_modules/node_modules` and silently lost
     // sharp/node-av in every forked decode worker on the desktop agent.
     const anchors: string[] = []
     const urls = hostExternalEntryUrls('sharp', {
-      env: { CAMSTACK_BUNDLED_ADDONS_DIR: '/res/node_modules/@camstack' },
-      cwd: '/data/addons/@camstack/addon-pipeline',
+      env: { CAMSTACK_BUNDLED_ADDONS_DIR: '/res/node_modules/@dominevo' },
+      cwd: '/data/addons/@dominevo/addon-pipeline',
       resolve: (anchorPath: string): string | null => {
         anchors.push(anchorPath)
         return anchorPath.startsWith('/res/node_modules/__')
@@ -97,7 +97,7 @@ describe('hostExternalEntryUrls', () => {
     expect(anchors).toEqual([
       '/res/node_modules/__camstack_host_external_anchor__.cjs',
       '/res/app.asar.unpacked/node_modules/__camstack_host_external_anchor__.cjs',
-      '/data/addons/@camstack/addon-pipeline/__camstack_host_external_anchor__.cjs',
+      '/data/addons/@dominevo/addon-pipeline/__camstack_host_external_anchor__.cjs',
     ])
     expect(urls).toEqual([BUNDLE_URL])
   })

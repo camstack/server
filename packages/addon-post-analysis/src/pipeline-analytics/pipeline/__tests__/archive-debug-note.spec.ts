@@ -22,7 +22,7 @@
  *     in the log line, tagged with the camera, so it is recoverable by hand.
  */
 
-import type { RetrainStatus } from '@camstack/types'
+import type { RetrainStatus } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { makeLogRecorder, makeSilentLogger } from '../../__tests__/test-helpers.js'
 import type { DebugNoteArchiveAppendInput, DebugNoteArchivePort } from '../archive-debug-note.js'

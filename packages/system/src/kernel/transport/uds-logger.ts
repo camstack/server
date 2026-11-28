@@ -1,4 +1,4 @@
-import type { IScopedLogger, LogExtras, LogTags } from '@camstack/types'
+import type { IScopedLogger, LogExtras, LogTags } from '@dominevo/types'
 import { redactLogMeta, redactLogText } from '../../logging/log-redactor.js'
 import type { ChildLogMessage } from './child-cap-protocol.js'
 

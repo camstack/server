@@ -1,11 +1,11 @@
 // @vitest-environment jsdom
 /**
- * Catalog lists CamStack seeds (source=camstack) and acquisition UIs for
+ * Catalog lists Dominevo seeds (source=camstack) and acquisition UIs for
  * plugin catalog / plus catalog. Custom lives under Import; Installed is inventory.
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import type { AddonPageProps } from '@camstack/ui-library'
+import type { AddonPageProps } from '@dominevo/ui-library'
 import { CatalogTab, type CatalogSource } from '../tabs/CatalogTab.js'
 import { OperationModalProvider } from '../components/OperationModalProvider.js'
 
@@ -112,7 +112,7 @@ describe('CatalogTab', () => {
     })
   })
 
-  it('lists an ungrouped CamStack seed as a flat card and downloads it', async () => {
+  it('lists an ungrouped Dominevo seed as a flat card and downloads it', async () => {
     const downloads: unknown[] = []
     const trpc = catalogTrpc({
       getSchema: {
@@ -158,7 +158,7 @@ describe('CatalogTab', () => {
     })
   })
 
-  it('CamStack source hides plugin catalog/plus catalog pipeline seeds (those live under their Catalog source)', async () => {
+  it('Dominevo source hides plugin catalog/plus catalog pipeline seeds (those live under their Catalog source)', async () => {
     const trpc = catalogTrpc({
       getSchema: {
         query: async () => ({

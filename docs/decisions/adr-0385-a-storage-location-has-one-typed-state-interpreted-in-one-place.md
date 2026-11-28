@@ -123,8 +123,8 @@ internal lever the drain ratchet drives (D386).
 - The pipe still carries `enabled` for one release, so a hub mid-upgrade behaves
   identically in both directions. When the mirror goes, `legacyModeOf` and the
   `stateOf` fold in `roots.ts` go with it.
-- `@camstack/types` and `@camstack/system` travel inside the published
-  `@camstack/server` closure, so **none of this is live until a server
+- `@dominevo/types` and `@dominevo/system` travel inside the published
+  `@dominevo/server` closure, so **none of this is live until a server
   containing it is installed on all three nodes** — hub, the Unraid agent and
   the Mac Mini agent. Deploying the pipeline addon alone changes nothing.
 

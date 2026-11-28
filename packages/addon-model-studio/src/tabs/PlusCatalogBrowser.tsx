@@ -9,8 +9,8 @@
  * blocked, with the reason.
  */
 import { useEffect, useMemo, useState } from 'react'
-import type { AddonPageProps } from '@camstack/ui-library'
-import type { ModelFormat } from '@camstack/types'
+import type { AddonPageProps } from '@dominevo/ui-library'
+import type { ModelFormat } from '@dominevo/types'
 import { plusCatalogPlusRegistryId, type PlusCatalogModelView } from '../ui/api.js'
 import { ImportProgressModal } from '../components/ImportProgressModal.js'
 import { FormatImportRow, type FormatRowEntry } from '../components/FormatImportRow.js'

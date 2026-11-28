@@ -99,7 +99,7 @@ made here (D447 §3):
    `listEventKinds` / `listEventKindsBatch` read `resolvePipeline` — an
    enabled `object-detection` step and its `enabledMacroClasses`, and
    `audio.enabled` — and never `getCameraStatus`. The class list is
-   `FIRST_LEVEL_MACRO_CLASSES` (`@camstack/types`), the authority the step's
+   `FIRST_LEVEL_MACRO_CLASSES` (`@dominevo/types`), the authority the step's
    offer is already guarded against; an explicit non-empty
    `enabledMacroClasses` narrows it in the authority's order; anything in it
    that is not a first-level macro is dropped (a stored `'package'` never
@@ -131,11 +131,11 @@ made here (D447 §3):
 
 ## Consequences
 
-- The taxonomy fix is `packages/addon-post-analysis`: `camstack deploy
+- The taxonomy fix is `packages/addon-post-analysis`: `dominevo deploy
   post-analysis`. Live the moment the runner respawns; the viewer's sweep
   (1.0.484) then adds nothing and can be removed on its own schedule.
-- The switch removal is `@camstack/system` and rides the next published
-  `@camstack/server` (D16). Until then the hub keeps the env read; nothing
+- The switch removal is `@dominevo/system` and rides the next published
+  `@dominevo/server` (D16). Until then the hub keeps the env read; nothing
   sets it, so behaviour is identical.
 - `listEventKindsBatch` now issues one `resolvePipeline` per camera, all in
   flight at once — there is no batch form of it. Measured on the hub over 32

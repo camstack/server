@@ -22,7 +22,7 @@
  * result from ending its hold.**
  */
 
-import type { FrameHandle } from '@camstack/types'
+import type { FrameHandle } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { NativeCropRegistry } from '../../session-decode/native-crop-registry.js'
 import { FrameCutterBinding } from '../frame-cutter-binding.js'

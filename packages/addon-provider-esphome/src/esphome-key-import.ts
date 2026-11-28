@@ -1,5 +1,5 @@
 /**
- * Import the API encryption keys of the boards CamStack already runs from a
+ * Import the API encryption keys of the boards Dominevo already runs from a
  * `board-key-source` (the ESPHome builder beside Home Assistant).
  *
  * Every board gets exactly one outcome, with a reason when it was not imported:
@@ -15,7 +15,7 @@ import type {
   BoardKeyResult,
   BoardKeySource,
   IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { EspBrokerEntry } from './config.js'
 
 export type KeyImportReason =

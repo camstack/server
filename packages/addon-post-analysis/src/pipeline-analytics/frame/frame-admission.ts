@@ -15,7 +15,7 @@ import {
   type InferenceOccasion,
   nodePin,
   type PipelineInferenceResultPayload,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { type FrameLagObserver, isAlarmingLagReport, lagVerdict } from '../frame-lag-observer.js'
 import type { FrameState } from './frame-state.js'
 

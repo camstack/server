@@ -27,7 +27,7 @@
  * Reads never block on a cold scan for a range they did not ask for: `warm`
  * runs in the background at startup so the first screen is already answered.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import {
   availabilityProfile,
   hoursWithFootage,

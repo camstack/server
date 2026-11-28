@@ -33,7 +33,7 @@
  * different fixes and one of them is "nothing, this is expected". A single
  * `null` would have made the 21.7% unattributable a second time.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 /** Why a recovery produced no pixels — or that it did. */
 export type RecoveredStillOutcome =

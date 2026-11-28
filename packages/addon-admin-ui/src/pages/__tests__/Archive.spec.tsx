@@ -1,7 +1,7 @@
 /// <reference types="@testing-library/jest-dom" />
 
 import * as jestDomMatchers from '@testing-library/jest-dom/matchers'
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import type { ReactElement } from 'react'

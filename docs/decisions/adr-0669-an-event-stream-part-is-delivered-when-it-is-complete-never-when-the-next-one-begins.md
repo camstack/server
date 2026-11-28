@@ -25,12 +25,12 @@ closed a part. The parser ran exactly one event behind, and on a stream with
 two alternating messages, one event behind is a phase inversion:
 
 - Live on camera 3836, 2026-09-28: the raw bytes read `action=Start` while
-  CamStack logged `firmware event received {action=Stop}` and `onboard motion
-  stopped`. Thirty seconds later the bytes read `action=Stop` and CamStack
+  Dominevo logged `firmware event received {action=Stop}` and `onboard motion
+  stopped`. Thirty seconds later the bytes read `action=Stop` and Dominevo
   logged `onboard motion started`. The same held for every pair.
 - The motion analyzer's rows (real motion) landed exactly on the firmware
   **Start** byte times (09:51:34, 09:52:39, 09:56:28, 10:03:50, 10:07:00). The
-  onboard rows CamStack wrote landed on the **Stop** times and spanned the quiet
+  onboard rows Dominevo wrote landed on the **Stop** times and spanned the quiet
   (09:53:10 for 190 s, 09:57:04 for 180 s, …).
 - The events-band recorder therefore filmed the quiet and cut on real motion:
   3836 high covered 623 of 684 minutes that day, and 14 of its holes longer

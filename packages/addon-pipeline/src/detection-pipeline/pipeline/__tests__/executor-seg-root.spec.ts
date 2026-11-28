@@ -5,14 +5,14 @@
  */
 import { describe, expect, it, vi } from 'vitest'
 import sharp from 'sharp'
-import { COCO_TO_MACRO, rootSuppliesOf } from '@camstack/types'
+import { COCO_TO_MACRO, rootSuppliesOf } from '@dominevo/types'
 import type {
   EngineOutput,
   FrameResult,
   IInferenceEngine,
   InferenceInput,
   ObjectDetection,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { getStepDefinition } from '../../registry/step-definitions.js'
 import { PipelineExecutor } from '../executor.js'
 import type { ExecutableStep } from '../tree-builder.js'

@@ -17,7 +17,7 @@
  */
 import { type ReactNode } from 'react'
 import { ChevronDown, ChevronRight } from 'lucide-react'
-import { StatusBadge, type DeviceListColumn, Button } from '@camstack/ui-library'
+import { StatusBadge, type DeviceListColumn, Button } from '@dominevo/ui-library'
 import { ProviderIcon } from '../shared/ProviderIcon'
 import { useTranslation } from 'react-i18next'
 import i18n from '../../i18n/index'

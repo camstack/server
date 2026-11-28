@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import type { ConfigFieldWithValue, ConfigUISchemaWithValues } from '@camstack/types'
+import type { ConfigFieldWithValue, ConfigUISchemaWithValues } from '@dominevo/types'
 import { filterSchemaByFieldScope } from '../settings-field-scope'
 
 /**

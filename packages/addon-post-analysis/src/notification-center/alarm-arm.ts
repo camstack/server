@@ -33,8 +33,8 @@ import type {
   NcAlarmSettings,
   NcAlarmSettingsPatch,
   NcAlarmSkipReason,
-} from '@camstack/types'
-import { secureActuationFor } from '@camstack/types'
+} from '@dominevo/types'
+import { secureActuationFor } from '@dominevo/types'
 import type { NcAlarmPanelPort, NotificationCenterDeps } from './index.js'
 
 /**

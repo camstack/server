@@ -22,7 +22,7 @@ import {
   type StaleKindFinding,
   type StaleSettingsKeyFinding,
   type StorageKind,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { DropKindResult, KindRef } from '../records/records-engine-types.js'
 
 /** Owners whose kinds the audit never drops (local-auth's legacy tables go by hand, D902). */

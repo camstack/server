@@ -38,7 +38,7 @@
  * The refusal names the sources, because "the grid has no low" is not a finding
  * — "101 has no low" is.
  */
-import type { CamProfile } from '@camstack/types'
+import type { CamProfile } from '@dominevo/types'
 import { deriveGridCanvas } from './grid-canvas-derivation.js'
 import type { PixelSize } from './grid-canvas.js'
 import type { NormalizedRect } from './grid-filter-graph.js'

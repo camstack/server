@@ -4,7 +4,7 @@
  * `buildRequest` is PURE: every case asserts the exact url / method / headers /
  * JSON body it emits from a canonical `PreparedNotification`. No network.
  */
-import type { PreparedNotification } from '@camstack/types'
+import type { PreparedNotification } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { TargetConfig } from '../../adapters/adapter.js'
 import { webhookAdapter } from '../../adapters/webhook.js'

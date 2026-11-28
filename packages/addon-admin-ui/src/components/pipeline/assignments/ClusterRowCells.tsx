@@ -14,7 +14,7 @@ import {
   IconButton,
   Select,
   WidgetSlot,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import type { RoleState } from './assignment-rows'
 import {
   DevicePinSelect,

@@ -4,7 +4,7 @@
  * with the broker's own refresh token: the operator signs in once, on the
  * broker, and never again here.
  */
-import type { IScopedLogger, Target } from '@camstack/types'
+import type { IScopedLogger, Target } from '@dominevo/types'
 import { BrokerEcho } from './broker-echo.js'
 import type { BrokerSeed } from './broker-seed.js'
 import { DEVICE_REFRESH_MS, type SpeakMode } from './constants.js'

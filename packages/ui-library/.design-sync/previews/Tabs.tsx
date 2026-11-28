@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@camstack/ui-library'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@dominevo/ui-library'
 
 const Frame = ({ children }: { children: ReactNode }) => (
   <div className="dark bg-background text-foreground p-5 rounded-lg">{children}</div>

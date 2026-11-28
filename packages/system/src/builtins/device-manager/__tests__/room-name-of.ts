@@ -4,7 +4,7 @@
  * reader does — through the rooms the provider lists — and an unknown id reads
  * as unset.
  */
-import type { IDeviceManagerProvider } from '@camstack/types'
+import type { IDeviceManagerProvider } from '@dominevo/types'
 import { type FakeSettingsStore, readDeviceRow } from './settings-store-api.js'
 
 export async function roomNameOf(

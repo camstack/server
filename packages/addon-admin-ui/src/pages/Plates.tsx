@@ -5,7 +5,7 @@
  * file is the body only — two `SectionCard`s matching the People section.
  */
 
-import { SECTION_BODY, SectionCard } from '@camstack/ui-library'
+import { SECTION_BODY, SectionCard } from '@dominevo/ui-library'
 import { Car, ScanLine } from 'lucide-react'
 import { RecentPlates } from '../components/detection-intelligence/RecentPlates'
 import { VehiclesList } from '../components/detection-intelligence/VehiclesList'

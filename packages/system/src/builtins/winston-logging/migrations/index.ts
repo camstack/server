@@ -1,4 +1,4 @@
-import type { AddonMigration } from '@camstack/types'
+import type { AddonMigration } from '@dominevo/types'
 import { type NodeFieldsPorts, planNodeFields } from './node-fields.js'
 
 export const WINSTON_LOGGING_ID = 'winston-logging'

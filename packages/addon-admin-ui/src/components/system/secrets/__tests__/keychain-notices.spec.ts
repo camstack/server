@@ -3,7 +3,7 @@
  * then the reset's re-enter list, then the key sharing the backup, then the
  * missing recovery copy, then orphans — instead of a stack of banners.
  */
-import type { KeychainResetRecord, KeychainStatus } from '@camstack/types'
+import type { KeychainResetRecord, KeychainStatus } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { buildKeychainNotices } from '../keychain-notices'
 

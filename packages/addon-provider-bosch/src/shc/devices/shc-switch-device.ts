@@ -3,7 +3,7 @@ import {
   type DeviceContext,
   type InferNativeProvider,
   type SwitchStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { buildPowerSwitchPutBody, readShcSwitchOn } from '../shc-domain-mapping.js'
 import type { ShcPowerSwitchState } from '../shc-types.js'
 import { ShcBaseDevice } from './shc-device-base.js'

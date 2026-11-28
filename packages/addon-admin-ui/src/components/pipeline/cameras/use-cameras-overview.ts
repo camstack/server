@@ -15,10 +15,10 @@ import {
   useClusterNodes,
   useLiveEvent,
   usePipelineOrchestratorGetCameraStatuses,
-} from '@camstack/ui-library'
-import { EventCategory } from '@camstack/types'
-import type { CameraStatus } from '@camstack/types'
-import type { SystemLiveEvent } from '@camstack/sdk'
+} from '@dominevo/ui-library'
+import { EventCategory } from '@dominevo/types'
+import type { CameraStatus } from '@dominevo/types'
+import type { SystemLiveEvent } from '@dominevo/sdk'
 import { useDeviceList } from '../../../hooks/useDevice'
 
 const POLL_INTERVAL_MS = 5_000

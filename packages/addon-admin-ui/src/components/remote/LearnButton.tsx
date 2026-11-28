@@ -5,8 +5,8 @@
  * learn (`getInfo.learn`). A native code is kept as such, otherwise the
  * measured timings are kept as a raw code.
  */
-import type { IrLearnResult } from '@camstack/types'
-import { Button, useIrTransmitterGetInfo, useIrTransmitterLearn } from '@camstack/ui-library'
+import type { IrLearnResult } from '@dominevo/types'
+import { Button, useIrTransmitterGetInfo, useIrTransmitterLearn } from '@dominevo/ui-library'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { SourceDraft } from './remote-config-model'

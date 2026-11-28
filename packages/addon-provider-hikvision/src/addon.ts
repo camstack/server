@@ -9,7 +9,7 @@ import type {
   DiscoveryMode,
   FieldProbeResult,
   IDevice,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   BaseDeviceProvider,
   clipEventLabelDepsFromApi,
@@ -24,7 +24,7 @@ import {
   widenDeviceConstructor,
   withClipEventLabels,
   defaultIntegrationDepsOver,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { type ClipService, createClipService } from './clips/clip-service.js'
 import { HIKVISION_ADDON_ID, HikvisionCamera, hikvisionCameraSchema } from './hikvision-camera.js'
 import {

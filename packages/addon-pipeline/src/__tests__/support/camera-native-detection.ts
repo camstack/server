@@ -1,4 +1,4 @@
-import type { CameraNativeDetection } from '@camstack/types'
+import type { CameraNativeDetection } from '@dominevo/types'
 
 /** Minimal {@link CameraNativeDetection} with required timestamp. */
 export function makeCameraNativeDetection(

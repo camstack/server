@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
   useSystem,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 
 import { InstanceEditorDialog } from '../instances/InstanceEditorDialog'
 

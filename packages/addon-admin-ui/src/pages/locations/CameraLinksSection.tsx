@@ -8,7 +8,7 @@
  * that opens the multi-select picker and writes the picked ids through the
  * same slot (D356: only what the operator picked, never an automatic link).
  */
-import type { ExtensionCandidate } from '@camstack/types'
+import type { ExtensionCandidate } from '@dominevo/types'
 import {
   Button,
   DataTable,
@@ -21,7 +21,7 @@ import {
   useDeviceLabel,
   type DataColumn,
   type PickerItem,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { Link2 } from 'lucide-react'
 import { useMemo, useState } from 'react'

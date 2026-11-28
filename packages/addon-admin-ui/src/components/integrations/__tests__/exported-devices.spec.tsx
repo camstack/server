@@ -6,7 +6,7 @@
 import { cleanup, render, screen, fireEvent } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { DETACHED_ROW_API } from '@camstack/ui-library'
+import { DETACHED_ROW_API } from '@dominevo/ui-library'
 import type { PanelRow } from '../../instances/instances-model'
 
 const h = vi.hoisted(() => ({
@@ -15,9 +15,9 @@ const h = vi.hoisted(() => ({
   panelProps: [] as Array<Record<string, unknown>>,
 }))
 
-vi.mock('@camstack/ui-library', async () => {
+vi.mock('@dominevo/ui-library', async () => {
   const actual =
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+    await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return {
     ...actual,
     useDeviceExportGetStatus: (input: unknown) => {

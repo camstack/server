@@ -6,13 +6,13 @@
  * but does nothing until you wire it up.
  *
  * Common next steps:
- *   1. Pick one or more capabilities from `@camstack/types/capabilities`.
+ *   1. Pick one or more capabilities from `@dominevo/types/capabilities`.
  *   2. Implement a provider conforming to the cap's `InferProvider`.
  *   3. Return them from `onInitialize` and add them to
  *      `package.json` → `camstack.addons[0].capabilities`.
- *   4. `nx run @camstack/addon-<%= fileName %>:deploy` to push to a hub.
+ *   4. `nx run @dominevo/addon-<%= fileName %>:deploy` to push to a hub.
  */
-import { BaseAddon, type ProviderRegistration } from '@camstack/types'
+import { BaseAddon, type ProviderRegistration } from '@dominevo/types'
 
 // Operator-visible config fields go here, each with a default below and a
 // field in the owning capability's scoped settings (its `*.cap.ts` declares the form). The framework merges persisted

@@ -1,6 +1,6 @@
-# CamStack UI Library — how to build with it
+# Dominevo UI Library — how to build with it
 
-CamStack is a surveillance/camera platform. Its components are real, compiled React
+Dominevo is a surveillance/camera platform. Its components are real, compiled React
 components on `window.CamstackUI.*` (loaded from `_ds_bundle.js`). Build screens by
 composing them; style your own layout glue with the Tailwind v4 utilities below.
 
@@ -18,7 +18,7 @@ everything renders on browser-default white:
 No theme provider is required — the tokens live in the shipped stylesheet and resolve from
 the `dark` class. (A `.light` variant exists; add `light` instead of `dark` to opt in.)
 
-## Styling idiom — Tailwind v4 utilities with CamStack tokens
+## Styling idiom — Tailwind v4 utilities with Dominevo tokens
 Components are styled internally; for YOUR layout, use Tailwind utility classes. Use the
 **semantic token utilities** (not raw colors) so it stays on-brand:
 
@@ -26,7 +26,7 @@ Components are styled internally; for YOUR layout, use Tailwind utility classes.
 |---|---|
 | Surfaces | `bg-background` (app canvas), `bg-background-elevated`, `bg-surface`, `bg-surface-hover` |
 | Text | `text-foreground`, `text-foreground-muted`, `text-foreground-subtle`, `text-foreground-disabled` |
-| Brand / accent | `bg-primary` / `text-primary` (CamStack orange), `text-primary-foreground` |
+| Brand / accent | `bg-primary` / `text-primary` (Dominevo orange), `text-primary-foreground` |
 | Borders | `border-border`, `border-border-subtle` |
 | Status | `text-success` / `bg-success`, `text-warning`, `text-danger`, `text-info` (+ `bg-*`) |
 | Provider accents | `text-provider-onvif`, `text-provider-hikvision`, `text-provider-reolink`, `text-provider-ha`, `text-provider-rtsp` |

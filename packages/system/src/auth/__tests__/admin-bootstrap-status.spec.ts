@@ -1,4 +1,4 @@
-import type { SettingsStoreClient } from '@camstack/types'
+import type { SettingsStoreClient } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { AuthManager } from '../auth-manager.js'
 import { staticJwtSigningKey } from '../jwt-signing-key.js'

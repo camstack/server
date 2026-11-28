@@ -1,4 +1,4 @@
-import { DeviceType, type ConfigSectionWithValues } from '@camstack/types'
+import { DeviceType, type ConfigSectionWithValues } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { hasConfigTabContent, isConfigTabSection } from '../config-tab-sections'
 import { DEVICE_EXPORT_TAB_ID } from '../device-export-tab'

@@ -46,7 +46,7 @@ export interface AgentStatus {
   readonly appVersion?: string | null
   /** Product release (image / desktop). Null when the shell did not declare one. */
   readonly productVersion?: string | null
-  /** Running `@camstack/server` package. Distinct from the product release. */
+  /** Running `@dominevo/server` package. Distinct from the product release. */
   readonly serverVersion?: string | null
   /** Legacy boolean — kept for backward compat with older agent builds. */
   readonly hubConnected?: boolean

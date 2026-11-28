@@ -22,9 +22,9 @@
  * is nothing else: a token whose only scope is a share-view grant. There is
  * no other token format and no other share surface (D895).
  */
-import type { CapabilityRegistry } from '@camstack/server/system'
-import type { CredentialScope } from '@camstack/types'
-import { CredentialScopeSchema, scopesGrantAdmin, shareViewGrantOf } from '@camstack/types'
+import type { CapabilityRegistry } from '@dominevo/server/system'
+import type { CredentialScope } from '@dominevo/types'
+import { CredentialScopeSchema, scopesGrantAdmin, shareViewGrantOf } from '@dominevo/types'
 import { TRPCError } from '@trpc/server'
 import { z } from 'zod'
 import type { AuthNetworkPolicy } from '../../auth/auth-network-policy.js'

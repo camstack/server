@@ -74,7 +74,7 @@ node's folded settings with no hardware fields.
   instead of by map iteration; the UI converges them to one copy on the next
   save.
 - No schema/cap change: the fix ships in `addon-pipeline-orchestrator`,
-  `addon-pipeline` and `addon-admin-ui` without a `@camstack/server` release.
+  `addon-pipeline` and `addon-admin-ui` without a `@dominevo/server` release.
 
 ## Enforcement
 

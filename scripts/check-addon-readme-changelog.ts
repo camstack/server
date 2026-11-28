@@ -7,7 +7,7 @@
  *
  * The Addons page reads the README from the npm packument and the CHANGELOG
  * from the tarball. A package that forgets either file publishes a card with
- * nothing to read. Builtins inside `@camstack/server/system` are not separate
+ * nothing to read. Builtins inside `@dominevo/server/system` are not separate
  * packages and are out of scope; private packages never publish and are out
  * of scope too.
  *

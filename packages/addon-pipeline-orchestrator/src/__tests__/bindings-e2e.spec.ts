@@ -36,8 +36,8 @@ import {
   enabledNodesFromBroker,
   waitUntil,
 } from './e2e-helpers.js'
-import { EventCategory } from '@camstack/types'
-import type { StreamSourceEntry } from '@camstack/types'
+import { EventCategory } from '@dominevo/types'
+import type { StreamSourceEntry } from '@dominevo/types'
 
 // Phase 3 slice 2 (Task 2): on-motion cameras no longer standing-dispatch —
 // they only get a runner attach at session time (on motion), or a

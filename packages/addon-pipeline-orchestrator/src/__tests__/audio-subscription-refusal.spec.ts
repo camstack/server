@@ -16,7 +16,7 @@
  *  - anything short of positive evidence (cold broker, failed read) subscribes
  *    exactly as before. A false negative here would mute a working camera.
  */
-import type { CameraDetectionConfig, CamProfile, IScopedLogger, LogExtras } from '@camstack/types'
+import type { CameraDetectionConfig, CamProfile, IScopedLogger, LogExtras } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   AudioSubscriptionController,

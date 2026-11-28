@@ -8,7 +8,7 @@
  * most often, and decoding it twice doubles the expensive half of the job for
  * no extra picture.
  */
-import type { FfmpegVideoEncoderId } from '@camstack/types'
+import type { FfmpegVideoEncoderId } from '@dominevo/types'
 import type { GridCell, GridLayout } from './grid-filter-graph.js'
 import type { GridComposition } from './grid-blocks.js'
 import type { GridStreamPlan } from './grid-stream-session.js'

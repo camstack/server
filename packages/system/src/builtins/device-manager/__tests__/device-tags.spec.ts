@@ -4,8 +4,8 @@
  * (a tag labels the record it is on; a location is organisational).
  */
 import { type FakeTagsApi, makeFakeTagsApi } from './fake-tags-api.js'
-import type { RecordsAccess } from '@camstack/types'
-import type { IDeviceManagerProvider, IScopedLogger } from '@camstack/types'
+import type { RecordsAccess } from '@dominevo/types'
+import type { IDeviceManagerProvider, IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { makeRecordsAccessForOwner } from '../../sqlite-storage/__tests__/support/records-world.js'
 import { DeviceRegistry } from '../../../kernel/device-registry.js'

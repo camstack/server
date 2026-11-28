@@ -3,7 +3,7 @@
  * the engine started, the `orphaned` flag, the operator's drop, and the way a
  * declaration revives a flagged kind.
  */
-import { UnknownRecordKindError } from '@camstack/types'
+import { UnknownRecordKindError } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { RecordsEngine } from '../records/records-engine.js'
 import { declaration, type Harness, makeHarness, silentLogger } from './support/records-harness.js'

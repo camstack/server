@@ -6,7 +6,7 @@ import {
   type LocationStatus,
   type LockState,
   type VehicleStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { KiaVehicleState } from './kia-bridge.js'
 
 /**

@@ -26,7 +26,7 @@ content) and which needed a published port on a containerised hub.
 ## Decision
 
 The hub is the HTTPS face of the vendor's login. A reusable `VendorLoginProxy` lives in
-the bare `@camstack/types` entry (bundled into each addon, no `node:` imports beyond the
+the bare `@dominevo/types` entry (bundled into each addon, no `node:` imports beyond the
 types of `http`; subpaths are host-resolved, D15) and is mounted by the addon on a data
 plane (`ctx.dataPlane.serve({ prefix: VENDOR_LOGIN_PROXY_PREFIX, access: 'admin' })`). The browser opens
 `/addon/<addonId>/vendor-login/<attemptId>/<vendorHost>/<path>`: the hub authenticates the
@@ -38,14 +38,14 @@ admin session, the proxy fetches the vendor page and rewrites its absolute URLs,
   `/addon/import-alexa/login/start|status|commit|cancel`. Mounted on `login`, the proxy
   swallowed `POST /login/start` (an attempt named "start") and answered HTML, so the
   admin UI's `res.json()` failed ("The string did not match the expected pattern").
-  `VENDOR_LOGIN_PROXY_PREFIX` is one constant in `@camstack/types`; `VendorLoginProxy`
+  `VENDOR_LOGIN_PROXY_PREFIX` is one constant in `@dominevo/types`; `VendorLoginProxy`
   takes no prefix option, and a spec asserts no route the addon serves starts with it.
 - The **terminal condition is the addon's**: a function over each upstream response that
   answers `continue` or `done(payload)`. Bosch: a `Location` (or a script/meta
   navigation) starting with the app scheme. Alexa: alexa-cookie2's redirect to
   `/cookie-success`. On `done` the addon's `onDone` runs the SAME exchange the paste path
   runs (`finishHomeConnectSignIn`, `finishHomeComSignIn`, the cookie capture) and the
-  browser is redirected to the existing CamStack result page (`oauthLandingUrl`, status
+  browser is redirected to the existing Dominevo result page (`oauthLandingUrl`, status
   plus a closed reason code — never a token or a code in the URL).
 - The form that started the attempt receives the result by polling a `claimSignIn`
   custom action (`claimAction` on the `account-sign-in` field): `pending` until the

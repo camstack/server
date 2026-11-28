@@ -23,7 +23,7 @@ import type {
   IDeviceExtensionProvider,
   IDeviceManagerProvider,
   IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { makeRecordsAccessForOwner } from '../../sqlite-storage/__tests__/support/records-world.js'
 import {

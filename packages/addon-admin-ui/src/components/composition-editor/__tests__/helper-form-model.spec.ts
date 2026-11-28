@@ -9,7 +9,7 @@ import {
   groupTemplate,
   type HelperMember,
   newCropHelperSpec,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   canSaveDraft,
@@ -332,7 +332,7 @@ function requireTemplate(id: 'temperature'): GroupTemplate {
 
 describe('the helper dialog title', () => {
   it('has a whole phrase for every template in both locales', async () => {
-    const { GROUP_TEMPLATES } = await import('@camstack/types')
+    const { GROUP_TEMPLATES } = await import('@dominevo/types')
     const en = (await import('../../../i18n/en.json')).default.helper.newTitle as Record<
       string,
       string

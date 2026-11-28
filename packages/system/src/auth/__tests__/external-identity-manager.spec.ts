@@ -1,4 +1,4 @@
-import type { SettingsStoreClient } from '@camstack/types'
+import type { SettingsStoreClient } from '@dominevo/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import {
   ExternalIdentityConflictError,

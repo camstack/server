@@ -9,7 +9,7 @@
  * (800-line file cap); `buildGlobalSettingsSchema` concatenates them at their
  * original position (end of the form).
  */
-import { AUDIO_MACRO_LABELS, type ConfigSection, type ConfigUISchema } from '@camstack/types'
+import { AUDIO_MACRO_LABELS, type ConfigSection, type ConfigUISchema } from '@dominevo/types'
 import { PRUNE_WINDOW_DEFAULT_DAYS } from '../notification-center/prune-windows.js'
 import { AUDIO_DETECTION_DEFAULTS } from './audio-detection-settings.js'
 import { DEVICE_ALERT_DEFAULTS } from './device-alert-settings.js'

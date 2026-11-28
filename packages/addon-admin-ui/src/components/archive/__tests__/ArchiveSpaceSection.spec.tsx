@@ -1,6 +1,6 @@
 /// <reference types="@testing-library/jest-dom" />
 
-import { selectOption } from '@camstack/ui-library/testing'
+import { selectOption } from '@dominevo/ui-library/testing'
 import * as jestDomMatchers from '@testing-library/jest-dom/matchers'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
@@ -21,8 +21,8 @@ const removeFootage = vi.fn()
 const removeEvents = vi.fn()
 const idle = { isPending: false }
 
-vi.mock('@camstack/ui-library', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@camstack/ui-library')>()),
+vi.mock('@dominevo/ui-library', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@dominevo/ui-library')>()),
   useConfirm: () => confirm,
   useRecordingArchivePruneFootage: () => ({ ...idle, mutateAsync: prune }),
   useRecordingArchiveDeleteFootprint: () => ({ ...idle, mutateAsync: removeFootage }),

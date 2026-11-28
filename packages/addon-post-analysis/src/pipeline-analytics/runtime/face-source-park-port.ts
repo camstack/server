@@ -22,7 +22,7 @@
  * refused by the node and logged by the client; the keeper then sees a parcel
  * of another instant and stores nothing, loudly.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { KEYFRAME_NATIVE_MAX_WIDTH } from '../pipeline/key-frame-capture.js'
 import type { ParkOrder } from '../pipeline/track-park.js'
 import type {

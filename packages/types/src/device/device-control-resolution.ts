@@ -5,7 +5,7 @@
  *
  * This module is deliberately framework-free: NO react / react-native / lucide
  * imports, no JSX, no platform widgets. It encodes only the DECISION; each
- * client (admin-ui's `@camstack/ui-library` web registry, the RN viewer's
+ * client (admin-ui's `@dominevo/ui-library` web registry, the RN viewer's
  * accessory registry) maps the returned control-KIND onto its own
  * platform-specific components. That's the one duplication we remove — the
  * presentational components stay platform-specific by necessity.

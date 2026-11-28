@@ -1,4 +1,4 @@
-import type { IScopedLogger, ShareSource, ShareWeights, SuggestSharesResult } from '@camstack/types'
+import type { IScopedLogger, ShareSource, ShareWeights, SuggestSharesResult } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   EffectiveSharesService,

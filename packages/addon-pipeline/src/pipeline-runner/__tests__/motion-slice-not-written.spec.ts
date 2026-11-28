@@ -13,8 +13,8 @@
  * White-box like `sensor-owned-suppresses-analyzer.spec.ts`: the real runner
  * built by `onInitialize`, driven through its own registration and motion API.
  */
-import type { IEventBus } from '@camstack/types'
-import { EventCategory } from '@camstack/types'
+import type { IEventBus } from '@dominevo/types'
+import { EventCategory } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import PipelineRunnerAddon from '../index.js'
 import type { CameraRegistration } from '../runner.js'

@@ -2,7 +2,7 @@
  * Folding a process snapshot into per-FUNCTION load points, and reducing a
  * long series to a drawable number of them WITHOUT losing a peak.
  *
- * ## Why this lives in `@camstack/types`
+ * ## Why this lives in `@dominevo/types`
  *
  * Two processes need the identical arithmetic and neither may import the
  * other: the hub's `native-metrics` folds the retained series before it leaves
@@ -12,7 +12,7 @@
  * copies of a fold is two charts that disagree about the same node.
  *
  * Browser-safe by construction: no imports at all, so it stays on the root
- * `@camstack/types` entry (the node-only surface is `@camstack/types/node`).
+ * `@dominevo/types` entry (the node-only surface is `@dominevo/types/node`).
  *
  * ## The reduction, and why min/max rather than a mean
  *

@@ -30,7 +30,7 @@
  */
 
 import { randomBytes } from 'node:crypto'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 import type { HikvisionIsapiClient } from '../hikvision-isapi-client.js'
 import { clipKeyFor } from './clip-identity.js'

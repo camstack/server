@@ -17,7 +17,7 @@
  * detection is attributed by IoU to the large entry, and that entry takes no
  * departure strike across minutes of box jitter.
  */
-import type { IScopedLogger, Zone } from '@camstack/types'
+import type { IScopedLogger, Zone } from '@dominevo/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import { makeAnalyticsRecordsNow, type FakeRecords } from '../../../__tests__/fake-records.js'

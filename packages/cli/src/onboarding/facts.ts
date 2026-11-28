@@ -8,8 +8,8 @@
  * Every wrapper strips what the steps do not need, so nothing here can carry a
  * credential into an answer.
  */
-import type { ConnectOutcome, HubConnection } from '@camstack/develop'
-import { StorageLocationSchema, type StorageLocation } from '@camstack/types'
+import type { ConnectOutcome, HubConnection } from '@dominevo/develop'
+import { StorageLocationSchema, type StorageLocation } from '@dominevo/types'
 import { z } from 'zod'
 import { readCameras, type CameraRef } from '../mcp/configure-common.js'
 import { readTargets, type TargetRef } from '../mcp/configure-hub-reads.js'
@@ -122,7 +122,7 @@ export interface SessionFacts {
 export interface OnboardingFacts {
   /** The feasibility verdict this machine remembers; null when none was run here. */
   readonly remembered: RememberedFeasibility | null
-  /** What the person said about opening CamStack away from home; null = not asked. */
+  /** What the person said about opening Dominevo away from home; null = not asked. */
   readonly remoteAccess: boolean | null
   readonly session: NoSessionFacts | SessionFacts
 }

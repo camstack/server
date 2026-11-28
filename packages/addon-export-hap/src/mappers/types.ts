@@ -15,7 +15,7 @@
  * deterministically on `unexposeDevice`.
  */
 
-import type { AddonContext, DeviceProxy, PinnedFfmpegResolver } from '@camstack/types'
+import type { AddonContext, DeviceProxy, PinnedFfmpegResolver } from '@dominevo/types'
 import type { Accessory } from '@homebridge/hap-nodejs'
 
 import type { HksvBuildOutcome } from '../hksv/build-outcome.js'
@@ -113,7 +113,7 @@ export interface CameraMapperOptions {
      *  camera. Absent means ON — `resolveMultiTierService`. */
     readonly multiTierService?: boolean
     /**
-     * Keep CamStack's own copy of every clip HomeKit Secure Video records from
+     * Keep Dominevo's own copy of every clip HomeKit Secure Video records from
      * this camera. Absent means ON — `resolveKeepHomekitClips`; HKSV has no
      * read-back, so a recording nobody teed is gone for good (D550).
      */

@@ -1,6 +1,6 @@
 # Security
 
-CamStack 0.1 is a beta. Supported releases are **0.1.x** (the product version
+Dominevo 0.1 is a beta. Supported releases are **0.1.x** (the product version
 on the hub, labelled beta while the major is 0).
 
 ## Reporting
@@ -10,13 +10,13 @@ request, or Discussion for it.
 
 - E-mail: ruoccogianluca1@gmail.com
 - GitHub private vulnerability reporting:
-  <https://github.com/camstack/server/security/advisories/new>
+  <https://github.com/dominevo/server/security/advisories/new>
   (use this once the repository has the feature enabled)
 
 ## What to include
 
 - The product version (`0.1.x` from the hub) and, if you have it, the
-  `@camstack/server` version or image tag
+  `@dominevo/server` version or image tag
 - How the hub is installed (Docker, Unraid, Proxmox, desktop) and whether the
   node is a hub or an agent
 - What an attacker can do, and whether the hub is reachable from the internet
@@ -41,4 +41,4 @@ In scope:
 - The Alexa skill Lambda template in `packages/addon-export-alexa/lambda-template`
 
 A camera, notifier, or other integration you configured is in scope only where
-CamStack's own code mishandles it. A vulnerability in that other service is not.
+Dominevo's own code mishandles it. A vulnerability in that other service is not.

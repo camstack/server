@@ -18,9 +18,9 @@
  * the durable row and the logs, and it must be unreachable from anything the
  * matcher reads.
  */
-import type { InMemoryRecords } from '@camstack/types'
-import type { NcRuleInput, ObjectEvent } from '@camstack/types'
-import { NcRuleInputSchema } from '@camstack/types'
+import type { InMemoryRecords } from '@dominevo/types'
+import type { NcRuleInput, ObjectEvent } from '@dominevo/types'
+import { NcRuleInputSchema } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   type FakeSettingsStore,

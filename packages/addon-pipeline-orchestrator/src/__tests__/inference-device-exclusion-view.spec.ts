@@ -1,4 +1,4 @@
-import type { InferenceDeviceDescriptor } from '@camstack/types'
+import type { InferenceDeviceDescriptor } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   annotateInferenceDeviceExclusions,

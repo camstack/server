@@ -1,5 +1,5 @@
-import type { IScopedLogger, MotionSources } from '@camstack/types'
-import { MOTION_CLOSE_AFTER_MS } from '@camstack/types'
+import type { IScopedLogger, MotionSources } from '@dominevo/types'
+import { MOTION_CLOSE_AFTER_MS } from '@dominevo/types'
 
 /**
  * The `device-activity` motion source: a device that says it is DOING ITS JOB

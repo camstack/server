@@ -1,4 +1,4 @@
-import type { DeviceManagerApi, IScopedLogger } from '@camstack/types'
+import type { DeviceManagerApi, IScopedLogger } from '@dominevo/types'
 import type { HmCustomEntity, HmDevice } from 'nodehomematic'
 import { HM_BATTERY_CAP } from './hm-battery.js'
 import { deriveHmEntitySpecs } from './hm-entity-spec.js'

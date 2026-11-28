@@ -6,17 +6,17 @@
  * from a spec. Same shape as `framework-nodepath.ts`.
  *
  * The selection MUST stay in lockstep with
- * `AddonInstaller.deriveBootstrapList` in `@camstack/server/system` — that one reads
- * the same `@camstack/server` manifest through `require.resolve`, this one
+ * `AddonInstaller.deriveBootstrapList` in `@dominevo/server/system` — that one reads
+ * the same `@dominevo/server` manifest through `require.resolve`, this one
  * reads the launcher's own `package.json` by absolute path (the slim image
- * strips the `@camstack/*` symlinks, so `require.resolve` yields an empty list
+ * strips the `@dominevo/*` symlinks, so `require.resolve` yields an empty list
  * at launcher import time). Two derivations of the same list is exactly how
- * `@camstack/addon-agent-ui` ended up installed on the hub: the installer's
+ * `@dominevo/addon-agent-ui` ended up installed on the hub: the installer's
  * copy honoured `camstack.agentOnlyBootstrapAddons`, this one did not, and the
  * hub is the side that actually boots through here.
  */
 
-/** The subset of `@camstack/server`'s `package.json` this module reads. */
+/** The subset of `@dominevo/server`'s `package.json` this module reads. */
 export interface ServerBootstrapManifest {
   readonly version?: string
   readonly dependencies?: Readonly<Record<string, string>>
@@ -26,13 +26,13 @@ export interface ServerBootstrapManifest {
 }
 
 /**
- * The packages a HUB-role node bootstrap-installs: every `@camstack/addon-*`
- * runtime dependency plus `@camstack/server/system` (the carrier of the required
+ * The packages a HUB-role node bootstrap-installs: every `@dominevo/addon-*`
+ * runtime dependency plus `@dominevo/server/system` (the carrier of the required
  * infrastructure builtins — storage-provider / settings / logging — without
  * which boot aborts).
  *
  * `camstack.agentOnlyBootstrapAddons` is subtracted. Those addons are declared
- * as runtime dependencies so the published `@camstack/server` closure CARRIES
+ * as runtime dependencies so the published `@dominevo/server` closure CARRIES
  * them for agent-role nodes to seed, but they are `execution.placement:
  * 'agent-only'` and the hub must never install them.
  */
@@ -40,6 +40,6 @@ export function selectHubBootstrapPackages(pkg: ServerBootstrapManifest): readon
   const agentOnly = new Set(pkg.camstack?.agentOnlyBootstrapAddons ?? [])
   return Object.keys(pkg.dependencies ?? {}).filter(
     (name) =>
-      !agentOnly.has(name) && (name.startsWith('@camstack/addon-') || name === '@camstack/server'),
+      !agentOnly.has(name) && (name.startsWith('@dominevo/addon-') || name === '@dominevo/server'),
   )
 }

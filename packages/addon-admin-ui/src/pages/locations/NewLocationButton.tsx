@@ -6,7 +6,7 @@
  * a form pinned above the content made the first thing on screen the thing
  * least often needed, and pushed the rooms below the fold.
  */
-import { Button, Input } from '@camstack/ui-library'
+import { Button, Input } from '@dominevo/ui-library'
 import { Plus, X } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'

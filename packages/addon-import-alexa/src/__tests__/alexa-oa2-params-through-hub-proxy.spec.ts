@@ -1,7 +1,7 @@
 import { createServer, type Server } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { VendorLoginProxy, type IScopedLogger } from '@camstack/types'
+import { VendorLoginProxy, type IScopedLogger } from '@dominevo/types'
 
 /**
  * The device registration needs Amazon to echo the `oa2` extension the first sign-in URL asked

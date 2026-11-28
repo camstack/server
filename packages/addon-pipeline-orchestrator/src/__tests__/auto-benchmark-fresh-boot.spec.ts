@@ -12,7 +12,7 @@
  * probe ever ran. A never-probed node is now ASKED for its devices, and the
  * probe's answer ticks the scheduler through the existing set-change path.
  */
-import type { IScopedLogger, NodeBenchmarkPlanInput } from '@camstack/types'
+import type { IScopedLogger, NodeBenchmarkPlanInput } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   type AutoBenchDevice,

@@ -1,5 +1,5 @@
 import type { ReactElement } from 'react'
-import { deviceIconGlyph, useDeviceLabel } from '@camstack/ui-library'
+import { deviceIconGlyph, useDeviceLabel } from '@dominevo/ui-library'
 import i18n from '../../i18n/index'
 import { siteDeviceFields, type SiteDevice } from './site-locations'
 /**

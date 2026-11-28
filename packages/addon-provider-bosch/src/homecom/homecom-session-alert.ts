@@ -3,7 +3,7 @@ import {
   SessionHealthTracker,
   type IScopedLogger,
   type SessionHealthAlertsPort,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export interface HomeComSessionAlertDeps {
   readonly logger: IScopedLogger

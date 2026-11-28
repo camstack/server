@@ -8,7 +8,7 @@
  * hub could not be asked.
  */
 
-import type { UnmetRequirement } from '@camstack/types'
+import type { UnmetRequirement } from '@dominevo/types'
 
 export const ADDON_VERSION_REASON_REGISTRY_LATEST =
   'installed version differs from registry latest' as const

@@ -24,8 +24,8 @@
  *   - log-destination — legacy provider shape (task #195)
  */
 
-import type { CapabilityRegistry } from '@camstack/server/system'
-import type { InferProvider } from '@camstack/types'
+import type { CapabilityRegistry } from '@dominevo/server/system'
+import type { InferProvider } from '@dominevo/types'
 import {
   accessoriesCapability,
   actionSourceCapability,
@@ -247,7 +247,7 @@ import {
   zoneAnalyticsCapability,
   zoneRulesCapability,
   zonesCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { MoleculerService } from '../../core/moleculer/moleculer.service.js'
 import { concatCollection, requireDeviceScoped } from './cap-mount-helpers.js'
 import { requireDeviceCollection } from './device-collection-dispatch.js'

@@ -1,5 +1,5 @@
 import { Homematic } from 'nodehomematic'
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IScopedLogger } from '@dominevo/types'
 import {
   HmIntegrationManager,
   wrapFacade,

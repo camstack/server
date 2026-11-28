@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { AddonRow } from '../AddonRow'
-import type { BulkUpdateItem } from '@camstack/types'
+import type { BulkUpdateItem } from '@dominevo/types'
 
 interface MinimalAddon {
   readonly name: string
@@ -19,7 +19,7 @@ function row(
   }> = {},
 ) {
   const addon: MinimalAddon = opts.addon ?? {
-    name: '@camstack/addon-x',
+    name: '@dominevo/addon-x',
     currentVersion: '1.0.0',
     isSystem: false,
   }
@@ -42,13 +42,13 @@ function row(
 
 describe('AddonRow', () => {
   it('renders addon name and current version', () => {
-    render(row({ addon: { name: '@camstack/addon-x', currentVersion: '1.0.0', isSystem: false } }))
-    expect(screen.getByText('@camstack/addon-x')).toBeTruthy()
+    render(row({ addon: { name: '@dominevo/addon-x', currentVersion: '1.0.0', isSystem: false } }))
+    expect(screen.getByText('@dominevo/addon-x')).toBeTruthy()
     expect(screen.getByText('1.0.0')).toBeTruthy()
   })
 
   it('system row: shows SYSTEM badge + Lock icon, no Uninstall button', () => {
-    render(row({ addon: { name: '@camstack/types', currentVersion: '0.1.38', isSystem: true } }))
+    render(row({ addon: { name: '@dominevo/types', currentVersion: '0.1.38', isSystem: true } }))
     expect(screen.getByText('SYSTEM')).toBeTruthy()
     // Lock icon — aria-label set on the SVG wrapper
     expect(screen.getByLabelText(/system package/i)).toBeTruthy()
@@ -56,7 +56,7 @@ describe('AddonRow', () => {
   })
 
   it('non-system row: no SYSTEM badge, Uninstall button present', () => {
-    render(row({ addon: { name: '@camstack/addon-x', currentVersion: '1.0.0', isSystem: false } }))
+    render(row({ addon: { name: '@dominevo/addon-x', currentVersion: '1.0.0', isSystem: false } }))
     expect(screen.queryByText('SYSTEM')).toBeNull()
     expect(screen.getByRole('button', { name: /uninstall/i })).toBeTruthy()
   })
@@ -64,7 +64,7 @@ describe('AddonRow', () => {
   it('disabledByBulk: all action buttons disabled', () => {
     render(
       row({
-        addon: { name: '@camstack/addon-x', currentVersion: '1.0.0', isSystem: false },
+        addon: { name: '@dominevo/addon-x', currentVersion: '1.0.0', isSystem: false },
         latestVersion: '1.0.1',
         disabledByBulk: true,
       }),
@@ -82,7 +82,7 @@ describe('AddonRow', () => {
 
   it('renders AddonRowBadge when bulkItem provided', () => {
     const bulkItem: BulkUpdateItem = {
-      name: '@camstack/addon-x',
+      name: '@dominevo/addon-x',
       isSystem: false,
       fromVersion: '1.0.0',
       toVersion: '1.0.1',
@@ -90,7 +90,7 @@ describe('AddonRow', () => {
     }
     render(
       row({
-        addon: { name: '@camstack/addon-x', currentVersion: '1.0.0', isSystem: false },
+        addon: { name: '@dominevo/addon-x', currentVersion: '1.0.0', isSystem: false },
         bulkItem,
       }),
     )
@@ -100,7 +100,7 @@ describe('AddonRow', () => {
   it('Update button hidden when no update available', () => {
     render(
       row({
-        addon: { name: '@camstack/addon-x', currentVersion: '1.0.0', isSystem: false },
+        addon: { name: '@dominevo/addon-x', currentVersion: '1.0.0', isSystem: false },
         latestVersion: null,
       }),
     )
@@ -110,7 +110,7 @@ describe('AddonRow', () => {
   it('Update button hidden when latest === current', () => {
     render(
       row({
-        addon: { name: '@camstack/addon-x', currentVersion: '1.0.1', isSystem: false },
+        addon: { name: '@dominevo/addon-x', currentVersion: '1.0.1', isSystem: false },
         latestVersion: '1.0.1',
       }),
     )
@@ -120,7 +120,7 @@ describe('AddonRow', () => {
   it('shows a requires-restart indicator for system packages', () => {
     render(
       row({
-        addon: { name: '@camstack/server', currentVersion: '1.0.0', isSystem: true },
+        addon: { name: '@dominevo/server', currentVersion: '1.0.0', isSystem: true },
       }),
     )
     expect(screen.getByText(/requires restart/i)).toBeTruthy()

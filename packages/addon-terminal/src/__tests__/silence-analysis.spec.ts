@@ -21,7 +21,7 @@
  *     hub running hot for a reason nobody connects to a terminal created three
  *     weeks earlier.
  */
-import type { AddonApi, IScopedLogger } from '@camstack/types'
+import type { AddonApi, IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { silenceAnalysisFor, TERMINAL_SILENCED_CAP_NAMES } from '../silence-analysis.js'
 

@@ -11,7 +11,7 @@ import type {
   IScopedLogger,
   PipelineDefaultStep,
   PipelineStepInput,
-} from '@camstack/types'
+} from '@dominevo/types'
 import sharp from 'sharp'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { StepVariantHandle } from '../engine/pipeline-model-manager.js'

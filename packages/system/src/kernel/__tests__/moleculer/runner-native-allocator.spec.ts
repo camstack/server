@@ -85,7 +85,7 @@ describe('runnerNativeAllocatorEnv', () => {
     expect(env.VIPS_CONCURRENCY).toBe(String(RUNNER_VIPS_CONCURRENCY_DEFAULT))
   })
 
-  it('ignores the retired CamStack arena override', () => {
+  it('ignores the retired Dominevo arena override', () => {
     const env = runnerNativeAllocatorEnv({ CAMSTACK_RUNNER_MALLOC_ARENA_MAX: '4' }, 'linux')
     expect(env.MALLOC_ARENA_MAX).toBe(String(RUNNER_MALLOC_ARENA_MAX_DEFAULT))
   })

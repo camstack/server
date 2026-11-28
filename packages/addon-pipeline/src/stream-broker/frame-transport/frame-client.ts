@@ -23,7 +23,7 @@ import type {
   FrameDecoder,
   TransportConnection,
 } from './types.js'
-import type { Unsubscribe } from '@camstack/types'
+import type { Unsubscribe } from '@dominevo/types'
 
 export function createFrameClient<TMessage>(
   options: FrameClientOptions<TMessage>,

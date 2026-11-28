@@ -18,9 +18,9 @@
  * socket closing) cannot leave a row that the next boot's `worker.online` would
  * read as a flip.
  */
-import type { InMemoryRecords } from '@camstack/types'
+import type { InMemoryRecords } from '@dominevo/types'
 import { makeNcRecords, ncTable } from './support/nc-test-deps.js'
-import { createEvent, NcRuleInputSchema, type SystemEvent } from '@camstack/types'
+import { createEvent, NcRuleInputSchema, type SystemEvent } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import type { NcDeviceLookup } from '../device-directory.js'

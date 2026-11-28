@@ -1,9 +1,9 @@
-# CamStack developer MCP and skill pack: audit and plan
+# Dominevo developer MCP and skill pack: audit and plan
 
 ## Summary
 
-1. **There is one CamStack MCP server: `@camstack/mcp-develop`.** It lives in `packages/mcp-develop/src/server.ts` and is a single 205-line file. It runs over stdio only, has no auth, and exposes 13 tools. It has no resources and no prompts: `resources/list` returns -32601. <!-- drift-ok -->
-2. **The server is a thin wrapper over `@camstack/develop`,** the library the `camstack develop` CLI also uses. Its tools are an addon and cap catalogue, `find_example` (13 curated examples), `validate_addon`, `scaffold_addon`, `scaffold_cap_stub`, `extend_addon`, and `list_skills` / `get_skill`.
+1. **There is one Dominevo MCP server: `@dominevo/mcp-develop`.** It lives in `packages/mcp-develop/src/server.ts` and is a single 205-line file. It runs over stdio only, has no auth, and exposes 13 tools. It has no resources and no prompts: `resources/list` returns -32601. <!-- drift-ok -->
+2. **The server is a thin wrapper over `@dominevo/develop`,** the library the `dominevo develop` CLI also uses. Its tools are an addon and cap catalogue, `find_example` (13 curated examples), `validate_addon`, `scaffold_addon`, `scaffold_cap_stub`, `extend_addon`, and `list_skills` / `get_skill`.
 3. **It works.** The develop tests pass (13 of 13) and the mcp-develop test passes (1 of 1). Both typechecks are clean. A `tsc` build into scratch succeeded. I started it over stdio and listed and called its tools: `get_capability recording` and `find_example notifier` answered correctly.
    - The only test covers the library, not the MCP server itself.
    - Both packages are already on npm at 0.1.1, even though the roadmap and `docs/reference/packages.md` say "not shipped".
@@ -21,7 +21,7 @@
 6. **Gaps in the biggest wishlist areas:**
    - **Knowledge:** no search or ADR tools.
    - **UI:** no ui-library catalogue or style checker. 46 primitives and 187 composites exist, but the only per-component docs are 188 `.prompt.md` files in the gitignored `ds-bundle/`. Baseline drift: 10 admin-ui `.tsx` files use raw hex colours, 38 addon `.tsx` files use Tailwind palette classes, and 24 admin-ui files use `style={{…}}`. No guard catches any of this.
-   - **Caps:** the scaffold only understands scope × mode. It knows nothing about deviceNative, wrapper/defaultActive, internal/mount, or deviceTypes. It also never mentions the method-tier baseline or the force-publish of `@camstack/system`.
+   - **Caps:** the scaffold only understands scope × mode. It knows nothing about deviceNative, wrapper/defaultActive, internal/mount, or deviceTypes. It also never mentions the method-tier baseline or the force-publish of `@dominevo/system`.
 7. **Gaps in ops, models, CI and auth:**
    - **Ops:** none exists.
    - **Models:** none exists.
@@ -42,7 +42,7 @@
 
 ## 1. What exists today
 
-### 1.1 The MCP server: `@camstack/mcp-develop` 0.1.1
+### 1.1 The MCP server: `@dominevo/mcp-develop` 0.1.1
 
 **Launch and configuration**
 - It runs over stdio (`server.ts:196-199`) and the bin is `camstack-mcp-develop`, which points at `dist/server.js`.
@@ -112,7 +112,7 @@ Plus the 4 code-review-graph single-file skills. `.claude/agents/frontend-archit
 - add-addon and add-capability exist three times: the pack, the repo and memory.
 - api-reference duplicates the generated `docs/reference/api.md`.
 - homelab-ops overlaps hub-image-deploy and publish-ci.
-- `add-capability` §7 "Ship it" (`SKILL.md:126-130`) says to deploy `packages/types`. Memory is newer and says a cap change needs a force-publish of `@camstack/system`, and `deploy packages/system`.
+- `add-capability` §7 "Ship it" (`SKILL.md:126-130`) says to deploy `packages/types`. Memory is newer and says a cap change needs a force-publish of `@dominevo/system`, and `deploy packages/system`.
 - The skill never mentions `scripts/check-method-tiers.ts --update`, the `CAP_INPUT_DEFAULTS` Zod-defaults trap, or the hand-written cap interfaces that rot.
 
 ### 1.3 Knowledge sources
@@ -163,7 +163,7 @@ Plus the 4 code-review-graph single-file skills. `.claude/agents/frontend-archit
 
 ### 1.4 Auth plumbing already available
 
-- **CLI credential chain** (`packages/cli/src/commands/credentials.ts:1` (header) and `:120`): `--token`, then `--token-file`, then `$CAMSTACK_TOKEN`, then the cached `~/.camstack/<host>.json` session from `camstack login` (0600, `auth.ts:44`). <!-- drift-ok: moved to packages/develop/src/hub/credentials.ts by D835 -->
+- **CLI credential chain** (`packages/cli/src/commands/credentials.ts:1` (header) and `:120`): `--token`, then `--token-file`, then `$CAMSTACK_TOKEN`, then the cached `~/.camstack/<host>.json` session from `dominevo login` (0600, `auth.ts:44`). <!-- drift-ok: moved to packages/develop/src/hub/credentials.ts by D835 -->
 - **Scoped admin token:** the "admin-capable expiring audited token, max 90 days" is in progress (`roadmap.md:95`).
 - **The problem:** `hub.mjs` uses a password (`:21,46`), turns TLS off (`:7`) and hard-coded the hub LAN IP (`:15`; moved to `CAMSTACK_HUB_URL` / `scratchpad/.hub-url` on 2026-10-09). It is not a model to follow.
 
@@ -195,7 +195,7 @@ Plus the 4 code-review-graph single-file skills. `.claude/agents/frontend-archit
 - Nothing applies the `index.ts` re-export and `AnyCapability` union hand-edits.
 - Nothing runs codegen, the method-tiers baseline update, or the agent `main.ts` hand-curated array check.
 - There is no cap-router spec stub and no step for the sessions log or an ADR.
-- There is no publish-implication note for force-publishing `@camstack/system`, or for cap updates that ship with no image.
+- There is no publish-implication note for force-publishing `@dominevo/system`, or for cap updates that ship with no image.
 - `get_capability` returns no methods, auth or events. The data is in `api.md` or could come from the definitions.
 
 **Addons**
@@ -230,7 +230,7 @@ Plus the 4 code-review-graph single-file skills. `.claude/agents/frontend-archit
 ## 3. Proposed design
 
 ### 3.1 Shape
-- **One package and binary,** keeping the `@camstack/mcp-develop` name and making `@camstack/develop` the library for everything. Logic stays in the library so the CLI and MCP keep parity.
+- **One package and binary,** keeping the `@dominevo/mcp-develop` name and making `@dominevo/develop` the library for everything. Logic stays in the library so the CLI and MCP keep parity.
 - **Toolsets:** `knowledge`, `ui`, `caps`, `addons`, `ci`, `ops`, `models` and `release`, selected with `--toolsets`.
 - **Two `.mcp.json` entries:**
   - `camstack-dev`: `knowledge`, `ui`, `caps`, `addons`, `ci` and `release` (describe only). It reads and writes the working tree, never calls the network, and needs no credentials.
@@ -297,7 +297,7 @@ Plus the 4 code-review-graph single-file skills. `.claude/agents/frontend-archit
 - **`run_codegen({check?})`**: runs `npm run codegen` or `codegen:check` and returns a summarised diff and guard failures.
 - **`method_tiers_diff()`**: runs `check-method-tiers.ts` and shows widened tiers. `--update` only on request.
 - **`cap_ship_plan(changedCaps)`**:
-  - Says whether a force-publish of `@camstack/system` is needed.
+  - Says whether a force-publish of `@dominevo/system` is needed.
   - Says whether it is an additive field (redeploy the addon only) or a new method (publish, then `applyServerUpdate` and `deploy packages/system`, plus the "+1 restart and toggle-verify" step).
   - This is description only.
 
@@ -317,7 +317,7 @@ Plus the 4 code-review-graph single-file skills. `.claude/agents/frontend-archit
 - Never `gh workflow run checks.yml`. The tool is deny-listed in code.
 
 ### 3.7 Ops toolset (P2, `camstack-ops`, read-only)
-- **Credentials:** resolved by reusing the CLI chain. `credentials.ts` and the session lookup are extracted into `@camstack/develop` (or `@camstack/sdk/node`).
+- **Credentials:** resolved by reusing the CLI chain. `credentials.ts` and the session lookup are extracted into `@dominevo/develop` (or `@dominevo/sdk/node`).
   - The order is `--token-file` (an explicit override only), then the `~/.camstack` session (superseded 2026-10-21: no admin-token file; one token format, refreshed automatically).
   - `$CAMSTACK_TOKEN` is used only if you decide to keep it.
   - Never passwords, never `.pw`, never `hub.mjs`.
@@ -396,7 +396,7 @@ Plus the 4 code-review-graph single-file skills. `.claude/agents/frontend-archit
 
 1. **Should private memory be served?** I recommend yes, as a read-only overlay from `~/.camstack/develop.json`, only in the local `camstack-dev` entry and never shipped. Over time, move the durable lessons into ADRs and architecture docs so the public layer improves too.
 2. **One server or two?** I recommend one binary with two `.mcp.json` entries (offline dev, and credentialed ops), so network and credential tools need their own approval.
-3. **Ops auth before the scoped admin token lands?** I recommend allowing the cached `camstack login` session for protected-tier reads now. Gate admin-tier reads (logs, footprints) on the scoped token. Remove the password login path from the tooling.
+3. **Ops auth before the scoped admin token lands?** I recommend allowing the cached `dominevo login` session for protected-tier reads now. Gate admin-tier reads (logs, footprints) on the scoped token. Remove the password login path from the tooling.
 4. **Where should log history come from?** I recommend the hub's `logDestination.query` as the target, so tools don't depend on Grafana. Until then, query Loki through Grafana with the token read from the macOS keychain, never from the environment and never printed.
 5. **Should the UI component catalogue be committed?** I recommend yes: a generated `docs/reference/ui-components.json` and `.md`, guarded for drift, instead of relying on the gitignored `ds-bundle`. Also decide whether the viewer's React Native kit belongs in the same catalogue (I recommend yes, as a separate section). <!-- drift-ok: a glob or a file this plan proposes -->
 6. **Should there be a styling guard?** I recommend yes: a ratcheted baseline guard for raw hex colours, palette classes and inline colour styles in `addon-*/src` and `ui-library`. The current counts are 10, 38 and 24 files. It would share its rules with `check_ui_file`, so new divergence fails while the existing cases are paid down.
@@ -405,24 +405,24 @@ Plus the 4 code-review-graph single-file skills. `.claude/agents/frontend-archit
 
 ## Operator decisions (2026-10-09) — override the plan above where they differ
 
-1. **Private, not public.** The tool for developing CamStack itself is a PRIVATE MCP server or specialised tool, always run from the operator's machine. It is not the public `@camstack/mcp-develop` npm package. The private one can serve memory, the private skills and hub access freely. The public package stays as is for third-party plugin authors.
+1. **Private, not public.** The tool for developing Dominevo itself is a PRIVATE MCP server or specialised tool, always run from the operator's machine. It is not the public `@dominevo/mcp-develop` npm package. The private one can serve memory, the private skills and hub access freely. The public package stays as is for third-party plugin authors.
 2. One binary, two entries (offline dev vs credentialed ops): OK.
-3. Ops auth: OK. Use the cached `camstack login` session for protected-tier reads; the admin expiring audited token for admin-tier reads; never passwords.
+3. Ops auth: OK. Use the cached `dominevo login` session for protected-tier reads; the admin expiring audited token for admin-tier reads; never passwords.
 4. **Log fetching asks WHICH log provider.** Do not assume Grafana/Loki: a user may only have the onboard winston destination, or another `log-destination`. List the configured log-destination providers and query the chosen one, e.g. through `logDestination.query` per provider.
 5. Commit the UI component catalogue, viewer kit included: YES.
 6. **NO styling guard / CI check for now.** It would block CI again. `check_ui_file` stays a tool the developer runs, not a gate.
 
-**Moved 2026-11-20 (planning #301): `@camstack/mcp-dev` now lives in the private planning repo (under `tools/` there); the `packages/mcp-dev` paths below are historical.** <!-- drift-ok -->
+**Moved 2026-11-20 (planning #301): `@dominevo/mcp-dev` now lives in the private planning repo (under `tools/` there); the `packages/mcp-dev` paths below are historical.** <!-- drift-ok -->
 
-**Status (2026-10-13): P1–P4 landed (P1 first; see the later entries).** Private package `@camstack/mcp-dev` (`camstack-dev` binary, `"private": true`, never published, run only from the operator's machine; registered in `.mcp.json`) — NOT the public `@camstack/mcp-develop`. Offline toolsets knowledge / ui / caps / addons / ci. The UI tools wrap the existing `scripts/ui/cli.ts` and the committed `docs/reference/ui-components.json` (one catalogue, no second generator); `check_ui_file` is a tool only, with no styling CI guard (decision 6). Open from P1: the viewer's React Native kit components are not in the catalogue (only its tokens are); P2 ops, P3 models/release and P4 skills/guards are not started.
+**Status (2026-10-13): P1–P4 landed (P1 first; see the later entries).** Private package `@dominevo/mcp-dev` (`camstack-dev` binary, `"private": true`, never published, run only from the operator's machine; registered in `.mcp.json`) — NOT the public `@dominevo/mcp-develop`. Offline toolsets knowledge / ui / caps / addons / ci. The UI tools wrap the existing `scripts/ui/cli.ts` and the committed `docs/reference/ui-components.json` (one catalogue, no second generator); `check_ui_file` is a tool only, with no styling CI guard (decision 6). Open from P1: the viewer's React Native kit components are not in the catalogue (only its tokens are); P2 ops, P3 models/release and P4 skills/guards are not started.
 
-**Status (2026-10-13, later): P2 landed.** The ops toolset is the `camstack-ops` entry of the same binary (`--toolsets ops`, registered in `.mcp.json`), read-only by construction. Credential chain, session cache, hub address and TLS trust were extracted into `@camstack/develop` (`src/hub`, D835); the CLI and `scripts/hub/hub.mjs` import them, and `hub.mjs` lost its password `login` and its certificate bypass. Tools: `ops_status`, `hub_query` (generated `kind: query` only, secret-bearing methods refused, admin tier needs a `csa_` token, output redacted and bounded), `topology`, `cap_providers`, `recent_tracks`, `track`, `audit_tracks`, `log_providers`, `hub_logs` (asks which log-destination provider), `loki_query` (only when an unauthenticated Loki provider is configured), `model_pin_census`, `retrain_census`, `keyframe_presence`. The three hub census scripts (model-pin, retrain, keyframe presence) are retired in favour of tools. Every tool, P1 included, now carries MCP annotations. Not in P2: `birth_decisions` / `event_density` (reachable through `hub_query`), a Prometheus tool (the repo has no Prometheus provider), the disk half of the pin census (it needed SSH). Finding: the cached `camstack login` session is scoped to `capability:addons` only, so protected-tier reads on it reach `addons.*` routes; everything else wants an admin token. P3 (models, release) and P4 (skills, guards) remain, **not to be started without the operator**.
+**Status (2026-10-13, later): P2 landed.** The ops toolset is the `camstack-ops` entry of the same binary (`--toolsets ops`, registered in `.mcp.json`), read-only by construction. Credential chain, session cache, hub address and TLS trust were extracted into `@dominevo/develop` (`src/hub`, D835); the CLI and `scripts/hub/hub.mjs` import them, and `hub.mjs` lost its password `login` and its certificate bypass. Tools: `ops_status`, `hub_query` (generated `kind: query` only, secret-bearing methods refused, admin tier needs a `csa_` token, output redacted and bounded), `topology`, `cap_providers`, `recent_tracks`, `track`, `audit_tracks`, `log_providers`, `hub_logs` (asks which log-destination provider), `loki_query` (only when an unauthenticated Loki provider is configured), `model_pin_census`, `retrain_census`, `keyframe_presence`. The three hub census scripts (model-pin, retrain, keyframe presence) are retired in favour of tools. Every tool, P1 included, now carries MCP annotations. Not in P2: `birth_decisions` / `event_density` (reachable through `hub_query`), a Prometheus tool (the repo has no Prometheus provider), the disk half of the pin census (it needed SSH). Finding: the cached `dominevo login` session is scoped to `capability:addons` only, so protected-tier reads on it reach `addons.*` routes; everything else wants an admin token. P3 (models, release) and P4 (skills, guards) remain, **not to be started without the operator**.
 
 **Status (2026-10-13, latest): P3 landed.** The `models` toolset joined `camstack-ops` and `release` is real. Read-only on the cluster: `model_floors` (the committed floor tables with the method and D739), `fetch_retrain_export` (admin token; streams the annotated tar into `scratchpad/retrain-export/`), `eval_model` (`scripts/eval` in `scratchpad/eval-venv`, workspace-confined inputs, venv only with `setupVenv:true`), `benchmark_status`, `birth_decisions`, `event_density` (the two P2 gaps), `release_status` (repository state, `gh run list`, `npm view`, node versions when a credential allows) and `release_plan` (the ordered train for changed paths, with the traps; replaces the P1 stub). Mutating, only with `--allow-mutations` and never executed in tests or smoke: `benchmark_run` and `model_studio_import`, behind a dry run and a one-shot `confirm_token` bound to the exact arguments (D836). Two departures from the sketch above: `model_studio_import` is not an upload (the bundle import takes a same-host peer-bytes ticket, D806/D613) but the gated convert-and-distribute of a model Model Studio already holds; and `release_status` lives in the `ops` entry because it reads `gh` and the registry, which the offline `camstack-dev` entry must not. `scaffold_ui_component` is new (file + spec + barrel line, the dry run is a diff), `scaffold_capability` and `scaffold_addon` now show diffs and default to dry run, and the addon kinds gained `model-studio` and `admin-ui`. P4 (skills, guards) remains, **not to be started without the operator**.
 
 
-**Status (2026-10-21, superseded by one token format):** `camstack login <host>` once; every tool uses that session (refreshed automatically); `--token-file` is an explicit override only. The `<host>.admin-token` file, its `.meta` and `$CAMSTACK_ADMIN_TOKEN_FILE` are removed, and the tier comes from the token's claims, not a `csa_` prefix. The paragraph below is the history.
+**Status (2026-10-21, superseded by one token format):** `dominevo login <host>` once; every tool uses that session (refreshed automatically); `--token-file` is an explicit override only. The `<host>.admin-token` file, its `.meta` and `$CAMSTACK_ADMIN_TOKEN_FILE` are removed, and the tier comes from the token's claims, not a `csa_` prefix. The paragraph below is the history.
 
-**Status (2026-10-13, admin token): one command for every MCP credential.** `camstack login --admin [--admin-days N]` also mints the `csa_` admin token (D816) in the same interactive session (re-authentication D813 with the password just typed; TOTP is asked at the login leg) and writes it to `~/.camstack/<host>.admin-token` (0600, atomic) plus a secret-free `.meta` with the expiry. `camstack whoami` reports its presence and expiry. When an ops tool needs the admin tier and there is no live admin token (missing, expired by the meta, or the hub answers 401/403), `ops_status`, `topology` and the refused `hub_query` carry the exact command; the MCP still never handles a password and installs nothing.
+**Status (2026-10-13, admin token): one command for every MCP credential.** `dominevo login --admin [--admin-days N]` also mints the `csa_` admin token (D816) in the same interactive session (re-authentication D813 with the password just typed; TOTP is asked at the login leg) and writes it to `~/.camstack/<host>.admin-token` (0600, atomic) plus a secret-free `.meta` with the expiry. `dominevo whoami` reports its presence and expiry. When an ops tool needs the admin tier and there is no live admin token (missing, expired by the meta, or the hub answers 401/403), `ops_status`, `topology` and the refused `hub_query` carry the exact command; the MCP still never handles a password and installs nothing.
 
 **Status (2026-10-13, final): P4 landed — P1–P4 landed.** D837 reverses the direction of the skills plan's section 4: the public pack (`packages/develop/skills/`) is the canonical text of `camstack-addon`, `camstack-capability` and `camstack-secrets`, and the repo skills are overlays that point at it. `camstack-docs` stays whole in the repo beside the pack's generic one. `camstack-api-reference` was a user-level skill, never in the repo or the pack, and is gone: `docs/reference/api.md` and the tools replace it. The stale `add-capability` shipping text is fixed in the pack. Guards, Checks only: `check-skill-pack-sync` and `check-ui-catalogue-current`; no styling guard (decision 6). The UI catalogue gained a `viewerEntries` section for the viewer kit (`camstack/src/components/ui`), read when the submodule is checked out and carried verbatim, with a notice, when it is not. `docs/reference/packages.md` derives "npm, standalone tool" from `private` (the Publish workflow skips exactly `private: true`) instead of "not shipped".

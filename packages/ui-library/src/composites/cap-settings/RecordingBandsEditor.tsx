@@ -6,7 +6,7 @@ import {
   MAX_SENSOR_TRIGGER_DEVICES,
   SOURCE_CAP_ACTIVE_FIELD,
   type RecordingObjectTriggerClass,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { DurationInput } from '../duration-input/DurationInput'
 import { bandOfTimeWindow, timeWindowOfBand } from '../time-window-input/stored-clock-range'
 import { TimeWindowInput } from '../time-window-input/TimeWindowInput'
@@ -17,8 +17,8 @@ import { Plus, Trash2, Volume2, VolumeX } from 'lucide-react'
 import {
   DEFAULT_EVENTS_BAND_BUFFER_SEC,
   RECORDING_AUDIO_TRIGGER_OFFERED_DBFS,
-} from '@camstack/types'
-import type { RecordingBand, RecordingBandMode, TimeWindow } from '@camstack/types'
+} from '@dominevo/types'
+import type { RecordingBand, RecordingBandMode, TimeWindow } from '@dominevo/types'
 import {
   batteryFloorWithNoRecording,
   emptyBand,

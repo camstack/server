@@ -59,8 +59,8 @@
  * read that THROWS is not that: it changes nothing at all (D49).
  */
 
-import type { DeviceMetaLike, IScopedLogger } from '@camstack/types'
-import { errMsg } from '@camstack/types'
+import type { DeviceMetaLike, IScopedLogger } from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
 import type { RefreshScope, SingleFlightRefresh } from './single-flight-refresh.js'
 import { createSingleFlightRefresh } from './single-flight-refresh.js'
 

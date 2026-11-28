@@ -3,7 +3,7 @@ import {
   errMsg,
   type IConnectionProbe,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { connectionFromSettings, enabledInterfaces } from './config.js'
 
 /** How long one request to the CCU may take before the test gives up on it. */

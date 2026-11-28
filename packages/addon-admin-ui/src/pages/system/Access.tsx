@@ -13,7 +13,7 @@
  * Credential create dialogs use `useItemFormUrl` with kind-specific keys
  * (`ACCESS_CREATE_URL_KEYS`) so they never collide with Users' `?new=1`.
  */
-import { Button, Tabs, TabsList, TabsTrigger } from '@camstack/ui-library'
+import { Button, Tabs, TabsList, TabsTrigger } from '@dominevo/ui-library'
 import {
   Fingerprint,
   KeyRound,

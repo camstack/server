@@ -56,7 +56,7 @@ import {
   templateCapability,
   EventCategory,
   historyRetentionFromSettings,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   ADDON_MIGRATIONS,
   coreBlocksMigrationPorts,
@@ -1650,7 +1650,7 @@ function createBrokerProcessHost(broker: IClusterBroker): BlockProcessHost {
  *
  * The probe is not defensive decoration. On the live hub, 2026-08-08, the
  * import succeeded and `transform()` threw *"The esbuild JavaScript API cannot
- * be bundled"* (it had been inlined into `@camstack/server/system`'s dist, so it could
+ * be bundled"* (it had been inlined into `@dominevo/server/system`'s dist, so it could
  * no longer find its own native binary). Importing successfully was therefore
  * NOT evidence the compiler worked — and because the failure arrived at
  * transform time, every save came back as

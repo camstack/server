@@ -12,7 +12,7 @@
  * assertion can pass vacuously.
  */
 import { beforeEach, describe, expect, it } from 'vitest'
-import { defineRecordKinds, type InMemoryRecords, makeInMemoryRecords } from '@camstack/types'
+import { defineRecordKinds, type InMemoryRecords, makeInMemoryRecords } from '@dominevo/types'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import { DurableLedger, type DurableLedgerSpec } from '../durable-ledger.js'
 import { DurableLedgerBodySchema } from '../durable-record-body.js'

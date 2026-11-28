@@ -10,26 +10,26 @@
  *  1. **Direct.** A package whose own files changed.
  *  2. **Bundled-into.** A package that compiles another package's SOURCE into
  *     its own artifact must be rebuilt when that source changes — it holds a
- *     COPY, not a dependency. `addon-admin-ui` aliases `@camstack/ui-library`
+ *     COPY, not a dependency. `addon-admin-ui` aliases `@dominevo/ui-library`
  *     to `../ui-library/src` in its vite config, so a published ui-library is
  *     invisible to the browser until the admin UI is rebuilt. Derived by
  *     reading the build configs, not from a list, because a list of who
  *     bundles whom is exactly the thing that goes stale.
  *
  *     A copy has two forms in this repo, and the first version of this rule
- *     knew one of them. `@camstack/server/system` sets `bundleTypesMainEntry: true`
+ *     knew one of them. `@dominevo/server/system` sets `bundleTypesMainEntry: true`
  *     (`tools/build/vite-lib.preset.ts`) and so INLINES the bare
- *     `@camstack/types` entry — the cap definitions every tRPC router
+ *     `@dominevo/types` entry — the cap definitions every tRPC router
  *     validates against — into its own dist; the hub sources them from there,
- *     never from `@camstack/types`. That form names no `../types/src`, so on
+ *     never from `@dominevo/types`. That form names no `../types/src`, so on
  *     2026-09-19 `event-saving` reached `types@1.2.229…231` through five runs
  *     and `system` stayed at 1.2.273, built the evening before: every
  *     `setCameraSwitch` on the fleet was refused with an eight-id enum while
  *     the types package next to it carried nine (D545). The derivation now
  *     reads the preset flag too, and `scripts/check-inlined-sources-known.ts`
  *     proves against the BUILT dists that no third form exists unknown to it.
- *  3. **Closure.** Anything `@camstack/server` depends on drags
- *     `@camstack/server` with it: the server is the only package published with
+ *  3. **Closure.** Anything `@dominevo/server` depends on drags
+ *     `@dominevo/server` with it: the server is the only package published with
  *     exact pins, so a closure member reaches a node through a new server and
  *     through nothing else.
  *
@@ -80,7 +80,7 @@ export function readWorkspace(root = process.cwd()) {
 }
 
 /**
- * A build-config line that makes the preset inline the bare `@camstack/types`
+ * A build-config line that makes the preset inline the bare `@dominevo/types`
  * entry. Matched on the option NAME, not on a path: the option is the
  * instruction, and it lives in the package's own config.
  */
@@ -88,7 +88,7 @@ const BUNDLE_TYPES_MAIN_ENTRY_PATTERN = /\bbundleTypesMainEntry\s*:\s*true\b/
 
 /**
  * A build-config line that picks the preset's self-contained externals. Those
- * externals do NOT keep `@camstack/types` outside the bundle
+ * externals do NOT keep `@dominevo/types` outside the bundle
  * (`SELF_CONTAINED_EXTERNALS` in `tools/build/vite-lib.preset.ts`), so every
  * such addon's dist carries a PRIVATE copy of the cap definitions: used by the
  * addon's own code, never by the hub's routers. See `inlinedSources`.
@@ -97,16 +97,16 @@ const SELF_CONTAINED_EXTERNALS_PATTERN = /\bexternals\s*:\s*['"]self-contained(?
 
 /**
  * A `noExternal` list naming a workspace package: the bundler is told to
- * inline it. `server/backend` inlines the private `@camstack/node-root`.
+ * inline it. `server/backend` inlines the private `@dominevo/node-root`.
  */
 const NO_EXTERNAL_PATTERN = /\bnoExternal\s*:\s*\[([^\]]*)\]/g
-const CAMSTACK_NAME_PATTERN = /@camstack\\?\/([a-z0-9-]+)/g
+const CAMSTACK_NAME_PATTERN = /@dominevo\\?\/([a-z0-9-]+)/g
 
 const TYPES_DIR = 'packages/types'
 
-/** dir → workspace dir, for a `@camstack/<name>` seen in a config or manifest. */
+/** dir → workspace dir, for a `@dominevo/<name>` seen in a config or manifest. */
 function dirOfName(packages, name) {
-  for (const [dir, pj] of packages) if (pj.name === `@camstack/${name}`) return dir
+  for (const [dir, pj] of packages) if (pj.name === `@dominevo/${name}`) return dir
   return null
 }
 
@@ -127,7 +127,7 @@ function tsupReachable(dir, pj, packages) {
     ...Object.keys(pj.peerDependencies ?? {}),
   ])
   const dev = Object.keys(pj.devDependencies ?? {}).filter(
-    (name) => name.startsWith('@camstack/') && !declared.has(name),
+    (name) => name.startsWith('@dominevo/') && !declared.has(name),
   )
   if (dev.length === 0) return []
   return [...packages.keys()].filter(
@@ -146,17 +146,17 @@ function tsupReachable(dir, pj, packages) {
  *     artifact. **authoritative**: the copy IS what the consumer runs
  *     (admin-ui's browser bundle of ui-library).
  *   - `bundleTypesMainEntry: true` — the preset inlines the bare
- *     `@camstack/types` entry. **authoritative**: `@camstack/server/system` builds
+ *     `@dominevo/types` entry. **authoritative**: `@dominevo/server/system` builds
  *     the cap routers from that copy, so it is the cluster's API surface.
  *   - `externals: 'self-contained'` / `'self-contained+ui'` — the preset
- *     inlines `@camstack/types` along with every other pure-JS dependency.
+ *     inlines `@dominevo/types` along with every other pure-JS dependency.
  *     **private**: the copy validates only what the addon itself parses; the
  *     hub never reads it. Declared here so the artifact guard can tell a
  *     known private copy from an unknown one, and so the cascade policy is
  *     one line (`bundledSources`) rather than folklore.
- *   - `noExternal: [… '@camstack/<name>' …]` — a bundler told to inline a
+ *   - `noExternal: [… '@dominevo/<name>' …]` — a bundler told to inline a
  *     workspace package by name (server/backend → node-root). **private**.
- *   - a `tsup.config.*` in a package that declares `@camstack/*` only under
+ *   - a `tsup.config.*` in a package that declares `@dominevo/*` only under
  *     `devDependencies` — tsup bundles those and what they reach (the CLI).
  *     **private**, declared as tsup's own rule: every workspace package that
  *     is not a dependency (`tsupReachable`).
@@ -243,22 +243,22 @@ export function directOwners(changedFiles, root = process.cwd()) {
 }
 
 function serverPackageDir(packages) {
-  return [...packages].find(([, pj]) => pj.name === '@camstack/server')?.[0]
+  return [...packages].find(([, pj]) => pj.name === '@dominevo/server')?.[0]
 }
 
-/** Names `@camstack/server` pins. Empty when the workspace has no server. */
+/** Names `@dominevo/server` pins. Empty when the workspace has no server. */
 /**
  * The framework that is published INSIDE the server tarball (D989): private,
  * never a registry package, never a pin. A change to it reaches a node only
  * through a new server, so for the cascade it is a closure member like `types`.
  */
-export const FOLDED_FRAMEWORK_NAME = '@camstack/server-framework'
+export const FOLDED_FRAMEWORK_NAME = '@dominevo/server-framework'
 
 function serverClosureNames(packages, { includeFolded = true } = {}) {
-  const server = [...packages].find(([, pj]) => pj.name === '@camstack/server')
+  const server = [...packages].find(([, pj]) => pj.name === '@dominevo/server')
   if (server === undefined) return new Set()
   return new Set([
-    ...Object.keys(server[1].dependencies ?? {}).filter((name) => name.startsWith('@camstack/')),
+    ...Object.keys(server[1].dependencies ?? {}).filter((name) => name.startsWith('@dominevo/')),
     ...(includeFolded ? [FOLDED_FRAMEWORK_NAME] : []),
   ])
 }
@@ -269,7 +269,7 @@ function serverClosureNames(packages, { includeFolded = true } = {}) {
  * Exported separately because the workflow reaches this set two ways — from
  * changed files (the affected path) and from `force_packages` / `scope=all` —
  * and both need the same answer. A second copy of the rules in the YAML is how
- * the first version of the closure cascade ended up covering `@camstack/server/system`
+ * the first version of the closure cascade ended up covering `@dominevo/server/system`
  * and nothing else for a month.
  */
 export function applyCascades(dirs, root = process.cwd()) {
@@ -294,7 +294,7 @@ export function applyCascades(dirs, root = process.cwd()) {
   }
 
   // Closure → server.
-  const serverDir = [...packages].find(([, pj]) => pj.name === '@camstack/server')?.[0]
+  const serverDir = [...packages].find(([, pj]) => pj.name === '@dominevo/server')?.[0]
   if (serverDir !== undefined) {
     const closure = serverClosureNames(packages)
     if ([...selected].some((dir) => closure.has(packages.get(dir).name))) selected.add(serverDir)
@@ -304,8 +304,8 @@ export function applyCascades(dirs, root = process.cwd()) {
 }
 
 /**
- * Publish order for the npm loop. `@camstack/server` is ALWAYS last: its
- * publish step waits until every pinned `@camstack/*` version is installable
+ * Publish order for the npm loop. `@dominevo/server` is ALWAYS last: its
+ * publish step waits until every pinned `@dominevo/*` version is installable
  * from the registry, so anything listed after it in the same loop can never
  * satisfy that wait.
  *
@@ -323,7 +323,7 @@ export function orderForPublish(dirs) {
 }
 
 /**
- * The closure pins that would ship a STALE copy: members of `@camstack/server`'s
+ * The closure pins that would ship a STALE copy: members of `@dominevo/server`'s
  * dependency closure that are NOT in this run's publish set (so the closure
  * pins the version already on the registry) but whose artifact carries an
  * authoritative copy of a package that IS being published.
@@ -347,7 +347,7 @@ export function staleRegistryPins(publishDirs, root = process.cwd(), options = {
   const packages = readWorkspace(root)
   const publishing = new Set([...publishDirs].filter((dir) => packages.has(dir)))
   const verified = new Set(options.verifiedUnchanged ?? [])
-  const serverEntry = [...packages].find(([, pj]) => pj.name === '@camstack/server')
+  const serverEntry = [...packages].find(([, pj]) => pj.name === '@dominevo/server')
   if (serverEntry === undefined) return []
   // The folded framework ships inside the server tarball itself: it is never a
   // registry pin, so it can never be a stale one.

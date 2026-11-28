@@ -46,7 +46,7 @@ import {
   type SensorEvent,
   type SystemEvent,
   type Track,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { NcAlarmTransition } from './alarm/alarm-transitions.js'
 import type { NcBatteryBand, NcBatteryReading } from './alerts/battery-band.js'
 import { consumableSubject, legacyConsumableSubject } from './alerts/consumable-subject.js'
@@ -1929,7 +1929,7 @@ export function incomingFromAddonUpdates(
   // "0.1.47 → 0.1.51" when the predecessor is known, "→ 0.1.51" when it is
   // not. The arrow stays either way: the line still says an update LANDED and
   // names where it landed. Printing an unknown predecessor as a number is the
-  // defect this replaced — "@camstack/addon-terminal 0.0.0 → latest" was read
+  // defect this replaced — "@dominevo/addon-terminal 0.0.0 → latest" was read
   // as two versions, and neither existed.
   const list = updates
     .map((update) => {
@@ -1964,15 +1964,15 @@ function incomingFromServerUpdated(
 ): NcIncomingEvent | null {
   const kind = stringField(data, 'kind')
   const requestedBy = stringField(data, 'requestedBy')
-  const packageName = stringField(data, 'packageName') ?? '@camstack/server'
+  const packageName = stringField(data, 'packageName') ?? '@dominevo/server'
   const fromVersion = stringField(data, 'fromVersion')
   const toVersion = stringField(data, 'toVersion') ?? versionFromRequestedBy(requestedBy)
   if (!restartIsUpdate(kind, requestedBy, toVersion)) return null
   const nodeId = stringField(data, 'nodeId') ?? 'hub'
   // Three sentences, not two: a marker written before the update engine
   // forwarded `fromVersion` still KNOWS where it landed, and dropping that
-  // because the other half is missing is how "@camstack/server sul nodo hub è
-  // stato aggiornato" [@camstack/server on the hub node has been updated] became the only thing the operator ever read.
+  // because the other half is missing is how "@dominevo/server sul nodo hub è
+  // stato aggiornato" [@dominevo/server on the hub node has been updated] became the only thing the operator ever read.
   const bodyKey =
     toVersion === undefined
       ? 'system.server-updated.body.plain'
@@ -2058,7 +2058,7 @@ function incomingFromNodeRestarting(
       nodeIds: [nodeId],
     })
   }
-  const packageName = stringField(data, 'packageName') ?? '@camstack/server'
+  const packageName = stringField(data, 'packageName') ?? '@dominevo/server'
   const what = stringField(data, 'what')
   const fromVersion = stringField(data, 'fromVersion')
   const bodyKey =

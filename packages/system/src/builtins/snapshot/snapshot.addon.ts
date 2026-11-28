@@ -15,7 +15,7 @@ import type {
   ProfileSlot,
   ProviderRegistration,
   RtspRestreamEntry,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   BaseAddon,
   deriveBatteryPresence,
@@ -30,7 +30,7 @@ import {
   nodePin,
   snapshotCapability,
   streamQualityLabel,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { SnapshotCache, type SnapshotCacheEntry } from './snapshot-cache.js'
 import { SnapshotDurableStore } from './snapshot-durable-store.js'

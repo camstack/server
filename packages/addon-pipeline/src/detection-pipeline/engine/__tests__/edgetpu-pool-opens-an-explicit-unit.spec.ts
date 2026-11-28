@@ -9,7 +9,7 @@
  * naming itself by the key suffix it was built for.
  */
 import { EventEmitter } from 'node:events'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 
 const spawned: FakeChild[] = []

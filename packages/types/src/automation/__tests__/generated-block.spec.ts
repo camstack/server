@@ -109,7 +109,7 @@ async function load(input: RecipeInput, name = 'Test automation'): Promise<Block
   const shim = await sharedShimUrl()
   const bundled = await build({
     stdin: { contents: source, loader: 'ts', resolveDir: HERE, sourcefile: 'generated.ts' },
-    alias: { '@camstack/types': shim },
+    alias: { '@dominevo/types': shim },
     external: [shim],
     bundle: true,
     write: false,

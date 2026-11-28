@@ -1,4 +1,4 @@
-import type { HeroAction, HeroModel } from '@camstack/types'
+import type { HeroAction, HeroModel } from '@dominevo/types'
 import { History, Package, Power } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Badge } from '../../primitives/badge'

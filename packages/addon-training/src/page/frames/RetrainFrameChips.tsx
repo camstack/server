@@ -4,8 +4,8 @@
  * (`retrainReviewBadgeLook`), dashed / "~" when approximate. Filled, so they
  * read over the thumbnail.
  */
-import type { RetrainCorpusPageFrame, RetrainMacroClass } from '@camstack/types'
-import { Badge, retrainReviewBadgeLook, useUiText } from '@camstack/ui-library'
+import type { RetrainCorpusPageFrame, RetrainMacroClass } from '@dominevo/types'
+import { Badge, retrainReviewBadgeLook, useUiText } from '@dominevo/ui-library'
 import {
   Car,
   CircleHelp,

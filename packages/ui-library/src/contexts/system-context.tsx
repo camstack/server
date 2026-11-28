@@ -14,13 +14,13 @@
  * differently (e.g. against a remote cluster).
  */
 import { createContext, useContext, type ReactNode, type JSX } from 'react'
-import type { System } from '@camstack/sdk'
+import type { System } from '@dominevo/sdk'
 import { createSharedContext } from '../lib/shared-context'
 
 /**
  * Cross-bundle SystemContext sharing — see `lib/shared-context.ts` for
  * why this is global. Addon page bundles ship their own copy of
- * `@camstack/ui-library`, and without sharing each bundle's
+ * `@dominevo/ui-library`, and without sharing each bundle's
  * `createContext()` produces a fresh instance that never matches the
  * host's `<SystemProvider>`.
  */

@@ -1,4 +1,4 @@
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import { type Harness, makeHarness, T0 } from '../../__tests__/support/harness.js'
 import { FIVE_MINUTES_MS } from '../../time/bucket-time.js'

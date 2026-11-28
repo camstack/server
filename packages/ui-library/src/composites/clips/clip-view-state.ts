@@ -28,7 +28,7 @@
  * source a camera HAS is still described here, with its availability,
  * whichever provider was asked.
  */
-import type { Clip, ClipSource } from '@camstack/types'
+import type { Clip, ClipSource } from '@dominevo/types'
 import type { ClipBand, ClipBandPlan } from './clip-band.js'
 import { defaultUiText, type UiTextFn } from '../../contexts/ui-text.js'
 import { describeSource, type ClipSourceNotice } from './clip-source-state.js'

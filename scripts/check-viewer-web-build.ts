@@ -12,7 +12,7 @@
  *     touches nothing in this repository;
  *   - the WEB viewer the hub serves at `/viewer`, which is a static export
  *     copied into `packages/addon-pipeline-orchestrator/assets/viewer/` by
- *     `npm run build:orchestrator` and shipped by `camstack deploy`.
+ *     `npm run build:orchestrator` and shipped by `dominevo deploy`.
  *
  * Nothing compared them. On 2026-07-31 the hub was serving viewer **1.0.186,
  * built 24 July**, while the app had shipped through **1.0.204** — eighteen
@@ -110,7 +110,7 @@ export function checkViewerBuild(input: {
     message:
       `the embedded web viewer is ${marker.version} but the repository pins viewer ${input.pinnedVersion}. ` +
       'An OTA does not rebuild it: run `npm run build:orchestrator` in the viewer repo, then ' +
-      '`camstack deploy packages/addon-pipeline-orchestrator`. ' +
+      '`dominevo deploy packages/addon-pipeline-orchestrator`. ' +
       '(Serving a stale bundle is how the hub sat 18 versions behind the app for a week.)',
   }
 }

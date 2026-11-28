@@ -1,10 +1,10 @@
-import type { CamProfile, RecordingConfig } from '@camstack/types'
+import type { CamProfile, RecordingConfig } from '@dominevo/types'
 import {
   RECORDING_SOURCE_CAMSTACK_ADDON,
   RecordingConfigSchema,
   RecordingStatusSchema,
   selectAssignedProfileSlots,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   CircleDot,

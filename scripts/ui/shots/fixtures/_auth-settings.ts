@@ -103,8 +103,8 @@ const WEBAUTHN_SECTION = {
       type: 'text',
       key: 'rpName',
       label: 'Product name',
-      description: 'Shown in the OS authenticator UI (e.g. "CamStack"). Cosmetic only.',
-      value: 'CamStack',
+      description: 'Shown in the OS authenticator UI (e.g. "Dominevo"). Cosmetic only.',
+      value: 'Dominevo',
     },
     {
       type: 'text',
@@ -160,7 +160,7 @@ export function authSettingsHandlers(withCors: boolean) {
     ],
     processes: [],
     categories: [],
-    rootPackage: { name: '@camstack/server', version: '1.2.500' },
+    rootPackage: { name: '@dominevo/server', version: '1.2.500' },
   }
 
   return {

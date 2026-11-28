@@ -3,8 +3,8 @@
  * still subjects included, so a session close can say whether it ended tracks.
  * The presence tap (`hasLiveTrack`) is unchanged: it still gates the hold.
  */
-import type { IEventBus, IScopedLogger, Unsubscribe } from '@camstack/types'
-import { EventCategory } from '@camstack/types'
+import type { IEventBus, IScopedLogger, Unsubscribe } from '@dominevo/types'
+import { EventCategory } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 
 import { makeIdleCameraSensors, makeIdleMotionSlice, makeLocalEventBus } from './e2e-helpers.js'

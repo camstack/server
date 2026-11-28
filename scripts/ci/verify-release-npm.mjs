@@ -4,9 +4,9 @@
  * top of `release.yml`'s `derive-version` job (plain node, zero deps — the
  * job does not `npm ci`), BEFORE any image or installer build starts.
  *
- * The product tag (`vX.Y.Z`) and `@camstack/server` are different lines
+ * The product tag (`vX.Y.Z`) and `@dominevo/server` are different lines
  * (D943). Both the Docker image and the desktop app install
- * `@camstack/server@latest` (Dockerfile, packages/desktop/scripts/stage-deps.mjs).
+ * `@dominevo/server@latest` (Dockerfile, packages/desktop/scripts/stage-deps.mjs).
  * This gate resolves that dist-tag and records it. It does not ask `latest`
  * to equal the product version: that was the coupled contract, and a product
  * `0.1.0` baking server `1.2.x` is the success case.
@@ -21,7 +21,7 @@
 import { appendFileSync } from 'node:fs'
 import { execFileSync } from 'node:child_process'
 
-const PACKAGE = '@camstack/server'
+const PACKAGE = '@dominevo/server'
 const SEMVER = /^\d+\.\d+\.\d+$/
 
 /**

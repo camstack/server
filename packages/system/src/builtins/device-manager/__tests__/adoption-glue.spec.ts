@@ -4,8 +4,8 @@
  * through `adoptionRefresh`, `adoptionAdopt` and `adoptionRelease`, so a call
  * the cap method forgot to make shows up here.
  */
-import type { DiscoveredChildDevice, ICapabilityRegistry, RecordsAccess } from '@camstack/types'
-import { DeviceType } from '@camstack/types'
+import type { DiscoveredChildDevice, ICapabilityRegistry, RecordsAccess } from '@dominevo/types'
+import { DeviceType } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { deviceManagerRecordKinds } from '../record-kinds.js'
 import { setup } from './device-manager-harness.js'

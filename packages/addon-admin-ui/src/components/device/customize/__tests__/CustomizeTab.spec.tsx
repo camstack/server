@@ -165,8 +165,8 @@ const compositionRead = vi.hoisted((): { current: Query } => ({
   current: { status: 'pending', refetch: async () => undefined },
 }))
 
-vi.mock('@camstack/ui-library', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@camstack/ui-library')>()
+vi.mock('@dominevo/ui-library', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dominevo/ui-library')>()
   const mutation = (mutateAsync: (input: never) => Promise<unknown>) => () => ({
     mutateAsync,
     isPending: false,

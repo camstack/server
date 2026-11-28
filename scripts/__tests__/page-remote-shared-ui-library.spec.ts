@@ -14,7 +14,7 @@ import { compareByBundleManifest } from '../ci/publish-output-hash.mjs'
  * ui-library edit republishes every page addon (planning #332).
  *
  * The fixture is a miniature workspace built with the same federation shape the
- * page configs use: `packages/*` linked under `node_modules/@camstack/*`.
+ * page configs use: `packages/*` linked under `node_modules/@dominevo/*`.
  */
 
 const MANIFEST = 'dist/.bundle-modules.json'
@@ -45,7 +45,7 @@ async function buildRemote(fixture: Fixture): Promise<Built> {
       write(
         `packages/${name}/package.json`,
         JSON.stringify({
-          name: `@camstack/${name}`,
+          name: `@dominevo/${name}`,
           version: '1.2.3',
           type: 'module',
           exports: { '.': { import: './dist/index.js' } },
@@ -54,17 +54,17 @@ async function buildRemote(fixture: Fixture): Promise<Built> {
       // Like a real install: the package resolves to its BUILT entry; the source is only reachable by path.
       write(`packages/${name}/dist/index.js`, source)
       write(`packages/${name}/src/index.ts`, source)
-      fs.mkdirSync(path.join(root, 'node_modules/@camstack'), {
+      fs.mkdirSync(path.join(root, 'node_modules/@dominevo'), {
         recursive: true,
       })
       fs.symlinkSync(
         path.join(root, `packages/${name}`),
-        path.join(root, `node_modules/@camstack/${name}`),
+        path.join(root, `node_modules/@dominevo/${name}`),
       )
     }
     write(
       'packages/addon-x/src/page.tsx',
-      "import { Button } from '@camstack/ui-library'\nimport { KINDS } from '@camstack/types'\nexport default function Page() { return Button() + KINDS.join() }\n",
+      "import { Button } from '@dominevo/ui-library'\nimport { KINDS } from '@dominevo/types'\nexport default function Page() { return Button() + KINDS.join() }\n",
     )
     const output = await build({
       root,
@@ -78,12 +78,12 @@ async function buildRemote(fixture: Fixture): Promise<Built> {
           dts: false,
           exposes: { './page': './packages/addon-x/src/page.tsx' },
           shared: {
-            '@camstack/ui-library': {
+            '@dominevo/ui-library': {
               singleton: true,
               requiredVersion: '>=1.2.3',
               import: false,
             },
-            '@camstack/types': {
+            '@dominevo/types': {
               singleton: true,
               requiredVersion: false,
               import: false,
@@ -94,7 +94,7 @@ async function buildRemote(fixture: Fixture): Promise<Built> {
       resolve: fixture.aliasUiLibrary
         ? {
             alias: {
-              '@camstack/ui-library': path.join(root, 'packages/ui-library/src'),
+              '@dominevo/ui-library': path.join(root, 'packages/ui-library/src'),
             },
           }
         : {},

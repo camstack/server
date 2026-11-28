@@ -9,9 +9,9 @@
  * while it is up. Everything here is about that: who emits, who does not, and
  * what is said when nothing is emitted.
  */
-import type { IScopedLogger, MotionSources } from '@camstack/types'
+import type { IScopedLogger, MotionSources } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { MOTION_CLOSE_AFTER_MS } from '@camstack/types'
+import { MOTION_CLOSE_AFTER_MS } from '@dominevo/types'
 import { DeviceActivitySource, sustainIntervalMs } from '../device-activity-source.js'
 
 interface Emitted {

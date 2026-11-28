@@ -24,7 +24,7 @@ import type {
   IScopedLogger,
   IVideoclipsProvider,
   PinnedFfmpegResolver,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 import type { AmcrestCgiClient } from '../amcrest-cgi-client.js'
 import { AMCREST_ADDON_ID } from '../schema.js'

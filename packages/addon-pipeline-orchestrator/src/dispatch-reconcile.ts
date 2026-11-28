@@ -1,4 +1,4 @@
-import type { ProfileSlot, PipelinePhaseMode } from '@camstack/types'
+import type { ProfileSlot, PipelinePhaseMode } from '@dominevo/types'
 
 export interface RunnerCameras {
   readonly nodeId: string

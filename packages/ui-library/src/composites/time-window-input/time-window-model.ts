@@ -10,7 +10,7 @@ import {
   type TimeWindowPreset,
   type WeekdayKey,
   expandTimeWindowPreset,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export const ALL_WEEKDAYS: readonly WeekdayKey[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
 export const SUN_EVENTS: readonly SunEvent[] = ['sunrise', 'sunset', 'dawn', 'dusk']

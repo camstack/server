@@ -4,7 +4,7 @@
  * more, so it is retired on restore through the normal device removal, which records the
  * tombstone (D865) — never by its absence from a list.
  */
-import { DeviceType, errMsg, type IScopedLogger, type SavedDevice } from '@camstack/types'
+import { DeviceType, errMsg, type IScopedLogger, type SavedDevice } from '@dominevo/types'
 
 /** The Gateway's own native id; a container or VM named "gateway" is `docker:gateway` / `vm:gateway`. */
 const LEGACY_GATEWAY_NATIVE_ID = 'gateway'

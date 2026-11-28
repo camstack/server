@@ -8,7 +8,7 @@
  * still wants the same native crop pair.
  */
 
-import type { FrameHandle } from '@camstack/types'
+import type { FrameHandle } from '@dominevo/types'
 import type { StationaryBbox } from '../stationary/stationary-types.js'
 import type { PackageSighting } from './package-stillness-tracker.js'
 import type { PackageSceneOccluder } from './package-scene-diff.js'

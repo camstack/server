@@ -12,7 +12,7 @@
  * different compare, or a missing expiry check, and nothing fails until a link
  * that should have died keeps working. The fix is the same one D52 applies to
  * crop geometry: one derivation, in a place every addon may depend on. A
- * framework package is exactly that place — `@camstack/types/node`, off the root
+ * framework package is exactly that place — `@dominevo/types/node`, off the root
  * entry because `node:crypto` must never be traversed by a browser bundler.
  *
  * What this module deliberately does NOT decide: the TTL, the base URL, the

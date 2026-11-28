@@ -5,7 +5,7 @@ import {
   DeviceType,
   type ReadingQuantity,
   StoredDeviceTypeSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { knownArrayCapacityBytes } from './unraid-array-capacity.js'
 import type { UnraidArrayDiskInfo, UnraidSnapshot } from './unraid-client-contract.js'
 
@@ -58,7 +58,7 @@ export const UnraidEntityIdentitySchema = z.object({
   /** Stable, filesystem-safe key (unique per instance, stable across reboots). */
   key: z.string().min(1),
   kind: UnraidEntityKindSchema,
-  /** The CamStack capability the child registers for this kind. */
+  /** The Dominevo capability the child registers for this kind. */
   capName: z.string().min(1),
   /** The DeviceType the child is created as. */
   deviceType: StoredDeviceTypeSchema,

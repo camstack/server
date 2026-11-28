@@ -7,7 +7,7 @@ import {
   Skeleton,
   type AddonPageProps,
   type DataColumn,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { CcuFaultsResultSchema, type CcuFault, type CcuFaultRow } from '../ccu/ccu-schemas.js'
 import { useT } from '../i18n/index.js'
 import type { CcuTrpc } from './ccu-client.js'
@@ -22,7 +22,7 @@ export function severityRank(severity: CcuFaultRow['severity']): number {
 }
 
 /**
- * The faults CamStack derives from the CCU, one row per device. A failed read
+ * The faults Dominevo derives from the CCU, one row per device. A failed read
  * is the warning alert, never an empty list: "no faults" is only said by an
  * answer that came back with none.
  */

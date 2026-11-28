@@ -5,7 +5,7 @@ import { type CapabilityDefinition, type InferProvider, method } from './capabil
 import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
- * `training-provider` — ONE cloud that can run the CamStack trainer.
+ * `training-provider` — ONE cloud that can run the Dominevo trainer.
  *
  * A thin, mockable translation layer: it knows how to run a container with a
  * GPU, move a dataset in, read the job's stdout and hand artefacts back. It

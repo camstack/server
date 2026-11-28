@@ -11,8 +11,8 @@
  * switch — the cell is empty, and no prose explains it. A disabled rule gets a
  * disabled switch: there is nothing to silence.
  */
-import type { NcRule, NcSnooze } from '@camstack/types'
-import { Switch, useSystem } from '@camstack/ui-library'
+import type { NcRule, NcSnooze } from '@dominevo/types'
+import { Switch, useSystem } from '@dominevo/ui-library'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'

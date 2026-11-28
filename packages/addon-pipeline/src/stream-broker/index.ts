@@ -10,7 +10,7 @@ export default StreamBrokerAddon
 export { StreamBrokerManager } from './stream-broker/stream-broker-manager'
 export { StreamBroker } from './stream-broker/stream-broker'
 export { StreamPipeServer } from './stream-broker/stream-pipe-server'
-export type { BrokerStats, BrokerStatus } from '@camstack/types'
+export type { BrokerStats, BrokerStatus } from '@dominevo/types'
 
 // --- Frame Transport (re-exports public API from ./frame-transport) ---
 export * from './frame-transport/index.js'

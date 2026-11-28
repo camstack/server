@@ -42,7 +42,7 @@ import type {
   RetrainOrigin,
   RetrainPipelineBox,
   RetrainVerdict,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { NormBox } from './retrain-boxes.js'
 import { applyVerdictToDraft } from './retrain-verdict-review.js'
 

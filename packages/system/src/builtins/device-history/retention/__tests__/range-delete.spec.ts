@@ -5,7 +5,7 @@
  * same counts dry or real. Real `history.db`, marked values: a spike of 999
  * inside the range, 10 everywhere else — a stale rollup shows as max 999.
  */
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import { type Harness, makeHarness } from '../../__tests__/support/harness.js'
 import { rawOf, rollupOf, seriesOf } from '../../__tests__/support/read-helpers.js'

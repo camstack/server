@@ -12,7 +12,7 @@
  *
  * Usage: npx tsx scripts/check-device-type-card-coverage.ts
  */
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import { connectedCardKindOf } from '../packages/ui-library/src/composites/device-card/connected/connected-card-kind.js'
 import { CAP_NAMES } from '../packages/types/src/generated/addon-cap-facts.js'
 import { isMain } from './lib/family-baseline.js'

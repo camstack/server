@@ -3,8 +3,8 @@
  * result actions. Cancel lives on the table row.
  */
 import { useEffect, useRef } from 'react'
-import type { TrainingJob } from '@camstack/types'
-import { Badge, type AddonPageProps } from '@camstack/ui-library'
+import type { TrainingJob } from '@dominevo/types'
+import { Badge, type AddonPageProps } from '@dominevo/ui-library'
 import { useT } from '../i18n/index.js'
 import { ResultPanel } from './ResultPanel.js'
 import { Sparkline } from './Sparkline.js'

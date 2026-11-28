@@ -14,7 +14,7 @@
  *   • relative targets must start with a single `/` (no `//host`, no
  *     scheme, no backslash, no `..` traversal);
  *   • absolute targets are accepted ONLY from the exact custom-scheme
- *     allowlist (`APP_AUTH_CALLBACK_URLS` in `@camstack/types`, shared with
+ *     allowlist (`APP_AUTH_CALLBACK_URLS` in `@dominevo/types`, shared with
  *     the hub's native link flow) — never an arbitrary URL.
  *
  * The validated target is parked in sessionStorage between the login
@@ -22,7 +22,7 @@
  * login completion, with a short expiry so a stale value can't hijack
  * an unrelated later login in the same tab.
  */
-import { parseAppAuthCallback } from '@camstack/types'
+import { parseAppAuthCallback } from '@dominevo/types'
 
 export type LoginRedirectTarget =
   | { readonly kind: 'path'; readonly path: string }

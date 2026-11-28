@@ -24,7 +24,7 @@
  * something this build cannot read", never as a silently wrong render.
  */
 
-import type { NcDelivery, NcOccupancyCondition, NcRule } from '@camstack/types'
+import type { NcDelivery, NcOccupancyCondition, NcRule } from '@dominevo/types'
 import i18n from '../../i18n/index'
 
 // ── Trigger vocabulary ──────────────────────────────────────────────

@@ -3,7 +3,7 @@
  * up, the name an exporter publishes it as) and a custom device's placeholder
  * before it has reported a device.
  */
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import { render, screen } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
@@ -21,8 +21,8 @@ interface Instances {
 let instances: Instances = { isLoading: true, data: [] }
 let exposed: readonly { entity: { kind: string; actionId?: string }; exposedAs?: string }[] = []
 
-vi.mock('@camstack/ui-library', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@camstack/ui-library')>()),
+vi.mock('@dominevo/ui-library', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@dominevo/ui-library')>()),
   useInstancesOfCap: () => instances,
   useDeviceExportListSupportedEntityKinds: () => ({ data: ['action'] }),
   useDeviceExportListExposedEntities: () => ({ data: exposed }),

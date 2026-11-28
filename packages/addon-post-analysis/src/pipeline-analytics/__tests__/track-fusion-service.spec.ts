@@ -55,7 +55,7 @@
  * `sweepUp`: an active row is RAM only, so every survivor that can close was
  * fused by this process.
  */
-import type { IScopedLogger, LogExtras } from '@camstack/types'
+import type { IScopedLogger, LogExtras } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { TrackFusionLeafCount } from '../pipeline/track-fusion-leaf.js'
 import {

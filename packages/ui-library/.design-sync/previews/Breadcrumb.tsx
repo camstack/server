@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
-import { Breadcrumb } from '@camstack/ui-library'
+import { Breadcrumb } from '@dominevo/ui-library'
 
-// CamStack is dark-first; render every story in the dark canvas so DS tokens resolve.
+// Dominevo is dark-first; render every story in the dark canvas so DS tokens resolve.
 const Frame = ({ children }: { children: ReactNode }) => (
   <div className="dark bg-background text-foreground p-5 rounded-lg">{children}</div>
 )

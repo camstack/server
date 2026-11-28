@@ -47,7 +47,7 @@
  * from `LocalChildClient` — typed structurally so tests can provide a fake
  * without any casts.
  */
-import type { EventFilter, IEventBus, SystemEvent } from '@camstack/types'
+import type { EventFilter, IEventBus, SystemEvent } from '@dominevo/types'
 import type { SharedBusState } from '../moleculer/event-bus-core.js'
 import {
   createSharedBusState,

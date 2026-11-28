@@ -26,14 +26,14 @@ describe('frameworkNodePaths', () => {
 
 describe('isActiveFrameworkRoot', () => {
   const root = '/data/server-root/current'
-  const folded = path.join(root, 'node_modules', '@camstack', 'server', 'system', 'package.json')
+  const folded = path.join(root, 'node_modules', '@dominevo', 'server', 'system', 'package.json')
 
   it('recognises a closure whose server carries the framework (D989)', () => {
     expect(isActiveFrameworkRoot(root, (p) => p === folded)).toBe(true)
   })
 
   it('a closure with only the retired standalone framework package is not one', () => {
-    const legacy = path.join(root, 'node_modules', '@camstack', 'system')
+    const legacy = path.join(root, 'node_modules', '@dominevo', 'system')
     expect(isActiveFrameworkRoot(root, (p) => p === legacy)).toBe(false)
   })
 

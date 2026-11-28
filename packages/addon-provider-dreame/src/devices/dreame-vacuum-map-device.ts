@@ -7,7 +7,7 @@ import {
   type DeviceContext,
   type ImageStatus,
   type InferNativeProvider,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   VacuumDevice as DreameVacuum,
   renderVacuumPng,

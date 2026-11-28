@@ -1,4 +1,4 @@
-import type { StorageLocation } from '@camstack/types'
+import type { StorageLocation } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   discardAddonForType,

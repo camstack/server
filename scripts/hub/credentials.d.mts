@@ -10,5 +10,5 @@ export interface HubAuthOptions {
   readonly server?: string
 }
 
-/** The token always comes from the `camstack login` session (D1101). */
+/** The token always comes from the `dominevo login` session (D1101). */
 export function resolveHubAuth(opts?: HubAuthOptions): Promise<HubAuth>

@@ -19,8 +19,8 @@ import {
   TimelapseScheduler,
 } from './timelapse/timelapse-scheduler.js'
 import { findLastClosedWindow, findNextWindowOpen } from './timelapse/window-bounds.js'
-import type { CameraOccupancySnapshot, IScopedLogger, NcRule, TimelapseRule } from '@camstack/types'
-import { readTimelapseGeneratedAt, ruleGroupingApplies } from '@camstack/types'
+import type { CameraOccupancySnapshot, IScopedLogger, NcRule, TimelapseRule } from '@dominevo/types'
+import { readTimelapseGeneratedAt, ruleGroupingApplies } from '@dominevo/types'
 import type { NotificationCenterDeps } from './index.js'
 
 /**

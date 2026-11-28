@@ -7,12 +7,12 @@
  *
  * Same **family** (YOLOv9). Size letter = tier. `relu` vs `relu_test` are two
  * trainings of that family (our selectors label them Standard / Test) — NOT
- * CamStack's "Fast" optimization. The Variant pre-selector filters which
+ * Dominevo's "Fast" optimization. The Variant pre-selector filters which
  * training is in the card; chips are only size + Int8.
  *
  * Runtime format (onnx / openvino / coreml / tflite) is the Import row.
  */
-import type { ModelFormat, ModelVariantSource, VariantPrecision } from '@camstack/types'
+import type { ModelFormat, ModelVariantSource, VariantPrecision } from '@dominevo/types'
 import type { PluginCatalogCatalogEntryView } from '../ui/api.js'
 import { pluginCatalogInputSizeKey } from './plugin-catalog-catalog-selectors.js'
 import { pluginCatalogCanonicalId } from './plugin-catalog-canonical.js'

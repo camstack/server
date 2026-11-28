@@ -1,7 +1,7 @@
 /**
  * Lightweight addon-authoring + addon-runner entry point.
  *
- * Importing the root barrel (`@camstack/types`) eagerly constructs the entire
+ * Importing the root barrel (`@dominevo/types`) eagerly constructs the entire
  * schema graph (~1963 `z.object/enum/union(...)` builders across 378 files),
  * costing ~47MB of V8 heap PER process. Every forked addon-runner paid that
  * even though it only needs a handful of runtime helpers — 8 runners ≈ 1.4GB
@@ -106,12 +106,12 @@ export { DisposerChain } from './disposer-chain.js'
 // schema-free module — `constants.ts` and `utils/hf-url.ts` import nothing, and
 // `types/model-formats.ts` is split out of `types/models.ts` (which builds Zod).
 // Reached through the root barrel these dragged the whole schema graph into
-// `@camstack/server/system/addon-utils` (~105 MB per runner).
+// `@dominevo/server/system/addon-utils` (~105 MB per runner).
 export { HF_REPO } from './constants.js'
 export { MODEL_FORMATS } from './types/model-formats.js'
 export { hfModelUrl } from './utils/hf-url.js'
 // The addon→addon byte transport (D613). From its DEEP module, never the
-// barrel: `addon-peer-bytes-facility.ts` reached for `@camstack/types` and
+// barrel: `addon-peer-bytes-facility.ts` reached for `@dominevo/types` and
 // pulled the whole schema graph into every forked runner — the ~146MB per
 // runner this subpath exists to prevent (D28).
 export {

@@ -9,7 +9,7 @@ import {
   type DeviceType,
   type EventCatalog,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { isRecord } from '../shared/device-state-changed.js'
 
 /** One row of the slim device listing: what resolves a `(addonId, stableId)` ref and types an existing target. */

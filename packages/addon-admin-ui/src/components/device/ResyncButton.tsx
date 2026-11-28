@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { RefreshCw } from 'lucide-react'
-import { useDeviceManagerAdoptionResync, Button } from '@camstack/ui-library'
+import { useDeviceManagerAdoptionResync, Button } from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 
 interface ResyncButtonProps {

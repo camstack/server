@@ -1,4 +1,4 @@
-import { HumiditySensorStatusSchema } from '@camstack/types'
+import { HumiditySensorStatusSchema } from '@dominevo/types'
 import { iface, numericValueField } from './shared.js'
 import { SENSOR_MIN_INTERVAL_MS } from './temperature.js'
 import type { GenericAdapter } from './types.js'

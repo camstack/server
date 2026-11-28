@@ -10,7 +10,7 @@
  *   - The node page lists only cameras CURRENTLY placed there, and shows the
  *     roles it holds as labels, not as checkbox look-alikes.
  */
-import { selectOption, selectOptionLabels } from '@camstack/ui-library/testing'
+import { selectOption, selectOptionLabels } from '@dominevo/ui-library/testing'
 import * as jestDomMatchers from '@testing-library/jest-dom/matchers'
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import type { ReactElement } from 'react'
@@ -46,7 +46,7 @@ vi.mock('../assignments/node-color-map', () => ({
     nodeId === 'hub' ? 'node-a' : 'node-b',
 }))
 
-vi.mock('@camstack/ui-library', async (importOriginal) => {
+vi.mock('@dominevo/ui-library', async (importOriginal) => {
   // Deep source import uses `.js` (TS ESM) — `.tsx` trips TS5097 under tsconfig.spec.
   const { RoleNodePill } = await import(
     '../../../../../ui-library/src/composites/role-node-pill.js'

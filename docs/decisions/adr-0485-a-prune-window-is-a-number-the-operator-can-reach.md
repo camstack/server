@@ -70,7 +70,7 @@ What this costs, measured rather than estimated:
   against ~80 MiB under the count bound. A rule that fires once a night goes the
   other way, from over six months of history to 14 days.
 - **The ops-log knob ships in the framework closure**, not with
-  `camstack deploy` like the four beside it. That asymmetry is the price of the
+  `dominevo deploy` like the four beside it. That asymmetry is the price of the
   operator's "uniform" — one document for everything log-shaped.
 - **`keptMaxAgeMs` is `number | null` and `??` is now wrong on it.** `null` is
   "forever" and the default is 14 days; folding one into the other is the exact

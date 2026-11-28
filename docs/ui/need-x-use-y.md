@@ -7,7 +7,7 @@ covers:
 
 # Need X → use Y
 
-One row per need, both clients. The admin column is `@camstack/ui-library`
+One row per need, both clients. The admin column is `@dominevo/ui-library`
 unless the cell names an admin-ui path; the viewer column is the viewer kit
 (`camstack/src/components/ui/`, a separate repository). `npm run ui:find`
 searches this table and the library catalogue together, so keep the first

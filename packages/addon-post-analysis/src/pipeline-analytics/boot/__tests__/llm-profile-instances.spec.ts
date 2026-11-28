@@ -3,7 +3,7 @@
  * addon. The facts carry model, kind, baseUrl, enabled and vision support, and never a key: the
  * stored key arrives as a secret view and must not be copied into the facts. Every value is fabricated.
  */
-import type { IntegrationInstance } from '@camstack/types'
+import type { IntegrationInstance } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { type LlmProfileApi, listLlmProfileFacts } from '../llm-profile-instances.js'
 

@@ -20,7 +20,7 @@ import {
   type MigrationProcedureResult,
   preconditionOf,
   type StoredKeyRead,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { HaInstanceSettingsPorts } from './legacy-integration-rows.js'
 
 export const HA_PROVIDER_ID = 'provider-homeassistant'

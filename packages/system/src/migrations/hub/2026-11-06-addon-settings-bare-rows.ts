@@ -21,8 +21,8 @@
  * A `plan` body: it reads, the engine applies the edit under a precondition on the rows as read.
  * A second run finds every row canonical and plans nothing.
  */
-import { nodeIdOfScopedKey } from '@camstack/types/addon'
-import { preconditionOf, type MigrationMeta } from '@camstack/types'
+import { nodeIdOfScopedKey } from '@dominevo/types/addon'
+import { preconditionOf, type MigrationMeta } from '@dominevo/types'
 import type {
   HubPlanMigration,
   MigrationDatabase,

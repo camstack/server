@@ -1,5 +1,5 @@
-import type { AddonApi, SwitchOptions } from '@camstack/types'
-import { CompositionSchema } from '@camstack/types'
+import type { AddonApi, SwitchOptions } from '@dominevo/types'
+import { CompositionSchema } from '@dominevo/types'
 import { TRPCClientError } from '@trpc/client'
 import { describe, expect, it } from 'vitest'
 import { createChildCapDispatch } from '../../../kernel/moleculer/child-cap-dispatch.js'

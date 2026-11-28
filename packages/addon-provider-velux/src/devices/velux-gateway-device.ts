@@ -8,7 +8,7 @@ import {
   errMsg,
   type InferNativeProvider,
   rebootCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { veluxGatewayDeviceSchema } from '../config.js'
 import {
   VELUX_GATEWAY_FAULT_TYPES,

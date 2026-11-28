@@ -5,7 +5,7 @@ import {
   type AccessoryChildSpec,
   type DeviceContext,
   type DeviceFeature,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { ENPAL_SYSTEM } from '../config.js'
 import {
   accessoryChildSpecs,

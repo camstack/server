@@ -1,5 +1,5 @@
-import { Button, IconButton, useAlertsList, useAlertsMarkRead } from '@camstack/ui-library'
-import type { Alert } from '@camstack/types'
+import { Button, IconButton, useAlertsList, useAlertsMarkRead } from '@dominevo/ui-library'
+import type { Alert } from '@dominevo/types'
 import { useQueryClient } from '@tanstack/react-query'
 import { X } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'

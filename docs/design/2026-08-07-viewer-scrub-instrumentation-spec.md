@@ -1,7 +1,7 @@
 # Viewer spec — scrub instrumentation (the client half of D69)
 
 > Status: to implement in the VIEWER app (the `camstack/` submodule →
-> github.com/camstack/viewer.git, `src/`). The hub half is DONE
+> github.com/dominevo/viewer.git, `src/`). The hub half is DONE
 > ([D69](../decisions/adr-0070.md)): the feeder emits one per-drag aggregate
 > with every phase, and the `scrubTo` control message already accepts the
 > mapping hint this document tells you to send. Written so a viewer session
@@ -120,7 +120,7 @@ for and never saw, and it is one query away with these fields.
 2. Loki, viewer stream: `scrub:drag-timeline` present, with `fineSamples > 0`.
    Absent ⇒ the `ALWAYS_SHIP_SCOPES` entry is missing (§2).
 3. Loki, hub stream, same minute:
-   `{container="CamStack"} |= "scrub-feeder:drag-end" | json | mapFine > 0`.
+   `{container="Dominevo"} |= "scrub-feeder:drag-end" | json | mapFine > 0`.
    `mapFine` still `0` while the viewer reports `fineSamples > 0` ⇒ the hint is
    not reaching the wire (§1 — most likely a bridge wrapper dropped the second
    argument).

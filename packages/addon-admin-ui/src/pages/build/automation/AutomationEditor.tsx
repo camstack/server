@@ -27,7 +27,7 @@ import {
   coreBlockAddonId,
   generateAutomationBlock,
   validateRecipeBounds,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   Badge,
   Button,
@@ -36,7 +36,7 @@ import {
   LogStream,
   useCoreBlocksGetTraces,
   useSystemGetSiteLocation,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { ScrollText, Workflow } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'

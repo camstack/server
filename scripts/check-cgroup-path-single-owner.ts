@@ -13,7 +13,7 @@
  * ```
  *
  * Docker gives the container its own cgroup namespace, so `/proc/self/cgroup`
- * inside `CamStack` reads the single line `0::/` and the whole hierarchy is at
+ * inside `Dominevo` reads the single line `0::/` and the whole hierarchy is at
  * the mount root. `native-metrics` runs INSIDE that container. A path copied
  * out of a host-side investigation — which is how this number was first read,
  * by hand, over ssh on 2026-08-29 — reads `ENOENT` in production and reports

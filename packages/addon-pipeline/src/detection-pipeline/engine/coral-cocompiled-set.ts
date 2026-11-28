@@ -12,7 +12,7 @@
  * only grows — it is reset by the pool's own lifetime (idle eviction, a
  * respawn), never by a dispatch that happens not to carry a step.
  */
-import type { ModelCatalogEntry, PipelineDefaultStep } from '@camstack/types'
+import type { ModelCatalogEntry, PipelineDefaultStep } from '@dominevo/types'
 import { flattenEnabledVideoSteps } from './step-utils.js'
 import type { CoCompiledSet, CoCompiledSetMember } from '../registry/edgetpu-cocompiled-sets.js'
 

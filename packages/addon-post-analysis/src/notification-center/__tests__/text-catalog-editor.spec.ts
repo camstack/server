@@ -18,7 +18,7 @@
  * surface's whole job is that the words survive a restart.
  */
 
-import type { InMemoryRecords } from '@camstack/types'
+import type { InMemoryRecords } from '@dominevo/types'
 import { ncRecordKinds } from '../record-kinds.js'
 import { makeNcRecords } from './support/nc-test-deps.js'
 import { beforeEach, describe, expect, it } from 'vitest'

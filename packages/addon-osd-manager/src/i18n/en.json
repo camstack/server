@@ -14,7 +14,7 @@
       "static": "Static text",
       "template": "Device template"
     },
-    "noneHint": "Writes blank overlay text. The binding stays so CamStack keeps owning this slot.",
+    "noneHint": "Writes blank overlay text. The binding stays so Dominevo keeps owning this slot.",
     "text": "Text",
     "namedTemplate": "Named template",
     "noTemplates": "No templates yet — create one in the Templates tab.",
@@ -115,7 +115,7 @@
     "save": "Save",
     "readOnly": "read-only",
     "cameraOff": "camera off",
-    "ownedByCamera": "This slot is owned by the camera and cannot be bound from CamStack.",
+    "ownedByCamera": "This slot is owned by the camera and cannot be bound from Dominevo.",
     "currently": "Currently “{{text}}”."
   },
   "pick": {

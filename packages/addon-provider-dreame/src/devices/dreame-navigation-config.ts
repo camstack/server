@@ -2,7 +2,7 @@ import {
   type NavigationActionEntry,
   type NavigationFeatures,
   NAVIGATION_ACTION_CATALOG,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /**
  * DATA-DRIVEN feature flags for the Dreame navigation surface. Keeping these as

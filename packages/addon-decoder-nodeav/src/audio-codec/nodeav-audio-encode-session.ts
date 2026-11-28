@@ -17,7 +17,7 @@
  * a `closed` guard makes each method a no-op after teardown. Native access is
  * synchronous so the reusable frames/packet are never re-entered mid-encode.
  */
-import type { AudioEncodedChunk, IScopedLogger } from '@camstack/types'
+import type { AudioEncodedChunk, IScopedLogger } from '@dominevo/types'
 import type { NodeAvRuntime } from './nodeav-runtime-loader.js'
 import { resolveAudioCodecAlias, type AudioPcmFormat } from './codec-catalog.js'
 import {

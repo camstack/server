@@ -16,7 +16,7 @@ import {
   type MigrationPlan,
   type MigrationProcedureResult,
   preconditionOf,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { ADDON_SETTINGS_TABLE, SETTINGS_NODE_ID, nodeKeyOf } from '../../settings-per-node.js'
 import type { TailnetBody } from '../tailnet-record-kinds.js'
 

@@ -2,7 +2,7 @@
   "lock": {
     "endpointId": "7__dev",
     "manufacturerName": "camstack",
-    "description": "CamStack lock",
+    "description": "Dominevo lock",
     "friendlyName": "Dev lock",
     "displayCategories": ["SMARTLOCK"],
     "capabilities": [
@@ -47,7 +47,7 @@
   "contact": {
     "endpointId": "7__dev",
     "manufacturerName": "camstack",
-    "description": "CamStack sensor",
+    "description": "Dominevo sensor",
     "friendlyName": "Dev contact",
     "displayCategories": ["CONTACT_SENSOR"],
     "capabilities": [
@@ -92,7 +92,7 @@
   "motionPresence": {
     "endpointId": "7__dev",
     "manufacturerName": "camstack",
-    "description": "CamStack sensor",
+    "description": "Dominevo sensor",
     "friendlyName": "Dev motionPresence",
     "displayCategories": ["MOTION_SENSOR"],
     "capabilities": [
@@ -137,7 +137,7 @@
   "temperature": {
     "endpointId": "7__dev",
     "manufacturerName": "camstack",
-    "description": "CamStack sensor",
+    "description": "Dominevo sensor",
     "friendlyName": "Dev temperature",
     "displayCategories": ["TEMPERATURE_SENSOR"],
     "capabilities": [
@@ -182,7 +182,7 @@
   "climateSensors": {
     "endpointId": "7__dev",
     "manufacturerName": "camstack",
-    "description": "CamStack sensor",
+    "description": "Dominevo sensor",
     "friendlyName": "Dev climateSensors",
     "displayCategories": ["TEMPERATURE_SENSOR"],
     "capabilities": [
@@ -241,7 +241,7 @@
   "switch": {
     "endpointId": "7__dev",
     "manufacturerName": "camstack",
-    "description": "CamStack switch",
+    "description": "Dominevo switch",
     "friendlyName": "Dev switch",
     "displayCategories": ["SWITCH"],
     "capabilities": [
@@ -286,7 +286,7 @@
   "siren": {
     "endpointId": "7__dev",
     "manufacturerName": "camstack",
-    "description": "CamStack siren",
+    "description": "Dominevo siren",
     "friendlyName": "Dev siren",
     "displayCategories": ["SWITCH"],
     "capabilities": [
@@ -331,7 +331,7 @@
   "light": {
     "endpointId": "7__dev",
     "manufacturerName": "camstack",
-    "description": "CamStack light",
+    "description": "Dominevo light",
     "friendlyName": "Dev light",
     "displayCategories": ["LIGHT"],
     "capabilities": [
@@ -376,7 +376,7 @@
   "dimmer": {
     "endpointId": "7__dev",
     "manufacturerName": "camstack",
-    "description": "CamStack switch",
+    "description": "Dominevo switch",
     "friendlyName": "Dev dimmer",
     "displayCategories": ["LIGHT"],
     "capabilities": [

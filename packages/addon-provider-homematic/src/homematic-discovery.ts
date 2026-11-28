@@ -4,7 +4,7 @@ import {
   type DiscoveredChildDevice,
   deviceAdminLinkCapability,
   gatewayDeviceName,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { inferHmDeviceType, mapHmDeviceChannels } from './homematic-mapping.js'
 import { deriveHmEntityPreviews } from './homematic-entity-derive.js'
 
@@ -61,7 +61,7 @@ export interface BuildCcuGatewayCandidateInput {
   readonly integrationName: string
   /** Whether the CCU session is up (drives the candidate's status). */
   readonly online: boolean
-  /** Native id -> adopted CamStack device id, for the devices already adopted. */
+  /** Native id -> adopted Dominevo device id, for the devices already adopted. */
   readonly adopted: ReadonlyMap<string, number>
 }
 
@@ -101,7 +101,7 @@ export function buildCcuGatewayCandidate(
  * `rooms` carries the CCU room assignment(s) (populated only when WebUI
  * credentials are configured on the integration); the first entry is surfaced in
  * `metadata.externalLocation` so the adoption flow can import it as a
- * CamStack location.
+ * Dominevo location.
  *
  * The firmware fields (`firmware` / `availableFirmware` / `updatable` /
  * `firmwareUpdateState`) are included so the per-entity preview can derive a
@@ -123,7 +123,7 @@ export type HmDiscoverable = Pick<
 export interface BuildHmCandidatesInput {
   readonly integrationId: string
   readonly devices: readonly HmDiscoverable[]
-  /** Device native id ({@link deviceNativeId}) -> adopted CamStack device id. */
+  /** Device native id ({@link deviceNativeId}) -> adopted Dominevo device id. */
   readonly adopted: ReadonlyMap<string, number>
 }
 

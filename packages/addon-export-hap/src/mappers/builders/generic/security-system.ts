@@ -41,7 +41,7 @@
  * D393, or no status read yet): refused. Only a panel that said "no PIN"
  * (`false`) is driven from the Home app.
  */
-import { type AlarmArmMode, AlarmPanelStatusSchema } from '@camstack/types'
+import { type AlarmArmMode, AlarmPanelStatusSchema } from '@dominevo/types'
 import {
   Characteristic,
   type CharacteristicValue,

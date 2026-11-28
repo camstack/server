@@ -19,7 +19,7 @@ interface StatusSlice {
 const statusSlice = vi.hoisted(() => ({ current: undefined as StatusSlice | undefined }))
 const resolveCalls = vi.hoisted(() => ({ args: [] as unknown[][] }))
 
-vi.mock('@camstack/ui-library', () => ({
+vi.mock('@dominevo/ui-library', () => ({
   useSystem: () => ({ trpcClient: {} }),
   useDeviceProxy: () => ({ state: { deviceStatus: {} } }),
   useDeviceStateSlice: () => statusSlice.current,

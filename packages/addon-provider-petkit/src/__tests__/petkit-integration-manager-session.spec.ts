@@ -1,5 +1,5 @@
 import { PetkitAuthError } from '@apocaliss92/nodepetkit'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { PetkitConfig } from '../config.js'
 import { type PetkitFacadeLike, PetkitIntegrationManager } from '../petkit-integration-manager.js'

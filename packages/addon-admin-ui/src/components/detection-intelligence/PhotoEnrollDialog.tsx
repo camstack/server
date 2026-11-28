@@ -43,7 +43,7 @@ import {
   useSystem,
   FileInput,
   Input,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { AlertTriangle, ImagePlus, Loader2, RotateCw, UserRound } from 'lucide-react'
 import { useCallback, useMemo, useRef, useState } from 'react'

@@ -1,4 +1,4 @@
-import { Button, Checkbox, FormField, ItemFormDialog, Select } from '@camstack/ui-library'
+import { Button, Checkbox, FormField, ItemFormDialog, Select } from '@dominevo/ui-library'
 import { ListTree } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import type { CcuProgram, ProgramKey } from '../ccu/ccu-schemas.js'

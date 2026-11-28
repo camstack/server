@@ -2,7 +2,7 @@
  * The recorder's OWN durable placement state (`recordingPlacement`).
  *
  * It lives here and not on `RecordingConfigSchema` deliberately: that schema is
- * strict, lives in `@camstack/types`, and every field added to it needs a
+ * strict, lives in `@dominevo/types`, and every field added to it needs a
  * framework train before the recorder can read it. Placement is recorder-owned
  * bookkeeping — a per-(camera, profile) location assignment plus the volume ids
  * the mount probe remembers — so it belongs in the recorder's own addon-store
@@ -12,7 +12,7 @@
  * assignment yet", which every caller already handles by resolving placement
  * from scratch.
  */
-import { createDurableState } from '@camstack/types'
+import { createDurableState } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   assignmentKey,

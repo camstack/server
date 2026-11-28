@@ -13,8 +13,8 @@ import {
   useJobsList,
   type DataColumn,
   type DataTableFilterConfig,
-} from '@camstack/ui-library'
-import type { Job } from '@camstack/types'
+} from '@dominevo/ui-library'
+import type { Job } from '@dominevo/types'
 import { Activity } from 'lucide-react'
 import { useMemo, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'

@@ -158,5 +158,5 @@ measurement is taken, not about code shape, so no guard can see a violation. Wha
 it leaves behind instead is the method, reproducible in ~3 minutes: `kill -USR1`
 the runner's container pid, poll `process.memoryUsage()` over
 `Runtime.evaluate`, integrate the positive deltas, divide by `/proc/<pid>/io`,
-and close the inspector. Any future amplification figure for a CamStack process
+and close the inspector. Any future amplification figure for a Dominevo process
 that is not accompanied by those two numbers should be treated as unmeasured.

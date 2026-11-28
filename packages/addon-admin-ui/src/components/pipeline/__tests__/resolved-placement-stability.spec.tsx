@@ -50,7 +50,7 @@ vi.mock('../assignments/node-color-map', () => ({
     nodeId === 'hub' ? 'node-a' : 'node-b',
 }))
 
-vi.mock('@camstack/ui-library', async (importOriginal) => {
+vi.mock('@dominevo/ui-library', async (importOriginal) => {
   // Deep source import uses `.js` (TS ESM) — `.tsx` trips TS5097 under tsconfig.spec.
   const { RoleNodePill } = await import(
     '../../../../../ui-library/src/composites/role-node-pill.js'

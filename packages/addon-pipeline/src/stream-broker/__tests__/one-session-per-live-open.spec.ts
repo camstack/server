@@ -18,7 +18,7 @@ import type {
   EncodedPacket,
   BrokerStats,
   Unsubscribe,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { BrokerWebrtcServer } from '../webrtc/broker-webrtc-server.js'
 
 /** What the mocked session saw. */

@@ -144,7 +144,7 @@ was `camera-grid-layout`, converted on 2026-09-19.
   (`packages/types/src/interfaces/config-ui.ts`) or the device page renders the
   raw tab id as its label. `navigation` and `consumables` already have entries
   there, and their label, icon and position in the tab bar are a
-  `@camstack/types` constant. So the placement changes that are most likely to
+  `@dominevo/types` constant. So the placement changes that are most likely to
   be asked for still cost a framework publish, whichever mechanism declares the
   section — which shrinks the "the addon owns its placement" gain to section
   order within the tab.

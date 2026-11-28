@@ -102,21 +102,21 @@ const { execFileSync } = require('node:child_process')
 // shards. `vitest` is the shard `v` ("i/n") handed to the package's own test
 // script after `--`; an unsplit shard has none.
 const SHARDS = {
-  'system-1': { p: ['@camstack/server-framework'], v: '1/2' },
-  'system-2': { p: ['@camstack/server-framework'], v: '2/2' },
-  'pipeline-1': { p: ['@camstack/addon-pipeline'], v: '1/2' },
-  'pipeline-2': { p: ['@camstack/addon-pipeline'], v: '2/2' },
-  'post-analysis-1': { p: ['@camstack/addon-post-analysis'], v: '1/3' },
-  'post-analysis-2': { p: ['@camstack/addon-post-analysis'], v: '2/3' },
-  'post-analysis-3': { p: ['@camstack/addon-post-analysis'], v: '3/3' },
-  'admin-ui-1': { p: ['@camstack/addon-admin-ui'], v: '1/3' },
-  'admin-ui-2': { p: ['@camstack/addon-admin-ui'], v: '2/3' },
-  'admin-ui-3': { p: ['@camstack/addon-admin-ui'], v: '3/3' },
-  'ui-library': { p: ['@camstack/ui-library'] },
-  'server-1': { p: ['@camstack/server'], v: '1/3' },
-  'server-2': { p: ['@camstack/server'], v: '2/3' },
-  'server-3': { p: ['@camstack/server'], v: '3/3' },
-  core: { p: ['@camstack/types', '@camstack/addon-pipeline-orchestrator'] },
+  'system-1': { p: ['@dominevo/server-framework'], v: '1/2' },
+  'system-2': { p: ['@dominevo/server-framework'], v: '2/2' },
+  'pipeline-1': { p: ['@dominevo/addon-pipeline'], v: '1/2' },
+  'pipeline-2': { p: ['@dominevo/addon-pipeline'], v: '2/2' },
+  'post-analysis-1': { p: ['@dominevo/addon-post-analysis'], v: '1/3' },
+  'post-analysis-2': { p: ['@dominevo/addon-post-analysis'], v: '2/3' },
+  'post-analysis-3': { p: ['@dominevo/addon-post-analysis'], v: '3/3' },
+  'admin-ui-1': { p: ['@dominevo/addon-admin-ui'], v: '1/3' },
+  'admin-ui-2': { p: ['@dominevo/addon-admin-ui'], v: '2/3' },
+  'admin-ui-3': { p: ['@dominevo/addon-admin-ui'], v: '3/3' },
+  'ui-library': { p: ['@dominevo/ui-library'] },
+  'server-1': { p: ['@dominevo/server'], v: '1/3' },
+  'server-2': { p: ['@dominevo/server'], v: '2/3' },
+  'server-3': { p: ['@dominevo/server'], v: '3/3' },
+  core: { p: ['@dominevo/types', '@dominevo/addon-pipeline-orchestrator'] },
 }
 const HEAVY_SHARDS = Object.keys(SHARDS)
 const LIGHT_SHARDS = ['light-a', 'light-b', 'light-c']
@@ -126,18 +126,18 @@ const LIGHT_SHARDS = ['light-a', 'light-b', 'light-c']
 // rest still land by hash of their NAME, so a project the table does not know
 // can never fall between shards. Weights are the vitest Duration of that run.
 const LIGHT_PINS = {
-  '@camstack/addon-export-alexa': 0,
-  '@camstack/addon-training': 1,
-  '@camstack/addon-provider-homeassistant': 2,
-  '@camstack/addon-model-studio': 2,
-  '@camstack/addon-provider-reolink': 0,
-  '@camstack/addon-export-hap': 1,
-  '@camstack/addon-ai': 1,
-  '@camstack/addon-provider-velux': 1,
-  '@camstack/addon-provider-bosch': 1,
-  '@camstack/addon-provider-dreame': 0,
-  '@camstack/addon-osd-manager': 2,
-  '@camstack/addon-provider-homematic': 0,
+  '@dominevo/addon-export-alexa': 0,
+  '@dominevo/addon-training': 1,
+  '@dominevo/addon-provider-homeassistant': 2,
+  '@dominevo/addon-model-studio': 2,
+  '@dominevo/addon-provider-reolink': 0,
+  '@dominevo/addon-export-hap': 1,
+  '@dominevo/addon-ai': 1,
+  '@dominevo/addon-provider-velux': 1,
+  '@dominevo/addon-provider-bosch': 1,
+  '@dominevo/addon-provider-dreame': 0,
+  '@dominevo/addon-osd-manager': 2,
+  '@dominevo/addon-provider-homematic': 0,
 }
 const heavy = new Set(Object.values(SHARDS).flatMap((s) => s.p))
 const hash = (name) => {

@@ -12,7 +12,7 @@
  */
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { RowMapStore, type RowMapSpec } from '../row-map-store.js'
 import { callsOn, makeSettingsStoreApi, type FakeSettingsStore } from './settings-store-api.js'
 

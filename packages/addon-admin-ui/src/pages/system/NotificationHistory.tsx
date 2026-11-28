@@ -20,9 +20,9 @@
  * so the URL and the filter never disagree (`notification-history.helpers.ts`).
  */
 
-import type { NcHistoryEntry, NcHistoryStatus, NcRule } from '@camstack/types'
-import { DeviceType } from '@camstack/types'
-import type { DataColumn } from '@camstack/ui-library'
+import type { NcHistoryEntry, NcHistoryStatus, NcRule } from '@dominevo/types'
+import { DeviceType } from '@dominevo/types'
+import type { DataColumn } from '@dominevo/ui-library'
 import {
   Badge,
   Button,
@@ -38,7 +38,7 @@ import {
   TABLE_SCROLL_MAX_H,
   useDeviceManagerListAll,
   useSystem,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useQuery } from '@tanstack/react-query'
 import { History, Loader2, RefreshCw } from 'lucide-react'
 import { useMemo, useState } from 'react'

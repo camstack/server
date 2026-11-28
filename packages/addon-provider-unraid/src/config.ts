@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import type { ConfigUISchema } from '@camstack/types'
+import type { ConfigUISchema } from '@dominevo/types'
 
 /** The device-registry `system` tag every Unraid device carries. */
 export const UNRAID_SYSTEM = 'unraid'

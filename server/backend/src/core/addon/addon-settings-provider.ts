@@ -9,15 +9,15 @@
  * panels went empty after the UDS migration; that path is gone.
  */
 import { z } from 'zod'
-import { SCOPED_SETTINGS_SCOPES } from '@camstack/types'
+import { SCOPED_SETTINGS_SCOPES } from '@dominevo/types'
 import type {
   ICamstackAddon,
   ConfigUISchema,
   ConfigUISchemaWithValues,
   ScopedSettingsScope,
-} from '@camstack/types'
-import type { IAddonSettingsProvider } from '@camstack/types'
-import type { AddonSettingsMethod } from '@camstack/server/system'
+} from '@dominevo/types'
+import type { IAddonSettingsProvider } from '@dominevo/types'
+import type { AddonSettingsMethod } from '@dominevo/server/system'
 import type { AddonCallGateway } from './addon-call-gateway.js'
 
 // ── Dependency interfaces ────────────────────────────────────────────
@@ -145,7 +145,7 @@ function isServiceNotFoundError(err: unknown): boolean {
 // ── Provider factory ─────────────────────────────────────────────────
 
 interface AddonSettingsProviderDeps {
-  /** Look up a loaded IN-PROCESS addon by id (the `@camstack/server/system` builtins). */
+  /** Look up a loaded IN-PROCESS addon by id (the `@dominevo/server/system` builtins). */
   readonly getAddon: AddonLookup
   /** Shared router for forked addon-level calls (hub-local-child / remote). */
   readonly gateway: AddonCallGateway

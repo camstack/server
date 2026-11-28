@@ -1,5 +1,5 @@
-import type { AddonStoreRead, FeatureManifest, ISettingsStoreProvider } from '@camstack/types'
-import { asJsonObject } from '@camstack/types/addon'
+import type { AddonStoreRead, FeatureManifest, ISettingsStoreProvider } from '@dominevo/types'
+import { asJsonObject } from '@dominevo/types/addon'
 import { type BootstrapConfig, RUNTIME_DEFAULTS } from './config-schema.js'
 import type {
   ISettingsStore,
@@ -129,7 +129,7 @@ export class ConfigManager {
   get<T>(configPath: string): T | undefined
   get<T>(configPath: string): T | undefined {
     const resolved = this.resolveConfigValue(configPath)
-    // Single generic type-level bridge — see @camstack/types RuntimeDefaultsShape
+    // Single generic type-level bridge — see @dominevo/types RuntimeDefaultsShape
     // for the canonical typed alternative to `get<T>`.
     return resolved as T | undefined
   }

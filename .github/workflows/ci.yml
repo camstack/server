@@ -203,7 +203,7 @@ jobs:
             server/*/node_modules
           key: node-modules-${{ runner.os }}-${{ runner.arch }}-node${{ env.NODE_VERSION }}-${{ hashFiles('package-lock.json', 'patches/**') }}
 
-      # `nx.json` lists `@camstack/nx-plugin` as a workspace plugin, and nx
+      # `nx.json` lists `@dominevo/nx-plugin` as a workspace plugin, and nx
       # refuses to load a local plugin whose `main` (./dist/index.js) does not
       # exist. A hosted runner is a fresh clone: EVERY nx command dies
       # with "Unable to resolve local plugin" before doing any work. Build it
@@ -214,7 +214,7 @@ jobs:
           NODE_OPTIONS: "--max-old-space-size=2048"
       # The same build Checks runs, from the Nx cache: on a warm key this is a
       # cache read, on a cold one it is the one full build this job pays.
-      # Tests resolve `@camstack/types` (and sdk /
+      # Tests resolve `@dominevo/types` (and sdk /
       # ui-library / system) through `dist/`, so it cannot be skipped — see the
       # 2026-07-31 note on the `typecheck` job's build step.
       #
@@ -290,7 +290,7 @@ jobs:
           if [ -f packages/system/dist/addon-runner.js ]; then
             echo "packages/system/dist is already built"
           else
-            scripts/ci/mem-step.sh build-system 12000 -- npx nx run @camstack/server-framework:build
+            scripts/ci/mem-step.sh build-system 12000 -- npx nx run @dominevo/server-framework:build
           fi
         env:
           NODE_OPTIONS: "--max-old-space-size=4096"
@@ -303,7 +303,7 @@ jobs:
       # runner's heap by more than 45 MB (scripts/addon-dist-footprint-budgets.json
       # grants a reasoned exception). Reads every packages/addon-*/dist, so it
       # runs right after the build. The runner-dist step above also probes
-      # `@camstack/server/system/addon-utils` (seven hub runners load it).
+      # `@dominevo/server/system/addon-utils` (seven hub runners load it).
       #
       # ~60 s over every addon dist, so a push runs it where an addon's built
       # output can change (verify:push does the same): the addons whose own
@@ -375,7 +375,7 @@ jobs:
       #
       # Cached under the workspace (gitignored). A hosted disk does not
       # outlive the job. After the build: the script imports
-      # `@camstack/types/node` from dist.
+      # `@dominevo/types/node` from dist.
       - name: Restore the pinned ffmpeg
         if: matrix.shard != 'typecheck' && matrix.shard != 'guards'
         uses: actions/cache@v4

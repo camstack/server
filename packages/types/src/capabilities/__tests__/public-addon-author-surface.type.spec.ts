@@ -1,9 +1,9 @@
 /**
  * An external addon author imports these from the package entry
- * (`src/index.ts`, published as `@camstack/types`). They are not reachable
+ * (`src/index.ts`, published as `@dominevo/types`). They are not reachable
  * through a deep path the package does not export.
  *
- * `fakeAddonContext` comes from `src/testing.ts` (`@camstack/types/testing`),
+ * `fakeAddonContext` comes from `src/testing.ts` (`@dominevo/types/testing`),
  * never the root entry.
  *
  * Disarm: drop `statusInstanceOf` from `capabilities/index.ts` — the import

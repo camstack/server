@@ -15,7 +15,7 @@
  *  - LABELS have no exclusion on the wire, so "All except these" is not
  *    offered, and there is no vocabulary to pick from: the list is typed.
  */
-import type { NcConditions } from '@camstack/types'
+import type { NcConditions } from '@dominevo/types'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { PickerFleetView } from './device-fleet-view'

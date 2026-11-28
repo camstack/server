@@ -5,7 +5,7 @@ import type {
   Classification,
   DetectionEvent,
   DetectionEventType,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { renameKey, renameMember } from '../tracker-v2/rename.js'
 import { DEFAULT_EVENT_EMITTER_CONFIG, type EventEmitterConfig } from './event-filter.js'
 

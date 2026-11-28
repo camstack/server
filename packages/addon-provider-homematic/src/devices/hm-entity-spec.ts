@@ -1,5 +1,5 @@
 import { hmPrimaryChildKeys } from './hm-primary-child.js'
-import { DeviceRole, DeviceType } from '@camstack/types'
+import { DeviceRole, DeviceType } from '@dominevo/types'
 import type { HmChannel, HmCustomEntity, HmDevice } from 'nodehomematic'
 import { mapHmDeviceChannels } from '../homematic-mapping.js'
 import {
@@ -60,8 +60,8 @@ type HmActuatorKind = 'switch' | 'cover' | 'light' | 'lock' | 'climate'
 const MAINTENANCE_CHANNEL_TYPE = 'MAINTENANCE'
 
 /**
- * Map a custom-entity kind to the actuator discriminant + its CamStack cap +
- * CamStack DeviceType. Returns null for kinds with no actuator wiring.
+ * Map a custom-entity kind to the actuator discriminant + its Dominevo cap +
+ * Dominevo DeviceType. Returns null for kinds with no actuator wiring.
  */
 function actuatorInfo(
   kind: HmCustomEntity['kind'],

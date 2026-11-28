@@ -1,4 +1,4 @@
-import type { ConfigDeviceMultiSelectField, ConfigDeviceSelectField } from '@camstack/types'
+import type { ConfigDeviceMultiSelectField, ConfigDeviceSelectField } from '@dominevo/types'
 import type { JSX, ReactNode } from 'react'
 import { resolveLabel, type TranslationFn } from '../config-form-builder'
 import { DeviceValuePicker } from './DeviceValuePicker'

@@ -12,11 +12,11 @@ import { t } from '../device/cap-vocabulary/l10n.js'
  * Vendor-neutral **onboard** recording + storage cap — what the CAMERA
  * writes to the CAMERA's own card, on the camera's own schedule.
  *
- * This is NOT `recording.cap.ts`. That one is CamStack's recorder: our
+ * This is NOT `recording.cap.ts`. That one is Dominevo's recorder: our
  * footage ledger, our storage locations, our retention. This one has a
  * different authority — the camera's firmware — and per D62 it stores
  * nothing of its own. Every value here is read from the camera and every
- * write goes back to the camera; there is no CamStack-side mirror that
+ * write goes back to the camera; there is no Dominevo-side mirror that
  * could disagree with the device.
  *
  * ## One shape, two firmwares
@@ -208,7 +208,7 @@ export const RecordingOnboardStatusSchema = z.object({
   /** The primary track's weekly windows, flattened. */
   windows: z.array(RecordWindowSchema),
   /**
-   * How many windows the camera described that CamStack could NOT read —
+   * How many windows the camera described that Dominevo could NOT read —
    * an unrecognised trigger, an unparseable clock, a weekday it does not
    * name.
    *

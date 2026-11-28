@@ -5,7 +5,7 @@ import {
   clusterStepSettingFieldsFor,
   type DeviceStepConfig,
   type PipelineAddonSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { ModelPicker } from './model-picker'
 import { stepModelOptions } from './resolve-step-default-model'
 import { type RootModelInfo, rootSourceState } from './root-model-source'

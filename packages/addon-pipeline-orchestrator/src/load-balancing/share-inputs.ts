@@ -2,7 +2,7 @@
  * The two reads of the agent-settings blob the effective shares need (D750),
  * pure so they are tested on their own.
  */
-import type { ShareWeights } from '@camstack/types'
+import type { ShareWeights } from '@dominevo/types'
 import type { AgentSettingsMapBlob } from '../orchestrator-store-schemas.js'
 
 /** The operator's sliders: node `detectWeight` and device `weight` (positive only). */

@@ -6,7 +6,7 @@
  * viewers and its RTSP viewers add up across all of its profile brokers, a
  * camera nobody watches is absent, and the answer is ordered.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { StreamBrokerManager } from '../stream-broker/stream-broker-manager.js'
 

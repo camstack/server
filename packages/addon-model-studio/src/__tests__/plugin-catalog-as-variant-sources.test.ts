@@ -2,8 +2,8 @@
  * plugin catalog manifesto → ModelVariantSource for GroupedModelSelector cards.
  */
 import { describe, expect, it } from 'vitest'
-import { buildModelVariantGroups } from '@camstack/types'
-import type { ModelCatalogEntry } from '@camstack/types'
+import { buildModelVariantGroups } from '@dominevo/types'
+import type { ModelCatalogEntry } from '@dominevo/types'
 import type { PluginCatalogCatalogEntryView } from '../ui/api.js'
 import {
   pluginCatalogEntriesAsVariantSources,

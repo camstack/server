@@ -14,7 +14,7 @@
  * `segmentSeconds` is deliberately large so the liveness watchdog's idle bound
  * cannot fire inside the window these tests advance through.
  */
-import type { RecordingConfig } from '@camstack/types'
+import type { RecordingConfig } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { specRoot } from './spec-root.js'
 import { settleTurns, settleUntil } from './settle.js'

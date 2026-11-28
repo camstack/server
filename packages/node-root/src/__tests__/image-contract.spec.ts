@@ -3,10 +3,10 @@ import { assessImageContract } from '../image-contract.js'
 
 /**
  * The case this module exists for, with its real numbers: on 2026-08-02 the
- * hub was RUNNING `ghcr.io/camstack/camstack-server:intel-1.1.74` — a
+ * hub was RUNNING `ghcr.io/dominevo/camstack-server:intel-1.1.74` — a
  * 13-day-old image from a repository that had been RENAMED and received no
  * builds — while the deployment contract declared
- * `ghcr.io/camstack/camstack:intel-latest` (then 1.2.32). The template guard
+ * `ghcr.io/dominevo/dominevo:intel-latest` (then 1.2.32). The template guard
  * passed every day, `runningVersion` was current via applyServerUpdate, and
  * NOTHING compared the running image to the contract. The agent had the right
  * repository but was pinned to `intel-1.2.0`.

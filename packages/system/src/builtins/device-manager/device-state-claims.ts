@@ -27,7 +27,7 @@ import type {
   FieldClaim,
   FieldClaimMode,
   IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { DeviceManagerSettings } from './device-meta-store.js'
 import { refused } from './device-state-claim-views.js'
 import type { DeviceStateMirror } from './device-state-mirror.js'

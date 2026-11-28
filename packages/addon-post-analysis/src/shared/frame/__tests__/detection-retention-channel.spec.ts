@@ -4,7 +4,7 @@
  * independent pulls and must stay available.
  */
 import { describe, expect, it } from 'vitest'
-import type { FrameHandle } from '@camstack/types'
+import type { FrameHandle } from '@dominevo/types'
 import { resolveFrame } from '../resolve-frame.js'
 
 function handle(): FrameHandle {

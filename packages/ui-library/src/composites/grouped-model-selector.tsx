@@ -3,7 +3,7 @@
  *
  * The catalog is a FLAT list of models (ids like `yolo26s`, `yolo26s-int8`);
  * this folds it into a `family → tier → variant` tree (see
- * `buildModelVariantGroups` in `@camstack/types`) so the operator picks
+ * `buildModelVariantGroups` in `@dominevo/types`) so the operator picks
  * "YOLO26 → Small → Int8" instead of scanning a flat dropdown of every
  * size×quantization. The selected value stays the flat model id.
  *
@@ -21,7 +21,7 @@ import {
   resolveVariantModelId,
   type ModelVariantOption,
   type ModelVariantSource,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { cn } from '../lib/cn'
 
 function Chip({

@@ -10,7 +10,7 @@ import {
   DeclarationRefusedError,
   NoCallerError,
   UnknownRecordKindError,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { RecordsEngine } from '../records/records-engine.js'
 import { RecordsProvider } from '../records/records-provider.js'

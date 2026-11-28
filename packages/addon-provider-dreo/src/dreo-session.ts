@@ -3,7 +3,7 @@
  * Dreo sign-in is a lost session; transport churn and offline devices are not.
  */
 
-import { IntegrationSessionReporter, type SessionLossReason } from '@camstack/types'
+import { IntegrationSessionReporter, type SessionLossReason } from '@dominevo/types'
 import { DreoBridgeError } from './dreo-bridge.js'
 
 /** The worker kept crashing and its respawn budget is spent: the account is offline for good. */

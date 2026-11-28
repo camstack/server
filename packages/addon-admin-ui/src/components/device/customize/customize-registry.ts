@@ -4,7 +4,7 @@
  * changes behaviour. A piece a kind lacks is a typed `gap` naming the phase
  * that removes it; the type refuses any other omission.
  */
-import { LINKED_TRIGGER_TEMPLATE_ID } from '@camstack/types'
+import { LINKED_TRIGGER_TEMPLATE_ID } from '@dominevo/types'
 import { planCustomizationSave } from './customization-save'
 import {
   CUSTOMIZE_KINDS,

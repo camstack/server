@@ -7,8 +7,8 @@
  * never unlocks (corpus export) × a legacy non-admin principal beside it,
  * which must still meet "Admin required".
  */
-import type { UserScope, ViewerTokenScope } from '@camstack/types'
-import { buildRoleScopes } from '@camstack/types'
+import type { UserScope, ViewerTokenScope } from '@dominevo/types'
+import { buildRoleScopes } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { DeviceScopeLookup } from '../../api/trpc/scope-access.js'
 import type { TrpcContext } from '../../api/trpc/trpc.context.js'

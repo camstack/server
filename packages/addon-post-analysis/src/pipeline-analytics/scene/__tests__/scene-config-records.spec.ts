@@ -5,7 +5,7 @@
  * would pass every read-back, and lose every scene on a respawn.
  */
 import { describe, expect, it, vi } from 'vitest'
-import { SceneMonitorSchema, type SceneMonitor } from '@camstack/types'
+import { SceneMonitorSchema, type SceneMonitor } from '@dominevo/types'
 import { makeAnalyticsRecords } from '../../__tests__/fake-records.js'
 import { makeSilentLogger } from '../../__tests__/test-helpers.js'
 import { SceneStore, sceneKey } from '../scene-store.js'

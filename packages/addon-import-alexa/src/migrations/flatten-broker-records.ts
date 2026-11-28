@@ -10,7 +10,7 @@ import {
   flattenNestedRecords,
   type FlattenRowPorts,
   type MigrationProcedureResult,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export const FLATTEN_BROKER_RECORDS_ID = 'import-alexa/2026-11-04-flatten-broker-records'
 

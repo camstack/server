@@ -15,7 +15,7 @@ vi.mock('../../../lib/broker-oauth-popup', () => ({
 
 const custom = vi.fn()
 vi.mock('../../../lib/mount', () => ({ hubPath: (path: string) => path }))
-vi.mock('@camstack/ui-library', () => ({
+vi.mock('@dominevo/ui-library', () => ({
   useSystem: () => ({ trpcClient: { addons: { custom: { mutate: custom } } } }),
 }))
 

@@ -11,7 +11,7 @@ import {
   ROOM_EXAMPLE_TEMPERATURE_SOURCES,
   ROOM_OCCUPANCY_WINDOW_MS,
   roomCompositionExample,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { CORE_BLOCKS_LOAD_LIMIT, CoreBlockStore } from '../core-block-store.js'
 import { coreBlocksRecordKinds } from '../record-kinds.js'

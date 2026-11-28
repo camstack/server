@@ -3,8 +3,8 @@
  * (`node-supervisor.ts`) — runtime-updatable node packages, phase 3.
  *
  * These read the node's data-dir server-root files (the restart-intent marker
- * + `state.json`) that the node's `@camstack/node-root`-backed update service
- * writes. The data-dir layout constants come straight from `@camstack/node-root`
+ * + `state.json`) that the node's `@dominevo/node-root`-backed update service
+ * writes. The data-dir layout constants come straight from `@dominevo/node-root`
  * (bundled into this shell's dist at build time), so there is one source of
  * truth. Kept out of `node-supervisor.ts` so that module stays import-free and
  * unit-testable; the composition here is trivial (path + fs) and exercised by
@@ -16,7 +16,7 @@ import {
   RESTART_INTENT_FILE,
   SERVER_ROOT_DIRNAME,
   SERVER_ROOT_STATE_FILE,
-} from '@camstack/node-root'
+} from '@dominevo/node-root'
 import {
   toNodeRootStateView,
   type NodeRootStateView,

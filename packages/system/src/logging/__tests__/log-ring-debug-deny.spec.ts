@@ -3,7 +3,7 @@
  * disabled channel never costs ring space.
  */
 import { afterEach, describe, expect, it } from 'vitest'
-import { __resetDebugInterestForTests, getDebugInterest, type LogEntry } from '@camstack/types'
+import { __resetDebugInterestForTests, getDebugInterest, type LogEntry } from '@dominevo/types'
 import { LogRingBuffer } from '../log-ring-buffer.js'
 
 function line(

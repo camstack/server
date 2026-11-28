@@ -14,7 +14,7 @@
  * fps numbers that match what real cameras achieve.
  */
 
-import { customAction, defineCustomActions } from '@camstack/types'
+import { customAction, defineCustomActions } from '@dominevo/types'
 import { z } from 'zod'
 import { BenchStepSchema, type BenchStepShape } from './bench-step-schema.js'
 import {

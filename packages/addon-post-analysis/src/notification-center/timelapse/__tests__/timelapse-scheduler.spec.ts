@@ -6,10 +6,10 @@
  * ALREADY produced it, and — only after a render AND an enqueue both
  * succeeded — stamping it.
  */
-import type { InMemoryRecords } from '@camstack/types'
+import type { InMemoryRecords } from '@dominevo/types'
 import { ncRecordKinds } from '../../record-kinds.js'
-import type { TimelapseRule } from '@camstack/types'
-import { readTimelapseGeneratedAt } from '@camstack/types'
+import type { TimelapseRule } from '@dominevo/types'
+import { readTimelapseGeneratedAt } from '@dominevo/types'
 import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest'
 import { makeSilentLogger } from '../../../pipeline-analytics/__tests__/test-helpers.js'
 import { NcTextCatalog } from '../../text-catalog.js'

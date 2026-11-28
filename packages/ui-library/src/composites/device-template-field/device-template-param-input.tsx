@@ -2,7 +2,7 @@ import {
   type DeviceTemplateParam,
   deviceTemplateCatalogueSentence,
   deviceTemplateParamChoices,
-} from '@camstack/types/device-template-catalogue'
+} from '@dominevo/types/device-template-catalogue'
 import { type ReactNode, useState } from 'react'
 import { useUiText } from '../../contexts/ui-text'
 import { humanizeIdentifier } from '../../lib/capability-label'

@@ -25,7 +25,7 @@ import { NcSnoozeStore } from './snooze-store.js'
 import type { NcSnoozeVerdict, NcSnoozeVerdictSuppressed } from './snooze-verdict.js'
 import { snoozeCoverage, snoozeVerdict } from './snooze-verdict.js'
 import { NcTextCatalog } from './text-catalog.js'
-import type { IScopedLogger, NcSnooze, NcSnoozeInput } from '@camstack/types'
+import type { IScopedLogger, NcSnooze, NcSnoozeInput } from '@dominevo/types'
 import { setTimeout as sleep } from 'node:timers/promises'
 import type { NotificationCenterDeps } from './index.js'
 

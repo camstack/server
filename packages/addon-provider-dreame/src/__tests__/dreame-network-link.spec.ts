@@ -24,7 +24,7 @@ describe('networkLinkFromBars', () => {
   })
 })
 
-import { NETWORK_LINK_UNKNOWN } from '@camstack/types'
+import { NETWORK_LINK_UNKNOWN } from '@dominevo/types'
 import { DreameNetworkLinkMonitor, NETWORK_LINK_CAP_NAME } from '../devices/dreame-network-link.js'
 
 function fakeStore() {

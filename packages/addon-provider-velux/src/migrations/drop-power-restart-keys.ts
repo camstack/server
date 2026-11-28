@@ -5,7 +5,7 @@
  * nothing reads these keys; this removes them. Idempotent: no key left means
  * `already-done`.
  */
-import type { AddonProcedureMigration, MigrationProcedureResult } from '@camstack/types'
+import type { AddonProcedureMigration, MigrationProcedureResult } from '@dominevo/types'
 
 export const VELUX_DROP_POWER_RESTART_KEYS_ID = 'provider-velux/2026-11-21-drop-power-restart-keys'
 

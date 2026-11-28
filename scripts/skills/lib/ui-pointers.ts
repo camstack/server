@@ -100,21 +100,21 @@ export function uiMdcTargets(root: string): MdcTarget[] {
     {
       file: '.cursor/rules/camstack-ui.mdc',
       description:
-        'CamStack UI design system — load before planning, building or restyling any admin-ui page, ui-library component, addon page, widget or viewer screen',
+        'Dominevo UI design system — load before planning, building or restyling any admin-ui page, ui-library component, addon page, widget or viewer screen',
       globs: [],
       body: uiMdcBody(['camstack-ui']),
     },
     {
       file: '.cursor/rules/camstack-ui-admin.mdc',
       description:
-        'CamStack admin UI / ui-library / addon page rules (AdminPage, AdminTabs, IntegrationHub, DataTable, Dialog, theme tokens)',
+        'Dominevo admin UI / ui-library / addon page rules (AdminPage, AdminTabs, IntegrationHub, DataTable, Dialog, theme tokens)',
       globs: uiGlobs(root),
       body: uiMdcBody(['camstack-ui', 'camstack-ui-admin']),
     },
     {
       file: '.cursor/rules/camstack-ui-viewer.mdc',
       description:
-        'CamStack viewer (React Native) UI rules — kit, tokens.ts, SheetModal, i18n en+it; layout changes need the operator',
+        'Dominevo viewer (React Native) UI rules — kit, tokens.ts, SheetModal, i18n en+it; layout changes need the operator',
       globs: VIEWER_GLOBS,
       body: uiMdcBody(['camstack-ui', 'camstack-ui-viewer']),
     },

@@ -3,7 +3,7 @@ import {
   type IDeviceRegistry,
   type DeviceManagerApi,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /**
  * Remove every adopted Dreame PARENT device (children cascade via the kernel)

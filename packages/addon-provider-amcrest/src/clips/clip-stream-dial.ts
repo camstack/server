@@ -43,7 +43,7 @@ import {
   CLIP_STILL_REASON_HEADER,
   clipReasonHeaderValue,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { ClipStreamOutcome, ClipStreamRefusalCode, ClipStreamSink } from './clip-stream.js'
 import type { ClipStreamAudioAsk } from './clip-stream-mux.js'
 

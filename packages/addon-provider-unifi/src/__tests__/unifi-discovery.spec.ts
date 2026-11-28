@@ -3,7 +3,7 @@
  * with its PoE ports as port devices under it (#583), named after the client on the port when
  * one is known, else by number (planning#587).
  */
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { UnifiInfraSnapshot } from '../unifi-client-contract.js'
 import { buildDiscoveryCandidates } from '../unifi-discovery.js'

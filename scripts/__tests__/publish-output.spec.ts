@@ -117,9 +117,9 @@ describe('published-output normalisation', () => {
       file(
         'package.json',
         JSON.stringify({
-          name: '@camstack/addon-agent-ui',
+          name: '@dominevo/addon-agent-ui',
           version: '1.2.275',
-          dependencies: { '@camstack/ui-library': '1.2.330', react: '^19.0.0' },
+          dependencies: { '@dominevo/ui-library': '1.2.330', react: '^19.0.0' },
           camstack: { addons: [{ version: '0.1.0' }] },
         }),
       ),
@@ -141,7 +141,7 @@ describe('published-output normalisation', () => {
       ),
       file(
         'dist/hostInit.mjs',
-        '"@camstack/ui-library": { version: "1.2.331", singleton: true }\n',
+        '"@dominevo/ui-library": { version: "1.2.331", singleton: true }\n',
       ),
       file('dist/index.html', '<script src="/assets/index-Ab12Cd34.js"></script>\n'),
     ]
@@ -150,8 +150,8 @@ describe('published-output normalisation', () => {
         'package.json',
         JSON.stringify({
           camstack: { addons: [{ version: '0.1.0' }] },
-          dependencies: { react: '^19.0.0', '@camstack/ui-library': '*' },
-          name: '@camstack/addon-agent-ui',
+          dependencies: { react: '^19.0.0', '@dominevo/ui-library': '*' },
+          name: '@dominevo/addon-agent-ui',
           version: '9.9.9',
         }),
       ),
@@ -173,7 +173,7 @@ describe('published-output normalisation', () => {
       ),
       file(
         'dist/hostInit.mjs',
-        '"@camstack/ui-library": { version: "1.2.330", singleton: true }\n',
+        '"@dominevo/ui-library": { version: "1.2.330", singleton: true }\n',
       ),
       file('dist/index.html', '<script src="/assets/index-Zz90Yy88.js"></script>\n'),
     ]
@@ -215,7 +215,7 @@ describe('published-output normalisation', () => {
   })
 })
 
-describe('embedded @camstack/types copy', () => {
+describe('embedded @dominevo/types copy', () => {
   // A self-contained addon bundles the types it uses, and a page remote's
   // loadShare shim lists every export of the host-provided types. A types
   // release changes both, and every other addon is not republished for it

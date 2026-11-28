@@ -13,7 +13,7 @@
  * not found`). This suite pins the per-(cap, device) semantics.
  */
 
-import { CapabilityRegistry, DeviceRegistry } from '@camstack/server/system'
+import { CapabilityRegistry, DeviceRegistry } from '@dominevo/server/system'
 import {
   type AddonContext,
   type AddonInitResult,
@@ -24,7 +24,7 @@ import {
   type IScopedLogger,
   type ProviderRegistration,
   type SystemEvent,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { makeRecordsAccessForOwner } from '../../sqlite-storage/__tests__/support/records-world.js'
 import { DeviceManagerAddon } from '../device-manager.addon.js'

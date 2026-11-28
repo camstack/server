@@ -5,7 +5,7 @@
  * backoff. A report whose value is missing is not a value (D393) and is dropped.
  */
 
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IScopedLogger } from '@dominevo/types'
 import type { MatterAttributeReport, MatterEventReport } from './matter-controller.js'
 
 /** First wait before our own re-establishment of an offline node's subscription. */
@@ -61,7 +61,7 @@ export interface MatterSubscribablePeer {
 export interface MatterSubscriptionSupervisorOptions {
   readonly brokerId: string
   readonly logger: IScopedLogger
-  /** CamStack device id for the node container, when the node has been adopted. */
+  /** Dominevo device id for the node container, when the node has been adopted. */
   readonly resolveDeviceId: (nodeId: string) => number | null
   readonly onReport: (report: MatterAttributeReport) => void
   /** Matter events (lock operations, switch presses). Optional: a test may not care. */

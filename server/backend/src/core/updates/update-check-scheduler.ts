@@ -44,8 +44,8 @@
  * state, re-announcing the whole list on the next successful poll. A fallible
  * read never looks like "no updates".
  */
-import type { IScopedLogger, NodeLiveness } from '@camstack/types'
-import { errMsg } from '@camstack/types'
+import type { IScopedLogger, NodeLiveness } from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
 
 /**
  * Default poll cadence: 6 hours. Registry lookups are cheap but not free, and
@@ -87,7 +87,7 @@ export interface UpdateCheckTargets {
   readonly checkHubAddons: () => Promise<unknown>
   /** Installed addon packages reported by one agent. */
   readonly checkAgentAddons: (nodeId: string) => Promise<unknown>
-  /** Framework packages inside the running `@camstack/server` closure. */
+  /** Framework packages inside the running `@dominevo/server` closure. */
   readonly checkFrameworkPackages: () => Promise<unknown>
   /** The node's own runtime-updatable root package. */
   readonly checkNodeServerUpdate: (nodeId: string, isHub: boolean) => Promise<unknown>

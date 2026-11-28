@@ -9,7 +9,7 @@
  *  2. `planDropMovedLinks` (plan): the key is deleted only while the record holds every user the
  *     settings carried; a record that cannot be read leaves the key in place.
  */
-import { type MigrationPlan, type MigrationProcedureResult, preconditionOf } from '@camstack/types'
+import { type MigrationPlan, type MigrationProcedureResult, preconditionOf } from '@dominevo/types'
 import {
   GOOGLE_HOME_NAME,
   GOOGLE_INSTANCE_ID,

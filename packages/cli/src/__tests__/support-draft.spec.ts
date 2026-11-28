@@ -77,7 +77,7 @@ function fakeGh(
   authCode = 0,
   createResult: ProcessResult = {
     code: 0,
-    stdout: 'https://github.com/camstack/addon-x/issues/12\n',
+    stdout: 'https://github.com/dominevo/addon-x/issues/12\n',
     stderr: '',
   },
 ) {
@@ -119,14 +119,14 @@ const ISSUE: DraftArgs = {
 describe('the target repository', () => {
   it('reads the repository field of the addon package from npm', async () => {
     const { ctx, urls } = ctxWithRegistry(
-      registryRepo('git+https://github.com/camstack/addon-x.git'),
+      registryRepo('git+https://github.com/dominevo/addon-x.git'),
     )
-    const target = await resolveRepo(ctx, '@camstack/addon-provider-reolink')
+    const target = await resolveRepo(ctx, '@dominevo/addon-provider-reolink')
     expect(target).toMatchObject({
-      repo: 'camstack/addon-x',
+      repo: 'dominevo/addon-x',
       source: 'package-repository-field',
     })
-    expect(urls).toEqual(['https://registry.npmjs.org/@camstack%2Faddon-provider-reolink/latest'])
+    expect(urls).toEqual(['https://registry.npmjs.org/@dominevo%2Faddon-provider-reolink/latest'])
   })
 
   it('understands the string and shorthand spellings', () => {
@@ -138,21 +138,21 @@ describe('the target repository', () => {
 
   it('falls back to camstack/server and says why', async () => {
     const none = ctxWithRegistry(() => new Response(JSON.stringify({})))
-    expect(await resolveRepo(none.ctx, '@camstack/addon-x')).toMatchObject({
-      repo: 'camstack/server',
+    expect(await resolveRepo(none.ctx, '@dominevo/addon-x')).toMatchObject({
+      repo: 'dominevo/server',
       source: 'fallback',
       reason: expect.stringContaining('no GitHub repository'),
     })
     const missing = ctxWithRegistry(() => new Response('{}', { status: 404 }))
-    expect(await resolveRepo(missing.ctx, '@camstack/addon-x')).toMatchObject({
+    expect(await resolveRepo(missing.ctx, '@dominevo/addon-x')).toMatchObject({
       source: 'fallback',
     })
     const other = ctxWithRegistry(registryRepo('https://gitlab.com/o/r'))
-    expect(await resolveRepo(other.ctx, '@camstack/addon-x')).toMatchObject({
+    expect(await resolveRepo(other.ctx, '@dominevo/addon-x')).toMatchObject({
       source: 'fallback',
     })
     expect(await resolveRepo(none.ctx, undefined)).toMatchObject({
-      repo: 'camstack/server',
+      repo: 'dominevo/server',
     })
   })
 
@@ -182,15 +182,15 @@ describe('scrubbing for a public place', () => {
 
 describe('support_draft_issue', () => {
   it('dry run is the full scrubbed draft and the target, and runs no gh', async () => {
-    const { ctx } = ctxWithRegistry(registryRepo('git+https://github.com/camstack/addon-x.git'))
+    const { ctx } = ctxWithRegistry(registryRepo('git+https://github.com/dominevo/addon-x.git'))
     const gh = fakeGh()
     const dry = await supportDraftIssue(ctx, gh.deps, ISSUE, undefined)
     const view = dryRunOf(dry)
     expect(view.token).toBeDefined()
     expect(view.describe).toMatchObject({
-      targetRepo: 'camstack/addon-x',
+      targetRepo: 'dominevo/addon-x',
       title: 'NPU not offered on 192.168.x.x',
-      command: expect.stringContaining('gh issue create --repo camstack/addon-x --title'),
+      command: expect.stringContaining('gh issue create --repo dominevo/addon-x --title'),
     })
     const text = JSON.stringify(view.describe)
     for (const leaked of [
@@ -210,15 +210,15 @@ describe('support_draft_issue', () => {
   })
 
   it('execute: checks gh auth, then creates with a 0600 body file that is removed after', async () => {
-    const { ctx } = ctxWithRegistry(registryRepo('git+https://github.com/camstack/addon-x.git'))
+    const { ctx } = ctxWithRegistry(registryRepo('git+https://github.com/dominevo/addon-x.git'))
     const gh = fakeGh()
     const token = dryRunOf(await supportDraftIssue(ctx, gh.deps, ISSUE, undefined)).token
     const done = await supportDraftIssue(ctx, gh.deps, ISSUE, token)
     if (done.status !== 'executed') throw new Error(`expected executed: ${JSON.stringify(done)}`)
     expect(done.result).toEqual({
       outcome: 'created',
-      url: 'https://github.com/camstack/addon-x/issues/12',
-      repo: 'camstack/addon-x',
+      url: 'https://github.com/dominevo/addon-x/issues/12',
+      repo: 'dominevo/addon-x',
     })
     expect(gh.calls.map((c) => [c.command, ...c.args.slice(0, 2)])).toEqual([
       ['gh', 'auth', 'status'],
@@ -226,7 +226,7 @@ describe('support_draft_issue', () => {
     ])
     const create = gh.calls[1]
     if (!create) throw new Error('no create call')
-    expect(create.args).toContain('camstack/addon-x')
+    expect(create.args).toContain('dominevo/addon-x')
     expect(create.bodyMode).toBe(0o600)
     expect(create.body).not.toContain('hunter2secretvalue')
     expect(create.body).not.toContain('8.8.8.8')
@@ -244,7 +244,7 @@ describe('support_draft_issue', () => {
       'serverManagement.getServerPackageStatus': () => ({ runningVersion: version }),
     }
     const { ctx } = ctxWithRegistry(
-      registryRepo('git+https://github.com/camstack/addon-x.git'),
+      registryRepo('git+https://github.com/dominevo/addon-x.git'),
       answers,
     )
     const gh = fakeGh()
@@ -258,15 +258,15 @@ describe('support_draft_issue', () => {
   })
 
   it('gh not signed in: returns the draft and a ready command, creates nothing', async () => {
-    const { ctx } = ctxWithRegistry(registryRepo('git+https://github.com/camstack/addon-x.git'))
+    const { ctx } = ctxWithRegistry(registryRepo('git+https://github.com/dominevo/addon-x.git'))
     const gh = fakeGh(1)
     const token = dryRunOf(await supportDraftIssue(ctx, gh.deps, ISSUE, undefined)).token
     const done = await supportDraftIssue(ctx, gh.deps, ISSUE, token)
     if (done.status !== 'executed') throw new Error('expected executed')
     expect(done.result).toMatchObject({
       outcome: 'gh-unavailable',
-      repo: 'camstack/addon-x',
-      command: expect.stringContaining('gh issue create --repo camstack/addon-x'),
+      repo: 'dominevo/addon-x',
+      command: expect.stringContaining('gh issue create --repo dominevo/addon-x'),
       saveBodyAs: './camstack-issue.md',
     })
     expect(gh.calls).toHaveLength(1)
@@ -274,7 +274,7 @@ describe('support_draft_issue', () => {
   })
 
   it('a failing gh create is reported with the draft, the file still removed', async () => {
-    const { ctx } = ctxWithRegistry(registryRepo('git+https://github.com/camstack/addon-x.git'))
+    const { ctx } = ctxWithRegistry(registryRepo('git+https://github.com/dominevo/addon-x.git'))
     const gh = fakeGh(0, {
       code: 1,
       stdout: '',
@@ -290,7 +290,7 @@ describe('support_draft_issue', () => {
   })
 
   it('works with no hub session: the draft carries the CLI version and says the hub facts are missing', async () => {
-    const { ctx } = ctxWithRegistry(registryRepo('https://github.com/camstack/server'))
+    const { ctx } = ctxWithRegistry(registryRepo('https://github.com/dominevo/server'))
     const noHub: McpContext = {
       ...ctx,
       hub: async () => ({
@@ -312,7 +312,7 @@ describe('support_draft_issue', () => {
   })
 
   it('a changed argument after the dry run burns the token: no gh call', async () => {
-    const { ctx } = ctxWithRegistry(registryRepo('https://github.com/camstack/server'))
+    const { ctx } = ctxWithRegistry(registryRepo('https://github.com/dominevo/server'))
     const gh = fakeGh()
     const token = dryRunOf(await supportDraftIssue(ctx, gh.deps, ISSUE, undefined)).token
     const out = await supportDraftIssue(ctx, gh.deps, { ...ISSUE, title: 'another title' }, token)
@@ -332,25 +332,25 @@ describe('support_draft_pr', () => {
   }
 
   it('benchmark: refuses without a column and cells (no token)', async () => {
-    const { ctx } = ctxWithRegistry(registryRepo('https://github.com/camstack/server'))
+    const { ctx } = ctxWithRegistry(registryRepo('https://github.com/dominevo/server'))
     const dry = await supportDraftPr(ctx, { ...BENCH, cells: undefined }, undefined)
     expect(dryRunOf(dry).token).toBeUndefined()
     expect(JSON.stringify(dry)).toContain('needs `column`')
   })
 
   it('benchmark: a plan with both locked files, a branch, the measured table and a gh pr create command', async () => {
-    const { ctx } = ctxWithRegistry(registryRepo('https://github.com/camstack/server'))
+    const { ctx } = ctxWithRegistry(registryRepo('https://github.com/dominevo/server'))
     const view = dryRunOf(await supportDraftPr(ctx, BENCH, undefined))
     expect(view.token).toBeDefined()
     expect(view.describe).toMatchObject({
-      targetRepo: 'camstack/server',
+      targetRepo: 'dominevo/server',
       branch: 'benchmark/intel-core-ultra-intel-npu',
       files: [
         'docs/benchmarks/detector-latency.json',
         'packages/types/src/pipeline/auto-tune/detector-performance.ts',
       ],
       command: expect.stringContaining(
-        'gh pr create --repo camstack/server --head <your-github-user>:benchmark/',
+        'gh pr create --repo dominevo/server --head <your-github-user>:benchmark/',
       ),
     })
     expect(JSON.stringify(view.describe)).toContain('| yolov9t-320 | 3 | 333 |')
@@ -358,7 +358,7 @@ describe('support_draft_pr', () => {
   })
 
   it('confirming returns the plan and spawns nothing: this tool pushes no code', async () => {
-    const { ctx } = ctxWithRegistry(registryRepo('https://github.com/camstack/server'))
+    const { ctx } = ctxWithRegistry(registryRepo('https://github.com/dominevo/server'))
     const gh = fakeGh()
     const token = dryRunOf(await supportDraftPr(ctx, BENCH, undefined)).token
     const done = await supportDraftPr(ctx, BENCH, token)

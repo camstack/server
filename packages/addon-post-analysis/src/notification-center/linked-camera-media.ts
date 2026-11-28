@@ -5,7 +5,7 @@
  * every rule that fires on it picks its own view of them here, from its own
  * media policy.
  */
-import type { NcLinkedCameraMode, NcMediaPolicy } from '@camstack/types'
+import type { NcLinkedCameraMode, NcMediaPolicy } from '@dominevo/types'
 import type { NcLinkedStills } from './linked-stills.js'
 import type { NcLinkedCameraStill } from './outbox.js'
 

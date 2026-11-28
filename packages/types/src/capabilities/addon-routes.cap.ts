@@ -73,7 +73,7 @@ export const addonRoutesCapability = {
       kind: 'mutation',
     }),
   },
-  /** BIG PLAN 2: declarative mount hint — read by `@camstack/server/system` `buildCapRouters`. */
+  /** BIG PLAN 2: declarative mount hint — read by `@dominevo/server/system` `buildCapRouters`. */
   mount: { kind: 'skip' },
   vocabulary: { notOperatorFacing: NOT_A_DEVICE.UI_PLUMBING },
 } as const satisfies CapabilityDefinition

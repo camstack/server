@@ -27,7 +27,7 @@
  * `h264_vaapi` / `h264_qsv` carry their own rate control and emit parameter
  * sets on their own schedule.
  */
-import type { FfmpegAudioPlan, FfmpegInvocation, FfmpegVideoPlan } from '@camstack/types'
+import type { FfmpegAudioPlan, FfmpegInvocation, FfmpegVideoPlan } from '@dominevo/types'
 
 import { HKSV_AUDIO_BITRATE_KBPS, HKSV_AUDIO_SAMPLE_RATE_HZ } from './recording-options.js'
 import { MAX_RECORDING_HEIGHT, type RecordingSource } from './recording-source.js'

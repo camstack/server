@@ -1,5 +1,5 @@
 /**
- * Closure pins (#681). `@camstack/server` ships `closure-pins.json`: every
+ * Closure pins (#681). `@dominevo/server` ships `closure-pins.json`: every
  * third-party package of its production closure at the exact version the repo
  * lockfile tested. A registry install in the staging dir writes it as
  * `overrides` so nothing published after the release can enter the closure.
@@ -77,7 +77,7 @@ export function parseClosurePins(raw: string): ClosurePinsRead {
     if (typeof version !== 'string' || !/^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.+-]+)?$/.test(version)) {
       return { pins: null, miss: 'non-exact-version' }
     }
-    if (name.startsWith('@camstack/')) continue
+    if (name.startsWith('@dominevo/')) continue
     pins[name] = version
   }
   return Object.keys(pins).length === 0 ? { pins: null, miss: 'empty' } : { pins, miss: null }

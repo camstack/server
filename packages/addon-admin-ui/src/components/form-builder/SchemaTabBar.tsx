@@ -1,4 +1,4 @@
-import { Button } from '@camstack/ui-library'
+import { Button } from '@dominevo/ui-library'
 /**
  * SchemaTabBar — shared tab bar for any FormBuilder-backed surface with
  * multiple tabs. Renders the button row; callers own the active state

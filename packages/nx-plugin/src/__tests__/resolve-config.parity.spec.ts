@@ -1,4 +1,4 @@
-import { isSessionFile, jwtExpiryMs, normalizeHubAddress, slugForServer } from '@camstack/develop'
+import { isSessionFile, jwtExpiryMs, normalizeHubAddress, slugForServer } from '@dominevo/develop'
 import { describe, expect, it } from 'vitest'
 import {
   isSessionBlob,

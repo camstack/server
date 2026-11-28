@@ -9,7 +9,7 @@
  * reason the refresh was designed in the morning and not declared until its
  * reader existed.
  */
-import type { ConfigUISchema } from '@camstack/types'
+import type { ConfigUISchema } from '@dominevo/types'
 import {
   CLIP_CATALOG_FORCED_WAKE_KEY,
   CLIP_CATALOG_REFRESH_MINUTES_DEFAULT,

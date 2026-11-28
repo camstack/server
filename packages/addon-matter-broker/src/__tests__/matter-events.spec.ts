@@ -3,7 +3,7 @@
  * emission on the bus, and node presence. Each case fails without the event
  * path (there was none) or without the presence wiring.
  */
-import { DeviceType, EventCategory } from '@camstack/types'
+import { DeviceType, EventCategory } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import type { MatterEventReport } from '../matter-controller.js'
 import { matterNodes } from '../matter-gateway.js'

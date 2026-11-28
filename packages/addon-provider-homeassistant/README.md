@@ -1,16 +1,16 @@
 # Home Assistant
 
-Home Assistant device provider addon for CamStack. Device provider (import) + native entity export (push). Two addons, one bundle, separate processes.
+Home Assistant device provider addon for Dominevo. Device provider (import) + native entity export (push). Two addons, one bundle, separate processes.
 
 <!-- readme:generated:start (derived from the manifest; edit outside this block) -->
 
-Package `@camstack/addon-provider-homeassistant` on npm.
+Package `@dominevo/addon-provider-homeassistant` on npm.
 
 ## What it provides
 
-- **Home Assistant** (`provider-homeassistant`): Adopt Home Assistant devices into CamStack via WebSocket. Category: messaging.
+- **Home Assistant** (`provider-homeassistant`): Adopt Home Assistant devices into Dominevo via WebSocket. Category: messaging.
   - Capabilities: `broker`, `integration-instances`, `board-key-source`, `device-adoption`, `vacuum-control`, `lawn-mower-control`, `running-state`, `valve`, `humidifier`, `water-heater`, `weather`, `image`, `update`, `notification-output`, `addon-routes`, `calendar-source`.
-- **Home Assistant Export** (`homeassistant-export`): Pushes CamStack entities to the CamStack Home Assistant custom component over HTTP. Chooses which devices reach which Home Assistant instance; Home Assistant never polls the hub for a value. Category: exports.
+- **Home Assistant Export** (`homeassistant-export`): Pushes Dominevo entities to the Dominevo Home Assistant custom component over HTTP. Chooses which devices reach which Home Assistant instance; Home Assistant never polls the hub for a value. Category: exports.
   - Capabilities: `device-export`, `addon-routes`, `oauth-integration`, `integration-instances`.
 
 ## Configuration
@@ -28,13 +28,13 @@ Edit these from System, Addons, this addon, Settings (a device's own settings ar
 
 - Home Assistant: hub-only.
 - Home Assistant Export: hub-only (runner group `integrations`).
-- A CamStack hub. An agent is used only where the placement above allows it.
+- A Dominevo hub. An agent is used only where the placement above allows it.
 
 ## Documentation
 
-- [docs/addons/addon-provider-homeassistant.md](https://github.com/camstack/server/blob/main/docs/addons/addon-provider-homeassistant.md)
-- [docs/architecture/device-model.md](https://github.com/camstack/server/blob/main/docs/architecture/device-model.md)
-- [packages/addon-provider-homeassistant/AGENTS.md](https://github.com/camstack/server/blob/main/packages/addon-provider-homeassistant/AGENTS.md)
+- [docs/addons/addon-provider-homeassistant.md](https://github.com/dominevo/server/blob/main/docs/addons/addon-provider-homeassistant.md)
+- [docs/architecture/device-model.md](https://github.com/dominevo/server/blob/main/docs/architecture/device-model.md)
+- [packages/addon-provider-homeassistant/AGENTS.md](https://github.com/dominevo/server/blob/main/packages/addon-provider-homeassistant/AGENTS.md)
 
 See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
 

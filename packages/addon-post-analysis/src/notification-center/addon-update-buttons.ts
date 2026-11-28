@@ -43,7 +43,7 @@
  * every addon on a node.
  */
 
-import type { NcSystemEventKind, NotificationAction } from '@camstack/types'
+import type { NcSystemEventKind, NotificationAction } from '@dominevo/types'
 
 /** The id this button travels under — in the callback and in the audit line. */
 const ADDON_UPDATE_BUTTON_ID = 'addon-update-apply'

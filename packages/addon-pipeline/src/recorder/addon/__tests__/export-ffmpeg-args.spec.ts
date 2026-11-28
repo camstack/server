@@ -1,4 +1,4 @@
-import type { ExportOptions } from '@camstack/types'
+import type { ExportOptions } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   buildAssembleConcatList,

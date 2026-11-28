@@ -8,7 +8,7 @@
  *  - every ADDON package in the set   requires.server = ">=<server version>"
  *    (the server this build was cut against — it cannot be older than that).
  *  - an addon that declares PAGES also requires
- *    addons['@camstack/addon-admin-ui'] = ">=<admin-ui version>": a page remote
+ *    addons['@dominevo/addon-admin-ui'] = ">=<admin-ui version>": a page remote
  *    does not bundle ui-library, the admin UI that mounts it provides it, so an
  *    older admin UI would mount the page into a library missing what it imports.
  *  - the SERVER (server/backend), when in the set:
@@ -27,7 +27,7 @@ import * as path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 export const SERVER_DIR = 'server/backend'
-export const ADMIN_UI_PACKAGE = '@camstack/addon-admin-ui'
+export const ADMIN_UI_PACKAGE = '@dominevo/addon-admin-ui'
 
 const WRAPPER_MINIMUMS_FILE = path.join(
   path.dirname(fileURLToPath(import.meta.url)),

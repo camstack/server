@@ -12,7 +12,7 @@ import {
   type InferNativeProvider,
   numericSensorCapability,
   type NumericSensorStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { vesyncSensorSchema, type VeSyncSensorKind } from '../config.js'
 import type {
   VeSyncDeviceSnapshot,
@@ -31,8 +31,8 @@ const FILTER_COLD_START: NumericSensorStatus = { value: 0, lastFetchedAt: 0 }
 const HUMIDITY_COLD_START: HumiditySensorStatus = { humidity: null, lastFetchedAt: 0 }
 
 /**
- * One VeSync read-only metric as a CamStack
- * {@link import('@camstack/types').DeviceType.Sensor} accessory child.
+ * One VeSync read-only metric as a Dominevo
+ * {@link import('@dominevo/types').DeviceType.Sensor} accessory child.
  *
  * Of a purifier (Fan):
  *   - `air-quality`  → the `air-quality-sensor` cap (PM2.5 in µg/m³).

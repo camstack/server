@@ -26,8 +26,8 @@ import {
   type NcSystemEventCondition,
   type NcSystemEventFamilyProblem,
   systemEventFamilyProblems,
-} from '@camstack/types'
-import { canonicalHash } from '@camstack/types/node'
+} from '@dominevo/types'
+import { canonicalHash } from '@dominevo/types/node'
 
 export interface NcRuleFamilySubject {
   readonly delivery: NcDelivery

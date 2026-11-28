@@ -19,9 +19,9 @@ import {
 import { errorEnvelope, type AlexaErrorEnvelope } from './error-envelope.js'
 import { parseCameraEndpointId } from './endpoint-id.js'
 import type { VerifiedDirectiveIdentity } from '../directive-router.js'
-import { pickPreferredRtspEntry, type RtspEntryLike } from '@camstack/types'
+import { pickPreferredRtspEntry, type RtspEntryLike } from '@dominevo/types'
 import type { ExposedDeviceEntry } from '../types.js'
-import type { AddonApi, AddonContext, IScopedLogger } from '@camstack/types'
+import type { AddonApi, AddonContext, IScopedLogger } from '@dominevo/types'
 
 const InitializeCameraStreamsDirectiveSchema = z.object({
   header: z.object({

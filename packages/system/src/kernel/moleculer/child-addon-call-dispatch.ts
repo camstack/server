@@ -1,6 +1,6 @@
 import type { AddonCallInput, AddonSettingsMethod } from '../transport/child-cap-protocol.js'
 import type { CustomActionRegistry } from '../custom-action-registry.js'
-import type { ICamstackAddon, AddonDataPlaneEndpoint, ScopedSettingsScope } from '@camstack/types'
+import type { ICamstackAddon, AddonDataPlaneEndpoint, ScopedSettingsScope } from '@dominevo/types'
 
 /**
  * Serializable HTTP route descriptor sent from a forked child to the hub over

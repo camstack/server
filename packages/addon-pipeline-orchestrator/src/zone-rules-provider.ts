@@ -40,7 +40,7 @@ import {
   type DeviceProxy,
   type DurableState,
   createDurableState,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 import type { ZoneMirrorHydration } from './zones-provider.js'
 

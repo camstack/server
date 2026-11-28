@@ -1,8 +1,8 @@
 /**
  * Opens the formula dialog for one stored field on a cap feature.
  */
-import type { CompositionFieldSource, CompositionFieldsFeature } from '@camstack/types'
-import { Button, IconButton } from '@camstack/ui-library'
+import type { CompositionFieldSource, CompositionFieldsFeature } from '@dominevo/types'
+import { Button, IconButton } from '@dominevo/ui-library'
 import { Pencil } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'

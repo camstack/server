@@ -1,6 +1,6 @@
 import { EventEmitter } from 'node:events'
 import { AcDevice, type DiscoveredDevice } from '@apocaliss92/nodegree'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { settingsToGreeConfig } from '../config.js'
 import {

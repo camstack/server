@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import type { DishwasherStatus } from '@camstack/types'
+import type { DishwasherStatus } from '@dominevo/types'
 import { DishwasherInlineControl, featureLabel, formatDuration } from '../dishwasher-control'
 
 /** A reachable appliance that has reported everything; tests override what they care about. */

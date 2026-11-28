@@ -9,8 +9,8 @@
  * reported as a state, not an error (Amazon). Unlocking by voice is something
  * the user must enable in the Alexa app; the skill does not second-guess it.
  */
-import type { AddonApi, AddonContext, IScopedLogger, LockState } from '@camstack/types'
-import { LockControlStatusSchema } from '@camstack/types'
+import type { AddonApi, AddonContext, IScopedLogger, LockState } from '@dominevo/types'
+import { LockControlStatusSchema } from '@dominevo/types'
 import type { VerifiedDirectiveIdentity } from '../directive-router.js'
 import { parseCameraEndpointId } from './endpoint-id.js'
 import { errorEnvelope } from './error-envelope.js'

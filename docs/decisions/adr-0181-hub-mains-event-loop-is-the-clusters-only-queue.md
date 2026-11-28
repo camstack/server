@@ -154,7 +154,7 @@ No guard script. "Is this read proportional to its answer?" is not
 mechanically decidable, and the shape that was wrong here —
 `json_extract` in a `WHERE`, an `await` per field — is legitimate elsewhere.
 Review, against this record. What a future session should do instead of
-re-deriving the analysis is take the profile: `docker exec CamStack kill -USR1
+re-deriving the analysis is take the profile: `docker exec Dominevo kill -USR1
 7`, then drive `Profiler.start` / `Profiler.stop` over
 `http://127.0.0.1:9229/json/list` from inside the container. Seventy-five
 seconds of a boot answered in one pass a question that two sessions of log

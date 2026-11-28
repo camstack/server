@@ -14,8 +14,8 @@
  * and `yolov9m-640-int8`. A label that can describe another machine is worse
  * than none: no local executor is a named failure, never a fallback to it.
  */
-import type { CapabilitiesAccess, PipelineEngineChoice } from '@camstack/types'
-import { errMsg } from '@camstack/types'
+import type { CapabilitiesAccess, PipelineEngineChoice } from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
 import type { ResidentEngine } from './runtime-labels.js'
 
 export const NO_LOCAL_EXECUTOR = 'no pipeline-executor provider in this process'

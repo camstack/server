@@ -13,7 +13,7 @@
  * so the glue code is unit-testable.
  */
 import { describe, it, expect, vi } from 'vitest'
-import type { IReadinessRegistryRecord } from '@camstack/types'
+import type { IReadinessRegistryRecord } from '@dominevo/types'
 
 // --------------------------------------------------------------------------
 // Helpers

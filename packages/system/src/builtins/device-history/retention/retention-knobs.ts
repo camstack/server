@@ -4,7 +4,7 @@
  * here. The two raw windows can be overridden per device (the addon's per-device store);
  * the rest are cluster-wide.
  */
-import type { RetentionKnob } from '@camstack/types'
+import type { RetentionKnob } from '@dominevo/types'
 import { DEFAULT_RETENTION, type RawDeviceOverride, type RetentionPolicy } from './retention.js'
 
 export const DEVICE_HISTORY_ADDON_ID = 'device-history'

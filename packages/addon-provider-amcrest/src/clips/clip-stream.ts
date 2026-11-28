@@ -62,8 +62,8 @@ import {
   clipReasonHeaderValue,
   type IScopedLogger,
   type PinnedFfmpegResolver,
-} from '@camstack/types'
-import { resolvePinnedFfmpegSpawner } from '@camstack/types/node'
+} from '@dominevo/types'
+import { resolvePinnedFfmpegSpawner } from '@dominevo/types/node'
 
 import { describeReplayUrl } from './clip-replay-url.js'
 import {

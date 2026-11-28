@@ -3,7 +3,7 @@
  *
  * Disarm: remove the `appearance` mirror in the flatten — the test fails.
  */
-import { APPEARANCE_BIN_COUNT, type FrameResult } from '@camstack/types'
+import { APPEARANCE_BIN_COUNT, type FrameResult } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { FrameProcessor } from '../pipeline/frame-processor.js'
 

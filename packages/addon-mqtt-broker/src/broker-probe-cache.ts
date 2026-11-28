@@ -12,7 +12,7 @@
  * so we don't bother persisting them.
  */
 import mqtt from 'mqtt'
-import type { MqttBrokerLiveStatus } from '@camstack/types'
+import type { MqttBrokerLiveStatus } from '@dominevo/types'
 
 type BrokerStatus = MqttBrokerLiveStatus
 

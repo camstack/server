@@ -10,8 +10,8 @@
  *    for the summary (not sent, not "no match");
  *  - schedule only (the old `summary`) and a legacy `instant` behave as before.
  */
-import type { InMemoryRecords, IScopedLogger, NcSystemEventDelivery } from '@camstack/types'
-import { createEvent, NcRuleInputSchema, type SystemEvent } from '@camstack/types'
+import type { InMemoryRecords, IScopedLogger, NcSystemEventDelivery } from '@dominevo/types'
+import { createEvent, NcRuleInputSchema, type SystemEvent } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { NotificationCenter } from '../index.js'
 import { NODE_LIVENESS_HOLDOFF_MS } from '../liveness-holdoff.js'

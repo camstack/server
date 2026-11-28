@@ -18,7 +18,7 @@ import type {
   IScopedLogger,
   IVideoclipsProvider,
   PinnedFfmpegResolver,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { HikvisionIsapiClient } from '../hikvision-isapi-client.js'
 import {
   CLIP_THUMB_EXTENSION,
@@ -389,7 +389,7 @@ export function createClipService(deps: ClipServiceDeps): ClipService {
   /**
    * `fileFor`'s vocabulary, in the one a clip EXPORT answers on.
    *
-   * `ClipExportFailure` is a cross-provider enum in `@camstack/types` and a
+   * `ClipExportFailure` is a cross-provider enum in `@dominevo/types` and a
    * Hikvision-shaped fact has no business widening it, so the two codes it
    * does not have are folded HERE, in one place, rather than at each call
    * site. Nothing is lost: `detail` opens with the real branch and the lane

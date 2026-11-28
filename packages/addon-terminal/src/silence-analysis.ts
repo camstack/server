@@ -36,15 +36,15 @@
  * resolution that fails now THROWS, because "we could not turn this off" is a
  * fact the caller must act on, not a line in a log.
  */
-import type { AddonApi, IScopedLogger } from '@camstack/types'
-import { DERIVED_CAMERA_SILENCED_CAP_NAMES, errMsg } from '@camstack/types'
+import type { AddonApi, IScopedLogger } from '@dominevo/types'
+import { DERIVED_CAMERA_SILENCED_CAP_NAMES, errMsg } from '@dominevo/types'
 
 /**
  * Every analyser a Terminal camera is created with switched OFF.
  *
  * An alias, not a copy. This list and the grid's were separate and had drifted
  * — neither named `pipeline-analytics` — so both now read the one in
- * `@camstack/types`, which is the package they already share.
+ * `@dominevo/types`, which is the package they already share.
  */
 export const TERMINAL_SILENCED_CAP_NAMES = DERIVED_CAMERA_SILENCED_CAP_NAMES
 

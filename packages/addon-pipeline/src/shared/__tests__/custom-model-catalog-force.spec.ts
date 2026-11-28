@@ -3,7 +3,7 @@
  * A warm empty TTL snapshot must not hide the brand-new id.
  */
 import { describe, expect, it, vi } from 'vitest'
-import type { CustomModelDescriptor } from '@camstack/types'
+import type { CustomModelDescriptor } from '@dominevo/types'
 import { CUSTOM_MODEL_CATALOG_TTL_MS, CustomModelCatalog } from '../custom-model-catalog.js'
 
 function descriptor(id: string): CustomModelDescriptor {

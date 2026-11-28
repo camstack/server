@@ -1,6 +1,6 @@
 /**
  * The skill Lambda's `/authorize` — the step of Alexa account linking where the
- * operator says WHICH hub the skill talks to. It is the CamStack page family
+ * operator says WHICH hub the skill talks to. It is the Dominevo page family
  * (same generated tokens as the hub's own sign-in/consent pages, en/it, no
  * script), and it checks the hub BEFORE sending the browser there: a wrong or
  * unreachable hub is an error on this page with a reason code, not a dead end
@@ -86,7 +86,7 @@ function run(opts: {
 }
 
 describe('/authorize — the hub address step', () => {
-  it('renders the CamStack page: generated tokens, a plain form, no script, CSP pinned to the style', async () => {
+  it('renders the Dominevo page: generated tokens, a plain form, no script, CSP pinned to the style', async () => {
     const res = await run({}).result
     expect(res.statusCode).toBe(200)
     expect(res.body).toContain(STYLE)
@@ -108,7 +108,7 @@ describe('/authorize — the hub address step', () => {
   it('speaks the operator’s language', async () => {
     const it = await run({ acceptLanguage: 'it-IT,it;q=0.9,en;q=0.8' }).result
     expect(it.body).toContain('<html lang="it">')
-    expect(it.body).toMatch(/Collega CamStack ad Alexa/)
+    expect(it.body).toMatch(/Collega Dominevo ad Alexa/)
     const en = await run({ acceptLanguage: 'de' }).result
     expect(en.body).toContain('<html lang="en">')
   })
@@ -159,7 +159,7 @@ describe('/authorize — the hub address step', () => {
     expect(res.body).toContain('data-reason="tls_error"')
   })
 
-  it('a server that is not a CamStack hub, or does not serve Alexa linking, is told apart', async () => {
+  it('a server that is not a Dominevo hub, or does not serve Alexa linking, is told apart', async () => {
     const notHub = await run({ hubUrl: HUB, fetch: async () => reply(404, 'nope') }).result
     expect(notHub.body).toContain('data-reason="not_camstack"')
     const noAlexa = await run({

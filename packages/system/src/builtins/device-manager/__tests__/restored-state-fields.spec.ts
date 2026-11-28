@@ -6,8 +6,8 @@
  * restart while the live readings must not.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { RuntimeStatePolicy } from '@camstack/types'
-import { runtimeStatePolicyFor } from '@camstack/types'
+import type { RuntimeStatePolicy } from '@dominevo/types'
+import { runtimeStatePolicyFor } from '@dominevo/types'
 import { persistableBlob } from '../runtime-state-persist-gate.js'
 import { flushDebounce, harness } from './mirror-harness.js'
 

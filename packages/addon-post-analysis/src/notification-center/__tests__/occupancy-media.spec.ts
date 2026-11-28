@@ -36,7 +36,7 @@
  * member track, and only when a rule that would actually fire on THIS edge asks
  * for a still.
  */
-import type { InMemoryRecords } from '@camstack/types'
+import type { InMemoryRecords } from '@dominevo/types'
 import type {
   CameraOccupancySnapshot,
   MediaFile,
@@ -44,8 +44,8 @@ import type {
   OccupancyLookAnswer,
   OccupancyLookRequest,
   SensorEvent,
-} from '@camstack/types'
-import { NcRuleInputSchema } from '@camstack/types'
+} from '@dominevo/types'
+import { NcRuleInputSchema } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   type FakeSettingsStore,

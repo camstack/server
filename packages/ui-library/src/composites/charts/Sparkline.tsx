@@ -4,7 +4,7 @@
  * by (an epoch, a time); the value next to it names what the line is.
  */
 import { useCallback, useMemo, type JSX } from 'react'
-import type { DisplayPreference, ReadingQuantity } from '@camstack/types'
+import type { DisplayPreference, ReadingQuantity } from '@dominevo/types'
 import type uPlot from 'uplot'
 import { cn } from '../../lib/cn'
 import { resolveChartColor, type ChartChromeToken, type ChartSeriesToken } from './chart-palette'

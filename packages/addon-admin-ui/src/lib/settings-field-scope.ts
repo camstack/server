@@ -26,7 +26,7 @@ import type {
   ConfigFieldWithValue,
   ConfigSectionWithValues,
   ConfigUISchemaWithValues,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /**
  * Which population a surface is entitled to render.

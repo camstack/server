@@ -1,6 +1,6 @@
 import { EventEmitter } from 'node:events'
 import type { Socket } from 'node:net'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { PRIME_MAX_PACKETS, PRIME_MAX_SPAN_MS, RtspRestreamer } from '../rtsp/rtsp-restreamer.js'
 import { RtspSession } from '../rtsp/rtsp-session.js'

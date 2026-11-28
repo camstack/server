@@ -9,7 +9,7 @@
  * editable one.
  */
 import { describe, expect, it } from 'vitest'
-import { CLUSTER_MODEL_SCOPED_STEPS, DEFAULT_CLUSTER_STEP_MODELS } from '@camstack/types'
+import { CLUSTER_MODEL_SCOPED_STEPS, DEFAULT_CLUSTER_STEP_MODELS } from '@dominevo/types'
 import { clusterScopedStep } from '../ClusterStepModel'
 
 describe('clusterScopedStep', () => {

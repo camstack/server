@@ -2,7 +2,7 @@ import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import type { IEventBus, IScopedLogger, SystemEvent } from '@camstack/types'
+import type { IEventBus, IScopedLogger, SystemEvent } from '@dominevo/types'
 import {
   announceProductVersionChange,
   buildNodeUpdateAnnouncement,
@@ -29,7 +29,7 @@ describe('buildNodeUpdateAnnouncement', () => {
     ).toEqual({
       kind: 'framework-update',
       what: 'desktop-shell',
-      packageName: 'CamStack desktop app',
+      packageName: 'Dominevo desktop app',
       fromVersion: '1.2.10',
       toVersion: '1.2.11',
       requestedAt: 5,
@@ -41,7 +41,7 @@ describe('buildNodeUpdateAnnouncement', () => {
       what: 'container-image',
       requestedAt: 1,
     })
-    expect(payload.packageName).toBe('CamStack container image')
+    expect(payload.packageName).toBe('Dominevo container image')
     expect('toVersion' in payload).toBe(false)
     expect('fromVersion' in payload).toBe(false)
   })

@@ -3,7 +3,7 @@
  * gen-closure-pins — derive `server/backend/closure-pins.json` from the root
  * `package-lock.json` (#681).
  *
- * Without it every `npm install @camstack/server@X` (applyServerUpdate on the
+ * Without it every `npm install @dominevo/server@X` (applyServerUpdate on the
  * hub and the agents, the Docker image, the desktop install) resolves each
  * third-party range against the live registry, so a package published after
  * the release was tested can enter the closure. The file maps every
@@ -17,9 +17,9 @@
  *   node scripts/gen-closure-pins.mjs --check    # exit 1 when the file on disk disagrees
  *
  * Runs from `server/backend`'s `prepack`, so `npm pack`, `npm publish` and
- * `camstack deploy --closure` all carry it; the file is git-ignored, so a
+ * `dominevo deploy --closure` all carry it; the file is git-ignored, so a
  * checked-out commit can never carry pins that disagree with the lockfile.
- * No `@camstack/*` entry: those resolve from their published versions.
+ * No `@dominevo/*` entry: those resolve from their published versions.
  */
 import * as fs from 'node:fs'
 import * as path from 'node:path'
@@ -117,7 +117,7 @@ export function buildPins(lock, opts = {}) {
   for (const [key, entry] of reached) {
     if (typeof entry.version !== 'string') continue
     const name = packageNameOf(key)
-    if (name.startsWith('@camstack/')) continue
+    if (name.startsWith('@dominevo/')) continue
     const set = versions.get(name) ?? new Set()
     set.add(entry.version)
     versions.set(name, set)

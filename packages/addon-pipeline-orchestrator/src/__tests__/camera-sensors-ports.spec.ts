@@ -4,7 +4,7 @@
  * keeps only the fields the resolver judges, and bindings are narrowed to the
  * source caps without reading `kind` (D13).
  */
-import type { AddonApi, IScopedLogger } from '@camstack/types'
+import type { AddonApi, IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { buildCameraSensorsPorts } from '../camera-sensors/resolver.js'
 

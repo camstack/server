@@ -1,4 +1,4 @@
-import { DeviceRole, DeviceType, type InitialDeviceMeta } from '@camstack/types'
+import { DeviceRole, DeviceType, type InitialDeviceMeta } from '@dominevo/types'
 import type { MqttHaCap } from './mqtt-ha-domain-mapping.js'
 
 /**

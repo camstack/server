@@ -25,7 +25,7 @@ import {
   type DeviceType,
   type IScopedLogger,
   historyItemFieldPath,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { HistoryCounters } from '../status/counters.js'
 import type { SeriesRegistry } from '../store/series-registry.js'
 import { identityOf, subjectIdOf } from '../store/series-registry.js'

@@ -61,7 +61,7 @@ place: a relay's audio decision made silently.
 **Rejected here, and priced.** Carrying s16le or the raw G.711 codes would
 take the G.711 legs 4× / 8× below the 16 kHz baseline instead of 2×, but it
 needs a `format` field on `DecodedAudioChunk` and `AudioChunkInput`
-(`@camstack/types`), and a consumer that does not know the field reads s16le
+(`@dominevo/types`), and a consumer that does not know the field reads s16le
 bytes as f32le and reports a level of +43 dBFS — silently. The two
 consumers deploy from two packages (`addon-pipeline-orchestrator`,
 `addon-pipeline`) and the analyzer runs on three nodes, so the skew is real.
@@ -125,9 +125,9 @@ the decoder used to pay: moved, not added.
 
 ## Consequences
 
-- **Deployed 2026-09-11** as `@camstack/addon-pipeline-orchestrator@1.2.182`
+- **Deployed 2026-09-11** as `@dominevo/addon-pipeline-orchestrator@1.2.182`
   at 08:55:17Z (first, so the guard is live before the rate flips) and
-  `@camstack/addon-pipeline@1.2.219` at 08:56:01Z, both hot, hub healthy
+  `@dominevo/addon-pipeline@1.2.219` at 08:56:01Z, both hot, hub healthy
   after each; nine `Audio analysis failed: channel closed` at the instant of
   the analyzer respawn and nothing after. Within the first minute: 19 brokers
   reported `planeSampleRate: 8000`; the orchestrator logged 18 subscriptions

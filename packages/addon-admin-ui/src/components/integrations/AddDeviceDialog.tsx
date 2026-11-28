@@ -1,4 +1,4 @@
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import {
   Dialog,
   DialogBody,
@@ -12,7 +12,7 @@ import {
   useDeviceManagerProviderCreationType,
   useDeviceManagerTestCreationField,
   Button,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { AlertTriangle, ChevronDown, Loader2, ScrollText, Wifi } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'

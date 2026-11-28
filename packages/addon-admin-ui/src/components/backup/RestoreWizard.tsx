@@ -22,7 +22,7 @@
  * progress bar.
  */
 
-import type { DataStoreDatabase } from '@camstack/types'
+import type { DataStoreDatabase } from '@dominevo/types'
 import {
   Button,
   Dialog,
@@ -39,7 +39,7 @@ import {
   Checkbox,
   Input,
   Radio,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, ArrowRight, Loader2, Lock, RotateCw } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'

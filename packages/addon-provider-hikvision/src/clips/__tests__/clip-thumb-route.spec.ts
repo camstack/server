@@ -8,7 +8,7 @@
  * them blank for a picture that was seconds away.
  */
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 
 import { createClipThumbHandler } from '../clip-data-plane.js'

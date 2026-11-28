@@ -10,7 +10,7 @@ import type {
   IScopedLogger,
   LogExtras,
   LogTags,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { TrackDetailDispatcher, type TrackDetailFrame } from '../detail-dispatcher.js'
 import { DetailScheduler } from '../detail-scheduler.js'

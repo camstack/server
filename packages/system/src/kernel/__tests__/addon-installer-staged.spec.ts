@@ -10,7 +10,7 @@ import { AddonInstaller } from '../addon-installer.js'
  * into the addons dir.
  */
 
-const PKG = '@camstack/addon-x'
+const PKG = '@dominevo/addon-x'
 
 describe('AddonInstaller.applyUpdateFromStaged', () => {
   let tmpRoot: string
@@ -86,7 +86,7 @@ describe('AddonInstaller.applyUpdateFromStaged', () => {
     const staged = path.join(stagingDir, 'not-tracked')
     fs.mkdirSync(staged, { recursive: true })
     await expect(
-      installer.applyUpdateFromStaged('@camstack/addon-never', '1.0.0', staged),
+      installer.applyUpdateFromStaged('@dominevo/addon-never', '1.0.0', staged),
     ).rejects.toThrow(/not currently tracked/)
   })
 

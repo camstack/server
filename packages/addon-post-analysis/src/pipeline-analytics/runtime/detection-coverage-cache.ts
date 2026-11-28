@@ -31,7 +31,7 @@
  * for every id — and unknown never reports a camera as excluded from coverage.
  */
 
-import { DETECTION_PIPELINE_CAP_NAME, type AddonApi, type IScopedLogger } from '@camstack/types'
+import { DETECTION_PIPELINE_CAP_NAME, type AddonApi, type IScopedLogger } from '@dominevo/types'
 
 export interface DetectionCoverageCacheDeps {
   readonly api: AddonApi

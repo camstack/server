@@ -71,9 +71,9 @@ rest: at 14:57 the **host's global** OOM killer (not the cgroup) killed
 `hub/pipeline-analytics` at **11.4 GB** of anon-rss. Every hub runner
 recorded at the same instant `loopMax ≈ 152–158 s`: **a block of ~154
 seconds of the whole container**, which is also why the Reolink watchdogs
-restarted the streams. CamStack was at 19 GB against **its** limit of 32: it did not
+restarted the streams. Dominevo was at 19 GB against **its** limit of 32: it did not
 overrun anything — the machine's RAM ran out, shared with the reference NVR (561%
-CPU, 10.5 GB). **Raising CamStack's limit does not help; lowering its
+CPU, 10.5 GB). **Raising Dominevo's limit does not help; lowering its
 consumption helps both.**
 
 **The rewriting of the problem**: separating the `MainThread` threads from the `V8Worker`s,
@@ -137,7 +137,7 @@ single constant would either absolve analytics' 11 GB or accuse the recorder's
 legitimate 2 GB. The runner takes the **maximum** among the co-located addons
 (D2/D29). hub-main has no manifest and its entrypoint is the **least
 deployable** surface of the system — the image never contains this repo's
-backend — so its number lives in `@camstack/server`, which `applyServerUpdate`
+backend — so its number lives in `@dominevo/server`, which `applyServerUpdate`
 replaces within the day.
 
 | process | budget | from what | prediction |
@@ -1028,25 +1028,25 @@ No new timer, no new sampler.
 **The GPU number is carried but is always `null` today, and rightly so.**
 Verified the same day: `i915_gem_objects` is readable on the Unraid host
 (`6014 shrinkable [0 free] objects, 1194934272 bytes`) and **does not exist inside the
-`CamStack` container**, where `native-metrics` actually runs — debugfs is not
+`Dominevo` container**, where `native-metrics` actually runs — debugfs is not
 mounted. It is also **host-wide across all DRM clients**, so it is not a
 component of `memory.current` and must not be subtracted. It is probed **once**
 per process and then latched: a bind mount cannot appear under a running
 container. To get it populated it is enough to mount `/sys/kernel/debug` read-only
-inside `CamStack` — it changes the container, not the code.
+inside `Dominevo` — it changes the container, not the code.
 
 **What this measurement does NOT buy**: it does not attribute. It says that the container holds
 6 GiB across page cache, shmem and slab; it does not say which process caused a page to be
 cached. That question needs another tool.
 
-## 2026-08-29 — CamStack versus the reference NVR: the first like-for-like memory comparison
+## 2026-08-29 — Dominevo versus the reference NVR: the first like-for-like memory comparison
 
 Read from the cgroups of the two containers on the same host, at the same instant, with
 **the same 30 cameras** in prebuffer + detection. Until today we had compared
 only CPU per camera; memory had never been measured because neither
 exposed its own cgroup and the reference NVR was switched off.
 
-| | CamStack | the reference NVR | ratio |
+| | Dominevo | the reference NVR | ratio |
 | --- | ---: | ---: | ---: |
 | `memory.current` | 20,070 MB | 10,890 MB | **1.84×** |
 | **`anon`** (process memory) | **15,952 MB** | **9,253 MB** | **1.72×** |
@@ -1060,7 +1060,7 @@ exposed its own cgroup and the reference NVR was switched off.
 ### The loads are NOT identical — normalise before quoting the ratio
 
 Confirmed by the operator on 2026-08-29: **the reference NVR is recording ~10 cameras**
-on the hub's NVR array, besides prebuffer + detection on all 30. CamStack
+on the hub's NVR array, besides prebuffer + detection on all 30. Dominevo
 records **30 writers** (16 devices; 8 cameras continuous high+low). So on
 recording we do **~1.6× the devices and ~3× the streams**, and the `anon` ratio
 is not at equal work: it is to our disadvantage on a share of extra work
@@ -1075,7 +1075,7 @@ Two readings remain to be qualified. The `shmem` (2.55×) is GEM buffers of the
 i915 driver behind hardware decode and inference: it depends on how many sessions each
 has open at that instant, so it is not stable between two readings. And the two
 **write destinations are different**: the reference NVR writes to the array with parity,
-CamStack to a 2.5" 5400 rpm USB disk measured saturated at 95% with
+Dominevo to a 2.5" 5400 rpm USB disk measured saturated at 95% with
 7-14 MB/s (see the section on the recordings disk). That difference is
 one of configuration, not of software, and must be taken out of the count before attributing
 anything to the code.
@@ -1092,7 +1092,7 @@ choice that can be copied on its own.
 **How to redo it** (the reference NVR is often off; it is opportunistic, and must be done while it runs):
 
 ```bash
-for C in CamStack reference-nvr; do CID=$(docker inspect -f '{{.Id}}' $C); \
+for C in Dominevo reference-nvr; do CID=$(docker inspect -f '{{.Id}}' $C); \
   cat /sys/fs/cgroup/docker/$CID/memory.current /sys/fs/cgroup/docker/$CID/memory.stat; done
 ```
 

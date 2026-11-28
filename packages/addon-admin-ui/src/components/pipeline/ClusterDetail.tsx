@@ -27,7 +27,7 @@
  * and event folders stay on Recordings. There are no pipeline templates (D759):
  * a stale `?ctab=templates` link lands on Assignments.
  */
-import { Tabs, TabsList, TabsTrigger } from '@camstack/ui-library'
+import { Tabs, TabsList, TabsTrigger } from '@dominevo/ui-library'
 import { useSearchParams } from 'react-router-dom'
 import { CLUSTER_SECTION_PARAM, CLUSTER_TAB_PARAM } from './pipeline-links'
 import { ClusterAssignmentsTab } from './tabs/ClusterAssignmentsTab'

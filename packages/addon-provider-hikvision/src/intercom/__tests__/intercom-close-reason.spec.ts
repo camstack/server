@@ -1,4 +1,4 @@
-import type { IScopedLogger, LogExtras } from '@camstack/types'
+import type { IScopedLogger, LogExtras } from '@dominevo/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import {
   type IIntercomTalkSession,

@@ -1,10 +1,10 @@
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IScopedLogger } from '@dominevo/types'
 import type {
   AdoptionFilter,
   AdoptionStatus,
   DiscoveredChildDevice,
   IDeviceAdoptionProvider,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { buildPetkitCandidates, type PetkitDiscoverable } from './petkit-discovery.js'
 
 /**
@@ -48,7 +48,7 @@ const DEVICES_FILTER: AdoptionFilter = {
   isDefault: true,
 } as const
 
-/** Build a `petkitDeviceId → CamStack deviceId` map for a single integration. */
+/** Build a `petkitDeviceId → Dominevo deviceId` map for a single integration. */
 async function adoptedMapForIntegration(
   integrationId: string,
   listAdoptedPetkit: PetkitAdoptionProviderDeps['listAdoptedPetkit'],

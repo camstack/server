@@ -1,4 +1,4 @@
-import { RecordingSignalRuntimeStateSchema } from '@camstack/types'
+import { RecordingSignalRuntimeStateSchema } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   RECORDING_SIGNAL_COLD_START,

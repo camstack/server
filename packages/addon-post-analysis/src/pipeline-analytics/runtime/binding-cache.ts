@@ -10,7 +10,7 @@
  * device-manager.
  */
 
-import type { AddonApi, IScopedLogger } from '@camstack/types'
+import type { AddonApi, IScopedLogger } from '@dominevo/types'
 
 export interface BindingCacheDeps {
   readonly api: AddonApi

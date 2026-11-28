@@ -13,17 +13,17 @@
  * It is still driven like a read here: `useQuery` with a debounced key, not
  * `useMutation`.
  *
- * Only type imports are needed from `@camstack/types` here. (A runtime one
+ * Only type imports are needed from `@dominevo/types` here. (A runtime one
  * would also be safe: the admin UI is the Module-Federation HOST and bundles
- * `@camstack/types` from the workspace — see `template-field.helpers.ts`.)
+ * `@dominevo/types` from the workspace — see `template-field.helpers.ts`.)
  */
 import type {
   NcTemplateVarContext,
   NcTemplateVarDescriptor,
   NcTemplatePreview,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { restoreHeldBackKinds, restoreHeldBackVars } from './template-field.helpers'
-import { useDebouncedString, useSystem } from '@camstack/ui-library'
+import { useDebouncedString, useSystem } from '@dominevo/ui-library'
 import { useQuery, type UseQueryResult } from '@tanstack/react-query'
 
 export const TEMPLATE_CATALOG_QUERY_KEY = ['nc', 'template-catalog'] as const
@@ -32,7 +32,7 @@ const PREVIEW_DEBOUNCE_MS = 400
 /**
  * The draft text a field editor holds, before it is wrapped in the full
  * `previewTemplate` context. Deliberately NOT named `NcTemplatePreviewInput`:
- * `@camstack/types` already exports that name for the full wire input
+ * `@dominevo/types` already exports that name for the full wire input
  * (`{ context, template: { title?, body? } }`) — reusing it here for this
  * flatter, field-local shape would read as the same type under two shapes.
  */

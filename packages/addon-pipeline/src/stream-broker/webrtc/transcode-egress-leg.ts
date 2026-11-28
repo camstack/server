@@ -41,7 +41,7 @@
  * it ever reaches a keyed field, two browsers watching the same camera at the
  * same tier stop sharing a child and nothing anywhere reports it.
  */
-import type { EgressTranscodeRequest, EncodedPacket, EncodeProfile } from '@camstack/types'
+import type { EgressTranscodeRequest, EncodedPacket, EncodeProfile } from '@dominevo/types'
 
 import { isH264IdrAccessUnit } from './h264-utils.js'
 import { convertH264ToAnnexB } from './h264-utils.js'

@@ -29,7 +29,7 @@
  * ## What it checks
  *
  * 1. BEHAVIOUR, for every (kind × filter) pair — 3 answers must agree:
- *      - `systemEventFilterApplies` (the single source, `@camstack/types`),
+ *      - `systemEventFilterApplies` (the single source, `@dominevo/types`),
  *      - the admin UI's `systemEventFilterVisibility` for that one kind,
  *      - the ENGINE, observed: a rule that sets ONLY that filter, against a
  *        subject carrying NO identity at all. If the engine applies the filter
@@ -67,7 +67,7 @@
  * is absent the viewer halves of 3 and 4 are SKIPPED and the output says so —
  * "I could not look" and "it is fine" are different answers (D315); the
  * precedent is `check-nc-mirrors-in-sync.ts`. The viewer module resolves
- * `@camstack/types` from `camstack/node_modules` (the PUBLISHED release the
+ * `@dominevo/types` from `camstack/node_modules` (the PUBLISHED release the
  * app ships with), which is exactly the copy whose tables it must agree with.
  *
  * Usage: npx tsx scripts/check-nc-system-filter-scope.ts
@@ -80,7 +80,7 @@ import type {
   NcSystemEventConditionFilterKey,
   NcSystemEventFilterKey,
   NcSystemEventKind,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   NC_CONSUMABLE_LOW_PERCENT_DEFAULT,
   NC_SYSTEM_EVENT_CONDITION_FILTER_KEYS,
@@ -91,7 +91,7 @@ import {
   systemEventFamilyProblems,
   systemEventFilterApplies,
   systemEventKindsOfFamily,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   type NcSystemEventFamilyFilterVisibility,
   type NcSystemEventFilterVisibility,
@@ -168,7 +168,7 @@ const UNSATISFIABLE: Readonly<Record<NcSystemEventFilterKey, ProbeFilterValue>> 
   deviceIds: [-1],
   deviceTypes: ['a-type-no-device-has'],
   nodeIds: ['a-node-that-does-not-exist'],
-  packageNames: ['@camstack/never-installed'],
+  packageNames: ['@dominevo/never-installed'],
   // Any threshold but the one the probe subject was judged at (the default).
   consumableLowPercent: NC_CONSUMABLE_LOW_PERCENT_DEFAULT + 1,
   commandActions: ['a.command-no-device-gave'],
@@ -239,7 +239,7 @@ function probeCondition(
     case 'nodeIds':
       return { kinds: [kind], nodeIds: ['hub'] }
     case 'packageNames':
-      return { kinds: [kind], packageNames: ['@camstack/server'] }
+      return { kinds: [kind], packageNames: ['@dominevo/server'] }
     case 'consumableLowPercent':
       return { kinds: [kind], consumableLowPercent: 25 }
     case 'commandActions':

@@ -3,7 +3,7 @@
  * Public-docs staleness reminder — lists public docs pages whose described server code changed after they were verified.
  *
  * NOT a gate (D751). The public site lives in another repository
- * (`camstack/docs`, Next.js + fumadocs), so the internal drift guard never saw
+ * (`dominevo/docs`, Next.js + fumadocs), so the internal drift guard never saw
  * it, and pages there described models, engines and tools that had moved on the
  * server for days with nothing saying so. Each page now declares the server code
  * it describes in its frontmatter — `applies-to:` (verified, arms this

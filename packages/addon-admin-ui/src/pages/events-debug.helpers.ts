@@ -17,7 +17,7 @@ import {
   type MediaProvenance,
 } from '../components/detection-intelligence/media-provenance.js'
 import { hubPath } from '../lib/mount'
-import { formatNumeric } from '@camstack/ui-library'
+import { formatNumeric } from '@dominevo/ui-library'
 
 /** The addonId for `addons.custom` is the MANIFEST id, never the npm package. */
 export const DEBUG_ADDON_ID = 'pipeline-analytics'
@@ -321,7 +321,7 @@ export function formatDuration(ms: number): string {
  * on every camera and a bare-trackId set un-marks the wrong camera's track.
  *
  * Re-declared rather than imported so this module stays free of the feed's
- * merge helpers, which pull in `@camstack/types`; the shape is pinned by a test
+ * merge helpers, which pull in `@dominevo/types`; the shape is pinned by a test
  * that compares the two.
  */
 export function debugSelectionKey(deviceId: number, trackId: string): string {

@@ -3,7 +3,7 @@ import { StorageService } from './storage.service'
 import type {
   ICoreStorageProvider as IStorageProvider,
   IStorageLocation,
-} from '@camstack/server/system'
+} from '@dominevo/server/system'
 
 const createMockProvider = (): IStorageProvider => {
   const mockLocation: IStorageLocation = { structured: undefined, files: undefined }

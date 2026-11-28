@@ -3,7 +3,7 @@
  * `FrameResult` shape consumed by every downstream surface (benchmark UI,
  * live view, analysis pipeline, notifications, event bus).
  *
- * Rules enforced here — see `@camstack/types/types/detection.ts` for the
+ * Rules enforced here — see `@dominevo/types/types/detection.ts` for the
  * full data model spec:
  *
  *   1. The executor walks the tree and hands each "root" output through
@@ -38,7 +38,7 @@ import type {
   ObjectDetection,
   ScoredLabel,
   StepOutput,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { AbsoluteBbox } from './crop-utils.js'
 import type { ExecutableStep } from './tree-builder.js'
 

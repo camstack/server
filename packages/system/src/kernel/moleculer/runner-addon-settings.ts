@@ -4,7 +4,7 @@
  * {@link ../sections-store.ts}) over this runner's settings-store client, so an
  * addon's settings are one set of rows whichever process asks.
  */
-import type { AddonStoreRead, StoredKeyRead } from '@camstack/types'
+import type { AddonStoreRead, StoredKeyRead } from '@dominevo/types'
 import { createAddonSettingsStore, type AddonSettingsDoor } from '../addon-settings-store.js'
 import { createSectionsStore, type SectionsDoor } from '../sections-store.js'
 import type { RunnerSettingsClient } from './runner-device-settings.js'

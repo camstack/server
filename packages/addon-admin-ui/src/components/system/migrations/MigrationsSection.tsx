@@ -4,7 +4,7 @@
  * that did not answer is never "no migrations" (D315): pending shows progress, a
  * failed read shows the error, an absent capability says so.
  */
-import { EmptyState, ErrorBox, SECTION_BODY, trpc } from '@camstack/ui-library'
+import { EmptyState, ErrorBox, SECTION_BODY, trpc } from '@dominevo/ui-library'
 import { Loader2, DatabaseZap } from 'lucide-react'
 import { useMemo, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'

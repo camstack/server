@@ -15,9 +15,9 @@ vi.mock('../../brokers/BrokerPicker', () => ({
 vi.mock('../InstanceLinkCreate', () => ({
   InstanceLinkCreate: (props: { functionCap: string }) => <span>create:{props.functionCap}</span>,
 }))
-vi.mock('@camstack/ui-library', async () => {
+vi.mock('@dominevo/ui-library', async () => {
   const actual =
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+    await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return {
     ...actual,
     InstancePlainSelect: (props: { functionCap: string; noneLabel?: string }) => (

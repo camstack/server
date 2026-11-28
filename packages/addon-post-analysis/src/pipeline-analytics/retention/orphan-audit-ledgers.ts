@@ -10,7 +10,7 @@
  * store uses: pages are KEYSET pages (`pageById`, the engine's opaque cursor),
  * the size is the kind's count, and a plate is deleted through its ledger.
  */
-import type { IScopedLogger, SettingsStoreClient } from '@camstack/types'
+import type { IScopedLogger, SettingsStoreClient } from '@dominevo/types'
 import type { EventLedgerCollection } from '../store/event-ledger-collection.js'
 import {
   type EventLedgerWiringDeps,

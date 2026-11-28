@@ -1,5 +1,5 @@
 import { DreameAuthError } from '@apocaliss92/nodedreame'
-import { errMsg, type IConnectionProbe, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IConnectionProbe, type IScopedLogger } from '@dominevo/types'
 import { dreameConfigSchema } from './config.js'
 import type { DreameFacadeFactory } from './dreame-integration-manager.js'
 

@@ -3,7 +3,7 @@
  * run's bag: both read `triggerVariablesOf`. The editor used to repeat the
  * names and had lost `label` (detection) and `zones` (stationary).
  */
-import { type AutomationWhen, triggerVariablesOf } from '@camstack/types'
+import { type AutomationWhen, triggerVariablesOf } from '@dominevo/types'
 import type { TFunction } from 'i18next'
 import { describe, expect, it } from 'vitest'
 import { whenScopeVariables } from '../scope-variables'

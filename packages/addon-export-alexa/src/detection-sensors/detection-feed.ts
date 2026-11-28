@@ -6,8 +6,8 @@
  * (events are telemetry, D8) cannot leave "Front door Person" detected (D49's
  * event-plus-reconcile shape).
  */
-import type { AddonContext, IScopedLogger } from '@camstack/types'
-import { EventCategory, errMsg } from '@camstack/types'
+import type { AddonContext, IScopedLogger } from '@dominevo/types'
+import { EventCategory, errMsg } from '@dominevo/types'
 import { z } from 'zod'
 import type { DetectionSensorClass } from '../handlers/endpoint-id.js'
 import { type ActiveTrackLike, DetectionTracker } from './detection-tracker.js'

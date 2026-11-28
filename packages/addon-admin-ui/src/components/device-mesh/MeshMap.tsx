@@ -14,8 +14,8 @@ import {
   type NodeProps,
 } from '@xyflow/react'
 import { useMemo } from 'react'
-import { useThemeMode, useUiText } from '@camstack/ui-library'
-import type { MeshTopology } from '@camstack/types'
+import { useThemeMode, useUiText } from '@dominevo/ui-library'
+import type { MeshTopology } from '@dominevo/types'
 import { layoutMesh, meshEdges } from './mesh-map-model'
 
 export interface MeshMapProps {

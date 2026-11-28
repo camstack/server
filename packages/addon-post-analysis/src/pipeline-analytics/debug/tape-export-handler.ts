@@ -22,8 +22,8 @@
  * debug-export's HEAD.
  */
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import type { DataPlaneHandler, IScopedLogger } from '@camstack/types'
-import { errMsg } from '@camstack/types'
+import type { DataPlaneHandler, IScopedLogger } from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
 import { type BundleParts, streamBundle } from '../tracking-bench/bundle.js'
 
 export const TAPE_EXPORT_PREFIX = 'tape-export'

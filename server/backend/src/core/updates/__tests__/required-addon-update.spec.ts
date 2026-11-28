@@ -1,4 +1,4 @@
-import type { Alert, IScopedLogger } from '@camstack/types'
+import type { Alert, IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   addonsBelowMinimum,
@@ -21,22 +21,22 @@ function logger(): IScopedLogger {
 }
 
 const MINIMUMS = {
-  '@camstack/addon-old': '>=2.0.0',
-  '@camstack/addon-fine': '>=1.0.0',
-  '@camstack/addon-unreadable': '>=1.0.0',
-  '@camstack/addon-absent': '>=1.0.0',
+  '@dominevo/addon-old': '>=2.0.0',
+  '@dominevo/addon-fine': '>=1.0.0',
+  '@dominevo/addon-unreadable': '>=1.0.0',
+  '@dominevo/addon-absent': '>=1.0.0',
 }
 const INSTALLED = {
-  '@camstack/addon-old': '1.5.0',
-  '@camstack/addon-fine': '1.0.0',
-  '@camstack/addon-unreadable': null,
+  '@dominevo/addon-old': '1.5.0',
+  '@dominevo/addon-fine': '1.0.0',
+  '@dominevo/addon-unreadable': null,
 }
 
 describe('addonsBelowMinimum', () => {
   it('names the stale and the unreadable, never the current or the absent', () => {
     expect(addonsBelowMinimum(MINIMUMS, INSTALLED).map((b) => b.name)).toEqual([
-      '@camstack/addon-old',
-      '@camstack/addon-unreadable',
+      '@dominevo/addon-old',
+      '@dominevo/addon-unreadable',
     ])
   })
 })
@@ -44,7 +44,7 @@ describe('addonsBelowMinimum', () => {
 describe('runRequiredAddonUpdates (planning#447)', () => {
   it('updates exactly the below-minimum set and raises an alert for a failure without stopping', async () => {
     const updatePackage = vi.fn(async (name: string) =>
-      name === '@camstack/addon-old' ? { success: false, error: 'npm 503' } : { success: true },
+      name === '@dominevo/addon-old' ? { success: false, error: 'npm 503' } : { success: true },
     )
     const emitted: Alert[] = []
     const updates: { alertId: string }[] = []
@@ -60,19 +60,19 @@ describe('runRequiredAddonUpdates (planning#447)', () => {
       now: () => 42,
     })
     expect(updatePackage.mock.calls.map((c) => c[0])).toEqual([
-      '@camstack/addon-old',
-      '@camstack/addon-unreadable',
+      '@dominevo/addon-old',
+      '@dominevo/addon-unreadable',
     ])
-    expect(report.updated).toEqual(['@camstack/addon-unreadable'])
-    expect(report.failed).toEqual([{ name: '@camstack/addon-old', reason: 'npm 503' }])
-    expect(emitted.map((a) => a.id)).toEqual([requiredAddonAlertId('@camstack/addon-old')])
+    expect(report.updated).toEqual(['@dominevo/addon-unreadable'])
+    expect(report.failed).toEqual([{ name: '@dominevo/addon-old', reason: 'npm 503' }])
+    expect(emitted.map((a) => a.id)).toEqual([requiredAddonAlertId('@dominevo/addon-old')])
     expect(emitted[0]?.message).toContain('npm 503')
-    expect(updates).toEqual([{ alertId: requiredAddonAlertId('@camstack/addon-unreadable') }])
+    expect(updates).toEqual([{ alertId: requiredAddonAlertId('@dominevo/addon-unreadable') }])
   })
 
   it('treats a throwing updater as a failure and keeps going', async () => {
     const updatePackage = vi.fn(async (name: string) => {
-      if (name === '@camstack/addon-old') throw new Error('boom')
+      if (name === '@dominevo/addon-old') throw new Error('boom')
       return { success: true }
     })
     const report = await runRequiredAddonUpdates({
@@ -83,7 +83,7 @@ describe('runRequiredAddonUpdates (planning#447)', () => {
       logger: logger(),
     })
     expect(report.failed.map((f) => f.reason)).toEqual(['boom'])
-    expect(report.updated).toEqual(['@camstack/addon-unreadable'])
+    expect(report.updated).toEqual(['@dominevo/addon-unreadable'])
   })
 })
 
@@ -93,7 +93,7 @@ describe('raiseHeldInstallAlerts', () => {
     await raiseHeldInstallAlerts({
       held: [
         {
-          packageName: '@camstack/addon-x',
+          packageName: '@dominevo/addon-x',
           spec: 'latest',
           code: 'no-compatible-version',
           reason: 'latest requires server >= 9.0.0, running 1.2.0, and no registry version fits',
@@ -105,7 +105,7 @@ describe('raiseHeldInstallAlerts', () => {
     })
     expect(emit).toHaveBeenCalledTimes(1)
     const alert = emit.mock.calls[0]?.[0]
-    expect(alert?.id).toBe(heldInstallAlertId('@camstack/addon-x'))
+    expect(alert?.id).toBe(heldInstallAlertId('@dominevo/addon-x'))
     expect(alert?.severity).toBe('critical')
     expect(alert?.message).toContain('9.0.0')
   })
@@ -115,7 +115,7 @@ describe('raiseHeldInstallAlerts', () => {
     await raiseHeldInstallAlerts({
       held: [
         {
-          packageName: '@camstack/addon-x',
+          packageName: '@dominevo/addon-x',
           spec: 'latest',
           code: 'registry-unreadable',
           reason: 'r',
@@ -142,15 +142,15 @@ describe('raiseHeldInstallAlerts', () => {
       ...base,
       held: [
         {
-          packageName: '@camstack/addon-x',
+          packageName: '@dominevo/addon-x',
           spec: 'latest',
           code: 'no-compatible-version',
           reason: 'r',
         },
       ],
     })
-    expect(store.get(heldInstallAlertId('@camstack/addon-x'))?.status).toBe('active')
+    expect(store.get(heldInstallAlertId('@dominevo/addon-x'))?.status).toBe('active')
     await raiseHeldInstallAlerts({ ...base, held: [] })
-    expect(store.get(heldInstallAlertId('@camstack/addon-x'))?.status).toBe('completed')
+    expect(store.get(heldInstallAlertId('@dominevo/addon-x'))?.status).toBe('completed')
   })
 })

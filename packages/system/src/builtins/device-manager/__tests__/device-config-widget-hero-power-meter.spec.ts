@@ -8,8 +8,8 @@ import type {
   DeviceBindingEntry,
   ICapabilityRegistry,
   IScopedLogger,
-} from '@camstack/types'
-import { isDeviceConfigCap, powerMeterCapability } from '@camstack/types'
+} from '@dominevo/types'
+import { isDeviceConfigCap, powerMeterCapability } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { deriveDeviceConfigContribution } from '../device-aggregation.js'
 import type { AggregationDeps } from '../device-aggregation.js'

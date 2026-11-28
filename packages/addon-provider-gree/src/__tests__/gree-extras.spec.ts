@@ -1,4 +1,4 @@
-import { DeviceType, DeviceRole } from '@camstack/types'
+import { DeviceType, DeviceRole } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   GREE_EXTRA_COLUMNS,

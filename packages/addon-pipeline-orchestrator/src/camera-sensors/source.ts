@@ -38,7 +38,7 @@ import {
   type MotionSources,
   type MotionTriggeredBy,
   sliceChangedAt,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   cameraOwnMotionRule,
   type EffectiveMotion,

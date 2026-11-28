@@ -4,7 +4,7 @@ Hub-side camera-to-agent load balancer — tracks runner capacity and dispatches
 
 <!-- readme:generated:start (derived from the manifest; edit outside this block) -->
 
-Package `@camstack/addon-pipeline-orchestrator` on npm.
+Package `@dominevo/addon-pipeline-orchestrator` on npm.
 
 ## What it provides
 
@@ -14,14 +14,14 @@ Package `@camstack/addon-pipeline-orchestrator` on npm.
 ## Requirements
 
 - Placement: hub-only.
-- A CamStack hub. An agent is used only where the placement above allows it.
+- A Dominevo hub. An agent is used only where the placement above allows it.
 
 ## Documentation
 
-- [docs/architecture/inference-devices.md](https://github.com/camstack/server/blob/main/docs/architecture/inference-devices.md)
-- [docs/architecture/detection-execution.md](https://github.com/camstack/server/blob/main/docs/architecture/detection-execution.md)
-- [docs/architecture/benchmark.md](https://github.com/camstack/server/blob/main/docs/architecture/benchmark.md)
-- [docs/architecture/ui.md](https://github.com/camstack/server/blob/main/docs/architecture/ui.md)
+- [docs/architecture/inference-devices.md](https://github.com/dominevo/server/blob/main/docs/architecture/inference-devices.md)
+- [docs/architecture/detection-execution.md](https://github.com/dominevo/server/blob/main/docs/architecture/detection-execution.md)
+- [docs/architecture/benchmark.md](https://github.com/dominevo/server/blob/main/docs/architecture/benchmark.md)
+- [docs/architecture/ui.md](https://github.com/dominevo/server/blob/main/docs/architecture/ui.md)
 
 See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
 

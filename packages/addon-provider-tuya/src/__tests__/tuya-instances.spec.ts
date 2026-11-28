@@ -8,10 +8,10 @@ import {
   integrationRowsMigration,
   integrationRowsPortsOver,
   makeInMemoryRecords,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { TuyaCloudError } from '@apocaliss92/nodetuya'
-import { REDACTED_SECRET } from '@camstack/types'
+import { REDACTED_SECRET } from '@dominevo/types'
 import { vi } from 'vitest'
 import { buildTuyaConnectionTestProvider } from '../tuya-connection-test.js'
 import type { TuyaCloudFactory } from '../tuya-integration-manager.js'

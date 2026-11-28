@@ -24,7 +24,7 @@
  * `maxSessionHoldMs` (a lost `off` is bounded per sensor); a Confirm sensor
  * also for one cooldown after it fell (the coincidence window).
  */
-import type { CameraOwnMotion, CameraSensorMode } from '@camstack/types'
+import type { CameraOwnMotion, CameraSensorMode } from '@dominevo/types'
 
 export interface SensorInputState {
   readonly mode: CameraSensorMode

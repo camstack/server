@@ -1,5 +1,5 @@
 /**
- * The UI catalogue — what `@camstack/ui-library` exports, which component
+ * The UI catalogue — what `@dominevo/ui-library` exports, which component
  * answers which need, and the colour tokens — derived from the source so it
  * cannot drift from it.
  *

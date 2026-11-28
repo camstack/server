@@ -4,7 +4,7 @@
  * its own config's, and never truncating a vector to fit a guess.
  */
 import { describe, expect, it, vi } from 'vitest'
-import type { ModelCatalogEntry } from '@camstack/types'
+import type { ModelCatalogEntry } from '@dominevo/types'
 import { buildClipModelRegistry } from '../../../shared/clip/clip-model-registry.js'
 import { CLIP_IMAGE_MODELS, CLIP_TEXT_MODELS } from '../../catalogs/embedding-models.js'
 import { ActiveClipModel, ENCODER_ROW_TTL_MS } from '../active-clip-model.js'

@@ -10,7 +10,7 @@
 
 ## Problem
 
-Today a decoded camera frame already lives in **shared memory** (`@camstack/shm-ring`,
+Today a decoded camera frame already lives in **shared memory** (`@dominevo/shm-ring`,
 a POSIX `shm_open`+`mmap` ring written by the decoder), but the Python inference
 pool never reads it. The detection path re-materialises the pixels and ships them
 over the pool's stdio pipe every frame:

@@ -1,4 +1,4 @@
-import type { HumidifierStatus } from '@camstack/types'
+import type { HumidifierStatus } from '@dominevo/types'
 import type { UiTextFn } from '../../../contexts/ui-text'
 import type { HumidifierActivity, HumidifierModeOption } from '../scenes/humidifier/model'
 

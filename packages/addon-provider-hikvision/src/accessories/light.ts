@@ -28,7 +28,7 @@ import type {
   ConfigUISchemaWithValues,
   DeviceContext,
   InferNativeProvider,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   BaseDevice,
   type BrightnessStatus,
@@ -39,7 +39,7 @@ import {
   type StateRefreshPolicy,
   type SwitchStatus,
   switchCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { AccessoryKind, type HikvisionAccessoryHost, hikvisionAccessoryBaseSchema } from './base.js'
 

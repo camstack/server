@@ -12,7 +12,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Ban, Loader2, RefreshCw } from 'lucide-react'
 import type { ReactNode } from 'react'
 

@@ -10,7 +10,7 @@
  * fingerprint" and rescores) — never a wrong suggestion, because a rescore is
  * idempotent over an unchanged gallery.
  */
-import type { IScopedLogger, RecordKindHandle, RecordsAccess } from '@camstack/types'
+import type { IScopedLogger, RecordKindHandle, RecordsAccess } from '@dominevo/types'
 import {
   type FaceRescoreJobStatus,
   FaceRescoreJobStatusSchema,

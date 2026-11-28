@@ -13,8 +13,8 @@ import {
   type DeviceSearchResult,
   deviceOffersActions,
   DeviceType,
-} from '@camstack/types'
-import { trpc } from '@camstack/ui-library'
+} from '@dominevo/types'
+import { trpc } from '@dominevo/ui-library'
 import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query'
 import type { TRPCLink } from '@trpc/client'
 import type { AnyRouter } from '@trpc/server'

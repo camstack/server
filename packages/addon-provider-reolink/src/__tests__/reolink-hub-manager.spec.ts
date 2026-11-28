@@ -2,7 +2,7 @@
  * D985 — the per-integration hub session manager: the one place that turns the integration list
  * into sessions, and the registry a camera reaches its session through.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { readHubConnection } from '../hub-connection.js'
 import { type HubIntegrationConnection, ReolinkHubManager } from '../reolink-hub-manager.js'

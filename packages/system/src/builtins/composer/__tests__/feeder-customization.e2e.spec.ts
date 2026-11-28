@@ -24,7 +24,7 @@ import {
   CompositionSchema,
   type CompositionSourceRef,
   feederCustomizationExample,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from 'vitest'
 import { OWNED_FIELDS_KEY } from '../../device-manager/field-ownership.js'
 import { NodeDeadlineTimer } from '../deadline-timer.js'

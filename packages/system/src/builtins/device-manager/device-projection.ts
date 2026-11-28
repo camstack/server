@@ -12,7 +12,7 @@ import type {
   IDevice,
   IDeviceRegistry,
   SourceInfo,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   collectZodSecretPaths,
   DeviceFeature,
@@ -20,7 +20,7 @@ import {
   DeviceType,
   extractSourceInfoFromMetadata,
   isKernelDerivedFeature,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { PersistedDeviceMeta } from './device-meta-types.js'
 
 /**

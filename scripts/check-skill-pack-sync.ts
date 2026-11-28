@@ -3,8 +3,8 @@
  * The public skill pack and the repository skills do not say the same thing twice.
  *
  * `packages/develop/skills/<id>.md` is the canonical PUBLIC text of a skill: it
- * ships on npm with `@camstack/develop` and is what `camstack develop skill`
- * and the `@camstack/mcp-develop` server hand to a third-party author. The
+ * ships on npm with `@dominevo/develop` and is what `dominevo develop skill`
+ * and the `@dominevo/mcp-develop` server hand to a third-party author. The
  * repository skill `.claude/skills/<id>/SKILL.md` is an OVERLAY on it: it
  * points at the pack text and keeps only what is true of this repository.
  *

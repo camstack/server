@@ -19,7 +19,7 @@ different depths, and that difference decides what was built today.
 | | HomeKit recording (HKSV) | Alexa camera events |
 | --- | --- | --- |
 | Why it shows nothing | The accessory does not publish `CameraRecordingManagement` / `CameraOperatingMode` at all | The endpoint does not declare `Alexa.SmartVision.ObjectDetectionSensor` |
-| Distance to working | **Large** — a live fMP4 fragment source does not exist anywhere in CamStack | **Medium** — one declaration, one new directive handler, one public image URL |
+| Distance to working | **Large** — a live fMP4 fragment source does not exist anywhere in Dominevo | **Medium** — one declaration, one new directive handler, one public image URL |
 | Blocked on something outside this repo | No | **Yes** — an operator check on the skill's Permissions page |
 | Shipped 2026-08-07 | Nothing. Design only. | The honesty fixes (§B4). The feed itself is phase 2. |
 
@@ -81,7 +81,7 @@ only the delegate and its media.** That is still five things:
    initialisation packet (`ftyp` + `moov`) followed by media fragments
    (`moof` + `mdat`), each starting on a key frame, at roughly the negotiated
    fragment length, beginning ~4 s BEFORE the trigger and continuing until iOS
-   closes the stream. **Nothing in CamStack can produce that.** See §A3.
+   closes the stream. **Nothing in Dominevo can produce that.** See §A3.
 
 4. **Motion-trigger wiring** — `EventTriggerOption.MOTION` is derived from
    `CameraControllerOptions.sensors.motion`, i.e. the controller must OWN the
@@ -199,7 +199,7 @@ Two things the plan above got wrong, both recorded in
   `EgressTranscodeRequestSchema`: phase 1-4 consumers are in-process and hold a
   live plane object, so the transport is reached through
   `EgressTranscodeManager.acquireFragments` and `egressTransportFromRequest` can
-  never name it. That defers the `@camstack/system` train to whenever a consumer
+  never name it. That defers the `@dominevo/system` train to whenever a consumer
   first needs to run off-node.
 
 The child rides the existing manager machinery unchanged — exact-match sharing
@@ -267,7 +267,7 @@ presumably satisfied — but confirm it before spending the week.
 - **iOS caches aggressively.** A camera that has ever been paired without
   `recording` may need to be removed from the Home and re-added before the
   option appears.
-- **`@camstack/types` resolves to its BUILT dist from `addon-pipeline`.** A test
+- **`@dominevo/types` resolves to its BUILT dist from `addon-pipeline`.** A test
   that builds an argv with `buildFfmpegArgs` and runs it against real ffmpeg
   reads the STALE dist on an unbuilt tree, silently produces the pre-P1 sink
   args, and fails with ffmpeg's `muxer does not support non seekable output` —
@@ -282,7 +282,7 @@ Written now, while the shape is fresh. No code.
 > Two of the assumptions below turned out to be wrong and are recorded here
 > rather than deleted: the transport is NOT reachable in-process by phase 4's
 > consumer (`addon-export-hap` is its own runner, so the splitter/plane/child
-> moved into `@camstack/types`), and the capacity question is settled by
+> moved into `@dominevo/types`), and the capacity question is settled by
 > measurement rather than by choosing the cheap option.
 
 **P3's cheap option is now cheaper than it looks.** `Fmp4FragmentPlane` already

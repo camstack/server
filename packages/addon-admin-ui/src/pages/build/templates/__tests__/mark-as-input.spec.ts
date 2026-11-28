@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { AutomationTemplatePayloadSchema, type AutomationTemplatePayload } from '@camstack/types'
+import { AutomationTemplatePayloadSchema, type AutomationTemplatePayload } from '@dominevo/types'
 import { bindableFields, markAsInput, markProblem, removeInput } from '../mark-as-input'
 
 const BODY: AutomationTemplatePayload = AutomationTemplatePayloadSchema.parse({

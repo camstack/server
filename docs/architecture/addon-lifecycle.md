@@ -94,7 +94,7 @@ that owns the addon ([D444](../decisions/adr-0444-hub-main-measures-its-own-epis
 with nothing left to purge and re-import, `require-cache.ts` and the guard that
 watched it are deleted (D284 superseded). <!-- drift-ok: naming a file whose deletion is the point -->
 
-### `@camstack/server/system` builtins, and the ones that are not in hub-main
+### `@dominevo/server/system` builtins, and the ones that are not in hub-main
 
 Builtins are the exception to "one addon, one process": they load in the hub
 ROOT process. The reason is narrow — storage, settings, logging and
@@ -271,9 +271,9 @@ a pure function) and never keeps an addon on its own say:
 | Part of the desired set | Rule |
 | --- | --- |
 | Hub packages | every package the hub installs whose addons are all `any-node` (a package with a `hub-only` addon is never wanted; one whose addons are ALL `hub-only` is a leftover), at the hub's version |
-| Agent-tracked packages | `@camstack/addon-agent-ui`, which the hub never loads: the hub follows the registry's `latest` for it, so `addons.updatePackage` for it fans out to every online agent |
+| Agent-tracked packages | `@dominevo/addon-agent-ui`, which the hub never loads: the hub follows the registry's `latest` for it, so `addons.updatePackage` for it fans out to every online agent |
 | Tombstones | a package removed on purpose from a node (a hub uninstall for it, an operator undeploy) stays off it; an explicit delivery to that node lifts it |
-| Never managed | `@camstack/server/system` |
+| Never managed | `@dominevo/server/system` |
 
 The diff against the node's reported roster is **install** (missing), **update**
 (behind, or AHEAD of the hub: D942) and **remove** (tombstoned, or a hub-only
@@ -293,8 +293,8 @@ nothing.
 
 Registration also still runs the decl-level stale sweep ([D24](../decisions/adr-0024.md)):
 an addon on the node that the hub does not install, or installs as `hub-only`, is
-undeployed. Bootstrap infrastructure (`@camstack/server/system`,
-`@camstack/addon-agent-ui`) never is. The agent has no local uninstall path:
+undeployed. Bootstrap infrastructure (`@dominevo/server/system`,
+`@dominevo/addon-agent-ui`) never is. The agent has no local uninstall path:
 `$agent.undeploy` is called only by the hub (an operator uninstall, the sweep, or
 a convergence removal).
 
@@ -477,7 +477,7 @@ Conventions:
   costs a retry (D347), not the device until the next restart. `createContext`
   stays synchronous and empty, for a caller that builds no device from it
   ([D677](../decisions/adr-0677-the-runtime-state-row-writer-never-writes-a-row-this-process-has-not-read.md)).
-- Reuse `@camstack/ui-library` composites (`StreamPanel`, `IntercomPanel`,
+- Reuse `@dominevo/ui-library` composites (`StreamPanel`, `IntercomPanel`,
   `TabbedSettingsForm`, `LogStream`, `NodePicker`, …). Do not fork them.
 - `ctx.api` for anything cross-addon, including existence checks
   ([transport.md](transport.md)).
@@ -488,11 +488,11 @@ This is the single most expensive trap in the repo, so it gets its own page:
 [update-and-release.md](update-and-release.md#deploying-an-addon-during-development).
 The short version: editing `packages/<addon>/src` and rebuilding `dist/` has **no
 runtime effect** — the running node loads addons from `<dataDir>/addons/`. Use
-`camstack deploy`.
+`dominevo deploy`.
 
 ## Custom actions
 
 An addon's operator buttons register on a DIFFERENT path depending on whether
-it runs in-process or forked, and `camstack deploy` reporting success is not
+it runs in-process or forked, and `dominevo deploy` reporting success is not
 evidence that a new one landed. See
 [addon-custom-actions.md](addon-custom-actions.md).

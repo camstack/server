@@ -29,7 +29,7 @@ import {
   type RecordIntegrationInstances,
   type SavedDevice,
   type SystemEvent,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { createHomematicAppSourceProvider } from './app-source.js'
 import { buildButtonEventHandlers } from './ccu/ccu-button-events.js'
@@ -249,13 +249,13 @@ export class HomematicProviderAddon extends BaseDeviceProvider {
     return connected === true ? homematicFacades.get(integrationId) : null
   }
 
-  /** CCU address → CamStack device id for containers adopted from one integration. */
+  /** CCU address → Dominevo device id for containers adopted from one integration. */
   private async adoptedCcuAddresses(integrationId: string): Promise<ReadonlyMap<string, number>> {
     const found = await this.adoptedContainers(integrationId)
     return found.ids
   }
 
-  /** CCU address → CamStack device name, for the same containers. */
+  /** CCU address → Dominevo device name, for the same containers. */
   private async adoptedCcuNames(integrationId: string): Promise<ReadonlyMap<string, string>> {
     const found = await this.adoptedContainers(integrationId)
     return found.names
@@ -656,8 +656,8 @@ export class HomematicProviderAddon extends BaseDeviceProvider {
   }
 
   /**
-   * Best-effort: resolve an imported CCU room to a CamStack location and assign
-   * it to a freshly-adopted device. Reuses an existing CamStack location via
+   * Best-effort: resolve an imported CCU room to a Dominevo location and assign
+   * it to a freshly-adopted device. Reuses an existing Dominevo location via
    * fuzzy match (`bestLocationMatch`), otherwise creates a new label.
    *
    * Takes the known-locations list and returns the possibly-extended list so

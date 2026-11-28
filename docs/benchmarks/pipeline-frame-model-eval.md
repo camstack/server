@@ -88,7 +88,7 @@ npx tsx scripts/pipeline-frame-model-eval.ts report --python python3.13
 ## Limits
 
 - Annotation-only ground truth supports target recovery but not defensible IoU or false-positive regression counts.
-- The declared positive control was not recovered at the current 0.50 threshold by either CamStack resolution; the reference NVR recovered it only with common letterbox at 0.20. The control therefore does not validate a 640 promotion in this run.
+- The declared positive control was not recovered at the current 0.50 threshold by either Dominevo resolution; the reference NVR recovered it only with common letterbox at 0.20. The control therefore does not validate a 640 promotion in this run.
 - CoreML `ComputeUnit.ALL` allows ANE execution but public CoreML APIs do not prove per-operation ANE placement; timings are wall-clock measurements on this Mac.
 - The four-image corpus is diagnostic, not a statistically representative accuracy dataset.
 - Capacity on live OpenVINO NPU/iGPU and real CoreML concurrency requires the existing quiet-node runner and was not inferred from single-image latency.

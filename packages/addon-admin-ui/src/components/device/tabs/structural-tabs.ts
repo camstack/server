@@ -3,7 +3,7 @@
  * settings schema — extracted from `DeviceDetail.tsx` (D676) so the table and
  * its filters are one pure function a spec can pin.
  */
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import { CUSTOMIZE_TAB_ID } from '../../../lib/customization-routes'
 import i18n from '../../../i18n/index'
 

@@ -1,4 +1,4 @@
-import type { DeviceValueFieldProps } from '@camstack/ui-library'
+import type { DeviceValueFieldProps } from '@dominevo/ui-library'
 import type { ReactElement } from 'react'
 
 /** One device the stub lists: the fields a row shows and the filters read. */
@@ -26,7 +26,7 @@ function meetsRequires(device: StubDevice, requires: DeviceValueFieldProps['requ
  * `data-requires`. Only the given value rows are drawn, a pick calls back, and the
  * transform and preview regions render once there is a pick.
  *
- * It imports nothing at runtime from `@camstack/ui-library`: the specs build it
+ * It imports nothing at runtime from `@dominevo/ui-library`: the specs build it
  * inside their own mock factory of that package, and a value import would wait on
  * the factory that is waiting on it.
  */

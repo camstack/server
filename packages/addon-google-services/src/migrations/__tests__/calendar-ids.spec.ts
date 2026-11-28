@@ -4,7 +4,7 @@
  * `brokers` record kind (in-memory records engine) for the broker rows, through the production
  * port binding.
  */
-import { makeInMemoryRecords, type RecordKindHandle } from '@camstack/types'
+import { makeInMemoryRecords, type RecordKindHandle } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import { googleBrokersEntryKind } from '../../broker-record-kinds.js'

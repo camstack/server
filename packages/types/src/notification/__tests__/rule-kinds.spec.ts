@@ -2,7 +2,7 @@
  * THE PIN for the shared rule-KIND and rule-SECTION model.
  *
  * This module is consumed by two editors that ship on different trains (the
- * admin UI with `camstack deploy`, the viewer with an EAS OTA), so nothing here
+ * admin UI with `dominevo deploy`, the viewer with an EAS OTA), so nothing here
  * may be "obviously right": every claim it makes about the engine is asserted
  * against the real served catalog, and the two halves are asserted against each
  * other — a seed that does not classify back into the section that produced it

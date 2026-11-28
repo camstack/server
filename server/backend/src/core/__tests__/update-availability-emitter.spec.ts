@@ -1,4 +1,4 @@
-import type { IEventBus, SystemEvent } from '@camstack/types'
+import type { IEventBus, SystemEvent } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { UpdateAvailabilityEmitter } from '../update-availability-emitter.js'
 
@@ -13,7 +13,7 @@ describe('UpdateAvailabilityEmitter', () => {
     const updates = new UpdateAvailabilityEmitter(bus, { type: 'core', id: 'updates' })
     const first = {
       target: 'addon' as const,
-      packageName: '@camstack/addon-pipeline',
+      packageName: '@dominevo/addon-pipeline',
       currentVersion: '1.2.3',
       latestVersion: '1.2.4',
     }
@@ -35,13 +35,13 @@ describe('UpdateAvailabilityEmitter', () => {
     const updates = new UpdateAvailabilityEmitter(busOf(emit), { type: 'core', id: 'updates' })
     const pipeline = {
       target: 'addon' as const,
-      packageName: '@camstack/addon-pipeline',
+      packageName: '@dominevo/addon-pipeline',
       currentVersion: '1.2.3',
       latestVersion: '1.2.4',
     }
     const reolink = {
       target: 'addon' as const,
-      packageName: '@camstack/addon-provider-reolink',
+      packageName: '@dominevo/addon-provider-reolink',
       currentVersion: '1.0.0',
       latestVersion: '1.0.1',
     }
@@ -87,13 +87,13 @@ describe('UpdateAvailabilityEmitter', () => {
     const updates = new UpdateAvailabilityEmitter(busOf(emit), { type: 'core', id: 'updates' })
     const pipeline = {
       target: 'addon' as const,
-      packageName: '@camstack/addon-pipeline',
+      packageName: '@dominevo/addon-pipeline',
       currentVersion: '1.2.3',
       latestVersion: '1.2.4',
     }
     const reolink = {
       target: 'addon' as const,
-      packageName: '@camstack/addon-provider-reolink',
+      packageName: '@dominevo/addon-provider-reolink',
       currentVersion: '1.0.0',
       latestVersion: '1.0.1',
     }
@@ -114,13 +114,13 @@ describe('UpdateAvailabilityEmitter', () => {
     const updates = new UpdateAvailabilityEmitter(busOf(emit), { type: 'core', id: 'updates' })
     const hub = {
       target: 'addon' as const,
-      packageName: '@camstack/addon-pipeline',
+      packageName: '@dominevo/addon-pipeline',
       currentVersion: '1.0.0',
       latestVersion: '1.1.0',
     }
     const agent = {
       target: 'addon' as const,
-      packageName: '@camstack/addon-ai',
+      packageName: '@dominevo/addon-ai',
       currentVersion: '0.4.8',
       latestVersion: '0.4.13',
       nodeId: 'agent-a',
@@ -135,12 +135,12 @@ describe('UpdateAvailabilityEmitter', () => {
       nodeIds: ['hub'],
       // Even the hub's own rows say which node they are about — a list with
       // unlabelled lines in it cannot be read on a cluster.
-      packages: [{ packageName: '@camstack/addon-pipeline', nodeId: 'hub' }],
+      packages: [{ packageName: '@dominevo/addon-pipeline', nodeId: 'hub' }],
     })
     expect(emit.mock.calls[1]![0].data).toMatchObject({
       nodeId: 'agent-a',
       nodeIds: ['agent-a'],
-      packages: [{ packageName: '@camstack/addon-ai', nodeId: 'agent-a' }],
+      packages: [{ packageName: '@dominevo/addon-ai', nodeId: 'agent-a' }],
     })
     expect(emit.mock.calls[1]![0].data['packages']).toHaveLength(1)
   })
@@ -150,7 +150,7 @@ describe('UpdateAvailabilityEmitter', () => {
     const updates = new UpdateAvailabilityEmitter(busOf(emit), { type: 'core', id: 'updates' })
     const hub = {
       target: 'server' as const,
-      packageName: '@camstack/server',
+      packageName: '@dominevo/server',
       currentVersion: '1.0.1',
       latestVersion: '1.0.2',
       nodeId: 'hub',
@@ -178,7 +178,7 @@ describe('UpdateAvailabilityEmitter', () => {
     })
     const hub = {
       target: 'addon' as const,
-      packageName: '@camstack/addon-pipeline',
+      packageName: '@dominevo/addon-pipeline',
       currentVersion: '1.0.0',
       latestVersion: '1.1.0',
     }

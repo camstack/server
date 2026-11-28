@@ -4,7 +4,7 @@ import {
   type DeviceContext,
   type InferNativeProvider,
   type SwitchStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { AUTO_SWITCH_JSON_KEY, VacuumDevice, type AutoSwitchKey } from '@apocaliss92/nodedreame'
 import { dreameChildSchema } from './dreame-child-device.js'
 import { DreameChildDevice } from './dreame-child-device.js'

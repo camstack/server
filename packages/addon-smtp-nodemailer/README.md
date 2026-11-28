@@ -1,10 +1,10 @@
 # Email (SMTP)
 
-SMTP email provider addon for CamStack — wraps `nodemailer` and registers a `smtp-provider` cap collection entry. Used by notifier addons.
+SMTP email provider addon for Dominevo — wraps `nodemailer` and registers a `smtp-provider` cap collection entry. Used by notifier addons.
 
 <!-- readme:generated:start (derived from the manifest; edit outside this block) -->
 
-Package `@camstack/addon-smtp-nodemailer` on npm.
+Package `@dominevo/addon-smtp-nodemailer` on npm.
 
 ## What it provides
 
@@ -15,7 +15,7 @@ Package `@camstack/addon-smtp-nodemailer` on npm.
 
 - Placement: hub-only.
 - Runtime dependencies installed with the addon: `mailparser`, `smtp-server`.
-- A CamStack hub. An agent is used only where the placement above allows it.
+- A Dominevo hub. An agent is used only where the placement above allows it.
 
 See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
 

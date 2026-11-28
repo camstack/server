@@ -11,6 +11,6 @@
 - [ ] No private data: no secrets, tokens, house addresses, host names, or camera media (the repository guards refuse these)
 
 For an addon or capability change, `scaffold_addon` / `scaffold_cap_stub` and
-`validate_addon` (`camstack develop`, or the `@camstack/mcp-develop` server)
+`validate_addon` (`dominevo develop`, or the `@dominevo/mcp-develop` server)
 are the way to start. `validate_addon` should be green before the package is
 published.

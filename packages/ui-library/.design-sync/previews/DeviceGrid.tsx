@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { DeviceGrid, DeviceSummaryCard } from '@camstack/ui-library'
+import { DeviceGrid, DeviceSummaryCard } from '@dominevo/ui-library'
 import { Move, Bell } from 'lucide-react'
 
 const Frame = ({ children }: { children: ReactNode }) => (

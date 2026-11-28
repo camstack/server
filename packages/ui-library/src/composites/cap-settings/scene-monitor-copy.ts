@@ -8,7 +8,7 @@
  * lighting the scene has never been captured in.
  */
 
-import type { SceneMonitor, SceneUnavailable } from '@camstack/types'
+import type { SceneMonitor, SceneUnavailable } from '@dominevo/types'
 import { defaultUiText, type UiTextFn } from '../../contexts/ui-text'
 
 /** The lighting variants an operator is OFFERED. The resolver can also report

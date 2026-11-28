@@ -6,7 +6,7 @@ import { buildLibPreset } from '../../tools/build/vite-lib.preset.ts'
 
 /**
  * `klf-200-api` imports `disposablestack/auto`, a polyfill for the explicit
- * resource management globals (`DisposableStack`, `Symbol.dispose`). CamStack
+ * resource management globals (`DisposableStack`, `Symbol.dispose`). Dominevo
  * requires Node 24+, which ships them natively, so the polyfill (and the
  * ~2.5 MB of `es-abstract` it drags in) stays out of the addon bundle.
  */
@@ -87,7 +87,7 @@ const base = buildLibPreset({
     index: 'src/index.ts',
     addon: 'src/addon.ts',
   },
-  // Ships self-contained (only @camstack/kernel + node builtins stay
+  // Ships self-contained (only @dominevo/kernel + node builtins stay
   // external): the klf-200-api library (a devDependency) is bundled inline.
   externals: 'self-contained',
 })

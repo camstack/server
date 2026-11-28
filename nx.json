@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
-  "plugins": ["@camstack/nx-plugin"],
+  "plugins": ["@dominevo/nx-plugin"],
   "targetDefaults": {
     "build": {
       "cache": true,

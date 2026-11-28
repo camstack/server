@@ -5,11 +5,11 @@
  * reason, that an unanswered matrix is never drawn as "off", that a child step
  * reads "off with <parent>", and that a failed write shows its error.
  */
-import { selectOption } from '@camstack/ui-library/testing'
+import { selectOption } from '@dominevo/ui-library/testing'
 import * as jestDomMatchers from '@testing-library/jest-dom/matchers'
 import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { StepSwitchMatrix } from '@camstack/types'
+import type { StepSwitchMatrix } from '@dominevo/types'
 
 expect.extend(jestDomMatchers)
 
@@ -40,8 +40,8 @@ vi.mock('@tanstack/react-query', async () => ({
   useQueryClient: () => ({ invalidateQueries: vi.fn() }),
 }))
 
-vi.mock('@camstack/ui-library', async () => ({
-  ...(await vi.importActual<Record<string, unknown>>('@camstack/ui-library')),
+vi.mock('@dominevo/ui-library', async () => ({
+  ...(await vi.importActual<Record<string, unknown>>('@dominevo/ui-library')),
   usePipelineOrchestratorGetStepSwitches: () => ({
     data: h.matrix,
     isError: h.queryError !== undefined,
@@ -58,7 +58,7 @@ vi.mock('@camstack/ui-library', async () => ({
   }),
 }))
 
-import type { StepTreeNode } from '@camstack/ui-library'
+import type { StepTreeNode } from '@dominevo/ui-library'
 import {
   ClusterStepRowAction,
   NodeStepRowAction,

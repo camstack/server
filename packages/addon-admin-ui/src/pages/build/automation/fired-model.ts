@@ -6,8 +6,8 @@
  * The editor writes `sourceIds` and `eventIds`, one of each. `kinds` and
  * `match` are written by hand or by a tool: a pick here never drops them.
  */
-import type { DeviceFiredLeaf, EventVocabularyEntry, EventVocabularySource } from '@camstack/types'
-import { EventEmitterStatusSchema, readEventVocabulary } from '@camstack/types'
+import type { DeviceFiredLeaf, EventVocabularyEntry, EventVocabularySource } from '@dominevo/types'
+import { EventEmitterStatusSchema, readEventVocabulary } from '@dominevo/types'
 
 /** The cap whose slice carries the vocabulary. */
 export const EVENT_EMITTER_CAP = 'event-emitter'

@@ -21,7 +21,7 @@
  * the dark parked car (`ENTRY_DNRG309`) and then the silver one beside it,
  * before leaving the frame at the bottom-right. Frame 3840×2160.
  */
-import type { BoundingBox } from '@camstack/types'
+import type { BoundingBox } from '@dominevo/types'
 import type { StationaryEntry } from '../../pipeline/stationary/stationary-types.js'
 
 export const FRAME_102 = { width: 3840, height: 2160 } as const

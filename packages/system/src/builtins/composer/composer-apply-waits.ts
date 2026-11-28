@@ -5,7 +5,7 @@
  * every converge while it waits — and its end is logged with the count of
  * applies it refused.
  */
-import type { ComposerApplyInput, ComposerApplyResult, IScopedLogger } from '@camstack/types'
+import type { ComposerApplyInput, ComposerApplyResult, IScopedLogger } from '@dominevo/types'
 
 const INTEGRATION_WAIT = 'waiting for the shared Blocks integration to reconcile'
 const STORE_NOT_LOADED =

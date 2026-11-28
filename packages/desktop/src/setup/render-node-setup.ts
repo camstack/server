@@ -2,7 +2,7 @@
  * The NODE product's setup window: hub or agent, plus the agent's hub
  * connection.
  *
- * This build stages the `@camstack/server` closure, so both of its roles run a
+ * This build stages the `@dominevo/server` closure, so both of its roles run a
  * real node. It offers NO viewer option: watching a hub needs none of the
  * 1.1 GB this product carries and ships as its own reduced product instead
  * (ADR-0402). A store still holding the retired `viewer` role arrives here
@@ -28,8 +28,8 @@ export function renderNodeSetup(initial: NodeSetupInitial): string {
   const isAgent = initial.isAgent
   return setupDocument({
     submitLabel: 'Save and start',
-    body: `<h1>Set up this CamStack machine</h1>
-<p class="sub">Choose whether this machine runs the CamStack hub or joins an existing hub as a worker.</p>
+    body: `<h1>Set up this Dominevo machine</h1>
+<p class="sub">Choose whether this machine runs the Dominevo hub or joins an existing hub as a worker.</p>
 
 <div class="label">Role</div>
 <div class="toggle">
@@ -44,12 +44,12 @@ export function renderNodeSetup(initial: NodeSetupInitial): string {
 </div>
 
 <div id="roleInfoHub" class="mode-info" style="display:${isAgent ? 'none' : 'block'}">
-  This machine runs the full CamStack server and admin UI. Cameras, recording
+  This machine runs the full Dominevo server and admin UI. Cameras, recording
   and analytics are managed here. The window opens the admin UI on
   https://localhost:${HUB_PROD_PORT}.
 </div>
 <div id="roleInfoAgent" class="mode-info" style="display:${isAgent ? 'block' : 'none'}">
-  This machine joins your CamStack cluster as a worker node and offloads
+  This machine joins your Dominevo cluster as a worker node and offloads
   inference/decoding for a hub elsewhere on the network.
 </div>
 

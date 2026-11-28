@@ -14,7 +14,7 @@
  *    one contact is asleep, and must not show that contact as closed.
  */
 
-import type { AlarmArmMode, AlarmState, NcAlarmConfig, NcAlarmSettings } from '@camstack/types'
+import type { AlarmArmMode, AlarmState, NcAlarmConfig, NcAlarmSettings } from '@dominevo/types'
 import { armModeOf, type NcDeviceNameLookup } from './alarm-mode-coverage.js'
 import { classifyCoveredOpening, type NcAlarmOpening } from './alarm-openings.js'
 import type { NcAlarmInputBypassRecord } from './alarm-input-bypasses.js'
@@ -22,7 +22,7 @@ import type { NcAlarmExclusionPhase } from './alarm-panel-device.js'
 
 /**
  * Derived from the published `NcAlarmConfig` rather than imported: the live
- * sub-schemas are not on the `@camstack/types` barrel, and adding them would
+ * sub-schemas are not on the `@dominevo/types` barrel, and adding them would
  * be a framework train for a name.
  */
 export type NcAlarmLive = NonNullable<NcAlarmConfig['live']>

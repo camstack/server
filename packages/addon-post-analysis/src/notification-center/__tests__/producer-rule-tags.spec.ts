@@ -6,8 +6,8 @@
  * `setTags` (the `tags` cap's rename/remove) must change only the tags, and a
  * rule stored before tags existed must load and re-save without a `tags` key.
  */
-import type { InMemoryRecords } from '@camstack/types'
-import { TimelapseRuleInputSchema, TimelapseRulePatchSchema } from '@camstack/types'
+import type { InMemoryRecords } from '@dominevo/types'
+import { TimelapseRuleInputSchema, TimelapseRulePatchSchema } from '@dominevo/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import {

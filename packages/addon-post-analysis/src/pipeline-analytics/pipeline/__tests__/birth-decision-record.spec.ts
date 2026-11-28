@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { MAX_BIRTH_LATENCY_PROXY_MS } from '@camstack/types'
+import { MAX_BIRTH_LATENCY_PROXY_MS } from '@dominevo/types'
 import {
   buildBirthDecisionRecord,
   type BirthDecisionRecordInput,

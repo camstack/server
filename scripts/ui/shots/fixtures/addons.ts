@@ -8,7 +8,7 @@ import { defineFixtures } from './_define'
 
 const PUBLISHED = [
   {
-    name: '@camstack/addon-tailscale',
+    name: '@dominevo/addon-tailscale',
     version: '1.4.2',
     description: 'Tailnet client and Serve/Funnel ingress for the hub.',
     keywords: ['camstack', 'addon'],
@@ -18,7 +18,7 @@ const PUBLISHED = [
     capabilities: ['mesh-network', 'network-access'],
   },
   {
-    name: '@camstack/addon-static-turn',
+    name: '@dominevo/addon-static-turn',
     version: '1.0.3',
     description: 'A fixed TURN relay for remote viewers.',
     keywords: ['camstack', 'addon'],
@@ -43,7 +43,7 @@ function installed(
       id,
       name,
       version: '1.2.3',
-      packageName: `@camstack/addon-${id}`,
+      packageName: `@dominevo/addon-${id}`,
       packageVersion: '1.2.3',
       capabilities: [],
     },
@@ -75,7 +75,7 @@ export default defineFixtures({
     'addons.list': INSTALLED,
     'addons.listUpdates': [
       {
-        name: '@camstack/addon-reolink',
+        name: '@dominevo/addon-reolink',
         currentVersion: '1.2.3',
         latestVersion: '1.4.0',
         isSystem: false,
@@ -105,7 +105,7 @@ export default defineFixtures({
       },
     ],
     'addons.getPackageDocs': (input: { name?: string; version?: string } | undefined) => ({
-      name: input?.name ?? '@camstack/addon-tailscale',
+      name: input?.name ?? '@dominevo/addon-tailscale',
       version: input?.version ?? '1.4.2',
       readme: {
         status: 'ok',

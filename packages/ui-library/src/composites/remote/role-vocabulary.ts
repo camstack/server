@@ -1,9 +1,9 @@
 /**
- * The admin's view of the shared remote role vocabulary (`@camstack/types`):
+ * The admin's view of the shared remote role vocabulary (`@dominevo/types`):
  * the name of a role in the operator's language. The viewer reads the same
  * vocabulary, so a key is called the same thing on both.
  */
-import { remoteRoleLabel, type VocabLocale } from '@camstack/types'
+import { remoteRoleLabel, type VocabLocale } from '@dominevo/types'
 
 /** `it`, `it-IT` → `it`; everything else → `en`. */
 export function vocabLocale(language: string): VocabLocale {

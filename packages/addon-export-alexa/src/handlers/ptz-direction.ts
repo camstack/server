@@ -15,7 +15,7 @@
  * normal momentary usage, but accept it for resilience.
  */
 
-import type { AddonApi, AddonContext, IScopedLogger } from '@camstack/types'
+import type { AddonApi, AddonContext, IScopedLogger } from '@dominevo/types'
 import { z } from 'zod'
 import type { VerifiedDirectiveIdentity } from '../directive-router.js'
 import { parseCameraEndpointId } from './endpoint-id.js'

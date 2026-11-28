@@ -12,9 +12,9 @@
  * answers with a ~12 s timeout on every request, forever.
  */
 
-import type { IScopedLogger } from '@camstack/types'
-import type { Fmp4Subscription } from '@camstack/types/node'
-import { Fmp4FragmentPlane } from '@camstack/types/node'
+import type { IScopedLogger } from '@dominevo/types'
+import type { Fmp4Subscription } from '@dominevo/types/node'
+import { Fmp4FragmentPlane } from '@dominevo/types/node'
 import type { CameraRecordingConfiguration } from '@homebridge/hap-nodejs'
 import { HDSProtocolError } from '@homebridge/hap-nodejs'
 import { describe, expect, it } from 'vitest'

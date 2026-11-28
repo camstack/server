@@ -4,7 +4,7 @@
  * device card (`WaterHeaterCardHero` in panel-controls.tsx).
  */
 import type { ReactNode } from 'react'
-import type { WaterHeaterStatus } from '@camstack/types'
+import type { WaterHeaterStatus } from '@dominevo/types'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
 import type { DeviceControlProps } from './control-registry'
 

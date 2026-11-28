@@ -1,4 +1,4 @@
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IScopedLogger } from '@dominevo/types'
 import { sameConnection, type UnraidConnectionConfig } from './config.js'
 import { UnraidIntegrationManager } from './unraid-integration-manager.js'
 import type { UnraidClientFactory } from './unraid-client-contract.js'

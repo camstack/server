@@ -1,4 +1,4 @@
-import type { GroupMember, Target } from '@camstack/types'
+import type { GroupMember, Target } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   isPickableTarget,

@@ -1,6 +1,6 @@
-/** Re-export — shared with `@camstack/ui-library`. */
+/** Re-export — shared with `@dominevo/ui-library`. */
 export {
   fleetViewOf,
   type DeviceFleetView,
   type PickerFleetView,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'

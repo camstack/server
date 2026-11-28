@@ -12,7 +12,7 @@
  * pass before AND after the accessor swap.
  */
 import { describe, it, expect, afterEach } from 'vitest'
-import { EventCategory } from '@camstack/types'
+import { EventCategory } from '@dominevo/types'
 import PipelineOrchestratorAddon from '../index.js'
 import { makeFakeContext, makeFakeBroker, enabledNodesFromBroker } from './e2e-helpers.js'
 

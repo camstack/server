@@ -3,7 +3,7 @@
  * unreadable settings, a list that did not answer) changes nothing. Devices are removed only on an
  * explicit Deleted/Disabled event that names the integration.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { EcowittSettingsRead } from '../ecowitt-instances.js'
 import {

@@ -12,7 +12,7 @@ import {
   type RecordsAccess,
   type RecordsTransport,
   type RecordView,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { orchestratorRecordKinds } from '../record-kinds.js'
 
 interface StoredRow {

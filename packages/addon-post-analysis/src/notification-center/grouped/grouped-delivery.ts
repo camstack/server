@@ -18,8 +18,8 @@
  * is about a member (spec §7).
  */
 
-import type { IScopedLogger, NcRule } from '@camstack/types'
-import { NC_GROUPING_MIN_SEC } from '@camstack/types'
+import type { IScopedLogger, NcRule } from '@dominevo/types'
+import { NC_GROUPING_MIN_SEC } from '@dominevo/types'
 import {
   type AliasResolveFailure,
   sampledOnce,

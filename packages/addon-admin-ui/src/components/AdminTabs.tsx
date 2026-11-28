@@ -6,7 +6,7 @@
  * underlined, mirroring the visual idiom used by the Settings shadcn-like
  * components elsewhere in the admin UI.
  */
-import { Tabs, TabsList, TabsTrigger } from '@camstack/ui-library'
+import { Tabs, TabsList, TabsTrigger } from '@dominevo/ui-library'
 import { useSearchParams } from 'react-router-dom'
 import type { ReactNode } from 'react'
 import type { LucideIcon } from 'lucide-react'

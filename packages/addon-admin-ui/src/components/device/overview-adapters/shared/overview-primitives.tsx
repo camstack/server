@@ -1,7 +1,7 @@
 /**
  * Shared low-level primitives used across the Overview-tab adapters.
  *
- * Every primitive composes its layout from `@camstack/ui-library`'s
+ * Every primitive composes its layout from `@dominevo/ui-library`'s
  * responsive tokens (`SECTION_*`, `TEXT_*`, `LIST_ROW`, …) — see
  * `packages/ui-library/src/lib/responsive.ts` for the three-tier
  * convention. Tweaking the token in one place updates every adapter
@@ -13,7 +13,7 @@
  *   • L3 (lg+ ≥1024px) — 4-col grids, generous padding
  */
 import type { ReactNode } from 'react'
-import { LIST_ROW, TEXT_HINT } from '@camstack/ui-library'
+import { LIST_ROW, TEXT_HINT } from '@dominevo/ui-library'
 
 export interface MiniStatProps {
   readonly label: string

@@ -3,8 +3,8 @@
  * coordinators) in the middle, routers on a first ring, everything else on an
  * outer ring. Deterministic, so a re-render never moves a node.
  */
-import { isRoutingRole, lqiTone, LQI_TONE_STROKE } from '@camstack/ui-library'
-import type { MeshNode, MeshTopology } from '@camstack/types'
+import { isRoutingRole, lqiTone, LQI_TONE_STROKE } from '@dominevo/ui-library'
+import type { MeshNode, MeshTopology } from '@dominevo/types'
 
 export interface MapPoint {
   readonly nodeKey: string

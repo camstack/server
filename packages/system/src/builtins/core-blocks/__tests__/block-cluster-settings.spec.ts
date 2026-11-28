@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- AddonContext stub: the same boundary as the sibling addon specs. */
-import { type AddonContext, BaseAddon, type ConfigUISchema } from '@camstack/types'
+import { type AddonContext, BaseAddon, type ConfigUISchema } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 
 /**

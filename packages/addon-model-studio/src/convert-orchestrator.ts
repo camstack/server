@@ -3,7 +3,7 @@ import {
   type ConvertResult,
   type ConvertTarget,
   type ModelConvertInput,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export interface NodeHardware {
   platform: string

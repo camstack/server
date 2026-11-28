@@ -12,7 +12,7 @@
  * we then fall back to the old chips rather than showing none.
  */
 
-import { useSystem, Button, Input } from '@camstack/ui-library'
+import { useSystem, Button, Input } from '@dominevo/ui-library'
 import { useCallback, useEffect, useState } from 'react'
 import { derivePathChips } from './path-chips'
 import { useTranslation } from 'react-i18next'

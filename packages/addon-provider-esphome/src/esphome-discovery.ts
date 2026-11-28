@@ -3,7 +3,7 @@ import {
   type DiscoveryCandidate,
   type DiscoveryHit,
   type DiscoveryMode,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { ESPHOME_DEFAULT_PORT } from './config.js'
 
 /** A board that announced itself on the LAN. Nothing is contacted beyond the mDNS question. */

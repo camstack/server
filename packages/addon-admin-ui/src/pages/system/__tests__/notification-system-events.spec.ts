@@ -12,7 +12,7 @@ import {
   NC_AUTHORABLE_SYSTEM_EVENT_KINDS,
   NC_SYSTEM_EVENT_FAMILIES,
   NC_SYSTEM_EVENT_KIND_GROUP_SPECS,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 
 import i18n from '../../../i18n'
@@ -395,12 +395,12 @@ describe('patchSystemEventFilters', () => {
     expect(
       patchSystemEventFilters(
         { kinds: ['device-offline', 'addon-update-available'], deviceIds: [101] },
-        { packageNames: ['@camstack/addon-ai'] },
+        { packageNames: ['@dominevo/addon-ai'] },
       ),
     ).toEqual({
       kinds: ['device-offline', 'addon-update-available'],
       deviceIds: [101],
-      packageNames: ['@camstack/addon-ai'],
+      packageNames: ['@dominevo/addon-ai'],
     })
   })
 
@@ -432,7 +432,7 @@ describe('list summaries', () => {
         kinds: ['device-offline', 'node-offline', 'addon-update-available'],
         deviceIds: [101, 102],
         nodeIds: ['agent-a'],
-        packageNames: ['@camstack/addon-ai'],
+        packageNames: ['@dominevo/addon-ai'],
       }),
     ).toBe('2 devices · 1 node · 1 package')
   })

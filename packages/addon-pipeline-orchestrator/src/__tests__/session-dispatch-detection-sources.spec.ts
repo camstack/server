@@ -17,14 +17,14 @@
  * A default that silently replaces an explicit pick is the worst kind: nothing
  * fails, nothing logs, and the feature is simply inert.
  */
-import { CAMERA_TRIGGER } from '@camstack/types'
+import { CAMERA_TRIGGER } from '@dominevo/types'
 import type {
   CameraDetectionConfig,
   DetectionSources,
   IScopedLogger,
   RunnerCameraConfig,
   RunnerLocalLoad,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 
 import {

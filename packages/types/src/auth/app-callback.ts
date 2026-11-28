@@ -8,11 +8,14 @@
  * list, so a scheme added for one flow can never be accepted by one side and
  * refused by the other.
  *
- * `camstack` is the production app; `camstack.dev` the dev client
- * (`APP_VARIANT=development`). Exact match after canonicalisation — no
+ * `dominevo` is the production app; `dominevo.dev` the dev client
+ * (`APP_VARIANT=development`). The `camstack` schemes stay accepted: the
+ * previous store app is still installed against production hubs. Exact match after canonicalisation — no
  * query or fragment riders, no http(s).
  */
 export const APP_AUTH_CALLBACK_URLS: readonly string[] = [
+  'dominevo://auth-callback',
+  'dominevo.dev://auth-callback',
   'camstack://auth-callback',
   'camstack.dev://auth-callback',
 ]

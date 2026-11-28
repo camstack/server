@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { FrameInput, FrameRef } from '@camstack/types'
+import type { FrameInput, FrameRef } from '@dominevo/types'
 import { selectExecutorFrameSource } from '../frame-ref-transport.js'
 
 const frame: FrameInput = {

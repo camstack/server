@@ -11,7 +11,7 @@
  * NOTHING for any addon and fails naming both row ids: two rows for one addon is an operator
  * decision, never a merge. A second run finds no prefixed row and edits nothing.
  */
-import type { MigrationMeta } from '@camstack/types'
+import type { MigrationMeta } from '@dominevo/types'
 import type {
   HubSqlMigration,
   MigrationDatabase,

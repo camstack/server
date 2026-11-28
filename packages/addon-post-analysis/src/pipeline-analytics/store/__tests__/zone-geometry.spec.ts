@@ -4,7 +4,7 @@
  * per-position intersection test.
  */
 import { describe, expect, it } from 'vitest'
-import type { TrackZoneFilter } from '@camstack/types'
+import type { TrackZoneFilter } from '@dominevo/types'
 import {
   computeTrackEnvelope,
   envelopesOverlap,

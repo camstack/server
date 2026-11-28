@@ -11,15 +11,15 @@
  * point, never a lock.
  *
  * ⚠️ Every composite this file renders is LOCAL to the benchmark package.
- * The page is a Module-Federation remote that declares `@camstack/ui-library`
+ * The page is a Module-Federation remote that declares `@dominevo/ui-library`
  * with `import: false`, so it consumes the HOST's copy: a composite present
  * in this tree but absent from the DEPLOYED ui-library type-checks here and
  * is `undefined` at runtime. Adding one is a framework train, not an addon
  * deploy.
  */
 
-import type { CameraStatus } from '@camstack/types'
-import type { AddonPageProps } from '@camstack/ui-library'
+import type { CameraStatus } from '@dominevo/types'
+import type { AddonPageProps } from '@dominevo/ui-library'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   describeResolvedSteps,
@@ -29,7 +29,7 @@ import {
 } from '../camera-context.js'
 import { useT } from '../i18n/index.js'
 import { type DeviceOption, friendlyDeviceName, SingleDeviceSelector } from './DeviceSelector.js'
-import { Select } from '@camstack/ui-library'
+import { Select } from '@dominevo/ui-library'
 
 export interface CameraOption {
   readonly deviceId: number

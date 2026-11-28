@@ -14,7 +14,7 @@ import {
   CAP_CUSTOMIZE_CATALOG,
   type CustomizeCatalogTarget,
   type DeviceInfo,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
@@ -32,8 +32,8 @@ const compositionRead = vi.hoisted((): { current: Read & { refetch: () => Promis
   current: { status: 'pending', refetch: async () => undefined },
 }))
 
-vi.mock('@camstack/ui-library', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@camstack/ui-library')>()
+vi.mock('@dominevo/ui-library', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dominevo/ui-library')>()
   const mutation = () => ({
     mutateAsync: vi.fn(async () => ({})),
     isPending: false,

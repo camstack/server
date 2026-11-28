@@ -36,8 +36,8 @@
  * generator that returns unmarked.
  */
 
-import type { IScopedLogger } from '@camstack/types'
-import type { Fmp4Subscription } from '@camstack/types/node'
+import type { IScopedLogger } from '@dominevo/types'
+import type { Fmp4Subscription } from '@dominevo/types/node'
 import type { CameraRecordingConfiguration, RecordingPacket } from '@homebridge/hap-nodejs'
 import { HDSProtocolError, HDSProtocolSpecificErrorReason } from '@homebridge/hap-nodejs'
 

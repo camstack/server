@@ -61,7 +61,7 @@ import {
   type FieldOutcome,
   type IScopedLogger,
   type SourceReader,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   type EvaluationHost,
   emitStateDerivedEvent,

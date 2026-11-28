@@ -3,7 +3,7 @@
  * port seen only through an API key) is not exported as a PowerController —
  * every TurnOn / TurnOff would fail. No answer keeps it (D315).
  */
-import type { AddonApi, IScopedLogger } from '@camstack/types'
+import type { AddonApi, IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { discoveryExtrasFor } from '../endpoints/adapters/index.js'
 import { SWITCH_OPTIONS_KEY } from '../endpoints/adapters/switch.js'
@@ -68,8 +68,14 @@ describe('Alexa — a switch that only reports (D1058)', () => {
   })
 
   it.each([
-    ['the hub cap router NOT_IMPLEMENTED code', Object.assign(new Error('nope'), { data: { code: 'NOT_IMPLEMENTED' } })],
-    ['the forked dispatcher marker', new Error("CAP_METHOD_NOT_IMPLEMENTED: 'switch.getOptions' is declared optional")],
+    [
+      'the hub cap router NOT_IMPLEMENTED code',
+      Object.assign(new Error('nope'), { data: { code: 'NOT_IMPLEMENTED' } }),
+    ],
+    [
+      'the forked dispatcher marker',
+      new Error("CAP_METHOD_NOT_IMPLEMENTED: 'switch.getOptions' is declared optional"),
+    ],
     ['the routing wording', new Error('provider does not implement "getOptions"')],
   ])('a provider without getOptions (%s) keeps the switch, silently', async (_label, err) => {
     const { slices, plan, log } = await planFor(() => Promise.reject(err))

@@ -2,7 +2,7 @@
  * AddonInstaller.applyUpdateFromStaged — NATIVE dependency install.
  *
  * Sibling of `addon-installer-staged-runtime-deps.spec.ts`, and the same class
- * of bug one layer down. `installFromTgz` (the `camstack deploy` / upload path)
+ * of bug one layer down. `installFromTgz` (the `dominevo deploy` / upload path)
  * completes a staged tree with THREE steps before it swaps: strip + `npm
  * install` the declared runtime deps, `installManifestNativeDeps` for
  * `camstack.nativeDependencies`, and the post-install
@@ -25,7 +25,7 @@
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import type { IScopedLogger, LogExtras } from '@camstack/types'
+import type { IScopedLogger, LogExtras } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AddonInstaller } from '../addon-installer.js'
 
@@ -71,7 +71,7 @@ function makeCapturingLogger(sink: CapturedLog[]): IScopedLogger {
   return logger
 }
 
-const PKG = '@camstack/addon-export-hap'
+const PKG = '@dominevo/addon-export-hap'
 /** Not resolvable anywhere on the host — never satisfied from a hoisted copy. */
 const NATIVE = 'camstack-fake-native'
 const NATIVE_RANGE = '^1.2.3'

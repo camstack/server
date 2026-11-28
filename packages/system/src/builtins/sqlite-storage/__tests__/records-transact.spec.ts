@@ -15,7 +15,7 @@ import {
   type RecordsAccess,
   RecordUniqueViolationError,
   TransactRefusedError,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import { declaration, makeHarness } from './support/records-harness.js'

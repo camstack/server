@@ -18,8 +18,8 @@
  * camera or it cannot be asked at all.
  */
 import { recordingsLocationOfMode } from '../roots.js'
-import type { IScopedLogger, LogExtras } from '@camstack/types'
-import { RECORDING_SOURCE_CAMSTACK } from '@camstack/types'
+import type { IScopedLogger, LogExtras } from '@dominevo/types'
+import { RECORDING_SOURCE_CAMSTACK } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { RecordingIndex } from '../../recording-index.js'
 import type { SegmentStore } from '../../segment-store.js'

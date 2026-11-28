@@ -5,7 +5,7 @@
  * leftover discard. A state change is saved on its own, not with the form: it is a decision about
  * what the disk does now, not a field of its config.
  */
-import { useConfirm, useIntegrationInstancesUpdateInstance } from '@camstack/ui-library'
+import { useConfirm, useIntegrationInstancesUpdateInstance } from '@dominevo/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { useState, type ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'

@@ -28,8 +28,8 @@
  */
 import { randomUUID } from 'node:crypto'
 
-import { RingBuffer, expandAudioChunkToF32le } from '@camstack/types'
-import type { AudioChunkFormat, DecodedAudioChunk, IScopedLogger } from '@camstack/types'
+import { RingBuffer, expandAudioChunkToF32le } from '@dominevo/types'
+import type { AudioChunkFormat, DecodedAudioChunk, IScopedLogger } from '@dominevo/types'
 
 /**
  * Per-subscription FIFO capacity. A chunk is a few KB and arrives ~every

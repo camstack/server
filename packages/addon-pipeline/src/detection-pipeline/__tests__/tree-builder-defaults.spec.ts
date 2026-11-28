@@ -13,7 +13,7 @@
  * `configSchema → defaults` pipeline is exercised end-to-end.
  */
 import { describe, it, expect } from 'vitest'
-import type { IInferenceEngine, PipelineDefaultStep } from '@camstack/types'
+import type { IInferenceEngine, PipelineDefaultStep } from '@dominevo/types'
 
 import { buildExecutableTree, type ResolvedStepEngine } from '../pipeline/tree-builder.js'
 

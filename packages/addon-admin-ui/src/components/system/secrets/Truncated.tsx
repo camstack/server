@@ -3,7 +3,7 @@
  * Never widens its parent: inside an auto-layout table cell a `truncate` alone
  * is inert, so the caller caps the width (`maxWidthClass`).
  */
-import { CopyButton, cn } from '@camstack/ui-library'
+import { CopyButton, cn } from '@dominevo/ui-library'
 
 export interface TruncatedProps {
   readonly value: string

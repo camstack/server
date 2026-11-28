@@ -4,8 +4,8 @@
  * detector "None" idles the whole video tree; "Camera onboard AI" idles only
  * the root step.
  */
-import type { PipelineSlot } from '@camstack/types'
-import type { StepTreeNode } from '@camstack/ui-library'
+import type { PipelineSlot } from '@dominevo/types'
+import type { StepTreeNode } from '@dominevo/ui-library'
 import { describe, expect, it } from 'vitest'
 import { cameraStepRows } from '../camera-step-tree-model'
 

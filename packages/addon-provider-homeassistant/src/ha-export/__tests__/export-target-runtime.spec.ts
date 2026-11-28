@@ -10,7 +10,7 @@
  * the connection" fails; match the patch key against the connection instead of the target and
  * "routes a device-panel key to the named target" fails.
  */
-import { type IScopedLogger, makeInMemoryRecords } from '@camstack/types'
+import { type IScopedLogger, makeInMemoryRecords } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { HaExportAddon } from '../ha-export.addon.js'
 import { ExportTargets, haExportTargetsKind, newTargetBody } from '../target-records.js'

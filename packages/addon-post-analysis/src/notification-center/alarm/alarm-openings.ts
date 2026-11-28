@@ -37,7 +37,7 @@ import {
   type IScopedLogger,
   LockStateSchema,
   type NcAlarmOpeningEventKind,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export type NcAlarmOpeningReading = 'open' | 'secure'
 
@@ -175,7 +175,7 @@ export function alarmOpeningFrom(runtime: NcRuntimeSlices): NcAlarmOpening {
 }
 
 /**
- * The sensor-event kind (`CAP_TO_KIND` in `@camstack/types`) → the cap whose
+ * The sensor-event kind (`CAP_TO_KIND` in `@dominevo/types`) → the cap whose
  * slice the row's `value` is. Only the opening kinds; every other kind is not
  * an opening.
  */

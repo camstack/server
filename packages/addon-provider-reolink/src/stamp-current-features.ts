@@ -1,4 +1,4 @@
-import type { CamStreamDescriptor } from '@camstack/types'
+import type { CamStreamDescriptor } from '@dominevo/types'
 
 /**
  * Stamp the camera's CURRENT feature list on every descriptor.

@@ -19,8 +19,8 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { StreamBrokerManager } from '../stream-broker/stream-broker-manager.js'
-import { EventCategory, createEvent } from '@camstack/types'
-import type { AddonApi, IEventBus, IScopedLogger, CamStreamDescriptor } from '@camstack/types'
+import { EventCategory, createEvent } from '@dominevo/types'
+import type { AddonApi, IEventBus, IScopedLogger, CamStreamDescriptor } from '@dominevo/types'
 
 function makeLogger(): IScopedLogger {
   const l: IScopedLogger = {

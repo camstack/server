@@ -4,7 +4,7 @@
  * arrive as a frame with no package box; only the runner knows which one the
  * governor decided.
  */
-import type { FrameResult } from '@camstack/types'
+import type { FrameResult } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { PACKAGE_DETECTION_STEP_ID, withPackageLook } from '../motion-settle-governor.js'
 

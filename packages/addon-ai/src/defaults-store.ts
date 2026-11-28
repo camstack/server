@@ -9,7 +9,7 @@ import {
   type LlmDefaultSelector,
   type RecordKindHandle,
   type RecordsAccess,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { aiRecordKinds } from './record-kinds.js'
 import { readAllRows } from './record-pages.js'
 

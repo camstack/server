@@ -17,7 +17,7 @@ import {
   unmetRequirements,
   type PackageRequires,
   type UnmetRequirement,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export interface DeliveryTarget {
   readonly name: string

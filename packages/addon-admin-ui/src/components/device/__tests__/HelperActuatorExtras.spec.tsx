@@ -4,7 +4,7 @@
  * refuses an unconfirmed unlock on its own; this pins that the page never
  * skips the question.
  */
-import { groupTemplate } from '@camstack/types'
+import { groupTemplate } from '@dominevo/types'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -13,9 +13,9 @@ import '../../../i18n'
 const lock = vi.fn(async () => undefined)
 const unlock = vi.fn(async (_input: { deviceId: number; confirm?: boolean }) => undefined)
 
-vi.mock('@camstack/ui-library', async () => {
+vi.mock('@dominevo/ui-library', async () => {
   const actual =
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+    await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return {
     ...actual,
     useLockControlLock: () => ({ mutateAsync: lock, isPending: false }),

@@ -20,14 +20,14 @@ const spec: AgentServiceSpec = {
   nodeExe: 'C:\\Program Files\\Cam&Stack\\resources\\node\\node.exe',
   supervisorJs: 'C:\\Program Files\\Cam&Stack\\resources\\service\\service-supervisor.js',
   starterJs:
-    'C:\\Program Files\\Cam&Stack\\resources\\node_modules\\@camstack\\server\\dist\\starter.js',
-  workingDir: 'C:\\Program Files\\Cam&Stack\\resources\\node_modules\\@camstack\\server\\dist',
+    'C:\\Program Files\\Cam&Stack\\resources\\node_modules\\@dominevo\\server\\dist\\starter.js',
+  workingDir: 'C:\\Program Files\\Cam&Stack\\resources\\node_modules\\@dominevo\\server\\dist',
   env: buildNodeEnv({
     role: 'agent',
     dataDir: "C:\\Users\\O'Brien\\AppData\\Roaming\\CamStack\\data",
     appVersion: '1.2.3',
     agent: { hubAddress: '192.0.2.10:4443', agentName: 'win-box', statusPort: 4444 },
-    bundledAddonsDir: 'C:\\Program Files\\Cam&Stack\\resources\\node_modules\\@camstack',
+    bundledAddonsDir: 'C:\\Program Files\\Cam&Stack\\resources\\node_modules\\@dominevo',
     seedServerDir: null,
   }),
   logDir: layout.logDir,
@@ -40,7 +40,7 @@ describe('buildWinswXml', () => {
     expect(xml).toContain('<id>CamStackAgent</id>')
     expect(xml).toContain('node.exe</executable>')
     expect(xml).toContain(
-      '<arguments>"C:\\Program Files\\Cam&amp;Stack\\resources\\service\\service-supervisor.js" "C:\\Program Files\\Cam&amp;Stack\\resources\\node_modules\\@camstack\\server\\dist\\starter.js"</arguments>',
+      '<arguments>"C:\\Program Files\\Cam&amp;Stack\\resources\\service\\service-supervisor.js" "C:\\Program Files\\Cam&amp;Stack\\resources\\node_modules\\@dominevo\\server\\dist\\starter.js"</arguments>',
     )
   })
 

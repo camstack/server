@@ -1,4 +1,4 @@
-import type { HeroMeasurementQuantity } from '@camstack/types'
+import type { HeroMeasurementQuantity } from '@dominevo/types'
 import type { UiTextFn } from '../../../contexts/ui-text'
 
 /** The short name of a quantity, under its value in the pie. */

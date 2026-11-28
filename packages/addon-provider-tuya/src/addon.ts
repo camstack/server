@@ -18,7 +18,7 @@ import {
   type RecordIntegrationInstances,
   type SystemEvent,
   rowsDepsOver,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { toTuyaCloudOptions } from './config.js'
 import { TuyaKettleContainerDevice } from './devices/tuya-kettle-container-device.js'
 import { TuyaSwitchDevice } from './devices/tuya-switch-device.js'

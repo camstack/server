@@ -3,8 +3,8 @@
  * now declared by their schemas, and `collectZodSecretPaths` (what a runner
  * reports at `registerDevice`) finds them where they actually sit.
  */
-import { collectSecretConfigKeys, collectZodSecretPaths } from '@camstack/types'
-import type { ConfigUISchema } from '@camstack/types'
+import { collectSecretConfigKeys, collectZodSecretPaths } from '@dominevo/types'
+import type { ConfigUISchema } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { z } from 'zod'
 import { amcrestCameraSchema } from '../../packages/addon-provider-amcrest/src/schema.ts'

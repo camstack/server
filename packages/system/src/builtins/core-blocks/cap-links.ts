@@ -28,7 +28,7 @@ import {
   declaredCapLink,
   errMsg,
   projectCapLinkOf,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export interface CapLinksPorts {
   /** The stored blocks, or null until the table has been READ. */

@@ -7,7 +7,7 @@ that mirrors it (one-file swap to go live — see "Library status").
 ## What this integration is
 
 An Unraid server (reference HA instance: **"agent-a", ~216 entities**) exposes a
-GraphQL API. CamStack adopts ONE **instance Container** per server; the array,
+GraphQL API. Dominevo adopts ONE **instance Container** per server; the array,
 per-disk, per-docker-container and notification entities materialise as its
 accessory children. `instanceMode: multiple` — many servers may be added; the
 connection (host, port, HTTPS flag and the ADMIN API key, a keychain secret) lives on the
@@ -26,7 +26,7 @@ All entity children are a single generic class (`UnraidEntityDevice`) keyed by a
 discriminated `kind`. A pure, unit-testable `unraid-mapping.ts` turns one
 `UnraidSnapshot` into the descriptor list.
 
-| Sub-kind | Entity | CamStack DeviceType | Cap | `kind` | Notes |
+| Sub-kind | Entity | Dominevo DeviceType | Cap | `kind` | Notes |
 |---|---|---|---|---|---|
 | **array** | array_state | `Sensor` | `enum-sensor` | enum | `ArrayState` literal (STARTED/STOPPED/…) |
 | array | array_usage | `Sensor` | `numeric-sensor` | numeric | `%` (used/total). total/used/free also emitted as `array_total`/`array_used`/`array_free` in GiB |

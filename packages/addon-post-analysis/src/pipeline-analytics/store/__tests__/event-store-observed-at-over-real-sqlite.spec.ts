@@ -14,8 +14,8 @@
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import type { ObjectEventDraft, SettingsStoreClient } from '@camstack/types'
-import { SqliteSettingsBackend } from '@camstack/server/system'
+import type { ObjectEventDraft, SettingsStoreClient } from '@dominevo/types'
+import { SqliteSettingsBackend } from '@dominevo/server/system'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
   type EventStoreLedgers,

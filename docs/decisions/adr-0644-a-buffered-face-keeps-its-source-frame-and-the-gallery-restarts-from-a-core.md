@@ -124,7 +124,7 @@ on the runner, which is a later change.
 - **Resolution: native.** A 28 px face downscaled to 1920 wide is ~14 px,
   under the 24 px landmark floor.
 - **Landmarks** ride the new optional `DetailResult.landmarks`: they need
-  `addon-pipeline` deployed and a `@camstack/server` carrying the widened
+  `addon-pipeline` deployed and a `@dominevo/server` carrying the widened
   schema; until then frames are stored with the box only.
 - **Losses, all logged and counted** (`buffered WITHOUT its source frame`):
   parcel evicted or aged out (10 min), park refused, track keyFrame moved to

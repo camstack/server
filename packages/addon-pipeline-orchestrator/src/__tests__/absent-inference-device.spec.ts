@@ -9,7 +9,7 @@
  *  - let the operator forget it — and refuse to forget a device that is
  *    present, or anything on a node whose probe did not answer.
  */
-import type { PipelineSchema } from '@camstack/types'
+import type { PipelineSchema } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import PipelineOrchestratorAddon from '../index.js'
 import {

@@ -320,11 +320,11 @@ Each fix was removed on its own and its test went red:
 
 ```bash
 # Host-side timeouts per hour on the GPU pool. Expect ~0; the incident ran 786 in 4 h.
-ssh unraid 'docker logs --since 24h CamStack 2>&1 | grep "timed out after 60000ms on openvino:gpu" | cut -c1-13 | sort | uniq -c'
+ssh unraid 'docker logs --since 24h Dominevo 2>&1 | grep "timed out after 60000ms on openvino:gpu" | cut -c1-13 | sort | uniq -c'
 # Every load says when it started and how long it took ("load started" with no end line = a compile in progress).
-ssh unraid 'docker logs --since 24h CamStack 2>&1 | grep -E "Model [0-9]+ (load started|loaded|replaced|load TIMED OUT)|returned AFTER its bound|compile past its soft bound|slow model compile (finished|failed)" | tail -40'
+ssh unraid 'docker logs --since 24h Dominevo 2>&1 | grep -E "Model [0-9]+ (load started|loaded|replaced|load TIMED OUT)|returned AFTER its bound|compile past its soft bound|slow model compile (finished|failed)" | tail -40'
 # Recycles, refusals and the budget's verdicts.
-ssh unraid 'docker logs --since 24h CamStack 2>&1 | grep -E "pool worker POISONED|Worker process exited|recycled after a compile hung|model REFUSED on this device|inference pool died|inference device FAILED|Step variant load failed|model load for dispatch failed" | tail -40'
+ssh unraid 'docker logs --since 24h Dominevo 2>&1 | grep -E "pool worker POISONED|Worker process exited|recycled after a compile hung|model REFUSED on this device|inference pool died|inference device FAILED|Step variant load failed|model load for dispatch failed" | tail -40'
 ```
 
 Expected on a healthy day: no `POISONED`, no `load TIMED OUT`, and every

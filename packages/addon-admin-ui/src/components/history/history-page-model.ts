@@ -7,7 +7,7 @@ import {
   DEVICE_HISTORY_ENERGY_KEY,
   type DeviceHistoryQueryManyItem,
   type DeviceHistorySeriesInfo,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   HISTORY_SELECTION_MAX,
   normalizeSelection,
@@ -16,7 +16,7 @@ import {
   type DeviceNameIndex,
   type DeviceNameNouns,
   type HistorySeriesRef,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 
 /** One pickable series, with what the picker searches and facets on. */
 export interface SeriesCandidate {

@@ -1,10 +1,10 @@
 # Notifiers
 
-System notifiers addon for CamStack — a `notification-output` collection provider hosting per-kind notifier adapters (ntfy, pushover, gotify, telegram, discord, webhook, zentik).
+System notifiers addon for Dominevo — a `notification-output` collection provider hosting per-kind notifier adapters (ntfy, pushover, gotify, telegram, discord, webhook, zentik).
 
 <!-- readme:generated:start (derived from the manifest; edit outside this block) -->
 
-Package `@camstack/addon-notifiers` on npm.
+Package `@dominevo/addon-notifiers` on npm.
 
 ## What it provides
 
@@ -24,11 +24,11 @@ Edit these from System, Addons, this addon, Settings (a device's own settings ar
 ## Requirements
 
 - Placement: hub-only (runner group `notifiers`).
-- A CamStack hub. An agent is used only where the placement above allows it.
+- A Dominevo hub. An agent is used only where the placement above allows it.
 
 ## Documentation
 
-- [docs/architecture/notifications.md](https://github.com/camstack/server/blob/main/docs/architecture/notifications.md)
+- [docs/architecture/notifications.md](https://github.com/dominevo/server/blob/main/docs/architecture/notifications.md)
 
 See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
 

@@ -23,7 +23,7 @@ import {
   errMsg,
   type ReadingQuantity,
   type WireableScalarKind,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export interface SourceRowView {
   readonly id: number

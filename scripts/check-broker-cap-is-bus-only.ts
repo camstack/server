@@ -8,7 +8,7 @@
  *
  * 1. `broker.cap.ts` declares exactly the bus methods (publish, subscribe, unsubscribe, getState,
  *    getBrokerConfig, getStatus) and no list / add / remove / settings method.
- * 2. `@camstack/types` exports no `BrokerInfo`, `BrokerProviderInfo` or `UnifiedBrokerInfo`: the row
+ * 2. `@dominevo/types` exports no `BrokerInfo`, `BrokerProviderInfo` or `UnifiedBrokerInfo`: the row
  *    of a broker is an instance row.
  * 3. No addon source (the admin UI only reads kinds, it declares none) implements a provider method `listProviders:` and a `signIn:` declaration sits
  *    only in a source that declares instance kinds (`functionCap:`).

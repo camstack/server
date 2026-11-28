@@ -5,8 +5,8 @@
  * concrete class implements each kind.
  */
 
-import type { AccessoryKindValue, DeviceContext, IDevice } from '@camstack/types'
-import { AccessoryKind } from '@camstack/types'
+import type { AccessoryKindValue, DeviceContext, IDevice } from '@dominevo/types'
+import { AccessoryKind } from '@dominevo/types'
 import { HikvisionLightAccessory, type HikvisionLightHost } from './light.js'
 import { HikvisionSirenAccessory, type HikvisionSirenHost } from './siren.js'
 

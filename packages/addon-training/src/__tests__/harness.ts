@@ -13,8 +13,8 @@ import type {
   TrainingJob,
   TrainingJobSpec,
   TrainingResult,
-} from '@camstack/types'
-import { TRAINING_RESULT_SCHEMA } from '@camstack/types'
+} from '@dominevo/types'
+import { TRAINING_RESULT_SCHEMA } from '@dominevo/types'
 import { TrainingEngine } from '../orchestrator/job-engine.js'
 import type {
   ArtifactPort,

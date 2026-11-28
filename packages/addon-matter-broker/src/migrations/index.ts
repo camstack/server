@@ -3,7 +3,7 @@ import {
   type BrokerLinkPorts,
   type FlattenRowPorts,
   moveBrokerLinksToConnections,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { FLATTEN_BROKER_RECORDS_ID, flattenBrokerRecords } from './flatten-broker-records.js'
 import {
   BROKER_LINKS_TO_CONNECTIONS_ID,

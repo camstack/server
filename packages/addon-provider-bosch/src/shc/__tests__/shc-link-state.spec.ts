@@ -3,7 +3,7 @@
  * answering (removed, unplugged) must take the integration and its devices
  * offline, and a reply must bring them back. One failed poll never flips.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { ShcClient, type ShcLinkDetail } from '../shc-client.js'
 import { ShcIntegrationManager } from '../shc-integration-manager.js'

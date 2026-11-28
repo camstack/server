@@ -8,7 +8,7 @@ import {
   type IScopedLogger,
   NC_TEMPLATE_TITLE_MAX_CHARS,
   type NotificationField,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, type MockInstance, vi } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import { NcDispatcher, type NcSendInput } from '../dispatcher.js'

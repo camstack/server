@@ -10,7 +10,7 @@ import {
   type RecordsAccess,
   RecordIntegrationInstances,
   REDACTED_SECRET,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { type GoogleBrokerBody, googleBrokersEntryKind } from './broker-record-kinds.js'
 import { buildGoogleBrokerSettingsSchema } from './google-broker-settings-schema.js'
 import { GOOGLE_BROKER_KIND, GOOGLE_BROKER_KIND_LABEL } from './google-types.js'

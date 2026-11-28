@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { IconAction } from '@camstack/ui-library'
+import { IconAction } from '@dominevo/ui-library'
 import { Pencil, RefreshCw, Trash2, Settings, ExternalLink } from 'lucide-react'
 
 const Frame = ({ children }: { children: ReactNode }) => (

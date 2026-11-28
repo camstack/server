@@ -1,4 +1,4 @@
-import type { AddonPageDeclaration } from '@camstack/types'
+import type { AddonPageDeclaration } from '@dominevo/types'
 
 /**
  * The CCU management page, surfaced through the `addon-pages-source` cap.

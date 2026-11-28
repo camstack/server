@@ -14,8 +14,8 @@
  * (device, cap, reason) with `tags: { deviceId }` (D391).
  */
 import type { z } from 'zod'
-import type { ClaimOutcome, IScopedLogger } from '@camstack/types'
-import { ALL_CAPABILITY_DEFINITIONS } from '@camstack/types'
+import type { ClaimOutcome, IScopedLogger } from '@dominevo/types'
+import { ALL_CAPABILITY_DEFINITIONS } from '@dominevo/types'
 import { shallowEqual } from './device-projection.js'
 import { type MergedSlice, mergeOwned, type OwnedCap, type OwnedCaps } from './field-ownership.js'
 

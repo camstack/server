@@ -6,7 +6,7 @@
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AddonPackageService } from '../addon-package.service.js'
 
@@ -81,8 +81,8 @@ describe('npm reachability from the hub addon sweep', () => {
   }
 
   it('reports failed when every lookup throws', async () => {
-    writeAddon(root, '@camstack/addon-a')
-    writeAddon(root, '@camstack/addon-b')
+    writeAddon(root, '@dominevo/addon-a')
+    writeAddon(root, '@dominevo/addon-b')
     vi.stubGlobal('fetch', async () => {
       throw new Error('ENOTFOUND registry.npmjs.org')
     })
@@ -93,7 +93,7 @@ describe('npm reachability from the hub addon sweep', () => {
   })
 
   it('reports reached when a lookup answers', async () => {
-    writeAddon(root, '@camstack/addon-a')
+    writeAddon(root, '@dominevo/addon-a')
     vi.stubGlobal('fetch', async () => Response.json({ version: '1.0.0' }))
     const service = buildService()
     observe(service)

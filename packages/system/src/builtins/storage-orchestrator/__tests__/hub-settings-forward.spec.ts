@@ -24,7 +24,7 @@
  *     with nothing in it).
  */
 
-import type { IClusterBroker, SettingsRecord } from '@camstack/types'
+import type { IClusterBroker, SettingsRecord } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   createHubSettingsForward,

@@ -19,7 +19,7 @@ import { PALETTE_ENTRY_IDS } from '../palette-entries.js'
 import { PALETTE_MIN_DELTA_E_MARK, deltaE00 } from '../palette-cie.js'
 
 describe('display palette presets', () => {
-  it('accepts CamStack, high contrast and the colour-blind preset', () => {
+  it('accepts Dominevo, high contrast and the colour-blind preset', () => {
     expect(DISPLAY_PRESETS.map((row) => row.id)).toEqual(['camstack', 'high-contrast', 'okabe-ito'])
     for (const row of DISPLAY_PRESETS) {
       const verdict = validatePalette(row.swatches, row.fallbacks)
@@ -27,7 +27,7 @@ describe('display palette presets', () => {
     }
   })
 
-  it('keeps the CamStack anchors the viewer already shipped', () => {
+  it('keeps the Dominevo anchors the viewer already shipped', () => {
     const ready = bundledCamstack()
     expect(ready.swatches.person).toEqual({ form: 'solid', hex: '#11a64c' })
     expect(ready.swatches.vehicle).toEqual({ form: 'solid', hex: '#3b82f6' })
@@ -153,7 +153,7 @@ describe('paletteFromInput / paletteFromStored', () => {
     }
   })
 
-  it('treats an empty store as the unconfigured CamStack preset', () => {
+  it('treats an empty store as the unconfigured Dominevo preset', () => {
     expect(paletteFromStored({})).toEqual(bundledCamstack())
     expect(paletteFromStored(undefined)).toMatchObject({ status: 'ready', source: 'unconfigured' })
   })

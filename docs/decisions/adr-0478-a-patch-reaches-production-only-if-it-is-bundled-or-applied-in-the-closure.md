@@ -28,9 +28,9 @@ four were wrong in the same way, so it is worth writing down how:
 | Signal | Why it misled |
 | --- | --- |
 | `pinsTooMuch` absent from `packages/system/dist/` | rolldown inlines a single-use `const`. The identifier is absent from every bundle **including the correct ones**. |
-| `pinsTooMuch` absent from the `@camstack/system@1.2.224` tarball | same. Grepping for `rest.buffer.byteLength` finds the patched expression, present, in that exact tarball. |
-| `@camstack/system`'s published `package.json` has no `postinstall` | true, and irrelevant: `moleculer` is not in the vite preset's externals, so rolldown inlines its whole tree — parser included — into `dist/index.js`. |
-| the live closure's `node_modules/moleculer/src/transporters/tcp/parser.js` is unpatched | true, and also irrelevant. Exactly one file requires that copy — `@camstack/server/dist/agent/agent-service.js`, for `Errors`. Nothing constructs a `ServiceBroker` from it; every broker on hub and agent comes from `createBroker` in `@camstack/system`, so the `Parser` that actually frames mesh traffic is the bundled, patched one. |
+| `pinsTooMuch` absent from the `@dominevo/system@1.2.224` tarball | same. Grepping for `rest.buffer.byteLength` finds the patched expression, present, in that exact tarball. |
+| `@dominevo/system`'s published `package.json` has no `postinstall` | true, and irrelevant: `moleculer` is not in the vite preset's externals, so rolldown inlines its whole tree — parser included — into `dist/index.js`. |
+| the live closure's `node_modules/moleculer/src/transporters/tcp/parser.js` is unpatched | true, and also irrelevant. Exactly one file requires that copy — `@dominevo/server/dist/agent/agent-service.js`, for `Errors`. Nothing constructs a `ServiceBroker` from it; every broker on hub and agent comes from `createBroker` in `@dominevo/system`, so the `Parser` that actually frames mesh traffic is the bundled, patched one. |
 
 Verified 2026-09-12 on the hub (`unraid`), the Docker agent (`agent-a`) and
 in the published tarball: the moleculer patch **does** ship, and
@@ -60,11 +60,11 @@ all three nodes — hub, Docker agent, Mac-mini Electron agent — production ra
 `session.ts` meanwhile carried a comment calling the closure copy "the patched
 copy", and `trpc.router.ts` twice described the leak as fixed. That is the
 leftover-that-reads-as-verification failure, three times over, and the specs
-backed it up: `@camstack/werift-turn-fix`'s relay-SDP specs load the DEV
+backed it up: `@dominevo/werift-turn-fix`'s relay-SDP specs load the DEV
 `node_modules`, which `patch-package` had just fixed.
 
 `node-turn` is the third patch and it is clean: a devDependency of
-`@camstack/werift-turn-fix` only — `private: true`, `camstack: false`, never
+`@dominevo/werift-turn-fix` only — `private: true`, `camstack: false`, never
 published, never deployed. Nothing in production loads it.
 
 ### What the werift patch was worth, honestly
@@ -105,7 +105,7 @@ reaches production**, and the claim is checked:
   A marker must be an **added line of the patch**: one that is not would be found
   in the unpatched file too, and every check built on it would be vacuous.
 - **`closure-postinstall`** — the patched package is resolved at runtime from
-  the framework closure and cannot be bundled. `@camstack/server` ships the patch
+  the framework closure and cannot be bundled. `@dominevo/server` ships the patch
   in `dist/closure-patches/` and applies it from its own `postinstall`, which is
   the one place that runs *inside* the staging closure, with the *new* release's
   patch files, needing no new dependency and no change to the update service.
@@ -121,13 +121,13 @@ nobody can say ships is a patch that does not.
 And the closure is not *trusted* to be patched, it is **checked**: the applier
 is best-effort (it must never fail an install, and an `ignore-scripts` npmrc or a
 hoisting surprise makes it a no-op), while `findUnappliedClosurePatches` in
-`@camstack/node-root` **refuses to arm a swap** into a closure whose markers are
+`@dominevo/node-root` **refuses to arm a swap** into a closure whose markers are
 absent, naming the marker. A best-effort applier plus a fail-closed validator is
 the only arrangement in which a skipped patch cannot look like an applied one.
 
 ## Consequences
 
-- `@camstack/server` gains a `postinstall`. The closure install passes
+- `@dominevo/server` gains a `postinstall`. The closure install passes
   `--omit=dev --no-audit --no-fund` and **not** `--ignore-scripts`, so this
   needs no change to `RootUpdateService` and no widening of what scripts run.
   Cost per install: reading one manifest and three small files — not a factor in

@@ -1,5 +1,5 @@
 import { useCallback } from 'react'
-import { useAlert, useConfirm } from '@camstack/ui-library'
+import { useAlert, useConfirm } from '@dominevo/ui-library'
 import type { z } from 'zod'
 import { callCcuAction, type CcuTrpc } from './ccu-client.js'
 import { useT } from '../i18n/index.js'

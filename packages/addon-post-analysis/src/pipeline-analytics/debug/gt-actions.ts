@@ -1,7 +1,7 @@
 /**
  * `debug.gt.*` — the admin fallback for ground-truth marks (D681, spec §4.3).
  * SAME body and SAME store as the four cap methods; they exist so labelling
- * can start with one `camstack deploy`, before a server train carries the cap
+ * can start with one `dominevo deploy`, before a server train carries the cap
  * methods to the hub. Not a second rule set.
  */
 import {
@@ -15,7 +15,7 @@ import {
   SetTrackPurityResultSchema,
   SetTrackRelationInputSchema,
   TrackRelationSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export const gtActions = defineCustomActions({
   'debug.gt.setRelation': customAction(SetTrackRelationInputSchema, TrackRelationSchema, {

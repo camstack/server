@@ -10,7 +10,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { makeRunnerCameraConfig } from '../../__tests__/support/runner-camera-config.js'
 import PipelineRunnerAddon from '../index.js'
-import { EventCategory } from '@camstack/types'
+import { EventCategory } from '@dominevo/types'
 import type {
   DecodedFrame,
   FrameInput,
@@ -19,7 +19,7 @@ import type {
   PipelineStepInputOutput,
   RunnerCameraConfig,
   SystemEvent,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 interface AddonInternals {
   onInitialize(): Promise<unknown>

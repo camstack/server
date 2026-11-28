@@ -3,7 +3,7 @@
  * locations a previous boot persisted. A row is given in the legacy column spelling
  * (`display_name`, `provider_id`, ...) the specs were written in and lands as a location body.
  */
-import { createRecordsAccess, createSecretsAccess, type RecordsAccess } from '@camstack/types'
+import { createRecordsAccess, createSecretsAccess, type RecordsAccess } from '@dominevo/types'
 import {
   makeFakeKeychain,
   makeRecordsWorld,

@@ -9,7 +9,7 @@
  * it); and both layers are pruned on every step, since an L2 step is O(n²) in
  * the pieces it holds.
  */
-import type { SpatialDetection } from '@camstack/types'
+import type { SpatialDetection } from '@dominevo/types'
 import type { TrackIdMinter } from '../track-id.js'
 import { CLOCK_STEP_CONFIRM_FRAMES, LINK_MAX_GAP_MS } from './constants.js'
 import { DeferredLinker, type LinkPiece } from './linker.js'

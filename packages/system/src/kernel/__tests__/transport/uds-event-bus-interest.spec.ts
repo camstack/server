@@ -7,7 +7,7 @@
  * serialised onto the UDS socket, because the hub would only drop it
  * (`fanoutOrphans`). Before the first set arrives the child sends everything.
  */
-import type { SystemEvent } from '@camstack/types'
+import type { SystemEvent } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import type { UdsEventChannel } from '../../transport/uds-event-bus.js'
 import { createUdsEventBus } from '../../transport/uds-event-bus.js'

@@ -6,7 +6,7 @@
  * ever held those tiles is empty for a different reason, and the operator
  * reading the line has to be able to tell the two apart — per camera.
  */
-import type { MediaFileRef, Track } from '@camstack/types'
+import type { MediaFileRef, Track } from '@dominevo/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { type AnalyticsLedgers, makeAnalyticsWorld } from '../../__tests__/fake-records.js'
 import { makeLogRecorder } from '../../__tests__/test-helpers.js'

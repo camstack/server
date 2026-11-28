@@ -2,7 +2,7 @@
  * Invented actuations for the card's History view. Times sit before the
  * ui:shots frozen clock (2026-10-09 09:31 UTC) so the relative labels stay put.
  */
-import type { DeviceTransition } from '@camstack/types'
+import type { DeviceTransition } from '@dominevo/types'
 
 export const ACTUATION_FIXTURE_DEVICE_ID = 201
 

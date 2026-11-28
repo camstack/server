@@ -1,7 +1,7 @@
 import { createServer, type Server } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { mapBaichuanWebhookToSimpleEvents, type ReolinkSimpleEvent } from '@apocaliss92/nodelink-js'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import {
   createWebhookHandler,

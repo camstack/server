@@ -36,7 +36,7 @@
  *     lost. Silence there reads as a write that happened.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import type { DeviceManagerSettings } from '../device-meta-store.js'
 import { DeviceMetaStore } from '../device-meta-store.js'

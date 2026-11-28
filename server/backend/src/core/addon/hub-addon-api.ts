@@ -9,7 +9,7 @@
 
 import { createTRPCClient, type TRPCLink } from '@trpc/client'
 import type { AnyRouter } from '@trpc/server'
-import type { AddonApi } from '@camstack/types'
+import type { AddonApi } from '@dominevo/types'
 import {
   commandObserverLink,
   getCommandFollowUpRegistry,
@@ -17,7 +17,7 @@ import {
   localProviderLink,
   type CommandObserver,
   type LocalProviderResolver,
-} from '@camstack/server/system'
+} from '@dominevo/server/system'
 
 type CapUsageObserverOptions = NonNullable<Parameters<typeof localProviderLink>[1]>
 

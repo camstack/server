@@ -94,8 +94,8 @@ Considered and rejected:
   2026-09-25: no viewer screen, CLI command or Home Assistant component calls
   `settingsStore`; the viewer calls `notificationOutput.listTargets` only from
   the admin-only alarm screen, gated on a confirmed admin verdict.
-- The tier is baked into the `@camstack/system` bundle (it inlines
-  `ALL_CAPABILITY_DEFINITIONS`), so it is live only with a `@camstack/server`
+- The tier is baked into the `@dominevo/system` bundle (it inlines
+  `ALL_CAPABILITY_DEFINITIONS`), so it is live only with a `@dominevo/server`
   containing it. The notifiers half ships with the addon alone.
 - `settingsStore` still does not scope a caller to its own namespace — an
   ADDON can still read another addon's collection. That is the migration

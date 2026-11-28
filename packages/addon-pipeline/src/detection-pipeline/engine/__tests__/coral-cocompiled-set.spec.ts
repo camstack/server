@@ -19,7 +19,7 @@
  *     new slot loaded before the old one goes.
  */
 import { describe, expect, it, vi } from 'vitest'
-import type { IScopedLogger, PipelineDefaultStep, PoolModelConfig } from '@camstack/types'
+import type { IScopedLogger, PipelineDefaultStep, PoolModelConfig } from '@dominevo/types'
 import {
   CoralSetPlanner,
   placedModelsOf,

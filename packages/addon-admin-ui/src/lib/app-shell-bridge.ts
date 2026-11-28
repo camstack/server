@@ -14,7 +14,7 @@ import {
   ShellToAppMessageSchema,
   type AppToShellMessage,
   type ShellToAppMessage,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** The `ReactNativeWebView` channel the viewer's native WebView puts on the page. */
 interface NativeBridge {

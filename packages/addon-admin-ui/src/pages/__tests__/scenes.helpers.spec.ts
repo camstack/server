@@ -1,4 +1,4 @@
-import type { SceneMonitor } from '@camstack/types'
+import type { SceneMonitor } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { buildSceneRows, lastTransitionAt, type SceneCamera, sceneRank } from '../scenes.helpers.js'
 

@@ -8,7 +8,7 @@ import {
   type InferNativeProvider,
   type PetFeederStatus,
   petFeederCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { petkitFeederDeviceSchema } from '../config.js'
 import {
   coldStartFeederStatus,
@@ -153,7 +153,7 @@ export function extractFeederReading(feeder: FeederDevice): FeederReading {
 
 /**
  * One PetKit feeder (Fresh Element / Mini / D3 / D4 / D4S / D4H / D4SH) as a
- * CamStack `PetFeeder` device. Registers the `pet-feeder` cap directly (no
+ * Dominevo `PetFeeder` device. Registers the `pet-feeder` cap directly (no
  * container / accessory children) and maps the live `@apocaliss92/nodepetkit`
  * `FeederDevice` handle → the cap slice.
  *

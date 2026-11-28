@@ -34,7 +34,7 @@ done
 mkdir -p "$OUT" "$WORK"
 
 MEVA=https://mevadata-public-01.s3.amazonaws.com/drops-123-r13
-UA="camstack-bench-clip/1 (https://github.com/camstack/server)"
+UA="camstack-bench-clip/1 (https://github.com/dominevo/server)"
 FPS=15
 # Every segment: 1920x1080 (scaled to fit, padded), 15 fps, no audio.
 NORM="scale=1920:1080:force_original_aspect_ratio=decrease:flags=lanczos,pad=1920:1080:(ow-iw)/2:(oh-ih)/2,fps=$FPS,format=yuv420p,setsar=1"

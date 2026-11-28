@@ -12,7 +12,7 @@
  * vitest 3 defaults `isolate: true` and `pool: 'forks'`, no setupFiles. That
  * re-evaluates the TypeScript graph per file. admin-ui adds four global
  * setupFiles, one of which imports both i18n catalogues (~0.5 MB each) into
- * every spec, and aliases `@camstack/ui-library` at the source barrel.
+ * every spec, and aliases `@dominevo/ui-library` at the source barrel.
  * `isolate: false` or a threads pool would share that cost and would also
  * share module state (i18n language, the jest-dom `expect`, `better-sqlite3`
  * in the framework). Not changed: it needs a per-spec decision, not a flag.
@@ -35,7 +35,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 
 /**
  * Nx project name → directory. `sdk` is the project.json name; the npm
- * workspace is `@camstack/sdk`, so `npm run test -w sdk` exits in under a
+ * workspace is `@dominevo/sdk`, so `npm run test -w sdk` exits in under a
  * second and fails the lane. Roots come from the root `package.json`
  * workspaces (`packages/*`, `server/*`, and the `e2e` package, which is not
  * under either tree).

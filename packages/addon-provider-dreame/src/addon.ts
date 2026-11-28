@@ -18,7 +18,7 @@ import {
   userError,
   collectOwnerIntegrationIds,
   rowsDepsOver,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { DreameReconciler, type IntegrationLifecycleKind } from './dreame-reconciler.js'
 import { toNodreameOptions } from './config.js'
 import {

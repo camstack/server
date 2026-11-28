@@ -4,7 +4,7 @@
  * must NOT count a sentry or a prestream, which never dial the camera (D173, D502).
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { StreamBroker } from '../stream-broker/stream-broker.js'
 
 function logger(): IScopedLogger {

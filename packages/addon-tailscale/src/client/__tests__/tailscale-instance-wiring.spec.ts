@@ -5,8 +5,8 @@
  * form writes THROUGH to the record (a key rotated there is the key the next boot rejoins with).
  * Only the CLI is faked: it records the `up` calls.
  */
-import type { AddonContext, IMeshNetworkProvider, IScopedLogger } from '@camstack/types'
-import { makeInMemoryRecords, meshNetworkCapability } from '@camstack/types'
+import type { AddonContext, IMeshNetworkProvider, IScopedLogger } from '@dominevo/types'
+import { makeInMemoryRecords, meshNetworkCapability } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 const cliCalls = vi.hoisted(() => ({ up: [] as { authKey: string; hostname?: string }[] }))

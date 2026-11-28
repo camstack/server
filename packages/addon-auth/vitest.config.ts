@@ -2,7 +2,7 @@ import { defineConfig } from 'vitest/config'
 import { vitestWorkers } from '../../vitest.workers'
 
 /**
- * Vitest config for the `@camstack/addon-auth` bundle.
+ * Vitest config for the `@dominevo/addon-auth` bundle.
  *
  * The bundle ships two addons under one package (oidc, webauthn). `vitest`
  * is pinned to `^3.2.4` in this package's own devDependencies, mirroring the

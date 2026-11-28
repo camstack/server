@@ -13,7 +13,7 @@ import {
   type TagColorId,
   type TagEntry,
   tagKey,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** How one tag is drawn. */
 export interface TagStyleView {

@@ -39,7 +39,7 @@ import {
   type DeviceIdentifierKey,
   type IdentifiersWriter,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** The `device-manager.setMetadata` input this populator sends. */
 export interface MetadataPatchInput {

@@ -81,7 +81,7 @@ function toEndpoint(
   return {
     endpointId: `${input.deviceId}__${GENERIC_ENDPOINT_SUFFIX}`,
     manufacturerName: 'camstack',
-    description: `CamStack ${input.type || 'device'}`,
+    description: `Dominevo ${input.type || 'device'}`,
     friendlyName: name.length > 0 ? name : `Device ${input.deviceId}`,
     displayCategories: [plan.category],
     capabilities: plan.capabilities,

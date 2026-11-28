@@ -1,4 +1,4 @@
-import type { KeychainResolveResult, SecretsAccess } from '@camstack/types'
+import type { KeychainResolveResult, SecretsAccess } from '@dominevo/types'
 import * as jwt from 'jsonwebtoken'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AuthManager } from '../auth-manager.js'

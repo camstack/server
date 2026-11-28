@@ -2,7 +2,7 @@
  * R5 — non-camera devices exported like HomeKit does, where Alexa has an
  * interface (D775).
  */
-import type { AddonContext } from '@camstack/types'
+import type { AddonContext } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { buildGenericDeviceEndpoint } from '../endpoints/generic-device.js'
 import { buildEndpointsForExposedDevice } from '../handlers/discovery.js'

@@ -26,7 +26,7 @@ import type {
   IStorageProviderImpl,
   StorageLocation,
   StorageProviderInfoSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import type { z } from 'zod'
 import { StorageOrchestratorService } from '../storage-orchestrator.service.js'

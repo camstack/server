@@ -5,7 +5,7 @@
  * pins the routing and the gate, not the engine (that is `addon-training`).
  */
 import { describe, expect, it } from 'vitest'
-import type { ITrainingOrchestrator } from '@camstack/types'
+import type { ITrainingOrchestrator } from '@dominevo/types'
 import { buildCapRouterForTest, checkAuthMatrix, invokeProcedure, makeCtx } from './harness.js'
 
 function makeProvider(): Partial<ITrainingOrchestrator> {

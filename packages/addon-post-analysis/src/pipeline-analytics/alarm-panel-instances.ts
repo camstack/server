@@ -12,7 +12,7 @@ import {
   entryBody,
   type RecordsAccess,
   RecordIntegrationInstances,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { z } from 'zod'
 
 export const alarmPanelConnectionsEntryKind = defineEntryKind('connections', {

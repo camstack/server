@@ -5,7 +5,7 @@
  * judgement alone: an admin deletes, and only a series that is orphan at the
  * moment of the delete.
  */
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import { type Harness, makeHarness } from '../../__tests__/support/harness.js'
 import { emitState, rawOf, rollupOf, seriesOf } from '../../__tests__/support/read-helpers.js'

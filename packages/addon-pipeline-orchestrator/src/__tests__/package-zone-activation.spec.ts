@@ -5,7 +5,7 @@
  * docs/superpowers/specs/2026-07-17-package-zones-design.md (ADDENDUM).
  */
 import { describe, it, expect } from 'vitest'
-import type { PipelineStepInputOutput } from '@camstack/types'
+import type { PipelineStepInputOutput } from '@dominevo/types'
 import { applyPackageZoneActivation, PACKAGE_DETECTION_STEP_ID } from '../pipeline-resolver.js'
 
 const objectDetection: PipelineStepInputOutput = {

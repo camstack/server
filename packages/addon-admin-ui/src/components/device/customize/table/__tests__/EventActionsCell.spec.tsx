@@ -4,7 +4,7 @@
  * stored composition (D391): the switch keeps the stored feature and flips only
  * `enabled`; the remove drops the feature.
  */
-import { CAP_CUSTOMIZE_CATALOG, type Composition, DeviceInfoSchema } from '@camstack/types'
+import { CAP_CUSTOMIZE_CATALOG, type Composition, DeviceInfoSchema } from '@dominevo/types'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import '../../../../../i18n'

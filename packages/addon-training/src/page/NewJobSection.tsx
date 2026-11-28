@@ -8,7 +8,7 @@ import type {
   RetrainCollection,
   TrainingBaseModel,
   TrainingProviderDescriptor,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   Button,
   Checkbox,
@@ -23,7 +23,7 @@ import {
   type AddonPageProps,
   type RootDetectorDeviceInput,
   type TrainingBaseModelRow,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import {
   buildClusterRootModelRows,
   type ClusterNodeSnapshot,

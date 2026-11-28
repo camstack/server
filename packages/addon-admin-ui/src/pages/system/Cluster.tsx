@@ -39,7 +39,7 @@ import { useSearchParams } from 'react-router-dom'
 
 import { ArrowDownToLine, Network } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { Button, NodePicker, useClusterTopology, useSystem } from '@camstack/ui-library'
+import { Button, NodePicker, useClusterTopology, useSystem } from '@dominevo/ui-library'
 import { AdminPage } from '../../components/AdminPage'
 import { ClusterUpdateDialog } from '../../components/cluster/ClusterUpdateDialog'
 import { AgentsFoundSection } from '../../components/cluster/pairing/AgentsFoundSection'

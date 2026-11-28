@@ -101,7 +101,7 @@ dispatched, and each root detection carries its own mask in the step's shape.**
 - The `segmentation` step keeps its own model and stays opt-in. Switching back
   to a plain root re-runs U2-Net with no write.
 - **Deploy order.**
-  1. `@camstack/types`, through a published `@camstack/server`. It carries the
+  1. `@dominevo/types`, through a published `@dominevo/server`. It carries the
      schema union, `rootSuppliesOf` and the picker hint.
   2. `addon-pipeline`. It carries the catalog move, the Python decoder and the
      runner.

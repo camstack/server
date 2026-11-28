@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { InferenceDeviceDescriptor } from '@camstack/types'
+import type { InferenceDeviceDescriptor } from '@dominevo/types'
 import { resolveInferenceDeviceEligibility } from '../inference-device-model.js'
 
 /**

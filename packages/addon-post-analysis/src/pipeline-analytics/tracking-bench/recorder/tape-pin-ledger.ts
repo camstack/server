@@ -28,7 +28,7 @@
  * refused, so a moved artifacts location can never strand 3 000 pinned
  * tracks against retention.
  */
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IScopedLogger } from '@dominevo/types'
 import type {
   TrackingTapeIndexStore,
   TrackingTapeRow,

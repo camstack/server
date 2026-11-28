@@ -1,4 +1,4 @@
-import type { IDevice, IDeviceRegistry } from '@camstack/types'
+import type { IDevice, IDeviceRegistry } from '@dominevo/types'
 
 export class DeviceRegistry implements IDeviceRegistry {
   /** Primary map: every registered device keyed by its progressive

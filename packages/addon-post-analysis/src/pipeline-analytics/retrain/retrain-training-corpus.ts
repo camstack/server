@@ -4,7 +4,7 @@
  * Shared by `resolveRetrainTrainingCorpus` so plan/start and the annotated
  * archive agree on which frames a selection includes.
  */
-import type { RetrainExportFilter, RetrainTrainingCorpusSelection } from '@camstack/types'
+import type { RetrainExportFilter, RetrainTrainingCorpusSelection } from '@dominevo/types'
 import type { RetrainExportManifest } from './retrain-export.js'
 import { workStateOf } from './retrain-corpus-query.js'
 

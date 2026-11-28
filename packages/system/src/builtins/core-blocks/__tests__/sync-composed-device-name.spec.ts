@@ -1,4 +1,4 @@
-import { COMPOSER_ADDON_ID, composedDeviceStableId } from '@camstack/types'
+import { COMPOSER_ADDON_ID, composedDeviceStableId } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { recordingLogger } from '../../composer/__tests__/fixtures.js'
 import {

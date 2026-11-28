@@ -1,5 +1,5 @@
-import type { SystemEvent } from '@camstack/types'
-import { createEvent, DeviceType } from '@camstack/types'
+import type { SystemEvent } from '@dominevo/types'
+import { createEvent, DeviceType } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { makeTestSystemEvent } from '../../__tests__/support/events.js'
 import type { NcDeviceLookup } from '../device-directory.js'
@@ -121,17 +121,17 @@ describe('system-event intake normalization', () => {
         { type: 'core', id: 'updates' },
         {
           target: 'addon',
-          packageName: '@camstack/addon-pipeline',
+          packageName: '@dominevo/addon-pipeline',
           currentVersion: '1.2.3',
           latestVersion: '1.2.4',
           packages: [
             {
-              packageName: '@camstack/addon-pipeline',
+              packageName: '@dominevo/addon-pipeline',
               currentVersion: '1.2.3',
               latestVersion: '1.2.4',
             },
             {
-              packageName: '@camstack/addon-provider-reolink',
+              packageName: '@dominevo/addon-provider-reolink',
               currentVersion: '1.0.0',
               latestVersion: '1.0.1',
             },
@@ -142,13 +142,13 @@ describe('system-event intake normalization', () => {
     )
     expect(update?.subject.systemEvent).toMatchObject({
       kind: 'addon-update-available',
-      packageName: '@camstack/addon-pipeline',
-      packageNames: ['@camstack/addon-pipeline', '@camstack/addon-provider-reolink'],
+      packageName: '@dominevo/addon-pipeline',
+      packageNames: ['@dominevo/addon-pipeline', '@dominevo/addon-provider-reolink'],
       textCount: 2,
       bodyKey: 'system.addon-update-available.body',
     })
     expect(update?.subject.systemEvent?.textParams?.['list']).toContain(
-      '@camstack/addon-provider-reolink 1.0.0 → 1.0.1',
+      '@dominevo/addon-provider-reolink 1.0.0 → 1.0.1',
     )
 
     const agentUpdate = incomingFromSystemEvent(
@@ -157,7 +157,7 @@ describe('system-event intake normalization', () => {
         { type: 'core', id: 'updates' },
         {
           target: 'addon',
-          packageName: '@camstack/addon-pipeline',
+          packageName: '@dominevo/addon-pipeline',
           currentVersion: '1.2.3',
           latestVersion: '1.2.4',
           nodeId: 'agent-a',
@@ -169,7 +169,7 @@ describe('system-event intake normalization', () => {
       nodeId: 'agent-a',
       bodyKey: 'system.addon-update-available.body',
       // The node is in the TITLE now, so the line is just the package.
-      textParams: expect.objectContaining({ list: '@camstack/addon-pipeline 1.2.3 → 1.2.4' }),
+      textParams: expect.objectContaining({ list: '@dominevo/addon-pipeline 1.2.3 → 1.2.4' }),
     })
     expect(agentUpdate?.subject.systemEvent?.subject).not.toBe(update?.subject.systemEvent?.subject)
 
@@ -179,19 +179,19 @@ describe('system-event intake normalization', () => {
         { type: 'core', id: 'updates' },
         {
           target: 'server',
-          packageName: '@camstack/server',
+          packageName: '@dominevo/server',
           currentVersion: '1.0.1',
           latestVersion: '1.0.2',
           nodeIds: ['hub', 'agent-a'],
           packages: [
             {
-              packageName: '@camstack/server',
+              packageName: '@dominevo/server',
               currentVersion: '1.0.1',
               latestVersion: '1.0.2',
               nodeId: 'hub',
             },
             {
-              packageName: '@camstack/server',
+              packageName: '@dominevo/server',
               currentVersion: '1.0.1',
               latestVersion: '1.0.2',
               nodeId: 'agent-a',
@@ -229,7 +229,7 @@ describe('system-event intake normalization', () => {
         { type: 'core', id: 'addons' },
         {
           addonId: 'pipeline-runner',
-          packageName: '@camstack/addon-pipeline',
+          packageName: '@dominevo/addon-pipeline',
           fromVersion: '1.2.3',
           toVersion: '1.2.4',
         },
@@ -239,7 +239,7 @@ describe('system-event intake normalization', () => {
     expect(addons?.subject.systemEvent).toMatchObject({
       kind: 'addon-updated',
       textCount: 1,
-      packageName: '@camstack/addon-pipeline',
+      packageName: '@dominevo/addon-pipeline',
     })
     expect(
       incomingFromSystemEvent(
@@ -261,7 +261,7 @@ describe('system-event intake normalization', () => {
         { type: 'core', id: 'system' },
         {
           kind: 'framework-update',
-          packageName: '@camstack/server',
+          packageName: '@dominevo/server',
           fromVersion: '1.0.1',
           toVersion: '1.0.2',
           requestedAt: 1,
@@ -355,7 +355,7 @@ describe('an update notification names the node and the versions', () => {
           { type: 'core', id: 'system' },
           {
             kind: 'framework-update',
-            packageName: '@camstack/server',
+            packageName: '@dominevo/server',
             fromVersion: '1.2.137',
             toVersion: '1.2.138',
             requestedAt: 1,
@@ -363,7 +363,7 @@ describe('an update notification names the node and the versions', () => {
           },
         ),
       ),
-    ).toBe('Server aggiornato — @camstack/server sul nodo hub è ora 1.2.138 (era 1.2.137)')
+    ).toBe('Server aggiornato — @dominevo/server sul nodo hub è ora 1.2.138 (era 1.2.137)')
   })
 
   it('never drops a version it HAS because the other one is missing', () => {
@@ -376,15 +376,15 @@ describe('an update notification names the node and the versions', () => {
           { type: 'core', id: 'system' },
           {
             kind: 'framework-update',
-            packageName: '@camstack/server',
+            packageName: '@dominevo/server',
             toVersion: '1.2.138',
             requestedAt: 1,
-            requestedBy: 'server-update: @camstack/server@1.2.138',
+            requestedBy: 'server-update: @dominevo/server@1.2.138',
             nodeId: 'hub',
           },
         ),
       ),
-    ).toBe('Server aggiornato — @camstack/server sul nodo hub è ora 1.2.138')
+    ).toBe('Server aggiornato — @dominevo/server sul nodo hub è ora 1.2.138')
   })
 
   it('a completed ADDON update reads both versions and the node', () => {
@@ -395,20 +395,20 @@ describe('an update notification names the node and the versions', () => {
           { type: 'core', id: 'addons' },
           {
             addonId: 'terminal',
-            packageName: '@camstack/addon-terminal',
+            packageName: '@dominevo/addon-terminal',
             fromVersion: '0.1.47',
             toVersion: '0.1.51',
             nodeId: 'hub',
           },
         ),
       ),
-    ).toBe('1 addon aggiornato — @camstack/addon-terminal 0.1.47 → 0.1.51 (hub)')
+    ).toBe('1 addon aggiornato — @dominevo/addon-terminal 0.1.47 → 0.1.51 (hub)')
   })
 
   it('an UNKNOWN predecessor is left out of the sentence, not printed as a version', () => {
     // The emitter omits `fromVersion` when it cannot read what was there (a
     // first install, an unreadable tree). It used to send `'0.0.0'`, and the
-    // operator read "@camstack/addon-terminal 0.0.0 → latest" as a fact. The
+    // operator read "@dominevo/addon-terminal 0.0.0 → latest" as a fact. The
     // notification must still ARRIVE — the update happened — and must not
     // state a version nobody installed.
     const rendered = sentence(
@@ -417,13 +417,13 @@ describe('an update notification names the node and the versions', () => {
         { type: 'core', id: 'addons' },
         {
           addonId: 'terminal',
-          packageName: '@camstack/addon-terminal',
+          packageName: '@dominevo/addon-terminal',
           toVersion: '0.1.51',
           nodeId: 'hub',
         },
       ),
     )
-    expect(rendered).toBe('1 addon aggiornato — @camstack/addon-terminal → 0.1.51 (hub)')
+    expect(rendered).toBe('1 addon aggiornato — @dominevo/addon-terminal → 0.1.51 (hub)')
     expect(rendered).not.toContain('0.0.0')
   })
 
@@ -471,20 +471,20 @@ describe('an update notification names the node and the versions', () => {
       { type: 'core', id: 'updates' },
       {
         target: 'addon',
-        packageName: '@camstack/addon-pipeline',
+        packageName: '@dominevo/addon-pipeline',
         currentVersion: '1.2.3',
         latestVersion: '1.2.4',
         nodeId: 'agent-a',
         nodeIds: ['agent-a'],
         packages: [
           {
-            packageName: '@camstack/addon-pipeline',
+            packageName: '@dominevo/addon-pipeline',
             currentVersion: '1.2.3',
             latestVersion: '1.2.4',
             nodeId: 'agent-a',
           },
           {
-            packageName: '@camstack/addon-ai',
+            packageName: '@dominevo/addon-ai',
             currentVersion: '0.4.8',
             latestVersion: '0.4.13',
             nodeId: 'agent-a',
@@ -497,11 +497,11 @@ describe('an update notification names the node and the versions', () => {
     expect(system?.titleKey).toBe('system.addon-update-available.title.onNode')
     // The node is named ONCE, in the title — the lines below it are the list.
     expect(system?.textParams?.['list']).toBe(
-      '@camstack/addon-pipeline 1.2.3 → 1.2.4\n@camstack/addon-ai 0.4.8 → 0.4.13',
+      '@dominevo/addon-pipeline 1.2.3 → 1.2.4\n@dominevo/addon-ai 0.4.8 → 0.4.13',
     )
     expect(sentence(event)).toBe(
       '2 aggiornamenti addon disponibili su agent-a — ' +
-        '@camstack/addon-pipeline 1.2.3 → 1.2.4\n@camstack/addon-ai 0.4.8 → 0.4.13',
+        '@dominevo/addon-pipeline 1.2.3 → 1.2.4\n@dominevo/addon-ai 0.4.8 → 0.4.13',
     )
   })
 
@@ -512,18 +512,18 @@ describe('an update notification names the node and the versions', () => {
         { type: 'core', id: 'updates' },
         {
           target: 'addon',
-          packageName: '@camstack/addon-pipeline',
+          packageName: '@dominevo/addon-pipeline',
           currentVersion: '1.2.3',
           latestVersion: '1.2.4',
           packages: [
             {
-              packageName: '@camstack/addon-pipeline',
+              packageName: '@dominevo/addon-pipeline',
               currentVersion: '1.2.3',
               latestVersion: '1.2.4',
               nodeId: 'hub',
             },
             {
-              packageName: '@camstack/addon-ai',
+              packageName: '@dominevo/addon-ai',
               currentVersion: '0.4.8',
               latestVersion: '0.4.13',
               nodeId: 'agent-a',
@@ -535,7 +535,7 @@ describe('an update notification names the node and the versions', () => {
     )?.subject.systemEvent
     expect(system?.titleKey).toBe('system.addon-update-available.title')
     expect(system?.textParams?.['list']).toBe(
-      '@camstack/addon-pipeline 1.2.3 → 1.2.4 (hub)\n@camstack/addon-ai 0.4.8 → 0.4.13 (agent-a)',
+      '@dominevo/addon-pipeline 1.2.3 → 1.2.4 (hub)\n@dominevo/addon-ai 0.4.8 → 0.4.13 (agent-a)',
     )
   })
 })
@@ -612,7 +612,7 @@ describe('every frozen key resolves, in every language', () => {
       { type: 'core', id: 'updates' },
       {
         target: 'addon',
-        packageName: '@camstack/addon-pipeline',
+        packageName: '@dominevo/addon-pipeline',
         currentVersion: '1.2.3',
         latestVersion: '1.2.4',
       },
@@ -622,7 +622,7 @@ describe('every frozen key resolves, in every language', () => {
       { type: 'core', id: 'updates' },
       {
         target: 'server',
-        packageName: '@camstack/server',
+        packageName: '@dominevo/server',
         currentVersion: '1.0.1',
         latestVersion: '1.0.2',
         nodeId: 'agent-a',
@@ -633,7 +633,7 @@ describe('every frozen key resolves, in every language', () => {
       { type: 'core', id: 'addons' },
       {
         addonId: 'pipeline-runner',
-        packageName: '@camstack/addon-pipeline',
+        packageName: '@dominevo/addon-pipeline',
         fromVersion: '1.2.3',
         toVersion: '1.2.4',
       },
@@ -643,7 +643,7 @@ describe('every frozen key resolves, in every language', () => {
       { type: 'core', id: 'system' },
       {
         kind: 'framework-update',
-        packageName: '@camstack/server',
+        packageName: '@dominevo/server',
         fromVersion: '1.0.1',
         toVersion: '1.0.2',
         requestedAt: 1,
@@ -656,7 +656,7 @@ describe('every frozen key resolves, in every language', () => {
       { type: 'core', id: 'system' },
       {
         kind: 'framework-update',
-        packageName: '@camstack/server',
+        packageName: '@dominevo/server',
         toVersion: '1.0.2',
         requestedAt: 1,
         nodeId: 'hub',
@@ -668,7 +668,7 @@ describe('every frozen key resolves, in every language', () => {
       { type: 'core', id: 'updates' },
       {
         target: 'addon',
-        packageName: '@camstack/addon-pipeline',
+        packageName: '@dominevo/addon-pipeline',
         currentVersion: '1.2.3',
         latestVersion: '1.2.4',
         nodeId: 'agent-a',

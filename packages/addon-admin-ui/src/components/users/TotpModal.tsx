@@ -26,7 +26,7 @@ import {
   useUserManagementGetTotpStatus,
   useUserManagementDisableTotp,
   useConfirm,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 
 interface TotpModalProps {

@@ -32,7 +32,7 @@ import {
   type IScopedLogger,
   type MigrationProcedureResult,
   type RecordKindHandle,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { readAllRows } from '../../../records/read-all-rows.js'
 import type { CoreBlockRowBody } from '../record-kinds.js'
 

@@ -13,7 +13,7 @@
  * instance record, a device — not only the running managers: a signed-out integration has no
  * manager, and its devices must still go when it is deleted.
  */
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IScopedLogger } from '@dominevo/types'
 import {
   appliancesWithoutCredential,
   connectionFromSettings,

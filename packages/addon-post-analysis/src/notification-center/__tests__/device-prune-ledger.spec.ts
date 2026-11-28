@@ -4,7 +4,7 @@
  *    (rule, field, subject) — that would drop the disable-once guard;
  *  - a write that lands while a load is in flight is not evicted by it.
  */
-import type { InMemoryRecords } from '@camstack/types'
+import type { InMemoryRecords } from '@dominevo/types'
 import { makeNcRecords, type NcFaultRules, withNcFaults } from './support/nc-test-deps.js'
 import { describe, expect, it } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'

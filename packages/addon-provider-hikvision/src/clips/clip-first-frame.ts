@@ -40,7 +40,7 @@
  * decoding a 4K frame takes longer than the whole replay did and there is no
  * reason to hold a camera for it.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 import type { HikvisionClipRow } from './clip-catalog.js'
 import type { ClipStreamCamera } from './clip-stream.js'

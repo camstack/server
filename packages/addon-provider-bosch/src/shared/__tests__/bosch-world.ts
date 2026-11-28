@@ -6,7 +6,7 @@ import {
   makeInMemoryRecords,
   type MigrationOwnerResult,
   type RecordsAccess,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 interface WorldSpec {
   readonly addonId: string

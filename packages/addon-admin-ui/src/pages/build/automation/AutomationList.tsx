@@ -22,7 +22,7 @@ import {
   countWhenLeaves,
   forEachLeaf,
   isEventLeaf,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   Badge,
   Button,
@@ -34,7 +34,7 @@ import {
   Switch,
   useCoreBlocksGetTraces,
   useUiText,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Pencil, Play, Plus, ScrollText, Trash2, Workflow } from 'lucide-react'
 import { Trans, useTranslation } from 'react-i18next'
 import { formatRelativeTime } from '../../../components/device/hero/format'

@@ -15,7 +15,7 @@
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import PipelineOrchestratorAddon from '../index.js'
-import type { StreamSourceEntry } from '@camstack/types'
+import type { StreamSourceEntry } from '@dominevo/types'
 import {
   enabledNodesFromBroker,
   makeFakeBroker,

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import type { IScopedLogger, RecordingConfig } from '@camstack/types'
+import type { IScopedLogger, RecordingConfig } from '@dominevo/types'
 import {
   readDeviceConfigs,
   loadDeviceConfig,

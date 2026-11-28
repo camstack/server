@@ -1,4 +1,4 @@
-import type { IntegrationSessionSink, IScopedLogger } from '@camstack/types'
+import type { IntegrationSessionSink, IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { settingsToDreoConfig } from '../config.js'
 import { DreoBridgeError } from '../dreo-bridge.js'

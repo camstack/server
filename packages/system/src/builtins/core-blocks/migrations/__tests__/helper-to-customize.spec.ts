@@ -26,7 +26,7 @@ import {
   defineAddonMigrations,
   planComposition,
   type SourceReading,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { CompositionRuntime } from '../../../composer/composition-runtime.js'
 import {

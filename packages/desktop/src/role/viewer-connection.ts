@@ -123,11 +123,11 @@ function page(title: string, body: string): string {
 /** The hub did not answer at all. */
 export function renderUnreachablePage(hubUrl: string, lastError: string): string {
   return page(
-    'CamStack — hub unreachable',
+    'Dominevo — hub unreachable',
     `<h2>Cannot reach the hub</h2>
 <p>Nothing answered at <code>${escapeHtml(hubUrl)}</code>.</p>
 <p class="hint">Last error: ${escapeHtml(lastError)}</p>
-<p class="hint">CamStack keeps retrying in the background and opens the viewer the
+<p class="hint">Dominevo keeps retrying in the background and opens the viewer the
 moment the hub answers. Use the tray icon to change the hub or open the logs.</p>`,
   )
 }
@@ -135,7 +135,7 @@ moment the hub answers. Use the tray icon to change the hub or open the logs.</p
 /** The hub is up; its viewer mount is still answering 503. */
 export function renderViewerStartingPage(hubUrl: string): string {
   return page(
-    'CamStack — viewer UI starting',
+    'Dominevo — viewer UI starting',
     `<h2>The hub is up — its viewer UI is still starting</h2>
 <p><code>${escapeHtml(hubUrl)}</code> answered, but the <code>viewer-ui</code>
 capability has not published its files yet (the hub replies
@@ -192,10 +192,10 @@ export function renderCertTrustPage(input: CertTrustPageInput): string {
 
   if (input.hadPin) {
     return page(
-      'CamStack — certificate changed',
+      'Dominevo — certificate changed',
       `<h2>This hub's certificate authority CHANGED</h2>
 <p><code>${escapeHtml(input.hostname)}</code> presented a root that is not the one
-this machine trusted for <code>${escapeHtml(input.hubUrl)}</code>. CamStack refused
+this machine trusted for <code>${escapeHtml(input.hubUrl)}</code>. Dominevo refused
 the connection and will not offer to accept it.</p>
 <p>A hub re-issues its leaf certificate on every address change without changing
 its root, so a NEW root means the hub itself was reinstalled — or something else
@@ -208,7 +208,7 @@ ${details}
   }
 
   return page(
-    'CamStack — certificate not trusted yet',
+    'Dominevo — certificate not trusted yet',
     `<h2>First connection to this hub</h2>
 <p><code>${escapeHtml(input.hubUrl)}</code> uses its own local certificate
 authority, which this machine has never seen. Nothing has been trusted yet.</p>
@@ -219,7 +219,7 @@ security it provides.</p>
 ${details}
 <p><a class="btn" href="${TRUST_ACCEPT_URL}">Trust this certificate authority</a></p>
 <p class="hint">Trusting it pins THIS root for this hub. If the hub ever presents
-a different one, CamStack refuses the connection and does not offer to accept
+a different one, Dominevo refuses the connection and does not offer to accept
 it — that refusal is the value of pinning, and it only works if you compared the
 fingerprint now.</p>`,
   )

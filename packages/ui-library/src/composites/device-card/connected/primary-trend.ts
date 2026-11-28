@@ -6,7 +6,7 @@ import {
   primarySeriesKey,
   quantityFromUnit,
   type ReadingQuantity,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { SparklinePoint } from '../../charts/Sparkline'
 import { readItemId } from '../../device-history/use-device-history'
 

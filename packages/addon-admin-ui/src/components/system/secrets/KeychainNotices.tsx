@@ -7,7 +7,7 @@
  * more than two lines only the most urgent shows until the operator expands
  * the rest. One box, one list: nothing stacks over anything at any width.
  */
-import { Button, cn } from '@camstack/ui-library'
+import { Button, cn } from '@dominevo/ui-library'
 import { AlertOctagon, AlertTriangle, ChevronDown, Info, type LucideIcon } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
 import type { KeychainNotice, KeychainNoticeId, KeychainNoticeTone } from './keychain-notices'

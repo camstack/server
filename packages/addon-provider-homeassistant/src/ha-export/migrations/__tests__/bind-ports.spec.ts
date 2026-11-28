@@ -3,7 +3,7 @@
  * overwritten, whatever the migration offers. Disarm: put without the `exists` check (or without
  * `ifRev: 0`) and "keeps the record the operator already has" fails.
  */
-import { makeInMemoryRecords } from '@camstack/types'
+import { makeInMemoryRecords } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { haExportTargetsKind, newTargetBody } from '../../target-records.js'
 import { defaultLinks, haExportLinksKind } from '../legacy-links-kind.js'

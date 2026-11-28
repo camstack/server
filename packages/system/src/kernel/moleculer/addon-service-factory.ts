@@ -1,5 +1,5 @@
 import type { ServiceSchema, Context } from 'moleculer'
-import type { ICamstackAddon, AddonDeclaration } from '@camstack/types'
+import type { ICamstackAddon, AddonDeclaration } from '@dominevo/types'
 import { deserializeTypedArrays } from './typed-array-serde.js'
 import { capBareAction } from '../transport/cap-action-name.js'
 

@@ -1,6 +1,6 @@
 /**
  * Compositions: composed devices (D659). This is the module barrel; leaf files
- * inside @camstack/types import the deep modules, never this file.
+ * inside @dominevo/types import the deep modules, never this file.
  */
 export * from './cap-link.js'
 export * from './composable-caps.js'

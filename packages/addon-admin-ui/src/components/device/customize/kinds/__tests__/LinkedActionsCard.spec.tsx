@@ -2,7 +2,7 @@
  * Linked actions (D356): the card lists what the camera links, and a link is
  * written only for what the operator ticked.
  */
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import type { ReactElement } from 'react'
@@ -40,8 +40,8 @@ const stamp = vi.hoisted((): { current: number } => ({ current: 321 }))
 const setLinks = vi.fn(async (_input: unknown) => ({}))
 const runAction = vi.fn()
 
-vi.mock('@camstack/ui-library', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@camstack/ui-library')>()
+vi.mock('@dominevo/ui-library', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dominevo/ui-library')>()
   return {
     ...actual,
     useActionsList: () => ({ data: ENTRIES }),
@@ -54,7 +54,7 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
   }
 })
 
-import { ConfirmDialogProvider, DataTable, type DataColumn } from '@camstack/ui-library'
+import { ConfirmDialogProvider, DataTable, type DataColumn } from '@dominevo/ui-library'
 import {
   LinkedActionButtons,
   LinkedActionItem,

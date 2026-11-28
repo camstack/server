@@ -11,7 +11,7 @@
  * (stableId, type, name, online, features, parentDeviceId, config, removeDevice).
  */
 
-import { DeviceRegistry } from '@camstack/server/system'
+import { DeviceRegistry } from '@dominevo/server/system'
 import type {
   AddonContext,
   IDevice,
@@ -20,13 +20,13 @@ import type {
   IScopedLogger,
   ProviderRegistration,
   StreamSourceEntry,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   consumablesCapability,
   DeviceType,
   errorCapability,
   eventEmitterCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { makeRecordsAccessForOwner } from '../../sqlite-storage/__tests__/support/records-world.js'
 import { z } from 'zod'

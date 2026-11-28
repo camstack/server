@@ -8,7 +8,7 @@
  * model against what the camera stored, the same substitution would report a
  * delta produced by a different encoder and say nothing about it.
  */
-import type { PipelineDefaultStep, PipelineStepInput } from '@camstack/types'
+import type { PipelineDefaultStep, PipelineStepInput } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { checkReplayPin, resolveRootModelId } from '../model-pin.js'
 

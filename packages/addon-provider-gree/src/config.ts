@@ -1,5 +1,5 @@
 import type { NodegreeOptions } from '@apocaliss92/nodegree'
-import type { ConfigUISchema } from '@camstack/types'
+import type { ConfigUISchema } from '@dominevo/types'
 import { z } from 'zod'
 
 /**
@@ -100,7 +100,7 @@ export function mergeConnectionPatch(
 // ---------------------------------------------------------------------------
 
 /**
- * Persisted config for a Gree AC {@link import('@camstack/types').DeviceType.Container}
+ * Persisted config for a Gree AC {@link import('@dominevo/types').DeviceType.Container}
  * device. The operator-supplied CONNECTION lives directly on the device (Reolink
  * pattern) — there is no broker registry. The device owns its own live
  * `@apocaliss92/nodegree` client keyed on its own `connectionKey`; its AC +

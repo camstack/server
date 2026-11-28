@@ -15,7 +15,7 @@ function stubServerUpdate(running: string, latest: string, updateAvailable: bool
       json: async () => ({
         available: true,
         status: {
-          packageName: '@camstack/server',
+          packageName: '@dominevo/server',
           runningVersion: running,
           latestVersion: latest,
           updateAvailable,

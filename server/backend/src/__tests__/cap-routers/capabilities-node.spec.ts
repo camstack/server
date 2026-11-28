@@ -12,8 +12,8 @@
  * The write ORDER (persist before the live switch) is pinned in
  * `capability-preference-write-order.spec.ts`.
  */
-import { CapabilityRegistry } from '@camstack/server/system'
-import type { IScopedLogger } from '@camstack/types'
+import { CapabilityRegistry } from '@dominevo/server/system'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { createCapabilitiesRouter } from '../../api/core/capabilities.router.js'
 import { makeCtx } from './harness.js'

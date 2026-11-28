@@ -1,4 +1,4 @@
-import type { MediaPlayerRepeat } from '@camstack/types'
+import type { MediaPlayerRepeat } from '@dominevo/types'
 import type { MediaArtworkKind } from '../../illustrations/MediaArtwork'
 import type { CardCommon, CardCommonActions } from '../../shell/model'
 

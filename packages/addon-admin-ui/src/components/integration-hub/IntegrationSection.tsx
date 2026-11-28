@@ -15,7 +15,7 @@
 import { Link2, type LucideIcon } from 'lucide-react'
 import { createContext, useContext, useEffect, useRef, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { SectionCard, TEXT_SECTION_LABEL } from '@camstack/ui-library'
+import { SectionCard, TEXT_SECTION_LABEL } from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 
 /** How long after mount the second, layout-settled scroll happens. */

@@ -1,4 +1,4 @@
-import type { IconKey } from '@camstack/types'
+import type { IconKey } from '@dominevo/types'
 import type { ReactElement } from 'react'
 import { cn } from '../../../lib/cn'
 import { useDisplayIconResolver } from '../../icon-glyphs'
@@ -13,12 +13,7 @@ export interface ReadingValueProps {
 }
 
 /** One reading, big: the quantity's icon, the value, the unit small and muted. */
-export function ReadingValue({
-  icon,
-  value,
-  unit,
-  text = false,
-}: ReadingValueProps): ReactElement {
+export function ReadingValue({ icon, value, unit, text = false }: ReadingValueProps): ReactElement {
   const resolve = useDisplayIconResolver()
   const Glyph = icon === null ? undefined : resolve(icon)
   return (

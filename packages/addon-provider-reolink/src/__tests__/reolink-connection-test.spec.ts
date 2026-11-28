@@ -3,7 +3,7 @@
  * logs in over Baichuan with the connection as the form holds it (a saved password stands in for
  * its redacted view) and names the reason when the hub refuses the login or does not answer.
  */
-import { makeInMemoryRecords, REDACTED_SECRET } from '@camstack/types'
+import { makeInMemoryRecords, REDACTED_SECRET } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { ReolinkHubConnection } from '../hub-connection.js'
 import type { ReolinkHubProbeFactory } from '../reolink-connection-test.js'

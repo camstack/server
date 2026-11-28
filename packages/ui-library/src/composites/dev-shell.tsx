@@ -16,8 +16,8 @@ import {
   splitLink,
   type TRPCClient,
 } from '@trpc/client'
-import type { AppRouter } from '@camstack/types'
-import { createSystem, type System } from '@camstack/sdk'
+import type { AppRouter } from '@dominevo/types'
+import { createSystem, type System } from '@dominevo/sdk'
 import superjson from 'superjson'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ThemeProvider } from '../theme/theme-provider'

@@ -1,5 +1,5 @@
 import type { IncomingMessage } from 'node:http'
-import type { IScopedLogger, LogExtras } from '@camstack/types'
+import type { IScopedLogger, LogExtras } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type {
   AudioDataCloseInfo,

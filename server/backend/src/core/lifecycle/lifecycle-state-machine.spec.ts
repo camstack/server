@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { LifecycleStateMachine } from './lifecycle-state-machine'
-import type { IEventBus, SystemEvent } from '@camstack/types'
-import type { IScopedLogger } from '@camstack/types'
+import type { IEventBus, SystemEvent } from '@dominevo/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 const createMockEventBus = (): IEventBus & { emitted: SystemEvent[] } => {
   const emitted: SystemEvent[] = []

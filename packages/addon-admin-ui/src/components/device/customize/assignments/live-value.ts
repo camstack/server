@@ -4,12 +4,12 @@
  * failed); every later change is the pushed slice, which wins once it carries
  * anything.
  */
-import { SOURCE_CAP_ACTIVE_FIELD } from '@camstack/types'
+import { SOURCE_CAP_ACTIVE_FIELD } from '@dominevo/types'
 import {
   BATTERY_BADGE_LOW_KEY,
   BATTERY_BADGE_NORMAL_KEY,
   binaryBatteryIsLow,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import type { QueryErrorLike } from '../known'
 import { readPath } from '../source-picker-model'
 import i18n from '../../../../i18n/index'

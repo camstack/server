@@ -1,4 +1,4 @@
-import { DeviceRole, DeviceType, type ReadingQuantity } from '@camstack/types'
+import { DeviceRole, DeviceType, type ReadingQuantity } from '@dominevo/types'
 import type { UnifiFeatureDescriptor, UnifiSensorMetric } from './config.js'
 import type { UnifiInfraSnapshot } from './unifi-client-contract.js'
 
@@ -174,7 +174,7 @@ export function featureLabel(
   }
 }
 
-/** The CamStack DeviceType a feature descriptor spawns. */
+/** The Dominevo DeviceType a feature descriptor spawns. */
 export function deviceTypeForDescriptor(descriptor: UnifiFeatureDescriptor): DeviceType {
   switch (descriptor.kind) {
     case 'switch':

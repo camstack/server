@@ -1,4 +1,4 @@
-import { resetHubMountForTests } from '@camstack/ui-library'
+import { resetHubMountForTests } from '@dominevo/ui-library'
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
@@ -32,7 +32,7 @@ function renderPage() {
 describe('ViewerPage', () => {
   it('frames the viewer at the root mount, with the permissions a live view needs', () => {
     renderPage()
-    const frame = screen.getByTitle('CamStack viewer')
+    const frame = screen.getByTitle('Dominevo viewer')
     expect(frame.tagName).toBe('IFRAME')
     expect(frame.getAttribute('src')).toBe('/viewer/camstack/')
     const allow = frame.getAttribute('allow') ?? ''
@@ -47,7 +47,7 @@ describe('ViewerPage', () => {
     document.head.innerHTML =
       '<base href="/api/camstack/p/g1/"><meta name="camstack-mount" content="/api/camstack/p/g1/">'
     renderPage()
-    expect(screen.queryByTitle('CamStack viewer')).toBeNull()
+    expect(screen.queryByTitle('Dominevo viewer')).toBeNull()
     expect(screen.getByTestId('viewer-unavailable-under-mount')).toBeTruthy()
   })
 })

@@ -10,13 +10,13 @@
  * as that census is still running, so a late runner snapshot cannot
  * deregister the session it never saw.
  */
-import { CAMERA_TRIGGER } from '@camstack/types'
+import { CAMERA_TRIGGER } from '@dominevo/types'
 import type {
   CameraDetectionConfig,
   IScopedLogger,
   RunnerCameraConfig,
   RunnerLocalLoad,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { RoundRobinInferenceDeviceRotation } from '../device-balancer.js'
 import { BALANCE_LOAD_BUDGET_MS, DISPATCH_RECONCILE_BUDGET_MS } from '../dispatch-timing.js'

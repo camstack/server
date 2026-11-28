@@ -3,8 +3,8 @@
  * package closures (ZERO-DEP: node:fs/node:path only, same constraint as
  * root-state.ts — the baked starter bundles this module).
  *
- * `camstack deploy-server` packs every workspace package in the server's
- * `@camstack/*` closure at one uniform dev version
+ * `dominevo deploy-server` packs every workspace package in the server's
+ * `@dominevo/*` closure at one uniform dev version
  * (`<base>-dev.<epochSeconds>`) and uploads the tarballs to
  * `POST /api/server-upload`. The hub stores them under:
  *

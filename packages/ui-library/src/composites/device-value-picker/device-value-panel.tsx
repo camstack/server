@@ -1,4 +1,4 @@
-import type { DeviceSearchRequires } from '@camstack/types'
+import type { DeviceSearchRequires } from '@dominevo/types'
 import { Search } from 'lucide-react'
 import { type JSX, type ReactNode, type UIEvent, useMemo, useState } from 'react'
 import { useUiText } from '../../contexts/ui-text'

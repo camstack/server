@@ -1,6 +1,6 @@
 /**
  * The admin-ui side of an OAuth completion (`/sso-complete#return=oauth&…`,
- * built by `oauthLandingUrl` in `@camstack/types`): where the page returns to,
+ * built by `oauthLandingUrl` in `@dominevo/types`): where the page returns to,
  * and how a popup hands its outcome back to the window that opened it.
  *
  * The hand-back reuses the broker popup's message (`camstack:broker-oauth`),
@@ -9,7 +9,7 @@
  * goes to this page's own origin, and a cross-origin or closed opener is not
  * written to. It carries a reason CODE, never a token or a message.
  */
-import type { OauthLandingOutcome } from '@camstack/types'
+import type { OauthLandingOutcome } from '@dominevo/types'
 import { BROKER_OAUTH_MESSAGE } from './broker-oauth-popup'
 import { integrationHubHref } from './integration-hub-url'
 import { readableOrigin } from './sso-popup'

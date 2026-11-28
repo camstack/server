@@ -26,7 +26,7 @@
  * is worse than not offering, because the operator files the hole as a broken
  * camera.
  */
-import type { CamProfile, CamStreamDescriptor } from '@camstack/types'
+import type { CamProfile, CamStreamDescriptor } from '@dominevo/types'
 import { gridCamStreamId } from './grid-profiles.js'
 import { GRID_WIRE_STREAM_KIND } from './grid-wire-format.js'
 

@@ -27,7 +27,7 @@ import {
  * (`HUB_ROOT_SPEC`); this fixture keeps the DI coverage.
  */
 const ALT_ROOT_SPEC: RootPackageSpec = {
-  packageName: '@camstack/alt-root',
+  packageName: '@dominevo/alt-root',
   entryRelPath: ['dist', 'cli.js'],
 }
 
@@ -47,7 +47,7 @@ describe('layout helpers', () => {
     expect(root).toBe(path.join('/data', 'server-root'))
     expect(versionDir(root, '1.2.3')).toBe(path.join(root, 'versions', '1.2.3'))
     expect(rootPackageDir(versionDir(root, '1.2.3'), HUB_ROOT_SPEC)).toBe(
-      path.join(root, 'versions', '1.2.3', 'node_modules', '@camstack', 'server'),
+      path.join(root, 'versions', '1.2.3', 'node_modules', '@dominevo', 'server'),
     )
     expect(rootEntryPath(versionDir(root, '1.2.3'), HUB_ROOT_SPEC)).toBe(
       path.join(
@@ -55,7 +55,7 @@ describe('layout helpers', () => {
         'versions',
         '1.2.3',
         'node_modules',
-        '@camstack',
+        '@dominevo',
         'server',
         'dist',
         'launcher.js',
@@ -67,7 +67,7 @@ describe('layout helpers', () => {
   it('derives an alternate spec layout (same dir name, different package + entry)', () => {
     const root = serverRootDir('/data')
     expect(rootPackageDir(versionDir(root, '1.2.3'), ALT_ROOT_SPEC)).toBe(
-      path.join(root, 'versions', '1.2.3', 'node_modules', '@camstack', 'alt-root'),
+      path.join(root, 'versions', '1.2.3', 'node_modules', '@dominevo', 'alt-root'),
     )
     expect(rootEntryPath(versionDir(root, '1.2.3'), ALT_ROOT_SPEC)).toBe(
       path.join(
@@ -75,7 +75,7 @@ describe('layout helpers', () => {
         'versions',
         '1.2.3',
         'node_modules',
-        '@camstack',
+        '@dominevo',
         'alt-root',
         'dist',
         'cli.js',
@@ -133,7 +133,7 @@ describe('validateVersionDir', () => {
   }
 
   it('accepts a well-formed version dir', () => {
-    scaffoldVersion('1.1.50', { name: '@camstack/server', version: '1.1.50' })
+    scaffoldVersion('1.1.50', { name: '@dominevo/server', version: '1.1.50' })
     expect(validateVersionDir(tmp, '1.1.50', 24, HUB_ROOT_SPEC)).toBeNull()
   })
 
@@ -142,18 +142,18 @@ describe('validateVersionDir', () => {
   })
 
   it('rejects a wrong package name', () => {
-    scaffoldVersion('1.1.50', { name: '@camstack/other', version: '1.1.50' })
+    scaffoldVersion('1.1.50', { name: '@dominevo/other', version: '1.1.50' })
     expect(validateVersionDir(tmp, '1.1.50', 24, HUB_ROOT_SPEC)).toMatch(/name/i)
   })
 
   it('rejects a version mismatch', () => {
-    scaffoldVersion('1.1.50', { name: '@camstack/server', version: '1.1.51' })
+    scaffoldVersion('1.1.50', { name: '@dominevo/server', version: '1.1.51' })
     expect(validateVersionDir(tmp, '1.1.50', 24, HUB_ROOT_SPEC)).toMatch(/version/i)
   })
 
   it('rejects when the node runtime is older than engines.node', () => {
     scaffoldVersion('1.1.50', {
-      name: '@camstack/server',
+      name: '@dominevo/server',
       version: '1.1.50',
       engines: { node: '>=26' },
     })
@@ -162,7 +162,7 @@ describe('validateVersionDir', () => {
 
   it('accepts when the node runtime satisfies engines.node', () => {
     scaffoldVersion('1.1.50', {
-      name: '@camstack/server',
+      name: '@dominevo/server',
       version: '1.1.50',
       engines: { node: '>=22' },
     })
@@ -171,7 +171,7 @@ describe('validateVersionDir', () => {
 
   it('accepts an unparseable engines.node (permissive)', () => {
     scaffoldVersion('1.1.50', {
-      name: '@camstack/server',
+      name: '@dominevo/server',
       version: '1.1.50',
       engines: { node: 'weird' },
     })
@@ -185,7 +185,7 @@ describe('validateVersionDir', () => {
     fs.writeFileSync(path.join(pkgDir, 'dist', 'cli.js'), '// entry', 'utf-8')
     fs.writeFileSync(
       path.join(pkgDir, 'package.json'),
-      JSON.stringify({ name: '@camstack/alt-root', version: '1.1.40', engines: { node: '>=22' } }),
+      JSON.stringify({ name: '@dominevo/alt-root', version: '1.1.40', engines: { node: '>=22' } }),
       'utf-8',
     )
     expect(validateVersionDir(tmp, '1.1.40', 24, ALT_ROOT_SPEC)).toBeNull()
@@ -204,10 +204,10 @@ describe('restart-intent marker', () => {
     const rootDir = serverRootDir(tmp)
     writeRestartIntentMarker(rootDir, {
       requestedAtMs: 123,
-      reason: 'server-update: @camstack/server@1.2.3',
+      reason: 'server-update: @dominevo/server@1.2.3',
     })
     const read = readRestartIntentMarker(rootDir)
-    expect(read).toEqual({ requestedAtMs: 123, reason: 'server-update: @camstack/server@1.2.3' })
+    expect(read).toEqual({ requestedAtMs: 123, reason: 'server-update: @dominevo/server@1.2.3' })
   })
 
   it('returns null when the marker is missing', () => {

@@ -9,7 +9,7 @@ import {
   type TrainingJob,
   type TrainingLogLine,
   type TrainingProgressPoint,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export const LOG_TAIL_LINES = 200
 export const LOG_LINE_MAX_CHARS = 500

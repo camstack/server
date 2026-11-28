@@ -17,7 +17,7 @@
  *    not be destructive.
  */
 
-import type { RetrainStatus } from '@camstack/types'
+import type { RetrainStatus } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { makeSilentLogger } from '../../__tests__/test-helpers.js'
 import {

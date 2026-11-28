@@ -34,7 +34,7 @@ import type {
   IScopedLogger,
   RunDetailSubtreeInput,
   RunDetailSubtreeResult,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   TrackDetailDispatcher,
   type ParkedDetailFrame,

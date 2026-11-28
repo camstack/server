@@ -14,7 +14,7 @@ applies-to:
 
 `AGENT_INFRA` was `INFRA_CAPABILITIES`, unfiltered. That list carries
 `{ name: 'data-store-provider', required: true }`; `sqlite-settings` is the only
-addon in the tree that declares it, and it ships inside the `@camstack/system`
+addon in the tree that declares it, and it ships inside the `@dominevo/system`
 closure the agent scans. **An agent could not boot without opening a database of
 its own.** Not a setting an operator could turn off — a precondition of boot,
 enforced by `assertRequiredInfraResolved`.

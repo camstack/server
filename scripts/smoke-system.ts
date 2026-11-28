@@ -3,16 +3,16 @@
  * Smoke test for the unified `System` class.
  *
  * Walks through the public API surface against a live local server:
- *   1. Construct with the `camstack login` session token
+ *   1. Construct with the `dominevo login` session token
  *   2. init() warm-boot
  *   3. listDevices() / getDevice() — exercise mirror + binding propagation
  *   4. system.<systemCap>.<method>() — call a known cluster-wide cap
  *   5. close()
  *
  * Configure via env:
- *   - SMOKE_URL  hub address (default: the `camstack login` session's hub)
+ *   - SMOKE_URL  hub address (default: the `dominevo login` session's hub)
  *
- * The credential is the `camstack login` session (D1101): no password here.
+ * The credential is the `dominevo login` session (D1101): no password here.
  *
  * Run: npx tsx scripts/smoke-system.ts
  *

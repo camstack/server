@@ -1,5 +1,5 @@
 /**
- * The announcements of an update that is NOT the `@camstack/server` closure
+ * The announcements of an update that is NOT the `@dominevo/server` closure
  * (D723 covered that one): the Electron shell replacing itself, and a container
  * that booted on a different image than its previous boot.
  *
@@ -17,12 +17,12 @@ import {
   type IScopedLogger,
   type NodeUpdateTarget,
   type PendingRestartMarkerPayload,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** Operator-facing name of what each non-closure update replaces. */
 const UPDATE_TARGET_LABEL: Readonly<Record<Exclude<NodeUpdateTarget, 'server'>, string>> = {
-  'desktop-shell': 'CamStack desktop app',
-  'container-image': 'CamStack container image',
+  'desktop-shell': 'Dominevo desktop app',
+  'container-image': 'Dominevo container image',
 }
 
 /** Where a boot records the product version it ran, to compare with the next boot. */

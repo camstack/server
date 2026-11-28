@@ -13,7 +13,7 @@ import type {
   NodeDecodeProfile,
   NodeBenchmarkRun,
   NodeBenchProgress,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { translate } from '../i18n/index.js'
 
 /** One device's selection in the editor. */

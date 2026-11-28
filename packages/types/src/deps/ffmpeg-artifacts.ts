@@ -1,5 +1,5 @@
 /**
- * The ffmpeg build every CamStack node downloads, per platform and arch.
+ * The ffmpeg build every Dominevo node downloads, per platform and arch.
  *
  * ## Why a download, on every node, including the container
  *

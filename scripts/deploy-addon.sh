@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Deploy an addon to a CamStack server: a thin wrapper over `camstack deploy`.
+# Deploy an addon to a Dominevo server: a thin wrapper over `dominevo deploy`.
 # Usage: ./scripts/deploy-addon.sh [--server URL] [path-to-addon]
 #
-# The credential is the `camstack login` session (D1101): run
-# `camstack login <host>` once, interactively. There is no token flag, no
+# The credential is the `dominevo login` session (D1101): run
+# `dominevo login <host>` once, interactively. There is no token flag, no
 # $CAMSTACK_TOKEN and no ~/.camstackrc.
 
 set -euo pipefail
@@ -16,7 +16,7 @@ while [[ $# -gt 0 ]]; do
   case $1 in
     --server) SERVER_ARGS=(--server "$2"); shift 2 ;;
     --token|--token-file) # removed-flag:begin
-      echo "Error: $1 was removed. Run 'camstack login <host>' once, interactively; every tool then uses that session." >&2
+      echo "Error: $1 was removed. Run 'dominevo login <host>' once, interactively; every tool then uses that session." >&2
       exit 1 # removed-flag:end
       ;;
     --help|-h)
@@ -24,8 +24,8 @@ while [[ $# -gt 0 ]]; do
       echo ""
       echo "  --server URL   Hub address (default: the cached login session)"
       echo ""
-      echo "Runs 'camstack deploy <path>' (build, pack, upload). Path defaults to the"
-      echo "current directory. Authentication is the 'camstack login' session."
+      echo "Runs 'dominevo deploy <path>' (build, pack, upload). Path defaults to the"
+      echo "current directory. Authentication is the 'dominevo login' session."
       exit 0
       ;;
     *) ADDON_PATH="$1"; shift ;;

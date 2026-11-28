@@ -11,7 +11,7 @@
  * `model-convert.progress` category, mirroring how the benchmark Pipeline tab
  * subscribes to `pipeline.trace`.
  */
-import type { AddonPageProps } from '@camstack/ui-library'
+import type { AddonPageProps } from '@dominevo/ui-library'
 import { z } from 'zod'
 import type {
   ConvertArtifact,
@@ -23,7 +23,7 @@ import type {
   NodeInferenceDevice,
   PipelineAddonSchema,
   PipelineSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   ConvertArtifactSchema,
   CustomModelDescriptorSchema,
@@ -32,7 +32,7 @@ import {
   readClusterStepModels,
   pipelineExecutorCapability,
   type ClusterStepModels,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { normalizePluginCatalogDrift } from '../plugin-catalog/plugin-catalog-tree-drift.js'
 import {
   PlusCatalogCatalogEntrySchema,
@@ -497,7 +497,7 @@ function isCatalogSchema(value: unknown): value is CatalogSchemaLike {
 }
 
 /**
- * CamStack seeds for Catalog, scoped to a node so `downloaded` is that
+ * Dominevo seeds for Catalog, scoped to a node so `downloaded` is that
  * node's disk, not the hub's. Same `getSchema` the pipeline pickers use.
  */
 export async function listPipelineCatalog(
@@ -518,7 +518,7 @@ export async function listPipelineCatalogBundle(
 }> {
   const raw = await pipelineSchemaCaller(trpc).query(nodeId !== undefined ? { nodeId } : undefined)
   if (!isCatalogSchema(raw)) {
-    throw new Error('pipeline schema unavailable — cannot list CamStack seeds')
+    throw new Error('pipeline schema unavailable — cannot list Dominevo seeds')
   }
   return {
     seeds: catalogSeedsFromSchema(raw),
@@ -536,7 +536,7 @@ export async function downloadPipelineModel(
   ).pipelineExecutor.downloadModel.mutate(input)
 }
 
-/** Wipe one CamStack seed format from a node's modelsDir (Installed Remove).
+/** Wipe one Dominevo seed format from a node's modelsDir (Installed Remove).
  *  Goes through model-studio `deleteSeedFromNode` so the call is `nodePin`'d —
  *  a bare `pipelineExecutor.deleteModel.mutate` always hit the hub. */
 export async function deletePipelineModel(

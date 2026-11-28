@@ -11,7 +11,7 @@ import {
   runningStateCapability,
   type VacuumControlStatus,
   vacuumControlCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { VacuumTankProps } from '../dreame-vacuum-decode.js'
 import {
   clampBatteryLevel,

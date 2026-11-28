@@ -1,4 +1,4 @@
-import type { HeroMeasurementQuantity } from '@camstack/types'
+import type { HeroMeasurementQuantity } from '@dominevo/types'
 import { type KeyboardEvent, type ReactElement, type ReactNode, useId } from 'react'
 import { cn } from '../../../../lib/cn'
 import type { SceneVisual } from '../../../hero-scene/types'

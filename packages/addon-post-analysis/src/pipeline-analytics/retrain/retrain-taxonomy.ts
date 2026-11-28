@@ -20,7 +20,7 @@
  * it exists to teach — the ones the model does not know yet.
  */
 
-import type { RetrainMacroClass as CapMacroClass } from '@camstack/types'
+import type { RetrainMacroClass as CapMacroClass } from '@dominevo/types'
 
 /**
  * The macro classes a retrain annotation may carry.

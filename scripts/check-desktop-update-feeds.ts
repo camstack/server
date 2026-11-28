@@ -4,7 +4,7 @@
  *
  * ── What this prevents ─────────────────────────────────────────────────────
  * The desktop shell builds TWO products from one source tree (D402): the full
- * `CamStack` and the reduced `CamStack Viewer`. Both publish to the SAME GitHub
+ * `Dominevo` and the reduced `Dominevo Viewer`. Both publish to the SAME GitHub
  * release, and electron-updater's feed is ONE file per channel per platform —
  * `latest-mac.yml`, `latest-linux.yml`, `latest.yml`. With both configs on the
  * default channel the second leg to finish OVERWRITES the first's feed.

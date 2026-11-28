@@ -1,4 +1,4 @@
-import { errMsg, type DeviceManagerApi, type IScopedLogger } from '@camstack/types'
+import { errMsg, type DeviceManagerApi, type IScopedLogger } from '@dominevo/types'
 import { ENPAL_SYSTEM } from './config.js'
 
 /**

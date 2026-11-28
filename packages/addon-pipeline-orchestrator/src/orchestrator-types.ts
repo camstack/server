@@ -13,8 +13,8 @@ import type {
   PipelineAssignment,
   PipelinePhaseMode,
   RunnerCameraConfig,
-} from '@camstack/types'
-import { customAction, defineCustomActions } from '@camstack/types'
+} from '@dominevo/types'
+import { customAction, defineCustomActions } from '@dominevo/types'
 import { z } from 'zod'
 
 // ── Pipeline phase-mode guard ────────────────────────────────────────────
@@ -152,7 +152,7 @@ export type OrchestratorDiagnostics = z.infer<typeof OrchestratorDiagnosticsSche
  *
  * A custom action rather than a cap method, matching how the orchestrator
  * already serves `dumpState`: this is a hub-local read over a table the hub
- * owns, and it ships with one `camstack deploy` instead of a release train.
+ * owns, and it ships with one `dominevo deploy` instead of a release train.
  * The MEAN is derived here and returned alongside the addable `sum`/`samples`
  * — a chart wants the first, a re-bucketing caller wants the second, and a
  * stored mean is a field that can disagree with both.

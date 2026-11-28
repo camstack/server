@@ -35,7 +35,7 @@ the two disagree, the screen is lying about the balancer.
 ## Decision
 
 The reason list is a CAP CONTRACT: `INFERENCE_DEVICE_EXCLUSION_REASONS` lives in
-`@camstack/types`, `getNodeInferenceDevices` carries `exclusion` (the reason, or
+`@dominevo/types`, `getNodeInferenceDevices` carries `exclusion` (the reason, or
 `null` for a candidate) on every device, and the value is produced by the SAME
 `resolveInferenceDeviceEligibility` the dispatcher runs — transported by the
 pure `annotateInferenceDeviceExclusions`, never recomputed. The orchestrator's

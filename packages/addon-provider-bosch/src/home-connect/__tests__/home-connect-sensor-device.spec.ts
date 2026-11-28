@@ -5,7 +5,7 @@ import {
   type EnumSensorStatus,
   type NumericSensorStatus,
   type PowerMeterStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import { HomeConnectSensorDevice } from '../devices/home-connect-sensor-device.js'
 import type { HomeConnectChildBinding } from '../home-connect-child-bindings.js'

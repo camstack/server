@@ -9,7 +9,7 @@
  * path uses (`buildSnapshotTargets`) — no second derivation of any crop rect.
  */
 import { describe, it, expect, vi } from 'vitest'
-import type { FrameHandle } from '@camstack/types'
+import type { FrameHandle } from '@dominevo/types'
 import { makeTestFrameHandle } from '../../__tests__/support/frame-handle.js'
 import {
   promoteSemanticBestFrame,

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { LogManager, LOG_BUFFER_DESTINATION_ID } from '../log-manager.js'
-import type { ILogDestination, LogEntry } from '@camstack/types'
+import type { ILogDestination, LogEntry } from '@dominevo/types'
 
 function collector(): { dest: ILogDestination; lines: LogEntry[] } {
   const lines: LogEntry[] = []

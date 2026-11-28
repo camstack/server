@@ -27,7 +27,7 @@ edit or reconcile.
 
 ## Decision
 
-One pure model in `@camstack/types` (`buildHeroModel`) is the hero of every device;
+One pure model in `@dominevo/types` (`buildHeroModel`) is the hero of every device;
 both clients draw only what it returns. It is extended per `DeviceType`, with a
 `DeviceRole` only refining a type.
 

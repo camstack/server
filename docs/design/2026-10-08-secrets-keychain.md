@@ -24,7 +24,7 @@ where they changed it. Where the two differ, the decisions win.
   plaintext JSON in `camstack.db`, plus `config.yaml` and library-owned files.
 - Three secrets reached logs (cloudflared token on argv, Tailscale auth key in
   an error message, the magic-link login link) — fixed by D783 (P0).
-- CamStack's system backups (which may go to S3 / SFTP) were the whole
+- Dominevo's system backups (which may go to S3 / SFTP) were the whole
   database, unencrypted.
 - Admin forms received the stored plaintext on purpose (`hydrateSchema`).
 - Agents keep no settings store: agent-placed addons read the hub's rows
@@ -33,7 +33,7 @@ where they changed it. Where the two differ, the decisions win.
 ## 1. Threat model
 
 **Protects against:** a copy of `camstack.db` (a stray `-wal`, a DB attached
-to a support issue, the inert copy on an agent); CamStack's own backups (the
+to a support issue, the inert copy on an agent); Dominevo's own backups (the
 master key is not in `DEFAULT_BACKUP_LOCATIONS`); the nightly appdata tar —
 **only** when the master key lives outside appdata; log leaks (central
 redactor, nothing on argv); non-admin reads (D634 stays, and a blob holds a
@@ -250,7 +250,7 @@ type).
   schema the save path reads; addon per-device stores (D4) have no operator
   adopt path; a device created before it registers persists its first config
   without its declared paths.
-- ~~Encrypt CamStack system-backup archives with the DEK~~ — done by D800,
+- ~~Encrypt Dominevo system-backup archives with the DEK~~ — done by D800,
   with a separate backup key pair (public key on the hub, secret key with the
   operator), not the DEK; TOTP secrets into the keychain; library-owned files.
 

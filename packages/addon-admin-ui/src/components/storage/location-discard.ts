@@ -19,7 +19,7 @@
  * methods would need an image rebuild; custom actions deploy with the
  * addon.
  */
-import type { StorageLocation } from '@camstack/types'
+import type { StorageLocation } from '@dominevo/types'
 import { modeAcceptsWrites, resolveLocationMode } from './location-mode'
 
 export const DISCARD_SUBTREES: Readonly<Record<string, readonly string[]>> = {

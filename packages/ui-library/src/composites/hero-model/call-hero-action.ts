@@ -1,4 +1,4 @@
-import { METHOD_DEVICE_SELECTORS, type HeroCall } from '@camstack/types'
+import { METHOD_DEVICE_SELECTORS, type HeroCall } from '@dominevo/types'
 
 /** `media-player` -> `mediaPlayer`: the router name the generated client gives a capability. */
 export function capRouterName(cap: string): string {

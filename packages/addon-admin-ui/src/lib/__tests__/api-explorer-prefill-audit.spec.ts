@@ -8,8 +8,8 @@
  */
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
-import * as capsModule from '@camstack/types'
-import type { CapabilityDefinition } from '@camstack/types'
+import * as capsModule from '@dominevo/types'
+import type { CapabilityDefinition } from '@dominevo/types'
 import { formSeed } from '../api-input-fields'
 
 function isCapabilityDefinition(value: unknown): value is CapabilityDefinition {

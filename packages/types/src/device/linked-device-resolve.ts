@@ -2,12 +2,12 @@
  * Which devices a camera's LINKED set resolves to — the pure rules, with no
  * store and no provider context.
  *
- * They live in `@camstack/types` rather than in the device-manager builtin
+ * They live in `@dominevo/types` rather than in the device-manager builtin
  * because two surfaces need the SAME answer and a second copy would be a
  * second definition of what a room contains: the hub's boot backfill, and the
  * admin UI's per-room rebuild. Moving them here also keeps that button a
  * framework-free change — a new cap method would only reach a node through a
- * published `@camstack/server` and a restart (D16), which is not what a
+ * published `@dominevo/server` and a restart (D16), which is not what a
  * convenience button is worth.
  */
 import { DeviceType } from './device-type.js'

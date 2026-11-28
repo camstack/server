@@ -35,7 +35,7 @@
  * once been composed — is documented in D519; it cannot wake a battery camera,
  * because a grid never dials one live at all (`grid-sentry-sources.ts`).
  */
-import { errMsg } from '@camstack/types'
+import { errMsg } from '@dominevo/types'
 import type { GridStreamLogger } from './grid-stream-session.js'
 
 /** Where a grid's last composed frame is kept between compositions. */

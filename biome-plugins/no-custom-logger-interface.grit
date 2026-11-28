@@ -7,5 +7,5 @@
 TsInterfaceDeclaration(id=$name) where {
   $name <: r".*Logger",
   $name <: not r"IScopedLogger",
-  register_diagnostic(span=$name, message="Use IScopedLogger from @camstack/types instead of creating custom logger interfaces.")
+  register_diagnostic(span=$name, message="Use IScopedLogger from @dominevo/types instead of creating custom logger interfaces.")
 }

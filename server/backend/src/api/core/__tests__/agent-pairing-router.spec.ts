@@ -9,7 +9,7 @@
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import type { SettingsStoreClient } from '@camstack/types'
+import type { SettingsStoreClient } from '@dominevo/types'
 import {
   AgentPairing,
   DEFAULT_HUB_TLS_TCP_PORT,
@@ -20,8 +20,8 @@ import {
   MeshCrl,
   PairingHttpError,
   type PairingResult,
-} from '@camstack/server/system'
-import type { MdnsAgent } from '@camstack/develop/hub-discovery'
+} from '@dominevo/server/system'
+import type { MdnsAgent } from '@dominevo/develop/hub-discovery'
 import { describe, expect, it } from 'vitest'
 import type { NodeCertificatesClient } from '../../../core/agent/node-certificates-client.js'
 import type { AuthenticatedAgent, TrpcContext } from '../../trpc/trpc.context.js'

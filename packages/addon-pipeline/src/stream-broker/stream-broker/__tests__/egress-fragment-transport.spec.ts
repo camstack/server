@@ -13,7 +13,7 @@
  *    retry, liveness removal), because those are the two bugs that made the
  *    push transport dark.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 
 import { FakeFfmpegChild, makeSpawnFn } from '../../../__tests__/support/spawn-fake-child.js'
@@ -21,7 +21,7 @@ import {
   EgressTranscodeManager,
   type EgressTranscodeManagerOptions,
 } from '../egress-transcode-manager.js'
-import type { Fmp4Packet } from '@camstack/types/node'
+import type { Fmp4Packet } from '@dominevo/types/node'
 
 // ── fakes ────────────────────────────────────────────────────────────────
 
@@ -186,7 +186,7 @@ describe('acquireFragments — the argv', () => {
     expect(argv).toContain('-movflags +frag_keyframe+empty_moov+default_base_moof')
     // 90 % of the negotiated length, NOT the length itself: a camera whose GOP
     // equals it emits fragments at DOUBLE the requested length (measured, D84).
-    // The constant and the measurement live in `@camstack/types`
+    // The constant and the measurement live in `@dominevo/types`
     // `ffmpeg/invocation.ts` — this asserts the sink actually carries it.
     expect(argv).toContain('-min_frag_duration 3600000')
     expect(argv).toContain('-force_key_frames expr:gte(t,n_forced*4)')

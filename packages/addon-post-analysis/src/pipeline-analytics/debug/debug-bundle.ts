@@ -30,7 +30,7 @@
  * unchanged track produce byte-identical names.
  */
 
-import type { MediaFileRef } from '@camstack/types'
+import type { MediaFileRef } from '@dominevo/types'
 import type { DebugTrackReport } from './debug-track-analysis.js'
 import { toAsciiZipName } from './zip-stream.js'
 

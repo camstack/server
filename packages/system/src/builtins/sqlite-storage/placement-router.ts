@@ -30,8 +30,8 @@ import type {
   DataStoreEngineInfo,
   IDataStoreProvider,
   IScopedLogger,
-} from '@camstack/types'
-import { DATA_STORE_DATABASES } from '@camstack/types'
+} from '@dominevo/types'
+import { DATA_STORE_DATABASES } from '@dominevo/types'
 import type { DataStoreInput, DataStoreOp, DataStoreOutput } from './file-host-protocol.js'
 import type { OwnedSqliteFile } from './owned-sqlite-file.js'
 import {

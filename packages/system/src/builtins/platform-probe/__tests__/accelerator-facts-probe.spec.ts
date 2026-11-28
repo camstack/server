@@ -104,7 +104,7 @@ describe('accelerator facts probe', () => {
     const addon = path.join(
       root,
       'addons',
-      '@camstack',
+      '@dominevo',
       'addon-pipeline',
       'python',
       'accelerator_facts.py',

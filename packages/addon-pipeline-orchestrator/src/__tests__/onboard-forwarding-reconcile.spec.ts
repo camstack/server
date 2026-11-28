@@ -14,7 +14,7 @@
  * WITHOUT `onboard` must turn the flag OFF, or this is a ratchet that quietly
  * enables things and never disables them.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { reconcileOnboardForwarding } from '../onboard-forwarding-reconcile.js'
 

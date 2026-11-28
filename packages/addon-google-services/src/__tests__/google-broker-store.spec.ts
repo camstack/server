@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isSecretMarker, makeInMemoryRecords } from '@camstack/types'
+import { isSecretMarker, makeInMemoryRecords } from '@dominevo/types'
 import { GoogleBrokerEntrySchema } from '../google-types.js'
 import { GoogleBrokerStore } from '../google-broker-store.js'
 import { googleBrokersEntryKind } from '../broker-record-kinds.js'

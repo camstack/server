@@ -21,7 +21,7 @@ import {
   type CompositionFieldPlan,
   compositionItemFieldPath,
   type ExpressionValue,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** One item of an item-array field, as written. */
 export type SliceItem = Readonly<Record<string, unknown>>

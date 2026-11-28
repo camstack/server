@@ -9,7 +9,7 @@
  */
 import { Play, Square, Timer } from 'lucide-react'
 import { type ReactNode, useEffect, useRef, useState } from 'react'
-import { timedRunRemaining, type TimedRunResult } from '@camstack/types'
+import { timedRunRemaining, type TimedRunResult } from '@dominevo/types'
 import { useUiText } from '../../contexts/ui-text'
 import { cn } from '../../lib/cn'
 import { Button } from '../../primitives/button'

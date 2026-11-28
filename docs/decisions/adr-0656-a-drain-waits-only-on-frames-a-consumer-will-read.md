@@ -20,7 +20,7 @@ applies-to:
 D652 made a planned teardown drain: the coordinator stops the worker decoding
 and kills it only once every image it yielded has been closed and every read
 and crop already sent has been answered, bounded by
-`SESSION_DECODE_DRAIN_BOUND_MS` (1 500 ms). It shipped in @camstack/server
+`SESSION_DECODE_DRAIN_BOUND_MS` (1 500 ms). It shipped in @dominevo/server
 1.2.394 / addon-pipeline 1.2.296 and removed the decode losses (0 `exited
 before toBuffer`, 0 `runInference failed` in the 40 min after).
 

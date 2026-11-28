@@ -1,4 +1,4 @@
-import type { AddonMigration } from '@camstack/types'
+import type { AddonMigration } from '@dominevo/types'
 import {
   BINDINGS_TO_TEMPLATES_MIGRATION_ID,
   type BindingsToTemplatesPorts,

@@ -3,7 +3,7 @@
  * is any device but a container (`isDoPickerDeviceType`); a scene row picks
  * cameras only. The search applies them, so no surface keeps its own list.
  */
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 
 /** Never offered as a trigger source or a command target. */
 export const BUILD_EXCLUDED_TYPES: readonly string[] = [DeviceType.Container]

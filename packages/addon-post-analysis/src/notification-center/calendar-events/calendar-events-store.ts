@@ -10,7 +10,7 @@
  */
 
 import { randomUUID } from 'node:crypto'
-import type { IScopedLogger, RecordKindHandle, RecordsAccess } from '@camstack/types'
+import type { IScopedLogger, RecordKindHandle, RecordsAccess } from '@dominevo/types'
 import { ncRecordKinds, type CalendarEventsRuleBody } from '../record-kinds.js'
 import {
   type NcCalendarEventsRule,

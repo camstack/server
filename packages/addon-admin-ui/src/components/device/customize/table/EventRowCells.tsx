@@ -9,8 +9,8 @@ import {
   type DeviceInfo,
   decodePulseOverride,
   projectSpanAssignment,
-} from '@camstack/types'
-import { Badge, type DeviceNameFields, IconButton, useDeviceLabel } from '@camstack/ui-library'
+} from '@dominevo/types'
+import { Badge, type DeviceNameFields, IconButton, useDeviceLabel } from '@dominevo/ui-library'
 import { Pencil, Trash2 } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'

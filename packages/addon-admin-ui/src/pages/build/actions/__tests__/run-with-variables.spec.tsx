@@ -3,7 +3,7 @@
  * used to have a disabled Run button. It now asks for the variable first, and
  * `actions.run` receives what was typed.
  */
-import { type ActionEntry, ActionEntrySchema } from '@camstack/types'
+import { type ActionEntry, ActionEntrySchema } from '@dominevo/types'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
@@ -13,8 +13,8 @@ import { missingRunValues, needsRunInput, runVariablesOf } from '../run-variable
 
 const runMutate = vi.fn()
 
-vi.mock('@camstack/ui-library', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@camstack/ui-library')>()),
+vi.mock('@dominevo/ui-library', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@dominevo/ui-library')>()),
   useActionsRun: () => ({ mutate: runMutate, isPending: false, error: null }),
   useActionsCreate: () => ({ mutate: vi.fn(), isPending: false, error: null }),
   useActionsUpdate: () => ({ mutate: vi.fn(), isPending: false, error: null }),

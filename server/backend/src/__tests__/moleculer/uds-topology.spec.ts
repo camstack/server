@@ -35,9 +35,9 @@
  * the helpers the closures delegate to.
  */
 
-import type { ChildCapDescriptor, RegisteredChild } from '@camstack/server/system'
-import { createLocalTransport, LocalChildRegistry } from '@camstack/server/system'
-import type { RegisterNodeParams } from '@camstack/server/system'
+import type { ChildCapDescriptor, RegisteredChild } from '@dominevo/server/system'
+import { createLocalTransport, LocalChildRegistry } from '@dominevo/server/system'
+import type { RegisterNodeParams } from '@dominevo/server/system'
 import { describe, expect, it, vi } from 'vitest'
 import {
   buildChildUdsManifest,
@@ -256,7 +256,7 @@ describe('E1 — buildChildUdsManifest (real helper)', () => {
   // cloudflare-turn + tailscale-*) stamps each descriptor with the REAL
   // owning addonId. The manifest builder must split them into one entry per
   // addon — collapsing them under `addonId = childId` was the
-  // "@camstack/addon-net-access" admin-UI bug (raw group id shown as every
+  // "@dominevo/addon-net-access" admin-UI bug (raw group id shown as every
   // provider's name, per-addon settings unroutable).
 
   it('splits descriptors by addonId into one manifest entry per hosted addon', () => {

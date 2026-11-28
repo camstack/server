@@ -3,7 +3,7 @@
  * stays, a row already on the node is never overwritten, and the keychain marker of `authKey`
  * arrives untouched. Real SQLite, the canonical `addon-settings` layout.
  */
-import { isSecretMarker, isSecretRefOwnedBy, makeSecretMarker } from '@camstack/types'
+import { isSecretMarker, isSecretRefOwnedBy, makeSecretMarker } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { perNodeFixture } from '../../../__tests__/per-node-fixture.js'
 import { SETTINGS_PER_NODE_MIGRATION } from '../index.js'

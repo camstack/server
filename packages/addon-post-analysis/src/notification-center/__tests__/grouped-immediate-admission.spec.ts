@@ -8,7 +8,7 @@
 
 import { makeNcRecords, withNcFaults } from './support/nc-test-deps.js'
 import { ncRecordKinds } from '../record-kinds.js'
-import type { ObjectEvent } from '@camstack/types'
+import type { ObjectEvent } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import { incomingFromObjectEvent } from '../event-intake.js'

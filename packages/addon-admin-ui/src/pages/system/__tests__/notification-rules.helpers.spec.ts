@@ -1,7 +1,7 @@
 /**
  * Unit tests for the pure Notification Rules form helpers (slices D1 + D2).
  */
-import type { NcConditionDescriptor, NcDelivery, NcRule, NcSystemEventKind } from '@camstack/types'
+import type { NcConditionDescriptor, NcDelivery, NcRule, NcSystemEventKind } from '@dominevo/types'
 import {
   audioIsFailClosed,
   NC_ALARM_SYSTEM_EVENT_KINDS,
@@ -9,7 +9,7 @@ import {
   NC_AUDIO_DEFAULTS,
   NC_CONDITION_CATALOG,
   ruleKindSpec,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { NC_OCCUPANCY_DEFAULTS } from '../notification-condition-fields'
 import {

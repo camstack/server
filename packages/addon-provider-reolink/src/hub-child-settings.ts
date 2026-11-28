@@ -1,4 +1,4 @@
-import type { ConfigUISchema } from '@camstack/types'
+import type { ConfigUISchema } from '@dominevo/types'
 import type { HubChannelSnapshot } from './reolink-hub-session.js'
 
 /**

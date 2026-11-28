@@ -16,7 +16,7 @@
  * probing motion → object → audio and taking the first hit, and on the live hub
  * that always answered `motion`.
  */
-import type { MediaFileKind, MediaOwnerType } from '@camstack/types'
+import type { MediaFileKind, MediaOwnerType } from '@dominevo/types'
 
 /**
  * The minimum a row needs to be RANKED by the ladders below: its kind, and the

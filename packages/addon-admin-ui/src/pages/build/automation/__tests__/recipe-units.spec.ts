@@ -3,7 +3,7 @@
  * `normalizeRecipeUnits`, with a unit on every quantity number — a bare number
  * on a quantity field is never saved silently.
  */
-import type { AutomationLeaf, AutomationRecipe } from '@camstack/types'
+import type { AutomationLeaf, AutomationRecipe } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { prepareRecipeUnits } from '../recipe-units'
 

@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import type { ConfigField, ConfigUISchema } from '@camstack/types'
+import type { ConfigField, ConfigUISchema } from '@dominevo/types'
 import { buildHomeConnectFormSchema } from '../../home-connect/config.js'
 import { homeConnectActions } from '../../home-connect/custom-actions.js'
 import { buildHomeComFormSchema } from '../../homecom/config.js'

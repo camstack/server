@@ -16,7 +16,7 @@
  *     typed into the label field in any casing.
  */
 
-import type { DetailResult, MediaFileKind, MediaFileRef } from '@camstack/types'
+import type { DetailResult, MediaFileKind, MediaFileRef } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   mapAssistDetails,

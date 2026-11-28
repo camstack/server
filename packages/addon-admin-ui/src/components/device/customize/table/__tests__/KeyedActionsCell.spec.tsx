@@ -2,7 +2,7 @@
  * A Lists row's active Switch (D1098 2b): the stored list's `enabled`, edited in
  * the draft through `handle.save`; a list that is not stored has no switch.
  */
-import type { Composition } from '@camstack/types'
+import type { Composition } from '@dominevo/types'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import '../../../../../i18n'

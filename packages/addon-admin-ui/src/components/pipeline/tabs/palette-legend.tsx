@@ -12,7 +12,7 @@ import {
   type PaletteLegendGroup,
   type PaletteSwatch,
   type PaletteSwatchMap,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export function swatchHex(swatch: PaletteSwatch | undefined): string | undefined {
   return swatch?.hex

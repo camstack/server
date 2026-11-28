@@ -9,7 +9,7 @@
  * in full (a secret that cannot be resolved aborts the pass); an existing record is never
  * overwritten; an old secret is cleared only once its record verifiably holds one.
  */
-import { type MigrationPlan, type MigrationProcedureResult, preconditionOf } from '@camstack/types'
+import { type MigrationPlan, type MigrationProcedureResult, preconditionOf } from '@dominevo/types'
 import type { TrainingAccountBody } from '../training-account-record-kinds.js'
 
 /** The addon id, the prefix of its rows in the canonical settings table. */

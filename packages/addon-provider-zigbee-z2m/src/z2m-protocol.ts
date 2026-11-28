@@ -42,7 +42,7 @@ const Z2mExposeBaseSchema = z.object({
   endpoint: z.string().optional(),
 })
 type Z2mExposeBase = z.infer<typeof Z2mExposeBaseSchema>
-/** A specific expose nests generic ones under the protocol's own `features` list (not a CamStack device feature). */
+/** A specific expose nests generic ones under the protocol's own `features` list (not a Dominevo device feature). */
 export type Z2mExpose = Z2mExposeBase & { readonly features?: readonly Z2mExpose[] }
 export const Z2mExposeSchema: z.ZodType<Z2mExpose> = Z2mExposeBaseSchema.extend({
   features: z.lazy(() => z.array(Z2mExposeSchema)).optional(),

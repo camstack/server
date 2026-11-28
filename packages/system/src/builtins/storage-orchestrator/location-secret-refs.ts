@@ -16,7 +16,7 @@ import {
   makeSecretMarker,
   recordSecretRef,
   type SecretMarker,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** The addon id the records door and the keychain both file this owner's values under. */
 export const STORAGE_RECORD_OWNER = 'storage-orchestrator'

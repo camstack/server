@@ -37,7 +37,7 @@ import type {
   ConfigFieldWithValue,
   ConfigSection,
   ConfigSectionWithValues,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export const DEVICE_EXPORT_CAP_NAME = 'device-export'
 export const DEVICE_EXPORT_TAB_ID = 'export'

@@ -2,7 +2,7 @@
  * Pure rules of the jobs ledger: who sees a job, who may stop it, what retention
  * removes. Audience is enforced here and nowhere else (planning#719, D1105).
  */
-import { isTerminalJobState, type CapCaller, type Job } from '@camstack/types'
+import { isTerminalJobState, type CapCaller, type Job } from '@dominevo/types'
 
 const DAY_MS = 24 * 60 * 60 * 1000
 

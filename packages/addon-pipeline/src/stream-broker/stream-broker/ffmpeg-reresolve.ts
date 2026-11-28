@@ -16,7 +16,7 @@
  * caller, as any refusal is. There is no timer: work that wants the binary is
  * what drives the next attempt.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { FfmpegHwAccelSetting, FfmpegSystemConfig } from './ffmpeg-invocation.js'
 
 /** At most one re-resolve attempt per this window. */

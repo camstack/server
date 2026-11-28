@@ -5,7 +5,7 @@ import {
   type DiscoveredChildDevice,
   type IDeviceAdoptionProvider,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { VESYNC_SYSTEM } from './config.js'
 import type { VeSyncDeviceSnapshot } from './vesync-client-contract.js'
 import {

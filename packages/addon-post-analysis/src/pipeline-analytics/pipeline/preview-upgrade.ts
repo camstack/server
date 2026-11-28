@@ -25,7 +25,7 @@
  * capture exec by an order of magnitude.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { type MediaProvenance, mediaProvenanceRank } from '../store/media-store.js'
 import type { KeyFrameCropMotionVerdict } from './keyframe-crop.js'
 import type { SubjectPathSample } from './subject-agreement.js'

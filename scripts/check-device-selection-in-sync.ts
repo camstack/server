@@ -7,7 +7,7 @@
  * or unknown, and never drops one on a read (D49). The admin keeps it at
  * `packages/addon-admin-ui/src/pages/system/`; the VIEWER (`camstack/`) keeps it
  * at `src/components/notifications/`, because the viewer resolves
- * `@camstack/types` from a published release and a helper added to the
+ * `@dominevo/types` from a published release and a helper added to the
  * workspace would not exist there. Two copies that drift make the two UIs
  * disagree about whether the same rule's device is gone.
  *
@@ -112,7 +112,7 @@ const PAIRS: readonly CopyPair[] = [
   // The device → value picker (issue #496): which row picks and which drills,
   // the chips, what a picked value says (gone only from an ANSWERED resolve —
   // D315), the facets, the sections and the four list states. The admin's
-  // spec is not paired: it imports a value from the bare `@camstack/types`
+  // spec is not paired: it imports a value from the bare `@dominevo/types`
   // entry and the admin's capability-label helper, neither of which the
   // viewer may import; the viewer pins the same behaviour in its mount spec.
   {

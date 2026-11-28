@@ -1,4 +1,4 @@
-import type { ConfigFieldWithValue, ConfigUISchemaWithValues } from '@camstack/types'
+import type { ConfigFieldWithValue, ConfigUISchemaWithValues } from '@dominevo/types'
 
 /** Walk a hydrated field and everything nested in it (`group`, `sub-tabs`). */
 function visit(field: ConfigFieldWithValue, out: Record<string, unknown>): void {

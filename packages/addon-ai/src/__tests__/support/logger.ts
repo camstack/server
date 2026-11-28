@@ -1,4 +1,4 @@
-import type { IScopedLogger, LogExtras, LogLevel } from '@camstack/types'
+import type { IScopedLogger, LogExtras, LogLevel } from '@dominevo/types'
 
 /** No-op scoped logger for unit tests. */
 export function makeTestLogger(): IScopedLogger {

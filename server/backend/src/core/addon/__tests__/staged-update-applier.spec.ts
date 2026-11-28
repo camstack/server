@@ -1,12 +1,12 @@
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import { JobJournal, LifecycleJobEngine, StagingArea } from '@camstack/server/system'
-import type { LifecycleJob } from '@camstack/types'
+import { JobJournal, LifecycleJobEngine, StagingArea } from '@dominevo/server/system'
+import type { LifecycleJob } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { applyStagedOrThrow } from '../staged-update-applier.js'
 
-const PACKAGE = '@camstack/addon-test'
+const PACKAGE = '@dominevo/addon-test'
 
 function job(): LifecycleJob {
   return {

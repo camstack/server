@@ -4,14 +4,14 @@
  * `local-auth`'s (`login-session-manager.ts`), reached through its
  * hub-internal surface; the mint is `auth/session-mint.ts`.
  */
-import type { CapabilityRegistry } from '@camstack/server/system'
+import type { CapabilityRegistry } from '@dominevo/server/system'
 import { TRPCError } from '@trpc/server'
 import { z } from 'zod'
 import {
   DEVICE_REFRESH_REFUSAL_PREFIX,
   type DeviceRefusalReason,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { HandoffCodeService } from '../../core/auth/handoff-code.service.js'
 import { userManagementInternal } from '../../auth/hub-sessions.js'
 import {

@@ -4,7 +4,7 @@
  * A mounted {@link DisplayPaletteProvider} paints the cluster's effective
  * palette instead. There is no second hex table here.
  */
-import { PALETTE_ENTRY_IDS, bundledCamstack, paintHex, type PaletteReady } from '@camstack/types'
+import { PALETTE_ENTRY_IDS, bundledCamstack, paintHex, type PaletteReady } from '@dominevo/types'
 
 const BUNDLED = bundledCamstack()
 
@@ -12,7 +12,7 @@ const BUNDLED = bundledCamstack()
 const MARK_IDS = new Set(['live', 'recording', 'heatmapScrub'])
 
 /**
- * Fixed colours for known classes, from the bundled CamStack preset.
+ * Fixed colours for known classes, from the bundled Dominevo preset.
  * Kept for callers that read the map directly.
  */
 export const CLASS_COLORS: Readonly<Record<string, string>> = Object.freeze(

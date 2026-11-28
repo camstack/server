@@ -2,7 +2,7 @@
  * Where every OAuth round-trip ends (`/sso-complete#return=oauth&…`): a sign-in
  * to a broker, a sign-out, an account link, or a refusal on the way. The hub's
  * callbacks redirect here instead of answering with a bare text page, so the
- * operator stays in CamStack.
+ * operator stays in Dominevo.
  *
  * A POPUP hands the outcome to the window that opened it and closes
  * (`deliverOauthOutcome`); a full-page flow (a PWA, a blocked popup) lands
@@ -11,9 +11,9 @@
  * The outcome is a status plus a reason CODE — the words are this page's, in
  * the operator's language.
  */
-import type { OauthLandingOutcome, OauthLandingReason } from '@camstack/types'
-import { parseOauthLandingFragment } from '@camstack/types'
-import { Button } from '@camstack/ui-library'
+import type { OauthLandingOutcome, OauthLandingReason } from '@dominevo/types'
+import { parseOauthLandingFragment } from '@dominevo/types'
+import { Button } from '@dominevo/ui-library'
 import { CheckCircle2, XCircle } from 'lucide-react'
 import { useEffect, type JSX } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -66,12 +66,12 @@ function useReasonText(reason: OauthLandingReason): string {
     case 'no_authorization_code':
       return t(
         'oauthLanding.reason.no_authorization_code',
-        'The provider finished the sign-in without granting CamStack access. Start the sign-in again from the beginning.',
+        'The provider finished the sign-in without granting Dominevo access. Start the sign-in again from the beginning.',
       )
     case 'no_refresh_token':
       return t(
         'oauthLanding.reason.no_refresh_token',
-        'The provider returned no long-lived access. Remove CamStack from the account’s connected apps, then sign in again.',
+        'The provider returned no long-lived access. Remove Dominevo from the account’s connected apps, then sign in again.',
       )
     case 'unavailable':
       return t(
@@ -130,7 +130,7 @@ function Outcome({ outcome }: { readonly outcome: OauthLandingOutcome }): JSX.El
       <p className="text-xs text-foreground-muted">
         {disconnected
           ? t('oauthLanding.signedOutBody', 'The account was disconnected from this hub.')
-          : t('oauthLanding.successBody', 'The account is connected. Returning to CamStack…')}
+          : t('oauthLanding.successBody', 'The account is connected. Returning to Dominevo…')}
       </p>
     </>
   )
@@ -162,7 +162,7 @@ export function OauthLandingPage({
             />
             <img
               src={hubPath('/brand/logo-horizontal-light.svg')}
-              alt={t('oauthLanding.brand', 'CamStack')}
+              alt={t('oauthLanding.brand', 'Dominevo')}
               className="h-12"
             />
           </picture>
@@ -171,7 +171,7 @@ export function OauthLandingPage({
           <Outcome outcome={outcome} />
           <div className="flex flex-col gap-2">
             <Button type="button" variant="primary" onClick={() => onContinue(returnPath)}>
-              {t('oauthLanding.back', 'Back to CamStack')}
+              {t('oauthLanding.back', 'Back to Dominevo')}
             </Button>
             {closable && (
               <Button type="button" variant="ghost" onClick={onClose}>

@@ -5,7 +5,7 @@
  * device's own saved one-tap run.
  */
 import type { ReactNode } from 'react'
-import { timedRunLimitOf } from '@camstack/types'
+import { timedRunLimitOf } from '@dominevo/types'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
 import type { UseDeviceProxyTrpc } from '../../hooks/use-device-proxy'
 import { TimedRunQuick } from './timed-run-quick'

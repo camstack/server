@@ -3,7 +3,7 @@
  * receives is minted on THAT broker's role (its `ha-export-targets` record), read from the palette on every
  * event (D986 §5). Disarm: mint one shared base again and both brokers carry the same URL.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { HaExportAddon } from '../ha-export.addon.js'
 import type { HaMediaRole } from '../media-url.js'

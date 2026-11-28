@@ -4,8 +4,8 @@
  * named per camera, and a respawn that fails for that reason is re-armed on
  * the bounded backoff instead of leaving the prebuffer dark.
  */
-import type { IScopedLogger } from '@camstack/types'
-import type { FfmpegSpawnFn } from '@camstack/types/node'
+import type { IScopedLogger } from '@dominevo/types'
+import type { FfmpegSpawnFn } from '@dominevo/types/node'
 import { describe, expect, it, vi } from 'vitest'
 import {
   HksvFragmentSource,

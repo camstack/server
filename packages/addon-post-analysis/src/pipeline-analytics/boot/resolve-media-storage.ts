@@ -5,7 +5,7 @@
  */
 
 import path from 'node:path'
-import type { AddonContext, IScopedLogger } from '@camstack/types'
+import type { AddonContext, IScopedLogger } from '@dominevo/types'
 import { ARTIFACTS_MEDIA_LOCATION } from '../../notification-center/artifact-store.js'
 import type {
   LocationAwareMediaBlobStorage,
@@ -50,7 +50,7 @@ export class ResolveMediaStorage {
     let storage: MediaBlobStorage | undefined = this.ctx.kernel.storage
     const mediaRoot = process.env.CAMSTACK_MEDIA_ROOT?.trim()
     if (mediaRoot) {
-      const { FilesystemStorageProvider } = await import('@camstack/types/node')
+      const { FilesystemStorageProvider } = await import('@dominevo/types/node')
       // `eventMedia` resolves to the media root ITSELF (not `<root>/eventMedia`):
       // media paths are `<deviceId>/events/…`, rooted per camera next to the
       // recorder's segment trees (2026-07-29 layout unification).

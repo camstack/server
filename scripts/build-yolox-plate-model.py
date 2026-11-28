@@ -32,7 +32,7 @@ THE GRAPH EDIT — do not drop it
 -------------------------------
 Upstream takes a dynamic ``images`` tensor in **BGR, 0..255** (YOLOX's cv2
 training loader) and returns ``output [1, 8400, 6]`` = ``cx, cy, w, h`` (input
-pixels), ``obj``, ``cls``. The CamStack pool feeds every letterbox detector
+pixels), ``obj``, ``cls``. The Dominevo pool feeds every letterbox detector
 **RGB float /255, NCHW** and the shipped ``yolo`` postprocessor decodes the
 YOLOv8 layout ``[1, 4 + classes, N]``. The edit makes the model speak that
 contract, so no pool or postprocessor code changes:
@@ -116,9 +116,9 @@ tags:
   - camstack
 ---
 
-# YOLOX-tiny licence-plate detector — CamStack build
+# YOLOX-tiny licence-plate detector — Dominevo build
 
-Single-class (`plate`) detector, re-packaged for the CamStack inference pool.
+Single-class (`plate`) detector, re-packaged for the Dominevo inference pool.
 The `plate-detection` step's only model, catalog id `yolox-tiny-plate`.
 
 | Format | File | Precision |
@@ -150,16 +150,16 @@ untouched. The input `{INPUT_NAME}` takes **RGB float in [0,1]** (NCHW,
 graph its BGR 0..255 tensor. The upstream output `[1, 8400, 6]`
 (cx, cy, w, h, obj, cls) is reshaped to `{OUTPUT_NAME} [1, 5, 8400]`
 (cx, cy, w, h, obj*cls). The OpenVINO and CoreML files are converted from that
-edited ONNX. Built by `scripts/build-yolox-plate-model.py` in the CamStack
+edited ONNX. Built by `scripts/build-yolox-plate-model.py` in the Dominevo
 repository; see `SOURCE.md`.
 
 The TFLite files are built by `scripts/build-yolox-plate-edgetpu.py` from that
 edited ONNX: YOLOX's Focus stem (four strided slices and a concat) is rewritten
 as the mathematically equivalent 6x6 stride-2 convolution, the input prefix is
 folded into it, and the graph ends at the raw head — per stride `s`,
-`reg_s` (dx, dy, log w, log h) and `score_s` (obj*cls), which the CamStack
+`reg_s` (dx, dy, log w, log h) and `score_s` (obj*cls), which the Dominevo
 `yolo` postprocessor decodes. It is quantised to full integer (int8,
-per-channel weights; input uint8 with scale 1/255) on CamStack vehicle crops,
+per-channel weights; input uint8 with scale 1/255) on Dominevo vehicle crops,
 and the Edge TPU file is that graph compiled with `edgetpu_compiler` 14.1.
 
 ## Training data
@@ -195,10 +195,10 @@ Rebuild every file in this folder from the pinned upstream file:
 python3 scripts/build-yolox-plate-model.py <work-dir>
 ```
 
-in the CamStack repository (https://github.com/camstack/server). The script
+in the Dominevo repository (https://github.com/dominevo/server). The script
 downloads the upstream ONNX by commit and refuses it if the sha256 differs,
 applies the graph edit described in README.md, converts the edited ONNX to
-OpenVINO IR (fp16 weights) and CoreML (fp16) with CamStack's `convert_lib.py`,
+OpenVINO IR (fp16 weights) and CoreML (fp16) with Dominevo's `convert_lib.py`,
 and checks that the edit is exact and that the three runtimes return the same
 detections.
 """

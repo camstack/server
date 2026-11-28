@@ -12,7 +12,7 @@ import {
   type IScopedLogger,
   type StorageLocation,
   type SystemEvent,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterAll, describe, expect, it, vi } from 'vitest'
 import { makeAddonContext } from '../../device-manager/__tests__/typed-addon-context.js'
 import { LivenessMonitorAddon } from '../liveness-monitor.addon.js'

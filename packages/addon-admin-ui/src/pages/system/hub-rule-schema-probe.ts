@@ -3,7 +3,7 @@
  * (D642 review I2; D934 dropped the tank-kind probe.)
  *
  * The admin and the notification centre are self-contained bundles: they
- * load, and look current, on a hub whose `@camstack/server` closure predates
+ * load, and look current, on a hub whose `@dominevo/server` closure predates
  * D642. The hub's generated router validates rule input with the Zod schemas
  * of THAT closure, and it fails silently: it strips `consumableLowPercent`
  * (z.object drops unknown keys), so a rule saves "fine" and judges at 15 %.
@@ -14,8 +14,8 @@
  * `pending`, and one that failed for any other reason is `unknown`, never
  * "the hub is old".
  */
-import type { NcTemplatePreviewInput } from '@camstack/types'
-import { useSystem } from '@camstack/ui-library'
+import type { NcTemplatePreviewInput } from '@dominevo/types'
+import { useSystem } from '@dominevo/ui-library'
 import { useQuery } from '@tanstack/react-query'
 
 export type HubRuleSchemaVerdict = 'pending' | 'current' | 'outdated' | 'unknown'

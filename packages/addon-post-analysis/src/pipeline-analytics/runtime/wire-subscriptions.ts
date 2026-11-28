@@ -22,8 +22,8 @@ import type {
   PipelineInferenceResultPayload,
   SystemEvent,
   Unsubscribe,
-} from '@camstack/types'
-import { EVENT_KIND_BY_CAP, EventCategory } from '@camstack/types'
+} from '@dominevo/types'
+import { EVENT_KIND_BY_CAP, EventCategory } from '@dominevo/types'
 import { parseTopologySnapshotNodes, type NodeLivenessNode } from './node-liveness.js'
 
 /** `DeviceBindingsChanged` payload as consumed by the analytics addon.
@@ -68,7 +68,7 @@ export const NC_SYSTEM_EVENT_CATEGORIES: readonly EventCategory[] = [
   EventCategory.DeviceOffline,
   EventCategory.DeviceStateChanged,
   // The operator's per-camera switch. Emitted by `deviceManager.setDisabled`
-  // in `@camstack/server/system`, which travels inside the published server closure —
+  // in `@dominevo/server/system`, which travels inside the published server closure —
   // so these two categories may simply never arrive until a server carrying
   // that emission is installed. Subscribing to a category nobody emits costs
   // one map key and nothing else.
@@ -112,7 +112,7 @@ export const NC_SYSTEM_EVENT_CATEGORIES: readonly EventCategory[] = [
   EventCategory.NotificationRuleBroken,
   EventCategory.NotificationRuleRepaired,
   // The D6 crash circuit-breaker giving up on a runner, emitted hub-side by
-  // `process-service.ts` in `@camstack/server/system` — so, like the two switch
+  // `process-service.ts` in `@dominevo/server/system` — so, like the two switch
   // categories above, it cannot arrive until a server carrying that emission
   // is installed. Subscribing early costs one map key.
   EventCategory.AddonRunnerFailed,

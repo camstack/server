@@ -6,7 +6,7 @@
  * therefore never saved — came back as a draft every time the frame reopened.
  * The decision now lives in the frame's `dismissed` set.
  */
-import type { RetrainAnnotation, RetrainPipelineBox } from '@camstack/types'
+import type { RetrainAnnotation, RetrainPipelineBox } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   addOperatorBox,

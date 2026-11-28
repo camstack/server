@@ -1,5 +1,5 @@
 import { EventEmitter } from 'node:events'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { startAlexaWorker, type WorkerChild } from '../speak/worker-client.js'
 

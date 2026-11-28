@@ -11,7 +11,7 @@ applies-to:
 
 ## Context
 
-The public site lives in its own repository (`camstack/docs`, Next.js +
+The public site lives in its own repository (`dominevo/docs`, Next.js +
 fumadocs, pages under `content/docs/**.mdx`). The internal drift guard
 (`scripts/check-docs-drift.ts`, D145) only reads this repository's markdown, so
 nothing connected a public page to the code it explains.

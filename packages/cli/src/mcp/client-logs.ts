@@ -11,7 +11,7 @@
  * the hub logs viewer `debug` at `info`, so level and scope are filtered here.
  * A read that failed is `lines: null` with a reason, never an empty list.
  */
-import type { HubClient } from '@camstack/develop'
+import type { HubClient } from '@dominevo/develop'
 import type { McpContext } from './context.js'
 import { parseSince } from './debug-logs.js'
 import { withHub, type NoSessionResult, type RefusedResult } from './ops-hub.js'

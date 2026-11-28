@@ -100,7 +100,7 @@ was already open.
 - An older hub strips `split` at save and sends one message; the admin preview
   names such a hub, the phone's hint says the option needs an updated hub.
 - The phone mirrors `split` and the test answer; its mirror-parity spec needs
-  the published `@camstack/types` that carries this record.
+  the published `@dominevo/types` that carries this record.
 
 ## Enforcement
 

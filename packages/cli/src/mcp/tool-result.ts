@@ -4,7 +4,7 @@
  * also say it failed (`isError: true`), or an assistant reads the failure as
  * data. A thrown error is already an `isError` result (the SDK catches it).
  */
-import { text as plainText, textError } from '@camstack/develop'
+import { text as plainText, textError } from '@dominevo/develop'
 import type { ToolTextResult } from './context.js'
 
 /** Top-level `status` values that mean "this call did not do what was asked". */

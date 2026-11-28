@@ -6,8 +6,8 @@
  * and a copy button, so a deep path never widens the card. Warnings about any
  * of these facts live in the page's notice region, not here.
  */
-import type { KeychainKeySource, KeychainStatus } from '@camstack/types'
-import { Badge, Button, CopyButton, SECTION_BODY, SectionCard } from '@camstack/ui-library'
+import type { KeychainKeySource, KeychainStatus } from '@dominevo/types'
+import { Badge, Button, CopyButton, SECTION_BODY, SectionCard } from '@dominevo/ui-library'
 import { KeyRound, Lock, ShieldCheck } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { formatWhen } from './format'

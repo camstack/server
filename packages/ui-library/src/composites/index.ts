@@ -203,7 +203,7 @@ export {
 // NOTE: MotionZonesSettings, PrivacyMaskSettings and MaskShapeCanvas are
 // intentionally NOT imported here — they pull in react-konva / konva at
 // module-evaluation time, adding ~300 KB to the first-paint bundle.
-// They are exported lazily from `@camstack/ui-library`'s root index
+// They are exported lazily from `@dominevo/ui-library`'s root index
 // (ui-library/src/index.ts).
 //
 // Each non-konva widget is imported from its OWN file (not from the

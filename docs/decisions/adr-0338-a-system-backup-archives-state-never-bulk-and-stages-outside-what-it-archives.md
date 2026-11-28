@@ -16,7 +16,7 @@ System backups on the hub grew to gigabytes (staging alone: 175M → 503M →
 
 1. **node_modules were archived.** D27 made the *image* addons
    node_modules-free, but `AddonInstaller` still materialises runtime deps
-   under `addons/@camstack/<addon>/node_modules` (~196 MB across 23 addons on
+   under `addons/@dominevo/<addon>/node_modules` (~196 MB across 23 addons on
    the hub), and the tar walk had no filter — 9,090 of the first 11,593
    entries of a live archive were node_modules paths.
 2. **Operator media was archived.** `addons-data/recorder/exports` held

@@ -1,4 +1,4 @@
-import type { LlmDefault, LlmProfile } from '@camstack/types'
+import type { LlmDefault, LlmProfile } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { nextFallbackProfile, resolveProfile } from '../resolve-profile.js'
 import { makeProfile } from './support/profile.js'

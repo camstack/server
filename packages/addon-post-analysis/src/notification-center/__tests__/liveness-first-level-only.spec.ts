@@ -5,7 +5,7 @@
  *
  * `deviceState.getAllSnapshots` over the live hub: **100 devices read
  * `device-status.online === false`**, none of them disabled, all of them from
- * `@camstack/addon-provider-homeassistant`, **zero cameras**. Of those 100:
+ * `@dominevo/addon-provider-homeassistant`, **zero cameras**. Of those 100:
  *
  *  - **96 carry a `parentDeviceId`**, and **32 of their 35 distinct parents are
  *    ONLINE** — the physical thing is reachable, one of its entities is not;
@@ -35,8 +35,8 @@
  * operator's own switch (D62) — somebody pressed something and is owed the
  * confirmation whatever level the device sits at.
  */
-import type { SystemEvent } from '@camstack/types'
-import { DeviceType } from '@camstack/types'
+import type { SystemEvent } from '@dominevo/types'
+import { DeviceType } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { NcDeviceIdentity, NcDeviceLookup } from '../device-directory.js'
 import { discardedSystemEvent, incomingFromSystemEvent } from '../event-intake.js'

@@ -5,7 +5,7 @@
  * the same `NC_DEVICE_ROW_KINDS`, so what is listed is what is removed, and
  * both read the record ENVELOPE's `deviceId`, which is what removal deletes by.
  */
-import type { DeviceDataEntry } from '@camstack/types'
+import type { DeviceDataEntry } from '@dominevo/types'
 import type { DurableKindDeps } from '../durable/durable-wiring.js'
 import { collectRecordPages } from '../durable/query-pages.js'
 import { NC_DEVICE_ROW_KINDS } from './device-removal.js'

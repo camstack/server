@@ -88,7 +88,7 @@ the zone is gone.
   spec file asserts each carry independently, and each was verified red by
   neutralising its carry alone.
 - The viewer declares its own structural `ZoneView` instead of importing
-  `SiteZone` from `@camstack/types`. That specifier resolves to the workspace
+  `SiteZone` from `@dominevo/types`. That specifier resolves to the workspace
   source for tsc and to the PUBLISHED package at runtime — an import of a
   same-day type compiles green and throws on first evaluation. See the sibling
   change that made the strict resolution the viewer's default.

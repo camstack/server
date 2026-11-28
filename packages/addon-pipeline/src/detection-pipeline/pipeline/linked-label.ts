@@ -18,7 +18,7 @@ import {
   linkedLabelStepId,
   type RootStepSupply,
   type ScoredLabel,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { getStepDefinition } from '../registry/step-definitions.js'
 
 /** The linked labels one mapped root detection carries. Pure. */

@@ -8,7 +8,7 @@ import {
   type IDeviceManagerProvider,
   type IScopedLogger,
   runtimeFieldUnit,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { DeviceTemplateHost, type TemplateDeviceRow } from './device-template/template-host.js'
 import { DeviceTemplateRenderer } from './device-template/template-renderer.js'
 

@@ -15,7 +15,7 @@
  * ({@link plusImportLane}) — Hailo / RKNN / ROCm / CPU-tflite builds never
  * reach a card.
  */
-import type { ModelVariantSource } from '@camstack/types'
+import type { ModelVariantSource } from '@dominevo/types'
 import {
   dimensionsOf,
   parseModelName,
@@ -74,7 +74,7 @@ export interface PlusCatalogView {
   readonly combos: ReadonlyMap<string, PlusCatalogCombo>
 }
 
-/** Only the builds CamStack has an engine for. */
+/** Only the builds Dominevo has an engine for. */
 export function runnablePlusModels(
   models: readonly PlusModelSummary[],
 ): readonly PlusModelSummary[] {

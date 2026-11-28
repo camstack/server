@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { DeviceType, resolveContainerPrimaryChild } from '@camstack/types'
+import { DeviceType, resolveContainerPrimaryChild } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { blazorRowsToReadings, blazorRowsToTexts, BlazorRowsSchema } from '../enpal-blazor.js'
 import {

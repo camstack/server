@@ -17,7 +17,7 @@
  * load, swap the index/row write order, infer `fields` from `values`, drop the
  * prune — one test each goes red.
  */
-import { EventCategory } from '@camstack/types'
+import { EventCategory } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { FIELD_CLAIMS_INDEX_KEY, FieldClaimsIndex } from '../field-claims-index.js'
 import { OWNED_FIELDS_KEY } from '../field-ownership.js'

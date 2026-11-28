@@ -18,8 +18,8 @@
  * per-camera, and a line without the tag cannot answer it.
  */
 
-import type { ExportRecord, IScopedLogger } from '@camstack/types'
-import { clipExportFailure, exportSubjectOf } from '@camstack/types'
+import type { ExportRecord, IScopedLogger } from '@dominevo/types'
+import { clipExportFailure, exportSubjectOf } from '@dominevo/types'
 import { listExportsFor, patchExport, type RecordingExportsState } from './export-store.js'
 
 /** The engine surface a reconcile needs — queueing, nothing else. */

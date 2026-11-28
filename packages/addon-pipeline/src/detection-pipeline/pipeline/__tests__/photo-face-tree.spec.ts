@@ -26,7 +26,7 @@
  */
 import { describe, expect, it, vi } from 'vitest'
 import sharp from 'sharp'
-import type { EngineOutput, IInferenceEngine, InferenceInput } from '@camstack/types'
+import type { EngineOutput, IInferenceEngine, InferenceInput } from '@dominevo/types'
 import { getStepDefinition } from '../../registry/step-definitions.js'
 import { PipelineExecutor } from '../executor.js'
 import type { ExecutableStep, ExecutableTree } from '../tree-builder.js'

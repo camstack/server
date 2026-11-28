@@ -1,10 +1,10 @@
 # Dreo Provider
 
-Dreo smart-device (fan / air-circulator / purifier / heater / humidifier) device-provider addon for CamStack — runs the maintained Python Dreo library (pydreo-community, REST + WebSocket) in a bundled worker.
+Dreo smart-device (fan / air-circulator / purifier / heater / humidifier) device-provider addon for Dominevo — runs the maintained Python Dreo library (pydreo-community, REST + WebSocket) in a bundled worker.
 
 <!-- readme:generated:start (derived from the manifest; edit outside this block) -->
 
-Package `@camstack/addon-provider-dreo` on npm.
+Package `@dominevo/addon-provider-dreo` on npm.
 
 ## What it provides
 
@@ -24,11 +24,11 @@ Edit these from System, Addons, this addon, Settings (a device's own settings ar
 
 - Placement: hub-only.
 - Python: Dreo installs `python/requirements.txt` into its own environment.
-- A CamStack hub. An agent is used only where the placement above allows it.
+- A Dominevo hub. An agent is used only where the placement above allows it.
 
 ## Documentation
 
-- [docs/architecture/device-model.md](https://github.com/camstack/server/blob/main/docs/architecture/device-model.md)
+- [docs/architecture/device-model.md](https://github.com/dominevo/server/blob/main/docs/architecture/device-model.md)
 
 See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
 

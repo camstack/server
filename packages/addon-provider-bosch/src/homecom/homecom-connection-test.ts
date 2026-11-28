@@ -1,4 +1,4 @@
-import { errMsg, type IConnectionProbe, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IConnectionProbe, type IScopedLogger } from '@dominevo/types'
 import { homeComConfigSchema, type HomeComConfig } from './config.js'
 import { unsupportedDeviceTypeMessage } from './homecom-device-type.js'
 import {

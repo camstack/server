@@ -3,9 +3,9 @@
  * called.
  */
 
-import type { ClipSourceAvailability, IScopedLogger } from '@camstack/types'
+import type { ClipSourceAvailability, IScopedLogger } from '@dominevo/types'
 
-import { clipExportFailure, VIDEOCLIPS_MAX_READ_BYTES } from '@camstack/types'
+import { clipExportFailure, VIDEOCLIPS_MAX_READ_BYTES } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 
 import type { HikvisionClipRow } from '../clip-catalog.js'

@@ -3,7 +3,7 @@ import {
   type DeviceContext,
   type InferNativeProvider,
   type UpdateStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { HmDevice } from 'nodehomematic'
 import { HmChildDevice, hmChildSchema } from './hm-child-device.js'
 

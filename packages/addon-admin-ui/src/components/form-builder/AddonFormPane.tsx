@@ -20,7 +20,7 @@
  *     save button batch every pane's mutation in one click.
  */
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef } from 'react'
-import type { ConfigUISchemaWithValues } from '@camstack/types'
+import type { ConfigUISchemaWithValues } from '@dominevo/types'
 import { FormBuilder } from './FormBuilder'
 import { useFormSaveController } from '../../hooks/useFormSaveController'
 

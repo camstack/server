@@ -5,7 +5,7 @@ import {
   type InferNativeProvider,
   type IScopedLogger,
   type PowerMeterStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { takeReading } from './ha-reading.js'
 import {
   applyMeterReading,

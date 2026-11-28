@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs'
-import { BatteryStatusSchema, CamStreamDescriptorSchema, DeviceFeature } from '@camstack/types'
+import { BatteryStatusSchema, CamStreamDescriptorSchema, DeviceFeature } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   advertisedRfcHost,

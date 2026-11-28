@@ -132,7 +132,7 @@ function main(): void {
       '\n\x1b[31m✘ a hand-rolled `fixed inset-0` overlay outside the UI library:\x1b[0m',
     )
     console.error(
-      '  Use `Dialog` + `DialogContent` (width, scroll="body") from @camstack/ui-library.\n',
+      '  Use `Dialog` + `DialogContent` (width, scroll="body") from @dominevo/ui-library.\n',
     )
     for (const v of violations) {
       console.error(`    ${v.file}:${v.line}`)

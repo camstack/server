@@ -11,7 +11,7 @@ import {
   type ConsumableItem,
   DeviceType,
   compileKeyedArrayOverride,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import '../../../../../i18n'
@@ -63,8 +63,8 @@ vi.mock('../KeyedArrayItemDialog', () => ({
       </button>
     ) : null,
 }))
-vi.mock('@camstack/ui-library', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@camstack/ui-library')>()
+vi.mock('@dominevo/ui-library', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dominevo/ui-library')>()
   return {
     ...actual,
     useConfirm: () => async () => confirm.answer,

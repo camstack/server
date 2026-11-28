@@ -3,13 +3,13 @@ import type {
   IScopedLogger,
   TokenPayload,
   TokenScope,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   CREDENTIAL_TOKEN_AUDIENCE,
   CredentialTokenClaimsSchema,
   isCredentialTokenPayload,
   SsoBridgeClaimsSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import * as bcrypt from 'bcryptjs'
 import * as jwt from 'jsonwebtoken'
 import type { z } from 'zod'

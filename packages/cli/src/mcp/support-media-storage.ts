@@ -4,7 +4,7 @@
  *
  *  1. every storage location that can hold event media, or that holds a stored
  *     media row — class, mode (`storage-location-mode`, D385), masked roots,
- *     whether its volume was readable, how much CamStack holds there (D388) —
+ *     whether its volume was readable, how much Dominevo holds there (D388) —
  *     with the number of stored media rows and bytes that name it
  *     (`pipelineAnalytics.getMediaLocationCensus`: one indexed aggregate per
  *     location, plus one covering-index scan, O(rows), for the total; D447);
@@ -24,9 +24,9 @@ import {
   MediaLocationCensusSchema,
   resolveLocationMode,
   StorageLocationSchema,
-} from '@camstack/types'
-import type { StorageLocationMode } from '@camstack/types'
-import type { HubClient } from '@camstack/develop'
+} from '@dominevo/types'
+import type { StorageLocationMode } from '@dominevo/types'
+import type { HubClient } from '@dominevo/develop'
 import { z } from 'zod'
 import type { McpContext } from './context.js'
 import { tracksSection, type TracksSection } from './debug-report.js'

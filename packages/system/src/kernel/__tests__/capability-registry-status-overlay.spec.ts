@@ -24,7 +24,7 @@ import {
   type IScopedLogger,
   type StatusOverlay,
   type StatusOverlayAnswer,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { CapabilityRegistry } from '../capability-registry.js'
 
 const NATIVE = { level: 40, charging: 'none', sleeping: false, lastUpdated: 1 }

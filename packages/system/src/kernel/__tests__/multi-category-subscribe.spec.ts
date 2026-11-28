@@ -14,7 +14,7 @@
  * 'device.online'] }` reaches the same entry twice unless delivery dedups by
  * ENTRY rather than by key.
  */
-import type { SystemEvent } from '@camstack/types'
+import type { SystemEvent } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   createSharedBusState,

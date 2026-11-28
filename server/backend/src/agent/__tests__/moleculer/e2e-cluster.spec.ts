@@ -19,7 +19,7 @@ import {
   createHubService,
   NativeMetricsProvider,
   type HubServiceDeps,
-} from '@camstack/server/system'
+} from '@dominevo/server/system'
 import { createAgentService } from '../../agent-service.js'
 import type { AgentServiceDeps } from '../../agent-service.js'
 import {
@@ -29,7 +29,7 @@ import {
   type IMetricsProvider,
   type ProviderRegistration,
   metricsProviderCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -997,7 +997,7 @@ describe('Group 6: Event flow with real addon', () => {
       data: { cpu: 42 },
       timestamp: Date.now(),
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- test double
-    } as unknown as import('@camstack/types').SystemEvent)
+    } as unknown as import('@dominevo/types').SystemEvent)
 
     await waitUntil(() => cluster.receivedEvents.length > 0, 3000)
     expect(cluster.receivedEvents).toHaveLength(1)
@@ -1020,7 +1020,7 @@ describe('Group 6: Event flow with real addon', () => {
         data: { node: nodeId },
         timestamp: Date.now(),
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- test double
-      } as unknown as import('@camstack/types').SystemEvent)
+      } as unknown as import('@dominevo/types').SystemEvent)
     }
 
     await waitUntil(() => cluster.receivedEvents.length >= 2, 3000)
@@ -1046,7 +1046,7 @@ describe('Group 6: Event flow with real addon', () => {
       data: { value: 1 },
       timestamp: Date.now(),
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- test double
-    } as unknown as import('@camstack/types').SystemEvent)
+    } as unknown as import('@dominevo/types').SystemEvent)
 
     // Local subscriber should receive immediately (synchronous dispatch)
     expect(localEvents).toHaveLength(1)
@@ -1086,7 +1086,7 @@ describe('Group 6: Event flow with real addon', () => {
       data: { from: 'agent-2' },
       timestamp: Date.now(),
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- test double
-    } as unknown as import('@camstack/types').SystemEvent)
+    } as unknown as import('@dominevo/types').SystemEvent)
 
     // Broadcast path is async — wait a beat for the Moleculer transit
     // to deliver to the peer broker's $event-bus service.
@@ -1161,7 +1161,7 @@ describe('Group 7: Context transparency', () => {
       data: {},
       timestamp: Date.now(),
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- test double
-    } as unknown as import('@camstack/types').SystemEvent)
+    } as unknown as import('@dominevo/types').SystemEvent)
 
     await waitUntil(() => receivedEvents.length > 0, 3000)
     expect(receivedEvents).toHaveLength(1)
@@ -1180,7 +1180,7 @@ describe('Group 7: Context transparency', () => {
       data: { value: 42 },
       timestamp: Date.now(),
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- test double
-    } as unknown as import('@camstack/types').SystemEvent)
+    } as unknown as import('@dominevo/types').SystemEvent)
     expect(events).toHaveLength(1)
   })
 
@@ -1229,7 +1229,7 @@ describe('Group 7: Context transparency', () => {
       config: { values: { url: 'rtsp://fake' } },
       online: true,
       removeDevice: async () => {},
-    } as unknown as import('@camstack/types').IDevice
+    } as unknown as import('@dominevo/types').IDevice
 
     await expect(context.kernel.devices.register(fakeDevice)).rejects.toThrow(/device-manager/)
   })
@@ -1359,7 +1359,7 @@ describe('Group 8: Concurrent operations', () => {
         data: { i },
         timestamp: Date.now(),
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- test double
-      } as unknown as import('@camstack/types').SystemEvent)
+      } as unknown as import('@dominevo/types').SystemEvent)
       return Promise.resolve()
     })
 

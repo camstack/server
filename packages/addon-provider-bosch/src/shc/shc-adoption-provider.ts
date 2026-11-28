@@ -7,7 +7,7 @@ import {
   type DiscoveredChildDevice,
   gatewayDeviceName,
   type IDeviceAdoptionProvider,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { buildShcCandidates, shcGatewayNativeId } from './shc-discovery.js'
 import { classifyShcDevice, deviceTypeForShcKind } from './shc-domain-mapping.js'
 import type { ShcDeviceSummary } from './shc-types.js'

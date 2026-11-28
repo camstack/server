@@ -6,7 +6,7 @@
  * discovered. The zoom state lives in {@link useRetrainViewport} so the page,
  * the toolbar, the canvas and the keyboard all move one viewport.
  */
-import { Button, KeyValueList, Popover, PopoverContent, PopoverTrigger } from '@camstack/ui-library'
+import { Button, KeyValueList, Popover, PopoverContent, PopoverTrigger } from '@dominevo/ui-library'
 import {
   ChevronLeft,
   ChevronRight,

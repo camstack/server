@@ -3,7 +3,7 @@
  * `cloud` motion source registers `device-state-refresh` (push none) and owns
  * no timer; a refresh reads the events API and a failing cloud fails the call.
  */
-import { EventCategory } from '@camstack/types'
+import { EventCategory } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { WyzeCamera } from '../wyze-camera.js'
 

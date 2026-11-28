@@ -17,7 +17,7 @@
  *  NOT in the left zone even though the bbox straddles it.
  */
 import { describe, it, expect } from 'vitest'
-import type { Zone } from '@camstack/types'
+import type { Zone } from '@dominevo/types'
 import { bboxPolygonOverlap, maskPolygonOverlap } from '../overlap.js'
 import { ZoneEngine } from '../zone-engine.js'
 import type { BboxRect, Point } from '../geometry.js'

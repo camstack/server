@@ -3,7 +3,7 @@
  * ActivateScene → `actions.run`. Only an ADMIN link sees or fires it, a refusal
  * is a named Google error and is never queued, and a deleted action is pruned.
  */
-import { type ActionRunResult, type ExportEntityApi, instanceApiOverTargets } from '@camstack/types'
+import { type ActionRunResult, type ExportEntityApi, instanceApiOverTargets } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 
 import {

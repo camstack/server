@@ -23,7 +23,7 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import {
   type NcActionClaimFailure,
   type NcActionGrant,
@@ -157,7 +157,7 @@ function grantMeta(grant: NcActionGrant): Readonly<Record<string, unknown>> {
 /** What the human standing in front of the page is told. */
 const FAILURE_COPY: Record<NcActionClaimFailure, string> = {
   unknown: 'This button is no longer available.',
-  expired: 'This button has expired. Open CamStack to do it there.',
+  expired: 'This button has expired. Open Dominevo to do it there.',
   'already-used': 'Already done — this button had been used.',
 }
 
@@ -317,7 +317,7 @@ export class NcActionPlane {
         background,
         200,
         'It did not work',
-        'The action failed and this button is now spent. Open CamStack.',
+        'The action failed and this button is now spent. Open Dominevo.',
       )
     }
   }

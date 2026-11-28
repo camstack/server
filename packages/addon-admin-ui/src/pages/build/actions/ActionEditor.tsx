@@ -14,7 +14,7 @@ import {
   type AutomationAction,
   type AutomationRunTrace,
   DeviceType,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   Badge,
   Button,
@@ -26,7 +26,7 @@ import {
   useActionsRun,
   useActionsUpdate,
   useConfirm,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { ListChecks, Play, Trash2 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'

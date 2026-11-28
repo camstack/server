@@ -44,7 +44,7 @@ export interface GpuInfo {
  * Why an NVIDIA GPU that IS present cannot run inference (D393/D315: present
  * but unusable is never reported as absent).
  *  - `no-cuda-execution-provider`: the node's ONNX Runtime build does not list
- *    `CUDAExecutionProvider` (CamStack ships the plain `onnxruntime` wheel;
+ *    `CUDAExecutionProvider` (Dominevo ships the plain `onnxruntime` wheel;
  *    planning#605).
  */
 export type NvidiaUnusableReason = 'no-cuda-execution-provider'

@@ -14,7 +14,7 @@ import {
   type ISmtpProvider,
   type PeerBytesOpenResult,
   type PeerBytesTicket,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { GOOGLE_GMAIL_API } from './google-types.js'
 
 export interface GmailAccountView {

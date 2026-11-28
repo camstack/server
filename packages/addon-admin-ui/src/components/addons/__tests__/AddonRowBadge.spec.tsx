@@ -2,10 +2,10 @@ import '@testing-library/jest-dom/vitest'
 import { describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { AddonRowBadge } from '../AddonRowBadge'
-import type { BulkUpdateItem } from '@camstack/types'
+import type { BulkUpdateItem } from '@dominevo/types'
 
 const baseItem: BulkUpdateItem = {
-  name: '@camstack/addon-x',
+  name: '@dominevo/addon-x',
   isSystem: false,
   fromVersion: '1.0.0',
   toVersion: '1.0.1',

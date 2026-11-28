@@ -11,7 +11,7 @@
  * The row is a cluster-level one (`deviceId: null`); the per-device numbers
  * ride in `detail` as JSON, so nothing is lost, only grouped.
  */
-import type { OpsLogReason } from '@camstack/types'
+import type { OpsLogReason } from '@dominevo/types'
 import type { EventsOpsLogAppendInput } from '../store/ops-log-store.js'
 
 /** What one device lost in one pass. Every field is a count of rows. */

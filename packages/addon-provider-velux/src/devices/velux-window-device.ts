@@ -5,7 +5,7 @@ import {
   DeviceRole,
   DeviceType,
   type IDevice,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { veluxWindowSchema } from '../config.js'
 import { veluxGateways } from '../velux-node-resolver.js'
 import { VeluxCoverDevice } from './velux-cover-device.js'

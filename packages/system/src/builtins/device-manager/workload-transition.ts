@@ -5,7 +5,7 @@ import {
   type WorkloadSettledState,
   type WorkloadState,
   type WorkloadTransitionKind,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** One workload event the mirror emits (#585). */
 export interface WorkloadTransitionEvent {

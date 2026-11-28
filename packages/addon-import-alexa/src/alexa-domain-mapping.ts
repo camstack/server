@@ -1,19 +1,19 @@
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 
 /**
- * Pure mapping from an Alexa smart-home capability interface to the CamStack
+ * Pure mapping from an Alexa smart-home capability interface to the Dominevo
  * typed cap the accessory child registers. Inverts the Alexa EXPORTER's
  * discovery table (`addon-export-alexa/endpoints/builder.ts`). Unit-tested in
  * isolation — NO alexa-remote2 import here so the mapping is a pure, total
  * function over plain interface-name strings.
  *
  * Plan §1.2 table. An Alexa appliance reports one or more capability interfaces;
- * each maps to a CamStack cap, and a multi-capability appliance yields several
+ * each maps to a Dominevo cap, and a multi-capability appliance yields several
  * caps on one child (e.g. a colour bulb = PowerController + BrightnessController
  * + ColorController → switch + brightness + color).
  */
 
-/** The CamStack device-native caps an Alexa interface can map onto (v1 subset). */
+/** The Dominevo device-native caps an Alexa interface can map onto (v1 subset). */
 export type AlexaCap =
   | 'switch'
   | 'brightness'
@@ -69,14 +69,14 @@ const CAP_ORDER: readonly AlexaCap[] = [
 ]
 
 export interface AlexaApplianceMapping {
-  /** The CamStack device type the appliance materialises as. */
+  /** The Dominevo device type the appliance materialises as. */
   readonly deviceType: DeviceType
   /** The caps the appliance child registers (deterministic order). */
   readonly capabilities: readonly AlexaCap[]
 }
 
 /**
- * Reduce an Alexa appliance's reported capability interfaces to its CamStack
+ * Reduce an Alexa appliance's reported capability interfaces to its Dominevo
  * device type + caps. Pure + total: an appliance with no recognised interface
  * maps to a Generic device with no caps (the adoption layer skips empty ones).
  */
@@ -96,7 +96,7 @@ export function mapAlexaCapabilitiesToCamStack(
   }
 }
 
-/** Pick the most-specific CamStack device type for a cap set. */
+/** Pick the most-specific Dominevo device type for a cap set. */
 function deviceTypeForCaps(caps: readonly AlexaCap[]): DeviceType {
   if (caps.includes('lock-control')) return DeviceType.Lock
   if (caps.includes('cover')) return DeviceType.Cover

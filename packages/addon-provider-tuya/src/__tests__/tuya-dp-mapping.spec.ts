@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import {
   booleanDpPatch,
   classifyTuyaCategory,

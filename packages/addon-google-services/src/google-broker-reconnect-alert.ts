@@ -1,4 +1,4 @@
-import type { Alert } from '@camstack/types'
+import type { Alert } from '@dominevo/types'
 
 export function googleBrokerReconnectAlertId(brokerId: string): string {
   return `google-broker:${brokerId}`

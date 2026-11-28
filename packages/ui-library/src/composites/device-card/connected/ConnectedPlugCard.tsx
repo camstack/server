@@ -1,4 +1,4 @@
-import { DeviceRole } from '@camstack/types'
+import { DeviceRole } from '@dominevo/types'
 import type { ReactElement } from 'react'
 import { useDeviceManagerGetDevice } from '../../../generated/system-hooks'
 import { PlugCard } from '../scenes/plug/PlugCard'

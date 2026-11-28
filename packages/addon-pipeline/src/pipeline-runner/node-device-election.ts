@@ -8,7 +8,7 @@
  * exactly the device the election excluded (#610). Pure: the caller reads the
  * view and acts on the answer.
  */
-import type { ModelFormat, NodeInferenceDevices } from '@camstack/types'
+import type { ModelFormat, NodeInferenceDevices } from '@dominevo/types'
 
 export type NodeDeviceChoice =
   /** Nothing is known to be excluded (or the view is unreadable): the node default serves, as before. */

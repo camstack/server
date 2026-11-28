@@ -1,7 +1,7 @@
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { ServiceBroker } from 'moleculer'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { LoadedAddonEntry } from '../agent-service.js'
@@ -57,7 +57,7 @@ function fakeSeam(
   return {
     addonsDir,
     loadedAddons,
-    bootstrapPackages: new Set(['@camstack/server', '@camstack/addon-pipeline']),
+    bootstrapPackages: new Set(['@dominevo/server', '@dominevo/addon-pipeline']),
     listRunnersByAddon: async (addonId) => runners.filter((r) => r.addonIds.includes(addonId)),
     stopRunner: async (name) => {
       stopped.push(name)
@@ -89,13 +89,13 @@ describe('undeployFromAgent', () => {
   })
 
   it('stops the runner hosting a package addon, drops its caps, row and folder (the 2026-10-08 leak)', async () => {
-    const dir = writePackage(addonsDir, '@camstack/addon-decoder-ffmpeg', [
+    const dir = writePackage(addonsDir, '@dominevo/addon-decoder-ffmpeg', [
       { id: 'decoder-ffmpeg', capabilities: ['decoder'] },
     ])
     const loaded = new Map<string, LoadedAddonEntry>([
       [
         'decoder-ffmpeg',
-        { id: 'decoder-ffmpeg', status: 'running', packageName: '@camstack/addon-decoder-ffmpeg' },
+        { id: 'decoder-ffmpeg', status: 'running', packageName: '@dominevo/addon-decoder-ffmpeg' },
       ],
     ])
     const seam = fakeSeam(addonsDir, loaded, [
@@ -103,7 +103,7 @@ describe('undeployFromAgent', () => {
     ])
 
     const result = await undeployFromAgent(seam, {
-      packageName: '@camstack/addon-decoder-ffmpeg',
+      packageName: '@dominevo/addon-decoder-ffmpeg',
       addonId: 'decoder-ffmpeg',
     })
 
@@ -118,10 +118,10 @@ describe('undeployFromAgent', () => {
   })
 
   it('finds a package whose addons never loaded (copy on disk, nothing in loadedAddons)', async () => {
-    const dir = writePackage(addonsDir, '@camstack/addon-x', [{ id: 'x' }])
+    const dir = writePackage(addonsDir, '@dominevo/addon-x', [{ id: 'x' }])
     const seam = fakeSeam(addonsDir, new Map(), [])
 
-    const result = await undeployFromAgent(seam, { packageName: '@camstack/addon-x' })
+    const result = await undeployFromAgent(seam, { packageName: '@dominevo/addon-x' })
 
     expect(result.outcome).toBe('uninstalled')
     expect(result.addonIds).toEqual(['x'])
@@ -129,31 +129,31 @@ describe('undeployFromAgent', () => {
   })
 
   it('respawns survivors of a shared runner without the removed addon', async () => {
-    writePackage(addonsDir, '@camstack/addon-a', [{ id: 'a', capabilities: ['cap-a'] }])
-    writePackage(addonsDir, '@camstack/addon-b', [{ id: 'b', capabilities: ['cap-b'] }])
+    writePackage(addonsDir, '@dominevo/addon-a', [{ id: 'a', capabilities: ['cap-a'] }])
+    writePackage(addonsDir, '@dominevo/addon-b', [{ id: 'b', capabilities: ['cap-b'] }])
     const loaded = new Map<string, LoadedAddonEntry>([
-      ['a', { id: 'a', status: 'running', packageName: '@camstack/addon-a' }],
-      ['b', { id: 'b', status: 'running', packageName: '@camstack/addon-b' }],
+      ['a', { id: 'a', status: 'running', packageName: '@dominevo/addon-a' }],
+      ['b', { id: 'b', status: 'running', packageName: '@dominevo/addon-b' }],
     ])
     const seam = fakeSeam(addonsDir, loaded, [{ name: 'ml', addonIds: ['a', 'b'] }])
 
-    const result = await undeployFromAgent(seam, { packageName: '@camstack/addon-a' })
+    const result = await undeployFromAgent(seam, { packageName: '@dominevo/addon-a' })
 
     expect(seam.stopped).toEqual(['ml'])
     // b's row is dropped so discovery re-adds it into a fresh runner.
     expect(loaded.has('b')).toBe(false)
     expect(seam.respawn).toHaveBeenCalledOnce()
     expect(result.runnersRespawned).toEqual(['ml'])
-    expect(fs.existsSync(path.join(addonsDir, '@camstack/addon-b'))).toBe(true)
+    expect(fs.existsSync(path.join(addonsDir, '@dominevo/addon-b'))).toBe(true)
   })
 
   it('refuses bootstrap packages and touches nothing', async () => {
-    const dir = writePackage(addonsDir, '@camstack/addon-pipeline', [{ id: 'pipeline-runner' }])
+    const dir = writePackage(addonsDir, '@dominevo/addon-pipeline', [{ id: 'pipeline-runner' }])
     const seam = fakeSeam(addonsDir, new Map(), [
       { name: 'pipeline-runner', addonIds: ['pipeline-runner'] },
     ])
 
-    const result = await undeployFromAgent(seam, { packageName: '@camstack/addon-pipeline' })
+    const result = await undeployFromAgent(seam, { packageName: '@dominevo/addon-pipeline' })
 
     expect(result.outcome).toBe('refused')
     expect(result.success).toBe(false)
@@ -162,12 +162,12 @@ describe('undeployFromAgent', () => {
   })
 
   it('refuses a package whose manifest marks an addon protected', async () => {
-    const dir = writePackage(addonsDir, '@camstack/addon-guarded', [
+    const dir = writePackage(addonsDir, '@dominevo/addon-guarded', [
       { id: 'guarded', protected: true },
     ])
     const seam = fakeSeam(addonsDir, new Map(), [])
 
-    const result = await undeployFromAgent(seam, { packageName: '@camstack/addon-guarded' })
+    const result = await undeployFromAgent(seam, { packageName: '@dominevo/addon-guarded' })
 
     expect(result.outcome).toBe('refused')
     expect(result.reason).toContain('protected')
@@ -176,7 +176,7 @@ describe('undeployFromAgent', () => {
 
   it('answers not-installed for a package this node does not have', async () => {
     const seam = fakeSeam(addonsDir, new Map(), [])
-    const result = await undeployFromAgent(seam, { packageName: '@camstack/addon-absent' })
+    const result = await undeployFromAgent(seam, { packageName: '@dominevo/addon-absent' })
     expect(result.outcome).toBe('not-installed')
     expect(seam.reconcile).not.toHaveBeenCalled()
   })
@@ -225,13 +225,13 @@ describe('$agent.undeploy wiring', () => {
   it("calls this node's $process.stop for the runner hosting the package", async () => {
     broker = new ServiceBroker({ nodeID: 'agent-test', transporter: 'Fake', logger: false })
     const addonsDir = path.join(tmpDir, 'addons')
-    writePackage(addonsDir, '@camstack/addon-decoder-ffmpeg', [
+    writePackage(addonsDir, '@dominevo/addon-decoder-ffmpeg', [
       { id: 'decoder-ffmpeg', capabilities: ['decoder'] },
     ])
     const loadedAddons = new Map<string, LoadedAddonEntry>([
       [
         'decoder-ffmpeg',
-        { id: 'decoder-ffmpeg', status: 'running', packageName: '@camstack/addon-decoder-ffmpeg' },
+        { id: 'decoder-ffmpeg', status: 'running', packageName: '@dominevo/addon-decoder-ffmpeg' },
       ],
     ])
     const stops: string[] = []
@@ -262,13 +262,13 @@ describe('$agent.undeploy wiring', () => {
     await broker.start()
 
     const result = (await broker.call('$agent.undeploy', {
-      packageName: '@camstack/addon-decoder-ffmpeg',
+      packageName: '@dominevo/addon-decoder-ffmpeg',
       addonId: 'decoder-ffmpeg',
     })) as Record<string, unknown>
 
     expect(result['outcome']).toBe('uninstalled')
     expect(stops).toEqual(['decoder-ffmpeg'])
     expect(unregistered).toEqual(['decoder@decoder-ffmpeg'])
-    expect(fs.existsSync(path.join(addonsDir, '@camstack/addon-decoder-ffmpeg'))).toBe(false)
+    expect(fs.existsSync(path.join(addonsDir, '@dominevo/addon-decoder-ffmpeg'))).toBe(false)
   })
 })

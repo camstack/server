@@ -5,14 +5,14 @@
  * refetch keeps the palette the hub last answered.
  */
 import type { JSX, ReactNode } from 'react'
-import type { PaletteResult } from '@camstack/types'
+import type { PaletteResult } from '@dominevo/types'
 import { useTranslation } from 'react-i18next'
 import {
   DisplayPaletteProvider,
   useDisplayPaletteGetPalette,
   useDisplayPaletteView,
   type DisplayPaletteView,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 
 export interface DisplayPaletteGateProps {
   readonly children: ReactNode
@@ -55,7 +55,7 @@ export function DisplayPaletteNotice(): JSX.Element | null {
     <p role="status" className="shrink-0 px-4 py-1 text-xs text-warning">
       {t(
         'pipeline.palette.unknown',
-        'The stored palette cannot be read ({{reason}}). Boxes use the bundled CamStack preset.',
+        'The stored palette cannot be read ({{reason}}). Boxes use the bundled Dominevo preset.',
         { reason: view.reason },
       )}
     </p>

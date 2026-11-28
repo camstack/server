@@ -3,7 +3,7 @@
  *
  * The ui-library's `config-form-field.tsx` switch handles built-in field
  * types (text, number, select, …). Field types declared in
- * `@camstack/types/interfaces/config-ui` that need heavy host-app
+ * `@dominevo/types/interfaces/config-ui` that need heavy host-app
  * components (e.g. `zone-editor` → polygon canvas via konva) are
  * dispatched through this registry: a host app (admin-ui) wraps the
  * device-detail tree with `CustomFieldRenderersProvider`, supplying a
@@ -35,7 +35,7 @@
  *   - `value`, `onChange`, `disabled` — same as built-in fields.
  */
 import { useContext, type ComponentType, type ReactNode, type JSX } from 'react'
-import type { ConfigField } from '@camstack/types'
+import type { ConfigField } from '@dominevo/types'
 import { createSharedContext } from '../lib/shared-context'
 
 /**

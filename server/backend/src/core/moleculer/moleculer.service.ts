@@ -9,7 +9,7 @@ import type {
   RegisteredAddonManifest,
   RegisteredChild,
   RegisterNodeParams,
-} from '@camstack/server/system'
+} from '@dominevo/server/system'
 import {
   AGENT_READINESS_SERVICE_NAME,
   CapRouteError,
@@ -50,9 +50,9 @@ import {
   answerClaimedGetStatus,
   answerDeviceCallRedirect,
   type DeviceCallRedirectHook,
-} from '@camstack/server/system'
-import type { CapabilityDefinition, StatusOverlayAnswer } from '@camstack/types'
-import { EventCategory, emitReadiness, errMsg, ReadinessRegistry } from '@camstack/types'
+} from '@dominevo/server/system'
+import type { CapabilityDefinition, StatusOverlayAnswer } from '@dominevo/types'
+import { EventCategory, emitReadiness, errMsg, ReadinessRegistry } from '@dominevo/types'
 import {
   addonPinOf,
   aggregateCollectionCall,
@@ -951,7 +951,7 @@ export class MoleculerService {
               addonId: string
               nodeId: string
               scope?: string
-              tags?: import('@camstack/types').LogTags
+              tags?: import('@dominevo/types').LogTags
               meta?: Record<string, unknown>
             }
           }) => {
@@ -1545,7 +1545,7 @@ export class MoleculerService {
    * NOT a Moleculer action — only the hub process calls this directly
    * through the `ctx.kernel.listClusterNativeCaps` injection.
    */
-  listClusterNativeCaps(): readonly import('@camstack/server/system').NodeNativeCapEntry[] {
+  listClusterNativeCaps(): readonly import('@dominevo/server/system').NodeNativeCapEntry[] {
     return this.nodeRegistry.listNativeCapEntries()
   }
 
@@ -1557,7 +1557,7 @@ export class MoleculerService {
    */
   listClusterNativeCapsForDevice(
     deviceId: number,
-  ): readonly import('@camstack/server/system').NodeNativeCapEntry[] {
+  ): readonly import('@dominevo/server/system').NodeNativeCapEntry[] {
     return this.nodeRegistry.listNativeCapEntriesForDevice(deviceId)
   }
 
@@ -1605,7 +1605,7 @@ export class MoleculerService {
    * manifest (runtime-updatable node packages: version visibility), or null
    * when the node never reported one (UDS children, pre-phase-2 agents).
    */
-  getNodeRootPackage(nodeId: string): import('@camstack/server/system').NodeRootPackageInfo | null {
+  getNodeRootPackage(nodeId: string): import('@dominevo/server/system').NodeRootPackageInfo | null {
     return this.nodeRegistry.getNodeRootPackage(nodeId)
   }
 
@@ -1799,7 +1799,7 @@ export class ChildManifestGate {
  * registers each addon's caps under its REAL addon id — real provider
  * registryKeys, per-addon settings/logs/restart, correct admin-UI display
  * names. Before this, all of a group's caps collapsed under one synthetic
- * `addonId = childId` (the group name) — the "@camstack/addon-net-access"
+ * `addonId = childId` (the group name) — the "@dominevo/addon-net-access"
  * admin-UI bug. A legacy child that omits `addonId` falls back to `childId`,
  * which is identical to the historical single-addon behaviour
  * (childId = runnerId = addonId when no group is declared).

@@ -13,7 +13,7 @@
  *     thresholds belong to the accelerator that runs it.
  */
 
-import type { IScopedLogger, KernelInferenceHardware } from '@camstack/types'
+import type { IScopedLogger, KernelInferenceHardware } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { resolveDefaultDetectionModel } from '../default-detection-model.js'
 import { DetectionPipelineProvider } from '../provider.js'

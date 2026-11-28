@@ -17,8 +17,8 @@ import type {
   ScanNetworkResult,
   ScanRequest,
   deviceProviderCapability,
-} from '@camstack/types'
-import { errMsg } from '@camstack/types'
+} from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
 
 type FullDeviceProvider = InferProvider<typeof deviceProviderCapability>
 /** The three provider methods discovery uses. */

@@ -6,7 +6,7 @@
  * discriminator: it must be on the record, under the SAME id. The old camera stable id is not
  * carried: a Terminal camera is a core block now (planning#580).
  */
-import { makeInMemoryRecords } from '@camstack/types'
+import { makeInMemoryRecords } from '@dominevo/types'
 import Database from 'better-sqlite3'
 import { describe, expect, it } from 'vitest'
 import { terminalInstancesKind } from '../../terminal-record-kinds.js'

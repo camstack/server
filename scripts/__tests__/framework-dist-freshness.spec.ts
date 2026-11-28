@@ -2,8 +2,8 @@
  * The prerequisite the AppRouter expansion never declared.
  *
  * `generate-api-types.ts` expands the hand-written core routers with the
- * SERVER tsconfig, and that tsconfig resolves `@camstack/types` /
- * `@camstack/server/system` through their published `dist/*.d.ts` — not their
+ * SERVER tsconfig, and that tsconfig resolves `@dominevo/types` /
+ * `@dominevo/server/system` through their published `dist/*.d.ts` — not their
  * sources. With a dist missing, the checker resolves the import to an error
  * type and every signature that flows through it expands to `any`; the
  * degradation guard then refuses to write and reports a symptom
@@ -20,7 +20,7 @@ import {
   CORE_ROUTER_FRAMEWORK_PACKAGES,
 } from '../framework-dist-freshness.ts'
 
-const PKG = { dir: 'packages/demo', name: '@camstack/demo' } as const
+const PKG = { dir: 'packages/demo', name: '@dominevo/demo' } as const
 
 describe('findUnusableFrameworkDists', () => {
   let root: string
@@ -51,7 +51,7 @@ describe('findUnusableFrameworkDists', () => {
     const problems = findUnusableFrameworkDists(root, [PKG])
     expect(problems).toHaveLength(1)
     expect(problems[0]?.reason).toBe('missing')
-    expect(problems[0]?.name).toBe('@camstack/demo')
+    expect(problems[0]?.name).toBe('@dominevo/demo')
   })
 
   it('reports a dist older than its sources as stale', () => {
@@ -83,8 +83,8 @@ describe('findUnusableFrameworkDists', () => {
 
   it('names the packages the core-router expansion actually resolves through', () => {
     expect(CORE_ROUTER_FRAMEWORK_PACKAGES.map((p) => p.name)).toEqual([
-      '@camstack/types',
-      '@camstack/server-framework',
+      '@dominevo/types',
+      '@dominevo/server-framework',
     ])
   })
 })

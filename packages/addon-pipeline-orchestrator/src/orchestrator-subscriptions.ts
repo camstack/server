@@ -33,7 +33,7 @@ import type {
   MotionTriggeredBy,
   PipelineInferenceResultPayload,
   Unsubscribe,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   createEvent,
   EventCategory,
@@ -46,7 +46,7 @@ import {
   RecordingSignalStatusSchema,
   readMotionTriggeredBy,
   recordingSignalCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   DEVICE_ACTIVITY_SOURCE,
   DeviceActivitySource,

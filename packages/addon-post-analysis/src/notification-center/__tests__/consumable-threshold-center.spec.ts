@@ -12,9 +12,9 @@
  * production door and the production slice taps — the unit specs fake all
  * three.
  */
-import type { InMemoryRecords } from '@camstack/types'
+import type { InMemoryRecords } from '@dominevo/types'
 import { makeNcRecords, ncTable } from './support/nc-test-deps.js'
-import { DeviceType, NcRuleInputSchema } from '@camstack/types'
+import { DeviceType, NcRuleInputSchema } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import type { NcTargetRef } from '../dispatcher.js'

@@ -1,4 +1,4 @@
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 /**
  * Sampled ingress log for the motion-bearing alarms a Hikvision camera pushes

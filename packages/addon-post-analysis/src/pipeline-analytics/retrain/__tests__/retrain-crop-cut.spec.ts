@@ -5,7 +5,7 @@
  */
 import sharp from 'sharp'
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_DETAIL_CROP_CONVENTION } from '@camstack/types'
+import { DEFAULT_DETAIL_CROP_CONVENTION } from '@dominevo/types'
 import { cutRetrainCrop, retrainCropWindow } from '../retrain-crop-cut.js'
 
 const BOX = { x: 0.3, y: 0.3, w: 0.4, h: 0.4 }

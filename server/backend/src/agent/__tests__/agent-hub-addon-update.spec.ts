@@ -44,11 +44,11 @@ const settle = () => new Promise<void>((resolve) => setTimeout(resolve, 0))
 describe('hub versions', () => {
   it('reads package versions from an addons.list answer and skips unreadable rows', () => {
     const map = hubVersionsFromList([
-      ...(hubList({ '@camstack/addon-a': '1.2.0' }) as unknown[]),
+      ...(hubList({ '@dominevo/addon-a': '1.2.0' }) as unknown[]),
       null,
       { manifest: 3 },
     ])
-    expect([...map]).toEqual([['@camstack/addon-a', '1.2.0']])
+    expect([...map]).toEqual([['@dominevo/addon-a', '1.2.0']])
   })
 
   it('differs from the hub in either direction; unknown is never a move', () => {
@@ -70,9 +70,9 @@ describe('Update asks the hub', () => {
     }
     globalThis.fetch = denyRegistry
     try {
-      const hub = fakeHub({ '@camstack/addon-a': '1.0.0' }, async () => ({ success: true }))
+      const hub = fakeHub({ '@dominevo/addon-a': '1.0.0' }, async () => ({ success: true }))
       const controls = createAgentHubAddonControls({ nodeId: 'agent-1', callHub: hub.callHub })
-      const res = await controls.start('@camstack/addon-a', ['@camstack/addon-a'])
+      const res = await controls.start('@dominevo/addon-a', ['@dominevo/addon-a'])
       expect(res).toEqual({ started: true, message: null })
       await settle()
       expect(hub.calls.map((c) => c.action)).toEqual([
@@ -80,7 +80,7 @@ describe('Update asks the hub', () => {
         HUB_ADDON_UPDATE_ACTION,
       ])
       expect(hub.calls[1]?.params).toEqual({
-        name: '@camstack/addon-a',
+        name: '@dominevo/addon-a',
         version: '1.0.0',
         nodeId: 'agent-1',
       })
@@ -91,18 +91,18 @@ describe('Update asks the hub', () => {
   })
 
   it("deploys the HUB's version to THIS node through the hub, and records done", async () => {
-    const hub = fakeHub({ '@camstack/addon-a': '1.2.0' }, async () => ({ success: true }))
+    const hub = fakeHub({ '@dominevo/addon-a': '1.2.0' }, async () => ({ success: true }))
     const controls = createAgentHubAddonControls({ nodeId: 'agent-1', callHub: hub.callHub })
-    const res = await controls.start('@camstack/addon-a', ['@camstack/addon-a'])
+    const res = await controls.start('@dominevo/addon-a', ['@dominevo/addon-a'])
     expect(res).toEqual({ started: true, message: null })
     await settle()
     const update = hub.calls.find((c) => c.action === HUB_ADDON_UPDATE_ACTION)
     expect(update?.params).toEqual({
-      name: '@camstack/addon-a',
+      name: '@dominevo/addon-a',
       version: '1.2.0',
       nodeId: 'agent-1',
     })
-    expect(controls.progress().get('@camstack/addon-a')).toEqual({
+    expect(controls.progress().get('@dominevo/addon-a')).toEqual({
       status: 'done',
       targetVersion: '1.2.0',
       message: null,
@@ -111,7 +111,7 @@ describe('Update asks the hub', () => {
 
   it("shows the hub's refusal as the failure reason", async () => {
     const problems: string[] = []
-    const hub = fakeHub({ '@camstack/addon-a': '1.2.0' }, async () => {
+    const hub = fakeHub({ '@dominevo/addon-a': '1.2.0' }, async () => {
       throw new Error('"addons.updatePackage" is not on the remote privilege grant')
     })
     const controls = createAgentHubAddonControls({
@@ -119,35 +119,35 @@ describe('Update asks the hub', () => {
       callHub: hub.callHub,
       onProblem: (m) => problems.push(m),
     })
-    await controls.start('@camstack/addon-a', ['@camstack/addon-a'])
+    await controls.start('@dominevo/addon-a', ['@dominevo/addon-a'])
     await settle()
-    const state = controls.progress().get('@camstack/addon-a')
+    const state = controls.progress().get('@dominevo/addon-a')
     expect(state?.status).toBe('failed')
     expect(state?.message).toContain('not on the remote privilege grant')
-    expect(problems.join()).toContain('@camstack/addon-a')
+    expect(problems.join()).toContain('@dominevo/addon-a')
   })
 
   it('reports a hub-side { success: false } as a failure with its error', async () => {
-    const hub = fakeHub({ '@camstack/addon-a': '1.2.0' }, async () => ({
+    const hub = fakeHub({ '@dominevo/addon-a': '1.2.0' }, async () => ({
       success: false,
       error: 'agent unreachable',
     }))
     const controls = createAgentHubAddonControls({ nodeId: 'agent-1', callHub: hub.callHub })
-    await controls.start('@camstack/addon-a', ['@camstack/addon-a'])
+    await controls.start('@dominevo/addon-a', ['@dominevo/addon-a'])
     await settle()
-    expect(controls.progress().get('@camstack/addon-a')).toMatchObject({
+    expect(controls.progress().get('@dominevo/addon-a')).toMatchObject({
       status: 'failed',
       message: 'agent unreachable',
     })
   })
 
   it('refuses, naming why, what it cannot honestly start', async () => {
-    const hub = fakeHub({ '@camstack/addon-a': '1.2.0' }, async () => ({ success: true }))
+    const hub = fakeHub({ '@dominevo/addon-a': '1.2.0' }, async () => ({ success: true }))
     const controls = createAgentHubAddonControls({ nodeId: 'agent-1', callHub: hub.callHub })
-    expect((await controls.start('@camstack/addon-x', ['@camstack/addon-a'])).message).toContain(
+    expect((await controls.start('@dominevo/addon-x', ['@dominevo/addon-a'])).message).toContain(
       'not installed',
     )
-    expect((await controls.start('@camstack/addon-b', ['@camstack/addon-b'])).message).toContain(
+    expect((await controls.start('@dominevo/addon-b', ['@dominevo/addon-b'])).message).toContain(
       'does not install',
     )
     const down = createAgentHubAddonControls({
@@ -156,7 +156,7 @@ describe('Update asks the hub', () => {
         throw new Error('no hub')
       },
     })
-    const refused = await down.start('@camstack/addon-a', ['@camstack/addon-a'])
+    const refused = await down.start('@dominevo/addon-a', ['@dominevo/addon-a'])
     expect(refused.started).toBe(false)
     expect(refused.message).toContain('hub did not answer')
     // Nothing was deployed by any refused start.
@@ -166,12 +166,12 @@ describe('Update asks the hub', () => {
   it('does not start a second update of a package that is running', async () => {
     let release: () => void = () => {}
     const hub = fakeHub(
-      { '@camstack/addon-a': '1.2.0' },
+      { '@dominevo/addon-a': '1.2.0' },
       () => new Promise((resolve) => (release = () => resolve({ success: true }))),
     )
     const controls = createAgentHubAddonControls({ nodeId: 'agent-1', callHub: hub.callHub })
-    await controls.start('@camstack/addon-a', ['@camstack/addon-a'])
-    const second = await controls.start('@camstack/addon-a', ['@camstack/addon-a'])
+    await controls.start('@dominevo/addon-a', ['@dominevo/addon-a'])
+    const second = await controls.start('@dominevo/addon-a', ['@dominevo/addon-a'])
     expect(second.started).toBe(false)
     release()
     await settle()
@@ -182,14 +182,14 @@ describe('addon-updates routes', () => {
   const report: AgentAddonUpdateReport = {
     entries: [
       {
-        packageName: '@camstack/addon-a',
+        packageName: '@dominevo/addon-a',
         installedVersion: '1.0.0',
         latestVersion: '1.3.0',
         updateAvailable: true,
         error: null,
       },
       {
-        packageName: '@camstack/addon-b',
+        packageName: '@dominevo/addon-b',
         installedVersion: '2.0.0',
         latestVersion: '2.0.0',
         updateAvailable: false,
@@ -210,7 +210,7 @@ describe('addon-updates routes', () => {
 
   it('joins the hub version: behind only where the hub is newer', async () => {
     const hub = fakeHub(
-      { '@camstack/addon-a': '1.2.0', '@camstack/addon-b': '2.0.0' },
+      { '@dominevo/addon-a': '1.2.0', '@dominevo/addon-b': '2.0.0' },
       async () => ({ success: true }),
     )
     const app = await serve(hub.callHub)
@@ -218,8 +218,8 @@ describe('addon-updates routes', () => {
       { available: true } & AgentAddonUpdateView
     >()
     const byName = new Map(body.entries.map((e) => [e.packageName, e]))
-    expect(byName.get('@camstack/addon-a')).toMatchObject({ hubVersion: '1.2.0', behindHub: true })
-    expect(byName.get('@camstack/addon-b')).toMatchObject({ hubVersion: '2.0.0', behindHub: false })
+    expect(byName.get('@dominevo/addon-a')).toMatchObject({ hubVersion: '1.2.0', behindHub: true })
+    expect(byName.get('@dominevo/addon-b')).toMatchObject({ hubVersion: '2.0.0', behindHub: false })
     expect(body.hubVersions).toBe('known')
   })
 
@@ -237,7 +237,7 @@ describe('addon-updates routes', () => {
   })
 
   it('an unpaired agent does not ask the hub at all', async () => {
-    const hub = fakeHub({ '@camstack/addon-a': '1.2.0' }, async () => ({ success: true }))
+    const hub = fakeHub({ '@dominevo/addon-a': '1.2.0' }, async () => ({ success: true }))
     const app = await serve(hub.callHub, () => false)
     const body = (
       await app.inject({ method: 'GET', url: '/api/agent/addon-updates' })
@@ -247,12 +247,12 @@ describe('addon-updates routes', () => {
   })
 
   it('POST update calls the hub, never a local install', async () => {
-    const hub = fakeHub({ '@camstack/addon-a': '1.2.0' }, async () => ({ success: true }))
+    const hub = fakeHub({ '@dominevo/addon-a': '1.2.0' }, async () => ({ success: true }))
     const app = await serve(hub.callHub)
     const res = await app.inject({
       method: 'POST',
       url: '/api/agent/addon-updates/update',
-      payload: { packageName: '@camstack/addon-a' },
+      payload: { packageName: '@dominevo/addon-a' },
     })
     expect(res.json()).toEqual({ started: true, message: null })
     await settle()

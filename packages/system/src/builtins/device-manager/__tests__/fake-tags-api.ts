@@ -4,7 +4,7 @@
  * mints them — opaque, new per tag — and the same name always answers the same
  * tag. One instance survives a spec's "reboot" so the ids stay resolvable.
  */
-import { entityNameKey, newEntityId, type TagRecord } from '@camstack/types'
+import { entityNameKey, newEntityId, type TagRecord } from '@dominevo/types'
 
 export interface FakeTagsApi {
   readonly listTags: { query: (input: Record<string, never>) => Promise<TagRecord[]> }

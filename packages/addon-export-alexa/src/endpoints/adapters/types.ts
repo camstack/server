@@ -1,5 +1,5 @@
 /**
- * The adapter contract (D869): ONE adapter per CamStack cap, declaring
+ * The adapter contract (D869): ONE adapter per Dominevo cap, declaring
  * everything Alexa needs from it, so a new cap is one file instead of five
  * (the endpoint row, the state mapping, the ChangeReport map, the directive
  * handler, the validator whitelist).
@@ -7,7 +7,7 @@
  * Discovery, ReportState, ChangeReport, the reconcile and the directive router
  * all iterate the one registry in `index.ts`; none of them names a cap.
  */
-import type { AddonApi, IScopedLogger } from '@camstack/types'
+import type { AddonApi, IScopedLogger } from '@dominevo/types'
 import type { DirectiveRouterDeps, VerifiedDirectiveIdentity } from '../../directive-router.js'
 import type { DirectiveHeader } from '../../handlers/types.js'
 import type { AlexaCapability, AlexaDisplayCategory } from '../types.js'
@@ -81,7 +81,7 @@ export interface AdapterDirective {
 }
 
 export interface GenericAdapter {
-  /** The CamStack cap that makes a device eligible. */
+  /** The Dominevo cap that makes a device eligible. */
   readonly cap: string
   /** Caps whose slices feed this adapter's properties (includes `cap`). */
   readonly stateCaps: readonly string[]

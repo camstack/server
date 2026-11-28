@@ -17,7 +17,7 @@ import {
   ModelConvertMetadataSchema,
   ConvertArtifactSchema,
   ModelCatalogEntrySchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** One format's presence on a node. */
 export const ModelFormatPresenceSchema = z.object({
@@ -210,7 +210,7 @@ export const modelStudioActions = defineCustomActions({
    * Rename an IMPORTED registry row (plus catalog, plus catalog, plugin catalog, uploads,
    * conversions) in place. Only `entry.name` changes — never the id, so pins
    * and availability are untouched. An empty name restores the name the model
-   * was imported with. CamStack catalog models are refused.
+   * was imported with. Dominevo catalog models are refused.
    */
   renameCustomModel: customAction(
     z.object({ modelId: z.string().min(1), name: z.string() }),
@@ -234,7 +234,7 @@ export const modelStudioActions = defineCustomActions({
     { kind: 'mutation' },
   ),
   /**
-   * Wipe one CamStack seed format from a node's modelsDir (Installed Remove).
+   * Wipe one Dominevo seed format from a node's modelsDir (Installed Remove).
    * Routes via `nodePin` — `pipelineExecutor.deleteModel` has no `nodeId` in
    * its input schema, so a bare tRPC mutate always hit the hub.
    */

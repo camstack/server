@@ -18,8 +18,8 @@
  *     benchmark, agent-ui already on Vite for Module Federation)
  *
  * Architecture:
- *   - **Framework externals** (always provided by runtime): @camstack/types,
- *     @camstack/kernel, zod, @trpc/{server,client}, node builtins.
+ *   - **Framework externals** (always provided by runtime): @dominevo/types,
+ *     @dominevo/kernel, zod, @trpc/{server,client}, node builtins.
  *     Singletons whose identity must match across boundaries.
  *   - **JS deps**: bundled inline. Each addon ships self-contained.
  *   - **Native deps** (.node): always external. Listed in manifest's
@@ -33,32 +33,32 @@ import type { LibraryFormats, UserConfig } from 'vite'
 export type ExternalsMode = 'framework' | 'framework+ui' | 'self-contained' | 'self-contained+ui'
 
 /**
- * Bare `@camstack/types` + every subpath export stay host-resolved. This is
+ * Bare `@dominevo/types` + every subpath export stay host-resolved. This is
  * the default framework contract (single source of truth for cap defs).
  */
-const BARE_TYPES_EXTERNAL: RegExp = /^@camstack\/types(\/.*)?$/
+const BARE_TYPES_EXTERNAL: RegExp = /^@dominevo\/types(\/.*)?$/
 
 /**
- * Same contract for `@camstack/server/system`, for the reason already spelled out on
+ * Same contract for `@dominevo/server/system`, for the reason already spelled out on
  * {@link BARE_TYPES_EXTERNAL}: a bare-string external matches the EXACT
- * specifier only, so `@camstack/server/system/addon-utils` was not external and
+ * specifier only, so `@dominevo/server/system/addon-utils` was not external and
  * rolldown tried to bundle it. The breakage stayed invisible for as long as
  * the nx cache kept serving a dist built before that subpath existed — the
  * build only failed once an unrelated edit invalidated the cache, which is
- * why a passing `camstack deploy` was not evidence the bundle still built.
+ * why a passing `dominevo deploy` was not evidence the bundle still built.
  */
-const BARE_SYSTEM_EXTERNAL: RegExp = /^@camstack\/server\/system(\/.*)?$/
+const BARE_SYSTEM_EXTERNAL: RegExp = /^@dominevo\/server\/system(\/.*)?$/
 
 /**
- * Subpath-only `@camstack/types` external. Keeps `@camstack/types/node`,
+ * Subpath-only `@dominevo/types` external. Keeps `@dominevo/types/node`,
  * `/addon`, `/catalogs` (and any other subpath) host-resolved while allowing
- * the BARE `@camstack/types` entry to be BUNDLED into the package's own dist.
+ * the BARE `@dominevo/types` entry to be BUNDLED into the package's own dist.
  * Used only when `bundleTypesMainEntry` is set — lets a system-level package
  * carry one authoritative copy of the cap-derived value symbols so that
- * `camstack deploy packages/system` refreshes the hub's capability surface
+ * `dominevo deploy packages/system` refreshes the hub's capability surface
  * without a new server image.
  */
-const TYPES_SUBPATH_ONLY_EXTERNAL: RegExp = /^@camstack\/types\/.+$/
+const TYPES_SUBPATH_ONLY_EXTERNAL: RegExp = /^@dominevo\/types\/.+$/
 
 /**
  * Node + dispatcher externals — the minimum that MUST stay outside the
@@ -66,7 +66,7 @@ const TYPES_SUBPATH_ONLY_EXTERNAL: RegExp = /^@camstack\/types\/.+$/
  * else is fair game to inline.
  */
 const RUNTIME_EXTERNALS: readonly (string | RegExp)[] = [
-  // Electron-runtime modules. `@camstack/server/system`'s restart-coordinator +
+  // Electron-runtime modules. `@dominevo/server/system`'s restart-coordinator +
   // native-deps loader import `electron` / `@electron/rebuild` lazily
   // (`await import(...).catch(() => null)`) and only when actually running
   // inside the Electron desktop shell. In the hub/agent server process they
@@ -120,9 +120,9 @@ const RUNTIME_EXTERNALS: readonly (string | RegExp)[] = [
 ]
 
 /**
- * Legacy framework externals — `@camstack/{types,core,sdk}` + zod +
+ * Legacy framework externals — `@dominevo/{types,core,sdk}` + zod +
  * tRPC. Required when the hub's `symlinkPeerDepsIntoAddonsDir` plants
- * a shared copy of these into `addonsDir/node_modules/@camstack/` and
+ * a shared copy of these into `addonsDir/node_modules/@dominevo/` and
  * addons resolve them via parent-walk. Identity-based dispatch (the
  * old model) required this so zod schema + cap-definition references
  * matched between hub and addons.
@@ -133,22 +133,22 @@ const RUNTIME_EXTERNALS: readonly (string | RegExp)[] = [
 const FRAMEWORK_EXTERNALS: readonly (string | RegExp)[] = [
   ...RUNTIME_EXTERNALS,
   // Match the bare specifier AND every subpath export (e.g.
-  // `@camstack/types/node`, which carries the FilesystemStorageProvider).
-  // A bare-string external only matches `@camstack/types` exactly, so the
-  // kernel/runner used to BUNDLE a frozen copy of `@camstack/types/node` —
+  // `@dominevo/types/node`, which carries the FilesystemStorageProvider).
+  // A bare-string external only matches `@dominevo/types` exactly, so the
+  // kernel/runner used to BUNDLE a frozen copy of `@dominevo/types/node` —
   // causing "rebuilt types but runtime still old" bugs. The regex keeps every
-  // `@camstack/types/*` import host-resolved (single source of truth).
+  // `@dominevo/types/*` import host-resolved (single source of truth).
   BARE_TYPES_EXTERNAL,
-  // @camstack/server/system: marked external so addon bundles don't inline the
+  // @dominevo/server/system: marked external so addon bundles don't inline the
   // sqlite-storage builtin. Inlining drags `require('better-sqlite3')`
   // into the addon's shared chunk, which then fails at load time because
-  // `better-sqlite3` lives in `@camstack/server/system`'s own node_modules (not
+  // `better-sqlite3` lives in `@dominevo/server/system`'s own node_modules (not
   // hoisted to the root). Keep it external — addons resolve it through the
-  // workspace symlink at `node_modules/@camstack/server/system`, which sees its
+  // workspace symlink at `node_modules/@dominevo/server/system`, which sees its
   // own `node_modules/` for native deps.
   BARE_SYSTEM_EXTERNAL,
-  '@camstack/sdk',
-  '@camstack/ui-library',
+  '@dominevo/sdk',
+  '@dominevo/ui-library',
   // Zod identity matters: input parsing in the cap router must use the
   // same zod instance that produced the schema. If two addons bundled
   // their own copies, instanceof checks would fail across boundaries.
@@ -158,7 +158,7 @@ const FRAMEWORK_EXTERNALS: readonly (string | RegExp)[] = [
 ]
 
 /**
- * Self-contained externals — `@camstack/types`, `zod`, `@camstack/sdk`
+ * Self-contained externals — `@dominevo/types`, `zod`, `@dominevo/sdk`
  * are INLINED into the addon dist. The addon ships everything it needs
  * to run except the kernel dispatcher + Node builtins. Survives server
  * upgrades that don't change cap shapes (additive schemas, renames in
@@ -169,13 +169,13 @@ const FRAMEWORK_EXTERNALS: readonly (string | RegExp)[] = [
  * (because the cap-definition objects in the addon are a separate
  * instance from the hub's). See `BaseAddon.registerProvider`.
  *
- * `@camstack/server/system` + `@camstack/ui-library` stay external because they
+ * `@dominevo/server/system` + `@dominevo/ui-library` stay external because they
  * carry native binaries (better-sqlite3) or React (UI singleton).
  */
 const SELF_CONTAINED_EXTERNALS: readonly (string | RegExp)[] = [
   ...RUNTIME_EXTERNALS,
   BARE_SYSTEM_EXTERNAL,
-  '@camstack/ui-library',
+  '@dominevo/ui-library',
 ]
 
 /** UI-only externals — only for packages shipping React widgets/pages. */
@@ -274,13 +274,13 @@ export interface ViteLibPresetOptions {
   readonly outDir?: string
 
   /**
-   * When `true`, the BARE `@camstack/types` entry is BUNDLED into this
+   * When `true`, the BARE `@dominevo/types` entry is BUNDLED into this
    * package's dist (its subpaths — `/node`, `/addon`, `/catalogs`, … — stay
-   * external). Only `@camstack/server/system` sets this: it lets the hub source its
+   * external). Only `@dominevo/server/system` sets this: it lets the hub source its
    * cap-derived runtime value symbols (`ALL_CAPABILITY_DEFINITIONS`,
-   * `METHOD_ACCESS_MAP`, …) from `@camstack/server/system` so `camstack deploy
+   * `METHOD_ACCESS_MAP`, …) from `@dominevo/server/system` so `dominevo deploy
    * packages/system` refreshes the capability surface with no server image,
-   * and `@camstack/types` is never deployed to the hub. Does NOT mutate the
+   * and `@dominevo/types` is never deployed to the hub. Does NOT mutate the
    * shared `FRAMEWORK_EXTERNALS`; only this package's effective externals are
    * adjusted. Default `false`.
    */
@@ -310,8 +310,8 @@ export function buildLibPreset(opts: ViteLibPresetOptions): UserConfig {
   // When `bundleTypesMainEntry` is set, swap the bare-types regex for the
   // subpath-only regex in THIS package's effective list — without mutating the
   // shared `FRAMEWORK_EXTERNALS` array (sdk relies on bare-types staying
-  // external). The bare `@camstack/types` import then inlines into the
-  // package's dist while `@camstack/types/{node,addon,catalogs}` stay external.
+  // external). The bare `@dominevo/types` import then inlines into the
+  // package's dist while `@dominevo/types/{node,addon,catalogs}` stay external.
   const externals: (string | RegExp)[] = opts.bundleTypesMainEntry
     ? baseExternals.map((ext) => (ext === BARE_TYPES_EXTERNAL ? TYPES_SUBPATH_ONLY_EXTERNAL : ext))
     : [...baseExternals]

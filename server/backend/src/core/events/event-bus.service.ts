@@ -1,5 +1,5 @@
-import { getBrokerEventBus } from '@camstack/server/system'
-import type { EventFilter, IEventBus, SystemEvent } from '@camstack/types'
+import { getBrokerEventBus } from '@dominevo/server/system'
+import type { EventFilter, IEventBus, SystemEvent } from '@dominevo/types'
 import type { ServiceBroker } from 'moleculer'
 import { ConfigService } from '../config/config.service'
 

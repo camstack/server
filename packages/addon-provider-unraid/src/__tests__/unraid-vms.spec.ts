@@ -1,4 +1,4 @@
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { UnraidApiError } from 'node-unraid'
 import { describe, expect, it, vi } from 'vitest'
 import { settingsToConnection } from '../config.js'

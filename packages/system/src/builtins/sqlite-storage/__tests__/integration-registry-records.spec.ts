@@ -1,4 +1,4 @@
-import { createRecordsAccess } from '@camstack/types'
+import { createRecordsAccess } from '@dominevo/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { IntegrationRegistry } from '../integration-registry.js'
 import { integrationRegistryRecordKinds } from '../integration-record-kinds.js'

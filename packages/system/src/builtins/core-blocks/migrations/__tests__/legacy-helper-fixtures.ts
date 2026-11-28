@@ -10,7 +10,7 @@ import {
   CompositionSchema,
   type CompositionFieldSource,
   type HelperMember,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export interface LegacyApplianceSpec {
   readonly kind: 'appliance'

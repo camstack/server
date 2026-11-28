@@ -13,7 +13,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { request as httpRequest } from 'node:http'
 
-import type { IScopedLogger, PeerBytesTicket } from '@camstack/types'
+import type { IScopedLogger, PeerBytesTicket } from '@dominevo/types'
 
 import {
   createAddonPeerBytesFacility,

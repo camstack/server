@@ -27,7 +27,7 @@
  * is enough (cloudflared invents the public URL).
  */
 import { z } from 'zod'
-import { customAction, defineCustomActions } from '@camstack/types'
+import { customAction, defineCustomActions } from '@dominevo/types'
 
 const ZoneSchema = z.object({
   id: z.string(),

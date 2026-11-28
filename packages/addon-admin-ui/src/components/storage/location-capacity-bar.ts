@@ -13,15 +13,15 @@
  * | band | what it is |
  * | --- | --- |
  * | `reserve` | the protected space, taken OUT OF FREE — not out of what is stored |
- * | `owned`   | what CamStack itself holds here, when a figure measured it |
+ * | `owned`   | what Dominevo itself holds here, when a figure measured it |
  * | `used`    | everything else occupying the disk: used MINUS our share |
  * | `free`    | what is left after the reserve is set aside |
  *
  * They used to overlap: `used` was every tenant INCLUDING us, so a shared disk
- * printed "1.6 TB used" and "1.5 TB CamStack" for the same bytes, and the
+ * printed "1.6 TB used" and "1.5 TB Dominevo" for the same bytes, and the
  * reserve was drawn over free space it had already counted. Four bands in a row
  * that overlap make the bar lie about proportions, so they are cut apart here:
- * `used` is now the non-CamStack remainder and is LABELLED as such, and the
+ * `used` is now the non-Dominevo remainder and is LABELLED as such, and the
  * percentages sum to 100 within rounding.
  *
  * With no measured share the bar falls back to three bands — reserve, used
@@ -36,7 +36,7 @@
  * empty bar reads as plenty of room and this repo has shipped that mistake
  * once already — most recently as two `backups` rows, a local disk and an SMB
  * share, printing byte-identical bars because the probe `statfs`'d a local
- * path for both (2026-09-13). What CamStack HOLDS there is a separate
+ * path for both (2026-09-13). What Dominevo HOLDS there is a separate
  * measurement and survives: an unknown denominator does not erase a known
  * numerator.
  */
@@ -63,7 +63,7 @@ export interface CapacityBarSegments {
   /** The protected reserve, taken out of free. 0 when unprotected. */
   readonly reservePercent: number
   /**
-   * CamStack's OWN share. `null` when nothing measured it — never 0, which
+   * Dominevo's OWN share. `null` when nothing measured it — never 0, which
    * would state that we occupy nothing (D315).
    */
   readonly ownedPercent: number | null
@@ -80,7 +80,7 @@ export interface CapacityBarLabels {
   /** Free as `statfs` reports it — the reserve included. */
   readonly freeTotal: string
   readonly freeTotalPercent: string
-  /** The non-CamStack remainder band. */
+  /** The non-Dominevo remainder band. */
   readonly used: string
   readonly usedPercent: string
   /** The free band: what is left after the reserve. */
@@ -88,7 +88,7 @@ export interface CapacityBarLabels {
   readonly freePercent: string
   /** `null` when the location protects nothing. */
   readonly reserve: string | null
-  /** `null` when CamStack's share of this volume is not measurable. */
+  /** `null` when Dominevo's share of this volume is not measurable. */
   readonly owned: string | null
   /** `null` when no cap is in force. */
   readonly cap: string | null
@@ -134,7 +134,7 @@ export interface UnknownCapacityBar {
   readonly kind: 'unknown'
   readonly summary: string
   /**
-   * What CamStack holds here, when something measured it — `null` when nothing
+   * What Dominevo holds here, when something measured it — `null` when nothing
    * did. Unknown capacity is a missing DENOMINATOR; it says nothing about the
    * numerator, and a share the storage providers reported is a fact this row
    * still has. A remote share (SMB, S3) is the normal case: no local `statfs`
@@ -161,7 +161,7 @@ function formatPercent(fraction: number): string {
 /** What the bar shows BESIDES the volume's own fill. */
 export interface CapacityBarExtras {
   /**
-   * Bytes CamStack itself holds on this volume (`location-owned-usage.ts`).
+   * Bytes Dominevo itself holds on this volume (`location-owned-usage.ts`).
    * `null`/absent means nobody measured it and NO band is drawn.
    */
   readonly ownedBytes?: number | null
@@ -174,7 +174,7 @@ export interface CapacityBarExtras {
  * to bytes (see `location-protection.ts`); `null` or a non-positive number
  * means the location protects nothing and no band is drawn.
  *
- * `extras.ownedBytes` is CamStack's share, carried the way `storage-fill.ts`
+ * `extras.ownedBytes` is Dominevo's share, carried the way `storage-fill.ts`
  * already carries `recordingsFraction` — the same derivation, not a parallel
  * one. `extras.cap` is marked only when a cap is actually in force.
  */
@@ -214,7 +214,7 @@ export function resolveCapacityBar(
   const reserveExceedsFree = reserveWanted > freeBytes
   const freeBand = freeBytes - reserveBand
 
-  // CamStack's share rides the SAME derivation as the volume fill: `usedBytes`
+  // Dominevo's share rides the SAME derivation as the volume fill: `usedBytes`
   // on a `RecordingLocationUsage` row is what `resolveVolumeFill` already calls
   // `recordingsFraction`. Clamped to what is actually occupied, so a stale
   // measurement can never carve a band out of somebody else's bytes.
@@ -300,7 +300,7 @@ export function resolveCapacityBar(
 
   // One pass, one source, ONE ORDER: entries are pushed in the order the bands
   // are drawn. The unmeasured share stays absent HERE too — a legend line
-  // reading "CamStack 0 B" is the same lie as a zero-width band.
+  // reading "Dominevo 0 B" is the same lie as a zero-width band.
   // `reserve` and `owned` are the CONDITIONAL bands and each is paired with its
   // entry exactly. `used` and `free` are the volume's two halves and are always
   // both — a measured zero there is a fact, not an absence.

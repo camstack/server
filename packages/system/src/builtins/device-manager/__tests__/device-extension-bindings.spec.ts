@@ -9,8 +9,8 @@
  * sensor) gets none, because the cap's `deviceTypes` is the codegen'd union of
  * the slots' host types.
  */
-import { CapabilityRegistry, DeviceRegistry } from '@camstack/server/system'
-import { type AddonContext, deviceExtensionCapability, type IScopedLogger } from '@camstack/types'
+import { CapabilityRegistry, DeviceRegistry } from '@dominevo/server/system'
+import { type AddonContext, deviceExtensionCapability, type IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { makeRecordsAccessForOwner } from '../../sqlite-storage/__tests__/support/records-world.js'
 import { DeviceManagerAddon } from '../device-manager.addon.js'

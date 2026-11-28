@@ -15,8 +15,8 @@ const program = (name: string, active: boolean, keys: string[]) => ({
 
 describe('keyEventStatuses (the dummy-program detection)', () => {
   it('a key referenced by an active program is ok, and names the program', () => {
-    const [status] = keyEventStatuses(['D:1'], [program('CamStack: Hall events', true, ['D:1'])])
-    expect(status).toEqual({ address: 'D:1', state: 'ok', programs: ['CamStack: Hall events'] })
+    const [status] = keyEventStatuses(['D:1'], [program('Dominevo: Hall events', true, ['D:1'])])
+    expect(status).toEqual({ address: 'D:1', state: 'ok', programs: ['Dominevo: Hall events'] })
   })
 
   it('a key no program references is missing', () => {

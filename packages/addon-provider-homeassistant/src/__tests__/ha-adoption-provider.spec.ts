@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { DeviceType } from '@camstack/types'
-import type { AddonContext, IDeviceAdoptionProvider, DeviceSummary } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
+import type { AddonContext, IDeviceAdoptionProvider, DeviceSummary } from '@dominevo/types'
 import { buildDiscoveryCandidates } from '../ha-discovery.js'
 import { HaProviderAddon } from '../addon.js'
 import type { HaDiscoveredDevice, HaDiscoveredEntity } from '../ha-discovery-types.js'

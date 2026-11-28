@@ -15,9 +15,9 @@
  * `listEventKindsBatch` for the selected camera.
  */
 
-import type { EventKindDescriptor, NcTaxonomy } from '@camstack/types'
-import { pickerForCondition } from '@camstack/types'
-import { Badge, Button, Input, Select, Switch } from '@camstack/ui-library'
+import type { EventKindDescriptor, NcTaxonomy } from '@dominevo/types'
+import { pickerForCondition } from '@dominevo/types'
+import { Badge, Button, Input, Select, Switch } from '@dominevo/ui-library'
 import type { RuleCameraOption } from './notification-condition-fields'
 import {
   HINT_CLASS,

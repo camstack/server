@@ -11,7 +11,7 @@
  * `scripts/check-catalog-licence.ts` fails when two records naming the same
  * upstream disagree on the weights licence or its URL.
  */
-import type { ModelLicense } from '@camstack/types'
+import type { ModelLicense } from '@dominevo/types'
 
 const COCO_DATA = {
   name: 'COCO 2017',
@@ -54,7 +54,7 @@ export const ULTRALYTICS_YOLOV9_AGPL: ModelLicense = {
  * classes. The repository's LICENSE.md is MIT and covers the publisher's own
  * plugin and notebooks; no separate licence is stated for the release weights,
  * so the record carries the terms of the GPL-3.0 checkpoint they derive from.
- * CamStack does not alter or re-host the files: a node downloads them from the
+ * Dominevo does not alter or re-host the files: a node downloads them from the
  * publisher's GitHub release, pinned by sha256 (the format's `revision`).
  */
 export const DBRO_YOLOV9_EDGETPU_GPL: ModelLicense = {
@@ -84,7 +84,7 @@ export const CORAL_APACHE: ModelLicense = {
   hosting: 'third-party',
 }
 
-/** The CamStack Coral COCO detector (SSD MobileNet V2). */
+/** The Dominevo Coral COCO detector (SSD MobileNet V2). */
 export const CORAL_COCO_APACHE: ModelLicense = {
   ...CORAL_APACHE,
   data: COCO_DATA,
@@ -117,7 +117,7 @@ export const YUNET_MIT: ModelLicense = {
   attribution:
     'YuNet weights Copyright (c) 2020 Shiqi Yu, MIT. Training code: ShiqiYu/libfacedetection.train, BSD-3-Clause.',
   modifications:
-    'input contract baked into the graph (the pool RGB /255 becomes the upstream BGR 0..255: Mul(255) plus a channel Gather); internal tensor names cleared in the OpenVINO IR; ONNX fp32, OpenVINO IR fp32, CoreML fp16 (scripts/build-yunet-model.py); Edge TPU build: the bake folded into the first Conv, full-integer int8 post-training quantisation calibrated on CamStack person crops, compiled with edgetpu_compiler 14 (scripts/build-yunet-edgetpu.py)',
+    'input contract baked into the graph (the pool RGB /255 becomes the upstream BGR 0..255: Mul(255) plus a channel Gather); internal tensor names cleared in the OpenVINO IR; ONNX fp32, OpenVINO IR fp32, CoreML fp16 (scripts/build-yunet-model.py); Edge TPU build: the bake folded into the first Conv, full-integer int8 post-training quantisation calibrated on Dominevo person crops, compiled with edgetpu_compiler 14 (scripts/build-yunet-edgetpu.py)',
   hosting: 'camstack-hf',
 }
 
@@ -157,7 +157,7 @@ export const OPEN_LPR_YOLOX_APACHE: ModelLicense = {
   attribution:
     'open-lpr models, Copyright the open-lpr contributors, Apache-2.0 (https://huggingface.co/faisalthaheem/open-lpr-models, tag detector-2026.10.1). YOLOX architecture and COCO pretraining by Megvii (https://github.com/Megvii-BaseDetection/YOLOX), Apache-2.0. The upstream NOTICE is reproduced verbatim (`NOTICE-open-lpr.txt`).',
   modifications:
-    'input contract baked into the graph (static 1x3x640x640 RGB /255 becomes the upstream BGR 0..255: Mul(255) plus a channel Gather) and the output reshaped to the YOLOv8 layout (cx, cy, w, h, obj*cls); ONNX fp32, OpenVINO IR fp16, CoreML fp16 (scripts/build-yolox-plate-model.py); Edge TPU build: the Focus stem rewritten as the equivalent 6x6 stride-2 Conv with the input bake folded into it, the graph cut before the grid decode (raw per-stride head), full-integer int8 post-training quantisation calibrated on CamStack vehicle crops, compiled with edgetpu_compiler 14 (scripts/build-yolox-plate-edgetpu.py)',
+    'input contract baked into the graph (static 1x3x640x640 RGB /255 becomes the upstream BGR 0..255: Mul(255) plus a channel Gather) and the output reshaped to the YOLOv8 layout (cx, cy, w, h, obj*cls); ONNX fp32, OpenVINO IR fp16, CoreML fp16 (scripts/build-yolox-plate-model.py); Edge TPU build: the Focus stem rewritten as the equivalent 6x6 stride-2 Conv with the input bake folded into it, the graph cut before the grid decode (raw per-stride head), full-integer int8 post-training quantisation calibrated on Dominevo vehicle crops, compiled with edgetpu_compiler 14 (scripts/build-yolox-plate-edgetpu.py)',
   hosting: 'camstack-hf',
 }
 
@@ -191,14 +191,14 @@ export const ANIMAL_CLASSIFIER_APACHE: ModelLicense = {
   code: 'Apache-2.0',
   data: OPEN_IMAGES_DATA,
   upstream: {
-    name: 'timm EfficientNet-Lite0, fine-tuned by CamStack',
+    name: 'timm EfficientNet-Lite0, fine-tuned by Dominevo',
     url: 'https://github.com/huggingface/pytorch-image-models',
   },
   url: 'https://github.com/huggingface/pytorch-image-models/blob/main/LICENSE',
   attribution:
     'EfficientNet-Lite0 via timm (Ross Wightman), Apache-2.0. Open Images V7 annotations © Google LLC, CC BY 4.0; images listed by Google as CC BY 2.0, without warranty.',
   modifications:
-    'fine-tuned by CamStack on the Open Images V7 animal subset (8 classes); exported to ONNX, OpenVINO IR and CoreML',
+    'fine-tuned by Dominevo on the Open Images V7 animal subset (8 classes); exported to ONNX, OpenVINO IR and CoreML',
   hosting: 'camstack-hf',
 }
 
@@ -224,13 +224,13 @@ export const VEHICLE_TYPE_V1_NC: ModelLicense = {
     url: 'https://huggingface.co/datasets/DrBimmer/vehicle-classification',
   },
   upstream: {
-    name: 'torchvision MobileNetV3-Large, fine-tuned by CamStack',
+    name: 'torchvision MobileNetV3-Large, fine-tuned by Dominevo',
     url: 'https://github.com/pytorch/vision',
   },
   url: 'https://creativecommons.org/licenses/by-nc/4.0/',
   attribution:
     'torchvision MobileNetV3, BSD-3-Clause. Trained on the Vehicle classification dataset by DrBimmer (https://huggingface.co/datasets/DrBimmer/vehicle-classification), CC BY-NC 4.0.',
-  modifications: 'fine-tuned by CamStack (8 classes); exported to ONNX, OpenVINO IR and CoreML',
+  modifications: 'fine-tuned by Dominevo (8 classes); exported to ONNX, OpenVINO IR and CoreML',
   hosting: 'camstack-hf',
   nonCommercial: true,
 }

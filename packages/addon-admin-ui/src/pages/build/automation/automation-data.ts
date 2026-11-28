@@ -17,8 +17,8 @@
  *    `operatorsForFieldKind`.
  */
 
-import { isDoPickerDeviceType, METHOD_ACCESS_MAP } from '@camstack/types'
-import { useDeviceManagerListAll, useSystem } from '@camstack/ui-library'
+import { isDoPickerDeviceType, METHOD_ACCESS_MAP } from '@dominevo/types'
+import { useDeviceManagerListAll, useSystem } from '@dominevo/ui-library'
 import { type UseQueryResult, useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import type { WireableCap } from './recipe-parts'

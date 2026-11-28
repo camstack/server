@@ -1,11 +1,11 @@
 /**
  * The cluster palette, when a host has read `display-palette` (D939).
  * No provider, a pending read, or an unknown store all paint the bundled
- * CamStack preset. Only `ready` replaces it. Callers that must say the
+ * Dominevo preset. Only `ready` replaces it. Callers that must say the
  * store was unreadable read {@link useDisplayPaletteView}.
  */
 import { createContext, useContext, type ReactNode } from 'react'
-import { bundledCamstack, type PaletteReady } from '@camstack/types'
+import { bundledCamstack, type PaletteReady } from '@dominevo/types'
 import { getClassColor } from './detection-colors'
 
 const BUNDLED = bundledCamstack()

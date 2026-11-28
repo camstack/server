@@ -135,13 +135,13 @@ describe('NcSystemStateLedger', () => {
         nodeIds: ['hub', 'agent-1'],
         rows: [
           {
-            packageName: '@camstack/addon-recorder',
+            packageName: '@dominevo/addon-recorder',
             currentVersion: '1.0.0',
             latestVersion: '1.0.1',
             nodeId: 'hub',
           },
           {
-            packageName: '@camstack/addon-recorder',
+            packageName: '@dominevo/addon-recorder',
             currentVersion: '1.0.0',
             latestVersion: '1.0.1',
             nodeId: 'agent-1',
@@ -156,16 +156,16 @@ describe('NcSystemStateLedger', () => {
         ?.map((row) => row.key)
         .toSorted(),
     ).toEqual([
-      updateStateKey('addon', 'agent-1', '@camstack/addon-recorder'),
-      updateStateKey('addon', 'hub', '@camstack/addon-recorder'),
+      updateStateKey('addon', 'agent-1', '@dominevo/addon-recorder'),
+      updateStateKey('addon', 'hub', '@dominevo/addon-recorder'),
     ])
     ledger.observeAddonUpdated({
-      packageName: '@camstack/addon-recorder',
+      packageName: '@dominevo/addon-recorder',
       toVersion: '1.0.1',
       nodeId: 'agent-1',
     })
     expect(ledger.openRows()?.map((row) => row.key)).toEqual([
-      updateStateKey('addon', 'hub', '@camstack/addon-recorder'),
+      updateStateKey('addon', 'hub', '@dominevo/addon-recorder'),
     ])
   })
 
@@ -177,7 +177,7 @@ describe('NcSystemStateLedger', () => {
         nodeIds: ['hub'],
         rows: [
           {
-            packageName: '@camstack/server',
+            packageName: '@dominevo/server',
             currentVersion: '1',
             latestVersion: '2',
             nodeId: 'hub',

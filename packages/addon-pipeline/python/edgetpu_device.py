@@ -2,7 +2,7 @@
 
 The pool `device` comes from the TS side as an explicit ordinal — ``usb:0``,
 ``usb:1``, ``pci:0``, ``pci:1`` (``edgetpuDelegateDevice`` in
-``@camstack/types``). libedgetpu's ``device`` option also takes the bare bus
+``@dominevo/types``). libedgetpu's ``device`` option also takes the bare bus
 (``usb`` / ``pci`` = the first unit of that bus). Pure: no libedgetpu import.
 """
 from __future__ import annotations
@@ -44,7 +44,7 @@ def edgetpu_library_path(
     """The libedgetpu file this pool loads.
 
     The same lookup as the TS probe (``chooseEdgetpuDelegate`` in
-    ``@camstack/types`` ``deps/edgetpu-delegate.ts``): ``CAMSTACK_EDGETPU_LIB``
+    ``@dominevo/types`` ``deps/edgetpu-delegate.ts``): ``CAMSTACK_EDGETPU_LIB``
     when set (followed even if missing — ``load_delegate`` then names it); the
     copy the deps downloader staged under ``<CAMSTACK_DATA>/deps/edgetpu/lib/``
     (``libedgetpu.1.dylib`` on macOS, ``libedgetpu.so.1`` elsewhere); else the

@@ -23,8 +23,8 @@
  * here, "why is the Mac worse than the hub"), and a line that cannot be grouped
  * cannot answer it.
  */
-import type { CameraMetrics, RunnerCameraConfig } from '@camstack/types'
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import type { CameraMetrics, RunnerCameraConfig } from '@dominevo/types'
+import { errMsg, type IScopedLogger } from '@dominevo/types'
 import {
   type CameraStressSample,
   DEFAULT_NODE_STRESS_THRESHOLDS,

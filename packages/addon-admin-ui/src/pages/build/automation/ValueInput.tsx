@@ -20,7 +20,7 @@ import {
   type QuantityValue,
   type ReadingQuantity,
   unitsForQuantity,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   Input,
   MultiSelectDropdown,
@@ -29,7 +29,7 @@ import {
   useUnitPreferences,
   useDeviceManagerGetDevice,
   type ResolvedSensorDisplay,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import type { WireableField } from './recipe-parts'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'

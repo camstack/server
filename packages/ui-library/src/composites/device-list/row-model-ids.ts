@@ -1,4 +1,4 @@
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import type { DeviceItemDevice } from '../device-item/helpers'
 
 /** The device types whose row value is drawn from the row model. */

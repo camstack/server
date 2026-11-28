@@ -8,7 +8,7 @@
  * window belongs to the reader), never by a timer. An id with no record answers
  * `null` — the reader falls back to the kept legacy name, or shows nothing.
  */
-import { errMsg, type IScopedLogger, type TagRecord } from '@camstack/types'
+import { errMsg, type IScopedLogger, type TagRecord } from '@dominevo/types'
 
 export const TAG_NAMES_FRESH_MS = 5_000
 

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Skeleton } from '@camstack/ui-library'
+import { Skeleton } from '@dominevo/ui-library'
 
 const Frame = ({ children }: { children: ReactNode }) => (
   <div className="dark bg-background text-foreground p-5 rounded-lg">{children}</div>

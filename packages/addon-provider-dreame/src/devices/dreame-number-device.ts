@@ -6,7 +6,7 @@ import {
   type DeviceContext,
   type InferNativeProvider,
   type ReadingQuantity,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { dreameQuantity, dreameStep, dreameToBase, dreameToUpstream } from '../dreame-reading.js'
 import { dreameChildSchema } from './dreame-child-device.js'
 import { DreameChildDevice } from './dreame-child-device.js'

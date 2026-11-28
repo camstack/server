@@ -2,7 +2,7 @@
  * TimeSpecInput: a clock time, a sun event with an offset, or a date, each a
  * `TimeSpec` that passes `TimeSpecSchema`.
  */
-import { type TimeSpec, TimeSpecSchema } from '@camstack/types'
+import { type TimeSpec, TimeSpecSchema } from '@dominevo/types'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { TimeSpecInput } from './TimeSpecInput'

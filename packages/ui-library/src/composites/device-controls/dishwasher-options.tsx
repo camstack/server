@@ -9,7 +9,7 @@
  * disabled "mixed" box — while it is not. A toggle is drawn only when the
  * device's binding implements its method.
  */
-import type { DeviceProxy, DishwasherStatus } from '@camstack/types'
+import type { DeviceProxy, DishwasherStatus } from '@dominevo/types'
 import type { ReactNode } from 'react'
 import { useUiText } from '../../contexts/ui-text'
 import { useDeviceCapability } from '../../hooks/use-device-capability'

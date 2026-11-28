@@ -30,7 +30,7 @@
  *
  * Pure: the caller does the read and the clock, this decides what they mean.
  */
-import type { ClipSourceAvailability, OnboardStorage } from '@camstack/types'
+import type { ClipSourceAvailability, OnboardStorage } from '@dominevo/types'
 
 import type { AmcrestCameraClock } from './clip-clock.js'
 

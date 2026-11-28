@@ -11,7 +11,7 @@ import {
   makeInMemoryRecords,
   type MigrationOwnerResult,
   runAddonMigrations,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { haNotifyRecordKinds, HaTargetStore } from '../../ha-notification-output.js'
 import {

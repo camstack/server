@@ -78,8 +78,8 @@ import {
   type LoggingSettingsPatch,
   type LoggingSettingsState,
   type LogLevel,
-} from '@camstack/types'
-import { DEFAULT_LOG_LEVEL, type LoggingGate } from '@camstack/server/system'
+} from '@dominevo/types'
+import { DEFAULT_LOG_LEVEL, type LoggingGate } from '@dominevo/server/system'
 import type { RequestCensusService } from './request-census-settings.js'
 import type { SettingsStoreGateway } from './site-location.js'
 

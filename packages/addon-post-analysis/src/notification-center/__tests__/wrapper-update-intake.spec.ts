@@ -1,4 +1,4 @@
-import { createEvent, DeviceType } from '@camstack/types'
+import { createEvent, DeviceType } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { NcDeviceLookup } from '../device-directory.js'
 import { incomingFromSystemEvent } from '../event-intake.js'

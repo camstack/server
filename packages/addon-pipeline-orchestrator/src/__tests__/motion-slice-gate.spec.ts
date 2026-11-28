@@ -7,7 +7,7 @@
  * never answered is unknown, so it keeps the gate closed. A node whose read
  * failed keeps its last answer (D49).
  */
-import type { IScopedLogger, RunnerLocalLoad } from '@camstack/types'
+import type { IScopedLogger, RunnerLocalLoad } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   type DirectoryEntry,

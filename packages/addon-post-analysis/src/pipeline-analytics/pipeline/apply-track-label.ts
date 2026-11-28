@@ -15,7 +15,7 @@
  * unlabelled" is always asked about one camera.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { EventStore } from '../store/event-store.js'
 import type { TrackStore } from '../store/track-store.js'
 import { recomputeTrackImportance } from './key-event-recompute.js'

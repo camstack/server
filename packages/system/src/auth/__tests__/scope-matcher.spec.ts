@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import type { TokenScope } from '@camstack/types'
+import type { TokenScope } from '@dominevo/types'
 import { scopesAllowDeviceCap } from '../scope-matcher.js'
 
 const deviceScope: TokenScope[] = [

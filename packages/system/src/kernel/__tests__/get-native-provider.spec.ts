@@ -8,7 +8,7 @@
  */
 import { describe, it, expect, vi } from 'vitest'
 import { z } from 'zod'
-import { method, type CapabilityDefinition, type IScopedLogger } from '@camstack/types'
+import { method, type CapabilityDefinition, type IScopedLogger } from '@dominevo/types'
 import { CapabilityRegistry } from '../capability-registry.js'
 
 const fooCap = {

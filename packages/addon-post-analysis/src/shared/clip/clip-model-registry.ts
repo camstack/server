@@ -14,7 +14,7 @@
  * truncated to 512 dims and ranked as noise with nothing in any log. An unknown
  * id is `null` here, and every caller says what it did about it.
  */
-import type { ClipModelMeta, ModelCatalogEntry } from '@camstack/types'
+import type { ClipModelMeta, ModelCatalogEntry } from '@dominevo/types'
 import { CLIP_IMAGE_MODELS } from '../../embedding-encoder/catalogs/embedding-models.js'
 
 /** The model in force when nobody has chosen — the cluster row's default. */

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { AppDeclarationSchema } from '@camstack/types'
+import { AppDeclarationSchema } from '@dominevo/types'
 import { createViewerAppSourceProvider } from '../viewer-app-source.js'
 
 describe('viewer app-source', () => {

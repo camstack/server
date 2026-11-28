@@ -1,5 +1,5 @@
-import { SWITCH_DEFAULT_OPTIONS } from '@camstack/types'
-import { commandOrigin } from '@camstack/types/addon'
+import { SWITCH_DEFAULT_OPTIONS } from '@dominevo/types'
+import { commandOrigin } from '@dominevo/types/addon'
 import { describe, expect, it } from 'vitest'
 import { applyCapCommand, type CapCommandDevice } from '../command-routes.js'
 

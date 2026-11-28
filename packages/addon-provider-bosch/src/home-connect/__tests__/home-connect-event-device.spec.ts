@@ -1,4 +1,4 @@
-import { DeviceType, EventCategory, type EventEmitterStatus } from '@camstack/types'
+import { DeviceType, EventCategory, type EventEmitterStatus } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import { HomeConnectEventDevice } from '../devices/home-connect-event-device.js'
 import { homeConnectConnections } from '../home-connect-gateway.js'

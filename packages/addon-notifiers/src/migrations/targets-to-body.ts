@@ -10,7 +10,7 @@ import {
   OldTargetBodySchema,
   type RecordKindHandle,
   type TargetRowPorts,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import type { EmailSendWithPorts } from './email-send-with.js'
 

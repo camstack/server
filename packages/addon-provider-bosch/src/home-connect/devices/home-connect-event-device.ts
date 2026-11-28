@@ -10,7 +10,7 @@ import {
   type EventEmitterStatus,
   type EventFire,
   type InferNativeProvider,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { eventActive } from '../home-connect-domain-mapping.js'
 import { homeConnectConnections, type HomeConnectWatchEvent } from '../home-connect-gateway.js'
 

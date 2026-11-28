@@ -17,8 +17,8 @@ const ensureEdgetpuDelegate = vi.fn(async () => ({
 }))
 const installPythonRequirements = vi.fn(async () => undefined)
 
-vi.mock('@camstack/types/node', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@camstack/types/node')>()
+vi.mock('@dominevo/types/node', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dominevo/types/node')>()
   return {
     ...actual,
     ensurePython: vi.fn(async () => '/py/bin/python3'),

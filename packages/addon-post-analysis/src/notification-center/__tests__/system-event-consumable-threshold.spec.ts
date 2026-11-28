@@ -7,8 +7,8 @@
  * on the subject; the engine lets a rule hear only the episode judged at ITS
  * threshold — the occupancy rule's per-count keying, one family over.
  */
-import type { NcSystemEventCondition, NcSystemEventKind } from '@camstack/types'
-import { NcRuleInputSchema, NcRuleSchema } from '@camstack/types'
+import type { NcSystemEventCondition, NcSystemEventKind } from '@dominevo/types'
+import { NcRuleInputSchema, NcRuleSchema } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { evaluateRule, NC_SYSTEM_DEVICE_ID, type NcRuleSubject } from '../rule-engine.js'
 

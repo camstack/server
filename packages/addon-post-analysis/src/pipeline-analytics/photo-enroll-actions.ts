@@ -4,13 +4,13 @@
  *
  * ## Why these ride `addons.custom` and are not cap methods
  *
- * A cap method's wire schema lives in `@camstack/types`, which travels inside
- * the `@camstack/server` closure — so a new one is not callable until a server
+ * A cap method's wire schema lives in `@dominevo/types`, which travels inside
+ * the `@dominevo/server` closure — so a new one is not callable until a server
  * train ships, however current the addon is. The hub validates cap inputs
  * against ITS compiled Zod, so a method the hub has never heard of simply does
  * not exist as a tRPC path. `addons.custom` is the opposite: the per-action
  * schema lives in the addon's own dist and the hub forwards an opaque envelope,
- * so a `camstack deploy` is the whole delivery. `embedding.*` and `debug.*`
+ * so a `dominevo deploy` is the whole delivery. `embedding.*` and `debug.*`
  * already ship this way.
  *
  * ## Why analysis and confirmation are two calls and not one
@@ -23,7 +23,7 @@
  * enrols the exact vector whose crop was on screen, which is what keeps the
  * gallery image 1:1 with the vector it claims to show.
  */
-import { customAction, defineCustomActions } from '@camstack/types'
+import { customAction, defineCustomActions } from '@dominevo/types'
 import { z } from 'zod'
 
 /**

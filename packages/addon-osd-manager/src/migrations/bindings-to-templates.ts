@@ -31,7 +31,7 @@ import {
   type MigrationPlan,
   OSD_TEMPLATE_TEXT_MAX,
   preconditionOf,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   clockExpression,
   convertParser,

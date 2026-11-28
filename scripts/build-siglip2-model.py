@@ -30,7 +30,7 @@ entries ``siglip2-b16-224`` (image) and ``siglip2-b16-224-text`` point at:
 
 THE BAKED INPUT CONTRACT (vision)
 ---------------------------------
-SigLIP expects ``(x - 0.5) / 0.5`` on [0,1] pixels. The CamStack pool feeds the
+SigLIP expects ``(x - 0.5) / 0.5`` on [0,1] pixels. The Dominevo pool feeds the
 catalog's ``preprocessMode: 'resize'`` + ``inputNormalization: 'none'`` — a
 bilinear stretch to 224×224 and ``/255`` (OpenVINO: the PPP u8 → f32 /255 fold;
 CoreML: ``ImageType(scale=1/255)``). ``2x - 1`` is therefore baked ahead of the
@@ -149,10 +149,10 @@ tags:
   - camstack
 ---
 
-# SigLIP2 B/16-224: CamStack build
+# SigLIP2 B/16-224: Dominevo build
 
 Google SigLIP2 base (patch 16, 224×224) image and text encoders, re-packaged for
-the CamStack inference pool and embedding encoder. 768-dimensional embeddings.
+the Dominevo inference pool and embedding encoder. 768-dimensional embeddings.
 Selectable on the `clip-embedding` step as `siglip2-b16-224` (image) with the
 text encoder `siglip2-b16-224-text`.
 
@@ -196,8 +196,8 @@ These files are a modified version of the upstream model (Apache-2.0 §4(b)):
 4. **Format conversion and precision.** OpenVINO IR and CoreML at fp16; the text
    ONNX weights converted to fp16 (inputs and outputs stay int64/fp32).
 
-Built and verified by `scripts/build-siglip2-model.py` in the CamStack
-repository (https://github.com/camstack/server): cross-format cosine against the
+Built and verified by `scripts/build-siglip2-model.py` in the Dominevo
+repository (https://github.com/dominevo/server): cross-format cosine against the
 fp32 reference, tokenizer ids equal to the reference processor, and the
 image-text embedding space checked on reference images.
 
@@ -205,7 +205,7 @@ image-text embedding space checked on reference images.
 
 Apache License, Version 2.0 — <https://www.apache.org/licenses/LICENSE-2.0>;
 full text in [`LICENSES/Apache-2.0.txt`](../../LICENSES/Apache-2.0.txt). The
-upstream model is © Google LLC. CamStack's changes are listed above. Every
+upstream model is © Google LLC. Dominevo's changes are listed above. Every
 model's attribution is in [`THIRD_PARTY_MODELS.md`](../../THIRD_PARTY_MODELS.md).
 """
 
@@ -428,14 +428,14 @@ def _stage_coreml(base: Path) -> None:
         compute_precision=ct.precision.FLOAT16,
         minimum_deployment_target=ct.target.macOS13,
     )
-    ml.short_description = "SigLIP2 B/16-224 vision encoder (Apache-2.0, Google), CamStack build"
+    ml.short_description = "SigLIP2 B/16-224 vision encoder (Apache-2.0, Google), Dominevo build"
     ml.license = "Apache-2.0"
     (base / "coreml").mkdir(parents=True, exist_ok=True)
     ml.save(str(base / VISION_ML))
     _strip_mlpackage(base / VISION_ML)
     print(f"  ✓ {VISION_ML} ({_size(base / VISION_ML) / 1e6:.0f} MB; head rewrite max diff {diff:.2e})")
 
-    # Text: never loaded by CamStack (the encoder's text path is onnxruntime),
+    # Text: never loaded by Dominevo (the encoder's text path is onnxruntime),
     # built because the format set asks for it. `torch.export` refuses the text
     # tower (`Unsupported fx node alias`); `jit.trace` converts it, and nothing
     # in it is shape-dependent at a fixed 64-token input. Verified here against
@@ -462,7 +462,7 @@ def _stage_coreml(base: Path) -> None:
         compute_precision=ct.precision.FLOAT16,
         minimum_deployment_target=ct.target.macOS13,
     )
-    ml_t.short_description = "SigLIP2 B/16-224 text encoder (Apache-2.0, Google), CamStack build"
+    ml_t.short_description = "SigLIP2 B/16-224 text encoder (Apache-2.0, Google), Dominevo build"
     ml_t.license = "Apache-2.0"
     ml_t.save(str(base / TEXT_ML))
     _strip_mlpackage(base / TEXT_ML)

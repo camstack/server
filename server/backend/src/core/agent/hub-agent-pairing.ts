@@ -10,14 +10,14 @@
  * at any moment): a light timer polls the agents of active pairings, so the hub
  * completes as soon as both sides confirmed, whether or not a browser is open.
  */
-import type { MdnsAgent } from '@camstack/develop/hub-discovery'
+import type { MdnsAgent } from '@dominevo/develop/hub-discovery'
 import type {
   AgentEndpoint,
   AgentPairingState,
   AgentPairingTransport,
   HubPairing,
   HubPairingView,
-} from '@camstack/server/system'
+} from '@dominevo/server/system'
 
 export interface DiscoveredAgent {
   readonly nodeId: string

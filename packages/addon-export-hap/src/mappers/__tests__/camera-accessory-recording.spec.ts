@@ -17,7 +17,7 @@
  * its motion trigger from that one and is blind to any other).
  */
 
-import type { AddonContext } from '@camstack/types'
+import type { AddonContext } from '@dominevo/types'
 import { Service, uuid } from '@homebridge/hap-nodejs'
 import { describe, expect, it } from 'vitest'
 import { createHapDecodeMemos } from '../builders/stream-hwaccel-memo.js'

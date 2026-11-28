@@ -1,9 +1,9 @@
-import type { AdoptionJob } from '@camstack/types'
+import type { AdoptionJob } from '@dominevo/types'
 import {
   useDeviceManagerAdoptionCancelJob,
   useDeviceManagerAdoptionListJobs,
   Button,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { AlertTriangle, CheckCircle2, Loader2, XCircle } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 

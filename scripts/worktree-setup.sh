@@ -15,7 +15,7 @@
 # install each (gigabytes, and every install a CPU-bound minute on a machine
 # that was already swapping). The symlinked node_modules IS the main clone's
 # directory: an install there rewrites main's dependencies under every other
-# agent. Note what the link means: `@camstack/*` resolves to the MAIN clone's
+# agent. Note what the link means: `@dominevo/*` resolves to the MAIN clone's
 # packages, so a change to a framework package is proven on assembled main by
 # the coordinator's verify:push, not by a run in the worktree.
 set -euo pipefail

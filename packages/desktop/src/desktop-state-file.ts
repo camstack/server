@@ -3,10 +3,10 @@
  * its version and updater state to `<dataDir>/server-root/desktop-app-state.json`
  * so the node (a child process OR a Windows service) can report it to the hub.
  *
- * The layout and the atomic write live in `@camstack/node-root`, shared with
+ * The layout and the atomic write live in `@dominevo/node-root`, shared with
  * the reader; this module only maps the updater snapshot onto the file shape.
  */
-import { serverRootDir, writeDesktopAppState, type DesktopAppStateFile } from '@camstack/node-root'
+import { serverRootDir, writeDesktopAppState, type DesktopAppStateFile } from '@dominevo/node-root'
 import type { UpdateState } from './auto-updater'
 
 /** Pure: the file content for one updater snapshot. */

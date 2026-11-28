@@ -15,7 +15,7 @@ import {
   type CoreBlock,
   type Scheduler,
   type TemplateRecord,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { templateEditPath } from '../components/remote/EditTemplateButton'
 import {
   isListedAutomation,

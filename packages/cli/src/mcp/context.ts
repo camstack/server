@@ -1,8 +1,8 @@
 /**
- * What every toolset of `camstack mcp` is handed. Tests inject a fake hub
+ * What every toolset of `dominevo mcp` is handed. Tests inject a fake hub
  * connection and a fake registry; production wires the CLI's credential chain.
  */
-import type { ConnectOutcome, HubConnection, HubDownloader, MutationGate } from '@camstack/develop'
+import type { ConnectOutcome, HubConnection, HubDownloader, MutationGate } from '@dominevo/develop'
 import type { HostCheckReport } from '../host-check/host-check.js'
 import type { HostFacts } from '../host-check/sizing.js'
 import type { ManifestProvider } from '../onboarding/manifest.js'

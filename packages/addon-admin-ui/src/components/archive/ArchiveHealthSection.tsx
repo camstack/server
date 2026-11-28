@@ -5,8 +5,8 @@
  *
  * Off is not broken (D62); an unread stage is unknown, not fine (D315).
  */
-import { Badge, type BadgeVariant, LogStream } from '@camstack/ui-library'
-import type { CameraStatus } from '@camstack/types'
+import { Badge, type BadgeVariant, LogStream } from '@dominevo/ui-library'
+import type { CameraStatus } from '@dominevo/types'
 import type { ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'

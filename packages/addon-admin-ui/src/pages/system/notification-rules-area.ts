@@ -10,7 +10,7 @@
  * module only names the producer areas and the union key the strip uses.
  */
 
-import { parseRuleSection } from '@camstack/types'
+import { parseRuleSection } from '@dominevo/types'
 import type { NcRuleSection, NcRuleSectionKey } from './rule-form-parsers'
 import { NC_RULE_SECTIONS } from './rule-form-parsers'
 import i18n from '../../i18n/index'

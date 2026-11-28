@@ -15,7 +15,7 @@
  * that index is empty. A suffixed index (`vec_object_clip_siglip2_*`) is never named here.
  * A second run finds nothing and changes nothing. `tolerate`: a node without these tables boots.
  */
-import type { MigrationMeta } from '@camstack/types'
+import type { MigrationMeta } from '@dominevo/types'
 import type {
   HubSqlMigration,
   MigrationDatabase,

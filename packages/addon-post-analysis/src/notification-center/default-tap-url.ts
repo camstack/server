@@ -13,12 +13,12 @@
  *
  * **Which address** (D709, D734): the one flagged as **Notification taps**
  * on the admin Network page — the `notificationTaps` role, read through
- * `local-network.getNotificationEndpoint`. By default that is the CamStack
+ * `local-network.getNotificationEndpoint`. By default that is the Dominevo
  * app link, and a tap is `https://camstack.zentik.app/camera/<id>?at=…&hub=
  * <hub origin>` — the native app opens when installed, the hosted viewer
  * otherwise. When the operator flags one of the hub's own addresses instead,
  * the tap is `<that base>/viewer/camstack/camera/<id>?at=…`. The URL itself is
- * assembled by `buildViewerLink` (@camstack/types).
+ * assembled by `buildViewerLink` (@dominevo/types).
  *
  * Only the TAP follows that role. Everything else a notification points at
  * off the LAN — action buttons, attachment and media links, and the admin
@@ -38,8 +38,8 @@
  * never a second place a caller could ask.
  */
 
-import type { ViewerLinkBase } from '@camstack/types'
-import { buildViewerLink } from '@camstack/types'
+import type { ViewerLinkBase } from '@dominevo/types'
+import { buildViewerLink } from '@dominevo/types'
 import type { NcSystemEventTapSubject } from './system-event-tap-url.js'
 import { systemEventTapUrl } from './system-event-tap-url.js'
 

@@ -8,7 +8,7 @@ import {
   CAP_CUSTOMIZE_CATALOG,
   SOURCE_CAP_ACTIVE_FIELD,
   SOURCE_CAP_CHANGED_AT_FIELD,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { WireableCatalog } from '../source-picker-model'
 import { declarationSourceForField, scalarFieldOffers } from '../scalar/scalar-fit'
 

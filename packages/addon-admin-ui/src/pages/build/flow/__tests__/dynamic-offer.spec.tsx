@@ -2,9 +2,9 @@
  * A `dynamic` offer resolves into a select from what the device answers, and
  * stays a free field when it cannot (D920).
  */
-import { selectOption } from '@camstack/ui-library/testing'
-import { vocabularyActionsForDevice } from '@camstack/types'
-import type { LooseVocabOpenArg } from '@camstack/types'
+import { selectOption } from '@dominevo/ui-library/testing'
+import { vocabularyActionsForDevice } from '@dominevo/types'
+import type { LooseVocabOpenArg } from '@dominevo/types'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { renderWithTemplateHub } from '../../../../test-setup/device-template-hub'

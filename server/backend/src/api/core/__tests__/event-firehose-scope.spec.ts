@@ -10,7 +10,7 @@
  * Neutralisation: drop the `scopedEventVisibility` filter in either router and
  * the "device:[5] sees only device 5" expectation flips to seeing both.
  */
-import type { SystemEvent } from '@camstack/types'
+import type { SystemEvent } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { createLiveEventsRouter } from '../live-events.router.js'
 import { createSystemEventsRouter } from '../system-events.router.js'

@@ -1,4 +1,4 @@
-import type { ConfigSectionWithValues } from '@camstack/types'
+import type { ConfigSectionWithValues } from '@dominevo/types'
 
 /** `<addonId>/<stableId>` of the device panel in this addon's widget bundle. */
 export const HM_DEVICE_PANEL_WIDGET_ID = 'provider-homematic/device-panel'
@@ -8,7 +8,7 @@ const NS = 'provider-homematic:device.panel'
 /**
  * The device page section of one CCU device: the Homematic panel widget
  * (values, diagnostics, manual actuation, MASTER configuration). The widget
- * stores nothing in CamStack — it reads and writes the CCU through the
+ * stores nothing in Dominevo — it reads and writes the CCU through the
  * addon's confirmed custom actions.
  */
 export function devicePanelSection(

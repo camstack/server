@@ -9,7 +9,7 @@ import {
   type RecordIntegrationInstances,
   type RecordsAccess,
   type ResolvedInstance,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { randomBytes } from 'node:crypto'
 import { type HaCalendarBody, haCalendarsEntryKind } from './broker-record-kinds.js'
 

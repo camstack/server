@@ -13,7 +13,7 @@ import { useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Cpu, Crop, Film, Layers, Radio, Scale, Scan, ShieldAlert, Sparkles } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { SECTION_BODY, SectionCard, TEXT_HINT } from '@camstack/ui-library'
+import { SECTION_BODY, SectionCard, TEXT_HINT } from '@dominevo/ui-library'
 import { NodeAddonsSettingsPanel } from '../../settings/NodeAddonsSettingsPanel'
 import { CLUSTER_SECTION_PARAM } from '../pipeline-links'
 import {

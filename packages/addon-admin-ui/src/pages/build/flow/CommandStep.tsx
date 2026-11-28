@@ -9,8 +9,8 @@
  * round", with the commands EVERY device of the loop has.
  */
 
-import type { ActionTarget, ResolvedVocabAction } from '@camstack/types'
-import { Button, ItemFormDialog } from '@camstack/ui-library'
+import type { ActionTarget, ResolvedVocabAction } from '@dominevo/types'
+import { Button, ItemFormDialog } from '@dominevo/ui-library'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {

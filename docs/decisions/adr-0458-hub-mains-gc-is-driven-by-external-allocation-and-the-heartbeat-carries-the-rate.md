@@ -62,7 +62,7 @@ live process (both restored afterwards; the restore was asserted):
   `chunk.length` on all 87 363 reads of the window. Node sizes the backing store
   to `nread`; there is no slab amplification.
 - *Moleculer's TCP `Parser._write`* — **98.78 % of every `Buffer.concat` above
-  64 kB**, by sampled stack, at `@camstack/system/dist/index.js:78913`. 1 273
+  64 kB**, by sampled stack, at `@dominevo/system/dist/index.js:78913`. 1 273
   socket reads/s delivering **8.0 MB/s** produced **338 MB/s of concat** plus
   the matching `Buffer.from`: an amplification of **42x on concat alone, ~67x
   with both**.
@@ -107,7 +107,7 @@ level.
    `maxPacketSize` and the emitted `("data", type, msg)` are unchanged, and a
    short trailing remainder is still copied into a pooled buffer so it cannot
    pin a multi-megabyte backing store until the peer speaks again. The parser is
-   moleculer's file, bundled verbatim into `@camstack/system/dist/index.js`, so
+   moleculer's file, bundled verbatim into `@dominevo/system/dist/index.js`, so
    the patch is the only place this repository can change it — and the spec that
    guards it requires the INSTALLED file, not a re-implementation, or it would
    pass while the bundle stayed quadratic.
@@ -132,10 +132,10 @@ level.
 
 ## Consequences
 
-- **Neither part ships with `camstack deploy`.** The patch is applied at
-  `npm ci` and bundled into `@camstack/system`; `gc-census.ts` and
-  `heap-watch.ts` are `@camstack/system` too. Both ride one published
-  `@camstack/server` closure (D16). Until that lands, hub-main keeps paying.
+- **Neither part ships with `dominevo deploy`.** The patch is applied at
+  `npm ci` and bundled into `@dominevo/system`; `gc-census.ts` and
+  `heap-watch.ts` are `@dominevo/system` too. Both ride one published
+  `@dominevo/server` closure (D16). Until that lands, hub-main keeps paying.
 - **The expected win is stated as a prediction, not a result.** In isolation the
   patch removes 514x/34x/18x of copying at three message-and-chunk shapes that
   bracket the hub's. If the external allocation falls with it, the major-GC rate

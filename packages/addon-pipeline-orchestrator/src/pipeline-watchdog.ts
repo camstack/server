@@ -6,7 +6,7 @@
  * the clock, logger, and recovery action are injected.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 export type WatchdogStage = 'audio' | 'motion' | 'detection'
 

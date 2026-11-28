@@ -55,7 +55,7 @@ import {
   toTimings,
   type IrNativeFormat,
   type IrPayload,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** The cap and method an infrared source's code goes out through. */
 const IR_TRANSMITTER_CAP = 'ir-transmitter'

@@ -15,8 +15,8 @@
  * call site already tolerated a missing api (`if (!api) continue` /
  * `if (!api) throw`), so this is not an observable behavior change.
  */
-import type { AddonApi, AgentLoadSummary, RunnerLocalLoad } from '@camstack/types'
-import { errMsg, type IScopedLogger, nodePin } from '@camstack/types'
+import type { AddonApi, AgentLoadSummary, RunnerLocalLoad } from '@dominevo/types'
+import { errMsg, type IScopedLogger, nodePin } from '@dominevo/types'
 import type { RunnerLoadAnswer } from './camera-sensors/motion-slice-gate.js'
 import { attributeDefaultPoolSessions } from './default-pool-attribution.js'
 import { type RunnerCensusEntry, raceBudget } from './dispatch-timing.js'

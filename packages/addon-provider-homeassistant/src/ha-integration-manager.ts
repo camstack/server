@@ -4,7 +4,7 @@ import {
   ERR_INVALID_AUTH,
   ERR_CANNOT_CONNECT,
 } from 'home-assistant-js-websocket'
-import { createEvent, errMsg, type IEventBus, type IScopedLogger } from '@camstack/types'
+import { createEvent, errMsg, type IEventBus, type IScopedLogger } from '@dominevo/types'
 import { randomUUID } from 'node:crypto'
 import { HaWsClient } from './ha-ws-client.js'
 import type { HaAuthConfig, HaEntityState, HaCompactUpdate } from './ha-types.js'
@@ -16,7 +16,7 @@ import { processEvent } from './ha-events.js'
  * multiplexer that routes downstream consumers via the typed event-bus.
  *
  * Subscription multiplexing:
- *   - Many CamStack consumers may call `broker.subscribe({filter})` on
+ *   - Many Dominevo consumers may call `broker.subscribe({filter})` on
  *     the same HA broker for overlapping entity sets. We keep ONE
  *     upstream `subscribe_entities` to HA with the UNION of every
  *     active subscription's entity ids, and fan inbound state changes

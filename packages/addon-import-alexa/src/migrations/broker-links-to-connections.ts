@@ -1,4 +1,4 @@
-import type { BrokerLinkPorts } from '@camstack/types'
+import type { BrokerLinkPorts } from '@dominevo/types'
 import { z } from 'zod'
 import { alexaBrokersEntryKind, alexaConnectionsEntryKind } from '../broker-record-kinds.js'
 import type { PositionalRecordsDoor } from './records-door.js'

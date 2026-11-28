@@ -14,7 +14,7 @@
  *     event is telemetry and may be dropped (D8/D11), so the backstop converges
  *     with no events at all.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { LocationRefresher } from '../addon/location-refresh.js'
 

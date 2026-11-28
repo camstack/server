@@ -221,7 +221,7 @@ describe('ReportData by identifier', () => {
 })
 
 describe('DeleteData hides from Alexa only', () => {
-  it('a deleted event disappears from the history; nothing in CamStack is touched', async () => {
+  it('a deleted event disappears from the history; nothing in Dominevo is touched', async () => {
     const { ctx } = context()
     const before = await report(ctx, { ...RANGE, maxResults: 10 })
     const victim = before.event.payload.data[0]!.eventIdentifier!

@@ -12,7 +12,7 @@
  * `retention-policy.spec.ts`, once.
  */
 
-import type { TrackCascadeCounts } from '@camstack/types'
+import type { TrackCascadeCounts } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { sweepTrackRetention } from '../track-retention-sweep.js'
 

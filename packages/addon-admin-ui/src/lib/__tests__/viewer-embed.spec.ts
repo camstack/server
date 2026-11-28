@@ -1,4 +1,4 @@
-import { resetHubMountForTests } from '@camstack/ui-library'
+import { resetHubMountForTests } from '@dominevo/ui-library'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { isEmbeddedByViewer, planViewerEmbed, VIEWER_EMBED_FLAG } from '../viewer-embed'
 import { buildNavSections } from '../nav-items'

@@ -8,7 +8,7 @@
  * Every read states a `limit` — the door's default row bound is 2 000 and an
  * unstated one would silently truncate (D58's cousin).
  */
-import type { DeviceHistoryKind } from '@camstack/types'
+import type { DeviceHistoryKind } from '@dominevo/types'
 import type { RawPoint, RollupRow } from '../rollup/rollup-math.js'
 import { rollupIsLegacy, scaledMagnitude } from './series-scale.js'
 import type { RollupTier } from '../time/bucket-time.js'

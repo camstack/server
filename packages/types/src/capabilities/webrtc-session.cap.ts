@@ -631,7 +631,7 @@ export const webrtcSessionCapability = {
       { kind: 'query' },
     ),
   },
-  /** BIG PLAN 2: declarative mount hint — read by `@camstack/server/system` `buildCapRouters`. */
+  /** BIG PLAN 2: declarative mount hint — read by `@dominevo/server/system` `buildCapRouters`. */
   mount: { kind: 'server-provided' },
   vocabulary: { noun: t('Live session', 'Sessione live'), order: 3340 },
 } as const satisfies CapabilityDefinition

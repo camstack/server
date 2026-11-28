@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import type { RecordingBand } from '@camstack/types'
+import type { RecordingBand } from '@dominevo/types'
 import { batteryFloorWithNoRecording } from '../recording-config-form'
 
 const band = (battery?: { min?: number; max?: number }): RecordingBand => ({

@@ -5,7 +5,7 @@
  * sessions it hands each accelerator within the pass so it cannot overshoot a
  * device's `maxSessions`.
  */
-import type { PipelineSchema, RunnerCameraConfig } from '@camstack/types'
+import type { PipelineSchema, RunnerCameraConfig } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import PipelineOrchestratorAddon from '../index.js'
 import {

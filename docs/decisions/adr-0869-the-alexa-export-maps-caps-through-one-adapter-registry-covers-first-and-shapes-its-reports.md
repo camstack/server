@@ -30,7 +30,7 @@ or a blind streaming its position became a stream of ChangeReports to Amazon.
 
 ## Decision
 
-**One adapter per CamStack cap** (`endpoints/adapters/<cap>.ts`), collected in
+**One adapter per Dominevo cap** (`endpoints/adapters/<cap>.ts`), collected in
 ONE registry (`adapters/index.ts`). An adapter declares, from the device's
 features, role and (when it asks) a slice read at discovery: the Alexa
 capabilities and display category (`describe`), the Alexa properties of a cap

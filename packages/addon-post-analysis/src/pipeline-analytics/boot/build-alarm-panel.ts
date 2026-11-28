@@ -5,8 +5,8 @@
  * dependency is read through the deps object.
  */
 
-import type { AddonContext } from '@camstack/types'
-import { DeclaredDevices, declarationOwnerNodeId, errMsg, seedInstanceOnce } from '@camstack/types'
+import type { AddonContext } from '@dominevo/types'
+import { DeclaredDevices, declarationOwnerNodeId, errMsg, seedInstanceOnce } from '@dominevo/types'
 import {
   NC_ALARM_DECLARATION,
   NC_INTEGRATION_NAME,

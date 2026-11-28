@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { Bell, Footprints } from 'lucide-react'
 import { CameraEventsTab } from '../../cameras/tabs/CameraEventsTab'
 import { TracksTab } from './TracksTab'
-import { Button } from '@camstack/ui-library'
+import { Button } from '@dominevo/ui-library'
 
 interface EventsAndTrailsTabProps {
   /** Numeric device handle — passed verbatim to every downstream tab. */

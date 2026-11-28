@@ -9,7 +9,7 @@
  * before electing, and any attach whose elected device cannot run a gated-on
  * root is refused, named, and left pending.
  */
-import type { PipelineSchema } from '@camstack/types'
+import type { PipelineSchema } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import PipelineOrchestratorAddon from '../index.js'
 import type { PendingReason } from '../placement-ledger.js'

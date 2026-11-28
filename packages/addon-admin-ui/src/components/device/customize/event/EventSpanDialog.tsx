@@ -11,7 +11,7 @@ import {
   type LevelSample,
   type SpanCompiled,
   stepSpan,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   Button,
   Dialog,
@@ -21,7 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
   useDeviceManagerListAll,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useLiveValue } from '../assignments/use-live-value'

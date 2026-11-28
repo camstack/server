@@ -7,7 +7,7 @@ import {
   deviceAdminLinkCapability,
   type InferNativeProvider,
   rebootCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { reolinkHubSessions } from './reolink-hub-session.js'
 

@@ -4,7 +4,7 @@
  * device is created naked; everything else attaches through Customize.
  */
 import { useCreateComposition } from '../../lib/create-composition'
-import { DeviceType, type HelperMember } from '@camstack/types'
+import { DeviceType, type HelperMember } from '@dominevo/types'
 import {
   Button,
   deviceTypeMetaOf,
@@ -13,7 +13,7 @@ import {
   useDeviceManagerListPersistedByAddon,
   useDeviceManagerSetName,
   useUiText,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { type ReactNode, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'

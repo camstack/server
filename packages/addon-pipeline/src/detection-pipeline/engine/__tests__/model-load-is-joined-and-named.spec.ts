@@ -17,7 +17,7 @@
  *     instead of walking toward the 254-slot ceiling.
  */
 import { describe, expect, it, vi } from 'vitest'
-import type { IScopedLogger, PipelineDefaultStep, PoolModelConfig } from '@camstack/types'
+import type { IScopedLogger, PipelineDefaultStep, PoolModelConfig } from '@dominevo/types'
 import { PipelineModelManager, type PoolModelSource } from '../pipeline-model-manager.js'
 import { SharedInferencePool } from '../shared-inference-pool.js'
 

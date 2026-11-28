@@ -143,11 +143,11 @@ only which pool of the same executor that key selects. The native child re-cut
   compared with `maxSessions`, and the balancer counts the same thing. Jumped
   detail work appears in neither count.
 - `RunnerInferenceDeviceSchema` gains an optional `steps`. That is a
-  `@camstack/types` change. The attach is an addon→addon call, and its input
+  `@dominevo/types` change. The attach is an addon→addon call, and its input
   is parsed in the process that OWNS the method — the runner's — with the
-  `@camstack/types` that process resolves (`child-addon-call-dispatch.ts`,
+  `@dominevo/types` that process resolves (`child-addon-call-dispatch.ts`,
   "validation happens HERE"; the hub's registered copy of a forked catalog
-  carries no schemas). The addon declares `@camstack/types` as a peer
+  carries no schemas). The addon declares `@dominevo/types` as a peer
   dependency, so that is the RUNNER NODE's closure — never the hub's. `steps`
   therefore survives whenever the runner node is new, whatever the hub runs;
   only the tRPC layer parses with the hub closure's types. A runner whose node

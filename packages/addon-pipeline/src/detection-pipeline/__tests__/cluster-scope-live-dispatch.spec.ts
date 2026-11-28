@@ -13,7 +13,7 @@
  * specifically — a stub catalog would pass whatever the stub declared.
  */
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_CLUSTER_STEP_MODELS } from '@camstack/types'
+import { DEFAULT_CLUSTER_STEP_MODELS } from '@dominevo/types'
 import { resolveInputSteps } from '../step-resolution.js'
 import { getStepDefinition } from '../registry/step-definitions.js'
 

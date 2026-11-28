@@ -75,7 +75,7 @@ of the registry it derives from, discarded whole on every mutation of it and
 never maintained in place.** Concretely:
 
 1. **The mesh parser accumulates without copying.** `patches/moleculer+0.15.0.patch`
-   replaces `Parser._write`'s accumulator with the same shape CamStack already
+   replaces `Parser._write`'s accumulator with the same shape Dominevo already
    applied to its own UDS `FrameDecoder`: pending chunks in an array, one
    `Buffer.concat` when a whole packet is available, **none at all while one is
    still incomplete**, and the 6-byte header read across the chunk boundary
@@ -103,12 +103,12 @@ never maintained in place.** Concretely:
    reverting.
 
 3. **The patch ships because the parser is BUNDLED.** `moleculer` is inlined
-   into `@camstack/system/dist/index.js` at build time (the profile's own
+   into `@dominevo/system/dist/index.js` at build time (the profile's own
    frame, `dist/index.js:78909`), so the patch — applied by `postinstall`
    wherever the artifact is built — is part of the published closure. It is not
    a runtime dependency on the hub and there is no `patches/` directory there.
    That also means the usual framework rule applies: this is **not live until a
-   `@camstack/server` containing it is installed**.
+   `@dominevo/server` containing it is installed**.
 
 4. **The index is discarded, never maintained.** `buildCapChildIndex`
    (`cap-child-index.ts`) is a pure function of the children it is handed; it

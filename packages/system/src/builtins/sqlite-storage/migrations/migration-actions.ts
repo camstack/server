@@ -4,7 +4,7 @@
  * route. `auth: 'admin'`, a mutation.
  */
 import { z } from 'zod'
-import { customAction, defineCustomActions, type CustomActionsSpec } from '@camstack/types'
+import { customAction, defineCustomActions, type CustomActionsSpec } from '@dominevo/types'
 
 export const retryMigrationInput: z.ZodObject<{ id: z.ZodString }> = z.object({
   id: z.string().min(1),

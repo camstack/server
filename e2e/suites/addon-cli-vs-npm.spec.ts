@@ -4,7 +4,7 @@
  * Exercises the two distinct install codepaths on the hub:
  *
  *   • CLI  = POST .tgz to /api/addons/upload (the wire format
- *            `camstack deploy` produces).
+ *            `dominevo deploy` produces).
  *   • npm  = tRPC `addons.installPackage` → AddonInstaller runs
  *            `npm install --registry $CAMSTACK_NPM_REGISTRY`.
  *
@@ -44,7 +44,7 @@ const REPO_PACKAGES_DIR = resolve(fileURLToPath(import.meta.url), '..', '..', '.
 const E2E_LIVE = process.env['CAMSTACK_E2E_LIVE'] === '1'
 const desc = E2E_LIVE ? describe : describe.skip
 
-const PACKAGE_NAME = '@camstack/e2e-fixture-noop'
+const PACKAGE_NAME = '@dominevo/e2e-fixture-noop'
 const HUB_PORT = 4546
 const VERDACCIO_PORT = 4882
 
@@ -199,7 +199,7 @@ desc('addon CLI-vs-npm — scenarios 1+3', () => {
   it('scenario 3: npm install v1.0.0, then CLI upload v2.0.0 → CLI wins', async () => {
     if (!state) throw new Error('suite state not initialised')
 
-    // Step 1 — npm install via tRPC (resolves @camstack/e2e-fixture-noop
+    // Step 1 — npm install via tRPC (resolves @dominevo/e2e-fixture-noop
     // against verdaccio, finds 1.0.0 since that's the only published version).
     await trpcMutation(
       state.client.port,
@@ -212,7 +212,7 @@ desc('addon CLI-vs-npm — scenarios 1+3', () => {
     expect(readInstalledVersion(state.hub.dataDir, PACKAGE_NAME)).toBe('1.0.0')
 
     // Step 2 — CLI deploy v2.0.0 via tarball upload (the wire format
-    // `camstack deploy` produces). Hub should swap v1 for v2 in-place.
+    // `dominevo deploy` produces). Hub should swap v1 for v2 in-place.
     const tgz = packAddon(state.v2.dir)
     const res = await uploadTarball(state.hub.port, state.client.token, tgz)
     expect(res.status, `upload body: ${res.body.slice(0, 300)}`).toBeLessThan(400)

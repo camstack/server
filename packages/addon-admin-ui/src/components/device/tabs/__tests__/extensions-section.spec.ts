@@ -1,4 +1,4 @@
-import { type ConfigSectionWithValues, DeviceType } from '@camstack/types'
+import { type ConfigSectionWithValues, DeviceType } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { isExtensionsPanelSection, showReadOnlyExtensionsInConfig } from '../extensions-section'
 

@@ -166,7 +166,7 @@ justified by any measured cost.** Per alternative, with this fleet's numbers:
 - **Shorter GOP** (camera-side I-frame interval on the substream, 4 s → 1–2 s):
   finer jump granularity and cheaper paused-precision (fewer delta frames to
   decode to reach an instant). Costs ~+20–40 % on `low` bitrate (still
-  negligible), zero migration (applies to new footage), zero CamStack code.
+  negligible), zero migration (applies to new footage), zero Dominevo code.
   Worth doing AFTER the SSD move if paused stepping still feels coarse; it
   does nothing for the current latency, which is I/O-bound, not decode-bound.
 - **Shorter segments** — rejected: more files and more metadata churn on the
@@ -232,7 +232,7 @@ comes back. Of everything above:
 
 ## 8. Measurement appendix (repro)
 
-- Drag census: `docker logs CamStack | grep scrub-feeder:drag-end` — fields
+- Drag census: `docker logs Dominevo | grep scrub-feeder:drag-end` — fields
   per D69. Seek: `recorded:seek-ready` (+ `recorded:seek-audio-dropped`,
   `recorded:play-census`, `recorded:play-stall` since).
 - Read-path bench: `scrub-read-bench.mjs` (session scratchpad) — locate +

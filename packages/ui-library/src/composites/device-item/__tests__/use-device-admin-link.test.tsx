@@ -7,7 +7,7 @@
 // "broken" about a device that is fine (D62). The positive case is one test;
 // the rest are the four gates and the two things the anchor must carry.
 import { act, renderHook } from '@testing-library/react'
-import type { DeviceAdminLink } from '@camstack/types'
+import type { DeviceAdminLink } from '@dominevo/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { UseDeviceProxyTrpc } from '../../../hooks/use-device-proxy'
 import { useDeviceAdminLink } from '../use-device-admin-link'

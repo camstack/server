@@ -8,7 +8,7 @@
  *
  * WHY THIS EXISTS (2026-08-26): `generate-api-types.ts` unsets `baseUrl` on
  * the throwaway ts-morph Project specifically so TypeScript's specifier
- * printer falls back to the package-name form (`@camstack/types`) instead of
+ * printer falls back to the package-name form (`@dominevo/types`) instead of
  * a path relative to `baseUrl`. That is the primary fix — see the comment on
  * `expandCoreRouters`'s `Project` construction. This function is the
  * defensive backstop: it normalizes BOTH the absolute-path form (leading
@@ -25,14 +25,14 @@
 export function cleanupExpandedRouterType(typeText: string, root: string): string {
   return (
     typeText
-      .replace(/import\("(?:\/[^"]*\/)?packages\/types\/[^"]*"\)/g, 'import("@camstack/types")')
-      .replace(/import\("(?:\/[^"]*\/)?packages\/core\/[^"]*"\)/g, 'import("@camstack/types")')
-      .replace(/import\("(?:\/[^"]*\/)?packages\/kernel\/[^"]*"\)/g, 'import("@camstack/types")')
-      .replace(/import\("(?:\/[^"]*\/)?server\/backend\/[^"]*"\)/g, 'import("@camstack/types")')
-      .replace(/import\("@camstack\/core[^"]*"\)/g, 'import("@camstack/types")')
-      .replace(/import\("@camstack\/kernel[^"]*"\)/g, 'import("@camstack/types")')
-      .replace(/import\("@camstack\/system[^"]*"\)/g, 'import("@camstack/types")')
-      .replace(/import\("@camstack\/types\/[^"]*"\)/g, 'import("@camstack/types")')
+      .replace(/import\("(?:\/[^"]*\/)?packages\/types\/[^"]*"\)/g, 'import("@dominevo/types")')
+      .replace(/import\("(?:\/[^"]*\/)?packages\/core\/[^"]*"\)/g, 'import("@dominevo/types")')
+      .replace(/import\("(?:\/[^"]*\/)?packages\/kernel\/[^"]*"\)/g, 'import("@dominevo/types")')
+      .replace(/import\("(?:\/[^"]*\/)?server\/backend\/[^"]*"\)/g, 'import("@dominevo/types")')
+      .replace(/import\("@dominevo\/core[^"]*"\)/g, 'import("@dominevo/types")')
+      .replace(/import\("@dominevo\/kernel[^"]*"\)/g, 'import("@dominevo/types")')
+      .replace(/import\("@dominevo\/system[^"]*"\)/g, 'import("@dominevo/types")')
+      .replace(/import\("@dominevo\/types\/[^"]*"\)/g, 'import("@dominevo/types")')
       .replace(
         new RegExp(`import\\("${root.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}/node_modules/`, 'g'),
         'import("',
@@ -42,10 +42,10 @@ export function cleanupExpandedRouterType(typeText: string, root: string): strin
         'import("@trpc/server/unstable-core-do-not-import")',
       )
       .replace(/import\("[^"]*trpc\.context[^"]*"\)\.\w+/g, 'any')
-      .replace(/import\("\.\.[^"]*"\)/g, 'import("@camstack/types")')
-      .replace(/import\("\.[^"]*"\)/g, 'import("@camstack/types")')
+      .replace(/import\("\.\.[^"]*"\)/g, 'import("@dominevo/types")')
+      .replace(/import\("\.[^"]*"\)/g, 'import("@dominevo/types")')
       .replace(/nodeId: unknown/g, 'nodeId?: string | undefined')
       // The server-side error shape maps to the LOCAL structural declaration.
-      .replace(/import\("@camstack\/types"\)\.AugmentedErrorShape/g, 'AugmentedErrorShape')
+      .replace(/import\("@dominevo\/types"\)\.AugmentedErrorShape/g, 'AugmentedErrorShape')
   )
 }

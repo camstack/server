@@ -6,7 +6,7 @@
  * client, and `RecordingLogger` implements `IScopedLogger` so the tests can
  * assert on the lines a DROP branch is required to emit.
  */
-import type { IScopedLogger, LogExtras } from '@camstack/types'
+import type { IScopedLogger, LogExtras } from '@dominevo/types'
 
 import type { DeviceGateway } from '../device-gateway.js'
 import type { GooglePrincipal } from '../google-home/cap-dispatch.js'

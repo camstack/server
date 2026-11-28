@@ -1,4 +1,4 @@
-import type { EngineOutput, IInferenceEngine, InferenceInput } from '@camstack/types'
+import type { EngineOutput, IInferenceEngine, InferenceInput } from '@dominevo/types'
 import { vi } from 'vitest'
 import { makeEngineOutput } from './engine-output.js'
 

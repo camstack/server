@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { MeshNode, MeshTopology } from '@camstack/types'
+import type { MeshNode, MeshTopology } from '@dominevo/types'
 import { layoutMesh, meshEdges } from '../mesh-map-model'
 
 const node = (nodeKey: string, role: MeshNode['role']): MeshNode => ({

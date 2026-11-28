@@ -8,14 +8,14 @@
  * `resolveEffectiveStepModel` the matrix cell uses, or every seed looks idle
  * and Remove stays enabled on models the fleet is running.
  */
-import { acceleratorShortLabel } from '@camstack/ui-library'
-import type { DeviceStepConfig, NodeInferenceDevice } from '@camstack/types'
+import { acceleratorShortLabel } from '@dominevo/ui-library'
+import type { DeviceStepConfig, NodeInferenceDevice } from '@dominevo/types'
 import {
   clusterModelSettingKey,
   isClusterScopedStep,
   type ClusterStepModels,
-} from '@camstack/types'
-import { resolveEffectiveStepModel, stepHasModelForFormat } from '@camstack/ui-library'
+} from '@dominevo/types'
+import { resolveEffectiveStepModel, stepHasModelForFormat } from '@dominevo/ui-library'
 
 /** Minimal per-step catalog for effective-model resolution (from getSchema). */
 export interface StepCatalogForActive {

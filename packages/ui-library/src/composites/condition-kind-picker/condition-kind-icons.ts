@@ -1,4 +1,4 @@
-import type { AutomationLeafKind } from '@camstack/types'
+import type { AutomationLeafKind } from '@dominevo/types'
 import {
   Activity,
   Bell,

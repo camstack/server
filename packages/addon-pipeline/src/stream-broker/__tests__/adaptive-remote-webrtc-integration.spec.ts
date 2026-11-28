@@ -35,8 +35,8 @@ import type {
   EncodedPacket,
   IScopedLogger,
   Unsubscribe,
-} from '@camstack/types'
-import { nodePin } from '@camstack/types'
+} from '@dominevo/types'
+import { nodePin } from '@dominevo/types'
 import { StreamBrokerManager } from '../stream-broker/stream-broker-manager.js'
 import { WebrtcSessionProvider } from '../device-scoped-providers.js'
 import { BrokerWebrtcServer } from '../webrtc/broker-webrtc-server.js'

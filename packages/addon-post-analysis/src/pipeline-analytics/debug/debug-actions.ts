@@ -2,15 +2,15 @@
  * The `debug.*` bridge — the Events → Debug tab's whole read surface.
  *
  * These are **custom actions**, not capability methods, deliberately. A cap
- * method is a cluster-wide contract: it needs codegen, a `@camstack/server/system`
+ * method is a cluster-wide contract: it needs codegen, a `@dominevo/server/system`
  * force-publish and a release train before the UI can call it, and every node
  * carries the router whether or not it will ever answer. This tab is a hub-local
  * diagnostic over a store the hub already owns — nothing else in the cluster
  * consumes it — so it rides `addons.custom` and ships with a single
- * `camstack deploy`.
+ * `dominevo deploy`.
  *
  * The addonId to call these with is the MANIFEST id, `pipeline-analytics`, never
- * the npm package name `@camstack/addon-post-analysis`. The dispatcher's
+ * the npm package name `@dominevo/addon-post-analysis`. The dispatcher's
  * not-found message says so out loud because the confusion has already cost this
  * repo an afternoon.
  *
@@ -27,7 +27,7 @@
  * action is resolved, so `z.void()` yields an action that can never be called.
  */
 
-import { customAction, defineCustomActions } from '@camstack/types'
+import { customAction, defineCustomActions } from '@dominevo/types'
 import { z } from 'zod'
 import { MEDIA_PROVENANCES } from '../store/media-store.js'
 import { CENSUS_MAX_WINDOW_MS } from '../store/read-census.js'
@@ -145,7 +145,7 @@ const AnalyzeOutputSchema = z.object({
  *
  * A custom action for the same reason the rest of this file is one: it is a
  * hub-local read over a store the hub already owns, and it ships with a single
- * `camstack deploy` instead of a release train. When a chart exists and needs
+ * `dominevo deploy` instead of a release train. When a chart exists and needs
  * this cluster-wide, promoting it to a cap method is a separate decision made
  * once — not something to pre-pay for now.
  *
@@ -247,7 +247,7 @@ const StoreCensusOutputSchema = z.object({
  *
  * Read-only, hub-local, and a custom action rather than a cap method for the
  * same reason as everything else in this file: no codegen, no publish train,
- * one `camstack deploy`.
+ * one `dominevo deploy`.
  */
 const StationaryInputSchema = z.object({
   /** Empty or absent means every camera holding an entry or a candidate. */

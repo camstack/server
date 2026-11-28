@@ -17,7 +17,7 @@ import {
   type ActionStep,
   ActionStepSchema,
   type ActionVariable,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { isVarRef } from '../flow/command-vocab'
 
 export interface ActionDraft {

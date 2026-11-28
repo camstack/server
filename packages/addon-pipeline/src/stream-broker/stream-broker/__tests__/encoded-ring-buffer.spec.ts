@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { EncodedPacket } from '@camstack/types'
+import type { EncodedPacket } from '@dominevo/types'
 import { EncodedRingBuffer } from '../encoded-ring-buffer.js'
 
 function vpkt(pts: number, keyframe = false): EncodedPacket {

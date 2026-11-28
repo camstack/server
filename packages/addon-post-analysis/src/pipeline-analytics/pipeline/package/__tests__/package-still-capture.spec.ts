@@ -3,7 +3,7 @@
  * must reach the notification centre WITH a still — device 615 shipped
  * `dropped: ["still", "gif"]` for want of one.
  */
-import type { FrameHandle, ObjectEvent } from '@camstack/types'
+import type { FrameHandle, ObjectEvent } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { createNoopLogger } from '../../../../embedding-encoder/shared/noop-logger.js'
 import { PACKAGE_DROP_DEFAULTS } from '../../../package-settings.js'

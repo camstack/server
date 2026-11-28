@@ -2,14 +2,14 @@
  * Residue quarantine for the ONE addon root.
  *
  * ── The bug class this closes ──────────────────────────────────────────────
- * `<dataDir>/addons/@camstack/<pkg>` is the only directory a node loads addons
+ * `<dataDir>/addons/@dominevo/<pkg>` is the only directory a node loads addons
  * from. Renaming a package inside it does NOT archive it — the directory name
  * is decoration, and three independent consumers key on the `package.json`
  * they find inside:
  *
  *   - `AddonLoader.loadFromDirectory` walks `@scope/*` and loads anything with
  *     a `package.json`; its skip list is keyed on the PACKAGE name, so
- *     `@camstack/system.bak-pre-unshadow` was never skipped;
+ *     `@dominevo/system.bak-pre-unshadow` was never skipped;
  *   - the agent's `resolveAddonPackageDirs` scans on the same rule;
  *   - `AddonManifest.reconcileFromDisk` does `onDisk.set(pkgJson.name, …)`,
  *     so the backup's version becomes the version the manifest — and every
@@ -17,13 +17,13 @@
  *
  * Measured 2026-08-07/08 on the live cluster:
  *
- *   agent-a  `@camstack/system.bak-pre-unshadow` — no package.json left,
+ *   agent-a  `@dominevo/system.bak-pre-unshadow` — no package.json left,
  *                  so not loadable, but the agent main process held five live
  *                  mappings of `better_sqlite3.node` out of it (D87).
- *   macmini        `@camstack/system.bak-pre-1272-1786129145` — still declares
- *                  `@camstack/system@1.2.3` (17 days old, 97 MB). The data root
- *                  has NO `addons/@camstack/system` directory at all, yet the
- *                  manifest reports `@camstack/system 1.2.3` — read straight
+ *   macmini        `@dominevo/system.bak-pre-1272-1786129145` — still declares
+ *                  `@dominevo/system@1.2.3` (17 days old, 97 MB). The data root
+ *                  has NO `addons/@dominevo/system` directory at all, yet the
+ *                  manifest reports `@dominevo/system 1.2.3` — read straight
  *                  out of the backup. The live process still had the backup's
  *                  `better_sqlite3.node` mapped `txt` against a 1.2.61 closure.
  *
@@ -75,7 +75,7 @@ function isReservedDir(dirName: string): boolean {
   return dirName.startsWith('.') || dirName === 'node_modules'
 }
 
-/** `@camstack/server/system` → `system`; `foo` → `foo`. */
+/** `@dominevo/server/system` → `system`; `foo` → `foo`. */
 function packageDirName(declaredName: string): string {
   const slash = declaredName.lastIndexOf('/')
   return slash === -1 ? declaredName : declaredName.slice(slash + 1)

@@ -3,8 +3,8 @@
  * what a failed or empty read is allowed to do. What a settle MEANS is pinned
  * in `derived-features.spec.ts` (the addon end to end) and in the types spec.
  */
-import type { DeviceBindingEntry, IEventBus, IScopedLogger, SystemEvent } from '@camstack/types'
-import { EventCategory } from '@camstack/types'
+import type { DeviceBindingEntry, IEventBus, IScopedLogger, SystemEvent } from '@dominevo/types'
+import { EventCategory } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { FeatureDeriver, subscribeFeatureDeriver } from '../feature-deriver.js'
 

@@ -12,7 +12,7 @@ import {
   type DeviceContext,
   type InferNativeProvider,
   type StateRefreshPolicy,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** How often the core reads the CCU's WatchDog system variables. */
 export const HOMEMATIC_GATEWAY_REFRESH_MS = 30_000

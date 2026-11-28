@@ -306,10 +306,10 @@ but it is an undeclared coupling, not an invariant.
 
 ### 5.3 Version skew: the schema that validates is the HUB's
 
-The live router compiles the inputs from the `@camstack/types` **installed on the hub**
+The live router compiles the inputs from the `@dominevo/types` **installed on the hub**
 (`ALL_CAPABILITY_DEFINITIONS` from the dist). A field added to a `*.cap.ts` and
 shipped with the addon does not exist for the hub's validator until a
-`@camstack/server` containing it arrives. The comment in
+`@dominevo/server` containing it arrives. The comment in
 `face-gallery.cap.ts`:120-126 says so at length and is correct: *«the hub router
 validates cap inputs against its own compiled Zod and strips a key it does not
 know»*.
@@ -426,7 +426,7 @@ cap it claims to serve.*
   `generated-cap-routers.ts` was stale?** The file was stale from the change to
   `face-gallery.cap.ts` until a later regeneration. Either CI did not run on those
   commits, or the regenerator produces different output in CI than locally
-  (`--check` depends on a fresh `@camstack/types` dist — see
+  (`--check` depends on a fresh `@dominevo/types` dist — see
   `findUnusableFrameworkDists` in `scripts/codegen.ts`). This has to be established
   before adding a second guard that would cover the same ground.
 - A test that **does** have value, rewritten: for every cap def, the **runtime** router

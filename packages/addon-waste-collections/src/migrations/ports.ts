@@ -4,7 +4,7 @@ import {
   RecordSecretUnavailableError,
   resolveSecretMarkers,
   type StoredKeyRead,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { plainWasteSourceKind, WasteSourceBody } from '../waste-source-record-kinds.js'
 import type { wasteSourceEntryKind } from '../waste-source-record-kinds.js'
 import { bodyOf, rowToSource } from '../waste-source-store.js'

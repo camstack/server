@@ -14,7 +14,7 @@
  * The addon declares no `execution.group`, so the hub owner stamp is the addon
  * id (`recorder`).
  */
-import { defineRecordKinds, ExportRecordSchema, OpsLogEntrySchema } from '@camstack/types'
+import { defineRecordKinds, ExportRecordSchema, OpsLogEntrySchema } from '@dominevo/types'
 
 export const recorderRecordKinds = defineRecordKinds({
   /**

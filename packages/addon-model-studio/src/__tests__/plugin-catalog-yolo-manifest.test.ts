@@ -161,7 +161,7 @@ describe('PLUGIN_CATALOG_YOLO_MANIFEST — verified input and preprocess', () =>
    * 320×320. Output layout [1,7,2100] + labels person/vehicle/animal +
    * cxcywh parse are verified. plugin catalog default preprocess is RGB
    * resize/stretch to square; `settings.pad` is opt-in and not equivalent
-   * to CamStack letterbox — this catalog must stay on `resize`.
+   * to Dominevo letterbox — this catalog must stay on `resize`.
    */
   it('declares inputSize 320x320 on every one of the 34 entries', () => {
     expect(PLUGIN_CATALOG_YOLO_MANIFEST).toHaveLength(34)

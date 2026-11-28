@@ -1,7 +1,7 @@
 /**
  * The camera's own clips carry OUR detections (D923): the `videoclips`
  * provider this addon registers is wrapped by `withClipEventLabels`, fed from
- * this addon's own `ctx.api`. The join itself is proved in `@camstack/types`
+ * this addon's own `ctx.api`. The join itself is proved in `@dominevo/types`
  * (`clip-event-labels.spec.ts`); this proves it is WIRED — a helper nobody
  * registers labels nothing.
  */

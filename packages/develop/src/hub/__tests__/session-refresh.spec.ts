@@ -119,13 +119,13 @@ describe('session refresh', () => {
     expect(seen).toHaveLength(1)
   })
 
-  it('a refusal says to run camstack login', async () => {
+  it('a refusal says to run dominevo login', async () => {
     session(NOW - 1000)
     const err = await resolveFreshCredentials(inputs(async () => refused())).catch(
       (e: unknown) => e,
     )
     expect(err).toBeInstanceOf(MissingCredentialsError)
-    expect(err instanceof Error ? err.message : '').toContain('camstack login')
+    expect(err instanceof Error ? err.message : '').toContain('dominevo login')
   })
 
   it('an expired session without a refresh token asks for a login, with no network call', async () => {

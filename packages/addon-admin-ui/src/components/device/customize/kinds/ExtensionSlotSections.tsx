@@ -7,7 +7,7 @@
  * type named in a tab. A slot's rows are a hook: the Customize table calls it
  * once for the devices that host the slot and renders the lines it returns.
  */
-import type { DeviceInfo, ExtensionSlotId } from '@camstack/types'
+import type { DeviceInfo, ExtensionSlotId } from '@dominevo/types'
 import { hostsLinkedDevices, type LinkedDevicesState, useLinkedDevices } from './LinkedDevicesRows'
 
 export interface ExtensionSlotRows {

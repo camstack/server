@@ -1,4 +1,4 @@
-import type { BrokerLinkPorts, CalendarRecordPorts } from '@camstack/types'
+import type { BrokerLinkPorts, CalendarRecordPorts } from '@dominevo/types'
 import type { HaNotifyPorts } from '../migrations/notify-targets-to-body.js'
 
 /** Link ports over nothing: for a spec that runs the catalogue without exercising the link migration. */

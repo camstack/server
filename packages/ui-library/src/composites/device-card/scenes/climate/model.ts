@@ -1,4 +1,4 @@
-import type { ClimateAction } from '@camstack/types'
+import type { ClimateAction } from '@dominevo/types'
 import type { ClimateAmbientActivity } from '../../illustrations/AmbientFx'
 import type { ClimateRole } from '../../illustrations/ClimateRoleGlyph'
 import type { MenuOption } from '../../parts/MenuButton'

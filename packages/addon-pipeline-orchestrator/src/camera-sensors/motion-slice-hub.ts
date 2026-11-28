@@ -5,7 +5,7 @@
  * file, from its slice-writer rule — so a second motion-slice write anywhere
  * else, the bootstrap included, is refused by path:line.
  */
-import { type AddonApi, errMsg, type MotionStatus } from '@camstack/types'
+import { type AddonApi, errMsg, type MotionStatus } from '@dominevo/types'
 import type { MotionSliceRead } from './motion-slice.js'
 
 /** The slice reads and writes `CameraMotionSlice` needs, over the hub. */

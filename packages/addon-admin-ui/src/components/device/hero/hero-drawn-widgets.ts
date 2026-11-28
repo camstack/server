@@ -1,4 +1,4 @@
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 
 /**
  * Hero widgets a type's own hero card already draws, so the page does not

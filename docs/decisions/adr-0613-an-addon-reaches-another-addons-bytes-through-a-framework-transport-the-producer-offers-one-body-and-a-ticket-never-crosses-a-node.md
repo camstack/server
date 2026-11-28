@@ -142,7 +142,7 @@ is worse than an honest refusal.
   equal, because a later "unification" would silently restore the refusal this
   record exists to remove.
 - **A provider that has not been redeployed answers `NOT_IMPLEMENTED`**, and the
-  engine falls back to the inline read — NAMED, with `hint: camstack deploy
+  engine falls back to the inline read — NAMED, with `hint: dominevo deploy
   <provider>` and the inline bound on the line. That fallback re-imposes 50 MiB,
   so an operator seeing `too-large-to-transfer` after this ships is looking at a
   stale addon rather than a clip that cannot be exported. With no inline read
@@ -167,9 +167,9 @@ is worse than an honest refusal.
   to be. What they SHOULD give up, if anyone touches them, is their private
   copies of the token/TTL/sweep/bound machinery — that part is now the
   framework's and duplicating it a third time is the thing this record forbids.
-- `packages/types` and `packages/system` ride inside the `@camstack/server`
+- `packages/types` and `packages/system` ride inside the `@dominevo/server`
   closure, so this needs a **publish + `applyServerUpdate`**, not a
-  `camstack deploy`. After the server update, deploy `provider-hikvision`,
+  `dominevo deploy`. After the server update, deploy `provider-hikvision`,
   `provider-reolink` and `addon-pipeline` — in that order, so the recorder's
   preference finds providers that can answer it and the named fallback is a
   short window rather than the steady state.
@@ -247,7 +247,7 @@ the streamed path (1).
 
 `packages/types/src/__tests__/videoclips-read-clip-bytes.spec.ts` — the type
 invariants are pinned **in `packages/types`, where the import IS the source**.
-A gate written in an addon package resolves `@camstack/types` to the BUILT
+A gate written in an addon package resolves `@dominevo/types` to the BUILT
 package, so editing the source leaves it green and the gate is worthless. The
 offer bound being its own number (1 red), a ticket naming its minting node (1),
 `declaredBytes` required so unknown is `null` and never absent (1).

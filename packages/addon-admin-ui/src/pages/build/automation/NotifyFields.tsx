@@ -4,8 +4,8 @@
  * Both may carry `{{vars.x}}` slots, filled from the run's variables.
  */
 
-import type { AutomationNotifyStep } from '@camstack/types'
-import { Input, Select, Skeleton, Textarea } from '@camstack/ui-library'
+import type { AutomationNotifyStep } from '@dominevo/types'
+import { Input, Select, Skeleton, Textarea } from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 import { useNotificationTargets } from '../../system/use-notification-targets'
 import { PickerLabel } from './FieldPicker'

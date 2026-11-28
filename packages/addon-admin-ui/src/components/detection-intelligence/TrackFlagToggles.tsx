@@ -26,7 +26,7 @@
  */
 import { useState, type JSX } from 'react'
 import { GraduationCap, Bug, Star } from 'lucide-react'
-import { useAlert, Button } from '@camstack/ui-library'
+import { useAlert, Button } from '@dominevo/ui-library'
 import {
   TRACK_FLAGS_AVAILABLE,
   TRACK_FLAGS_UNAVAILABLE_TITLE,

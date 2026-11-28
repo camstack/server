@@ -1,11 +1,11 @@
 # Contributing
 
 Pull requests are accepted. GitHub Issues and Discussions are open on
-[camstack/server](https://github.com/camstack/server).
+[camstack/server](https://github.com/dominevo/server).
 
 A vulnerability is not an issue. Report it as [SECURITY.md](SECURITY.md)
 describes. Questions belong in
-[Discussions](https://github.com/camstack/server/discussions).
+[Discussions](https://github.com/dominevo/server/discussions).
 
 User guides: <https://camstack-docs.zentik.app>
 
@@ -47,18 +47,18 @@ name where the text should name the mechanism. Run the guard you touched
 (`npx tsx scripts/check-<name>.ts`). Do not put secrets, house addresses, or
 camera media in a commit, an issue, or a pull request.
 
-## Extending CamStack with the developer MCP
+## Extending Dominevo with the developer MCP
 
 Two MCP servers exist. They are not the same package.
 
-### Plugin authors — `@camstack/develop` and `@camstack/mcp-develop`
+### Plugin authors — `@dominevo/develop` and `@dominevo/mcp-develop`
 
-`@camstack/develop` is the catalogue, scaffold, and validator. The CLI is
-`camstack develop` (from `@camstack/cli` in this repository). The same
-operations are the MCP server `@camstack/mcp-develop`:
+`@dominevo/develop` is the catalogue, scaffold, and validator. The CLI is
+`dominevo develop` (from `@dominevo/cli` in this repository). The same
+operations are the MCP server `@dominevo/mcp-develop`:
 
 ```bash
-npx @camstack/mcp-develop
+npx @dominevo/mcp-develop
 ```
 
 ```json
@@ -66,38 +66,38 @@ npx @camstack/mcp-develop
   "mcpServers": {
     "camstack-develop": {
       "command": "npx",
-      "args": ["@camstack/mcp-develop"]
+      "args": ["@dominevo/mcp-develop"]
     }
   }
 }
 ```
 
-`camstack develop` only runs inside a checkout of this repository. It walks
+`dominevo develop` only runs inside a checkout of this repository. It walks
 up to a workspace whose `package.json` lists `packages/*`. These commands
 are the ones the CLI actually implements:
 
 ```bash
-camstack develop list-addons
-camstack develop list-caps
-camstack develop who-provides <cap>
-camstack develop examples
-camstack develop find-example <query>
-camstack develop scaffold addon <name> --kind empty|provider|notifier|osd|post-analysis
-camstack develop scaffold cap <name> --scope system|device --mode singleton|collection
-camstack develop extend <addon> --entry <id>
-camstack develop validate [addon]
-camstack develop skills
-camstack develop skill <id>
+dominevo develop list-addons
+dominevo develop list-caps
+dominevo develop who-provides <cap>
+dominevo develop examples
+dominevo develop find-example <query>
+dominevo develop scaffold addon <name> --kind empty|provider|notifier|osd|post-analysis
+dominevo develop scaffold cap <name> --scope system|device --mode singleton|collection
+dominevo develop extend <addon> --entry <id>
+dominevo develop validate [addon]
+dominevo develop skills
+dominevo develop skill <id>
 ```
 
 `scaffold addon` writes `packages/addon-<name>/`. `validate` checks the
 manifest, that each `entry` has a source file and a matching vite entries
 key, and that a capability declared as `{ "name": "..." }` exists in this
-workspace. A string in `capabilities` is not checked by that pass. The CLI and `@camstack/mcp-develop` write unless you pass
+workspace. A string in `capabilities` is not checked by that pass. The CLI and `@dominevo/mcp-develop` write unless you pass
 `--dry-run` or `dryRun: true`. The private operator MCP (`mcp-dev`, in the planning repo) is the
 other way around: `scaffold_addon` is a dry run unless `dryRun: false`.
 
-Tools on `@camstack/mcp-develop` (workspace only, no hub):
+Tools on `@dominevo/mcp-develop` (workspace only, no hub):
 
 | Tool | What it does |
 | --- | --- |
@@ -118,18 +118,18 @@ Tools on `@camstack/mcp-develop` (workspace only, no hub):
 for training). They are separate from scaffolding. The `track-review` skill
 describes the environment variables and the confirm-before-write rule.
 
-The skill pack ships in `@camstack/develop` (`skills/`). The ids are
+The skill pack ships in `@dominevo/develop` (`skills/`). The ids are
 `camstack-addon`, `camstack-capability`, `camstack-secrets`, `camstack-docs`,
 `architecture`, and `track-review`. The page the pack links is
 [Develop → MCP and skills](https://docs.camstack.com/docs/develop/mcp-and-skills).
 
 ### The operator MCP (`mcp-dev`, private)
 
-`camstack-dev` is the operator MCP for developing CamStack itself. It lives in
+`camstack-dev` is the operator MCP for developing Dominevo itself. It lives in
 the private planning repo (`tools/mcp-dev`), reads a camstack-server checkout,
 and is not on npm. The repo's `.mcp.json` launches it from the sibling
 `planning` clone. It takes the addon-author read tools from
-`@camstack/mcp-develop` and adds the workspace knowledge
+`@dominevo/mcp-develop` and adds the workspace knowledge
 tools: `search_knowledge`, `get_decision`, `decisions_for_path`, `traps_for`,
 `guards_for`, `subsystem_of`, `subsystem_map`, `read_section`,
 `next_adr_number`, `list_skills`, `get_skill`, `find_ui_component`,
@@ -154,7 +154,7 @@ The published server's capability stub is `scaffold_cap_stub`.
 | Viewer | The viewer app is its own repository. In this tree, `viewer-ui` is a capability on `packages/addon-pipeline-orchestrator` |
 
 A runnable addon on its own, a bundle, tests, and a full `package.json` are
-in [camstack/addon-examples](https://github.com/camstack/addon-examples) and
+in [camstack/addon-examples](https://github.com/dominevo/addon-examples) and
 on the docs page
 [/docs/developers/addon-examples](https://camstack-docs.zentik.app/docs/developers/addon-examples).
 
@@ -188,8 +188,8 @@ Install is explicit. Choosing the package calls `addons.installPackage` with
 `latest`, downloads the tarball, and refuses it when `package.json` has no
 `camstack.addons` array (`Package <name> has no camstack.addons manifest`).
 The name may be scoped (`@scope/addon-name`) or unscoped. Nothing in that
-path requires the `@camstack/` scope or a `camstack-addon-*` prefix. The
-scaffold's own name is `@camstack/addon-<name>`.
+path requires the `@dominevo/` scope or a `camstack-addon-*` prefix. The
+scaffold's own name is `@dominevo/addon-<name>`.
 
 A `.tgz` upload on the same page is the other way in. It has the same
 manifest requirement.
@@ -215,18 +215,18 @@ An agent does not ask npm. It installs the version the hub already has.
 
 ### Layout
 
-`camstack develop scaffold addon <name>` (and MCP `scaffold_addon`) writes
+`dominevo develop scaffold addon <name>` (and MCP `scaffold_addon`) writes
 this inside a checkout of this repository. It refuses to run outside one.
 The `vite.config.ts` it writes imports `../../tools/build/vite-lib.preset.ts`,
 which exists only in this repository. A package in its own repository keeps
 the same manifest and class shape; the full file set that builds on its own
-is the [addon-examples](https://github.com/camstack/addon-examples) repository.
+is the [addon-examples](https://github.com/dominevo/addon-examples) repository.
 
 The scaffold's `package.json` is:
 
 ```json
 {
-  "name": "@camstack/addon-my-feature",
+  "name": "@dominevo/addon-my-feature",
   "version": "0.1.0",
   "keywords": ["camstack", "addon", "camstack-addon"],
   "license": "MIT",
@@ -239,14 +239,14 @@ The scaffold's `package.json` is:
       {
         "id": "my-feature",
         "name": "My Feature",
-        "description": "My Feature — CamStack addon.",
+        "description": "My Feature — Dominevo addon.",
         "entry": "./dist/my-feature.addon.js",
         "execution": { "placement": "hub-only" },
         "capabilities": []
       }
     ]
   },
-  "peerDependencies": { "@camstack/types": "*" },
+  "peerDependencies": { "@dominevo/types": "*" },
   "scripts": { "build": "vite build" }
 }
 ```
@@ -260,31 +260,31 @@ points at a file under `dist/`. `files` is `["dist"]` so the published
 tarball contains the bundle and `package.json`.
 
 `externals: 'self-contained'` (what the scaffold sets) inlines
-`@camstack/types`, `@camstack/sdk`, `zod`, and `@trpc/*`. It leaves
-`@camstack/server` and `@camstack/ui-library` out of the bundle. For that
-mode the host that actually has to resolve an import is `@camstack/server`
+`@dominevo/types`, `@dominevo/sdk`, `zod`, and `@trpc/*`. It leaves
+`@dominevo/server` and `@dominevo/ui-library` out of the bundle. For that
+mode the host that actually has to resolve an import is `@dominevo/server`
 (`packages/system/src/kernel/host-externals.ts`). Native modules the preset
 also keeps external are `sharp`, `node-av`, `node-pty`, and `ssh2`. Do not
 import `ALL_CAPABILITY_DEFINITIONS`. The lightweight types entry is
-`@camstack/types/addon`.
+`@dominevo/types/addon`.
 
-The record that lists `@camstack/sdk` and `@camstack/types` subpaths as
+The record that lists `@dominevo/sdk` and `@dominevo/types` subpaths as
 host-external describes `framework` externals. The scaffold does not emit
 `framework`; it emits `self-contained`, which inlines those packages. The
-scaffold's `peerDependencies` still names `@camstack/types` only.
+scaffold's `peerDependencies` still names `@dominevo/types` only.
 
 ### Before you publish
 
 From this repository, after the scaffold:
 
 ```bash
-camstack develop validate my-feature
-npm run build -w @camstack/addon-my-feature
-camstack deploy packages/addon-my-feature
+dominevo develop validate my-feature
+npm run build -w @dominevo/addon-my-feature
+dominevo deploy packages/addon-my-feature
 ```
 
 `validate_addon` should report no errors before `npm publish`. From the
-addon directory, `camstack deploy` (path defaults to `.`) packs that
+addon directory, `dominevo deploy` (path defaults to `.`) packs that
 directory and installs it on the hub you are logged in to, so you can try
 the build before the registry has it. Publish with `npm publish`. After
 `latest` moves, a hub whose channel is `latest` installs that version.
@@ -292,4 +292,4 @@ the build before the registry has it. Publish with `npm publish`. After
 Models in this repository, knowing they use the monorepo preset:
 `packages/addon-smtp-nodemailer`, `packages/addon-provider-rtsp`, and
 `packages/addon-remote-storage`. The standalone runnable copy is
-[addon-examples](https://github.com/camstack/addon-examples).
+[addon-examples](https://github.com/dominevo/addon-examples).

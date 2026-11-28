@@ -3,7 +3,7 @@
  * step (D1022): the same job, the same policy object, `transitionDays` among
  * the four tiers - no second mechanism.
  */
-import { createRecordsAccess, DeviceType, type DeviceTransition } from '@camstack/types'
+import { createRecordsAccess, DeviceType, type DeviceTransition } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import { makeRecordsWorld } from '../../../sqlite-storage/__tests__/support/records-world.js'
 import { type Harness, makeHarness } from '../../__tests__/support/harness.js'

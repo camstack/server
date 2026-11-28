@@ -15,7 +15,7 @@ import {
   ROOM_EXAMPLE_TEMPERATURE_SOURCES,
   ROOM_OCCUPANCY_WINDOW_MS,
   roomCompositionExample,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type {
   ComposedWriteTarget,
   DeadlineTimer,

@@ -9,7 +9,7 @@
  */
 import { EventEmitter } from 'node:events'
 import { Worker } from 'node:worker_threads'
-import { encodeVectorBase64 } from '@camstack/types'
+import { encodeVectorBase64 } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import type { FileHostThread } from '../file-host-client.js'
 import { collectTransferables } from '../file-host-protocol.js'

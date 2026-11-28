@@ -22,7 +22,7 @@ import type {
   ISsoBridgeProvider,
   IUserManagementProvider,
   ProviderRegistration,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   authProviderCapability,
   BaseAddon,
@@ -30,7 +30,7 @@ import {
   deviceCredentialsCapability,
   formatDeviceRevoker,
   userManagementCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { DeviceCaStore } from '../../auth/device-ca-store.js'
 import { DeviceCredentialManager } from '../../auth/device-credential-manager.js'
 import { AuthManager } from '../../auth/auth-manager.js'
@@ -57,7 +57,7 @@ import { createOauthGrants } from './oauth-grants.js'
 import { localAuthPreferencesRecordKinds } from './preferences-record-kinds.js'
 import { UserPreferencesStore } from './user-preferences-store.js'
 import { OauthSessionManager } from './oauth-session-manager.js'
-import { userError } from '@camstack/types'
+import { userError } from '@dominevo/types'
 
 /** How often the auth tables are swept for dead rows. */
 const AUTH_REAP_INTERVAL_MS = 24 * 3600_000

@@ -8,9 +8,9 @@
  * runner's state once per summary; only a POSITIVE answer closes the row, and
  * a read that fails changes nothing (D49).
  */
-import type { InMemoryRecords } from '@camstack/types'
+import type { InMemoryRecords } from '@dominevo/types'
 import { makeNcRecords } from './support/nc-test-deps.js'
-import { NcRuleInputSchema, scheduleForSendTimes } from '@camstack/types'
+import { NcRuleInputSchema, scheduleForSendTimes } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import type { NcTargetRef } from '../dispatcher.js'

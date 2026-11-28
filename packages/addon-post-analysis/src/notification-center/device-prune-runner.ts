@@ -42,7 +42,7 @@
  * never plan against the same snapshot and write twice.
  */
 
-import type { IScopedLogger, LogTags, NcAlarmSettings, NcAlarmSettingsPatch } from '@camstack/types'
+import type { IScopedLogger, LogTags, NcAlarmSettings, NcAlarmSettingsPatch } from '@dominevo/types'
 import type { NcDeviceDirectory } from './device-directory.js'
 import type { NcDeviceMuteStore } from './device-mute-store.js'
 import {

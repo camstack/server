@@ -1,7 +1,7 @@
 import { Select } from '../../primitives/select'
 import { useUiText, type UiTextFn } from '../../contexts/ui-text'
 import { type CSSProperties, type ReactNode } from 'react'
-import type { ClimateControlStatus, HvacMode } from '@camstack/types'
+import type { ClimateControlStatus, HvacMode } from '@dominevo/types'
 import { useDeviceCapability } from '../../hooks/use-device-capability.js'
 import { useDeviceCommand } from '../../hooks/use-device-command.js'
 import { cn } from '../../lib/cn.js'

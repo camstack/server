@@ -17,7 +17,7 @@ import PipelineRunnerAddon, {
   rgbFrameToGrayFrame,
   shouldStartOnboardAnalyzer,
 } from '../index.js'
-import type { RunnerCameraConfig } from '@camstack/types'
+import type { RunnerCameraConfig } from '@dominevo/types'
 import { makeRunnerCameraConfig } from '../../__tests__/support/runner-camera-config.js'
 
 // ── helpers ────────────────────────────────────────────────────────────────

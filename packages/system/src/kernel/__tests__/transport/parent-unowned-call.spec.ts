@@ -1019,7 +1019,7 @@ describe('createParentUnownedCallHandler', () => {
       capName: 'system',
       method: 'info',
       args: undefined,
-      callerAddonId: '@camstack/addon-pipeline',
+      callerAddonId: '@dominevo/addon-pipeline',
     })
 
     expect(logger.warn).not.toHaveBeenCalled()
@@ -1027,7 +1027,7 @@ describe('createParentUnownedCallHandler', () => {
     expect(logger.debug.mock.calls[0]?.[1]).toEqual({
       capName: 'system',
       method: 'info',
-      callerAddonId: '@camstack/addon-pipeline',
+      callerAddonId: '@dominevo/addon-pipeline',
       route: '$core-caps',
     })
   })

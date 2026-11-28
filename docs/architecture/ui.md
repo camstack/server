@@ -68,16 +68,16 @@ page (`packages/addon-pipeline-orchestrator`, `packages/addon-model-studio`,
 
 ## The library is host-provided
 
-`@camstack/ui-library` is host-provided, not bundled into addons
+`@dominevo/ui-library` is host-provided, not bundled into addons
 ([D15](../decisions/adr-0015.md)): two copies would mean two Reacts.
 
 A page remote (`addon-model-studio`, `-osd-manager`, `-training`, `-benchmark`,
-`-provider-homematic`) declares `@camstack/ui-library` as `shared` with
+`-provider-homematic`) declares `@dominevo/ui-library` as `shared` with
 `import: false` and compiles none of it in: the built stub holds the page's own
 code and a `loadShare` chunk for ui-library, and its
 `dist/.bundle-modules.json` lists no `packages/ui-library/` module. A ui-library
 change therefore never republishes a page addon, the same as `types`. A page's
-config must **not** alias `@camstack/ui-library` (or `@camstack/ui`, `@camstack/types`)
+config must **not** alias `@dominevo/ui-library` (or `@dominevo/ui`, `@dominevo/types`)
 to a `src` path: that rewrites the specifier before the sharing layer sees it
 and bundles the library again. `scripts/check-page-remote-no-ui-library-alias.ts`
 refuses it, and `scripts/__tests__/page-remote-shared-ui-library.spec.ts` proves
@@ -94,14 +94,14 @@ floor travels with the page:
   naming both versions instead of mounting the page (`strictVersion` stays off;
   the check is ours).
 - At publish, `scripts/ci/stamp-requires.mjs` writes
-  `camstack.requires.addons['@camstack/addon-admin-ui'] = '>=<admin-ui version>'`
+  `camstack.requires.addons['@dominevo/addon-admin-ui'] = '>=<admin-ui version>'`
   into every addon that declares pages, and the hub refuses to install or start
   such an addon on an older admin UI (`unmetAddonRequirements`).
 
 The publish step still decides on the modules a bundle holds
 (`dist/.bundle-modules.json`, `tools/build/bundle-modules-manifest.ts`), never
 on bytes: the module-federation chunk is not deterministic between builds of one
-tree. A page that imports a subpath that is not shared (`@camstack/types/addon`,
+tree. A page that imports a subpath that is not shared (`@dominevo/types/addon`,
 as `addon-osd-manager` does for `CAP_STATE_LEAVES`) still bundles that module
 and republishes with it.
 
@@ -110,7 +110,7 @@ and republishes with it.
 Every user-visible string of an addon page or widget lives in
 `packages/addon-<x>/src/i18n/en.json` + `it.json` (nested keys, the namespace is
 the addon id) — never a literal in the `.tsx`. The components read them through
-ONE helper, `createAddonI18n(ns, { en, it })` from `@camstack/ui-library`, which
+ONE helper, `createAddonI18n(ns, { en, it })` from `@dominevo/ui-library`, which
 returns a typed `useT()` (keys are checked against `en.json` by the compiler), a
 `Trans` for sentences with inline elements, and `translate()` for code outside
 React.
@@ -202,8 +202,8 @@ Rules that follow, each of which a root-mounted dev session cannot see broken:
 `scripts/check-hub-paths-through-mount.ts` (CI) is the guard. `mount.spec.ts`
 pins that at the root nothing changed, byte for byte.
 
-What is NOT covered: the backend part travels with `@camstack/server`, so a
-`camstack deploy packages/addon-admin-ui` alone ships a relative build that
+What is NOT covered: the backend part travels with `@dominevo/server`, so a
+`dominevo deploy packages/addon-admin-ui` alone ships a relative build that
 works at the root but is not injected until a server carrying `spa-mount.ts`
 is published and applied; server-side redirects other than the login bounce
 (`/api/oauth2/authorize`, `/viewer` → `/viewer/camstack/`) still send
@@ -289,7 +289,7 @@ branch to flip.
 **Home Assistant, concretely (component 0.5.12+, HACS):**
 
 1. _Admin UI_ — the integration's sidebar panel, on by default (Settings →
-   Devices & services → CamStack → Configure → "Show sidebar panel"). It is
+   Devices & services → Dominevo → Configure → "Show sidebar panel"). It is
    relayed; there is nothing to paste. A dashboard link to it is a `button`
    card with `tap_action: {action: navigate, navigation_path: /camstack}`.
 2. _Viewer_ — the hub's own address, opened in a NEW TAB (top-level, so the
@@ -1020,8 +1020,8 @@ reaches a screen only through the Debug tab's `debug.analyze` custom action.
 
 **The Debug tab's two `addons.custom` actions are its defining property, and
 adding to them is not a release train.** `debug.listTracks` / `debug.analyze`
-ship with one `camstack deploy` of `pipeline-analytics`; a cap method would need
-codegen, a `@camstack/server/system` publish and a release. Everything the 2026-08-28
+ship with one `dominevo deploy` of `pipeline-analytics`; a cap method would need
+codegen, a `@dominevo/server/system` publish and a release. Everything the 2026-08-28
 rework added — the subject fields the shared card needs, the tile provenance,
 the miss reason — went onto those two actions, and the bulk actions write the
 `setTrackFlags` cap method that already existed. A change to this tab that seems
@@ -1259,7 +1259,7 @@ named features:
 | what Save writes (`draftFromUser`, `withMode`, `saveRequestOf`) | `components/users/user-role-model.ts`                                                       | pure, so every write decision is pinned by `user-role-model.spec.ts`  |
 | the device list                                                 | the shared `DevicePicker` (`pages/system/DevicePicker.tsx`), parents only                   | the picker used everywhere else (D636); a camera's children follow it |
 | the mode                                                        | `SegmentedChoice`: "All devices except…" or "Only these devices…"                           | one list, never an allow list beside a block list                     |
-| the feature list                                                | `VIEWER_FEATURES` in `@camstack/types`, labels translated under `users.viewerFeatures.<id>` | the catalogue grows one entry at a time with the methods it unlocks   |
+| the feature list                                                | `VIEWER_FEATURES` in `@dominevo/types`, labels translated under `users.viewerFeatures.<id>` | the catalogue grows one entry at a time with the methods it unlocks   |
 | the device count (`auth.previewScope`)                          | `server/backend/src/api/core/auth.router.ts`, shown by `components/users/RolePreview.tsx`   | see below                                                             |
 
 Rules that each cost something to learn:
@@ -1533,12 +1533,12 @@ The editor runs `validatePalette` while the operator changes a colour, and
 `setPalette` refuses the same pairs. The legend names every swatch (label
 and hex) on both contrast grounds (`#0c0a09`, `#fafaf9`); subclasses sit in
 a collapsed group under their parent. The live cursor and the heatmap handle
-must be at least ΔE2000 20 apart. In the CamStack preset the handle is
+must be at least ΔE2000 20 apart. In the Dominevo preset the handle is
 `#4b32ff`.
 
 Detection colours, the event-kind legend and server-drawn boxes read that
 palette. A pending read stays pending. An `unknown` result (the settings
-store could not be read) keeps the bundled CamStack preset and says so; it
+store could not be read) keeps the bundled Dominevo preset and says so; it
 is not presented as the stored choice. The viewer consumes the same
 `getPalette` shape in a later phase.
 
@@ -1760,7 +1760,7 @@ camera picker (`recordings/export-camera-filter.ts`).
     `tab: 'recording'`, derived from the capabilities.
 - The pure logic (row merge, camera state, health rows, event clusters, growth, redirects) lives in
   `components/archive/*.ts` beside `__tests__/archive-pure.spec.ts`.
-- Location mode is read only through `@camstack/types` (`mayWriteToLocation`, `resolveLocationMode`);
+- Location mode is read only through `@dominevo/types` (`mayWriteToLocation`, `resolveLocationMode`);
   `scripts/check-storage-location-mode-single-owner.ts` scans admin-ui too.
 
 ## Multi-app shell ([D1096](../decisions/adr-1096-an-app-in-the-shell-is-a-capability-entry-the-shell-owns-the-only-drawer-and-an-embedded-app-is-chromeless.md))
@@ -1777,7 +1777,7 @@ lands; an unmeasured count is `null`, never `0`.
 The shell owns the one drawer (hamburger on the left of the toolbar): user and
 server, shared search, the app list, the active app's nav, settings, sign out.
 An embedded app talks to the shell over the `app-bridge` `postMessage` envelope
-(`packages/types/src/app-bridge.ts`, exported from `@camstack/types/client`;
+(`packages/types/src/app-bridge.ts`, exported from `@dominevo/types/client`;
 `parseAppBridgeMessage` returns the typed message or `null`) and goes chromeless
 only after the shell's `hello`. Labels are i18n keys with an English fallback.
 

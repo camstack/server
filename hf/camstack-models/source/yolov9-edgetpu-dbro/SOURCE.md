@@ -28,5 +28,5 @@ Licences:
 - Notebooks and plugin code: MIT, © 2025 Dan Brown (`LICENSE.md`).
 - Training data: COCO 2017, filtered to 17 classes.
 
-CamStack does not modify these files; it decodes their output with its own
+Dominevo does not modify these files; it decodes their output with its own
 `yolo-split-dfl` postprocessor.

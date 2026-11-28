@@ -1,4 +1,4 @@
-import { makeInMemoryRecords, type RecordsAccess } from '@camstack/types'
+import { makeInMemoryRecords, type RecordsAccess } from '@dominevo/types'
 import { authWebauthnRecordKinds } from '../record-kinds.js'
 import { PasskeyStore, type StoredPasskey } from '../passkey-store.js'
 

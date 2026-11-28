@@ -7,7 +7,7 @@
  * line reverted and confirmed RED before being kept (D277 § Enforcement).
  */
 import { describe, expect, it, vi } from 'vitest'
-import type { FrameHandle, IScopedLogger } from '@camstack/types'
+import type { FrameHandle, IScopedLogger } from '@dominevo/types'
 import { createCaptureCrop } from '../pipeline/capture-crop.js'
 import { personOverVehicle } from '../pipeline/person-over-vehicle.js'
 import { CaptureScheduler } from '../runtime/capture-scheduler.js'

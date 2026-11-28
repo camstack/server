@@ -12,7 +12,7 @@
 import { Globe, ShieldCheck } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Trans, useTranslation } from 'react-i18next'
-import { SECTION_BODY, SectionCard } from '@camstack/ui-library'
+import { SECTION_BODY, SectionCard } from '@dominevo/ui-library'
 import { BootstrapSettingsForm } from '../../components/system/BootstrapSettingsForm'
 import { SIGN_IN_POLICY_SECTION_ID } from '../../lib/sign-in-policy-section'
 import { InstancesTable } from '../../components/instances/InstancesTable'

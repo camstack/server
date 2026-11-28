@@ -22,7 +22,7 @@ import {
   type GatedToolSpec,
   type HubClient,
   type MutationGate,
-} from '@camstack/develop'
+} from '@dominevo/develop'
 import { z } from 'zod'
 import type { McpContext } from './context.js'
 import { readQuery, reasonOf, type Read } from './ops-hub.js'
@@ -39,9 +39,9 @@ import { scrubDeepForPublic, scrubForPublic } from './support-scrub.js'
 export const DRAFT_ISSUE_TOOL = 'support_draft_issue'
 export const DRAFT_PR_TOOL = 'support_draft_pr'
 
-export const FALLBACK_REPO = 'camstack/server'
+export const FALLBACK_REPO = 'dominevo/server'
 /** The package that owns the inference runtime, used for accelerator drafts. */
-export const INFERENCE_PACKAGE = '@camstack/addon-pipeline'
+export const INFERENCE_PACKAGE = '@dominevo/addon-pipeline'
 const TITLE_MAX = 140
 const DIAGNOSIS_MAX = 4_000
 
@@ -228,7 +228,7 @@ export async function collectFacts(ctx: McpContext, args: DraftArgs): Promise<Dr
 // the text
 
 const FOOTER =
-  '_Drafted with the `camstack mcp` support toolset. Secrets and private addresses are removed before this text is shown._'
+  '_Drafted with the `dominevo mcp` support toolset. Secrets and private addresses are removed before this text is shown._'
 
 function cleanTitle(raw: string): string {
   return scrubForPublic(raw).replace(/\s+/g, ' ').trim().slice(0, TITLE_MAX)

@@ -36,7 +36,7 @@
 import { promises as fs } from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import type { RecordingConfig } from '@camstack/types'
+import type { RecordingConfig } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { GATE_INCLUSIVE_EPSILON_MS } from '../decision-schedule.js'
 import { RecordingController, type RecordingControllerDeps } from '../recording-controller'

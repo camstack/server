@@ -22,7 +22,7 @@
  *
  * Precedence: error > healthy > idle.
  */
-import type { CameraStatus } from '@camstack/types'
+import type { CameraStatus } from '@dominevo/types'
 
 export type CameraHealth = 'healthy' | 'idle' | 'error'
 

@@ -1,5 +1,5 @@
 import { useUiText, type UiTextFn } from '../../contexts/ui-text'
-import { RECORDING_SOURCE_CAMSTACK_ADDON } from '@camstack/types'
+import { RECORDING_SOURCE_CAMSTACK_ADDON } from '@dominevo/types'
 import { Film, Pause, Play, Radio } from 'lucide-react'
 import {
   useCallback,
@@ -645,7 +645,7 @@ export function RecordingTimeline({
           variant="warning"
           message={t(
             'uiLibrary.recordingTimeline.availabilityUnreadable',
-            "CamStack could not be asked about this camera's recordings — this bar shows nothing, which is not the same as no footage.",
+            "Dominevo could not be asked about this camera's recordings — this bar shows nothing, which is not the same as no footage.",
           )}
         />
       ) : null}

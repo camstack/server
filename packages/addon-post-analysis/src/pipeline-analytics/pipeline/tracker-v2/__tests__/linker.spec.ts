@@ -58,7 +58,7 @@
  * The prune test was rebuilt: its long LIVE faceless continuation can no longer join a
  * face-bearing chain (H1), so the chain is six short faceless pieces that each ended.
  */
-import type { BoundingBox } from '@camstack/types'
+import type { BoundingBox } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   confirmedPredecessorRejections,

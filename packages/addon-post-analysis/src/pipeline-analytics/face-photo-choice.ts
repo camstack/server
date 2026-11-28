@@ -12,7 +12,7 @@
  * a name. Measured on the live nine: IoU 0.53–0.83, new-vs-stored cosine
  * 0.63–0.86, unambiguous 9/9.
  */
-import { cosineSimilarity } from '@camstack/types'
+import { cosineSimilarity } from '@dominevo/types'
 import type { PhotoBbox, PhotoFace } from './photo-enrollment.js'
 import { iou, type PixelBox } from './pipeline/event-child-crops.js'
 

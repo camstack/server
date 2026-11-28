@@ -21,14 +21,14 @@
  * SQLite replays them onto whatever file sits beside it. The restored copy
  * would come up as a mix of two databases.
  *
- * Zero `@camstack/*` runtime imports, like the launcher that calls it. The
+ * Zero `@dominevo/*` runtime imports, like the launcher that calls it. The
  * suffix is spelled here and pinned to `DATABASE_SNAPSHOT_SUFFIX` by
  * `pending-restore-sqlite.spec.ts`.
  */
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 
-/** Mirrors `DATABASE_SNAPSHOT_SUFFIX` in `@camstack/types` (spec-pinned). */
+/** Mirrors `DATABASE_SNAPSHOT_SUFFIX` in `@dominevo/types` (spec-pinned). */
 export const SQLITE_SNAPSHOT_SUFFIX = '.backup-snapshot'
 
 export const SQLITE_SIDECAR_SUFFIXES = ['-wal', '-shm', '-journal'] as const

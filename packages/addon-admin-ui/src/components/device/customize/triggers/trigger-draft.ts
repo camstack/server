@@ -8,7 +8,7 @@ import {
   type LinkedTriggerParams,
   linkedTriggerValues,
   type TemplateInstance,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { RowRemoval } from './linked-triggers-model'
 
 /** Prefix of the block id a not-yet-saved trigger carries. */

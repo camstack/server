@@ -1,9 +1,9 @@
 /**
- * The CLI's wire for `@camstack/develop` calls (session refresh, `whoami`):
+ * The CLI's wire for `@dominevo/develop` calls (session refresh, `whoami`):
  * the same pinned-CA agent every other CLI hub call uses
  * (`hub-http.ts`).
  */
-import type { HubTransport } from '@camstack/develop'
+import type { HubTransport } from '@dominevo/develop'
 import { hubRequest } from './hub-http.js'
 
 export const cliHubTransport: HubTransport = async (req) => {

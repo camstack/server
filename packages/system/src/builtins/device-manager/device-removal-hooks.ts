@@ -20,7 +20,7 @@ import {
   type IScopedLogger,
   type OrphanDeviceData,
   type SettingsStoreClient,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { RemovalCleanup, RemovalStep } from './removal-cleanup.js'
 
 /** The capability name implementers register under. */

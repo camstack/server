@@ -21,7 +21,7 @@
  * ledger's: an observation made before the load ANSWERED is provisional.
  */
 import { describe, expect, it, vi } from 'vitest'
-import type { InMemoryRecords } from '@camstack/types'
+import type { InMemoryRecords } from '@dominevo/types'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import { slowWrites } from './slow-writes.js'
 import { NcLivenessLedger, type NcLivenessObservation } from '../liveness-ledger.js'

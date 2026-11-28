@@ -37,7 +37,7 @@ drift from it.
 ## Decision
 
 The hub's address is read from `local-network.getConnectionEndpoints` through
-one function, `pickHubBaseUrl(endpoints, audience)` in `@camstack/types`:
+one function, `pickHubBaseUrl(endpoints, audience)` in `@dominevo/types`:
 
 - `cluster` (agents, LAN devices): a plausible LAN IPv4 literal, then any
   plausible LAN address, then the mesh. Never the public tunnel, never
@@ -128,7 +128,7 @@ the same answer the card shows next to each field.
 **Why a second field and not the notification-link custom address.** The
 notification address answers a different question with a different default:
 it is chosen for a notification's RECIPIENT, off the LAN and hours later, and
-its AUTO value is the CamStack app link — not a hub address at all (D709). A
+its AUTO value is the Dominevo app link — not a hub address at all (D709). A
 sign-in link must name the hub itself, and an OIDC callback or a WebAuthn
 relying party must stay stable once registered; tying them to a flag an
 operator moves to change where notification taps open would silently break

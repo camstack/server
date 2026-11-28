@@ -28,8 +28,8 @@ import {
   ArchivedDebugNoteSchema,
   type ArchivedDebugNoteQueryInput,
   MAX_ARCHIVED_DEBUG_NOTES,
-} from '@camstack/types'
-import type { IScopedLogger } from '@camstack/types'
+} from '@dominevo/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { EventLedgerCollection } from './event-ledger-collection.js'
 import { createHash } from 'node:crypto'
 import type {

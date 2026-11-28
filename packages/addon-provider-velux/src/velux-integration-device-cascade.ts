@@ -1,4 +1,4 @@
-import { type DeviceManagerApi, errMsg, type IScopedLogger } from '@camstack/types'
+import { type DeviceManagerApi, errMsg, type IScopedLogger } from '@dominevo/types'
 
 /** The part of the device registry the cascade reads: which devices the addon owns, and their parent. */
 export interface VeluxDeviceRegistryView {

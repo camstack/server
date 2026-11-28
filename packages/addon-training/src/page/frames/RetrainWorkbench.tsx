@@ -22,7 +22,7 @@
  */
 
 import { useT } from '../../i18n/index.js'
-import { parseRetrainRevisionConflict, type RetrainFrame } from '@camstack/types'
+import { parseRetrainRevisionConflict, type RetrainFrame } from '@dominevo/types'
 import {
   Badge,
   Button,
@@ -32,7 +32,7 @@ import {
   usePipelineAnalyticsProposeRetrainAnnotations,
   usePipelineAnalyticsSaveRetrainAnnotations,
   usePipelineAnalyticsSetRetrainFrameComplete,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { ChevronDown, ChevronRight, Loader2, Sparkles } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { frameAddress } from './frame-address.js'

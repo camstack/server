@@ -14,7 +14,7 @@
 import { useUiText } from '../../contexts/ui-text'
 import type { ReactNode } from 'react'
 import { Download, Check, Loader2 } from 'lucide-react'
-import type { UpdateStatus } from '@camstack/types'
+import type { UpdateStatus } from '@dominevo/types'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
 import type { DeviceControlProps } from './control-registry'
 

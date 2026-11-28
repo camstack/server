@@ -4,7 +4,7 @@
  * the kernel never reconciled. A probe that completed this session answers
  * `complete`; a cache-only restore stays `unknown` (spawns, never prunes).
  */
-import type { AccessoryChildSpec } from '@camstack/types'
+import type { AccessoryChildSpec } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { accessoryChildrenAnswerFor } from '../accessory-probe-flags'
 

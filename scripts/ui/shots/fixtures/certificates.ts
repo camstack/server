@@ -105,7 +105,7 @@ export default defineFixtures({
     'mut:deviceCredentials.startEnrollment': () => ({
       code: 'fixture-code',
       expiresAt: NOW + 10 * MINUTE,
-      enrollUrl: 'camstack://enroll?hub=https%3A%2F%2Fhub.example.com&code=fixture-code',
+      enrollUrl: 'dominevo://enroll?hub=https%3A%2F%2Fhub.example.com&code=fixture-code',
       hubOrigin: 'https://hub.example.com',
       hubOrigins: ['https://hub.example.com'],
     }),

@@ -25,7 +25,7 @@ import type {
   PreparedAttachment,
   PreparedNotification,
   TargetKind,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { HttpRequestPlan, HttpNotifierAdapter, TargetConfig } from './adapter.js'
 
 const DEFAULT_SERVER_URL = 'https://ntfy.sh'

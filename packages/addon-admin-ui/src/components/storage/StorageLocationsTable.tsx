@@ -7,7 +7,7 @@
  * drain / discard block at the top of the edit dialog, and the delete's forced variant
  * (offered by the delete dialog when the hub refuses on occupancy).
  */
-import { useStorageListLocationDeclarations } from '@camstack/ui-library'
+import { useStorageListLocationDeclarations } from '@dominevo/ui-library'
 import { HardDrive } from 'lucide-react'
 import { useMemo, type ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'

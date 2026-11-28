@@ -5,7 +5,7 @@
  * on read), and a write-side merge keeps the stored key when the marker is
  * untouched (or the field is absent), and clears the key on an empty string.
  */
-import type { LlmProfile } from '@camstack/types'
+import type { LlmProfile } from '@dominevo/types'
 import { secretFieldOf } from './kinds/provider-config.js'
 
 /** Same marker as addon-notifiers/src/secrets.ts — UI contract. */

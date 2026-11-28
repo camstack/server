@@ -15,8 +15,8 @@ import {
   createMeshAccessMiddleware,
   isProcessVerifiedMeshPeer,
   MeshIdentityGate,
-} from '@camstack/server/system'
-import type { IScopedLogger } from '@camstack/types'
+} from '@dominevo/server/system'
+import type { IScopedLogger } from '@dominevo/types'
 
 /** At most one "refused" line per node per this long. */
 const REFUSED_LOG_INTERVAL_MS = 60_000

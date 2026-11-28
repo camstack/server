@@ -1,4 +1,4 @@
-import type { Composition, CompositionStateRead } from '@camstack/types'
+import type { Composition, CompositionStateRead } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { buildFieldsTableRows, describeFieldSource } from '../fields-table-rows'
 

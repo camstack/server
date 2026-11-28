@@ -18,7 +18,7 @@ import {
   recordUpsertEdit,
   tagIdFromKey,
   tagKey,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   type CalendarEventsRuleBody,
   ncRecordKinds,

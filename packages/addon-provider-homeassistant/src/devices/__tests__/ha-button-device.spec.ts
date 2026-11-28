@@ -1,11 +1,11 @@
 import { describe, it, expect, vi } from 'vitest'
-import { DeviceType, type IDeviceRuntimeState } from '@camstack/types'
+import { DeviceType, type IDeviceRuntimeState } from '@dominevo/types'
 import { HaButtonDevice } from '../ha-button-device.js'
 
 function buildButtonCtx(
   entityId: string,
   publishMutate = vi.fn(async () => null),
-): import('@camstack/types').DeviceContext {
+): import('@dominevo/types').DeviceContext {
   let runtimeStateRef: IDeviceRuntimeState | null = null
 
   return {
@@ -73,7 +73,7 @@ function buildButtonCtx(
       addContext: vi.fn(),
       with: vi.fn(),
     },
-  } as unknown as import('@camstack/types').DeviceContext
+  } as unknown as import('@dominevo/types').DeviceContext
 }
 
 describe('HaButtonDevice', () => {

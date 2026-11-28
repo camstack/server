@@ -1,10 +1,10 @@
-import type { IReadinessRegistryRecord, SystemEvent } from '@camstack/types'
+import type { IReadinessRegistryRecord, SystemEvent } from '@dominevo/types'
 import {
   CommandOriginClaimSchema,
   createEvent,
   EventCategory,
   isCommand,
-} from '@camstack/types/addon'
+} from '@dominevo/types/addon'
 import type { CapUsageCallRecord } from '../moleculer/cap-usage-registry.js'
 import { PARENT_ROUTED_PROVIDER_ADDON_ID } from '../moleculer/cap-usage-registry.js'
 import { matchesPattern } from '../moleculer/event-bus-core.js'

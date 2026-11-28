@@ -1,4 +1,4 @@
-import type { StateRefreshReason } from '@camstack/types'
+import type { StateRefreshReason } from '@dominevo/types'
 import type { KiaDiscoverable } from './kia-discovery.js'
 import type { KiaVehicleHandle } from './kia-device-handle.js'
 

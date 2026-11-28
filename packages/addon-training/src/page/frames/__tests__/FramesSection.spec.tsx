@@ -3,9 +3,9 @@
  * Frames corpus chrome — KPI, collections, filters, grid. Pending ≠ empty (D315).
  * Annotation overlay mounts RetrainWorkbench for the selected frame.
  */
-import type { RetrainCollection, RetrainCorpusKpi, RetrainCorpusPageFrame } from '@camstack/types'
+import type { RetrainCollection, RetrainCorpusKpi, RetrainCorpusPageFrame } from '@dominevo/types'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { ConfirmDialogProvider } from '@camstack/ui-library'
+import { ConfirmDialogProvider } from '@dominevo/ui-library'
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { FramesSection } from '../FramesSection.js'
@@ -134,8 +134,8 @@ vi.mock('../lib/authed-download.js', () => ({
   authedDownload: (url: string, name: string) => authedDownload(url, name),
 }))
 
-vi.mock('@camstack/ui-library', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@camstack/ui-library')>()
+vi.mock('@dominevo/ui-library', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dominevo/ui-library')>()
   return {
     ...actual,
     // Dist may lag the source export of Pagination (device-list barrel).

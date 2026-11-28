@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return -- AddonContext stub crosses typed boundaries. */
-import type { AddonContext, IScopedLogger, ISmtpProvider } from '@camstack/types'
+import type { AddonContext, IScopedLogger, ISmtpProvider } from '@dominevo/types'
 import {
   type IIntegrationInstancesProvider,
   integrationInstancesCapability,
   makeInMemoryRecords,
   smtpProviderCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { smtpRelaysKind } from '../relay-record-kinds.js'
 import { SmtpNodemailerAddon } from '../smtp.addon.js'

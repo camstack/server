@@ -42,7 +42,7 @@
  * module must never produce for a battery camera.
  */
 
-import { deriveBatteryPresence, type BatteryPresence, type IScopedLogger } from '@camstack/types'
+import { deriveBatteryPresence, type BatteryPresence, type IScopedLogger } from '@dominevo/types'
 
 /**
  * Why a battery camera's stream could not be produced. Carries the resolved

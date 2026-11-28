@@ -5,11 +5,11 @@ import {
   SECTION_BODY,
   Badge,
   Button,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 /**
  * Updates card — the agent UI could restart a node but never update one.
  *
- * This card is the FRAMEWORK (`@camstack/server`) only — a real, local action.
+ * This card is the FRAMEWORK (`@dominevo/server`) only — a real, local action.
  * The node resolves `latest` and installs the closure straight from the npm
  * registry; the hub is not involved at any step. This is what an isolated or
  * misaligned node needs, and it works with the hub down.
@@ -22,7 +22,7 @@ import {
  * displayed, so a failing check redrew exactly like a successful one and the
  * operator pressed a button that did nothing, three times.
  *
- * Runtime: build this package, then `camstack deploy addon-agent-ui` (the
+ * Runtime: build this package, then `dominevo deploy addon-agent-ui` (the
  * runner loads from `<dataDir>/addons/`, not the workspace `dist/`).
  */
 import { Download, Info, RefreshCw } from 'lucide-react'

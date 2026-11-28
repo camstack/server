@@ -9,7 +9,7 @@
  *                     before going to the WebRTC consumer side.
  */
 import { z } from 'zod'
-import { customAction, defineCustomActions } from '@camstack/types'
+import { customAction, defineCustomActions } from '@dominevo/types'
 
 const TestResultSchema = z.discriminatedUnion('ok', [
   z.object({

@@ -11,7 +11,7 @@ import {
   formatReading,
   type ConsumableItem,
   type ConsumableRemaining,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { UiTextFn } from '../../../contexts/ui-text'
 import { consumableItemLevel, consumableLevelLabel } from '../../consumable-level-badge'
 import type { CardConsumable } from '../shell/model'

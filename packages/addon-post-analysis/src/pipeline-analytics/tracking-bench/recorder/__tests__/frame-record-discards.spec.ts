@@ -9,7 +9,7 @@
  * Disarm: normalise in `tapeDiscards` (`Math.abs` on `w` and `h`) — the
  * inverted-box test and the production-parity test must fail.
  */
-import type { DiscardedDetection, FrameResult } from '@camstack/types'
+import type { DiscardedDetection, FrameResult } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { selectLowScoreContinuations } from '../../../pipeline/tracker/low-score-continuation.js'
 import { buildFrameRecord, tapeDiscardCorners } from '../frame-record.js'

@@ -12,7 +12,7 @@
  */
 
 import { describe, expect, it } from 'vitest'
-import type { Zone } from '@camstack/types'
+import type { Zone } from '@dominevo/types'
 import { DeviceZoneResolver, ZONE_AUTHORITY_TTL_MS } from '../device-zone-resolver.js'
 import { buildStationarySnapshot } from '../zone-analytics-provider.js'
 

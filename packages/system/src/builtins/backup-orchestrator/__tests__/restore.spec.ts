@@ -17,7 +17,7 @@ import * as fs from 'node:fs'
 import * as fsp from 'node:fs/promises'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { downloadArchiveToCache } from '../download-helpers.js'
 import type { ChunkedDownloadApi } from '../manifest-store.js'
 

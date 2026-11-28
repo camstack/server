@@ -45,8 +45,8 @@ import type {
   NcAlarmSensorsInput,
   NcAlarmSettingsPatch,
   NcRule,
-} from '@camstack/types'
-import { ruleAutoTriggersAlarm } from '@camstack/types'
+} from '@dominevo/types'
+import { ruleAutoTriggersAlarm } from '@dominevo/types'
 import type { NcAlarmPanelPort, NotificationCenterDeps } from './index.js'
 
 /**

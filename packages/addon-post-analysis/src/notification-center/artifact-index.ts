@@ -42,7 +42,7 @@
  *   signed link is minted regardless.
  */
 
-import type { IScopedLogger, RecordKindHandle } from '@camstack/types'
+import type { IScopedLogger, RecordKindHandle } from '@dominevo/types'
 import { z } from 'zod'
 import type { DurableLedgerBody } from '../durable/durable-record-body.js'
 import type { DurableKindDeps } from '../durable/durable-wiring.js'
@@ -70,7 +70,7 @@ const NEVER_EXPIRES = Number.MAX_SAFE_INTEGER
 
 /**
  * What an artefact IS. The schema lives in the ADDON, not in `packages/types`,
- * for the same reason the summary rule's does: it ships on `camstack deploy`
+ * for the same reason the summary rule's does: it ships on `dominevo deploy`
  * and never waits for a framework train.
  *
  * TWO groups:

@@ -1,4 +1,4 @@
-import type { IScopedLogger, LogExtras, LogTags } from '@camstack/types'
+import type { IScopedLogger, LogExtras, LogTags } from '@dominevo/types'
 
 /** One captured log line. */
 export interface LoggedLine {

@@ -49,8 +49,8 @@
  * that the key is dead; it is enforced by nothing else.
  */
 
-import type { ISettingsBackend, SettingsCollection } from '@camstack/types'
-import { asJsonObject } from '@camstack/types/addon'
+import type { ISettingsBackend, SettingsCollection } from '@dominevo/types'
+import { asJsonObject } from '@dominevo/types/addon'
 
 /** One retired-key declaration, scoped to a single store row. */
 export interface RetiredKeySpec {
@@ -126,7 +126,7 @@ export interface RetiredRowPurgeResult {
  *
  * Mirrors `resolveNodeRole` (server/backend `node-role.ts`) — unset or `'hub'`
  * means hub, which is the launcher's own default. It is duplicated rather than
- * imported because `@camstack/server/system` is a dependency OF the backend, not the
+ * imported because `@dominevo/server/system` is a dependency OF the backend, not the
  * other way round; the parse is four lines and the env var is the contract.
  *
  * Anything else answers `false`. Skipping where the purge should have run is a

@@ -3,8 +3,8 @@ import {
   type DeviceContext,
   DeviceType,
   type IDeviceRuntimeState,
-} from '@camstack/types'
-import { fakeAddonContext } from '@camstack/types/testing'
+} from '@dominevo/types'
+import { fakeAddonContext } from '@dominevo/types/testing'
 import { describe, expect, it } from 'vitest'
 import { HaContainerDevice } from '../devices/ha-container-device.js'
 import { parseContainerEntities } from '../ha-container-reconcile.js'

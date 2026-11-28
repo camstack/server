@@ -6,7 +6,7 @@
 
 **Architecture:** Mirror `EventStore`/`TrackStore` verbatim: a class with `{ store: SettingsStoreClient, logger: IScopedLogger }` deps, a `static declare(store)` that registers typed collections, and CRUD methods over the `settingsStore` `insert`/`query`/`update`/`set`/`delete` mutations. Embeddings persist as JSON `number[]` (normalized; ~512 floats, small). `loadGallery()` projects samples onto the `GallerySample` shape the Phase-1a matcher consumes.
 
-**Tech Stack:** TypeScript 5.9 (strict, ESM NodeNext, `.js` imports), vitest, `@camstack/types`, `crypto.randomUUID()` for ids.
+**Tech Stack:** TypeScript 5.9 (strict, ESM NodeNext, `.js` imports), vitest, `@dominevo/types`, `crypto.randomUUID()` for ids.
 
 ## Global Constraints
 
@@ -44,7 +44,7 @@
 - Test: `packages/addon-post-analysis/src/pipeline-analytics/__tests__/identity-store.spec.ts`
 
 **Interfaces:**
-- Consumes: `SettingsStoreClient`, `IScopedLogger` from `@camstack/types`; the test fake `makeFakeSettingsStore`/`makeSilentLogger` from `./test-helpers.js` (read its real exports first).
+- Consumes: `SettingsStoreClient`, `IScopedLogger` from `@dominevo/types`; the test fake `makeFakeSettingsStore`/`makeSilentLogger` from `./test-helpers.js` (read its real exports first).
 - Produces: `Identity`, `IdentityStore.declare`, `createIdentity`, `renameIdentity`, `deleteIdentity`, `listIdentities`. (`deleteIdentity` already cascades sample rows via a query+delete, so it works before `addSample` lands in Task 2.)
 
 - [ ] **Step 1: Write the failing test**
@@ -109,7 +109,7 @@ Expected: FAIL — module `../store/identity-store.js` not found.
 
 ```typescript
 import { randomUUID } from 'node:crypto'
-import type { SettingsStoreClient, IScopedLogger } from '@camstack/types'
+import type { SettingsStoreClient, IScopedLogger } from '@dominevo/types'
 
 export const IDENTITIES_COLLECTION = 'pipeline-analytics:identities'
 export const IDENTITY_SAMPLES_COLLECTION = 'pipeline-analytics:identity-samples'
@@ -497,7 +497,7 @@ Expected: FAIL — module not found.
 - [ ] **Step 3: Implement `face-store.ts`**
 
 ```typescript
-import type { SettingsStoreClient, IScopedLogger } from '@camstack/types'
+import type { SettingsStoreClient, IScopedLogger } from '@dominevo/types'
 
 export const FACES_COLLECTION = 'pipeline-analytics:faces'
 

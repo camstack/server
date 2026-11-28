@@ -30,7 +30,7 @@ that axis would lie.
   been borrowed this way and CI went red on a commit that was green
   locally.
 - The viewer ships with `npm run update:patch` (OTA) → `build:orchestrator` →
-  `camstack deploy packages/addon-pipeline-orchestrator` → submodule pin.
+  `dominevo deploy packages/addon-pipeline-orchestrator` → submodule pin.
   **Do not ship**: leave the commits, the main session does the shipping.
 
 ---

@@ -20,7 +20,7 @@
  * concatenate one byte per sample with four and label the result 8 kHz.
  */
 import { describe, expect, it, vi } from 'vitest'
-import type { DecodedAudioChunkWire } from '@camstack/types'
+import type { DecodedAudioChunkWire } from '@dominevo/types'
 import { AudioWindowAccumulator } from '../audio-window-accumulator.js'
 
 /** One 500 ms μ-law mono chunk at 8 kHz — 4000 bytes, one per sample. */

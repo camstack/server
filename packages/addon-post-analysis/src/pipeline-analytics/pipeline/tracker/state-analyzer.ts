@@ -1,4 +1,4 @@
-import type { ObjectState, TrackedDetection, TrackedObjectState } from '@camstack/types'
+import type { ObjectState, TrackedDetection, TrackedObjectState } from '@dominevo/types'
 import { LINK_WINDOW_MS } from '../tracker-v2/constants.js'
 import { bboxCentroid } from '../zones/geometry.js'
 

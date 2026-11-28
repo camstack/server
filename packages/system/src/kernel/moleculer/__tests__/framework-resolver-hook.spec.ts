@@ -8,14 +8,14 @@ import { initialize, resolve } from '../framework-resolver-hook.mjs'
 let frameworkDir: string
 
 beforeAll(() => {
-  // Build a fake framework dir with a resolvable @camstack/server/system package.
+  // Build a fake framework dir with a resolvable @dominevo/server/system package.
   frameworkDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fw-'))
-  const pkgDir = path.join(frameworkDir, 'node_modules', '@camstack', 'server')
+  const pkgDir = path.join(frameworkDir, 'node_modules', '@dominevo', 'server')
   fs.mkdirSync(pkgDir, { recursive: true })
   fs.writeFileSync(
     path.join(pkgDir, 'package.json'),
     JSON.stringify({
-      name: '@camstack/server',
+      name: '@dominevo/server',
       version: '1.0.0',
       exports: { './system': './index.js' },
     }),
@@ -31,8 +31,8 @@ describe('framework-resolver-hook', () => {
       shortCircuit: true,
     })
     const result = await resolve(
-      '@camstack/server/system',
-      { parentURL: 'file:///data/addons/@camstack/addon-x/dist/index.js' },
+      '@dominevo/server/system',
+      { parentURL: 'file:///data/addons/@dominevo/addon-x/dist/index.js' },
       nextResolve,
     )
     // The hook must have anchored parentURL under frameworkDir/node_modules.
@@ -44,7 +44,7 @@ describe('framework-resolver-hook', () => {
       url: `RESOLVED:${spec}:${ctx.parentURL ?? ''}`,
       shortCircuit: true,
     })
-    const original = 'file:///data/addons/@camstack/addon-x/dist/index.js'
+    const original = 'file:///data/addons/@dominevo/addon-x/dist/index.js'
     const result = await resolve('some-third-party-lib', { parentURL: original }, nextResolve)
     expect(result.url).toBe(`RESOLVED:some-third-party-lib:${original}`)
   })
@@ -57,7 +57,7 @@ describe('framework-resolver-hook', () => {
     for (const native of ['sharp', 'node-av', 'node-pty', 'ssh2']) {
       const result = await resolve(
         native,
-        { parentURL: 'file:///data/addons/@camstack/addon-x/dist/index.js' },
+        { parentURL: 'file:///data/addons/@dominevo/addon-x/dist/index.js' },
         nextResolve,
       )
       expect(result.url, `${native} should resolve via framework dir`).toContain(
@@ -67,7 +67,7 @@ describe('framework-resolver-hook', () => {
   })
 
   it('does NOT redirect better-sqlite3 — an addon import falls through to its own location', async () => {
-    const addonParent = 'file:///data/addons/@camstack/addon-x/dist/index.js'
+    const addonParent = 'file:///data/addons/@dominevo/addon-x/dist/index.js'
     const nextResolve = async (_spec: string, ctx: { parentURL?: string }) => ({
       url: ctx.parentURL ?? '',
       shortCircuit: true,

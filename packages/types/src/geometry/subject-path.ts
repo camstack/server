@@ -7,13 +7,13 @@
  * SVG burnt into the JPEG by `sharp`, when a rule sets
  * `media.showSubjectPath`). They must draw the SAME line for the same track,
  * so the point list, its simplification and the mapping into a crop live here
- * once. `@camstack/ui-library` re-exports this module for the UI side.
+ * once. `@dominevo/ui-library` re-exports this module for the UI side.
  *
- * It lives in `@camstack/types` and not in ui-library because the server
+ * It lives in `@dominevo/types` and not in ui-library because the server
  * addon that renders the notification picture cannot take ui-library (a React
- * bundle for the browser), while `@camstack/types` is already the
+ * bundle for the browser), while `@dominevo/types` is already the
  * framework-free contract every side imports — the hub, the admin UI and the
- * viewer (`@camstack/types/client`). No React, no DOM, no `sharp`: pure.
+ * viewer (`@dominevo/types/client`). No React, no DOM, no `sharp`: pure.
  *
  * ## Space
  *

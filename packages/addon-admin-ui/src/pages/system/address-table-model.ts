@@ -9,8 +9,8 @@
  * decides WHICH call a click makes, and when the operator must first accept a
  * plain-http public endpoint.
  */
-import type { HubAddressBook, HubAddressRole, HubAddressRow } from '@camstack/types'
-import { PUBLIC_ENDPOINT_HTTP_REASON } from '@camstack/types'
+import type { HubAddressBook, HubAddressRole, HubAddressRow } from '@dominevo/types'
+import { PUBLIC_ENDPOINT_HTTP_REASON } from '@dominevo/types'
 import i18n from '../../i18n/index'
 
 export interface RoleColumn {
@@ -141,7 +141,7 @@ export function summarizeRoles(book: HubAddressBook): readonly RoleSummary[] {
       r.resolved === null
         ? 'nothing reachable'
         : role === 'notificationTaps' && r.source === 'auto'
-          ? 'CamStack app link'
+          ? 'Dominevo app link'
           : r.resolved
     return { role, title, inUse: text, automatic: r.source !== 'flagged' }
   })

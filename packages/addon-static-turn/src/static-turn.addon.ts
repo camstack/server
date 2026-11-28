@@ -1,5 +1,5 @@
 /**
- * Static TURN/STUN provider: points CamStack at a self-hosted coturn (or any static TURN server).
+ * Static TURN/STUN provider: points Dominevo at a self-hosted coturn (or any static TURN server).
  *
  * Every server is a `servers` record (D985, D996), reachable through the `integration-instances`
  * cap and edited on the TURN Servers page. The broker aggregates this alongside any other
@@ -18,7 +18,7 @@ import {
   integrationInstancesCapability,
   isSecretMarker,
   turnProviderCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   ADDON_MIGRATIONS,
   type TurnCataloguePorts,
@@ -232,7 +232,7 @@ export class StaticTurnAddon extends BaseAddon<StaticTurnConfig> {
           title: 'TURN / STUN server',
           titleKey: 'static-turn:globalSettings.s_turn.title',
           description:
-            'Self-hosted (coturn) or any static TURN/STUN server. CamStack sends these ICE servers to both the hub and the browser so WebRTC can traverse NAT/CGNAT.',
+            'Self-hosted (coturn) or any static TURN/STUN server. Dominevo sends these ICE servers to both the hub and the browser so WebRTC can traverse NAT/CGNAT.',
           descriptionKey: 'static-turn:globalSettings.s_turn.description',
           fields: [
             {

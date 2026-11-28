@@ -11,7 +11,7 @@ applies-to:
 
 The operator runs about two dozen ESPHome boards (relays, shutter controllers,
 metering plugs, RF transmitters). Home Assistant already reaches them, so the
-question was whether CamStack should speak the ESPHome native API itself, and
+question was whether Dominevo should speak the ESPHome native API itself, and
 with which client: `esphome-client` (npm, ISC, zero runtime dependencies) or a
 Python worker around the reference `aioesphomeapi`, run the way the Echo speech
 worker was (line-delimited JSON, bounded respawn, secrets by a 0600 file).

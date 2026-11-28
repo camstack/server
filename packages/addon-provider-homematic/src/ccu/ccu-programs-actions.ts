@@ -259,7 +259,7 @@ async function refreshPrograms(
   deps.ccuChanged(integrationId)
 }
 
-/** The Programs tab: list every CCU program, and the key-event program CamStack can write. */
+/** The Programs tab: list every CCU program, and the key-event program Dominevo can write. */
 export function buildCcuProgramHandlers(deps: CcuActionDeps) {
   return {
     listCcuPrograms: async (input: IntegrationRef): Promise<CcuProgramsResult> => {

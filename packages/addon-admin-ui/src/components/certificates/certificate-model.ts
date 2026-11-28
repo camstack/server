@@ -4,7 +4,7 @@
  * whether Renew is offered, what a failed handover is called). No React here, so
  * each rule is pinned by a plain spec.
  */
-import type { trpc } from '@camstack/ui-library'
+import type { trpc } from '@dominevo/ui-library'
 import i18n from '../../i18n/index'
 
 type Utils = ReturnType<typeof trpc.useUtils>

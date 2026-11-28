@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { LogChannelDescriptor } from '@camstack/types'
+import type { LogChannelDescriptor } from '@dominevo/types'
 import { addonOfChannel, groupChannelsByAddon, formatRemaining } from '../log-watch.helpers'
 
 function channel(name: string, kind: 'diagnostic' | 'debug'): LogChannelDescriptor {

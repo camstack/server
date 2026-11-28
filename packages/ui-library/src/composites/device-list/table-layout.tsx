@@ -444,7 +444,7 @@ function TableRowGroup({
             />
           )
         })}
-      {/* Trailing synthetic "Disabled" section — every child whose CamStack-side
+      {/* Trailing synthetic "Disabled" section — every child whose Dominevo-side
           `disabled` flag is set, rendered LAST + muted. Collapsed by default
           (seeded into `closedSections`). */}
       {showAccessoryRows && disabledSection !== undefined && (

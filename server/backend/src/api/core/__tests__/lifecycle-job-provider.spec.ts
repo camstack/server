@@ -25,14 +25,14 @@ describe('createLifecycleJobRunner', () => {
     })
     const { jobId } = await runner.startJob({
       kind: 'update',
-      targets: [{ name: '@camstack/addon-x', version: '1.0.1' }],
+      targets: [{ name: '@dominevo/addon-x', version: '1.0.1' }],
       createdBy: 'admin',
     })
     const job = runner.getJob(jobId)
     expect(job?.state).toBe('completed')
     expect(job?.createdBy).toBe('admin') // createdBy now travels on the startJob input
     expect(job?.tasks[0]?.phase).toBe('done')
-    expect(applied[0]).toMatchObject({ name: '@camstack/addon-x', version: '1.0.1' })
+    expect(applied[0]).toMatchObject({ name: '@dominevo/addon-x', version: '1.0.1' })
     expect(typeof applied[0]?.stagedPath).toBe('string') // staged dir IS the swap source
   })
 })

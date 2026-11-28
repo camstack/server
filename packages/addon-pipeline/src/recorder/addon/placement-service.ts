@@ -30,8 +30,8 @@
  *     spread across two disks is a legitimate thing for the planner to decide;
  *     what is not legitimate is that it looked exactly like a leftover.
  */
-import type { CamProfile, IScopedLogger } from '@camstack/types'
-import { errMsg, gbToBytes } from '@camstack/types'
+import type { CamProfile, IScopedLogger } from '@dominevo/types'
+import { errMsg, gbToBytes } from '@dominevo/types'
 import type { RecordingOpsLogSink } from './ops-log-store.js'
 import {
   type PlacementCandidate,

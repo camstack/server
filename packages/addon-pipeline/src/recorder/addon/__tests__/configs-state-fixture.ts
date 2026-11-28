@@ -7,7 +7,7 @@
  * the store is free to answer a call production never makes, and to miss one it
  * does. The fake keeps the surface to exactly what the handle calls.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import {
   recordingConfigsState,
   type DeviceConfigSettings,

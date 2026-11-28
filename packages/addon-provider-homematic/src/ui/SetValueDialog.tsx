@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Button, ItemFormDialog } from '@camstack/ui-library'
+import { Button, ItemFormDialog } from '@dominevo/ui-library'
 import { Send } from 'lucide-react'
 import type { ConfigValue, ValueParam } from '../ccu/ccu-schemas.js'
 import { useT } from '../i18n/index.js'

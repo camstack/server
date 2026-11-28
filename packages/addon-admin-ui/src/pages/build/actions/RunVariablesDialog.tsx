@@ -4,7 +4,7 @@
  * is answered, and the answers go out through `actions.run`'s `variables`.
  */
 
-import type { ActionVariable } from '@camstack/types'
+import type { ActionVariable } from '@dominevo/types'
 import {
   Button,
   Dialog,
@@ -14,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
   Input,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Loader2, Play } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'

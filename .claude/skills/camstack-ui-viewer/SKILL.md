@@ -1,9 +1,9 @@
 ---
 name: camstack-ui-viewer
-description: CamStack viewer UI — the Expo / React Native app in the `camstack/` submodule (github.com/camstack/viewer) and its browser `embed/` player. Use with camstack-ui when adding or changing a viewer screen, sheet, settings row, event/timeline view or the embed player, or when touching viewer colours, tokens.ts, SheetModal, PickerSheet or locales. A viewer LAYOUT change must be co-designed with the operator — ask first.
+description: Dominevo viewer UI — the Expo / React Native app in the `camstack/` submodule (github.com/dominevo/viewer) and its browser `embed/` player. Use with camstack-ui when adding or changing a viewer screen, sheet, settings row, event/timeline view or the embed player, or when touching viewer colours, tokens.ts, SheetModal, PickerSheet or locales. A viewer LAYOUT change must be co-designed with the operator — ask first.
 ---
 
-# CamStack UI — the viewer
+# Dominevo UI — the viewer
 
 Load the umbrella first: `camstack-ui` (`.claude/skills/camstack-ui/SKILL.md`)
 owns the workflow, the token map and the done-gate. Rules in full:
@@ -53,14 +53,14 @@ Search before building: `npm run ui:find -- "<need>"` in the viewer repo.
 
 - **Icons:** `lucide-react-native` only through `src/lib/icons.ts` (the barrel
   is refused by `camstack/scripts/check-icon-imports.mjs`).
-- **Values from `@camstack/types`** come from `@camstack/types/client` (or
+- **Values from `@dominevo/types`** come from `@dominevo/types/client` (or
   `/enums`); the bare entry is `import type` only.
 - **i18n:** every user-facing string is `t('…')` with a key in BOTH
   `locales/en.json` and `locales/it.json`. No decision ids in UI text.
 - **Data:** TanStack Query hooks in `src/data/` over the hub tRPC API; client
   state in Zustand (`src/store/`).
 - **The embed player (`embed/`) is web code:** Vite + Tailwind + the SAME
-  `camstack-theme.css` and `@camstack/ui-library` composites as the admin UI,
+  `camstack-theme.css` and `@dominevo/ui-library` composites as the admin UI,
   so the `camstack-ui-admin` styling rules apply there.
 
 ## Verify

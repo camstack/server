@@ -4,7 +4,7 @@
  * update. Every part is read on its own, so one refused or failed read leaves a
  * `null` with its reason and never a made-up zero (D393).
  */
-import type { HubConnection } from '@camstack/develop'
+import type { HubConnection } from '@dominevo/develop'
 import { z } from 'zod'
 import type { McpContext } from './context.js'
 import { partitionAddonUpdates, type InstalledNewer } from './addon-update-partition.js'

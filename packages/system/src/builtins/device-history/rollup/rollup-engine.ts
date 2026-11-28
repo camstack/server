@@ -16,7 +16,7 @@
  * The dirty sets are memory: a crash forgets them, and the boot window
  * ({@link BOOT_WINDOW_MS}) is what makes that harmless.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { HistoryCounters } from '../status/counters.js'
 import type { HistoryStore } from '../store/history-store.js'
 import { READ_PAGE } from '../store/history-store.js'

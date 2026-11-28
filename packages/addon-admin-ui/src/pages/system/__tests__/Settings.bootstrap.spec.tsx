@@ -12,8 +12,8 @@ const state = vi.hoisted(() => ({
   online: true,
 }))
 
-vi.mock('@camstack/ui-library', async (importOriginal) => {
-  const real = await importOriginal<typeof import('@camstack/ui-library')>()
+vi.mock('@dominevo/ui-library', async (importOriginal) => {
+  const real = await importOriginal<typeof import('@dominevo/ui-library')>()
   return {
     ...real,
     useClusterNodes: () => ({

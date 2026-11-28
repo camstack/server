@@ -20,8 +20,8 @@
  * Plus the reason a resurrected camera came back fully configured: its
  * per-device orchestrator settings survived the deletion.
  */
-import type { IScopedLogger, StreamSourceEntry } from '@camstack/types'
-import { EventCategory } from '@camstack/types'
+import type { IScopedLogger, StreamSourceEntry } from '@dominevo/types'
+import { EventCategory } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import PipelineOrchestratorAddon from '../index.js'
 import {

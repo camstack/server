@@ -3,7 +3,7 @@ import type {
   RelocateJob,
   StorageLocation,
   StorageMigrationJob,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { StorageMigrationCoordinator } from '../storage-migration-coordinator.js'
 import { StorageOrchestratorService } from '../storage-orchestrator.service.js'

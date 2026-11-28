@@ -10,8 +10,8 @@
 | Code licence | AGPL-3.0 |
 | **Weights licence** | **AGPL-3.0** ([`LICENSES/AGPL-3.0.txt`](../../LICENSES/AGPL-3.0.txt)) |
 | Training data | COCO 2017 (annotations CC BY 4.0) |
-| CamStack modifications | exported with Ultralytics to ONNX, OpenVINO IR and CoreML |
+| Dominevo modifications | exported with Ultralytics to ONNX, OpenVINO IR and CoreML |
 | Corresponding source | [Source offer for the AGPL-3.0 weights](../../THIRD_PARTY_MODELS.md#source-offer-for-the-agpl-30-weights) |
 | Commercial use | AGPL-3.0 obligations apply |
 
-CamStack redistributes the files in this folder; every change from the upstream is stated above. Converting a model does not change its licence. The collection statement is [`LICENSE`](../../LICENSE); every model's attribution is in [`THIRD_PARTY_MODELS.md`](../../THIRD_PARTY_MODELS.md).
+Dominevo redistributes the files in this folder; every change from the upstream is stated above. Converting a model does not change its licence. The collection statement is [`LICENSE`](../../LICENSE); every model's attribution is in [`THIRD_PARTY_MODELS.md`](../../THIRD_PARTY_MODELS.md).

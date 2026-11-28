@@ -12,7 +12,7 @@
  * `EventCategory.DeviceStateChanged` bus events — a dropped event is a
  * missing history row, never wrong durable state.
  */
-import type { IScopedLogger, SensorEvent } from '@camstack/types'
+import type { IScopedLogger, SensorEvent } from '@dominevo/types'
 import type { EventLedgerCollection } from './event-ledger-collection.js'
 
 /**

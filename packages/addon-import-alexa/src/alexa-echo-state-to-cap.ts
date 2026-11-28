@@ -5,7 +5,7 @@
  * A value Amazon did not send is null, never 0 (D393): a silent speaker has no
  * volume reading, not volume 0.
  */
-import type { MediaPlayerRepeat, MediaPlayerState, MediaPlayerStatus } from '@camstack/types'
+import type { MediaPlayerRepeat, MediaPlayerState, MediaPlayerStatus } from '@dominevo/types'
 import type { DeviceVolume, PlayerInfo } from './speak/worker-protocol.js'
 
 export interface EchoStatusInput {

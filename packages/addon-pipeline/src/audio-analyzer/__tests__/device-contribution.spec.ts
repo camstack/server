@@ -11,7 +11,7 @@ import type {
   IScopedLogger,
   AudioAnalysisSettings,
   ConfigUISchemaWithValues,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { IAudioPipeline } from '../audio-pipeline.js'
 
 function makeLogger(): IScopedLogger {

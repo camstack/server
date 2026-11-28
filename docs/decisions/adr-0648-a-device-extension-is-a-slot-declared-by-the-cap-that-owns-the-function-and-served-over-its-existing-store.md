@@ -137,8 +137,8 @@ Three things surfaced while wiring slice 1 that the design did not know:
   (`listDeviceIdsByCaps(SOURCE_CAPS)`), which also refuses containers and ids
   no device has; an already-saved source is kept.
 - Framework change: a new cap, a descriptor field and a generated module in
-  `@camstack/types`, a dispatcher change in the server. Live only in a published
-  `@camstack/server` that contains them (D16); slice 2's HA addon must check the
+  `@dominevo/types`, a dispatcher change in the server. Live only in a published
+  `@dominevo/server` that contains them (D16); slice 2's HA addon must check the
   minimum server version at boot.
 - `scripts/lib/parse-cap.ts` now reads `name:` and `scope:` from the
   capability's OWN block. The first-in-file rule had silently misclassified

@@ -1,6 +1,6 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
-import { CatalogFileSchema } from '@camstack/types'
+import { CatalogFileSchema } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 
 /** `packages/` of this checkout: this file is packages/system/src/i18n/__tests__. */

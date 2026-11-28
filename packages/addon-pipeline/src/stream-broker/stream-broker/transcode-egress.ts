@@ -20,7 +20,7 @@
  * Every collaborator is injected so the wiring is unit-testable without real
  * ffmpeg or sockets.
  */
-import type { SpawnedFfmpegProcess } from '@camstack/types/node'
+import type { SpawnedFfmpegProcess } from '@dominevo/types/node'
 import { randomUUID } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
@@ -31,9 +31,9 @@ import type {
   FfmpegAudioSidecar,
   FfmpegInvocation,
   IScopedLogger,
-} from '@camstack/types'
-import { errMsg } from '@camstack/types'
-import { NO_COST_CLAIM, type ChildCostClaimHandle } from '@camstack/types/node'
+} from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
+import { NO_COST_CLAIM, type ChildCostClaimHandle } from '@dominevo/types/node'
 import { buildBrokerEgressArgs, type FfmpegSpawnFn } from './ffmpeg-invocation.js'
 
 /** The audio codecs that can ride the RTP sidecar. */

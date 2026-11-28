@@ -21,7 +21,7 @@ import {
   type TransitionRecordResult,
   type TransitionRefusalReason,
   type TransitionsStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { DAY_MS } from '../time/bucket-time.js'
 import type { FieldChange } from './change-coalescing.js'
 import type { DerivedChanges } from './derived-changes.js'

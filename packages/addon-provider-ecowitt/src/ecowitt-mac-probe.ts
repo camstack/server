@@ -6,7 +6,7 @@
  * connection edit). Never a broadcast — this path only asks the host it was given.
  */
 import { createSocket } from 'node:dgram'
-import { errMsg } from '@camstack/types'
+import { errMsg } from '@dominevo/types'
 import { parseEcowittReply, SCAN_PACKET_HEX, SCAN_PORT } from './ecowitt-lan-discovery.js'
 
 /** How long the probe waits for the gateway's reply. */

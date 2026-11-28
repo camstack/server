@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
-import type { PlayerOverlayLayer } from '@camstack/ui-library'
+import type { PlayerOverlayLayer } from '@dominevo/ui-library'
 import { layersNode, splitOverlayLayers } from '../overlay-layers'
 
 afterEach(cleanup)

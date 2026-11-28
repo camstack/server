@@ -38,7 +38,7 @@ import {
   usePipelineAnalyticsListEventKindsBatch,
   Slider,
   usePersistedPageSize,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import {
   filterKeyEvents,
   sortKeyEvents,

@@ -8,7 +8,7 @@
  * the map does not know. A FAILED read changes nothing (D49): the previous map
  * stays, and the failure is counted and logged, never read as "no devices".
  */
-import { DeviceType, type IScopedLogger } from '@camstack/types'
+import { DeviceType, type IScopedLogger } from '@dominevo/types'
 import type { HistoryCounters } from '../status/counters.js'
 
 export interface DeviceTypeSource {

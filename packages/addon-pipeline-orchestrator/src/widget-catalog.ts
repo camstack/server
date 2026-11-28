@@ -11,7 +11,7 @@
  * Extracted verbatim from `index.ts` (S1 refactor slice — zero behavior
  * change).
  */
-import type { WidgetMetadata } from '@camstack/types'
+import type { WidgetMetadata } from '@dominevo/types'
 
 export const pipelineOrchestratorWidgets: readonly WidgetMetadata[] = [
   {

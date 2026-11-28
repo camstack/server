@@ -10,7 +10,7 @@ import {
   createAddonContext,
   NativeMetricsProvider,
   type HubServiceDeps,
-} from '@camstack/server/system'
+} from '@dominevo/server/system'
 import { createAgentService } from '../../agent-service.js'
 import type { AgentServiceDeps } from '../../agent-service.js'
 import type {
@@ -18,7 +18,7 @@ import type {
   AddonDeclaration,
   AddonContext,
   InternalAddonContext,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 // ---------------------------------------------------------------------------
 // Helpers

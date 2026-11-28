@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import type { IEventBus, IScopedLogger, SystemEvent } from '@camstack/types'
+import type { IEventBus, IScopedLogger, SystemEvent } from '@dominevo/types'
 import {
   HaBrokerEntrySchema,
   HaBrokerRegistry,

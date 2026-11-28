@@ -35,7 +35,7 @@ import {
   type IScopedLogger,
   type StateRefreshPolicy,
   type StateRefreshReason,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { CommandCallOutcome, CommandFollowUpTarget } from '../../kernel/command-follow-up.js'
 import type { StateRefreshPolicyEntry } from '../../kernel/state-refresh-policies.js'
 

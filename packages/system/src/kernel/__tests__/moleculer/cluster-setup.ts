@@ -6,7 +6,7 @@ import {
   registerEventBusService,
 } from '../../moleculer/addon-context-factory.js'
 import type { HubServiceDeps } from '../../moleculer/hub-service.js'
-import type { SystemEvent } from '@camstack/types'
+import type { SystemEvent } from '@dominevo/types'
 
 interface TestCluster {
   readonly hub: ServiceBroker

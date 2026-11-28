@@ -1,14 +1,14 @@
 /**
  * AddonInstaller.applyUpdateFromStaged — runtime-dependency install.
  *
- * `installFromTgz` (the `camstack deploy` / upload path) installs an addon's
+ * `installFromTgz` (the `dominevo deploy` / upload path) installs an addon's
  * declared `camstack.runtimeDependencies` into the tree before swapping it in.
  * The OTA staged-swap path did NOT: it moved the staged dir into place and
  * stopped, so ANY addon declaring runtime deps was broken by its first OTA
  * update — the dist landed with no `node_modules`, every load threw
  * `Cannot find module`, and the retry loop replayed it forever
- * (`@camstack/addon-export-hap`, 126 failed load retries over 10.5h on
- * 2026-08-12; `@camstack/addon-remote-storage` with `@aws-sdk/*` + `webdav` is
+ * (`@dominevo/addon-export-hap`, 126 failed load retries over 10.5h on
+ * 2026-08-12; `@dominevo/addon-remote-storage` with `@aws-sdk/*` + `webdav` is
  * the same landmine).
  *
  * Semantics mirrored from `installFromTgz`: the tree is built COMPLETE first
@@ -20,8 +20,8 @@
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import type { IScopedLogger, LogExtras } from '@camstack/types'
-import { asJsonObject, parseJsonUnknown } from '@camstack/types'
+import type { IScopedLogger, LogExtras } from '@dominevo/types'
+import { asJsonObject, parseJsonUnknown } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AddonInstaller } from '../addon-installer.js'
 
@@ -67,7 +67,7 @@ function makeCapturingLogger(sink: CapturedLog[]): IScopedLogger {
   return logger
 }
 
-const PKG = '@camstack/addon-remote-storage'
+const PKG = '@dominevo/addon-remote-storage'
 
 interface StagedFixture {
   /** `dependencies` as authored in the published package.json. */
@@ -140,7 +140,7 @@ describe('AddonInstaller.applyUpdateFromStaged — runtime dependencies', () => 
 
   it('installs the declared runtimeDependencies', async () => {
     const staged = writeStaged({
-      dependencies: { webdav: '^5.7.1', '@camstack/types': '^0.1.0' },
+      dependencies: { webdav: '^5.7.1', '@dominevo/types': '^0.1.0' },
       runtimeDependencies: ['webdav'],
     })
 
@@ -191,9 +191,9 @@ describe('AddonInstaller.applyUpdateFromStaged — runtime dependencies', () => 
     expect(npmMock.calls[0]?.cwd).toBe(staged)
   })
 
-  it('strips host-provided @camstack/* deps from the swapped-in manifest', async () => {
+  it('strips host-provided @dominevo/* deps from the swapped-in manifest', async () => {
     const staged = writeStaged({
-      dependencies: { webdav: '^5.7.1', '@camstack/types': '^0.1.0' },
+      dependencies: { webdav: '^5.7.1', '@dominevo/types': '^0.1.0' },
       runtimeDependencies: ['webdav'],
     })
 
@@ -204,7 +204,7 @@ describe('AddonInstaller.applyUpdateFromStaged — runtime dependencies', () => 
   })
 
   it('skips npm entirely when nothing survives the strip', async () => {
-    const staged = writeStaged({ dependencies: { '@camstack/types': '^0.1.0' } })
+    const staged = writeStaged({ dependencies: { '@dominevo/types': '^0.1.0' } })
 
     const res = await installer.applyUpdateFromStaged(PKG, '1.0.1', staged)
 

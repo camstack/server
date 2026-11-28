@@ -16,8 +16,8 @@ import type {
   IEventBus,
   ObjectDetection,
   PipelineInferenceResultPayload,
-} from '@camstack/types'
-import { EventCategory, createEvent } from '@camstack/types'
+} from '@dominevo/types'
+import { EventCategory, createEvent } from '@dominevo/types'
 import { bootAnalytics, type Booted } from './boot-analytics.js'
 import { SNAPSHOT_MAX_ROLLBACKS } from '../pipeline/snapshot-retry.js'
 import type { FakeEventBus } from './test-helpers.js'

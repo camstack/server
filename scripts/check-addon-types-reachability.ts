@@ -1,7 +1,7 @@
 /**
  * Types-reachability guard on the BUILT addon dists (D1074, amends D28).
  *
- * An addon bundle inlines `@camstack/types` (D15). The bundler keeps a top-level
+ * An addon bundle inlines `@dominevo/types` (D15). The bundler keeps a top-level
  * initializer (`const X = z.object(...)`) it cannot prove pure, so a types
  * statement nobody references stays in the dist and is evaluated when the addon
  * loads: ~68 % of the types statements in a provider's dist were dead weight, +35
@@ -53,7 +53,7 @@ function walk(node: AstNode, parent: AstNode | null, visit: Visit): void {
   }
 }
 
-/** A `//#region` banner path that belongs to the `@camstack/types` package. */
+/** A `//#region` banner path that belongs to the `@dominevo/types` package. */
 export function isTypesRegion(region: string): boolean {
   return /(^|\/)packages\/types\/(dist|src)\//.test(region) || region.startsWith('../types/')
 }
@@ -94,7 +94,7 @@ function declaredNames(node: AstNode): string[] {
 }
 
 /**
- * Bytes of `@camstack/types` statements in `code` that no addon code reaches.
+ * Bytes of `@dominevo/types` statements in `code` that no addon code reaches.
  *
  * The roots are the statements outside a types region plus export lists. A bare
  * types statement (`Object.freeze({...})`, `macro(...)`) is NOT a root: when the

@@ -8,14 +8,14 @@ import type {
   TrainingBaseModel,
   TrainingJob,
   TrainingProviderDescriptor,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   ErrorBox,
   ItemFormDialog,
   SECTION_BODY,
   SectionCard,
   type AddonPageProps,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Cloud } from 'lucide-react'
 import { useT } from '../i18n/index.js'
 import { JobsTable } from './JobsTable.js'

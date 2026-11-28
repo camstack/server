@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react'
-import type { ClusterUpdateStep } from '@camstack/types'
+import type { ClusterUpdateStep } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { ClusterUpdateSteps } from '../ClusterUpdateSteps'
 

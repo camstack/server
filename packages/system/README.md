@@ -1,10 +1,10 @@
-# CamStack System
+# Dominevo System
 
-Core addon for CamStack — builtins, pipeline, process management, auth, logging, events.
+Core addon for Dominevo — builtins, pipeline, process management, auth, logging, events.
 
 <!-- readme:generated:start (derived from the manifest; edit outside this block) -->
 
-Package `@camstack/server-framework` — private, never published to npm.
+Package `@dominevo/server-framework` — private, never published to npm.
 
 ## What it provides
 
@@ -99,15 +99,15 @@ Package `@camstack/server-framework` — private, never published to npm.
 - Core Blocks: hub-only.
 - Composer: hub-only (runner group `composer`).
 - Camera Grids: default placement.
-- A CamStack hub. An agent is used only where the placement above allows it.
+- A Dominevo hub. An agent is used only where the placement above allows it.
 
 ## Documentation
 
-- [docs/architecture/transport.md](https://github.com/camstack/server/blob/main/docs/architecture/transport.md)
-- [docs/architecture/addon-lifecycle.md](https://github.com/camstack/server/blob/main/docs/architecture/addon-lifecycle.md)
-- [docs/architecture/storage-files.md](https://github.com/camstack/server/blob/main/docs/architecture/storage-files.md)
-- [docs/architecture/secrets-keychain.md](https://github.com/camstack/server/blob/main/docs/architecture/secrets-keychain.md)
-- [packages/system/AGENTS.md](https://github.com/camstack/server/blob/main/packages/system/AGENTS.md)
+- [docs/architecture/transport.md](https://github.com/dominevo/server/blob/main/docs/architecture/transport.md)
+- [docs/architecture/addon-lifecycle.md](https://github.com/dominevo/server/blob/main/docs/architecture/addon-lifecycle.md)
+- [docs/architecture/storage-files.md](https://github.com/dominevo/server/blob/main/docs/architecture/storage-files.md)
+- [docs/architecture/secrets-keychain.md](https://github.com/dominevo/server/blob/main/docs/architecture/secrets-keychain.md)
+- [packages/system/AGENTS.md](https://github.com/dominevo/server/blob/main/packages/system/AGENTS.md)
 
 See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
 

@@ -1,5 +1,5 @@
 import { connect } from 'node:net'
-import type { IConnectionProbe, IScopedLogger } from '@camstack/types'
+import type { IConnectionProbe, IScopedLogger } from '@dominevo/types'
 
 /** REST port of a Smart Home Controller. A connect here means the address answers. */
 export const SHC_REACHABILITY_PORT = 8444

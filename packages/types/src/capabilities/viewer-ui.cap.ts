@@ -6,7 +6,7 @@ const StaticDirOutputSchema = z.object({ staticDir: z.string() })
 const VersionOutputSchema = z.object({ version: z.string() })
 
 /**
- * viewer-ui — serves the CamStack VIEWER web build (the Expo/React-Native
+ * viewer-ui — serves the Dominevo VIEWER web build (the Expo/React-Native
  * universal client's PWA export) from the hub, alongside admin-ui. Mirrors
  * `admin-ui` exactly: a singleton, server-internal cap exposing the static
  * dist directory + build version so `main.ts` can mount the SPA under a

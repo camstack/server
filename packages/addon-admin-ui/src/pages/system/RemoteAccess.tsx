@@ -18,9 +18,9 @@ import {
   useNetworkAccessStart,
   useNetworkAccessStop,
   type DataColumn,
-} from '@camstack/ui-library'
-import { NetworkAccessStatusSchema } from '@camstack/types'
-import type { NetworkAccessStatus } from '@camstack/types'
+} from '@dominevo/ui-library'
+import { NetworkAccessStatusSchema } from '@dominevo/types'
+import type { NetworkAccessStatus } from '@dominevo/types'
 import { useQueryClient } from '@tanstack/react-query'
 import { STATUS_BADGE_CLASS } from '../../components/integration-hub/addon-controls'
 import { InstancesTable } from '../../components/instances/InstancesTable'
@@ -123,7 +123,7 @@ export function RemoteAccessPage(): ReactElement {
       )}
       emptyDescription={t(
         'system.remoteAccess.installATunnelAddonE',
-        'Install a tunnel addon (e.g. @camstack/addon-cloudflare) to expose this hub publicly.',
+        'Install a tunnel addon (e.g. @dominevo/addon-cloudflare) to expose this hub publicly.',
       )}
       addLabel={t('system.remoteAccess.addTunnel', 'Add tunnel')}
       extraColumns={[tunnelColumn]}

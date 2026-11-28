@@ -22,7 +22,7 @@ import {
   DeviceType,
   FEEDER_EXAMPLE_ADDON_ID,
   feederExampleSources,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** The HA broker id the fixture adopts under; any id works — the stable ids embed it. */
 export const BROKER_ID = 'b1'

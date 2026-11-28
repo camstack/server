@@ -1,4 +1,4 @@
-# One-shot: remove retired @camstack packages from the public registry.
+# One-shot: remove retired @dominevo packages from the public registry.
 # Safe to re-run — already-missing names are skipped. Delete this workflow
 # after the run succeeds.
 name: Unpublish Retired Packages
@@ -32,13 +32,13 @@ jobs:
 
           # Deprecated on npm, or source gone / no longer deployable.
           PACKAGES=(
-            @camstack/addon-analytics
-            @camstack/addon-decoder-ffmpeg
-            @camstack/shm-ring
-            @camstack/addon-export-ha-mqtt
-            @camstack/core
-            @camstack/kernel
-            @camstack/addon-vector-store
+            @dominevo/addon-analytics
+            @dominevo/addon-decoder-ffmpeg
+            @dominevo/shm-ring
+            @dominevo/addon-export-ha-mqtt
+            @dominevo/core
+            @dominevo/kernel
+            @dominevo/addon-vector-store
           )
 
           for pkg in "${PACKAGES[@]}"; do

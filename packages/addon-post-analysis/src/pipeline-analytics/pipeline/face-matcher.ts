@@ -1,4 +1,4 @@
-import { cosineSimilarity } from '@camstack/types'
+import { cosineSimilarity } from '@dominevo/types'
 
 /**
  * A gallery vector. Production holds it as the `Float32Array` it was stored as,

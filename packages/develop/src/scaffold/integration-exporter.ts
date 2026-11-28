@@ -19,7 +19,7 @@ import {
   RecordIntegrationInstances,
   type RecordsAccess,
   isInstanceOn,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 
 export const <%= className %>_TARGET_KIND = '<%= fileName %>-target'
@@ -136,7 +136,7 @@ import {
   integrationInstancesCapability,
   type RecordKindHandle,
   saveExposedName,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import {
   open<%= className %>Targets,

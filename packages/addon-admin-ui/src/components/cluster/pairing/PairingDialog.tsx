@@ -30,7 +30,7 @@ import {
   Input,
   trpc,
   useClusterTopology,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { CheckCircle2, Loader2, ShieldCheck, XCircle } from 'lucide-react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 

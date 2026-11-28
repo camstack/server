@@ -13,7 +13,7 @@
  */
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
-import type { LogReadEntry, LogReadQuery, LogReadResult } from '@camstack/types'
+import type { LogReadEntry, LogReadQuery, LogReadResult } from '@dominevo/types'
 import {
   compileLogFilter,
   lineMatches,

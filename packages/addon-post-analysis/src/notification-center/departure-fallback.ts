@@ -5,7 +5,7 @@
 
 import type { OccupancyEdge } from './occupancy-watcher.js'
 import { NC_DEPARTURE_STILL_LEAD_MS, NC_STILL_SHELF_TTL_MS, NcStillShelf } from './still-shelf.js'
-import type { IScopedLogger, MediaFileBytes } from '@camstack/types'
+import type { IScopedLogger, MediaFileBytes } from '@dominevo/types'
 
 /** Bound on remembered departure fallbacks (D691 review M3) — the shelf's own
  *  capture bound. */

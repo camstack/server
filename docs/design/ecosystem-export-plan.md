@@ -144,7 +144,7 @@ are `Button` + `DeviceRole.Doorbell`, `Cover` + role, `Sensor` + the `smoke` cap
 four.
 
 **`NcAlarmPanelDevice`** (`packages/addon-post-analysis/src/notification-center/alarm/alarm-panel-device.ts`)
-is CamStack's own alarm panel and the one `alarm-panel` device not imported from
+is Dominevo's own alarm panel and the one `alarm-panel` device not imported from
 Home Assistant. It is deliberately an ordinary `BaseDevice` carrying the
 `alarm-panel` cap natively — its own docblock names the three exporters as the
 reason. Two facts an exporter must respect: modes are `home | away | night` only
@@ -171,7 +171,7 @@ Three implementors, and:
 | `homeassistant-export` | 28 kinds — effectively every type | **`CAP_ENTITY_MAP`**, a declarative `Record<capName, descriptor>` in `packages/addon-provider-homeassistant/src/ha-export/entity-catalog.ts` |
 
 **The three exporters share no code.** Across all three `src/` trees every
-`@camstack/*` import is `@camstack/types` or `@camstack/types/node`. The one
+`@dominevo/*` import is `@dominevo/types` or `@dominevo/types/node`. The one
 nominally shared helper, `packages/types/src/utils/export-reconciler.ts`, says in
 its own docblock that it is "shared by the camera export addons (Alexa, HAP)" —
 in practice only HAP uses it; Alexa replaced it with
@@ -278,7 +278,7 @@ derived from `CAP_ENTITY_MAP` — 27 capabilities covering `switch`, `button`,
 `power-meter`, `air-quality-sensor`, `enum-sensor`, `numeric-sensor`,
 `doorbell`, `alarm-panel`, plus an `online` diagnostic on every device. Two
 **synthetic devices** (Notification Center with a writable switch per rule, and
-CamStack Server with cluster/node/addon health) are exporter-owned, not camstack
+Dominevo Server with cluster/node/addon health) are exporter-owned, not camstack
 devices.
 
 Live on the hub since 2026-08-09: `devices=4 entities=142`.
@@ -330,7 +330,7 @@ Everything expensive is already built:
   (`packages/addon-export-alexa/src/oauth-integration.ts`), redirect prefixes for
   layla/pitangui/alexa.amazon.co.jp, no PKCE (confidential client, secret in the
   Lambda), refresh tokens that never expire by operator decision.
-- A **published, shared CamStack skill** whose credentials are committed on
+- A **published, shared Dominevo skill** whose credentials are committed on
   purpose (`packages/addon-export-alexa/src/public-skill.ts`), with a
   `skillMode: 'custom'` escape for operators running their own.
 - The **Alexa Event Gateway** (`packages/addon-export-alexa/src/lwa-event-gateway.ts`,
@@ -465,10 +465,10 @@ automatability, zero cross-repo coupling. Tier B upgrades those to native
 platforms later.
 
 **Constraint 2 — the train.** Framework packages (`types`, `system`, `sdk`,
-`ui-library`) travel inside the published `@camstack/server` closure: a change
-there is not live until a `@camstack/server` containing it is installed. **No
-task tonight may modify `@camstack/types`.** Everything below is addon-local and
-ships with `camstack deploy`. The shared descriptor table (§3.4) is deliberately
+`ui-library`) travel inside the published `@dominevo/server` closure: a change
+there is not live until a `@dominevo/server` containing it is installed. **No
+task tonight may modify `@dominevo/types`.** Everything below is addon-local and
+ships with `dominevo deploy`. The shared descriptor table (§3.4) is deliberately
 deferred to a train, and the field-name disagreement in §1.2 is resolved by a CI
 guard rather than by a hoist.
 
@@ -523,7 +523,7 @@ calling `switch.setState`; one asserting a refused `arm` surfaces as a failure.
 
 **Done when.** `npm run test -w packages/addon-provider-homeassistant` green,
 `npm run typecheck` green, and on the live hub a lock or the NC alarm panel
-toggles from HA and reads back correctly. **Requires `camstack deploy
+toggles from HA and reads back correctly. **Requires `dominevo deploy
 packages/addon-provider-homeassistant`.**
 
 ---
@@ -722,7 +722,7 @@ a bridge model that no longer exist, and drop the `_entryRenameNote` whose state
 precondition for removal was met.
 
 **Done when.** Typecheck + tests green, a switch and a sensor pair into the Home
-app and actuate. **Requires `camstack deploy packages/addon-export-hap`.**
+app and actuate. **Requires `dominevo deploy packages/addon-export-hap`.**
 
 ---
 
@@ -774,7 +774,7 @@ endpoint. Add the interface **last**, after the state path answers.
 
 **Done when.** `SUPPORTED_KINDS` widened, discovery returns the new endpoints,
 one device responds to a voice command and to a `ReportState`. **Requires
-`camstack deploy packages/addon-export-alexa`.**
+`dominevo deploy packages/addon-export-alexa`.**
 
 ---
 
@@ -806,10 +806,10 @@ guard is wired into `.github/workflows/ci.yml`. **No deploy.**
 
 ### 3.4 Explicitly out of scope tonight
 
-- **A shared `@camstack/types` descriptor table.** It is the right end state —
+- **A shared `@dominevo/types` descriptor table.** It is the right end state —
   `CAP_ENTITY_MAP` generalised to a target-neutral descriptor, sitting beside
   `device-control-resolution.ts`, with each exporter binding it to its own
-  vocabulary — but `@camstack/types` is train-bound and a half-migrated shared
+  vocabulary — but `@dominevo/types` is train-bound and a half-migrated shared
   layer overnight is worse than two honest tables plus T8's guard. Revisit once
   T3 and T5 have both settled and the tables can be diffed.
 - **Tier B HA platforms.** Ten LANDED on 2026-08-14 — `cover`, `climate`,

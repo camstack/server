@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { REDACTED_SECRET, SECRET_CLEAR } from '@camstack/types'
+import { REDACTED_SECRET, SECRET_CLEAR } from '@dominevo/types'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { SecretRevealProvider } from '../../config-secret-field'

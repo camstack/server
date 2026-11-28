@@ -1,4 +1,4 @@
-import type { DeviceFaultType } from '@camstack/types'
+import type { DeviceFaultType } from '@dominevo/types'
 
 import type { PickOption } from './notification-rule-pickers'
 

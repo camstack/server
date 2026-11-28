@@ -5,7 +5,7 @@
  *
  * This is the shape HomeKit Secure Video's `CameraRecordingDelegate` yields
  * (`RecordingPacket` #0 is the initialisation, the rest are media fragments),
- * and it is the same shape a CamStack clip source wants — which is the point.
+ * and it is the same shape a Dominevo clip source wants — which is the point.
  * One fragmenter, two consumers (roadmap item 4b, now in the private planning board).
  * The splitter therefore knows about NEITHER of them: it emits units, and
  * {@link import('./fmp4-fragment-plane.js').Fmp4FragmentPlane} decides who gets
@@ -33,7 +33,7 @@
  *
  * It never inspects `tfdt`/`trun` and never computes a fragment's duration. The
  * fragment length is decided upstream by the muxer (`-min_frag_duration` plus a
- * key-frame grid, see `@camstack/types` `ffmpeg/invocation.ts`), and a duration
+ * key-frame grid, see `@dominevo/types` `ffmpeg/invocation.ts`), and a duration
  * parsed here would be a SECOND opinion about the same fact — the failure mode
  * D67 exists to prevent. A consumer that must verify conformance measures the
  * arrival cadence, which is the thing it actually cares about.

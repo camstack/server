@@ -14,7 +14,7 @@
  */
 import { useCallback, useMemo, useState, type JSX } from 'react'
 import { EyeOff, History as HistoryIcon, LineChart } from 'lucide-react'
-import type { DeviceHistoryQueryManyEntry, DeviceHistoryQueryManyItem } from '@camstack/types'
+import type { DeviceHistoryQueryManyEntry, DeviceHistoryQueryManyItem } from '@dominevo/types'
 import { useDeviceManagerGetDevice } from '../../generated/system-hooks'
 import { useUiText } from '../../contexts/ui-text'
 import type { ReadingDisplaySubject } from '../hero-model/measurement-display'

@@ -9,7 +9,7 @@
  * "this rung is a trial, from `low`" and the backoff after a failed trial must
  * travel with the adaptive intent, like `failures` already does.
  */
-import type { CamProfile } from '@camstack/types'
+import type { CamProfile } from '@dominevo/types'
 
 export interface TryClimbRevert {
   /** The rung that was tried and did not land. */

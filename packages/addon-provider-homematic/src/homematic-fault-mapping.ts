@@ -3,7 +3,7 @@ import {
   type DeviceFault,
   ERROR_STATUS_COLD,
   type ErrorStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { HmSysVar, HmValue } from 'nodehomematic'
 
 /**

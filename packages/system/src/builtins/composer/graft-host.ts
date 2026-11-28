@@ -28,7 +28,7 @@ import {
   type DeviceContext,
   errMsg,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { ComposerGraftPorts } from './existing-target.js'
 
 export interface GraftPorts {

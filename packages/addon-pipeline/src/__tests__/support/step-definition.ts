@@ -1,4 +1,4 @@
-import type { StepDefinition } from '@camstack/types'
+import type { StepDefinition } from '@dominevo/types'
 import { makeModelCatalogEntry } from './model-catalog-entry.js'
 
 /** Minimal classifier-shaped {@link StepDefinition} for executor / runner specs. */

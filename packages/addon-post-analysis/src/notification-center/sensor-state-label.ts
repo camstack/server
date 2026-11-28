@@ -6,7 +6,7 @@
  * device stripped), else `sensor.state.<token>`. A token nobody worded is
  * empty: the title keeps the device name and never invents a state (D393).
  */
-import { conventionalEventVocabulary } from '@camstack/types'
+import { conventionalEventVocabulary } from '@dominevo/types'
 import type { NcTextCatalog } from './text-catalog.js'
 
 /** Shared vocabulary kind of a short press (`event-vocabulary.ts`). */

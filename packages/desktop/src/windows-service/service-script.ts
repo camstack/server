@@ -25,7 +25,7 @@ const SID_ADMINISTRATORS = '*S-1-5-32-544'
 const SID_SYSTEM = '*S-1-5-18'
 
 export interface ServiceLayout {
-  /** `%ProgramData%\CamStack` — holds only the last-action log. */
+  /** `%ProgramData%\Dominevo` — holds only the last-action log. */
   readonly rootDir: string
   /** `%ProgramData%\CamStack\service` — admin-only: WinSW exe, XML, logs. */
   readonly serviceDir: string
@@ -44,7 +44,7 @@ export interface ServiceLayout {
 }
 
 export function serviceLayout(programData: string): ServiceLayout {
-  const rootDir = `${programData}\\CamStack`
+  const rootDir = `${programData}\\Dominevo`
   const serviceDir = `${rootDir}\\service`
   return {
     rootDir,

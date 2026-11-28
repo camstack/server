@@ -1,7 +1,7 @@
 /**
  * Persistence of the jobs ledger over the `jobs` and `job-dismissals` record kinds.
  */
-import type { Job, RecordKindHandle, RecordsAccess } from '@camstack/types'
+import type { Job, RecordKindHandle, RecordsAccess } from '@dominevo/types'
 import { readAllRows } from '../../../records/read-all-rows.js'
 import {
   jobDismissalsRecordKind,

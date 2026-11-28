@@ -2,8 +2,8 @@
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import type { AddonContext, IUserManagementProvider } from '@camstack/types'
-import { userManagementCapability } from '@camstack/types'
+import type { AddonContext, IUserManagementProvider } from '@dominevo/types'
+import { userManagementCapability } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   getUserManagementInternal,

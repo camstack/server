@@ -10,7 +10,7 @@ import {
   TemplateDeviceStateValueSchema,
   type TemplateTimeWindowValue,
   TemplateTimeWindowValueSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   Button,
   Dialog,
@@ -19,7 +19,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {

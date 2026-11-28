@@ -1,7 +1,7 @@
 {
-  "name": "@camstack/types",
-  "version": "1.2.644",
-  "description": "Shared types, interfaces, and model catalogs for the CamStack detection ecosystem",
+  "name": "@dominevo/types",
+  "version": "0.1.0",
+  "description": "Shared types, interfaces, and model catalogs for the Dominevo detection ecosystem",
   "keywords": [
     "camstack",
     "types",
@@ -13,12 +13,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/camstack/server.git",
+    "url": "https://github.com/dominevo/server.git",
     "directory": "packages/types"
   },
   "homepage": "https://camstack-docs.zentik.app",
   "bugs": {
-    "url": "https://github.com/camstack/server/issues"
+    "url": "https://github.com/dominevo/server/issues"
   },
   "sideEffects": false,
   "main": "./dist/index.js",

@@ -4,7 +4,7 @@ import type {
   AddonDeclaration,
   ICamstackAddon,
   ProviderRegistration,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { fixtureCap } from './fixture-cap'
 
 export class MockLogAddon implements ICamstackAddon {

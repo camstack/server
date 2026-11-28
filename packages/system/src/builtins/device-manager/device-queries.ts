@@ -1,4 +1,4 @@
-import { userError } from '@camstack/types'
+import { userError } from '@dominevo/types'
 /**
  * Device query + live-runtime + provider/adoption operations for the
  * device-manager addon — the read/live half of the `IDeviceManagerProvider`
@@ -22,14 +22,14 @@ import { userError } from '@camstack/types'
  * `pctx.provider`. Pure refactor — no behavior change.
  */
 
-import type { ConfigUISchemaWithValues, IDevice, StreamSourceEntry } from '@camstack/types'
+import type { ConfigUISchemaWithValues, IDevice, StreamSourceEntry } from '@dominevo/types'
 import {
   DeviceType,
   deviceManagerCapability,
   deviceProviderCapability,
   errMsg,
   InferProvider,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   projectSourceInfo,
   isCameraDevice,

@@ -1,5 +1,5 @@
 import { useQueries, useQuery } from '@tanstack/react-query'
-import { useSystem } from '@camstack/ui-library'
+import { useSystem } from '@dominevo/ui-library'
 
 import { mergeFaultTypes } from './fault-type-options'
 import type { PickOption } from './notification-rule-pickers'

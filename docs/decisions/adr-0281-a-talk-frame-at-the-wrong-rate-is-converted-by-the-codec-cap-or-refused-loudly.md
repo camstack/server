@@ -115,7 +115,7 @@ talk frame goes through it.**
   it was asked for.
 - `TalkPcmTranscoder` and the counters exist **twice**, one copy per provider
   package. Addons never import each other and promoting the file to
-  `@camstack/types` would put a two-provider helper on the framework publish
+  `@dominevo/types` would put a two-provider helper on the framework publish
   train. Duplication is the accepted cost here (as it already is for
   `IntercomAudioCodecApi` and the two intercom orchestrators); DIVERGENCE is
   not, and is guarded.

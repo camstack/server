@@ -18,17 +18,17 @@ description: Measure real inference capacity per node and accelerator.
 # Benchmark
 
 Benchmark answers a concrete question: **how does this accelerator behave under
-CamStack's real pipeline path?** It is a hub Admin tool under
+Dominevo's real pipeline path?** It is a hub Admin tool under
 **Detection → Benchmark**.
 
 ## Before you start
 
-- The hub runs `@camstack/addon-benchmark`.
-- The node you measure must run a current `@camstack/addon-pipeline` (it hosts the pipeline runner).
+- The hub runs `@dominevo/addon-benchmark`.
+- The node you measure must run a current `@dominevo/addon-pipeline` (it hosts the pipeline runner).
 - Every run picks a **node** and an **inference device** (GPU, NPU, Coral, …) —
   the same keys as Pipeline → matrix and Model Studio → Installed.
 
-CamStack does **not** let Benchmark override the node's engine. What you measure
+Dominevo does **not** let Benchmark override the node's engine. What you measure
 is what cameras would actually get.
 
 ## Tabs

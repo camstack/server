@@ -5,7 +5,7 @@ import {
   type DeviceFeature,
   type DeviceRole,
   errMsg,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { dreameFacades } from '../dreame-gateway.js'
 

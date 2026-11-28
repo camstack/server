@@ -42,7 +42,7 @@ let confirmAnswer = true
 let ownSessions: Session[] = []
 let userSessions: Session[] = []
 
-vi.mock('@camstack/ui-library', () => ({
+vi.mock('@dominevo/ui-library', () => ({
   Button: ({ children, onClick }: { children: unknown; onClick: () => void }) => (
     <button onClick={onClick}>{children as string}</button>
   ),

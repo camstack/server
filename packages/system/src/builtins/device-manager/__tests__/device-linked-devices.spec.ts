@@ -22,16 +22,16 @@ import type {
   IScopedLogger,
   ProviderRegistration,
   SettingsStoreClient,
-} from '@camstack/types'
-import { DeviceType } from '@camstack/types'
+} from '@dominevo/types'
+import { DeviceType } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { makeRecordsAccessForOwner } from '../../sqlite-storage/__tests__/support/records-world.js'
-// Import DeviceRegistry from source (not the `@camstack/server/system` barrel) so the
+// Import DeviceRegistry from source (not the `@dominevo/server/system` barrel) so the
 // suite runs without a built dist — the barrel transitively pulls node-only
 // deps (otplib) that vitest doesn't need for this test.
 import { DeviceRegistry } from '../../../kernel/device-registry.js'
 import type { LinkCandidate } from '../device-linked-devices.js'
-import { deviceManagerCapability } from '@camstack/types'
+import { deviceManagerCapability } from '@dominevo/types'
 import {
   applyLinkedDevicesPatch,
   LINKED_IDS_CONFIG_KEY,
@@ -1001,7 +1001,7 @@ describe('the linked-devices fleet listing costs no per-device settings read', (
  * are different answers, and the second one is a list nobody can use.
  *
  * The child is chosen by `resolveContainerPrimaryChild` — the same rule
- * admin-ui renders a container AS, now living in `@camstack/types` instead of
+ * admin-ui renders a container AS, now living in `@dominevo/types` instead of
  * being restated here, in ui-library, in the HA adoption mapping and in the
  * viewer.
  */

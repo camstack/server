@@ -21,8 +21,8 @@
  *     must not re-announce every device), and a pending shaped value is left
  *     alone: its event is alive.
  */
-import type { AddonContext, IScopedLogger } from '@camstack/types'
-import { EventCategory, errMsg } from '@camstack/types'
+import type { AddonContext, IScopedLogger } from '@dominevo/types'
+import { EventCategory, errMsg } from '@dominevo/types'
 import { z } from 'zod'
 import type { PropertyShaping } from '../endpoints/adapters/types.js'
 import { ReportShaper, type ShaperClock } from './report-shaper.js'

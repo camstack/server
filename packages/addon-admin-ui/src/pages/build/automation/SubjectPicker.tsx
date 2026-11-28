@@ -17,7 +17,7 @@ import {
   type DetectionSubject,
   pickerForRuleClasses,
   subClassesOf,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   Button,
   Input,
@@ -26,7 +26,7 @@ import {
   useFaceGalleryListIdentities,
   usePlateGalleryListPlates,
   useSystem,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useQuery } from '@tanstack/react-query'
 import { Plus, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'

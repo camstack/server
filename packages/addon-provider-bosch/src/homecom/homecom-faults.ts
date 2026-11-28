@@ -1,4 +1,4 @@
-import { ERROR_STATUS_COLD, type DeviceFault, type ErrorStatus } from '@camstack/types'
+import { ERROR_STATUS_COLD, type DeviceFault, type ErrorStatus } from '@dominevo/types'
 import type { HomeComBridgeFault } from './homecom-bridge.js'
 
 /**

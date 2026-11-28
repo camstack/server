@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import type { FrameRef } from '@camstack/types'
+import type { FrameRef } from '@dominevo/types'
 import { LocalFrameRegistry } from '../local-frame-registry.js'
 import type { FrameImage } from '../video-frame-generator.js'
 import {

@@ -1,7 +1,7 @@
 {
-  "name": "@camstack/develop",
-  "version": "0.1.60",
-  "description": "CamStack developer tooling — catalogue, scaffold, validate, and example lookup shared by the CLI and MCP server.",
+  "name": "@dominevo/develop",
+  "version": "0.1.0",
+  "description": "Dominevo developer tooling — catalogue, scaffold, validate, and example lookup shared by the CLI and MCP server.",
   "keywords": [
     "camstack",
     "develop",
@@ -12,12 +12,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/camstack/server.git",
+    "url": "https://github.com/dominevo/server.git",
     "directory": "packages/develop"
   },
   "homepage": "https://camstack-docs.zentik.app",
   "bugs": {
-    "url": "https://github.com/camstack/server/issues"
+    "url": "https://github.com/dominevo/server/issues"
   },
   "type": "module",
   "main": "./dist/index.js",
@@ -56,7 +56,7 @@
     "vitest": "^3.0.0"
   },
   "dependencies": {
-    "@camstack/types": "*",
+    "@dominevo/types": "0.1.0",
     "multicast-dns": "^7.2.5",
     "zod": "^4.3.6"
   }

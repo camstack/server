@@ -9,7 +9,7 @@
  * the old literal both assertions below fail.
  */
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_DETAIL_CROP_CONVENTION } from '@camstack/types'
+import { DEFAULT_DETAIL_CROP_CONVENTION } from '@dominevo/types'
 import type { RetrainAnnotation } from '../retrain-annotation-store.js'
 import {
   buildRetrainManifest,

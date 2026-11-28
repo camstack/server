@@ -19,8 +19,8 @@
  */
 import { Layers, Boxes, MapPinOff } from 'lucide-react'
 import { useMemo } from 'react'
-import type { DeviceProxy, PerScopeBreakdown, CameraOccupancySnapshot } from '@camstack/types'
-import { useDeviceProxy, useDeviceStateSlice, useSystem } from '@camstack/ui-library'
+import type { DeviceProxy, PerScopeBreakdown, CameraOccupancySnapshot } from '@dominevo/types'
+import { useDeviceProxy, useDeviceStateSlice, useSystem } from '@dominevo/ui-library'
 import { useT } from '../../i18n/index.js'
 
 export interface OccupancyPanelProps {

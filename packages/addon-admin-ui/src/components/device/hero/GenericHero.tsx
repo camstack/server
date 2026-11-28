@@ -1,5 +1,5 @@
 import { ProviderIcon } from '../../shared/ProviderIcon'
-import { StatusBadge } from '@camstack/ui-library'
+import { StatusBadge } from '@dominevo/ui-library'
 import { CapabilityBadges } from '../../shared/CapabilityBadges'
 import type { HeroProps } from './HeroRegistry'
 import { useTranslation } from 'react-i18next'

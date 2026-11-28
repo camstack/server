@@ -11,7 +11,7 @@ import type {
   ShareSource,
   StaleDevicePin,
   SuggestSharesResult,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { WeightCommitEntry, WeightSliderNode } from '../placement-board/WeightSliderStack'
 import i18n from '../../../i18n/index'
 

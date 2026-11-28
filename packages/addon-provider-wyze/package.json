@@ -1,7 +1,7 @@
 {
-  "name": "@camstack/addon-provider-wyze",
-  "version": "0.2.178",
-  "description": "Wyze camera device-provider addon for CamStack — wraps the @apocaliss92/wyze-bridge-js P2P/DTLS client, feeding the stream-broker via the pull-rfc4571 lazy-publish path (a structural twin of addon-provider-reolink)",
+  "name": "@dominevo/addon-provider-wyze",
+  "version": "0.1.0",
+  "description": "Wyze camera device-provider addon for Dominevo — wraps the @apocaliss92/wyze-bridge-js P2P/DTLS client, feeding the stream-broker via the pull-rfc4571 lazy-publish path (a structural twin of addon-provider-reolink)",
   "keywords": [
     "camstack",
     "addon",
@@ -15,12 +15,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/camstack/server.git",
+    "url": "https://github.com/dominevo/server.git",
     "directory": "packages/addon-provider-wyze"
   },
   "homepage": "https://camstack-docs.zentik.app",
   "bugs": {
-    "url": "https://github.com/camstack/server/issues"
+    "url": "https://github.com/dominevo/server/issues"
   },
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -66,7 +66,7 @@
       }
     ],
     "requires": {
-      "server": ">=1.2.968"
+      "server": ">=0.1.0"
     }
   },
   "files": [
@@ -85,7 +85,7 @@
   },
   "devDependencies": {
     "@apocaliss92/wyze-bridge-js": "file:./vendor/apocaliss92-wyze-bridge-js-0.1.2.tgz",
-    "@camstack/types": "*",
+    "@dominevo/types": "0.1.0",
     "typescript": "~6.0.3",
     "vite": "^8.0.11",
     "vitest": "^2.0.0",

@@ -4,7 +4,7 @@
  * and, for an infrared train, how many timings it carries. Pure: no hook, no
  * translation — the caller words it.
  */
-import type { RemoteBindingAction } from '@camstack/types'
+import type { RemoteBindingAction } from '@dominevo/types'
 import type { AutomationDevice } from '../../pages/build/automation/automation-data'
 import { IR_CAP, IR_SEND, isCompleteAction } from './remote-config-model'
 

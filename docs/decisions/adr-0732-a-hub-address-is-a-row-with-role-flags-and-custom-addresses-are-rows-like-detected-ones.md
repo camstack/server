@@ -38,13 +38,13 @@ operator asked for one concept.
 ## Decision
 
 An address is a **row**: a detected endpoint, an operator-entered **custom
-address** (url + label), or the CamStack app link. Every row carries **role
+address** (url + label), or the Dominevo app link. Every row carries **role
 flags**, the same way for detected and custom rows:
 
 | Role | Values | Automatic (no flag) |
 | --- | --- | --- |
 | `viewer` — what the apps race and connect to | many | every LAN IPv4 address + the public tunnel |
-| `notifications` — where taps and links point | one | the CamStack app link (D709) |
+| `notifications` — where taps and links point | one | the Dominevo app link (D709) |
 | `agents` — what agents and LAN devices pull from | one | LAN IPv4 literal, plausible LAN, mesh |
 | `signIn` — sign-in links, OIDC callbacks, passkey RP, OAuth2 | one | tunnel, mesh, LAN |
 
@@ -54,7 +54,7 @@ flags**, the same way for detected and custom rows:
   automatic.
 - Automatic picks only among DETECTED endpoints. A custom address serves
   exactly the roles it is flagged with — it never wins a role by ranking.
-- One resolver per role in `@camstack/types` (`resolveViewerAddresses`,
+- One resolver per role in `@dominevo/types` (`resolveViewerAddresses`,
   `resolveNotificationsAddress`, `resolveAgentsAddress`,
   `resolveSignInAddress`); `local-network.getAddresses()` returns their
   answers, and every consumer — agent deliveries and model distribution,
@@ -104,7 +104,7 @@ the same flags.
   notification custom-address field are gone. The Notification links card
   keeps its live preview and its "use default" button.
 - This is a framework change (cap methods, `ConnectionEndpoint.kind` grew
-  `'custom'`): it is live only with a `@camstack/server` that contains it, and
+  `'custom'`): it is live only with a `@dominevo/server` that contains it, and
   every exhaustive switch over the kind must handle `'custom'`.
 - An addon updated before the hub calls `getAddresses` on a hub that lacks it
   and falls back to its "unavailable" branch; ship the server first.

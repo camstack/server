@@ -1,4 +1,4 @@
-import type { IScopedLogger, LocalInterface, LogExtras } from '@camstack/types'
+import type { IScopedLogger, LocalInterface, LogExtras } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { runScan } from '../scan-engine.js'
 import type { HttpProbeOutcome, ScanIo, UdpExchangeRequest, UdpReply } from '../scan-io.js'

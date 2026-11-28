@@ -13,7 +13,7 @@
  */
 
 import type { ServerResponse } from 'node:http'
-import { createEvent, NcRuleInputSchema } from '@camstack/types'
+import { createEvent, NcRuleInputSchema } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import { NcActionPlane } from '../action-plane.js'
@@ -158,12 +158,12 @@ function serverAvailable(node: string) {
     { type: 'core', id: 'updates' },
     {
       target: 'server',
-      packageName: '@camstack/server',
+      packageName: '@dominevo/server',
       currentVersion: '1.2.190',
       latestVersion: '1.2.198',
       packages: [
         {
-          packageName: '@camstack/server',
+          packageName: '@dominevo/server',
           currentVersion: '1.2.190',
           latestVersion: '1.2.198',
           nodeId: node,
@@ -261,7 +261,7 @@ describe('a server-update notification carries a button that stages it on the na
     expect(await tap(h, serverButton(h.sends)!.url!)).toContain('did not work')
     expect(h.applied).toEqual([])
     expect(h.sends.slice(before).map((send) => send.notification.body)).toEqual([
-      'Could not read whether hub still needs a server update — nothing was changed. Open CamStack.',
+      'Could not read whether hub still needs a server update — nothing was changed. Open Dominevo.',
     ])
   })
 
@@ -273,7 +273,7 @@ describe('a server-update notification carries a button that stages it on the na
     expect(h.applied).toEqual([])
     expect(h.sends.slice(before).map((send) => send.notification.body)).toEqual([
       'Updating server on hub…',
-      'Server update on hub was refused — nothing was changed. Open CamStack.',
+      'Server update on hub was refused — nothing was changed. Open Dominevo.',
     ])
   })
 
@@ -297,18 +297,18 @@ describe('what the server-update button REFUSES to be', () => {
         { type: 'core', id: 'updates' },
         {
           target: 'server',
-          packageName: '@camstack/server',
+          packageName: '@dominevo/server',
           currentVersion: '1.2.190',
           latestVersion: '1.2.198',
           packages: [
             {
-              packageName: '@camstack/server',
+              packageName: '@dominevo/server',
               currentVersion: '1.2.190',
               latestVersion: '1.2.198',
               nodeId: 'hub',
             },
             {
-              packageName: '@camstack/server',
+              packageName: '@dominevo/server',
               currentVersion: '1.2.190',
               latestVersion: '1.2.198',
               nodeId: 'agent-a',

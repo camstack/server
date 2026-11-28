@@ -14,7 +14,7 @@
  * passes on the code that caused the incident.
  */
 import { describe, it, expect, afterEach } from 'vitest'
-import type { AddonContext, IScopedLogger } from '@camstack/types'
+import type { AddonContext, IScopedLogger } from '@dominevo/types'
 import PipelineAnalyticsAddon from '../index.js'
 import {
   makeFakeSettingsStore,

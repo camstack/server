@@ -11,7 +11,7 @@ import {
   type MediaFile,
   NC_CLIP_POST_ROLL_DEFAULT_SEC,
   NC_CLIP_PRE_ROLL_DEFAULT_SEC,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { defined } from '../../__tests__/support/vitest-mock.js'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
@@ -156,10 +156,10 @@ describe('NcDispatcher target resolution', () => {
             timestamp: 1_753_000_000_000,
             systemEvent: {
               kind: 'server-update-available',
-              subject: 'package:@camstack/server',
+              subject: 'package:@dominevo/server',
               title: 'Server update available',
-              body: '@camstack/server 1.2.90 is available (current 1.2.89)',
-              packageName: '@camstack/server',
+              body: '@dominevo/server 1.2.90 is available (current 1.2.89)',
+              packageName: '@dominevo/server',
               data: {
                 category: 'update.available',
                 currentVersion: '1.2.89',
@@ -179,10 +179,10 @@ describe('NcDispatcher target resolution', () => {
       expect(await h.dispatcher.deliver(entry)).toMatchObject({ ok: true })
       expect(h.sends[0]!.notification).toMatchObject({
         title: 'Server update available',
-        body: '@camstack/server 1.2.90 is available (current 1.2.89)',
+        body: '@dominevo/server 1.2.90 is available (current 1.2.89)',
         metadata: {
           systemEventKind: 'server-update-available',
-          subject: 'package:@camstack/server',
+          subject: 'package:@dominevo/server',
           latestVersion: '1.2.90',
         },
       })
@@ -1001,7 +1001,7 @@ describe('NcDispatcher — footage from the clip ring', () => {
     expect(seen).toEqual({ preRollSec: 0, postRollSec: 3 })
   })
 
-  it('the default is the ONE published in @camstack/types, which the viewer reads too', () => {
+  it('the default is the ONE published in @dominevo/types, which the viewer reads too', () => {
     // A second copy is how the viewer came to DISPLAY 3/7 while the hub cut
     // 4/6 — and prune a typed 3 back to "absent", which the hub then read as 4.
     expect(NC_CLIP_PRE_ROLL_DEFAULT_SEC).toBe(4)

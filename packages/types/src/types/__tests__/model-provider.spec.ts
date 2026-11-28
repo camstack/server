@@ -16,12 +16,12 @@ describe('inferModelProvider', () => {
     ).toBe('frigate')
   })
 
-  it('maps plugin-catalog ids and import descriptions, not CamStack yolov9', () => {
+  it('maps plugin-catalog ids and import descriptions, not Dominevo yolov9', () => {
     expect(inferModelProvider({ id: 'scrypted-yolov9s-relu-onnx' })).toBe('scrypted')
     expect(
       inferModelProvider({
         id: 'yolov9s',
-        description: 'CamStack YOLOv9 Small',
+        description: 'Dominevo YOLOv9 Small',
       }),
     ).toBe('custom')
     expect(

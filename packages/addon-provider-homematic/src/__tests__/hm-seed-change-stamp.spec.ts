@@ -14,7 +14,7 @@ import {
   DeviceType,
   type IDeviceRuntimeState,
   type LockControlStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { HmDevice, HmValue, Homematic, ValueChangedEvent } from 'nodehomematic'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { HmActuatorDevice } from '../devices/hm-actuator-device.js'

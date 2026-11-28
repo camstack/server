@@ -4,7 +4,7 @@
  * `validated` is "the daemon is reachable and the key is well-formed", never "the control plane
  * accepted it". The key is read, never echoed: no result field carries it.
  */
-import type { IntegrationTestConnectionResult } from '@camstack/types'
+import type { IntegrationTestConnectionResult } from '@dominevo/types'
 
 /** The two key prefixes the Tailscale admin console issues. */
 const KEY_PREFIXES: readonly string[] = ['tskey-auth-', 'tskey-client-']

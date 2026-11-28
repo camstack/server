@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { buildMqttHaAdoptionProvider } from '../mqtt-ha-adoption-provider.js'
 import { buildMqttHaStableId, parseDiscoveryConfigPayload } from '../mqtt-ha-discovery-parser.js'
 import { MqttHaDiscoveryStore } from '../mqtt-ha-discovery-store.js'

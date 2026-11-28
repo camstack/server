@@ -51,7 +51,7 @@
  * It costs one extra RPC pair, ONLY on the refusal path, and never on a
  * listing that found something.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 import type { AmcrestRpc2Client, AmcrestRpc2Error } from './amcrest-rpc2-client.js'
 import { type AmcrestCameraClock, toCameraWallClock } from './clip-clock.js'

@@ -27,7 +27,7 @@
  * {@link refuseStill}'s domain automatically and a branch has to opt INTO
  * deferring it.
  */
-import type { ClipStillDisposition, ClipStillRefusalCode } from '@camstack/types'
+import type { ClipStillDisposition, ClipStillRefusalCode } from '@dominevo/types'
 
 /** The still is queued behind the camera's one replay slot. It is coming. */
 export type DeferredStillCode = 'queue-full'

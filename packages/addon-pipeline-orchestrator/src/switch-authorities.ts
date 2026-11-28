@@ -70,8 +70,8 @@ import type {
   IScopedLogger,
   PrivacyMaskSwitchState,
   RecordingConfig,
-} from '@camstack/types'
-import { errMsg, nodePin, PRIVACY_MASK_CAP_NAME } from '@camstack/types'
+} from '@dominevo/types'
+import { errMsg, nodePin, PRIVACY_MASK_CAP_NAME } from '@dominevo/types'
 import { FleetReadPass } from './camera-status/fleet-read-pass.js'
 import type { RepeatWarnSampler } from './repeat-warn-sampler.js'
 

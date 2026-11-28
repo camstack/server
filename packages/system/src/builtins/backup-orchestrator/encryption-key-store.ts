@@ -9,7 +9,7 @@
  * A read that fails THROWS: a backup run must never take "could not read the
  * setting" for "encryption is off" and ship a plain archive.
  */
-import type { CollectionColumn, ISettingsStoreProvider, RecordKindHandle } from '@camstack/types'
+import type { CollectionColumn, ISettingsStoreProvider, RecordKindHandle } from '@dominevo/types'
 import { readAllRows } from '../../records/read-all-rows.js'
 import { parseBackupPublicKey } from '../system-backup/backup-encryption.js'
 import { backupOrchestratorRecordKinds, type BackupEncryptionKeyBody } from './record-kinds.js'

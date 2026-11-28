@@ -2,7 +2,7 @@
  * Where a composition writes, and the ports its runtime drives (D659, D663).
  * Split from `composition-runtime.ts`, which re-exports every name here.
  */
-import type { ClaimOutcome, SystemEvent } from '@camstack/types'
+import type { ClaimOutcome, SystemEvent } from '@dominevo/types'
 import type { SlicePatch } from './slice-assembler.js'
 
 export interface WriteOk {

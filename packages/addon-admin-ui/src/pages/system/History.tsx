@@ -18,7 +18,7 @@
  */
 import { useMemo } from 'react'
 import { useQueries } from '@tanstack/react-query'
-import { DeviceType, parseOccupancyScope, type DeviceHistorySeriesInfo } from '@camstack/types'
+import { DeviceType, parseOccupancyScope, type DeviceHistorySeriesInfo } from '@dominevo/types'
 import {
   AddonScopedSettingsForm,
   Button,
@@ -51,7 +51,7 @@ import {
   TEXT_HINT,
   type HistorySeriesRef,
   type HistoryWindowId,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Archive, History as HistoryIcon, LineChart, Save, X } from 'lucide-react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'

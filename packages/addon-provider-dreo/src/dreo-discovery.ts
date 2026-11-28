@@ -1,4 +1,4 @@
-import type { DiscoveredChildDevice } from '@camstack/types'
+import type { DiscoveredChildDevice } from '@dominevo/types'
 import { capsForKind, classifyDreoModel, deviceTypeForKind } from './dreo-domain-mapping.js'
 
 /**
@@ -15,7 +15,7 @@ export interface DreoDiscoverable {
 
 export interface BuildDreoCandidatesInput {
   readonly devices: readonly DreoDiscoverable[]
-  /** dreoDeviceId → adopted CamStack device id. */
+  /** dreoDeviceId → adopted Dominevo device id. */
   readonly adopted: ReadonlyMap<string, number>
 }
 

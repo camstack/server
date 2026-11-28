@@ -1,4 +1,4 @@
-import { NativeCropResultSchema } from '@camstack/types'
+import { NativeCropResultSchema } from '@dominevo/types'
 import { describe, it, expect } from 'vitest'
 import {
   resolveNativeCropHitKind,

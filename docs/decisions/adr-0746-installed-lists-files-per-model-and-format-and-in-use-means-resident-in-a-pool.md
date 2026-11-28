@@ -54,17 +54,17 @@ changes only through that section's explicit action and its confirm.
 `onDisk` is `current`, `stale` or `missing`; `downloaded` is
 `onDisk === 'current'`. `precision` is `fp32`, `fp16` or `int8`, reported
 only when the build states it: a file-name token, an INT8 variant, an EdgeTPU
-compile, or a CamStack Core ML export (D743). An unsuffixed OpenVINO IR is
+compile, or a Dominevo Core ML export (D743). An unsuffixed OpenVINO IR is
 FP16 in one family and FP32 in another, so it reports none.
 
 ## Consequences
 
 - Both new fields are optional. A runner older than this change reports only
   `downloaded`, and the page reads that as `current` or `missing`.
-- The rule lives in `addon-pipeline`, not in `@camstack/system` or
-  `@camstack/types`. Both are resolved from the host at runtime, so a new
+- The rule lives in `addon-pipeline`, not in `@dominevo/system` or
+  `@dominevo/types`. Both are resolved from the host at runtime, so a new
   value there would make the addon fail to load on an older hub. Only the
-  schemas, which are types, are in `@camstack/types`.
+  schemas, which are types, are in `@dominevo/types`.
 - The page reads every online node (getSchema, devices, loaded engines) for
   the Cluster models section.
 

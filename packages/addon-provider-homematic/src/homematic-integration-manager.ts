@@ -1,5 +1,5 @@
 import { Homematic, type ConnectionEvent, type HomematicEventMap } from 'nodehomematic'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { type HomematicConfig, toHomematicOptions } from './config.js'
 
 // ---------------------------------------------------------------------------

@@ -15,14 +15,14 @@ LAN. BLE commissioning is not wired.
 
 ## Adding a brand-new device (an Aqara lock)
 
-CamStack cannot pair a device that is still in factory mode: there is no BLE
+Dominevo cannot pair a device that is still in factory mode: there is no BLE
 commissioning and no Thread dataset step on the hub. The supported path is:
 
 1. Create the Matter fabric (Integrations, Matter fabric). There is no restore
    id to give; a fabric is new and its devices go with it.
 2. Pair the lock in an ecosystem that can (the Aqara app or Home Assistant).
 3. In that ecosystem choose **Share device** (multi-admin) to get the code.
-4. In CamStack add a Matter integration on the fabric, open **Add Matter
+4. In Dominevo add a Matter integration on the fabric, open **Add Matter
    device** and paste the code over IP. No Thread dataset is needed when the
    lock is already on a Thread border router's mesh.
 
@@ -32,13 +32,13 @@ commissioning and no Thread dataset step on the hub. The supported path is:
    on Wi-Fi is the usual first node; an Aqara U200 that is already on that
    hub's Thread mesh can be shared after the hub).
 2. Open the device and choose **Share device**.
-3. In CamStack, open the Matter integration and choose **Add Matter device**.
+3. In Dominevo, open the Matter integration and choose **Add Matter device**.
 4. Paste the numeric code or the `MT:` code before it expires. The dialog
    reports discovering, then PASE, then commissioning. A failure is named:
    the code expired, no device answered on the network, or the code was
    rejected.
 5. When commissioning finishes, adopt the new node. The device stays in
-   Home Assistant; sharing adds CamStack as another controller on the fabric.
+   Home Assistant; sharing adds Dominevo as another controller on the fabric.
 
 The Aqara app can share the same way: the share sheet shows the same manual
 code or QR payload.
@@ -102,7 +102,7 @@ a value: the previous state stays until a real report arrives. The
 subscription resubscribes when the session drops or the node comes back
 online, with a delay that grows up to one minute.
 
-| Matter cluster | CamStack |
+| Matter cluster | Dominevo |
 | --- | --- |
 | On/Off | switch |
 | Level | brightness |

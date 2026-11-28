@@ -12,7 +12,7 @@
  * another node; writing it back would resurrect it). A row that does not
  * validate is `unreadable` and the mirror is left as it was.
  */
-import type { RecordKindHandle, SettingsStoreClient } from '@camstack/types'
+import type { RecordKindHandle, SettingsStoreClient } from '@dominevo/types'
 import type { DurableLedger, DurableLedgerSpec } from '../durable/durable-ledger.js'
 
 export type NcRereadResult<TRow> =

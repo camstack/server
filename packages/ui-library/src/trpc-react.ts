@@ -19,7 +19,7 @@
  *      they pick up the host instance and skip the second create.
  */
 import { createTRPCReact, type CreateTRPCReact } from '@trpc/react-query'
-import type { AppRouter } from '@camstack/types'
+import type { AppRouter } from '@dominevo/types'
 
 export type AppTrpcReact = CreateTRPCReact<AppRouter, unknown>
 

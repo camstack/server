@@ -20,7 +20,7 @@
  * tests pin both directions: the prebuffer window widens, and the shared one
  * does not move.
  */
-import type { IScopedLogger, StreamSource } from '@camstack/types'
+import type { IScopedLogger, StreamSource } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { StreamBroker } from '../stream-broker/stream-broker.js'
 import type { PrebufferConfig } from '../prebuffer.js'

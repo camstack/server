@@ -12,7 +12,7 @@ import {
   type RecordKindHandle,
   type RecordsAccess,
   RecordIntegrationInstances,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { buildIntegrationFormSchema, espBoardRowSchema } from './config.js'
 

@@ -8,12 +8,12 @@
  * no button at all.
  */
 
-import type { PackageInstallations, UninstallPackageResult } from '@camstack/types'
+import type { PackageInstallations, UninstallPackageResult } from '@dominevo/types'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { AddonListItem } from '../AddonCard'
 
-const PKG = '@camstack/addon-a'
+const PKG = '@dominevo/addon-a'
 
 const mutateAsync = vi.fn()
 const confirmFn = vi.fn()
@@ -34,9 +34,9 @@ function row(nodeId: string, isHub: boolean, isOnline = true) {
   }
 }
 
-vi.mock('@camstack/ui-library', async () => {
+vi.mock('@dominevo/ui-library', async () => {
   const actual =
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+    await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return {
     Badge: actual.Badge,
     Button: actual.Button,

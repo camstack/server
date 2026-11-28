@@ -9,8 +9,8 @@
  * Both fail CLOSED (no subject bbox) when a normalized box can't be derived.
  */
 
-import type { NcRule, ObjectEvent, Track } from '@camstack/types'
-import { NcRuleInputSchema, NcRuleSchema } from '@camstack/types'
+import type { NcRule, ObjectEvent, Track } from '@dominevo/types'
+import { NcRuleInputSchema, NcRuleSchema } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   evaluateRule,

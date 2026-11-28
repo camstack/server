@@ -9,7 +9,7 @@ import {
   makeInMemoryRecords,
   type MigrationOwnerResult,
   preconditionOf,
-} from '@camstack/types'
+} from '@dominevo/types'
 import Database from 'better-sqlite3'
 import { describe, expect, it } from 'vitest'
 import { ADDON_SETTINGS_TABLE } from '../../../settings-per-node.js'

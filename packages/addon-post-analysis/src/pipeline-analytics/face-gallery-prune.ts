@@ -24,7 +24,7 @@
  *
  * Pure and deps-injected; the addon supplies the stores and the cadence.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { type FaceAlignmentVersion, isV2Aligned } from './face-alignment-version.js'
 
 /** Operator decision (2026-09-26): prune once an identity has 10 v2 detected samples. */

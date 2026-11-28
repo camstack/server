@@ -9,7 +9,7 @@ import {
   mergeSecretStatePaths,
   type SecretsAccess,
   transformSecretWrite,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   type SettingsRows,

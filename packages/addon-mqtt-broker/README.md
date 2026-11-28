@@ -1,10 +1,10 @@
 # MQTT Broker
 
-MQTT broker registry addon for CamStack — manages external broker entries + an optional embedded aedes broker. Consumers spin up their own `mqtt.js` clients via the `mqtt-broker` cap.
+MQTT broker registry addon for Dominevo — manages external broker entries + an optional embedded aedes broker. Consumers spin up their own `mqtt.js` clients via the `mqtt-broker` cap.
 
 <!-- readme:generated:start (derived from the manifest; edit outside this block) -->
 
-Package `@camstack/addon-mqtt-broker` on npm.
+Package `@dominevo/addon-mqtt-broker` on npm.
 
 ## What it provides
 
@@ -15,7 +15,7 @@ Package `@camstack/addon-mqtt-broker` on npm.
 
 - Placement: hub-only.
 - Runtime dependencies installed with the addon: `aedes`.
-- A CamStack hub. An agent is used only where the placement above allows it.
+- A Dominevo hub. An agent is used only where the placement above allows it.
 
 See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
 

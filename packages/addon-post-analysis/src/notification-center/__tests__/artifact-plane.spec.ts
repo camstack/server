@@ -335,7 +335,7 @@ describe('collectArtifactEndpoints — the hub PUBLIC ENDPOINT (D734)', () => {
     expect(pickArtifactBaseUrl(out)).toBe('https://public.example')
   })
 
-  it('the CamStack app link is never a hub base — media keeps the hub ladder', async () => {
+  it('the Dominevo app link is never a hub base — media keeps the hub ladder', async () => {
     const out = await collectArtifactEndpoints({
       publicEndpoint: 'https://camstack.zentik.app',
       getConnected: async () => ({ url: 'https://tunnel.example', protocol: 'https' }),

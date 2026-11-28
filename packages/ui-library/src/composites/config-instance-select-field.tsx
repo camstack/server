@@ -4,7 +4,7 @@
  * select over the existing instances. The cap and kind are data, never named here.
  */
 import type { JSX } from 'react'
-import type { ConfigInstanceSelectField } from '@camstack/types'
+import type { ConfigInstanceSelectField } from '@dominevo/types'
 import { useInstancePickerSlot } from '../contexts/instance-picker-slot'
 import { useUiText } from '../contexts/ui-text'
 import type { LinkableInstance } from '../hooks/use-instances-of-cap'

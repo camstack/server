@@ -1,5 +1,5 @@
 /** Pure helpers for the Logs → Diagnostics page. */
-import type { DebugWatchState, LogChannelDescriptor } from '@camstack/types'
+import type { DebugWatchState, LogChannelDescriptor } from '@dominevo/types'
 
 /** `4m 12s`. Never a bare millisecond count — a deadline has to be readable. */
 export function formatRemaining(ms: number): string {

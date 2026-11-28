@@ -1,7 +1,7 @@
 {
-  "name": "@camstack/addon-provider-ecowitt",
-  "version": "0.2.176",
-  "description": "Ecowitt weather-station device-provider addon for CamStack — wraps the @apocaliss92/nodewitt local-poll / push client",
+  "name": "@dominevo/addon-provider-ecowitt",
+  "version": "0.1.0",
+  "description": "Ecowitt weather-station device-provider addon for Dominevo — wraps the @apocaliss92/nodewitt local-poll / push client",
   "keywords": [
     "camstack",
     "addon",
@@ -15,12 +15,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/camstack/server.git",
+    "url": "https://github.com/dominevo/server.git",
     "directory": "packages/addon-provider-ecowitt"
   },
   "homepage": "https://camstack-docs.zentik.app",
   "bugs": {
-    "url": "https://github.com/camstack/server/issues"
+    "url": "https://github.com/dominevo/server/issues"
   },
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -66,7 +66,7 @@
       }
     ],
     "requires": {
-      "server": ">=1.2.968"
+      "server": ">=0.1.0"
     }
   },
   "files": [
@@ -85,7 +85,7 @@
   },
   "devDependencies": {
     "@apocaliss92/nodewitt": "^1.5.0",
-    "@camstack/types": "*",
+    "@dominevo/types": "0.1.0",
     "typescript": "~6.0.3",
     "vite": "^8.0.11",
     "vitest": "^2.0.0",

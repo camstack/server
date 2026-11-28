@@ -36,8 +36,8 @@ import {
   Trash2,
   Undo2,
 } from 'lucide-react'
-import type { NavigationActionEntry, NavigationActionId } from '@camstack/types'
-import { NAVIGATION_LIGHT_LEVEL_MAX, NAVIGATION_LIGHT_LEVEL_MIN } from '@camstack/types'
+import type { NavigationActionEntry, NavigationActionId } from '@dominevo/types'
+import { NAVIGATION_LIGHT_LEVEL_MAX, NAVIGATION_LIGHT_LEVEL_MIN } from '@dominevo/types'
 import { useSystem } from '../../contexts/system-context'
 import { useUiText } from '../../contexts/ui-text'
 import { type NavigationDirection, useNavigation } from '../../hooks/use-navigation'

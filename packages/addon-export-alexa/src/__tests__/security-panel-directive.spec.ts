@@ -1,4 +1,4 @@
-import type { AddonApi, AddonContext, IScopedLogger } from '@camstack/types'
+import type { AddonApi, AddonContext, IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { VerifiedDirectiveIdentity } from '../directive-router.js'
 import { handleArm, handleDisarm, type SecurityPanelContext } from '../handlers/security-panel.js'

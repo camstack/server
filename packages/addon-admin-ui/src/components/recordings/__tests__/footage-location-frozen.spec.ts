@@ -4,7 +4,7 @@
  * SAME predicate, or the UI offers a Report that comes back `source-writable`.
  */
 
-import type { StorageLocation } from '@camstack/types'
+import type { StorageLocation } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { footageLocationFrozen } from '../footage-location-frozen.js'
 

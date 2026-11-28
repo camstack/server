@@ -56,13 +56,13 @@ declares, served ONLY through `integration-instances`.
 The `broker` cap loses eleven methods and `BrokerInfo`; callers list the instances of the owning
 addon instead. A dual addon (a broker and the integrations that use it) composes two record kinds
 into one provider with `composeInstanceKinds`. The ad-hoc ids are migrated by their CONSUMER, under
-D987. A cap change force-publishes `@camstack/system`, and the removal commits atomically with
+D987. A cap change force-publishes `@dominevo/system`, and the removal commits atomically with
 the UI that used it. Until steps 3 to 8 of the epic land, the superseded clauses stay in force for
 the families not yet moved.
 
 What an operator can do now: add, edit, test, switch off and delete every broker kind from the
 Connectivity page (Alexa, Matter, Home Assistant, Google, MQTT, the inbound mailboxes), test an
-MQTT broker or a mailbox port before saving it, create an ONBOARD MQTT broker (a CamStack `aedes`
+MQTT broker or a mailbox port before saving it, create an ONBOARD MQTT broker (a Dominevo `aedes`
 server on this hub, with an auto-allocated or typed port and optional anonymous access) and delete
 it to stop its server. Removing a broker something still uses is refused, naming the users; a
 registry that cannot be read refuses too, and so does an MQTT Discovery addon that is installed but

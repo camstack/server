@@ -4,7 +4,7 @@
  * and the state key is deleted only after a second read shows every token on its record.
  * Real SQLite for the settings table, the real `brokers` kind with its keychain.
  */
-import { isSecretMarker, makeInMemoryRecords, type StoredKeyRead } from '@camstack/types'
+import { isSecretMarker, makeInMemoryRecords, type StoredKeyRead } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { googleBrokersEntryKind } from '../../broker-record-kinds.js'
 import { GoogleBrokerStore } from '../../google-broker-store.js'

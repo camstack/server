@@ -206,7 +206,7 @@ allocation D9/D18 forbid, and a raised ceiling instead of a removed cause.
   the span of history is the same.
 - The `preRollReport` wire reply requires `budgetFrames`, and `preRollSettled`
   is a new reply; parent and child ship in the same addon, so there is no skew.
-- `liveTrackCount` is a framework (`@camstack/types`) field: the orchestrator
+- `liveTrackCount` is a framework (`@dominevo/types`) field: the orchestrator
   reports `liveTracks: null` until a post-analysis that sends it is running.
 - The runner's latest-only queue is still cleared on session close and detach
   (one frame at most); that is now logged, not changed.

@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import type { Job } from '@camstack/types'
+import type { Job } from '@dominevo/types'
 import {
   activityBadgeCount,
   canCancelJob,

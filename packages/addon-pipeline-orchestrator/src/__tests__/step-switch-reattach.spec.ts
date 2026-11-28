@@ -8,7 +8,7 @@ import type {
   CameraDetectionConfig,
   InferenceDeviceDescriptor,
   IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import PipelineOrchestratorAddon from '../index.js'
 import { CORAL, CORAL_GPU_CATALOG, GPU } from './attach-pipeline-fixtures.js'

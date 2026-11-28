@@ -16,7 +16,7 @@
  * fails here.
  */
 
-import { type AlarmArmMode, NC_ALARM_SYSTEM_EVENT_KINDS } from '@camstack/types'
+import { type AlarmArmMode, NC_ALARM_SYSTEM_EVENT_KINDS } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { incomingFromAlarmTransition } from '../../event-intake.js'
 import { NC_LANGUAGES, NC_TEXT_BUNDLES, NcTextCatalog } from '../../text-catalog.js'

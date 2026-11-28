@@ -23,7 +23,7 @@ import type {
   DecodedAudioChunkWire,
   IScopedLogger,
   LogExtras,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { AudioDeviceAttachments, MAX_WINDOWS_AWAITING_RESULT } from '../audio-device-attachments.js'

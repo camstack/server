@@ -3,7 +3,7 @@
  * the `setAlias` mutation, and the one-shot boot backfill for rows that predate
  * the column.
  *
- * The grammar and the slug live in `@camstack/types` (`device-alias.ts`); this
+ * The grammar and the slug live in `@dominevo/types` (`device-alias.ts`); this
  * file owns the persistence and the cluster-wide uniqueness, always under the
  * meta write lock so two registrations cannot both claim `stufa`.
  */
@@ -14,7 +14,7 @@ import {
   EventCategory,
   generateDeviceAlias,
   type InferProvider,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { ProviderContext } from './device-provider-context.js'
 import type { DeviceRowStore } from './device-row-store.js'
 

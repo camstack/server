@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
-import { ConfirmDialogProvider } from '@camstack/ui-library'
+import { ConfirmDialogProvider } from '@dominevo/ui-library'
 import { describe, expect, it, vi } from 'vitest'
-import { AutomationTemplatePayloadSchema, instantiateAutomationTemplate } from '@camstack/types'
+import { AutomationTemplatePayloadSchema, instantiateAutomationTemplate } from '@dominevo/types'
 import '../../../../i18n'
 vi.mock('../../automation/automation-data', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../automation/automation-data')>()),

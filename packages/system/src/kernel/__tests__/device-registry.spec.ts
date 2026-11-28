@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { DeviceRegistry } from '../device-registry.js'
-import { DeviceType, DeviceFeature } from '@camstack/types'
-import type { IDevice } from '@camstack/types'
+import { DeviceType, DeviceFeature } from '@dominevo/types'
+import type { IDevice } from '@dominevo/types'
 
 let mockIdCounter = 1
 

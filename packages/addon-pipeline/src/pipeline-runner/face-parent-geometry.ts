@@ -17,7 +17,7 @@
  * anchor IS the parent box, so every face would map inside it. There the guard
  * cannot run, and `runDetailSubtree` says so rather than pass a vacuous check.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 /** A `{x,y,w,h}` rectangle in frame pixels. */
 export interface GeometryRect {

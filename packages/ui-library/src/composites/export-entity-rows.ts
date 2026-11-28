@@ -9,7 +9,7 @@
  *
  * Pure functions, so the rules are pinned without a DOM.
  */
-import { ExportEntityKindSchema, ExposedEntitySchema } from '@camstack/types'
+import { ExportEntityKindSchema, ExposedEntitySchema } from '@dominevo/types'
 import { z } from 'zod'
 
 /** The kinds this module builds rows for. A device is the table's own row. */

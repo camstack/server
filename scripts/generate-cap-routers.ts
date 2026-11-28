@@ -151,7 +151,7 @@ async function loadCapabilities(): Promise<CapInfo[]> {
     // matches so browser callers can reach these procedures as regular
     // cap methods, not an implicit in-process-only surface.
     const { expandCapMethods, DEVICE_SETTINGS_CONTRIBUTION_METHODS, DEVICE_STATUS_METHOD } =
-      await import('@camstack/types')
+      await import('@dominevo/types')
     const effectiveMethods = expandCapMethods(capDef)
     if (Object.keys(effectiveMethods).length === 0) continue
 
@@ -438,25 +438,25 @@ async function generate(): Promise<void> {
     '/* eslint-disable */',
     '',
     "import { TRPCError } from '@trpc/server'",
-    "import { CapRouteError } from '@camstack/server/system'",
+    "import { CapRouteError } from '@dominevo/server/system'",
     "import { z } from 'zod'",
     `import { ${middlewareImports.join(', ')}, trpcRouter } from './trpc.middleware.js'`,
-    `import type { InferProvider } from '@camstack/types'`,
+    `import type { InferProvider } from '@dominevo/types'`,
     ...(caps.some((c) => c.exposesDeviceSettings)
-      ? [`import { DEVICE_SETTINGS_CONTRIBUTION_METHODS } from '@camstack/types'`]
+      ? [`import { DEVICE_SETTINGS_CONTRIBUTION_METHODS } from '@dominevo/types'`]
       : []),
     ...(caps.some((c) => c.hasStatus)
-      ? [`import { DEVICE_STATUS_METHOD } from '@camstack/types'`]
+      ? [`import { DEVICE_STATUS_METHOD } from '@dominevo/types'`]
       : []),
     ...(caps.some((c) => CALLER_STAMPED_CAPABILITIES.includes(c.capName))
-      ? [`import { withoutCallerStamp } from '@camstack/types'`]
+      ? [`import { withoutCallerStamp } from '@dominevo/types'`]
       : []),
     `import type { TrpcContext } from './trpc.context.js'`,
     '',
   ]
 
   for (const cap of caps) {
-    lines.push(`import { ${cap.exportName} } from '@camstack/types'`)
+    lines.push(`import { ${cap.exportName} } from '@dominevo/types'`)
   }
 
   lines.push('')

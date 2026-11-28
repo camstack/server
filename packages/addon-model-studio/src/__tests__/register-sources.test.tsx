@@ -4,7 +4,7 @@
  */
 import { afterEach, describe, expect, it } from 'vitest'
 import { cleanup, render, screen } from '@testing-library/react'
-import type { AddonPageProps } from '@camstack/ui-library'
+import type { AddonPageProps } from '@dominevo/ui-library'
 import { CustomTab } from '../tabs/RegisterTab.js'
 import { OperationModalProvider } from '../components/OperationModalProvider.js'
 
@@ -35,7 +35,7 @@ function customTrpc(): AddonPageProps['trpc'] {
 afterEach(cleanup)
 
 describe('CustomTab — sources', () => {
-  it('offers upload and URL — not plus catalog, plugin catalog, or CamStack', () => {
+  it('offers upload and URL — not plus catalog, plugin catalog, or Dominevo', () => {
     render(
       <OperationModalProvider>
         <CustomTab trpc={customTrpc()} onRegistered={() => undefined} />
@@ -46,6 +46,6 @@ describe('CustomTab — sources', () => {
     }
     expect(screen.queryByRole('button', { name: 'plus catalog' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'plugin catalog' })).toBeNull()
-    expect(screen.queryByRole('button', { name: 'CamStack' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Dominevo' })).toBeNull()
   })
 })

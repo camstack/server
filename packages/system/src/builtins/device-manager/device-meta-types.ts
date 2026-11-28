@@ -14,8 +14,8 @@ import type {
   DeviceIdentifiers,
   IconKey,
   RoleDisplayDefault,
-} from '@camstack/types'
-import { canonicalIconKey, LOCATION_DESCRIPTION_MAX } from '@camstack/types'
+} from '@dominevo/types'
+import { canonicalIconKey, LOCATION_DESCRIPTION_MAX } from '@dominevo/types'
 
 /**
  * Wire shape matching `z.infer<typeof SettingsSchemaWithValuesSchema>` —

@@ -15,8 +15,8 @@
  */
 import { useEffect, useRef } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { useLiveEvent } from '@camstack/ui-library'
-import { EventCategory, type PipelineAnalyticsFaceGalleryChangedPayload } from '@camstack/types'
+import { useLiveEvent } from '@dominevo/ui-library'
+import { EventCategory, type PipelineAnalyticsFaceGalleryChangedPayload } from '@dominevo/types'
 import { createDebouncedInvalidate, type DebouncedInvalidate } from './debounced-invalidate.js'
 
 const FACE_GALLERY_KEY = [['faceGallery']]

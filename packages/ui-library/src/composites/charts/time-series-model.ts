@@ -2,7 +2,7 @@
  * The pure half of `TimeSeriesChart`: which series go on which value axis,
  * the aligned data uPlot draws, and what the readout says at an index.
  */
-import type { ReadingQuantity } from '@camstack/types'
+import type { ReadingQuantity } from '@dominevo/types'
 import {
   alignSeries,
   sharedGapSpans,

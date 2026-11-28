@@ -6,8 +6,8 @@ import {
   MowerStatus,
   mowerFaultSeverity,
 } from '@apocaliss92/nodedreame'
-import { ERROR_STATUS_COLD } from '@camstack/types'
-import type { ConsumableItem, DeviceFault, ErrorStatus, LawnMowerActivity } from '@camstack/types'
+import { ERROR_STATUS_COLD } from '@dominevo/types'
+import type { ConsumableItem, DeviceFault, ErrorStatus, LawnMowerActivity } from '@dominevo/types'
 
 /**
  * Pure decode helper for the Dreame mower. Translate the library's

@@ -1,4 +1,4 @@
-/** Re-export — shared with `@camstack/ui-library`. */
+/** Re-export — shared with `@dominevo/ui-library`. */
 export {
   DEVICE_PICKER_GROUP_STORAGE_KEY,
   readStoredGroupBy,
@@ -6,4 +6,4 @@ export {
   useStoredGroupBy,
   usePickerSiteZones,
   type StoredGroupBy,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'

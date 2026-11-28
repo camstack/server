@@ -6,7 +6,7 @@
  *
  * A read that failed is a reason, never "up to date" (D315, D393).
  */
-import type { HubClient } from '@camstack/develop'
+import type { HubClient } from '@dominevo/develop'
 import { z } from 'zod'
 import { distinctCaps, isCapless, TopologyNodeSchema, TopologySchema } from './ops-status.js'
 import { readQuery, type Read } from './ops-hub.js'
@@ -176,13 +176,13 @@ export function wrapperInstructions(kind: WrapperKind | null): readonly string[]
       return [
         'The image is replaced, not the closure: pull the new image and RECREATE the container (a plain restart keeps the old image).',
         'Docker Compose: `docker compose pull` then `docker compose up -d`.',
-        'Unraid: Docker tab, "Check for updates", then apply the update on the CamStack container (it is recreated from the new image; keep the same appdata paths).',
+        'Unraid: Docker tab, "Check for updates", then apply the update on the Dominevo container (it is recreated from the new image; keep the same appdata paths).',
         'Proxmox LXC: recreate the container the way it was installed; `setup_install_guide` with hostKind "proxmox-lxc" returns the official steps.',
         'Back up the data volume first; no tool here does it.',
       ]
     case 'electron':
       return [
-        'Update the CamStack desktop app on that machine: install the new app version (the in-app update, or reinstall from the release) and let the app restart.',
+        'Update the Dominevo desktop app on that machine: install the new app version (the in-app update, or reinstall from the release) and let the app restart.',
         'The server closure update does not change the app bundle.',
       ]
     case 'native':

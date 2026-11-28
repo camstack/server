@@ -1,4 +1,4 @@
-import { ACTION_STEP_KINDS } from '@camstack/types'
+import { ACTION_STEP_KINDS } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { ACTION_EDITOR_KINDS } from '../../actions/ActionEditor'
 import { offeredStepKinds } from '../ActionList'

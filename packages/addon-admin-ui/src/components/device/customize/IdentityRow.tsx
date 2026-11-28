@@ -5,7 +5,7 @@
  * editable like the name, spawned accessory children included: the provider's
  * role is only the first value. Type is read-only.
  */
-import type { DeviceInfo } from '@camstack/types'
+import type { DeviceInfo } from '@dominevo/types'
 import {
   Checkbox,
   deviceRoleMetaOf,
@@ -16,8 +16,8 @@ import {
   TagInput,
   useTagRegistry,
   useUiText,
-} from '@camstack/ui-library'
-import type { UiTextFn } from '@camstack/ui-library'
+} from '@dominevo/ui-library'
+import type { UiTextFn } from '@dominevo/ui-library'
 import { type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuickDetailSave } from '../quick-detail-save'

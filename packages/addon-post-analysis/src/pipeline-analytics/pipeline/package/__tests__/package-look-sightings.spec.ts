@@ -3,7 +3,7 @@
  * person overlap, and episode drop logging.
  */
 
-import type { Zone, ZoneRule } from '@camstack/types'
+import type { Zone, ZoneRule } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { createNoopLogger } from '../../../../embedding-encoder/shared/noop-logger.js'
 import { PACKAGE_DROP_DEFAULTS } from '../../../package-settings.js'

@@ -13,7 +13,7 @@
  * picked.
  */
 import { describe, expect, it, vi } from 'vitest'
-import type { DeviceHistoryIngestResult, IScopedLogger } from '@camstack/types'
+import type { DeviceHistoryIngestResult, IScopedLogger } from '@dominevo/types'
 import {
   RECORD_MIN_INTERVAL_MS,
   RECORD_RATE_SLACK_MS,

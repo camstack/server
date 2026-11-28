@@ -6,7 +6,7 @@ const find = (content: string, rel = REL) => findRawDurationInputs([{ rel, conte
 
 describe('check-no-raw-duration-input', () => {
   it('refuses a retired duration component, by import or by use', () => {
-    expect(find("import { DurationPartsInput } from '@camstack/ui-library'\n")).toHaveLength(1)
+    expect(find("import { DurationPartsInput } from '@dominevo/ui-library'\n")).toHaveLength(1)
     expect(find('<DelayField value={1} />')[0]?.kind).toBe('retired-component')
     expect(find('const labels = useDurationLabels()')).toHaveLength(1)
   })

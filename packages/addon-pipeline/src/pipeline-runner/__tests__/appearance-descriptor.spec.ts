@@ -8,7 +8,7 @@
  *    noise reads as gray" fails (review M9: near-black noise has a high HSV
  *    saturation — (3,1,2) is s = 0.67 — but carries no colour).
  */
-import { APPEARANCE_BIN_COUNT, APPEARANCE_BLOCKS } from '@camstack/types'
+import { APPEARANCE_BIN_COUNT, APPEARANCE_BLOCKS } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   appearanceCrop,

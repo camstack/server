@@ -4,7 +4,7 @@ import {
   type DiscoveryMode,
   DeviceType,
   defaultIntegrationName,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export interface VeluxDiscoveredGateway {
   readonly host: string

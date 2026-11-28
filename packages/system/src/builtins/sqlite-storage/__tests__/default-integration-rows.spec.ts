@@ -11,7 +11,7 @@ import {
   entryBody,
   defaultIntegrationPortsOver,
   createSecretsAccess,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { integrationRegistryRecordKinds } from '../integration-record-kinds.js'
 import { IntegrationRegistry } from '../integration-registry.js'

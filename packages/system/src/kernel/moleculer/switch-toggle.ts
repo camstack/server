@@ -13,8 +13,8 @@
  * before reading any state. A provider without `getOptions`, or a read that
  * failed, toggles as before (D315).
  */
-import type { IScopedLogger } from '@camstack/types'
-import { switchRefusesSetState } from '@camstack/types/addon'
+import type { IScopedLogger } from '@dominevo/types'
+import { switchRefusesSetState } from '@dominevo/types/addon'
 
 /** Why a toggle will not act: the state is unknown, or the switch cannot be set. */
 export type SwitchToggleRefusal = 'no-slice' | 'stale' | 'not-settable'

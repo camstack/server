@@ -11,7 +11,7 @@
  * `deviceManager.listDeviceIdsByCaps` reached the guard through the addon's
  * own wiring.
  */
-import { NcRuleInputSchema } from '@camstack/types'
+import { NcRuleInputSchema } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import { NcDeviceCompatRefusal } from '../../notification-center/device-compat-guard.js'
 import { type Booted, bootAnalytics } from './boot-analytics.js'

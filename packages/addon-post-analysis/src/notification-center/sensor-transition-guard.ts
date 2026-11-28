@@ -17,7 +17,7 @@
  * refine on the conditions schema would also run at LOAD. The engine is
  * untouched.
  */
-import type { IScopedLogger, NcDelivery, NcSensorTransition } from '@camstack/types'
+import type { IScopedLogger, NcDelivery, NcSensorTransition } from '@dominevo/types'
 import {
   mergedFamilySubject,
   type NcRuleFamilyGuardContext,

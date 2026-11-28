@@ -18,7 +18,7 @@ import {
   type MigrationPlan,
   type MigrationProcedureResult,
   preconditionOf,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   ALEXA_INSTANCE_ID,
   ALEXA_SKILL_DEFAULT_BODY,

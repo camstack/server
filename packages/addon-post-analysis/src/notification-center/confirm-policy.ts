@@ -10,8 +10,8 @@
  * Pure. No clock, no store, no logger — so the derivation below is testable as
  * arithmetic rather than through a dispatch.
  */
-import type { NcConfirmExpect, NcOccupancyCondition, NcRule } from '@camstack/types'
-import { NC_CONFIRM_DEFAULT_MAX_IMAGE_PX, NC_CONFIRM_DEFAULT_TIMEOUT_MS } from '@camstack/types'
+import type { NcConfirmExpect, NcOccupancyCondition, NcRule } from '@dominevo/types'
+import { NC_CONFIRM_DEFAULT_MAX_IMAGE_PX, NC_CONFIRM_DEFAULT_TIMEOUT_MS } from '@dominevo/types'
 import type { NcOutboxConfirmPolicy } from './outbox.js'
 
 /**

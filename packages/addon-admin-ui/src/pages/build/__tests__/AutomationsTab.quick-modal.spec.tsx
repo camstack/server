@@ -2,8 +2,8 @@
  * Automations tab: a row click opens the quick modal, and only its Open button
  * goes to the editor.
  */
-import type { CoreBlock } from '@camstack/types'
-import { ConfirmDialogProvider } from '@camstack/ui-library'
+import type { CoreBlock } from '@dominevo/types'
+import { ConfirmDialogProvider } from '@dominevo/ui-library'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
@@ -22,8 +22,8 @@ const BLOCK: CoreBlock = {
   lastChangedAt: 1,
 }
 
-vi.mock('@camstack/ui-library', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@camstack/ui-library')>()),
+vi.mock('@dominevo/ui-library', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@dominevo/ui-library')>()),
   useSystem: () => ({
     trpcClient: {
       coreBlocks: {

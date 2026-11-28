@@ -1,6 +1,6 @@
 import type { OsdConfig, OsdPatch } from '@apocaliss92/nodelink-js'
 import { isOsdCorner, OSD_CORNERS, readOsdPosition } from '@apocaliss92/nodelink-js'
-import type { OsdOverlay, OsdPosition, OsdStatus } from '@camstack/types'
+import type { OsdOverlay, OsdPosition, OsdStatus } from '@dominevo/types'
 import type { OsdSnapshot } from './osd-settings-section.js'
 
 /** Reolink channel-name overlay — short firmware limit, but usable as OSD text. */
@@ -17,7 +17,7 @@ export const REOLINK_OSD_OVERLAY_IDS = {
 const CORNER_POSITIONS: readonly OsdPosition[] = OSD_CORNERS as readonly OsdPosition[]
 
 /**
- * The CamStack ↔ camera boundary for the OSD overlay: the library's
+ * The Dominevo ↔ camera boundary for the OSD overlay: the library's
  * `getOsd` reply → the persisted snapshot, and the settings-form keys →
  * the library's `setOsd` patch. Pure, so both directions are testable
  * without a `ReolinkCamera`.

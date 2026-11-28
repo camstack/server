@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return -- Electron types not resolved by eslint */
 /**
- * CamStack — the single Electron desktop SHELL for all three roles.
+ * Dominevo — the single Electron desktop SHELL for all three roles.
  *
  * On first launch the operator picks a ROLE:
- *   - Hub    — runs the full CamStack server + admin UI on this machine
+ *   - Hub    — runs the full Dominevo server + admin UI on this machine
  *              (embedded window loads https://localhost:4443).
  *   - Agent  — joins an existing hub as a worker node
  *              (embedded window loads http://localhost:4444).
@@ -14,7 +14,7 @@
  *              `docs/design/2026-09-08-desktop-viewer-role.md`.
  *
  * For the two SUPERVISED roles the shell spawns the SAME shared STARTER
- * (`@camstack/server/dist/starter.js`) as a child process and passes
+ * (`@dominevo/server/dist/starter.js`) as a child process and passes
  * `CAMSTACK_ROLE=<role>` — the server's launcher branches on it. The starter
  * boots the active server root from the user data dir, falling back to the
  * baked SEED closure on first boot / offline, so node/framework updates land in
@@ -441,7 +441,7 @@ function currentNodeEnv(
     agent = { hubAddress, agentName: store.get('agentName'), statusPort: AGENT_LOCAL_PORT }
   }
   // Bundled-addons resolution — ONE copy: the packaged closure's own
-  // `<resourcesPath>/node_modules/@camstack` scope dir; the seed dir lets the
+  // `<resourcesPath>/node_modules/@dominevo` scope dir; the seed dir lets the
   // first-boot/offline fallback work. Dev (unpackaged) leaves both unset.
   return buildNodeEnv({
     role,
@@ -531,8 +531,8 @@ function startNodeProcess(): void {
     console.error('[main] node start failed', err)
     void dialog.showMessageBox({
       type: 'error',
-      title: 'CamStack — start failed',
-      message: 'Could not start the CamStack node process.',
+      title: 'Dominevo — start failed',
+      message: 'Could not start the Dominevo node process.',
       detail: err instanceof Error ? err.message : String(err),
     })
   }
@@ -549,7 +549,7 @@ async function toggleRunAsService(enable: boolean): Promise<void> {
   const fail = (detail: string): void => {
     void dialog.showMessageBox({
       type: 'error',
-      title: 'CamStack — Windows service',
+      title: 'Dominevo — Windows service',
       message: enable
         ? 'Could not set the agent up as a Windows service.'
         : 'Could not remove the Windows service.',
@@ -566,10 +566,10 @@ async function toggleRunAsService(enable: boolean): Promise<void> {
     buttons: ['Continue', 'Cancel'],
     defaultId: 0,
     cancelId: 1,
-    title: 'CamStack — Windows service',
+    title: 'Dominevo — Windows service',
     message: enable
-      ? 'Run the CamStack agent as a Windows service?'
-      : 'Stop running the CamStack agent as a Windows service?',
+      ? 'Run the Dominevo agent as a Windows service?'
+      : 'Stop running the Dominevo agent as a Windows service?',
     detail: enable
       ? 'The agent will start at boot and keep running after you log out. Windows will ask for administrator permission once.'
       : 'The service is removed and the agent runs inside this app again. Windows will ask for administrator permission once.',
@@ -730,7 +730,7 @@ function showSetupWindow(): void {
   setupWindow = new BrowserWindow({
     width: 520,
     height: 600,
-    title: 'CamStack — Setup',
+    title: 'Dominevo — Setup',
     resizable: false,
     minimizable: false,
     maximizable: false,
@@ -895,7 +895,7 @@ function showMainWindow(): void {
     height: bounds.height,
     x: bounds.x,
     y: bounds.y,
-    title: 'CamStack',
+    title: 'Dominevo',
     backgroundColor: '#0c0a09', // matches admin-ui --color-background
     icon: nativeImage.createFromPath(path.join(__dirname, '..', 'assets', 'icon.png')),
     webPreferences: {
@@ -966,7 +966,7 @@ function renderUnreachableHtml(role: SupervisedRole, isPackaged: boolean): strin
   return `<!doctype html>
 <html><body style="font-family:-apple-system,sans-serif;padding:40px;color:#444;">
 <h2>${label} UI not reachable yet</h2>
-<p>The CamStack node may still be starting, or it failed to bind port ${port}.</p>
+<p>The Dominevo node may still be starting, or it failed to bind port ${port}.</p>
 <p>Use the tray icon → Restart node, then reopen the window.</p>
 </body></html>`
 }
@@ -995,9 +995,9 @@ function ensureTray(): void {
   trayIcon.setTemplateImage(true)
   tray = new Tray(trayIcon)
   if (trayIcon.isEmpty()) {
-    tray.setTitle('CamStack')
+    tray.setTitle('Dominevo')
   }
-  tray.setToolTip('CamStack')
+  tray.setToolTip('Dominevo')
   refreshTrayMenu()
   tray.on('click', () => {
     if (process.platform !== 'darwin') tray?.popUpContextMenu()
@@ -1050,7 +1050,7 @@ function refreshTrayMenu(): void {
         ]
 
   const items: Electron.MenuItemConstructorOptions[] = [
-    { label: `CamStack ${roleLabel(role)} v${app.getVersion()}`, enabled: false },
+    { label: `Dominevo ${roleLabel(role)} v${app.getVersion()}`, enabled: false },
     ...roleLine,
     ...statusLines,
     ...(updateState.downloaded

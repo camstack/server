@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { WyzeCamera } from '@apocaliss92/wyze-bridge-js'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { buildWyzeAdoptionProvider } from '../wyze-adoption-provider.js'
 import type { AdoptedWyzeCamera, WyzeAdoptionProviderDeps } from '../wyze-adoption-provider.js'
 

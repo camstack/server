@@ -12,7 +12,7 @@
 import { useId, useMemo, useState } from 'react'
 import { Activity } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
-import type { MotionEvent } from '@camstack/types'
+import type { MotionEvent } from '@dominevo/types'
 import {
   BarSeries,
   SectionCard,
@@ -20,7 +20,7 @@ import {
   useSystem,
   type BarBucket,
   type BarLayerDef,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { bucketCounts, formatRangeLabel, humanBucket } from './chart-utils'
 import { useT } from '../../i18n/index.js'
 

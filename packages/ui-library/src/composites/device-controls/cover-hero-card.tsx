@@ -7,7 +7,7 @@ import { useDeviceCommand } from '../../hooks/use-device-command'
 import { useDragValue } from '../../hooks/use-drag-value'
 import { cn } from '../../lib/cn'
 import { useUiText } from '../../contexts/ui-text'
-import { type CoverStatus, DeviceFeature } from '@camstack/types'
+import { type CoverStatus, DeviceFeature } from '@dominevo/types'
 import type { DeviceControlProps } from './control-registry'
 import { coverHighlight, type CoverHighlightVariant } from './cover-inline'
 

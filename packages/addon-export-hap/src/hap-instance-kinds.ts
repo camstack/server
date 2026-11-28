@@ -7,7 +7,7 @@
  * addon id and ADOPTS the identity the addon held in its settings, byte for byte, so a
  * controller that paired before keeps working.
  */
-import { type DefinedRecordKind, defineEntryKind } from '@camstack/types'
+import { type DefinedRecordKind, defineEntryKind } from '@dominevo/types'
 import { z } from 'zod'
 
 /** The default instance keeps its record under the addon id (it adopted the old identity). */

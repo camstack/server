@@ -14,7 +14,7 @@
  * addon's keychain (D787). The owning addon's ports resolve and release them
  * with `resolveSecretMarkers`, the same call the old settings door used.
  */
-import { collectSecretMarkerRefs } from '@camstack/types'
+import { collectSecretMarkerRefs } from '@dominevo/types'
 import type { MigrationDatabase } from './migration-types.js'
 
 export const LEGACY_INTEGRATION_ROWS_TABLE = 'integration_settings'

@@ -8,7 +8,7 @@
  * `derived-cycle-check.spec.ts`; this spec proves it is WIRED into the mutation.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { StreamBrokerManager } from '../stream-broker/stream-broker-manager.js'
 

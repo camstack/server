@@ -9,7 +9,7 @@ import { Slider } from '../primitives/slider'
 import { Checkbox } from '../primitives/checkbox'
 import { Select } from '../primitives/select'
 import { useState, type JSX } from 'react'
-import type { PipelineSlot, PipelineAddonSchema, ConfigField, ConfigOption } from '@camstack/types'
+import type { PipelineSlot, PipelineAddonSchema, ConfigField, ConfigOption } from '@dominevo/types'
 import { cn } from '../lib/cn'
 import { useUiText } from '../contexts/ui-text'
 import { CollapsibleCard } from '../primitives/collapsible-card'
@@ -362,14 +362,14 @@ function ConfigSchemaFieldControl({
   allFields: readonly ConfigField[]
   step: PipelineStepDisplayConfig
   disabled: boolean
-  modelScopedOptions?: readonly import('@camstack/types').ConfigOption[]
+  modelScopedOptions?: readonly import('@dominevo/types').ConfigOption[]
   onChange: (updated: PipelineStepDisplayConfig) => void
   hideModelBoundSourceRow: boolean
 }) {
   // Evaluate showWhen condition — resolve value with default fallback
   const showWhen =
     field.type !== 'separator' && field.type !== 'info'
-      ? (field as { showWhen?: import('@camstack/types').ConfigCondition }).showWhen
+      ? (field as { showWhen?: import('@dominevo/types').ConfigCondition }).showWhen
       : undefined
   if (showWhen) {
     const { field: condField, equals, notEquals, in: inList, notIn } = showWhen

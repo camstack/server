@@ -1,4 +1,4 @@
-import type { IScopedLogger, LogExtras } from '@camstack/types'
+import type { IScopedLogger, LogExtras } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   type HikvisionAlarmEvent,
@@ -176,7 +176,7 @@ describe('subscribeAlarms lifecycle', () => {
  * Wire-framing regressions.
  *
  * Five Hikvision cameras (firmware `C-R-*`: I91DN/I91DD V5.7.1, I91EV V5.8.10)
- * have never delivered a single motion event to CamStack while the SAME
+ * have never delivered a single motion event to Dominevo while the SAME
  * cameras produce hardware motion on the SAME `/ISAPI/Event/notification/
  * alertStream` endpoint in another NVR stack. The distinguishing behaviour of
  * the working implementation is that it does not trust the boundary token

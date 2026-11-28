@@ -1,5 +1,5 @@
 /**
- * THE list of the three first-level macros lives in `@camstack/types`
+ * THE list of the three first-level macros lives in `@dominevo/types`
  * (`FIRST_LEVEL_MACRO_CLASSES`, `types/labels.ts`) and has three consumers: the union
  * `FirstLevelMacro`, the recording trigger
  * (`RecordingTriggers.objectClasses`) and the OFFER of the `object-detection` step.
@@ -14,7 +14,7 @@
  * test.
  */
 import { describe, expect, it } from 'vitest'
-import { FIRST_LEVEL_MACRO_CLASSES } from '@camstack/types'
+import { FIRST_LEVEL_MACRO_CLASSES } from '@dominevo/types'
 import { getStep } from '../detection-pipeline/registry/step-definitions.js'
 
 const OBJECT_DETECTION_STEP_ID = 'object-detection'

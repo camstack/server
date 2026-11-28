@@ -1,6 +1,6 @@
 import { EventEmitter } from 'node:events'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { Alert, IScopedLogger } from '@camstack/types'
+import type { Alert, IScopedLogger } from '@dominevo/types'
 
 class FakeClient extends EventEmitter {
   connected = false

@@ -8,7 +8,7 @@
  * file — adding a new tunable section is "stamp `tab: '<id>'` on it"
  * and adding a non-schema surface is "append an entry to `extraTabs`".
  */
-import { useClusterNodes } from '@camstack/ui-library'
+import { useClusterNodes } from '@dominevo/ui-library'
 import { useSearchParams } from 'react-router-dom'
 import { STEP_INSPECTOR_PARAMS } from '../../lib/step-url-selection'
 import type { ExtraTab } from '../settings/NodeAddonsSettingsPanel'

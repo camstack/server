@@ -133,7 +133,7 @@ before its capture ran did not lose work, it stopped wanting it.
 - **A framework publish train IS required.** `system.getFailureContributions` is
   a new method on a mounted cap: its router lives in the generated
   `server/backend` closure and its type in `packages/types`, so it reaches a
-  node only inside a published `@camstack/server` (D16). Deploying
+  node only inside a published `@dominevo/server` (D16). Deploying
   `addon-post-analysis` / `addon-pipeline` alone ships the providers and the
   counting — correct, and inert, because nothing can call them. The addons must
   also be redeployed: the manifests now declare `failure-contribution`.

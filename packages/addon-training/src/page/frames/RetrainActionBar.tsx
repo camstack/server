@@ -6,7 +6,7 @@
  * It is outside the scrolling list on purpose: Save must be one tap away
  * whatever the list is doing, on a phone included.
  */
-import { Button, Checkbox, Tooltip, TooltipContent, TooltipTrigger } from '@camstack/ui-library'
+import { Button, Checkbox, Tooltip, TooltipContent, TooltipTrigger } from '@dominevo/ui-library'
 import { CheckCheck, ListTree } from 'lucide-react'
 import type { JSX } from 'react'
 import { useT } from '../../i18n/index.js'

@@ -6,7 +6,7 @@
  * index — only the dimension is shrunk to what the fixture vectors carry, so a
  * test exercises the real index resolution rather than a hand-rolled stub.
  */
-import type { ModelCatalogEntry } from '@camstack/types'
+import type { ModelCatalogEntry } from '@dominevo/types'
 import {
   buildClipModelRegistry,
   type ClipModelRegistry,

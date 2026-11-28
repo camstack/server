@@ -44,7 +44,7 @@ export function buildActionSwitch(input: ActionSwitchInput): Mapper {
   accessory.category = Categories.SWITCH
 
   const info = accessory.getService(Service.AccessoryInformation)
-  info?.setCharacteristic(Characteristic.Manufacturer, 'CamStack')
+  info?.setCharacteristic(Characteristic.Manufacturer, 'Dominevo')
   info?.setCharacteristic(Characteristic.Model, 'Action')
   info?.setCharacteristic(Characteristic.SerialNumber, `camstack-action-${actionId}`)
 

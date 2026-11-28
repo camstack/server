@@ -1,5 +1,5 @@
 ---
-description: Audit CamStack tracks the operator flagged — missing media kinds, thumbnails, early track ends
+description: Audit Dominevo tracks the operator flagged — missing media kinds, thumbnails, early track ends
 alwaysApply: false
 ---
 <!-- Written by `npx tsx scripts/skills/gen-skill-pointers.ts` — a pointer, not a copy. The procedure lives in the skill below. -->

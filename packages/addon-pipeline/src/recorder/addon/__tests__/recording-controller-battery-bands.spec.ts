@@ -11,7 +11,7 @@
 import { promises as fs } from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import type { RecordingConfig } from '@camstack/types'
+import type { RecordingConfig } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { BATTERY_BAND_DWELL_MS, BATTERY_LEVEL_STALE_MS } from '../../battery-hysteresis.js'
 import { RecordingController, type RecordingControllerDeps } from '../recording-controller'

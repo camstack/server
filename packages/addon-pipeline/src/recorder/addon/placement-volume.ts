@@ -38,7 +38,7 @@
 import { randomUUID } from 'node:crypto'
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
-import type { CamProfile } from '@camstack/types'
+import type { CamProfile } from '@dominevo/types'
 import { type RecordingsLocation, resolvePlacement } from './roots.js'
 
 /** Marker file name, at the ROOT of a recordings location. */

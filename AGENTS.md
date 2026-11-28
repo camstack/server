@@ -1,6 +1,6 @@
 # AGENTS.md — camstack-server
 
-CamStack is a kernel plus addons. The kernel owns processes, transport and
+Dominevo is a kernel plus addons. The kernel owns processes, transport and
 registries; every feature is an addon. Node.js 24+, TypeScript 5.7+, Fastify 5,
 tRPC v11, Zod 4, npm workspaces + nx.
 
@@ -72,16 +72,16 @@ npm run docs:check                                # docs generated + no dead pat
 ## ⚠️ Your edit is probably not running
 
 Editing `packages/<addon>/src/…` and rebuilding `dist/` has **no runtime effect**.
-The running node loads addons from `<dataDir>/addons/@camstack/<addon>/dist/`
+The running node loads addons from `<dataDir>/addons/@dominevo/<addon>/dist/`
 until you deploy.
 
 ```bash
-camstack deploy packages/addon-pipeline-orchestrator   # or: camstack deploy pipeline-orchestrator
-camstack deploy <pkg> -n <nodeId>                      # to an agent (hub is default)
+dominevo deploy packages/addon-pipeline-orchestrator   # or: dominevo deploy pipeline-orchestrator
+dominevo deploy <pkg> -n <nodeId>                      # to an agent (hub is default)
 ```
 
 Framework packages (`types`, `system`, `sdk`, `ui-library`) travel inside the
-`@camstack/server` closure, so a fix there is live only after that closure is
+`@dominevo/server` closure, so a fix there is live only after that closure is
 installed. Procedure: `docs/architecture/update-and-release.md`.
 
 ## Rules
@@ -132,7 +132,7 @@ change the record — do not quietly work around it.
   never any non-dot entry at the shared root. `eventMedia` → `events/`,
   `recordingsLow` → `low/`, `recordings` → `high|mid`. A drained location
   looked full because high footage was writing next to it. (D327)
-- **The live SQLite file is the `sqlite-settings` bind**, identified by `docker inspect`, never a sibling `camstack.db`. Never sqlite3 while CamStack runs. Never `@camstack/server` under `/data/addons`. (D328, D147)
+- **The live SQLite file is the `sqlite-settings` bind**, identified by `docker inspect`, never a sibling `camstack.db`. Never sqlite3 while Dominevo runs. Never `@dominevo/server` under `/data/addons`. (D328, D147)
 - **A live SQLite file is reached only through its owner's connection.** No `fs` open/read/close of a `.db`/`-wal`/`-shm` in the owning process (closing any descriptor drops SQLite's locks), and no second connection from another process, not even a PASSIVE checkpoint. A live database is never backed up as files: the owner writes a verified snapshot (`database-snapshot`) and the archive carries that. (D679, D693, guard `check-sqlite-files-not-opened-by-fs`)
 - **A device fact is kept fresh in the addon that owns the device — a consumer never keeps a second copy.** The freshness window belongs to the reader (`OPERATOR_WRITTEN_STALE_MS`, `serve-and-revalidate` on a polled cap). Every read the cap exposes gets the same discipline, and a read never joins a refresh already in flight: it answers from the slice, empty included. WHEN a migrated provider re-reads a device is the core's: the state-refresh scheduler calls its `device-state-refresh`. (D224, supersedes D221; amended by D1062)
 - **The motion area bar judges a merged SUBJECT, relative to the motion view.** Components are merged first; the group's rectangle is the union of the original boxes; the bar is a fraction of the view. A group over `maxCoverageFraction` is weather, and its components are re-judged individually. Per camera, opt-in: a positive `minArea` keeps the legacy per-component rule, `0` moves that camera. One `WasmMotionDetector` serves every camera on a node and is resized per frame (`ensureSize`). (D394)
@@ -252,7 +252,7 @@ Wiring points are silent when missed: follow the skill, do not improvise.
 | Any UI — admin-ui, ui-library, an addon page or widget, the viewer — load FIRST | `camstack-ui` |
 | … then, for admin-ui / ui-library / addon pages | `camstack-ui-admin` |
 | … or, for the viewer app and its embed player | `camstack-ui-viewer` |
-| A new or changed addon or manifest entry; `camstack deploy` | `camstack-addon` |
+| A new or changed addon or manifest entry; `dominevo deploy` | `camstack-addon` |
 | A new or changed `*.cap.ts`; picking a provider | `camstack-capability` |
 | A change to `server/backend`, `system`, `types` or `sdk`: test, build, ship | `camstack-server-change` |
 | A password / token / key, or a credential for a child process | `camstack-secrets` |
@@ -279,7 +279,7 @@ Skills are `.claude/skills/<name>/SKILL.md` (Codex: open the file). For UI:
 
 - **Never a bare landing page.** A server route that ends a flow (OAuth
   callback, account link, sign-in, magic link) redirects to the existing
-  CamStack result page with a status and a reason — never a hand-written "you
+  Dominevo result page with a status and a reason — never a hand-written "you
   can close this window". No tokens or codes in that URL.
 
 ## Graph tools

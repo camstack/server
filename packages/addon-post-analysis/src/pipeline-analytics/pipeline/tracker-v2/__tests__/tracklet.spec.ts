@@ -8,7 +8,7 @@
  *    "becomes face-bearing once …" fails;
  *  - assign `firstFaceAt = t` (not `??=`): the same test fails (400, not 200).
  */
-import type { SpatialDetection } from '@camstack/types'
+import type { SpatialDetection } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { MAX_PREDICTION_MS } from '../constants.js'
 import { Tracklet } from '../tracklet.js'

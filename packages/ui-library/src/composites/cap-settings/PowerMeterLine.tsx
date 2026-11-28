@@ -13,7 +13,7 @@
 import { useUiText } from '../../contexts/ui-text'
 import type { JSX } from 'react'
 import { Zap } from 'lucide-react'
-import { netPowerOf, type PowerMeterStatus } from '@camstack/types'
+import { netPowerOf, type PowerMeterStatus } from '@dominevo/types'
 import { useSystem } from '../../contexts/system-context'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
 import { cn } from '../../lib/cn'

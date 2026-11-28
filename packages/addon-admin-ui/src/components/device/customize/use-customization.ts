@@ -4,12 +4,12 @@
  * which names each problem by path (D391) — comes back as a reason to show.
  */
 import { useCreateComposition } from '../../../lib/create-composition'
-import type { Composition, CompositionSourceRef } from '@camstack/types'
+import type { Composition, CompositionSourceRef } from '@dominevo/types'
 import {
   useCoreBlocksDelete,
   useCoreBlocksGetCustomization,
   useCoreBlocksUpdateComposition,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { type CustomizationState, resolveCustomization } from './customization-read'

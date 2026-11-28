@@ -221,7 +221,7 @@ Nothing in the code cares whether the column is still there: `rowToValue` stops
 writing it and `recordToRow` stops reading it, so an unread `paths` column is
 inert. **Deploy first, drop at your leisure** — there is no lockstep.
 
-`CLAUDE.md`: **never `sqlite3` while CamStack runs**, and the live file is the
+`CLAUDE.md`: **never `sqlite3` while Dominevo runs**, and the live file is the
 `sqlite-settings` bind identified by `docker inspect`, never a sibling
 `camstack.db` (D328, D147). On this hub that is
 `/mnt/mixed/camstack/addons-data/sqlite-settings/camstack.db`.

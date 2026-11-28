@@ -7,7 +7,7 @@
  * addon has no settings page of its own any more: the skills ARE the page.
  */
 import { describe, expect, it } from 'vitest'
-import type { ConfigField, ConfigSection } from '@camstack/types'
+import type { ConfigField, ConfigSection } from '@dominevo/types'
 import { exportAlexaActions } from '../custom-actions.js'
 import { ExportAlexaAddon } from '../export-alexa.addon.js'
 import { buildAlexaInstanceSections } from '../settings-schema.js'

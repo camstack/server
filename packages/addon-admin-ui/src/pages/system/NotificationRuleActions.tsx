@@ -7,9 +7,9 @@
  * steps of its own.
  */
 
-import type { ActionEntry, NcRuleNotificationButton } from '@camstack/types'
+import type { ActionEntry, NcRuleNotificationButton } from '@dominevo/types'
 import type { ReactNode } from 'react'
-import { Button, Input, Select, Switch } from '@camstack/ui-library'
+import { Button, Input, Select, Switch } from '@dominevo/ui-library'
 import { AlertTriangle, ExternalLink, Plus, Trash2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { TRIGGER_ALARM_PRESET } from '../build/actions/action-draft'

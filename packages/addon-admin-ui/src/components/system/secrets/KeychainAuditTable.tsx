@@ -3,8 +3,8 @@
  * newest first, a page at a time. The hub answers the most recent
  * `KEYCHAIN_AUDIT_FETCH` entries; paging is over that window.
  */
-import type { KeychainAuditAction, KeychainAuditEntry } from '@camstack/types'
-import { Badge, Button, DataTable, type DataColumn } from '@camstack/ui-library'
+import type { KeychainAuditAction, KeychainAuditEntry } from '@dominevo/types'
+import { Badge, Button, DataTable, type DataColumn } from '@dominevo/ui-library'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import type { TFunction } from 'i18next'
 import { useMemo, useState } from 'react'

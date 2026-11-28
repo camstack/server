@@ -7,7 +7,7 @@
  * detection-pipeline share the `detection` group, i.e. ONE process: the
  * provider in this process is the node's own, and it is the one to ask.
  */
-import type { CapabilitiesAccess } from '@camstack/types'
+import type { CapabilitiesAccess } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { NO_LOCAL_EXECUTOR, readLocalResidentEngines } from '../local-resident-engines.js'
 import { buildRuntimeLabels } from '../runtime-labels.js'

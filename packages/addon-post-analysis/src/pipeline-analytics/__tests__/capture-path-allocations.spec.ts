@@ -13,7 +13,7 @@
  * by when V8 happens to collect, which is the very thing under study.
  */
 import sharp from 'sharp'
-import type { FrameHandle, IScopedLogger } from '@camstack/types'
+import type { FrameHandle, IScopedLogger } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { drawBoxedFrame, drawBoxedJpeg } from '../../shared/frame/box-drawer.js'
 import { decodeJpegToRgb } from '../../shared/frame/encode-crop.js'

@@ -13,8 +13,8 @@
  * devices (the pre-existing, already-logged fallback), and a pass that runs long
  * says WHICH HALF was slow instead of leaving it to be correlated by hand.
  */
-import type { RecordingConfig } from '@camstack/types'
-import type { IScopedLogger } from '@camstack/types'
+import type { RecordingConfig } from '@dominevo/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest'
 import { specRoot } from './spec-root.js'
 

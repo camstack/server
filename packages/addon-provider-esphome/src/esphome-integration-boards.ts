@@ -5,7 +5,7 @@ import {
   isSecretMarkerLike,
   REDACTED_SECRET,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   connectionOfRow,
   espBoardRowSchema,

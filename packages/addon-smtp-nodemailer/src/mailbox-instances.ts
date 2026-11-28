@@ -15,7 +15,7 @@ import {
   type RecordsAccess,
   SMTP_INBOUND_KIND,
   SmtpInboundSettingsSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { probeBind } from './bind-probe.js'
 import { mailboxSettingsSchema, type SmtpInboundBroker } from './inbound-broker.js'
 import { type MailboxBody, MailboxBodySchema, mailboxesKind } from './mailbox-record-kinds.js'

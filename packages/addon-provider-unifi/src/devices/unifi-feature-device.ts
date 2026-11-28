@@ -18,7 +18,7 @@ import {
   type SwitchStatus,
   switchCapability,
   temperatureSensorCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   type UnifiButtonAction,
   type UnifiFeatureKind,

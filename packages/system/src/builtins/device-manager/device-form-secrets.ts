@@ -32,7 +32,7 @@ import {
   isSecretMarker,
   isSecretMarkerLike,
   toSecretFieldView,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { ContributionShape } from './device-meta-types.js'
 
 type Sections = ContributionShape['sections']

@@ -1,6 +1,6 @@
 /**
  * What the About line shows: the product release (image / desktop app) and
- * the running `@camstack/server` package. They are different lines (D943).
+ * the running `@dominevo/server` package. They are different lines (D943).
  *
  * The product version is declared by the shell — `CAMSTACK_PRODUCT_VERSION`,
  * set by the image and by the desktop app. A dev workspace leaves it unset;

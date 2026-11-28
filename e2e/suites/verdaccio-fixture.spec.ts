@@ -39,7 +39,7 @@ describeLive('verdaccio fixture', () => {
     writeFileSync(
       join(fixturePkgDir, 'package.json'),
       JSON.stringify(
-        { name: '@camstack/verdaccio-fixture-test', version: '0.0.1', main: 'index.js' },
+        { name: '@dominevo/verdaccio-fixture-test', version: '0.0.1', main: 'index.js' },
         null,
         2,
       ),
@@ -81,7 +81,7 @@ describeLive('verdaccio fixture', () => {
     )
     const stdout = execFileSync(
       'npm',
-      ['view', '@camstack/verdaccio-fixture-test', 'version', '--json'],
+      ['view', '@dominevo/verdaccio-fixture-test', 'version', '--json'],
       {
         cwd: npmrcDir,
         env: { ...process.env, HOME: npmrcDir },
@@ -98,7 +98,7 @@ describeLive('verdaccio fixture', () => {
     writeFileSync(
       join(v2Dir, 'package.json'),
       JSON.stringify(
-        { name: '@camstack/verdaccio-fixture-test', version: '0.0.2', main: 'index.js' },
+        { name: '@dominevo/verdaccio-fixture-test', version: '0.0.2', main: 'index.js' },
         null,
         2,
       ),
@@ -109,7 +109,7 @@ describeLive('verdaccio fixture', () => {
 
     // Latest dist-tag should advance to 0.0.2.
     const res = await fetch(
-      `${registry.url}/-/package/@camstack%2Fverdaccio-fixture-test/dist-tags`,
+      `${registry.url}/-/package/@dominevo%2Fverdaccio-fixture-test/dist-tags`,
     )
     expect(res.status).toBe(200)
     const tags = (await res.json()) as { latest?: string }

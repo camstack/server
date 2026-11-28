@@ -1,4 +1,4 @@
-import type { IScopedLogger, LogExtras, LogTags } from '@camstack/types'
+import type { IScopedLogger, LogExtras, LogTags } from '@dominevo/types'
 import { ncRecordKinds } from '../../record-kinds.js'
 import { makeNcRecords } from '../../__tests__/support/nc-test-deps.js'
 import sharp from 'sharp'

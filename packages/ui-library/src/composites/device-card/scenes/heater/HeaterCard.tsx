@@ -1,4 +1,4 @@
-import { NOT_REPORTED } from '@camstack/types'
+import { NOT_REPORTED } from '@dominevo/types'
 import type { ReactElement } from 'react'
 import { useUiText } from '../../../../contexts/ui-text'
 import { AmbientFx } from '../../illustrations/AmbientFx'

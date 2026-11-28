@@ -2,7 +2,7 @@
  * Overlay the fresh on-disk `declaration` onto a live addon instance's
  * `manifest` when building the rows returned by `listAddons()`.
  *
- * `loadNewAddons()` — invoked on every `camstack deploy` / package install —
+ * `loadNewAddons()` — invoked on every `dominevo deploy` / package install —
  * refreshes `entry.declaration` from a fresh disk scan but DELIBERATELY leaves
  * the live `entry.addon` instance in place so `restartAddon` can shut the old
  * instance down cleanly. Manifest-affecting changes (a newly declared

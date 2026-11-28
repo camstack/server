@@ -1,4 +1,4 @@
-import { type RecordKindHandle, type RecordsAccess } from '@camstack/types'
+import { type RecordKindHandle, type RecordsAccess } from '@dominevo/types'
 import { z } from 'zod'
 import { haBrokersEntryKind } from '../broker-record-kinds.js'
 

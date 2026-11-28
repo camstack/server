@@ -1,5 +1,5 @@
 /**
- * Availability publishing: the framework is part of `@camstack/server` (D989), so
+ * Availability publishing: the framework is part of `@dominevo/server` (D989), so
  * `listFrameworkPackages` has no row and publishes nothing — the server-update
  * path announces it. The fallible-read rule is pinned here: a registry lookup
  * that FAILS must log and publish nothing, never look like "no updates". The
@@ -9,7 +9,7 @@
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import type { IScopedLogger, SystemEvent } from '@camstack/types'
+import type { IScopedLogger, SystemEvent } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 // Both resolve against the `vi.mock`s below, which vitest hoists above every
 // import. The `execFile` fake reads `npmViewResult` only when CALLED, so the
@@ -95,7 +95,7 @@ function availabilityEvents(events: readonly SystemEvent[]): readonly SystemEven
 }
 
 describe('listFrameworkPackages after the fold (D989)', () => {
-  it('has no row of its own: the framework ships inside @camstack/server, whose update the server path announces', async () => {
+  it('has no row of its own: the framework ships inside @dominevo/server, whose update the server path announces', async () => {
     const { service, emitted } = buildService()
     const rows = await service.listFrameworkPackages()
     expect(rows).toEqual([])
@@ -132,15 +132,15 @@ describe('a failed registry lookup never looks like "no updates"', () => {
 
   it('keeps the dedup state intact when one lookup fails mid-check', async () => {
     const { service, emitted, warnings } = buildService()
-    const installed = [{ name: '@camstack/addon-pipeline', version: '1.2.3' }]
+    const installed = [{ name: '@dominevo/addon-pipeline', version: '1.2.3' }]
 
-    latestByName = { '@camstack/addon-pipeline': '1.2.4' }
+    latestByName = { '@dominevo/addon-pipeline': '1.2.4' }
     await service.checkUpdatesForInstalled(installed, 'agent-a')
     expect(availabilityEvents(emitted)).toHaveLength(1)
 
     // The registry goes away. This must NOT publish an empty snapshot: an
     // empty snapshot is "up to date" and would clear the dedup state.
-    latestByName = { '@camstack/addon-pipeline': 'fail' }
+    latestByName = { '@dominevo/addon-pipeline': 'fail' }
     await service.checkUpdatesForInstalled(installed, 'agent-a')
     expect(availabilityEvents(emitted)).toHaveLength(1)
     const incomplete = warnings.find((w) => /incomplete/i.test(w.message))
@@ -148,27 +148,27 @@ describe('a failed registry lookup never looks like "no updates"', () => {
     expect(incomplete?.meta).toMatchObject({ tags: { nodeId: 'agent-a' } })
 
     // Registry comes back with the SAME answer — still nothing new to say.
-    latestByName = { '@camstack/addon-pipeline': '1.2.4' }
+    latestByName = { '@dominevo/addon-pipeline': '1.2.4' }
     await service.checkUpdatesForInstalled(installed, 'agent-a')
     expect(availabilityEvents(emitted)).toHaveLength(1)
   })
 
   it('still clears the scope when a COMPLETE check finds nothing', async () => {
     const { service, emitted } = buildService()
-    const installed = [{ name: '@camstack/addon-pipeline', version: '1.2.3' }]
+    const installed = [{ name: '@dominevo/addon-pipeline', version: '1.2.3' }]
 
-    latestByName = { '@camstack/addon-pipeline': '1.2.4' }
+    latestByName = { '@dominevo/addon-pipeline': '1.2.4' }
     await service.checkUpdatesForInstalled(installed, 'agent-a')
     expect(availabilityEvents(emitted)).toHaveLength(1)
 
     // Operator installed it. A clean, complete check drops the row…
-    latestByName = { '@camstack/addon-pipeline': '1.2.4' }
+    latestByName = { '@dominevo/addon-pipeline': '1.2.4' }
     await service.checkUpdatesForInstalled(
-      [{ name: '@camstack/addon-pipeline', version: '1.2.4' }],
+      [{ name: '@dominevo/addon-pipeline', version: '1.2.4' }],
       'agent-a',
     )
     // …so the same version becomes announceable again if it ever regresses.
-    latestByName = { '@camstack/addon-pipeline': '1.2.4' }
+    latestByName = { '@dominevo/addon-pipeline': '1.2.4' }
     await service.checkUpdatesForInstalled(installed, 'agent-a')
     expect(availabilityEvents(emitted)).toHaveLength(2)
   })

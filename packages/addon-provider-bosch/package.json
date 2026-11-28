@@ -1,7 +1,7 @@
 {
-  "name": "@camstack/addon-provider-bosch",
-  "version": "0.1.65",
-  "description": "Bosch smart-home device-provider addons for CamStack — SHC, Home Connect, and HomeCom cloud integrations (scaffold)",
+  "name": "@dominevo/addon-provider-bosch",
+  "version": "0.1.0",
+  "description": "Bosch smart-home device-provider addons for Dominevo — SHC, Home Connect, and HomeCom cloud integrations (scaffold)",
   "keywords": [
     "camstack",
     "addon",
@@ -15,12 +15,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/camstack/server.git",
+    "url": "https://github.com/dominevo/server.git",
     "directory": "packages/addon-provider-bosch"
   },
   "homepage": "https://camstack-docs.zentik.app",
   "bugs": {
-    "url": "https://github.com/camstack/server/issues"
+    "url": "https://github.com/dominevo/server/issues"
   },
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -142,7 +142,7 @@
       }
     ],
     "requires": {
-      "server": ">=1.2.969"
+      "server": ">=0.1.0"
     }
   },
   "files": [
@@ -161,7 +161,7 @@
     "publish:npm": "npm publish --access public"
   },
   "devDependencies": {
-    "@camstack/types": "*",
+    "@dominevo/types": "0.1.0",
     "typescript": "~6.0.3",
     "vite": "^8.0.11",
     "vitest": "^2.0.0"

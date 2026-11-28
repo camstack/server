@@ -4,8 +4,8 @@
  * stays `null` when it fails: an unanswered query is not an unnamed hub, so
  * nothing here ever invents a name or prompts on a guess.
  */
-import { type ServerNameInfo } from '@camstack/types'
-import { useSystemInfo } from '@camstack/ui-library'
+import { type ServerNameInfo } from '@dominevo/types'
+import { useSystemInfo } from '@dominevo/ui-library'
 
 export interface ServerNameState {
   readonly info: ServerNameInfo | null

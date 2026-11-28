@@ -23,7 +23,7 @@
  * A write is claimed only after it reads back. Idempotent: a sample that
  * already has a source is skipped. It never touches the photo pass or its arm.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { readJpegSize } from './retrain/jpeg-dimensions.js'
 import type { MediaOwnerRef } from './store/media-store.js'
 

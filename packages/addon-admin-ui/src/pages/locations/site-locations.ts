@@ -1,4 +1,4 @@
-import type { DeviceNameFields } from '@camstack/ui-library'
+import type { DeviceNameFields } from '@dominevo/ui-library'
 
 /**
  * Physical (site) locations — rooms/areas devices belong to, not storage disks.

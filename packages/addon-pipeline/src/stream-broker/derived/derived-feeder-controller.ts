@@ -19,8 +19,8 @@
  * refcount. That keeps this a small, deterministic, unit-testable seam.
  */
 
-import type { IScopedLogger } from '@camstack/types'
-import { errMsg } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
 import type { DerivedStreamFeeder } from './derived-stream-feeder.js'
 
 /** A started feeder plus the cleanup that releases its source loopback. */

@@ -11,8 +11,8 @@
  * the name fails it too.
  */
 import { Accessory } from '@homebridge/hap-nodejs'
-import { EXPOSED_NAMES_STORE_KEY, ExportNameRefusedError } from '@camstack/types'
-import { fakeAddonContext } from '@camstack/types/testing'
+import { EXPOSED_NAMES_STORE_KEY, ExportNameRefusedError } from '@dominevo/types'
+import { fakeAddonContext } from '@dominevo/types/testing'
 import { describe, expect, it } from 'vitest'
 import { BridgeHost } from '../bridge-host.js'
 import { BridgeInstance } from '../bridge-instance.js'

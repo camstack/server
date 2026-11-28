@@ -13,7 +13,7 @@
  * which is what turned a 768-d SigLIP2 query into 512 dims of noise under
  * MobileCLIP's fallback meta.
  */
-import type { ClipModelMeta, IScopedLogger, ModelCatalogEntry } from '@camstack/types'
+import type { ClipModelMeta, IScopedLogger, ModelCatalogEntry } from '@dominevo/types'
 import type { ClipModel, ClipModelRegistry } from '../../shared/clip/clip-model-registry.js'
 import type { CrashBudget } from './crash-budget.js'
 import { PermanentRequirementsFailure, type RequirementsGate } from './model-requirements.js'

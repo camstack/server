@@ -4,7 +4,7 @@
  * buttons routed to the `workload` cap. Power is not here — it is the
  * `switch` a workload with start and stop registers from its power hint.
  */
-import { WorkloadStatusSchema, type WorkloadStatus } from '@camstack/types'
+import { WorkloadStatusSchema, type WorkloadStatus } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   applyCapCommand,

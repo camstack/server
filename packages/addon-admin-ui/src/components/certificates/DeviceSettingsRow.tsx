@@ -4,7 +4,7 @@
  * QR is unaffected. The switch reflects the ANSWERED setting — until the hub
  * answers it is not drawn at all, so a default never reads as the stored value.
  */
-import { FormSaveBar, SettingRow, Switch, trpc } from '@camstack/ui-library'
+import { FormSaveBar, SettingRow, Switch, trpc } from '@dominevo/ui-library'
 import { useState, type ReactNode } from 'react'
 
 import { QueryBody } from './QueryBody'

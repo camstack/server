@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import type { PipelineConfig, PipelineEngineChoice } from '@camstack/types'
+import type { PipelineConfig, PipelineEngineChoice } from '@dominevo/types'
 import { PipelineValidator } from '../src/pipeline/pipeline-validator'
 
 /** The engine is irrelevant to routing; any valid choice will do. */

@@ -36,7 +36,7 @@ A leftover `config.yaml` is not read. The one-release reader
 (`legacy-config-yaml.ts`) applied a differing port, host or data path when the
 environment variable was unset, so an update would not move a node silently.
 Transition reader removed 2026-11-12: that module, its spec and the `js-yaml`
-dependency of `@camstack/server/system` are gone. A node that still kept a
+dependency of `@dominevo/server/system` are gone. A node that still kept a
 non-default value only in the file must set `CAMSTACK_PORT`, `CAMSTACK_HOST` or
 `CAMSTACK_DATA`. A restore of an older archive still skips the `config.yaml`
 entry (`RETIRED_CONFIG_FILE` in `pending-restore.ts`), so the file is not

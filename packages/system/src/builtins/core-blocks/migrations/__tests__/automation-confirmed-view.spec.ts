@@ -14,7 +14,7 @@ import {
   createRecordsAccess,
   defineAddonMigrations,
   generateAutomationBlock,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { makeRecordsWorld } from '../../../sqlite-storage/__tests__/support/records-world.js'
 import { recordingLogger } from '../../__tests__/fixtures.js'

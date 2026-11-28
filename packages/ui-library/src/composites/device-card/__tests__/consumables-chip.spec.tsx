@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
-import type { ConsumableItem } from '@camstack/types'
+import type { ConsumableItem } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { defaultUiText } from '../../../contexts/ui-text'
 import { toCardConsumable } from '../connected/consumable-card-item'

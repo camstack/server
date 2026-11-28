@@ -12,8 +12,8 @@ import {
   HTTP_TIMEOUT_MAX_S,
   REACH_RETRY_INTERVAL_S,
   REACH_RETRY_MAX_S,
-} from '@camstack/types'
-import { Button, Input, Select, Switch, Textarea, DurationInput } from '@camstack/ui-library'
+} from '@dominevo/types'
+import { Button, Input, Select, Switch, Textarea, DurationInput } from '@dominevo/ui-library'
 import { Plus, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { PickerLabel } from './FieldPicker'

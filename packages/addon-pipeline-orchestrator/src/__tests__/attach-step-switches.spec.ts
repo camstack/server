@@ -4,7 +4,7 @@
  * is what the attach obeys, and the roster tells the runner which device
  * switched which step off.
  */
-import type { PipelineSchema } from '@camstack/types'
+import type { PipelineSchema } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   type AttachPipeline,

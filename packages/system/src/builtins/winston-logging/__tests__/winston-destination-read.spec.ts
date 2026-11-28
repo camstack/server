@@ -7,7 +7,7 @@ import * as os from 'node:os'
 import * as path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import type { LogReadResult } from '@camstack/types'
+import type { LogReadResult } from '@dominevo/types'
 import { LogManager } from '../../../logging/log-manager.js'
 import { WinstonDestination } from '../winston-destination.js'
 

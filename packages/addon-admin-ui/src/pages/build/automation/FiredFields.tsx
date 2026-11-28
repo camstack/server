@@ -7,8 +7,8 @@
  * device whose vocabulary is not known yet must not look like one with no
  * events (D315).
  */
-import type { DeviceFiredLeaf } from '@camstack/types'
-import { DeviceValuePicker, Select, useDeviceStateGetCapSlice } from '@camstack/ui-library'
+import type { DeviceFiredLeaf } from '@dominevo/types'
+import { DeviceValuePicker, Select, useDeviceStateGetCapSlice } from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 import { PickerLabel } from './FieldPicker'
 import {

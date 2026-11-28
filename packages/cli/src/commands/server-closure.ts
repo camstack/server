@@ -1,17 +1,17 @@
 /**
- * `camstack deploy-server` — closure-set discovery + dev-version packing.
+ * `dominevo deploy-server` — closure-set discovery + dev-version packing.
  *
  * Graph-driven (NOT a hardcoded list): the closure is discovered by walking
- * the dependency graph from `server/backend/package.json` (`@camstack/server`)
+ * the dependency graph from `server/backend/package.json` (`@dominevo/server`)
  * across the workspace. Two sets fall out of the walk:
  *
  *   - **packSet** — the transitive INSTALL closure (`dependencies` +
- *     `optionalDependencies` + `peerDependencies`) restricted to `@camstack/*`
+ *     `optionalDependencies` + `peerDependencies`) restricted to `@dominevo/*`
  *     packages that exist in the workspace. These are packed at the uniform
  *     dev version and uploaded — they are exactly what the hub's staged
  *     `npm install` must resolve to the uploaded copies.
  *   - **buildSet** — packSet plus build-only workspace dev-deps (e.g.
- *     `@camstack/node-root`, which the server BUNDLES at build time). These
+ *     `@dominevo/node-root`, which the server BUNDLES at build time). These
  *     must be BUILT in dependency order so every bundle embeds fresh code,
  *     but they never appear in the installed tree, so they are not uploaded.
  *
@@ -22,7 +22,7 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 
-const CAMSTACK_SCOPE_PREFIX = '@camstack/'
+const CAMSTACK_SCOPE_PREFIX = '@dominevo/'
 
 export interface WorkspacePackage {
   readonly name: string
@@ -31,7 +31,7 @@ export interface WorkspacePackage {
 }
 
 export interface ServerClosure {
-  /** The workspace `@camstack/server` version — the dev-version base. */
+  /** The workspace `@dominevo/server` version — the dev-version base. */
   readonly serverVersion: string
   /** Install closure, dependency order (root package last). Pack + upload these. */
   readonly packSet: readonly WorkspacePackage[]
@@ -138,7 +138,7 @@ function depNames(
 }
 
 /**
- * DFS post-order walk from `rootName` over the workspace-`@camstack/*` edges
+ * DFS post-order walk from `rootName` over the workspace-`@dominevo/*` edges
  * of `fields`. Post-order = dependencies before dependents; the root package
  * lands last. Cycles are broken at the back-edge (post-order still yields
  * every member exactly once).
@@ -168,7 +168,7 @@ function walkClosure(
 }
 
 /**
- * Discover the `@camstack/server` workspace closure by reading the graph.
+ * Discover the `@dominevo/server` workspace closure by reading the graph.
  * Throws with a precise message when the workspace shape is unexpected —
  * the command must fail loudly rather than upload a partial closure.
  */
@@ -178,7 +178,7 @@ export function discoverServerClosure(workspaceRoot: string): ServerClosure {
   if (serverManifest === null) {
     throw new Error(
       `No parseable package.json at ${path.join('server/backend', 'package.json')} — ` +
-        'run `camstack deploy-server` from the camstack-server workspace root.',
+        'run `dominevo deploy-server` from the camstack-server workspace root.',
     )
   }
   const workspace = loadWorkspacePackages(workspaceRoot)
@@ -214,7 +214,7 @@ export function workspaceAddonMinimums(workspaceRoot: string): Readonly<Record<s
 
 /**
  * Run `fn` while the package's `package.json` carries the uniform dev
- * version (its `version` plus every intra-set `@camstack/*` range across all
+ * version (its `version` plus every intra-set `@dominevo/*` range across all
  * dependency fields). The ORIGINAL bytes are restored afterwards — success
  * or failure — so the workspace file is never left dirty. Used to wrap
  * `npm pack` so the tarball self-describes as the dev version.

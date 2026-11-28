@@ -1,4 +1,4 @@
-import { DeviceRole, DeviceType, isSwitchLight, resolveDeviceControlKind } from '@camstack/types'
+import { DeviceRole, DeviceType, isSwitchLight, resolveDeviceControlKind } from '@dominevo/types'
 import { type CapCardKind, capCardKindOf } from './cap-card-kinds'
 
 /** The scenes a real device can be drawn with today. */

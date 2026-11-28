@@ -7,8 +7,8 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import { selectOption, selectOptionLabels } from '@camstack/ui-library/testing'
-import { ConfirmDialogProvider, type AddonPageProps } from '@camstack/ui-library'
+import { selectOption, selectOptionLabels } from '@dominevo/ui-library/testing'
+import { ConfirmDialogProvider, type AddonPageProps } from '@dominevo/ui-library'
 import { InstalledTab } from '../tabs/InstalledTab.js'
 import type { ReactElement } from 'react'
 

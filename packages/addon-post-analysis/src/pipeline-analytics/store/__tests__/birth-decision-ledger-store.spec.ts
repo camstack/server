@@ -10,7 +10,7 @@
  *  - the table is BOUNDED by row count, oldest evicted first;
  *  - the read path answers newest-first, filtered per camera / verdict / since.
  */
-import { MAX_BIRTH_DECISION_RECORDS } from '@camstack/types'
+import { MAX_BIRTH_DECISION_RECORDS } from '@dominevo/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import {
   type FakeRecords,

@@ -1,4 +1,4 @@
-import { NetworkLinkStatusSchema } from '@camstack/types'
+import { NetworkLinkStatusSchema } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { portNetworkLinkStatus } from '../unifi-port-state.js'
 import { port } from './unifi-fixtures.js'

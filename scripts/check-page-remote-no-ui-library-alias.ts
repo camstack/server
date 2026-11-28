@@ -5,8 +5,8 @@
  *
  * ## The failure this catches
  *
- * Every page remote shares `@camstack/ui-library` with the host (`import: false`).
- * A `resolve.alias` of `@camstack/ui-library` (or `@camstack/ui`, `@camstack/types`)
+ * Every page remote shares `@dominevo/ui-library` with the host (`import: false`).
+ * A `resolve.alias` of `@dominevo/ui-library` (or `@dominevo/ui`, `@dominevo/types`)
  * to a `src` path rewrites the specifier BEFORE module-federation's sharing layer
  * sees it, so the whole library is bundled into the remote. The remote then
  * changes whenever the library does, and every page addon is republished for a
@@ -17,8 +17,8 @@
  * For every package that declares an addon page, in each of its federation
  * configs (`vite.config.ts` / `vite.page.config.ts` containing `federation(`):
  *
- * 1. no alias entry for `@camstack/ui-library`, `@camstack/ui` or `@camstack/types`;
- * 2. the `@camstack/ui-library` share states `requiredVersion` as a `>=` range —
+ * 1. no alias entry for `@dominevo/ui-library`, `@dominevo/ui` or `@dominevo/types`;
+ * 2. the `@dominevo/ui-library` share states `requiredVersion` as a `>=` range —
  *    that declaration is what the host's `AddonPageLoader` compares against.
  *
  * `addon-agent-ui` is a standalone app, declares no page, and keeps bundling.
@@ -33,10 +33,10 @@ const ROOT = path.resolve(import.meta.dirname, '..')
 const PACKAGES = path.join(ROOT, 'packages')
 const CONFIGS = ['vite.config.ts', 'vite.page.config.ts'] as const
 
-const ALIAS_OF_SHARED = /['"]@camstack\/(ui-library|ui|types)['"]\s*:\s*(?:path\.|\.|['"`])/
+const ALIAS_OF_SHARED = /['"]@dominevo\/(ui-library|ui|types)['"]\s*:\s*(?:path\.|\.|['"`])/
 
 /** The share entry for ui-library: from its key to the closing brace of its object. */
-const UI_LIBRARY_SHARE = /['"]@camstack\/ui-library['"]\s*:\s*\{[^}]*\}/g
+const UI_LIBRARY_SHARE = /['"]@dominevo\/ui-library['"]\s*:\s*\{[^}]*\}/g
 
 /** Why a federation config would bundle the shared libraries, or fail to declare its minimum (empty = fine). */
 export function pageRemoteConfigProblems(source: string): readonly string[] {
@@ -47,11 +47,11 @@ export function pageRemoteConfigProblems(source: string): readonly string[] {
     .filter((line) => !/^\s*(\/\/|\*|\/\*)/.test(line))
     .join('\n')
   const hit = ALIAS_OF_SHARED.exec(code)
-  if (hit !== null) problems.push(`resolve.alias of @camstack/${hit[1]} bundles it into the remote`)
+  if (hit !== null) problems.push(`resolve.alias of @dominevo/${hit[1]} bundles it into the remote`)
   const shares = [...code.matchAll(UI_LIBRARY_SHARE)].map((m) => m[0])
   const declared = shares.some((share) => /requiredVersion\s*:\s*`>=/.test(share))
   if (!declared)
-    problems.push('the @camstack/ui-library share has no requiredVersion: `>=<version>`')
+    problems.push('the @dominevo/ui-library share has no requiredVersion: `>=<version>`')
   return problems
 }
 

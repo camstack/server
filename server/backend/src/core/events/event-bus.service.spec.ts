@@ -5,8 +5,8 @@ import * as os from 'node:os'
 import { ServiceBroker } from 'moleculer'
 import { EventBusService } from './event-bus.service'
 import { ConfigService } from '../config/config.service'
-import type { ISettingsStore } from '@camstack/server/system'
-import type { SystemEvent } from '@camstack/types'
+import type { ISettingsStore } from '@dominevo/server/system'
+import type { SystemEvent } from '@dominevo/types'
 
 /** Flush pending queueMicrotask callbacks */
 const flush = () => new Promise<void>((resolve) => queueMicrotask(resolve))

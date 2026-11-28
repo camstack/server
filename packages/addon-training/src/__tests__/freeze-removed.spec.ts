@@ -3,7 +3,7 @@
  * TrainingCorpusSelection instead of datasetVersionId.
  *
  * Imports the worktree `.cap.ts` sources directly — this worktree's
- * `node_modules` symlink resolves `@camstack/types` to the main clone's dist.
+ * `node_modules` symlink resolves `@dominevo/types` to the main clone's dist.
  */
 import { describe, expect, it } from 'vitest'
 import { pipelineAnalyticsCapability } from '../../../types/src/capabilities/pipeline-analytics.cap.js'

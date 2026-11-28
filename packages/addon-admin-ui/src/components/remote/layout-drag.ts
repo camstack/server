@@ -5,14 +5,14 @@
  * arrows use (`moveButton`, `moveGroup`), so a drop the preview shows as valid
  * is always a payload the template store accepts.
  */
-import type { LayoutRect, RemoteLayoutPayload } from '@camstack/types'
+import type { LayoutRect, RemoteLayoutPayload } from '@dominevo/types'
 import {
   groupById,
   type LayoutRefusal,
   type LayoutResult,
   moveButton,
   moveGroup,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 
 export interface DragItem {
   readonly kind: 'button' | 'group'

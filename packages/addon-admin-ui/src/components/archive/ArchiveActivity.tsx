@@ -15,7 +15,7 @@ import {
   TABLE_SCROLL_MAX_H,
   usePipelineAnalyticsListOpsLog,
   useRecordingArchiveListOpsLog,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Activity } from 'lucide-react'
 import { useMemo, useState, type ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'

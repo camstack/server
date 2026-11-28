@@ -126,7 +126,7 @@ kernel's whole retransmit budget, and `drain` never comes).
 
 ## Consequences
 
-- The two indexes ship with the addons: `camstack deploy post-analysis` and a
+- The two indexes ship with the addons: `dominevo deploy post-analysis` and a
   deploy of `addon-pipeline` (the large bundle — its hot deploy has wedged
   the listener before; the operator decides when). The first
   `declareCollection` after each builds the index over every existing row:
@@ -134,7 +134,7 @@ kernel's whole retransmit budget, and `drain` never comes).
   not beside a running drain or seal, per the sibling notes), ~19 k rows for
   `segment-hours` (well under a second).
 - The route and the pump are `server/backend` and ride the next published
-  `@camstack/server` (D16). Until then the download queues without bound and
+  `@dominevo/server` (D16). Until then the download queues without bound and
   says nothing; the hub is on 1.2.269 and the change is ready.
 - `footprintByLocation` and `accountingForLocations` keep their SQL; the
   profiler's WARN for these two shapes should stop appearing after the

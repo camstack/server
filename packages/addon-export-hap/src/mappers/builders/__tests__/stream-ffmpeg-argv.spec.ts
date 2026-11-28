@@ -23,7 +23,7 @@
  * ## What this file is allowed to assert, and what it is not
  *
  * The migration moves argument EMISSION from a hand-rolled vector in
- * `stream-ffmpeg-args.ts` to `buildFfmpegArgs` in `@camstack/types` (D67, Rule
+ * `stream-ffmpeg-args.ts` to `buildFfmpegArgs` in `@dominevo/types` (D67, Rule
  * 1 of `scripts/check-ffmpeg-primitive.ts`). The shared builder emits the video
  * encode block in ITS order, so a literal whole-argv golden could not survive
  * the move and would have to be rewritten — which is exactly the kind of
@@ -43,7 +43,7 @@
  * unnoticed.
  */
 
-import { buildFfmpegArgs } from '@camstack/types'
+import { buildFfmpegArgs } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 
 import { buildVideoPlan } from '../stream-bitrate.js'

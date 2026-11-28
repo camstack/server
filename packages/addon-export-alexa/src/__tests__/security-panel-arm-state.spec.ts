@@ -1,4 +1,4 @@
-import type { AlarmArmMode } from '@camstack/types'
+import type { AlarmArmMode } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   alarmArmModeForAlexa,

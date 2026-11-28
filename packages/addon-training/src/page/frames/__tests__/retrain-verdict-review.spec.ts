@@ -3,7 +3,7 @@
  * the frame opens: the mapping verdict -> review state. Nothing is saved by it —
  * the operator confirms by saving, so a pre-answered box makes the editor dirty.
  */
-import type { RetrainPipelineBox, RetrainVerdict } from '@camstack/types'
+import type { RetrainPipelineBox, RetrainVerdict } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { editorSignature } from '../lib/retrain-dirty.js'
 import { seedEditor } from '../lib/retrain-editor.js'

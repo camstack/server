@@ -3,7 +3,7 @@
  * ticks routed through the one `setAddressRole`, a custom address added only
  * when it validates, and a plain-http sign-in held until the operator accepts.
  */
-import type { HubAddressBook, HubAddressRow } from '@camstack/types'
+import type { HubAddressBook, HubAddressRow } from '@dominevo/types'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { AddressesCard } from '../AddressesCard'
@@ -87,7 +87,7 @@ describe('AddressesCard', () => {
     expect(help.hasAttribute('open')).toBe(false)
     expect(help.querySelector('summary')?.textContent).toBe('What are roles?')
     const text = help.textContent ?? ''
-    expect(text).toContain('Addresses the CamStack apps try when connecting')
+    expect(text).toContain('Addresses the Dominevo apps try when connecting')
     expect(text).toContain('Only where tapping a notification opens')
     expect(text).toContain('download addons, models and media')
     expect(text).toContain('buttons, attachments and admin links in notifications')

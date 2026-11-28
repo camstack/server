@@ -3,7 +3,7 @@
  * the real one was measured to have.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 
 import type { AmcrestRpc2Client, AmcrestRpc2Result } from '../amcrest-rpc2-client.js'

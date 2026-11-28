@@ -14,7 +14,7 @@
  *     the same devices, element-wise; a link whose target is missing or differs stays parked and
  *     is named. The `reconcileIntervalSec` and `knownBrokers` settings go once no link is parked.
  */
-import { type MigrationProcedureResult } from '@camstack/types'
+import { type MigrationProcedureResult } from '@dominevo/types'
 import {
   DEFAULT_RECONCILE_INTERVAL_SEC,
   type HaExportTargetBody,

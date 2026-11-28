@@ -57,7 +57,7 @@
  * ledger) that is no longer in `$process.list` and whose runner is gone.
  * Anything less does not get to name a process disposable.
  */
-import type { NodeProcess } from '@camstack/types'
+import type { NodeProcess } from '@dominevo/types'
 import type { ThreadCpuSplit } from './thread-cpu-sampler.js'
 
 /** The classes a node process can carry. Mirrors `NodeProcessSchema`. */

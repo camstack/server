@@ -38,8 +38,8 @@
  * the Range route natively (D549 22).
  */
 import type { spawn as nodeSpawn } from 'node:child_process'
-import type { PinnedFfmpegResolver } from '@camstack/types'
-import { NO_PINNED_FFMPEG_DETAIL } from '@camstack/types/node'
+import type { PinnedFfmpegResolver } from '@dominevo/types'
+import { NO_PINNED_FFMPEG_DETAIL } from '@dominevo/types/node'
 
 /** A clip that has not transferred by here is not going to. */
 export const CLIP_MUX_TIMEOUT_MS = 60_000

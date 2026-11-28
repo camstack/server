@@ -5,7 +5,7 @@
  * notifications) stay in its bottom bar or rail and are not published: its nav
  * is empty.
  */
-import type { AppDeclaration, IAppSourceProvider } from '@camstack/types'
+import type { AppDeclaration, IAppSourceProvider } from '@dominevo/types'
 
 export const VIEWER_APP_ID = 'viewer'
 

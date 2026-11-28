@@ -7,8 +7,8 @@
  * refusal — `cross-node` above all — is a statement about the transport and
  * must never reach the operator as "this clip has no bytes".
  */
-import type { ClipBytes, ExportClipSubject, ExportRecord, IScopedLogger } from '@camstack/types'
-import { clipExportFailure, clipExportFailureOf } from '@camstack/types'
+import type { ClipBytes, ExportClipSubject, ExportRecord, IScopedLogger } from '@dominevo/types'
+import { clipExportFailure, clipExportFailureOf } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   type ClipFetchRequest,
@@ -204,7 +204,7 @@ describe('a provider that predates the transport', () => {
     // The hint is what turns "too-large-to-transfer" from a dead end into a
     // deploy: an operator who sees that refusal after D613 is looking at a
     // stale addon.
-    expect(said?.meta['hint']).toBe('camstack deploy provider-reolink')
+    expect(said?.meta['hint']).toBe('dominevo deploy provider-reolink')
     expect(said?.meta['inlineBound']).toBe(50 * 1024 * 1024)
   })
 

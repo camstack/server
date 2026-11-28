@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { DeviceRun } from '@camstack/types'
+import type { DeviceRun } from '@dominevo/types'
 import { defaultUiText } from '../../../contexts/ui-text'
 import {
   RUN_WINDOW_MARGIN_MS,

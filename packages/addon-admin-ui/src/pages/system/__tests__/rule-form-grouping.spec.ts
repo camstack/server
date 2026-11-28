@@ -6,13 +6,13 @@
  * places the option is hidden, and the choices the hub's save guard (T16) would
  * refuse — which the editor explains instead of letting the save fail.
  */
-import type { NcConfirm, NcRule } from '@camstack/types'
+import type { NcConfirm, NcRule } from '@dominevo/types'
 import {
   NC_CONDITION_CATALOG,
   NC_GROUPING_DEFAULT_SEC,
   NC_GROUPING_MAX_SEC,
   NC_GROUPING_MIN_SEC,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   applyDeliveryChoice,

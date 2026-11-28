@@ -3,7 +3,7 @@
  *
  * There is no `ensureAlarmPanel` any more. The get-or-create, the `fixed`
  * re-assertion, the adopt-don't-skip rule and the hub-ownership gate all moved
- * to `DeclaredDevices` in `@camstack/types` — the one primitive for a device an
+ * to `DeclaredDevices` in `@dominevo/types` — the one primitive for a device an
  * addon declares. What is left here is the *declaration*: the stable id, the
  * seed name, the type and the class. Data, not procedure.
  *
@@ -13,7 +13,7 @@
  * second read to agree before it does anything destructive (D49).
  */
 
-import { type DeviceDeclaration, DeviceType } from '@camstack/types'
+import { type DeviceDeclaration, DeviceType } from '@dominevo/types'
 import { NcAlarmPanelDevice } from './alarm-panel-device.js'
 
 /** Stable id of the one panel. Never derived from a name — a rename must not

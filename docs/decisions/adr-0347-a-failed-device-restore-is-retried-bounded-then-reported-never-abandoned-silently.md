@@ -65,9 +65,9 @@ abandoned after one attempt and never retried forever. The rules:
   retry — the machinery is in the default implementation. An override can
   return a `DeviceRestoreReport` and reuse `DeviceRestoreRetryScheduler`, but
   nothing forces it to.
-- `@camstack/types` is a framework external even for "self-contained" addons,
-  so this is live only via a new `@camstack/server` closure — not via
-  `camstack deploy` of a provider.
+- `@dominevo/types` is a framework external even for "self-contained" addons,
+  so this is live only via a new `@dominevo/server` closure — not via
+  `dominevo deploy` of a provider.
 
 ## Enforcement
 

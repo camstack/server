@@ -24,7 +24,7 @@
  * new camera, which reads as correct in a device list and is not.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { DeviceRowStore, deviceRowBackendOf } from '../device-row-store.js'
 import { MigrationRefusedError } from '../migration-refused.js'

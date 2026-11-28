@@ -1,5 +1,5 @@
 /** Test helper (D698): a records world whose writes land late. */
-import type { InMemoryRecords } from '@camstack/types'
+import type { InMemoryRecords } from '@dominevo/types'
 import { withNcFaults } from './support/nc-test-deps.js'
 
 /**

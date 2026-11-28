@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import { ConfirmDialogProvider } from '@camstack/ui-library'
+import { ConfirmDialogProvider } from '@dominevo/ui-library'
 import type { CcuDeviceState, ValueParam } from '../ccu/ccu-schemas.js'
 import type { CcuTrpc } from '../ui/ccu-client.js'
 import { DevicePanel } from '../ui/DevicePanel.js'

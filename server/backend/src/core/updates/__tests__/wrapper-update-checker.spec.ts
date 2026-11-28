@@ -12,7 +12,7 @@
  *    clears the dedup state and reads as "everything is fine";
  *  - and a branch that drops work says so, with the node id on the line.
  */
-import type { EventCategory, IEventBus, IScopedLogger, ServerPackageStatus } from '@camstack/types'
+import type { EventCategory, IEventBus, IScopedLogger, ServerPackageStatus } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { UpdateAvailabilityEmitter } from '../../update-availability-emitter.js'
 import { WrapperUpdateChecker, WRAPPER_PACKAGE_NAME } from '../wrapper-update-checker.js'
@@ -44,7 +44,7 @@ function recordingLogger(): { logger: IScopedLogger; warns: { message: string; m
 
 function status(overrides: Partial<ServerPackageStatus>): ServerPackageStatus {
   return {
-    packageName: '@camstack/server',
+    packageName: '@dominevo/server',
     runningVersion: '1.2.32',
     nodeRuntimeVersion: '24.0.0',
     activeVersion: '1.2.32',

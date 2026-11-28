@@ -1,4 +1,4 @@
-import type { CustomModelDescriptor, ModelCatalogEntry } from '@camstack/types'
+import type { CustomModelDescriptor, ModelCatalogEntry } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { groupCustomModelsByStep, mergeCustomModels } from '../custom-models.js'
 

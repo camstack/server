@@ -1,5 +1,5 @@
 /** A complete in-memory keychain handle for owner `system`. Test-only. */
-import type { SecretsAccess } from '@camstack/types'
+import type { SecretsAccess } from '@dominevo/types'
 
 export interface FakeSecrets {
   readonly handle: SecretsAccess

@@ -1,9 +1,9 @@
 /**
  * Curated world-timezone catalogue + DST rules.
  *
- * Lives in `@camstack/types` (a system package every addon already
+ * Lives in `@dominevo/types` (a system package every addon already
  * depends on) so BOTH the shared `<TimezoneSelector>` in
- * `@camstack/ui-library` AND device providers (e.g. the Reolink camera
+ * `@dominevo/ui-library` AND device providers (e.g. the Reolink camera
  * driver) can resolve a friendly IANA id to its standard UTC offset and
  * DST rule without importing the UI package.
  *

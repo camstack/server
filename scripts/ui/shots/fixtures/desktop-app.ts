@@ -12,7 +12,7 @@ export default defineFixtures({
   description: 'A node whose desktop app has a downloaded update ready to install.',
   handlers: {
     'serverManagement.getServerPackageStatus': {
-      packageName: '@camstack/server',
+      packageName: '@dominevo/server',
       runningVersion: VERSION,
       nodeRuntimeVersion: '24.21.0',
       activeVersion: VERSION,

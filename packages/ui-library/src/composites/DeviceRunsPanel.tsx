@@ -9,7 +9,7 @@
  * `—`, never `0` (D393).
  */
 import { useState, type JSX } from 'react'
-import type { DeviceRun } from '@camstack/types'
+import type { DeviceRun } from '@dominevo/types'
 import { useUiText, type UiTextFn } from '../contexts/ui-text'
 import { Badge } from '../primitives/badge'
 import { CollapsibleCard } from '../primitives/collapsible-card'

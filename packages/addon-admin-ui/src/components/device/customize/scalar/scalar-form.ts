@@ -12,7 +12,7 @@ import {
   type ScalarCompileInput,
   compileScalarOverride,
   tryConvertUnit,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { ScalarFieldFit, ScalarTransformKind } from './scalar-fit'
 export type ScalarTransformDraft = ScalarCompileInput['draft']['transform']
 

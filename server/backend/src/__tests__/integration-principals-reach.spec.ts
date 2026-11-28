@@ -5,8 +5,8 @@
  * reach every method its integration calls (listed in the descriptor's own
  * comments), and must NOT reach an administration method it never had.
  */
-import type { UserScope } from '@camstack/types'
-import { capabilityScopesOf } from '@camstack/types'
+import type { UserScope } from '@dominevo/types'
+import { capabilityScopesOf } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { checkScopeAccess } from '../api/trpc/scope-access.js'
 import { buildAlexaOauthIntegration } from '../../../../packages/addon-export-alexa/src/oauth-integration.js'

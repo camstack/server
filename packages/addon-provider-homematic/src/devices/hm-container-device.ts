@@ -9,7 +9,7 @@ import {
   type DeviceContext,
   resyncCapability,
   resyncThroughAdoption,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { Homematic, HmDevice, HmValue, ValueChangedEvent } from 'nodehomematic'
 import { homematicFacades } from '../homematic-facade-resolver.js'
 import { hmName } from './hm-name.js'

@@ -13,8 +13,8 @@ import {
   type ExposedNameStore,
   type IScopedLogger,
   makeInMemoryRecords,
-} from '@camstack/types'
-import { fakeAddonContext } from '@camstack/types/testing'
+} from '@dominevo/types'
+import { fakeAddonContext } from '@dominevo/types/testing'
 import { describe, expect, it } from 'vitest'
 import { type AnnounceClient, announceToBrokers } from '../announce.js'
 import { devBlockFor, haNameValidator, namesByBroker } from '../exposed-name.js'
@@ -58,7 +58,7 @@ describe('Home Assistant exposed name', () => {
     const dev: HaDeviceBlock = {
       ids: ['camstack_7'],
       name: 'Gate cam',
-      mf: 'CamStack',
+      mf: 'Dominevo',
       mdl: 'camera',
     }
     expect(devBlockFor(dev, names, 'ha-a')).toEqual({
@@ -100,7 +100,7 @@ describe('Home Assistant exposed name', () => {
     const dev: HaDeviceBlock = {
       ids: ['camstack_7'],
       name: 'Gate cam',
-      mf: 'CamStack',
+      mf: 'Dominevo',
       mdl: 'camera',
     }
     const delivered = await announceToBrokers(

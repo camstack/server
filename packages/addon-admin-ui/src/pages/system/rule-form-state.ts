@@ -21,7 +21,7 @@ import type {
   NcSystemEventFamily,
   NcThrottle,
   NcThrottleGranularity,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   audioIsFailClosed,
   conditionVisibleForKind,
@@ -48,7 +48,7 @@ import {
   systemRuleKindOf,
   stepActuatesAlarmPanel,
   flattenActionSteps,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { NEW_SYSTEM_EVENT_DELIVERY } from './notification-system-event-delivery'
 import { seedSystemEventForFamily } from './notification-system-events'
 import { projectRuleScope, type RuleScopeDraft, ruleScopeDraftOf } from './rule-scope-model'
@@ -247,7 +247,7 @@ export interface NcRuleFormState {
  * The snooze durations a notification offers when the rule does not say, and
  * the full palette the editor lets an operator pick from.
  *
- * MIRRORS `NC_DEFAULT_SNOOZE_MINUTES` in `@camstack/types`, and mirrored for
+ * MIRRORS `NC_DEFAULT_SNOOZE_MINUTES` in `@dominevo/types`, and mirrored for
  * the same reason as {@link isRuleSnoozeExempt}: that package reaches this
  * addon as a Module-Federation SINGLETON provided by the HOST, so importing a
  * newly-added export would read `undefined` until a server closure carrying it
@@ -274,7 +274,7 @@ export function snoozeChoiceLabel(minutes: number): string {
  * moves it.
  *
  * A LOCAL copy of what `addon-post-analysis/notification-center/snooze-exempt.ts`
- * decides, and the duplication is deliberate rather than lazy: `@camstack/types`
+ * decides, and the duplication is deliberate rather than lazy: `@dominevo/types`
  * reaches this addon as a Module-Federation SINGLETON provided by the HOST, so a
  * shared helper added to it is `undefined` here until a server closure carrying
  * it is installed. The admin would then render "snooze available" on an alarm

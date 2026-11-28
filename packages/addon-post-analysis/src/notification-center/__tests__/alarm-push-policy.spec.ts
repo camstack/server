@@ -24,7 +24,7 @@ import {
   NcRuleInputSchema,
   type ObjectEvent,
   type SensorEvent,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   makePanelContext,

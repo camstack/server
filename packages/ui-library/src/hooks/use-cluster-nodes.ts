@@ -25,7 +25,7 @@
  * `scripts/check-topology-is-a-diagram-not-a-lookup.ts` keeps every other call
  * site out of `nodes.topology`.
  */
-import type { TopologyNode } from '@camstack/types'
+import type { TopologyNode } from '@dominevo/types'
 import { useMemo } from 'react'
 import { trpc } from '../trpc-react'
 import { useEventStreamLatest } from './use-event-stream'

@@ -2,7 +2,7 @@
  * The Secrets page's operations — each confirmed, each refreshing the page
  * afterwards. Kept out of the page so the page is only composition.
  */
-import { KEYCHAIN_RESET_CONFIRMATION } from '@camstack/types'
+import { KEYCHAIN_RESET_CONFIRMATION } from '@dominevo/types'
 import {
   useAlert,
   useConfirm,
@@ -13,7 +13,7 @@ import {
   useKeychainAdminResetKeychain,
   useKeychainAdminRotateMasterKey,
   usePrompt,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 
 function messageOf(err: unknown): string {

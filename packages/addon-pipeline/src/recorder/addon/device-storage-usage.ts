@@ -16,7 +16,7 @@
  * reported, because "what can this process serve without touching the disk" is
  * a real question — under names that say so.
  */
-import type { IScopedLogger, RecordingDeviceUsage } from '@camstack/types'
+import type { IScopedLogger, RecordingDeviceUsage } from '@dominevo/types'
 import type { Accounting, ArchiveDeviceUsage } from '../types.js'
 import type { SegmentHourLedger } from './segment-hour-ledger.js'
 

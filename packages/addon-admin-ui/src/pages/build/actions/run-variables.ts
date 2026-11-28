@@ -7,7 +7,7 @@
  * out, so the run sees it unset rather than as `''` or `NaN`.
  */
 
-import type { ActionVariable } from '@camstack/types'
+import type { ActionVariable } from '@dominevo/types'
 
 export type RunValue = string | number | boolean
 export type RunValues = Readonly<Record<string, RunValue | undefined>>

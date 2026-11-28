@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { ExportRecord } from '@camstack/types'
+import type { ExportRecord } from '@dominevo/types'
 import {
   type RecordingExportsState,
   getExportRecord,

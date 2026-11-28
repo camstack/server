@@ -9,8 +9,8 @@
  * `undefined`; share one client and the second one fails.
  */
 
-import type { DeviceCommandObservation } from '@camstack/types'
-import { commandOrigin } from '@camstack/types/addon'
+import type { DeviceCommandObservation } from '@dominevo/types'
+import { commandOrigin } from '@dominevo/types/addon'
 import { describe, expect, it } from 'vitest'
 import { createHubAddonApi } from '../hub-addon-api.js'
 
@@ -130,9 +130,9 @@ describe('createHubAddonApi device commands (D1022)', () => {
 
   it('settles the outcome as rejected when the command throws', async () => {
     const { observed, api } = switchSetup(true)
-    await expect(api('core-blocks').switch.setState.mutate({ deviceId: 7, on: true })).rejects.toThrow(
-      'device unreachable',
-    )
+    await expect(
+      api('core-blocks').switch.setState.mutate({ deviceId: 7, on: true }),
+    ).rejects.toThrow('device unreachable')
     await expect(observed[0]?.outcome).rejects.toThrow('device unreachable')
   })
 })

@@ -13,8 +13,8 @@ import {
   NcRuleInputSchema,
   scheduleForSendTimes,
   type SystemEvent,
-} from '@camstack/types'
-import type { InMemoryRecords } from '@camstack/types'
+} from '@dominevo/types'
+import type { InMemoryRecords } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import type { NcDeviceIdentity } from '../device-directory.js'

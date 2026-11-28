@@ -18,7 +18,7 @@ import {
   entryBody,
   MIGRATION_API_V1_METHODS,
   type MigrationApiV1,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type Database from 'better-sqlite3'
 import { afterEach, describe, expect, it } from 'vitest'
 import { type HubSeedMarks, seedHubCatalogue } from '../../../migrations/hub/__fixtures__/seed.js'

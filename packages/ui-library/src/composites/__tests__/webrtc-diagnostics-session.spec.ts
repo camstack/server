@@ -1,4 +1,4 @@
-import type { WebrtcSessionDebug } from '@camstack/types'
+import type { WebrtcSessionDebug } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type {
   RawCounters,

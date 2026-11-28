@@ -34,8 +34,8 @@ import type {
   ObjectDetection,
   PipelineInferenceResultPayload,
   Zone,
-} from '@camstack/types'
-import { EventCategory, createEvent } from '@camstack/types'
+} from '@dominevo/types'
+import { EventCategory, createEvent } from '@dominevo/types'
 import PipelineAnalyticsAddon from '../index.js'
 import { FrameProcessor } from '../pipeline/frame-processor.js'
 import {

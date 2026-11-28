@@ -1,7 +1,7 @@
-import { userError } from '@camstack/types'
+import { userError } from '@dominevo/types'
 /**
  * HandoffCodeService — one-time login handoff codes for the native-app
- * auth handoff (viewer "Sign in with CamStack").
+ * auth handoff (viewer "Sign in with Dominevo").
  *
  * Flow: an AUTHENTICATED browser session (the admin-ui login page, after
  * any successful login leg) mints a short-lived single-use code bound to
@@ -24,7 +24,7 @@ import { userError } from '@camstack/types'
  */
 import * as crypto from 'node:crypto'
 
-/** Wire prefix — `chc_` = CamStack Handoff Code (not a credential: it is redeemed once for a session). */
+/** Wire prefix — `chc_` = Dominevo Handoff Code (not a credential: it is redeemed once for a session). */
 export const HANDOFF_CODE_PREFIX = 'chc_'
 
 export const HANDOFF_CODE_TTL_MS = 60_000

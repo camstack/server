@@ -11,7 +11,7 @@
  * outcome (a frame from an analyzer older than D660) stays ABSENT — unknown,
  * never defaulted to "classified".
  */
-import type { AudioResult } from '@camstack/types'
+import type { AudioResult } from '@dominevo/types'
 import type { AudioSample } from '../notification-center/audio-rule-matcher.js'
 
 /** The per-device floor the router and the NC feed share. */

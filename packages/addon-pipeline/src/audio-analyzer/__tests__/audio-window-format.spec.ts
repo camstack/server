@@ -13,7 +13,7 @@
  * The level meter is rate-agnostic: RMS over the source samples.
  */
 import { describe, expect, it, vi } from 'vitest'
-import type { AudioChunkInput, IScopedLogger } from '@camstack/types'
+import type { AudioChunkInput, IScopedLogger } from '@dominevo/types'
 import { makeTestAudioAnalyzerProvider } from '../../__tests__/support/audio-analyzer-provider.js'
 import { resampleMono16k, type AudioChunk, type IAudioPipeline } from '../audio-pipeline.js'
 

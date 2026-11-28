@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { DeviceType, DeviceRole, type DeviceConfig, type IDevice } from '@camstack/types'
+import { DeviceType, DeviceRole, type DeviceConfig, type IDevice } from '@dominevo/types'
 import {
   buildFreshStandaloneSpec,
   diffStandaloneEntity,

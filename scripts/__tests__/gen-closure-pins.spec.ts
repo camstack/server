@@ -25,12 +25,12 @@ const lock: { lockfileVersion: number; packages: Record<string, LockEntry> } = {
   lockfileVersion: 3,
   packages: {
     'server/backend': {
-      dependencies: { '@camstack/addon-x': '*', a: '^1.0.0', sharp: '^0.35.0' },
+      dependencies: { '@dominevo/addon-x': '*', a: '^1.0.0', sharp: '^0.35.0' },
     },
     'packages/addon-x': {
       dependencies: { b: '^2.0.0', shared: '^1.0.0', dup: '^1.0.0' },
     },
-    'node_modules/@camstack/addon-x': { resolved: 'packages/addon-x', link: true },
+    'node_modules/@dominevo/addon-x': { resolved: 'packages/addon-x', link: true },
     'node_modules/a': { version: '1.4.0', dependencies: { dup: '^2.0.0' } },
     'node_modules/a/node_modules/dup': { version: '2.0.0' },
     'node_modules/dup': { version: '1.0.0' },
@@ -62,8 +62,8 @@ describe('buildPins', () => {
     expect(pins['shared']).toBe('1.9.9')
   })
 
-  it('never lists a @camstack workspace package', () => {
-    expect(Object.keys(pins).filter((n) => n.startsWith('@camstack/'))).toEqual([])
+  it('never lists a @dominevo workspace package', () => {
+    expect(Object.keys(pins).filter((n) => n.startsWith('@dominevo/'))).toEqual([])
   })
 
   it('keeps the per-platform optional natives for every platform', () => {

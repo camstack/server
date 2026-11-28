@@ -7,7 +7,7 @@ import {
   topLevelFieldsOf,
   type Composition,
   type CompositionTargetDescription,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { storedPeers } from '../composition-peers.js'
 import { HOST_REF, METER_REF, block, fullMeterFields } from './cap-links-fixtures.js'

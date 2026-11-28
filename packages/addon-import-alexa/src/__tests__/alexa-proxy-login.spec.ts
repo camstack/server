@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { capturedToCookieString } from '../alexa-proxy-login-manager.js'
 import { buildAlexaLoginRoutes, type AlexaLoginRouteDeps } from '../alexa-login-routes.js'
 import type { AlexaDeviceCodeManager } from '../alexa-device-code-manager.js'

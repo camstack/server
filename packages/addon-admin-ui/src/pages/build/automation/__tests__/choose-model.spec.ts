@@ -1,5 +1,5 @@
-import type { AutomationAction, AutomationChooseStep } from '@camstack/types'
-import { AutomationChooseStepSchema, CHOOSE_BRANCHES_MAX } from '@camstack/types'
+import type { AutomationAction, AutomationChooseStep } from '@dominevo/types'
+import { AutomationChooseStepSchema, CHOOSE_BRANCHES_MAX } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   addBranch,

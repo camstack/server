@@ -14,7 +14,7 @@ import {
   revisionWeightUrl,
 } from '../src/download/model-downloader'
 import { HOSTED_MODEL_REVISIONS } from '../src/download/hosted-model-revisions'
-import type { ModelCatalogEntry } from '@camstack/types'
+import type { ModelCatalogEntry } from '@dominevo/types'
 
 const ovEntry: ModelCatalogEntry = {
   id: 'ov-model',
@@ -220,7 +220,7 @@ describe('downloadModel', () => {
 describe('format revision (an artefact replaced in place on the mirror)', () => {
   let tmpDir: string
 
-  // A fixture repo, NOT the CamStack mirror: a mirror URL resolves its
+  // A fixture repo, NOT the Dominevo mirror: a mirror URL resolves its
   // revision from the generated table, and these cases need to choose theirs.
   const HF = 'https://huggingface.co/camstack-test/fixture-models/resolve/main'
   const pkgEntry = (revision?: string): ModelCatalogEntry => ({
@@ -372,7 +372,7 @@ describe('format revision (an artefact replaced in place on the mirror)', () => 
 const sha256 = (body: string): string => createHash('sha256').update(body).digest('hex')
 
 /**
- * Every artefact on the CamStack mirror carries a revision — the sha256 of its
+ * Every artefact on the Dominevo mirror carries a revision — the sha256 of its
  * weight file, generated from the mirror's LFS metadata into
  * `hosted-model-revisions.ts` — and a node holding a copy without a record
  * proves it current by hashing that file instead of downloading it again.

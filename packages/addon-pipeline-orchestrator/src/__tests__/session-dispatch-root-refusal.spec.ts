@@ -9,13 +9,13 @@
  * pinned onto `coreml:ane`, a device the catalog ships no object-detection
  * build for. Faked: the balancer inputs and the transport.
  */
-import { CAMERA_TRIGGER } from '@camstack/types'
+import { CAMERA_TRIGGER } from '@dominevo/types'
 import type {
   CameraDetectionConfig,
   IScopedLogger,
   RunnerCameraConfig,
   RunnerLocalLoad,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { RoundRobinInferenceDeviceRotation } from '../device-balancer.js'
 import {

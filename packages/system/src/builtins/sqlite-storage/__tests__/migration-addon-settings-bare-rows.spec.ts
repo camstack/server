@@ -6,7 +6,7 @@
  * `{ addonId, key, value }` fails over a bare row and applies once the row is wrapped.
  */
 import { fileURLToPath } from 'node:url'
-import { MigrationPlanSchema, type MigrationPlan, type StoredKeyRead } from '@camstack/types'
+import { MigrationPlanSchema, type MigrationPlan, type StoredKeyRead } from '@dominevo/types'
 import { unwrapStoredValue } from '../../../kernel/prefix-walk.js'
 import Database from 'better-sqlite3'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'

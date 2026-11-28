@@ -61,7 +61,7 @@
  *  - (D681 follow-up) empty `flushOpenSegments`: "flushes every open segment
  *    without rotating" fails.
  */
-import type { FrameResult } from '@camstack/types'
+import type { FrameResult } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { makeLogRecorder } from '../../../__tests__/test-helpers.js'
 import type { FrameObservation } from '../../../pipeline/frame-observation.js'

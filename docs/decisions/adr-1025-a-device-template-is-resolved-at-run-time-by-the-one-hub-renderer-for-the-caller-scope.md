@@ -44,7 +44,7 @@ device state; two of them also take values from callers who are not admins.
 
 ## Consequences
 
-- The cap change needs `@camstack/system` force-published.
+- The cap change needs `@dominevo/system` force-published.
 - A non-admin run can read only its own camera's values; widening needs a
   scope grant the provider does not have yet.
 - NC's `{{var}}` pass runs after the device pass, so a device value containing

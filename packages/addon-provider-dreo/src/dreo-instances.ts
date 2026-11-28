@@ -11,7 +11,7 @@ import {
   REDACTED_SECRET,
   type RecordsAccess,
   RecordIntegrationInstances,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { buildConnectionFormSchema, connectionFromSettings, DreoRegionSchema } from './config.js'
 import type { DreoConfig } from './config.js'

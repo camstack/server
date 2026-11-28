@@ -13,7 +13,7 @@ import {
   EventCategory,
   type IEventBus,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { DeviceConfigContributions } from '../device-config-contributions.js'
 import PipelineOrchestratorAddon from '../index.js'

@@ -1,6 +1,6 @@
-import type { DiscoveredChildDevice } from '@camstack/types'
+import type { DiscoveredChildDevice } from '@dominevo/types'
 
-/** One live port child of an adopted infra device: its CamStack id and the port it follows. */
+/** One live port child of an adopted infra device: its Dominevo id and the port it follows. */
 export interface LivePortChild {
   readonly id: number
   readonly portIdx: number

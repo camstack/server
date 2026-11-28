@@ -22,7 +22,7 @@ import type {
   LogChannelsProviderHandle,
   RecordIntegrationInstances,
   SystemEvent,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   BaseDeviceProvider,
   clipEventLabelDepsFromApi,
@@ -45,7 +45,7 @@ import {
   userError,
   videoclipsCapability,
   withClipEventLabels,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import {
   CLIP_CATALOG_REFRESH_MINUTES_KEY,
@@ -251,7 +251,7 @@ function isMeaningfulIdentifier(s: string): boolean {
  */
 async function enrichHostIdentifiersFromLiveApi(
   detection: AutoDetectResult,
-  logger: import('@camstack/types').IScopedLogger,
+  logger: import('@dominevo/types').IScopedLogger,
 ): Promise<void> {
   const api = detection.api as {
     getInfo?: (

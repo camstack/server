@@ -1,16 +1,16 @@
 /**
- * Zigbee2MQTT `exposes` → CamStack caps. Generic by design: nothing here knows a vendor or a model,
+ * Zigbee2MQTT `exposes` → Dominevo caps. Generic by design: nothing here knows a vendor or a model,
  * only the standard expose names Zigbee2MQTT itself publishes (`temperature`, `occupancy`,
  * `water_leak`, a `light` / `switch` / `cover` / `lock` / `climate` expose with its features).
  *
- * One physical device is ONE CamStack device. Its primary function (climate, light, cover, lock,
+ * One physical device is ONE Dominevo device. Its primary function (climate, light, cover, lock,
  * switch, else sensor) picks the device type; every reading becomes a cap of that device, never a
  * separate sensor. Power, energy, voltage and current fold into `power-meter`; CO2, VOC, PM2.5,
  * PM10 and AQI into `air-quality-sensor`. Diagnostic and config exposes (link quality, battery
  * voltage, …) feed nothing. The plan is plain data, persisted on the device, so a device restored
  * while the server is unreachable still registers its caps.
  */
-import { DeviceRole, DeviceType } from '@camstack/types'
+import { DeviceRole, DeviceType } from '@dominevo/types'
 import { z } from 'zod'
 import type { Z2mExpose, Z2mScalar } from './z2m-protocol.js'
 

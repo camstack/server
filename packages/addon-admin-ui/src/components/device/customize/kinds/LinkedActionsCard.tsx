@@ -3,7 +3,7 @@
  * on its own; the picker lists what exists and the operator ticks. Reads and
  * writes `actions.getLinks` / `actions.setLinks`.
  */
-import type { ActionEntry, DeviceInfo } from '@camstack/types'
+import type { ActionEntry, DeviceInfo } from '@dominevo/types'
 import {
   Badge,
   Button,
@@ -19,7 +19,7 @@ import {
   useActionsList,
   useActionsRun,
   useActionsSetLinks,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { Play, X } from 'lucide-react'
 import { type ReactNode, useState } from 'react'

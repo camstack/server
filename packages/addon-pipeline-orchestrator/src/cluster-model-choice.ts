@@ -22,7 +22,7 @@ import {
   type ClusterModelChoice,
   interpretStoredClusterModel,
   type StoredKeyRead,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /**
  * Turn a three-way read of `clusterModel:<stepId>` into the cap answer.

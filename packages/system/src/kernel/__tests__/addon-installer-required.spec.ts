@@ -10,7 +10,7 @@
  * Two invariants on the bootstrap list:
  *   1. Every name in `AddonInstaller.REQUIRED_PACKAGES` resolves to a
  *      workspace package in `packages/` — no dangling entries.
- *   2. Every `@camstack/addon-*` listed in `server/backend/package.json`
+ *   2. Every `@dominevo/addon-*` listed in `server/backend/package.json`
  *      (the backend's declared runtime dependencies) MUST appear in
  *      REQUIRED_PACKAGES — if the backend depends on it, the install
  *      seed has to include it.
@@ -54,7 +54,7 @@ function listWorkspacePackages(): Array<{
 }> {
   const packagesDir = path.join(repoRoot(), 'packages')
   const out: Array<{ name: string; dir: string; keywords: readonly string[] }> = []
-  // The framework is part of `@camstack/server` since D989, so the server's own
+  // The framework is part of `@dominevo/server` since D989, so the server's own
   // directory is the workspace home of that bootstrap entry.
   const candidates = fs.readdirSync(packagesDir).map((entry) => path.join(packagesDir, entry))
   const frameworkDir = path.join(packagesDir, 'system')
@@ -62,7 +62,7 @@ function listWorkspacePackages(): Array<{
     path.join(repoRoot(), 'server', 'backend', 'package.json'),
   )
   if (serverPkg.name) {
-    // `@camstack/server` is where the framework ships; its builtin addon entries
+    // `@dominevo/server` is where the framework ships; its builtin addon entries
     // (the `protected: true` ones) are declared in the framework's own manifest.
     out.push({ name: serverPkg.name, dir: frameworkDir, keywords: serverPkg.keywords ?? [] })
   }
@@ -87,10 +87,10 @@ function listBackendAddonDeps(): readonly string[] {
     ...backend.peerDependencies,
   }
   // Agent-only bootstrap addons (carried in the closure for agent-role seeding
-  // only, e.g. @camstack/addon-agent-ui) are excluded from the HUB bootstrap
+  // only, e.g. @dominevo/addon-agent-ui) are excluded from the HUB bootstrap
   // set — mirror `AddonInstaller.deriveBootstrapList`'s exclusion here.
   const agentOnly = new Set(backend.camstack?.agentOnlyBootstrapAddons ?? [])
-  return Object.keys(all).filter((n) => n.startsWith('@camstack/addon-') && !agentOnly.has(n))
+  return Object.keys(all).filter((n) => n.startsWith('@dominevo/addon-') && !agentOnly.has(n))
 }
 
 interface CamstackAddonEntry {
@@ -118,14 +118,14 @@ describe('AddonInstaller.REQUIRED_PACKAGES coherence', () => {
     expect(missing).toEqual([])
   })
 
-  it('REQUIRED_PACKAGES is the set of @camstack/addon-* deps in server/backend/package.json plus @camstack/server/system', () => {
+  it('REQUIRED_PACKAGES is the set of @dominevo/addon-* deps in server/backend/package.json plus @dominevo/server/system', () => {
     const required = [...AddonInstaller.REQUIRED_PACKAGES].toSorted()
-    // The bootstrap set is every @camstack/addon-* dep PLUS @camstack/server/system —
+    // The bootstrap set is every @dominevo/addon-* dep PLUS @dominevo/server/system —
     // the framework core builtins the kernel installs at boot (see
-    // addon-installer.ts: `deps.filter(n => n.startsWith('@camstack/addon-') ||
-    // n === '@camstack/server/system')`). The single source of truth is the backend's
+    // addon-installer.ts: `deps.filter(n => n.startsWith('@dominevo/addon-') ||
+    // n === '@dominevo/server/system')`). The single source of truth is the backend's
     // package.json deps; this guard keeps REQUIRED_PACKAGES in lockstep.
-    const expected = [...listBackendAddonDeps(), '@camstack/server'].toSorted()
+    const expected = [...listBackendAddonDeps(), '@dominevo/server'].toSorted()
     expect(required).toEqual(expected)
   })
 
@@ -144,14 +144,14 @@ describe('AddonInstaller.REQUIRED_PACKAGES coherence', () => {
     expect(missing).toEqual([])
   })
 
-  it('AGENT_PACKAGES is exactly server/backend package.json camstack.agentBootstrapAddons plus @camstack/server/system', () => {
-    // Post-consolidation the agent boots the SAME `@camstack/server` closure,
+  it('AGENT_PACKAGES is exactly server/backend package.json camstack.agentBootstrapAddons plus @dominevo/server/system', () => {
+    // Post-consolidation the agent boots the SAME `@dominevo/server` closure,
     // so its bootstrap set is the backend manifest's `agentBootstrapAddons`
     // field (single source of truth — the separate agent meta-package is gone).
     const agentBootstrapAddons = backendPackage().camstack?.agentBootstrapAddons ?? []
     const agent = [...AddonInstaller.AGENT_PACKAGES].toSorted()
-    // Same bootstrap contract as the hub: the declared addons PLUS @camstack/server/system.
-    const expected = [...agentBootstrapAddons, '@camstack/server'].toSorted()
+    // Same bootstrap contract as the hub: the declared addons PLUS @dominevo/server/system.
+    const expected = [...agentBootstrapAddons, '@dominevo/server'].toSorted()
     expect(agent).toEqual(expected)
   })
 })

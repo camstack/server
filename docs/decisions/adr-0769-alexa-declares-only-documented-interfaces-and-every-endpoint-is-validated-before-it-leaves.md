@@ -54,7 +54,7 @@ A new capability lands with its devices added to the spec matrix.
 
 - An interface Amazon adds or a version it bumps needs one line in the
   allowlist; until then the validator withholds the endpoint and says so.
-- Battery state is visible in CamStack only.
+- Battery state is visible in Dominevo only.
 
 ## Enforcement
 

@@ -12,7 +12,7 @@
  * unchanged but the React code lives alongside the addon that owns
  * the `zones` cap.
  */
-import type { WidgetProps } from '@camstack/ui-library'
+import type { WidgetProps } from '@dominevo/ui-library'
 import { useT } from '../i18n/index.js'
 import { ZonesTab } from './ZonesTab'
 

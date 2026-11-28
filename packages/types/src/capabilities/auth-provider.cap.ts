@@ -38,7 +38,7 @@ export const authProviderCapability = {
     /** Check a token with this provider; null when invalid. */
     validateToken: method(z.object({ token: z.string() }), AuthResultSchema.nullable()),
   },
-  /** BIG PLAN 2: declarative mount hint — read by `@camstack/server/system` `buildCapRouters`. */
+  /** BIG PLAN 2: declarative mount hint — read by `@dominevo/server/system` `buildCapRouters`. */
   mount: { kind: 'skip' },
   vocabulary: { notOperatorFacing: NOT_A_DEVICE.IDENTITY },
 } as const satisfies CapabilityDefinition

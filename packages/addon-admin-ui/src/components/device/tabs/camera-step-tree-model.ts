@@ -15,8 +15,8 @@
  * A source idle does not pretend to be a parent switch — the root can be
  * idle because the camera detects itself while the steps under it still run.
  */
-import type { CameraDetectionSource, PipelineSlot } from '@camstack/types'
-import type { StepTreeNode } from '@camstack/ui-library'
+import type { CameraDetectionSource, PipelineSlot } from '@dominevo/types'
+import type { StepTreeNode } from '@dominevo/ui-library'
 import { stepsSuppressedBySource } from '../../pipeline/step-inspector/detection-source-model'
 
 /** What the camera stored for one step. Auto = no `stepToggles` entry. */

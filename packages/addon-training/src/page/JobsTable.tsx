@@ -3,7 +3,7 @@
  * detail (timeline, log, result actions) sits under the table.
  */
 import { useEffect, useMemo, useState, type JSX, type ReactNode } from 'react'
-import type { TrainingJob } from '@camstack/types'
+import type { TrainingJob } from '@dominevo/types'
 import {
   Badge,
   Button,
@@ -15,7 +15,7 @@ import {
   type AddonPageProps,
   type DataColumn,
   type DataTableFilterConfig,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { JobDetail } from './JobDetail.js'
 import { errorText } from './use-async.js'
 import { useT, type TFn } from '../i18n/index.js'

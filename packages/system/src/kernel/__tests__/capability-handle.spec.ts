@@ -14,8 +14,8 @@ import type {
   TypedSystemEvent,
   TypedEventFilter,
   ReadinessScope,
-} from '@camstack/types'
-import { ReadinessRegistry } from '@camstack/types'
+} from '@dominevo/types'
+import { ReadinessRegistry } from '@dominevo/types'
 import { CapabilityHandle, CapabilityUnavailableError } from '../capability-handle.js'
 
 // ── Test helpers ──────────────────────────────────────────────────────

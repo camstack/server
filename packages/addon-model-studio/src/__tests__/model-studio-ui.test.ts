@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { CustomModelDescriptor, ModelCatalogEntry } from '@camstack/types'
+import type { CustomModelDescriptor, ModelCatalogEntry } from '@dominevo/types'
 import {
   buildConvertTargets,
   catalogGroupedSeeds,
@@ -172,7 +172,7 @@ describe('formatMB', () => {
   })
 })
 
-describe('catalogSeedsFromSchema — CamStack provider from pipeline getSchema', () => {
+describe('catalogSeedsFromSchema — Dominevo provider from pipeline getSchema', () => {
   const schema: CatalogSchemaLike = {
     slots: [
       {

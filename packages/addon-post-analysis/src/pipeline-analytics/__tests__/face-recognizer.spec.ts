@@ -1,4 +1,4 @@
-import type { PipelineAnalyticsFaceGalleryChangedPayload } from '@camstack/types'
+import type { PipelineAnalyticsFaceGalleryChangedPayload } from '@dominevo/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { FaceRecognizer, type FaceRecognizerDeps } from '../face-recognizer.js'
 import { FACE_DEFAULTS } from '../face-settings.js'

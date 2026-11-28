@@ -11,7 +11,7 @@ import type {
   WorkloadResources,
   WorkloadState,
   WorkloadStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { UnifiInfraSnapshot, UnifiInfraState } from './unifi-client-contract.js'
 
 /** What a UniFi console, switch or access point declares: its resources and a restart. */

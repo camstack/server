@@ -10,7 +10,7 @@ import {
   FACE_RESCORE_INTERVAL_KEY,
   type IScopedLogger,
   readFaceRescoreIntervalMinutes,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   CLUSTER_MODEL_OWNER_ADDON_ID,
   CLUSTER_MODEL_OWNER_CAP,

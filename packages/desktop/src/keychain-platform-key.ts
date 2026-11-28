@@ -17,7 +17,7 @@
 import { randomBytes } from 'node:crypto'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
-import { writeOwnerOnlyFileSync } from '@camstack/owner-only-file'
+import { writeOwnerOnlyFileSync } from '@dominevo/owner-only-file'
 
 /** The slice of Electron's `safeStorage` this module uses. */
 export interface SafeStorageLike {

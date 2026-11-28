@@ -35,7 +35,7 @@
  * `'immediate'` and keeps the kill-now path.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { WorkerLeaseKnobs } from './native-lease-knobs.js'
 import type { SessionHwaccelOffer } from './session-hwaccel.js'
 import type {

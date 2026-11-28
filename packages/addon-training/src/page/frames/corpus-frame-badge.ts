@@ -1,7 +1,7 @@
 /**
  * Badge chrome for a corpus grid tile — exclusive work-state partition (§4.2).
  */
-import type { RetrainFrameWorkState } from '@camstack/types'
+import type { RetrainFrameWorkState } from '@dominevo/types'
 
 export interface CorpusFrameBadge {
   readonly labelKey: 'todo' | 'inProgress' | 'complete'

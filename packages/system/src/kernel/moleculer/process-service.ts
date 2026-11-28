@@ -6,8 +6,8 @@ import {
 } from './runner-refusal.js'
 import { type ChildProcess, type SpawnOptions, spawn } from 'node:child_process'
 import * as path from 'node:path'
-import type { EventCatalog, KnownEventCategory } from '@camstack/types'
-import { createEvent, EventCategory } from '@camstack/types'
+import type { EventCatalog, KnownEventCategory } from '@dominevo/types'
+import { createEvent, EventCategory } from '@dominevo/types'
 import type { Context, ServiceBroker, ServiceSchema } from 'moleculer'
 import { getPidStats as readPidStats } from '../../process/resource-monitor.js'
 import { RUNNER_RSS_BUDGET_ENV } from '../heap-watch.js'
@@ -236,7 +236,7 @@ function createProcessService(
   // 13-minute dual-writer incident was exactly that co-existence.
   const pendingGroupReaps = new Map<string, Promise<void>>()
   // Per-runnerId lifecycle serialization. Two concurrent ops for the SAME
-  // runnerId (two overlapping `camstack deploy`s firing `void restartAddon`,
+  // runnerId (two overlapping `dominevo deploy`s firing `void restartAddon`,
   // or a deploy overlapping a crash-respawn) MUST NOT interleave: each
   // restart captures the old child, kills it, `processes.delete`s the key,
   // then `spawnRunner` re-`set`s a fresh child. Interleaved, the second

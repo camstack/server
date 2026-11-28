@@ -3,7 +3,7 @@
  * `type: 'time-window'` settings field — the schema-driven form renders the
  * shared `<TimeWindowInput>` and stores ONE `TimeWindow` object.
  */
-import { type ConfigField, TimeWindowSchema } from '@camstack/types'
+import { type ConfigField, TimeWindowSchema } from '@dominevo/types'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { FormField } from '../config-form-field'

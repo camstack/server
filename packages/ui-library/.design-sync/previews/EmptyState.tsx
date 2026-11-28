@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { EmptyState, Button } from '@camstack/ui-library'
+import { EmptyState, Button } from '@dominevo/ui-library'
 import { Camera, VideoOff, Bell } from 'lucide-react'
 
 const Frame = ({ children }: { children: ReactNode }) => (

@@ -11,10 +11,10 @@
  * The child cannot signal the shell over IPC (business traffic never uses raw
  * process messages, and the update path is a hub↔node tRPC call the shell is
  * not part of). Instead the node drops a restart-intent MARKER file in its
- * data dir (`@camstack/node-root` owns the layout) moments before the exit;
+ * data dir (`@dominevo/node-root` owns the layout) moments before the exit;
  * the shell reads + consumes it here to classify the exit.
  *
- * The data-dir layout constants are imported DIRECTLY from `@camstack/node-root`
+ * The data-dir layout constants are imported DIRECTLY from `@dominevo/node-root`
  * — it is bundled INTO this shell's dist at build time (a devDependency, tsc
  * inlines the values), so there is one source of truth and no anti-drift test
  * is needed. Deliberately free of any `electron`/`fs` import so the
@@ -75,7 +75,7 @@ export function classifyNodeExit(input: NodeExitInput): NodeExitClass {
 // -- Root-package status summary (tray surface) ----------------------------
 
 /**
- * The subset of `@camstack/node-root`'s `ServerRootState` the shell surfaces.
+ * The subset of `@dominevo/node-root`'s `ServerRootState` the shell surfaces.
  * Read structurally from `<dataDir>/server-root/state.json`; only these fields
  * are needed for a concise status line, so the shell does not depend on the
  * full node-root type.

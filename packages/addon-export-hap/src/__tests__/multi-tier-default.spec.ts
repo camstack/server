@@ -67,7 +67,7 @@ describe('the multi-tier service name is one HAP accepts', () => {
    * one "may prevent the accessory from being added in the Home App or cause
    * unresponsiveness". While the service was an off-by-default experiment the
    * warning was noise; now it is declared on every exposed camera, so the name
-   * is part of the release. The experiment's name — `CamStack multi-tier
+   * is part of the release. The experiment's name — `Dominevo multi-tier
    * (probe)` — was rejected for its parentheses.
    */
   it('starts and ends with alphanumerics and carries no brackets', () => {

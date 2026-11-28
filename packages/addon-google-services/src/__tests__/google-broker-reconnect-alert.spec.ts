@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import type { AddonContext, IScopedLogger } from '@camstack/types'
+import type { AddonContext, IScopedLogger } from '@dominevo/types'
 import { GoogleBrokerRegistry } from '../google-broker-registry.js'
 import {
   buildGoogleBrokerReconnectAlert,

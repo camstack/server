@@ -49,12 +49,12 @@ vi.mock('react-i18next', () => ({
   }),
 }))
 
-vi.mock('@camstack/ui-library', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@camstack/ui-library')>()
+vi.mock('@dominevo/ui-library', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dominevo/ui-library')>()
   return {
     groupChildrenByLayout: actual.groupChildrenByLayout,
     // Faithful inline mirror of the real `childListName` helper — kept local so
-    // this spec doesn't depend on a freshly-built `@camstack/ui-library` dist.
+    // this spec doesn't depend on a freshly-built `@dominevo/ui-library` dist.
     // Its own behaviour is unit-tested in ui-library's `child-list-name.test.ts`.
     classifyDeviceChildren: actual.classifyDeviceChildren,
     childListName: (child: { name: string; display?: { label?: string } }, parentName: string) => {

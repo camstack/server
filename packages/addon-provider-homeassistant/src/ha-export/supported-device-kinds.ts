@@ -5,7 +5,7 @@
  * dryer or dishwasher is offered because its power reading exports as a
  * sensor. running-state stays unmapped.
  */
-import { PLUG_APPLIANCE_TYPES } from '@camstack/types'
+import { PLUG_APPLIANCE_TYPES } from '@dominevo/types'
 
 export const SUPPORTED_DEVICE_KINDS: readonly string[] = [
   'camera',

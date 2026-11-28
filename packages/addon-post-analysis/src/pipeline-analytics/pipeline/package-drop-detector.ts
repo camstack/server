@@ -34,8 +34,8 @@ import type {
   PipelineAnalyticsPackagePickedUpPayload,
   Zone,
   ZoneRule,
-} from '@camstack/types'
-import { errMsg } from '@camstack/types'
+} from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
 import type { PackageDropSettings } from '../package-settings.js'
 import { type PackageCollector, pickupInstantOf } from './package/package-collector-mirror.js'
 import type { PackageLlmConfirmOutcome } from './package/package-llm-confirm.js'

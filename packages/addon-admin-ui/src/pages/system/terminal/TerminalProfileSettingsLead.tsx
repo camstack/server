@@ -9,7 +9,7 @@ import {
   useInstancesOfCap,
   useIntegrationInstancesUpdateInstance,
   useTerminalSessionListProfiles,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Loader2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'

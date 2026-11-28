@@ -1,4 +1,4 @@
-import type { AddonApi, IScopedLogger } from '@camstack/types'
+import type { AddonApi, IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { readConnectivity } from '../connectivity.js'
 

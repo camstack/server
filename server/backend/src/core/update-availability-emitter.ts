@@ -1,4 +1,4 @@
-import { type EventCatalog, EventCategory, type EventSource, type IEventBus } from '@camstack/types'
+import { type EventCatalog, EventCategory, type EventSource, type IEventBus } from '@dominevo/types'
 import type { IUpdateAvailabilityStore } from './update-availability-store.js'
 
 export type UpdateAvailablePayload = EventCatalog['update.available']

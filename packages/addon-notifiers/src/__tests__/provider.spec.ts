@@ -14,7 +14,7 @@ import type {
   Target,
   TargetKind,
   TargetKindCaps,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type {
   HttpNotifierAdapter,
@@ -22,10 +22,7 @@ import type {
   HttpResponseLike,
   NotifierAdapter,
 } from '../adapters/adapter.js'
-import {
-  createNotificationOutputProvider as createNotificationOutputProvider,
-  type HttpSender,
-} from '../provider.js'
+import { createNotificationOutputProvider, type HttpSender } from '../provider.js'
 import { TargetStore } from '../target-store.js'
 import { makeNotifiersRecords } from './fake-records.js'
 

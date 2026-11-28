@@ -20,7 +20,7 @@ import * as net from 'node:net'
 import type { Socket } from 'node:net'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 import {
   G711_FRAME_MS,

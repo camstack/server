@@ -14,9 +14,9 @@ const schemaQuery = vi.hoisted(() => vi.fn())
 const instanceQuery = vi.hoisted(() => vi.fn())
 const updateInstance = vi.hoisted(() => vi.fn())
 
-vi.mock('@camstack/ui-library', async () => {
+vi.mock('@dominevo/ui-library', async () => {
   const actual =
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+    await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return {
     ...actual,
     useSystem: () => ({

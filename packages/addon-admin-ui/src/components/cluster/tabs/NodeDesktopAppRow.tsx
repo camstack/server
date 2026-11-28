@@ -11,7 +11,7 @@
 import { Loader2, RotateCw } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, useConfirm, useServerManagementInstallDesktopUpdate } from '@camstack/ui-library'
+import { Button, useConfirm, useServerManagementInstallDesktopUpdate } from '@dominevo/ui-library'
 import { formatRelativeTime } from '../../device/hero/format'
 
 const RESTART_TIMEOUT_MS = 3 * 60_000

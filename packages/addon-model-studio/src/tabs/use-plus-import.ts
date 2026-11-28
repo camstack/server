@@ -7,8 +7,8 @@
  *  - openvino / coreml → download the ONNX first when absent, then convert
  */
 import { useCallback, useEffect, useState } from 'react'
-import type { AddonPageProps } from '@camstack/ui-library'
-import type { ModelFormat } from '@camstack/types'
+import type { AddonPageProps } from '@dominevo/ui-library'
+import type { ModelFormat } from '@dominevo/types'
 import {
   ensureModelFormats,
   plusCatalogPlusRegistryId,

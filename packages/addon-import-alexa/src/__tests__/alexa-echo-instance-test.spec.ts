@@ -2,7 +2,7 @@
  * The Echo instance can be TESTED: the old probe (the Amazon account of the target is signed in on its
  * broker) answers the tri-state of `testInstance` instead of `unsupported`.
  */
-import { makeInMemoryRecords, notificationTargetParts } from '@camstack/types'
+import { makeInMemoryRecords, notificationTargetParts } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { alexaNotifyRecordKinds, echoTargetProbe } from '../speak/echo-store.js'
 import { alexaTargetKind } from '../speak/provider.js'

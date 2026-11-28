@@ -16,7 +16,7 @@ import type {
   CameraDetectionPhase,
   CameraDetectionProvisioningState,
   CameraRecordingMode,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   composeCameraStatus,
   type ComposeInput,

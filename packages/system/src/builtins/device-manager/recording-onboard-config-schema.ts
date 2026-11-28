@@ -19,7 +19,7 @@
  *   - **Every field is rendered on every camera**, and one this camera
  *     cannot write is rendered DISABLED with its reason in the
  *     description. Not hidden: a control that vanishes is
- *     indistinguishable from a feature CamStack never built, and
+ *     indistinguishable from a feature Dominevo never built, and
  *     disabled must not look like broken.
  */
 import type {
@@ -33,8 +33,8 @@ import type {
   RecordWindow,
   RecordingOnboardOptions,
   RecordingOnboardStatus,
-} from '@camstack/types'
-import { DAY_NAMES, MINUTES_PER_DAY, formatMinutes } from '@camstack/types'
+} from '@dominevo/types'
+import { DAY_NAMES, MINUTES_PER_DAY, formatMinutes } from '@dominevo/types'
 
 const KEY_PREFIX = 'recordingOnboard_'
 
@@ -127,7 +127,7 @@ function storageBanner(status: RecordingOnboardStatus | null): ConfigField {
       key: RECORDING_ONBOARD_KEYS.storageBanner,
       label: 'Onboard storage',
       variant: 'warning',
-      content: `CamStack could not read this camera's storage, so its state is unknown — not empty. ${status.storage.reason}`,
+      content: `Dominevo could not read this camera's storage, so its state is unknown — not empty. ${status.storage.reason}`,
     }
   }
   return {
@@ -429,7 +429,7 @@ function windowsField(
  *
  * Never returns null. The storage read works on every camera in the
  * fleet, so the section always has something true to say — and a camera
- * CamStack has not reached yet says exactly that, rather than
+ * Dominevo has not reached yet says exactly that, rather than
  * disappearing (D315: not-yet-known must not look like not-installed).
  */
 export function buildRecordingOnboardConfigSchema(
@@ -453,7 +453,7 @@ export function buildRecordingOnboardConfigSchema(
     title: 'Camera recording',
     titleKey: 'server:recordingSection.s_recording-onboard-recording.title',
     description:
-      "What the camera records to its own card. This writes the camera, not CamStack's recorder.",
+      "What the camera records to its own card. This writes the camera, not Dominevo's recorder.",
     descriptionKey: 'server:recordingSection.s_recording-onboard-recording.description',
     columns: 2,
     fields: [

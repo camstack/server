@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect } from 'vitest'
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import { DEVICE_TYPE_CONTROL, resolveDeviceControl, coverHighlight } from '../control-registry'
 
 describe('DEVICE_TYPE_CONTROL', () => {

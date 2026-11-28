@@ -9,11 +9,11 @@
  *   - `SYSTEM_PACKAGE` is the only workspace package with `camstack.system: true`
  *     (drift in either direction breaks live-update).
  *   - `isFrameworkPackage` accepts the pure-JS framework packages
- *     (`@camstack/{system,types,sdk}`) whose `dist/` is live-mirrored into the
+ *     (`@dominevo/{system,types,sdk}`) whose `dist/` is live-mirrored into the
  *     hub closure by `syncFrameworkDist`, and rejects native (`shm-ring`),
  *     addons, and unknown packages (sanity check on the gate the deploy path
- *     uses). `@camstack/types` is included so a capability change ships via
- *     `camstack deploy packages/types` with no image rebuild.
+ *     uses). `@dominevo/types` is included so a capability change ships via
+ *     `dominevo deploy packages/types` with no image rebuild.
  */
 import { describe, it, expect } from 'vitest'
 import * as fs from 'node:fs'
@@ -63,13 +63,13 @@ function discoverWorkspacePackages(): readonly PackageJsonView[] {
   return results
 }
 
-const FRAMEWORK_WORKSPACE_PACKAGE = '@camstack/server-framework'
+const FRAMEWORK_WORKSPACE_PACKAGE = '@dominevo/server-framework'
 
 describe('framework package — manifest parity', () => {
   it('SYSTEM_PACKAGE exists in `packages/` with camstack.system: true', () => {
     const pkgs = discoverWorkspacePackages()
-    // The kernel + builtins are the private workspace `@camstack/server-framework`,
-    // shipped inside the `@camstack/server` tarball as `@camstack/server/system` (D989).
+    // The kernel + builtins are the private workspace `@dominevo/server-framework`,
+    // shipped inside the `@dominevo/server` tarball as `@dominevo/server/system` (D989).
     const match = pkgs.find((p) => p.name === FRAMEWORK_WORKSPACE_PACKAGE)
     expect(match, `expected ${FRAMEWORK_WORKSPACE_PACKAGE} in packages/`).toBeDefined()
     expect(match?.system, `${FRAMEWORK_WORKSPACE_PACKAGE} must declare camstack.system: true`).toBe(
@@ -78,23 +78,23 @@ describe('framework package — manifest parity', () => {
   })
 
   it.todo(
-    'every workspace package with camstack.system: true is SYSTEM_PACKAGE — pending manifest clean-up of @camstack/{types,sdk,shm-ring,ui-library}',
+    'every workspace package with camstack.system: true is SYSTEM_PACKAGE — pending manifest clean-up of @dominevo/{types,sdk,shm-ring,ui-library}',
   )
 })
 
 describe('isFrameworkPackage', () => {
   it('returns true for the pure-JS framework packages (system, types, sdk)', () => {
     expect(isFrameworkPackage(SYSTEM_PACKAGE)).toBe(true)
-    expect(isFrameworkPackage('@camstack/types')).toBe(true)
-    expect(isFrameworkPackage('@camstack/sdk')).toBe(true)
+    expect(isFrameworkPackage('@dominevo/types')).toBe(true)
+    expect(isFrameworkPackage('@dominevo/sdk')).toBe(true)
   })
 
   it('returns false for native shm-ring, addons and unknown packages', () => {
     // shm-ring ships a native `.node` prebuild — not dist-only mirrorable.
-    expect(isFrameworkPackage('@camstack/shm-ring')).toBe(false)
-    expect(isFrameworkPackage('@camstack/addon-stream-broker')).toBe(false)
+    expect(isFrameworkPackage('@dominevo/shm-ring')).toBe(false)
+    expect(isFrameworkPackage('@dominevo/addon-stream-broker')).toBe(false)
     expect(isFrameworkPackage('left-pad')).toBe(false)
     expect(isFrameworkPackage('')).toBe(false)
-    expect(isFrameworkPackage('@camstack')).toBe(false)
+    expect(isFrameworkPackage('@dominevo')).toBe(false)
   })
 })

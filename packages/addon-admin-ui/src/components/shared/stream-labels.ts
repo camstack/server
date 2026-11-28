@@ -1,7 +1,7 @@
 /**
  * Shared stream label utilities for the admin UI.
  *
- * Wraps `streamQualityLabel` from `@camstack/types` and adds
+ * Wraps `streamQualityLabel` from `@dominevo/types` and adds
  * context-aware formatting (resolution, quality suffix).
  *
  * Contexts:
@@ -9,7 +9,7 @@
  *   - `quality` → "High Quality", "Mid Quality", "Low Quality"
  *   - `broker`  → "High (1920×1080)", includes resolution when available
  */
-import { streamQualityLabel } from '@camstack/types'
+import { streamQualityLabel } from '@dominevo/types'
 import i18n from '../../i18n/index'
 
 export type StreamLabelContext = 'short' | 'quality' | 'broker'

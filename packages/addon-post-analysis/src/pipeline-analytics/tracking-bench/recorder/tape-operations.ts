@@ -12,7 +12,7 @@
  *    is never folded into `already-released` / `not-found`, which are answers
  *    about a tape, not about the node (D393).
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { TrackingTapeIndexStore } from '../../store/tracking-tape-index-store.js'
 import type { TapeOperationQueue } from './tape-operation-queue.js'
 import {

@@ -214,7 +214,7 @@ const EXPORT = {
 const CLIP_SOURCES = [
   {
     source: 'camstack',
-    label: 'CamStack recordings',
+    label: 'Dominevo recordings',
     addonId: 'recorder',
     availability: { state: 'ok' },
   },
@@ -356,7 +356,7 @@ export default defineFixtures({
     'recording.listSources': [
       {
         source: 'camstack',
-        label: 'CamStack recordings',
+        label: 'Dominevo recordings',
         addonId: 'recorder',
         availability: { state: 'ok' },
       },

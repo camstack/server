@@ -6,7 +6,7 @@
  * would have proved the map, which is not the part that can be wrong.
  */
 import { get, request } from 'node:http'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import type { ClipStreamRouteOutcome, ClipStreamTarget } from '../clip-data-plane.js'

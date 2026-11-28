@@ -1,5 +1,5 @@
 import { lookup as dnsLookup } from 'node:dns/promises'
-import { errMsg } from '@camstack/types'
+import { errMsg } from '@dominevo/types'
 import type { Logger } from './types.js'
 
 /**

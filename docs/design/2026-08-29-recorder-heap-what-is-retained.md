@@ -22,7 +22,7 @@ covers:
 # The recorder's 1.4 GB — retained, not churn, and not the index
 
 > **The question.** Stage 1 shipped five measured CPU/allocation fixes
-> (`@camstack/addon-pipeline@1.2.141`, 09:56Z) and the `heapUsed` floor did not
+> (`@dominevo/addon-pipeline@1.2.141`, 09:56Z) and the `heapUsed` floor did not
 > move. `remove-the-memory-ceilings` §1 recorded the falsifier as having fired
 > and asked the next question: is the recorder holding **a large retained set
 > plus normal churn**, or is it **a very high allocation rate whose garbage V8
@@ -452,7 +452,7 @@ process it is talking about.
 ## 7 · 2026-08-29, second pass (15:00–15:40Z) — per-space telemetry, and what it kills
 
 Method: the same read-only tools (`hl loki-query`, `scripts/hub/hub.mjs`), plus
-`ls`/`find`/`wc -c` inside the `CamStack` container over SSH. No snapshot, no
+`ls`/`find`/`wc -c` inside the `Dominevo` container over SSH. No snapshot, no
 SQLite, no hub mutation.
 
 Three of this document's own suspects are now excluded by **measurement rather
@@ -737,7 +737,7 @@ tick was already running its final workload.
 
 **Investigator artifact, disclosed.** The 15:22Z sample reads
 `loopMax=99301ms`. At 15:19–15:21Z this session ran a `find` over `/data` and
-`/recordings` inside the `CamStack` container, which is the most likely cause.
+`/recordings` inside the `Dominevo` container, which is the most likely cause.
 Treat that one sample as contaminated; every other number in §8 and §10 predates
 any command issued here.
 
@@ -801,10 +801,10 @@ within a working day without touching the cadence.
 > Above the recording-node gate on purpose: an inert recorder that stalls is
 > itself a finding, and the cost on a silent process is one unref'd 1 s timer.
 >
-> **Promotion into `@camstack/system` was considered and rejected.** It would
+> **Promotion into `@dominevo/system` was considered and rejected.** It would
 > either duplicate a mechanism that already exists — forbidden — or relocate the
 > module across a package boundary, which is a refactor with a slower ship chain
-> (publish train rather than `camstack deploy`) on a day whose constraint is
+> (publish train rather than `dominevo deploy`) on a day whose constraint is
 > measurement only. The module already ships in the same bundle as the recorder,
 > so the reuse costs one import and one call and nothing else. `loopMax=2660ms`
 > becomes a line carrying `cause`, `gcMs`, `gcCount`, `longestGcMs` and
@@ -814,7 +814,7 @@ within a working day without touching the cadence.
 (`packages/system/src/kernel/event-loop-stall-monitor.ts:105`)
 runs a `PerformanceObserver({entryTypes:['gc']})`, attributes an observed stall
 to GC or not-GC, and logs `stallMs`, `cause`, `gcMs`, `gcCount`, `longestGcMs`
-and `heapUsedMb`. It ships inside `@camstack/addon-pipeline` — the **same
+and `heapUsedMb`. It ships inside `@dominevo/addon-pipeline` — the **same
 bundle** as the recorder — and has exactly one caller,
 `packages/addon-pipeline/src/detection-pipeline/index.ts:801`.
 

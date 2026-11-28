@@ -53,10 +53,10 @@ describe('agent service resources', () => {
   it('runs the starter from its own directory', () => {
     const spec = buildAgentServiceSpec({
       resourcesPath: 'C:\\R',
-      starterJs: 'C:\\R\\node_modules\\@camstack\\server\\dist\\starter.js',
+      starterJs: 'C:\\R\\node_modules\\@dominevo\\server\\dist\\starter.js',
       env: { CAMSTACK_ROLE: 'agent' },
     })
-    expect(spec.workingDir).toBe('C:\\R\\node_modules\\@camstack\\server\\dist')
+    expect(spec.workingDir).toBe('C:\\R\\node_modules\\@dominevo\\server\\dist')
     expect(spec.env).toEqual({ CAMSTACK_ROLE: 'agent' })
   })
 })

@@ -1,7 +1,7 @@
 /**
  * `getStreamWithCodec` reports the SENTRY counterpart of the url it hands out.
  *
- * A composite camera (`@camstack/server/system`'s `camera-grid` builtin) must compose a battery
+ * A composite camera (`@dominevo/server/system`'s `camera-grid` builtin) must compose a battery
  * source WITHOUT waking it, and the dial that does that is the sentry path. The
  * question "may this camera be dialled in sentry?" already has exactly one
  * authority in this repo — `sentryEligible`, asked by the broker, on facts the
@@ -18,7 +18,7 @@
  * broker itself is feeding; that egress has no sentry counterpart and claiming
  * one would be a url nothing serves.
  */
-import type { CameraStream, CamProfile } from '@camstack/types'
+import type { CameraStream, CamProfile } from '@dominevo/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { makeScopedLogger } from '../../../__tests__/support/scoped-logger.js'
 import { makeSpawnFn } from '../../../__tests__/support/spawn-fake-child.js'

@@ -11,7 +11,7 @@
  * implementation that persisted the row first and threw afterwards, which is
  * the shape that leaves an unusable recordings target configured.
  */
-import type { IScopedLogger, StorageLocation, StorageLocationDeclaration } from '@camstack/types'
+import type { IScopedLogger, StorageLocation, StorageLocationDeclaration } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { buildStorageLocationRegistry } from '../../../kernel/storage-location-registry.js'
 import type { ILocationStore } from '../location-store.js'

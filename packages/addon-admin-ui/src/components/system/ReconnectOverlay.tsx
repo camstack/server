@@ -22,7 +22,7 @@
 import { CheckCircle2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { useSystem, useAddonsGetLastRestart } from '@camstack/ui-library'
+import { useSystem, useAddonsGetLastRestart } from '@dominevo/ui-library'
 import i18n from '../../i18n/index'
 
 type ConnState = 'connected' | 'disconnected' | 'connecting'

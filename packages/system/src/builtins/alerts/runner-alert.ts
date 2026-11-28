@@ -13,8 +13,8 @@
  * crash bumps the count but never downgrades them. A dismissed record starts
  * a fresh one.
  */
-import type { AlertSeverity } from '@camstack/types'
-import { CORE_BLOCK_ADDON_PREFIX } from '@camstack/types'
+import type { AlertSeverity } from '@dominevo/types'
+import { CORE_BLOCK_ADDON_PREFIX } from '@dominevo/types'
 import { CRASH_BREAKER_ERROR_PREFIX } from '../../kernel/moleculer/runner-failure-info.js'
 
 export type RunnerAlertState = 'crashed' | 'failed' | 'refused'

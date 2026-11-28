@@ -2,7 +2,7 @@
  * Hot-tier container memory readings — adapter over {@link NodeLoadRing}.
  */
 
-import type { ContainerMemoryPoint, ContainerMemorySnapshot } from '@camstack/types'
+import type { ContainerMemoryPoint, ContainerMemorySnapshot } from '@dominevo/types'
 import { NodeLoadRing } from './node-load-ring.js'
 
 export const CONTAINER_MEMORY_SAMPLES_PER_NODE = 180

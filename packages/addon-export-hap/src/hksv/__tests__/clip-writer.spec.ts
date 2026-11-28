@@ -12,9 +12,9 @@
  * A fake plane would only prove the writer agrees with whoever wrote the fake,
  * which is the pre-seeding failure this repo has shipped twice.
  */
-import type { IScopedLogger } from '@camstack/types'
-import type { Fmp4Packet } from '@camstack/types/node'
-import { Fmp4FragmentPlane } from '@camstack/types/node'
+import type { IScopedLogger } from '@dominevo/types'
+import type { Fmp4Packet } from '@dominevo/types/node'
+import { Fmp4FragmentPlane } from '@dominevo/types/node'
 import { describe, expect, it } from 'vitest'
 
 import type { ClipSink } from '../clip-writer.js'

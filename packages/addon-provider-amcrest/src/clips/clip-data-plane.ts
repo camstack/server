@@ -33,7 +33,7 @@ import {
   CLIP_STILL_REASON_HEADER,
   clipReasonHeaderValue,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 import { type MintRefusal, type MintResult, refuseStill } from './clip-still-refusal.js'
 

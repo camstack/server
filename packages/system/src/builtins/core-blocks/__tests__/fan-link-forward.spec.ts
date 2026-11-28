@@ -5,7 +5,7 @@
  * link; a field nobody linked stays the native provider's.
  */
 import { describe, expect, it, vi } from 'vitest'
-import type { CompositionSourceRef, CoreBlock, IScopedLogger } from '@camstack/types'
+import type { CompositionSourceRef, CoreBlock, IScopedLogger } from '@dominevo/types'
 import {
   type FanLinkForwardPorts,
   fanLinkForwardRedirect,

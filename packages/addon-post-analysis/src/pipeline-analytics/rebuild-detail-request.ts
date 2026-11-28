@@ -33,7 +33,7 @@
  * cameras run `detectionMode: 'on-motion'`. `runStatelessStep` resolves the
  * step from the catalog instead, so any capable node can serve any track.
  */
-import type { RunStatelessStepInput, RunStatelessStepResult } from '@camstack/types'
+import type { RunStatelessStepInput, RunStatelessStepResult } from '@dominevo/types'
 import type { RebuildEmbedOutcome, RebuildSource } from './embedding-rebuild.js'
 
 /** The one step a rebuild runs. */

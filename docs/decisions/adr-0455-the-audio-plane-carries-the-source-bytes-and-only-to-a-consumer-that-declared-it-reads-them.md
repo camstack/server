@@ -99,10 +99,10 @@ only a consumer that declared it can read them.**
    the whole of the safety argument, and it is what lets the broker and its
    consumers deploy one at a time across three nodes.
 
-4. **One expansion, in `@camstack/types`.** `expandAudioChunkToF32le` is the
+4. **One expansion, in `@dominevo/types`.** `expandAudioChunkToF32le` is the
    only place a coded window becomes floats, and it always returns owned,
    0-offset bytes. Both addons are `self-contained` and bundle the bare
-   `@camstack/types` entry, so this travels with `camstack deploy` and needs no
+   `@dominevo/types` entry, so this travels with `dominevo deploy` and needs no
    published server. A second μ-law table anywhere is the defect.
    (`stream-broker.ts`'s `mulawToPcm` / `pcmToMulaw` are the ENCODE direction
    for the WebRTC egress — a different transform, not a copy.)

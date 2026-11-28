@@ -7,7 +7,7 @@
  * read. These tests pin the schema hole. Runtime shm metrics stay elsewhere
  * and must not be confused with a `frameSink` / `shm` operator selector.
  */
-import type { ConfigField, ConfigSection } from '@camstack/types'
+import type { ConfigField, ConfigSection } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { buildGlobalSettingsSections } from '../settings-ui-schemas.js'
 

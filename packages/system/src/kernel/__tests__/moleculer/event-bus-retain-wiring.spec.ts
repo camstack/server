@@ -6,7 +6,7 @@
  *    child is always empty because child runners + agents are fire-and-forget.
  */
 
-import type { SystemEvent } from '@camstack/types'
+import type { SystemEvent } from '@dominevo/types'
 import { ServiceBroker } from 'moleculer'
 import { afterEach, describe, expect, it } from 'vitest'
 import { getBrokerEventBus } from '../../moleculer/event-bus.js'

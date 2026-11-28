@@ -4,7 +4,7 @@
  * focused control enabled while the save runs: disabling the form blurred text
  * inputs (mobile keyboard closed) — Training Modal entry Name.
  */
-import type { ConfigUISchemaWithValues } from '@camstack/types'
+import type { ConfigUISchemaWithValues } from '@dominevo/types'
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { AddonScopedSettingsForm } from '../addon-scoped-settings-form'

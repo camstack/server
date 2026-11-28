@@ -1,4 +1,4 @@
-import type { ConfigSection } from '@camstack/types'
+import type { ConfigSection } from '@dominevo/types'
 import { z } from 'zod'
 
 /**

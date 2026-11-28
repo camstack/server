@@ -1,5 +1,5 @@
 import { ShieldCheck, Loader2, AlertCircle } from 'lucide-react'
-import { resolveDisplayIcon, useIconGlyphsVersion, useRemoteComponent } from '@camstack/ui-library'
+import { resolveDisplayIcon, useIconGlyphsVersion, useRemoteComponent } from '@dominevo/ui-library'
 import { isPasskeyMethodUsable } from './second-factor-selection'
 import { usePlatformAuthenticator } from './use-platform-authenticator'
 import { PasskeyLoginButton, type PasskeySecondFactorOutcome } from './PasskeyLoginButton'

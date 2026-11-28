@@ -20,7 +20,7 @@ import { describe, expect, it } from 'vitest'
  *   something else entirely; once awake it "unblocked after several seconds".
  *
  * `privacy-mask` already had the answer (D224): a window that bounds only a
- * change made in the REOLINK APP — because a CamStack write re-reads the
+ * change made in the REOLINK APP — because a Dominevo write re-reads the
  * camera itself and is its own invalidation — plus `serve-and-revalidate`, so
  * the known state is served immediately and the refresh happens behind the
  * form. These five ask exactly the same question and get the same discipline.
@@ -68,7 +68,7 @@ describe('every derived-form cap is read off the mirror, never off the camera', 
     it(`${registrar} bounds only a change made in the Reolink app`, () => {
       const body = registrarBody(registrar)
       // Not a 10 s poll window: these values change when an operator changes
-      // them, and a CamStack write re-reads the camera on its own.
+      // them, and a Dominevo write re-reads the camera on its own.
       expect(body).toContain('staleMs: OPERATOR_WRITTEN_STALE_MS')
       expect(body).not.toContain('staleMs: STALE_MS')
     })

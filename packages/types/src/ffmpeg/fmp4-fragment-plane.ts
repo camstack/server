@@ -6,7 +6,7 @@
  *
  * The operator's requirement for HKSV was explicit: the live fMP4 source built
  * for it must be **dual-use**, so a HomeKit-triggered recording also lands in
- * CamStack as an additional videoclip source alongside the recorder and the NC
+ * Dominevo as an additional videoclip source alongside the recorder and the NC
  * clip ring — *one fragmenter, two consumers; do not build an HKSV-only pipe*
  * (roadmap item 4b, now in the private planning board). A single-callback pipe makes the second consumer
  * a second ffmpeg child of the same camera. So this is the same shape the

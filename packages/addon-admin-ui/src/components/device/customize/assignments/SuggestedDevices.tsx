@@ -4,7 +4,7 @@
  * that IS the picker's own pick (add it, or use it as the field's device).
  * Drawn from the tab's list-row chrome; it owns no data and writes nothing.
  */
-import { Button, LIST_ROW, TEXT_SECTION_LABEL, useDeviceLabelById } from '@camstack/ui-library'
+import { Button, LIST_ROW, TEXT_SECTION_LABEL, useDeviceLabelById } from '@dominevo/ui-library'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 

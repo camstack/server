@@ -6,7 +6,7 @@
  * header, no internal scroll, no mobile rule. It is a `DataTable` now, so a
  * 90-day rollup scrolls its own rows with the column header pinned.
  */
-import type { LlmUsageRollup } from '@camstack/types'
+import type { LlmUsageRollup } from '@dominevo/types'
 import {
   DataTable,
   EmptyState,
@@ -18,8 +18,8 @@ import {
   TABLE_SCROLL_MAX_H,
   useInstancesOfCap,
   useSystem,
-} from '@camstack/ui-library'
-import type { DataColumn } from '@camstack/ui-library'
+} from '@dominevo/ui-library'
+import type { DataColumn } from '@dominevo/ui-library'
 import { useQuery } from '@tanstack/react-query'
 import { Gauge } from 'lucide-react'
 import { useMemo, useState } from 'react'

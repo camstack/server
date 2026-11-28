@@ -49,7 +49,7 @@
  * The window is closed by `settle()`, not by the load answering: an
  * observation handled between the two still belongs to the window (review L1).
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { DurableLedger } from '../durable/durable-ledger.js'
 
 type BootWindowEntry<TRow> =

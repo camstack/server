@@ -1,7 +1,7 @@
 import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { settingsToConnection } from '../config.js'
 import { parseDeviceMessages } from '../enpal-device-page.js'
@@ -136,7 +136,13 @@ describe('auto - Blazor back-off and missing Python', () => {
       return down(t)
     }
     const read = (at: number) =>
-      readEnpalSnapshot({ connection, fetch: pageFetch, blazor, blazorBackoff: backoff, now: () => at })
+      readEnpalSnapshot({
+        connection,
+        fetch: pageFetch,
+        blazor,
+        blazorBackoff: backoff,
+        now: () => at,
+      })
 
     const first = await read(1_000)
     expect(first.source).toBe('device-page')
@@ -257,7 +263,9 @@ describe('EnpalIntegrationManager - source changes are logged', () => {
     await manager.poll()
     clock += 30_000
     await manager.poll()
-    const warns = rec.lines.filter((l) => l.level === 'warn' && l.message.includes('preferred source'))
+    const warns = rec.lines.filter(
+      (l) => l.level === 'warn' && l.message.includes('preferred source'),
+    )
     expect(warns).toHaveLength(1)
     expect(warns[0]?.message).toContain('cannot reach the box')
     expect(warns[0]?.message).toContain('device-page')
@@ -305,7 +313,11 @@ describe('createBlazorReader - the process bridge', () => {
     const file = script(
       `const chunk = 'x'.repeat(1 << 20); const t = setInterval(() => process.stdout.write(chunk), 5); setTimeout(() => clearInterval(t), 20000)`,
     )
-    const read = createBlazorReader({ pythonPath: process.execPath, scriptPath: file, timeoutMs: 15000 })
+    const read = createBlazorReader({
+      pythonPath: process.execPath,
+      scriptPath: file,
+      timeoutMs: 15000,
+    })
     const started = Date.now()
     await expect(read({ host: 'h', port: 80 })).rejects.toMatchObject({ kind: 'protocol' })
     expect(Date.now() - started).toBeLessThan(10000)

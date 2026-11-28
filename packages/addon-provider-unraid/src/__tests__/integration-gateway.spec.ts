@@ -14,7 +14,7 @@ import {
   type InitialDeviceMeta,
   makeInMemoryRecords,
   secretTreeFromSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'

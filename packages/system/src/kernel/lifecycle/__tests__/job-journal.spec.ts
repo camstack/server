@@ -3,7 +3,7 @@ import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 import { JobJournal } from '../job-journal.js'
-import type { LifecycleJob } from '@camstack/types'
+import type { LifecycleJob } from '@dominevo/types'
 
 let dir: string
 let journal: JobJournal
@@ -20,7 +20,7 @@ const baseJob = (): LifecycleJob => ({
     {
       taskId: 't1',
       nodeId: 'hub',
-      packageName: '@camstack/addon-x',
+      packageName: '@dominevo/addon-x',
       fromVersion: '1.0.0',
       toVersion: '1.0.1',
       target: 'addon',
@@ -59,7 +59,7 @@ describe('JobJournal', () => {
     journal.appendLog('j1', 't1', {
       tsMs: 1,
       nodeId: 'hub',
-      packageName: '@camstack/addon-x',
+      packageName: '@dominevo/addon-x',
       phase: 'fetching',
       message: 'x',
     })

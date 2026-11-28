@@ -61,7 +61,7 @@ function makeTgz(tmpRoot: string): string {
   fs.writeFileSync(
     path.join(pkgDir, 'package.json'),
     JSON.stringify({
-      name: '@camstack/addon-dedupe-test',
+      name: '@dominevo/addon-dedupe-test',
       version: '1.0.0',
       main: 'dist/index.js',
       dependencies: { werift: '^0.22.9', 'vendor-lib': '^1.0.0' },
@@ -70,7 +70,7 @@ function makeTgz(tmpRoot: string): string {
         addons: [
           {
             id: 'dedupe-test',
-            name: '@camstack/addon-dedupe-test',
+            name: '@dominevo/addon-dedupe-test',
             version: '1.0.0',
             entry: './dist/index.js',
           },
@@ -128,9 +128,9 @@ describe('AddonInstaller.installFromTgz — closure dedupe', () => {
     })
     const tgz = makeTgz(tmpRoot)
     const result = await installer.installFromTgz(tgz)
-    expect(result.name).toBe('@camstack/addon-dedupe-test')
+    expect(result.name).toBe('@dominevo/addon-dedupe-test')
 
-    const nm = path.join(addonsDir, '@camstack/addon-dedupe-test', 'node_modules')
+    const nm = path.join(addonsDir, '@dominevo/addon-dedupe-test', 'node_modules')
     // werift: closure-compatible → symlink into the closure.
     const weriftEntry = path.join(nm, 'werift')
     expect(fs.lstatSync(weriftEntry).isSymbolicLink()).toBe(true)
@@ -151,7 +151,7 @@ describe('AddonInstaller.installFromTgz — closure dedupe', () => {
     const installer = new AddonInstaller({ addonsDir })
     const tgz = makeTgz(tmpRoot)
     await installer.installFromTgz(tgz)
-    const nm = path.join(addonsDir, '@camstack/addon-dedupe-test', 'node_modules')
+    const nm = path.join(addonsDir, '@dominevo/addon-dedupe-test', 'node_modules')
     for (const name of ['werift', 'vendor-lib', 'zod']) {
       expect(fs.lstatSync(path.join(nm, name)).isSymbolicLink()).toBe(false)
     }

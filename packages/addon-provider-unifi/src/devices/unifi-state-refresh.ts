@@ -13,7 +13,7 @@ import {
   type DeviceContext,
   type InferNativeProvider,
   type StateRefreshPolicy,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { unifiControllers } from '../unifi-node-resolver.js'
 
 /** The fastest a controller is read: the connection form's lower bound. */

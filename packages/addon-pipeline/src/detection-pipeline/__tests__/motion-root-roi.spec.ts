@@ -1,4 +1,4 @@
-import type { RootInputSource, StepDefinition } from '@camstack/types'
+import type { RootInputSource, StepDefinition } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   MAX_SUBJECT_INPUT_PX,

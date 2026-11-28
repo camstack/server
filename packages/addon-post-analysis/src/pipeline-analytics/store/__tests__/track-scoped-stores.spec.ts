@@ -24,7 +24,7 @@ import {
   makeAnalyticsRecords,
   seedLedgerRows,
 } from '../../__tests__/fake-records.js'
-import type { SettingsStoreClient } from '@camstack/types'
+import type { SettingsStoreClient } from '@dominevo/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { testFaceSeedRow } from '../../../__tests__/support/face-seed.js'
 import {

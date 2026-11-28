@@ -4,7 +4,7 @@
  * (`faceRescoreIntervalMinutes`) the old `getGlobalSettings` walk read — and a failed read skips the
  * tick instead of guessing an interval (D49).
  */
-import { FACE_RESCORE_INTERVAL_KEY } from '@camstack/types'
+import { FACE_RESCORE_INTERVAL_KEY } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { FACE_ARCFACE_INDEX } from '../store/embedding-vector-index.js'
 import { wireFaceLedger } from '../store/event-ledger-wiring.js'

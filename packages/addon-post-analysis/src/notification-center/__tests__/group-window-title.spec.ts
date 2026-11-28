@@ -1,7 +1,7 @@
 /**
  * A group-window title says how many of which kind, never the rule's name.
  */
-import { NcRuleInputSchema, NcRuleSchema, type NcSystemEventKind } from '@camstack/types'
+import { NcRuleInputSchema, NcRuleSchema, type NcSystemEventKind } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { buildTemplateVars, renderRowTitle } from '../dispatcher.js'
 import { groupWindowSubject } from '../group-window-summary.js'
@@ -190,7 +190,7 @@ function burstRow(kind: NcSystemEventKind, index: number, ruleName: string): NcO
             percentage: '0',
             item: 'Filter',
             title: 'Installer',
-            packageName: '@camstack/addon-post-analysis',
+            packageName: '@dominevo/addon-post-analysis',
             currentVersion: '1',
             latestVersion: '2',
           },

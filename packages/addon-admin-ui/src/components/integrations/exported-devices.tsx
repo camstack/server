@@ -15,8 +15,8 @@ import {
   DeviceExportSetup,
   useDeviceExportGetStatus,
   type DataColumn,
-} from '@camstack/ui-library'
-import { DeviceExportStatusSchema } from '@camstack/types'
+} from '@dominevo/ui-library'
+import { DeviceExportStatusSchema } from '@dominevo/types'
 import { useState, type ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'

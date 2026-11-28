@@ -1,4 +1,4 @@
-import { BrokerConsumerAttributionSchema } from '@camstack/types'
+import { BrokerConsumerAttributionSchema } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { RTSP_DESCRIBE_WARMUP_ATTRIBUTION } from '../rtsp-listen-server.js'
 

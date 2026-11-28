@@ -83,7 +83,7 @@ automation block read the wrong device without a sound.
      circuit breaker (three timeouts in a minute answer `budget-exceeded`
      without running), and kills a worker that does not report ready in time.
 4. **The renderer lives in device-manager**, which owns the device rows and the
-   aliases; `@camstack/types` carries only the vocabulary (limits, refusal
+   aliases; `@dominevo/types` carries only the vocabulary (limits, refusal
    reasons, how a reference resolves) and no engine.
 5. **The mirror key is the pair.** A stable id resolves through
    `stableIdKey(stableId, addonId)`; the bare stable id answers only while no
@@ -102,9 +102,9 @@ in the owner (`_deviceAliasBackfillVersion`), like the linked-devices backfill.
   `arguments` cannot be addressed by name.
 - A render costs a worker round trip; the worker is persistent, so only the
   first render after a spawn or a kill pays the start.
-- `nunjucks` is a dependency of `@camstack/server` (system) only, bundled into
+- `nunjucks` is a dependency of `@dominevo/server` (system) only, bundled into
   the render worker; no addon depends on it (D28).
-- The change adds a capability method, so `@camstack/system` must be
+- The change adds a capability method, so `@dominevo/system` must be
   force-published for it to reach a hub.
 
 ## Enforcement

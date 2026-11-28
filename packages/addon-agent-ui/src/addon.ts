@@ -1,8 +1,8 @@
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import type { IAdminUiProvider, ProviderRegistration } from '@camstack/types'
+import type { IAdminUiProvider, ProviderRegistration } from '@dominevo/types'
 
-import { BaseAddon, adminUiCapability } from '@camstack/types'
+import { BaseAddon, adminUiCapability } from '@dominevo/types'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 

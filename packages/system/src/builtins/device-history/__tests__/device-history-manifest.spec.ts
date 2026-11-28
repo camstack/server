@@ -4,7 +4,7 @@
  */
 import { readFileSync } from 'node:fs'
 import * as path from 'node:path'
-import { type AddonDeclaration, isIsolatedBuiltin, resolveRunnerId } from '@camstack/types'
+import { type AddonDeclaration, isIsolatedBuiltin, resolveRunnerId } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 
 const pkgPath = path.resolve(import.meta.dirname, '../../../../package.json')

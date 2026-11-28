@@ -12,15 +12,15 @@ function pkg(contents: string): string {
 }
 
 describe('readServerVersionFrom', () => {
-  it('reads the @camstack/server version', () => {
-    expect(readServerVersionFrom(pkg('{"name":"@camstack/server","version":"1.2.650"}'))).toBe(
+  it('reads the @dominevo/server version', () => {
+    expect(readServerVersionFrom(pkg('{"name":"@dominevo/server","version":"1.2.650"}'))).toBe(
       '1.2.650',
     )
   })
   it('is null for another package, an unreadable file or a missing version', () => {
     expect(readServerVersionFrom(pkg('{"name":"x","version":"1.0.0"}'))).toBeNull()
     expect(readServerVersionFrom(pkg('not json'))).toBeNull()
-    expect(readServerVersionFrom(pkg('{"name":"@camstack/server"}'))).toBeNull()
+    expect(readServerVersionFrom(pkg('{"name":"@dominevo/server"}'))).toBeNull()
     expect(readServerVersionFrom('/nonexistent/package.json')).toBeNull()
   })
 })

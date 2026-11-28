@@ -22,7 +22,7 @@
  */
 
 import { describe, expect, it, vi } from 'vitest'
-import { LoggingGate } from '@camstack/server/system'
+import { LoggingGate } from '@dominevo/server/system'
 import { HttpRequestCensus } from '../../trpc/http-request-census.js'
 import {
   describeLayers,

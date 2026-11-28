@@ -164,7 +164,7 @@ function preset(
 }
 
 export const DISPLAY_PRESETS: readonly DisplayPreset[] = [
-  preset('camstack', 'CamStack', CAMSTACK_HEX, CAMSTACK_FALLBACK),
+  preset('camstack', 'Dominevo', CAMSTACK_HEX, CAMSTACK_FALLBACK),
   preset('high-contrast', 'High contrast', HIGH_CONTRAST_HEX, HIGH_CONTRAST_FALLBACK),
   preset('okabe-ito', 'Colour-blind safe', OKABE_ITO_HEX, OKABE_ITO_FALLBACK),
 ]
@@ -175,7 +175,7 @@ export function presetById(id: string): DisplayPreset | undefined {
 
 export function bundledCamstack(): PaletteReady {
   const presetRow = presetById('camstack')
-  if (presetRow === undefined) throw new Error('CamStack preset missing')
+  if (presetRow === undefined) throw new Error('Dominevo preset missing')
   return readyOf(presetRow, 'unconfigured', false)
 }
 

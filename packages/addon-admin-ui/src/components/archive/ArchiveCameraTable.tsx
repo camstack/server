@@ -12,7 +12,7 @@ import {
   DataTable,
   EmptyState,
   TABLE_SCROLL_MAX_H,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Camera } from 'lucide-react'
 import { useMemo, type ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'

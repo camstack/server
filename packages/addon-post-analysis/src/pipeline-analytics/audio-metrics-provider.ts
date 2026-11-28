@@ -19,7 +19,7 @@ import type {
   AudioClassSummary,
   IScopedLogger,
   DeviceProxy,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { SliceThrottler, snapshotEqualsIgnoringTs } from './runtime/slice-throttler.js'
 
 const AUDIO_METRICS_CAP_NAME = 'audio-metrics'

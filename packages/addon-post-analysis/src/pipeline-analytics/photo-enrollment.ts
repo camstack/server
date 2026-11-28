@@ -48,7 +48,7 @@
  * same pixels and hoping it lands the same way.
  */
 import { randomUUID } from 'node:crypto'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { FACE_ALIGNMENT_SCRFD_V2, type FaceAlignmentVersion } from './face-alignment-version.js'
 import { embeddingMagnitudeVerdict } from './pipeline/embedding-magnitude-gate.js'
 import { enrollmentPromiscuity, type GallerySample } from './pipeline/face-matcher.js'

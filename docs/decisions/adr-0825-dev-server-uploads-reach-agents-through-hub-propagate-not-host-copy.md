@@ -14,7 +14,7 @@ applies-to:
 
 ## Context
 
-`camstack deploy-server` packs a `<base>-dev.<epoch>` closure and uploads it to
+`dominevo deploy-server` packs a `<base>-dev.<epoch>` closure and uploads it to
 `POST /api/server-upload`, which writes only the hub's
 `server-root/dev-uploads/<version>/`. Agents stage that version exclusively from
 local uploads (`dev-uploads-missing` otherwise). Phase 1 left agents without an
@@ -34,7 +34,7 @@ Dev-channel fan-out uses the same pattern as addon deploy:
 3. The agent writes `server-root/dev-uploads/<version>/` atomically; it does
    not promote. Promotion remains `serverManagement.applyServerUpdate` with
    `nodeId`.
-4. `camstack deploy-server --all` / `-n <nodeId>` drives propagate then apply.
+4. `dominevo deploy-server --all` / `-n <nodeId>` drives propagate then apply.
    Default without flags stays hub-only.
 
 Host/volume copy of `dev-uploads` is emergency-only, not the procedure.

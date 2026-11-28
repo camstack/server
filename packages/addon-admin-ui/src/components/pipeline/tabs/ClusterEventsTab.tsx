@@ -19,7 +19,7 @@ import {
   useAddonSettingsGetScopedSettings,
   useAddonSettingsUpdateScopedSettings,
   Select,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { StorageLocationsPanel } from './StorageLocationsPanel'
 import { useTranslation } from 'react-i18next'
 

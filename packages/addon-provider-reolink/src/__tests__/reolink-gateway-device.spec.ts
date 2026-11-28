@@ -7,7 +7,7 @@ import {
   DeviceFeature,
   DeviceType,
   type IDeviceRuntimeState,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ReolinkGatewayDevice } from '../reolink-gateway-device.js'
 import { type HubSessionHandle, reolinkHubSessions } from '../reolink-hub-session.js'

@@ -4,7 +4,7 @@
  * it on any other delivery is refused and logged, on both save routes.
  */
 import { makeNcRecords } from './support/nc-test-deps.js'
-import { NcRuleInputSchema } from '@camstack/types'
+import { NcRuleInputSchema } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import {
   makeLogRecorder,

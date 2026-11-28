@@ -24,7 +24,7 @@
  * states which lines it governs and why the second half does or does not hold.
  */
 
-import { declareLogChannel } from '@camstack/types'
+import { declareLogChannel } from '@dominevo/types'
 
 /**
  * The WebRTC negotiation and media lifecycle for one camera: SDP offer/answer,

@@ -5,7 +5,7 @@ import {
   type IDeviceRuntimeState,
   type IScopedLogger,
   type EventEmitterStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { HaEventEmitterDevice } from '../ha-event-emitter-device.js'
 
 const ENTITY_ID = 'event.pulsante_luce_porch_ch1'

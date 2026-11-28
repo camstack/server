@@ -1,5 +1,5 @@
 import type { ConnectionOptions } from 'node:tls'
-import { errMsg } from '@camstack/types'
+import { errMsg } from '@dominevo/types'
 import { Connection, Gateway } from 'klf-200-api'
 import { loginFailure } from './klf-gateway-client.js'
 

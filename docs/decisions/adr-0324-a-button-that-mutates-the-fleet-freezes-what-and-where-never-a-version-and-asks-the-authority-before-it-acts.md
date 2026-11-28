@@ -44,7 +44,7 @@ Three things reading settled that the request did not:
   cast, and has the property the section below is about: it cannot see a
   version even by accident.
 - **An icon would have deleted the notification.** `NotificationActionIcon` is a
-  closed vocabulary carried in the published `@camstack/server` closure, and the
+  closed vocabulary carried in the published `@dominevo/server` closure, and the
   cap seam validates against the HUB's copy. There is no member meaning
   "update", and an addon emitting a token the running hub does not know does not
   lose the icon — its whole `send` fails Zod. The button ships with no icon.
@@ -98,7 +98,7 @@ asks the authority that owns the answer what is still true.**
    sequence window. A snooze gets an hour because at worst it silences the one
    person the notification was addressed to; this one restarts every addon it
    names on a whole node, over a link that travelled through a push relay. Past
-   the window the plane says "expired — open CamStack", which is precisely the
+   the window the plane says "expired — open Dominevo", which is precisely the
    D305 tap target the same notification already carries: the button degrades
    into the page.
 7. **Authorisation is the signature, and the button is narrowed to OWNED

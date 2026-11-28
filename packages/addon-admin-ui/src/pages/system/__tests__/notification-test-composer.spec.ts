@@ -8,7 +8,7 @@
  * `docs/superpowers/specs/2026-07-03-notification-output-notifier-matrix.md`).
  */
 
-import type { TargetKindCaps } from '@camstack/types'
+import type { TargetKindCaps } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   availablePresets,

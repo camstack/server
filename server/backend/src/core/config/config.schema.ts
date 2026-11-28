@@ -1,3 +1,3 @@
-// Re-export from @camstack/server/system
-export { bootstrapSchema, RUNTIME_DEFAULTS } from '@camstack/server/system'
-export type { BootstrapConfig } from '@camstack/server/system'
+// Re-export from @dominevo/server/system
+export { bootstrapSchema, RUNTIME_DEFAULTS } from '@dominevo/server/system'
+export type { BootstrapConfig } from '@dominevo/server/system'

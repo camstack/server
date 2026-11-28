@@ -10,7 +10,7 @@
  * they came, `redirected` answers the redirect's result and the provider is
  * never called.
  */
-import type { DeviceCall, DeviceCallAnswer } from '@camstack/types'
+import type { DeviceCall, DeviceCallAnswer } from '@dominevo/types'
 
 export interface DeviceCallRedirectView {
   covers(method: string): boolean

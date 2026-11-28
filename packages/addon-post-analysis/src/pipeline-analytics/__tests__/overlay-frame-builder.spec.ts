@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import type { ObjectDetection } from '@camstack/types'
+import type { ObjectDetection } from '@dominevo/types'
 import {
   buildOverlayDetections,
   OVERLAY_DETAIL_FRESHNESS_MS,

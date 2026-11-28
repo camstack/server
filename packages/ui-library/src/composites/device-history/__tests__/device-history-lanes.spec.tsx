@@ -5,7 +5,7 @@
  */
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { DeviceHistorySeriesInfo } from '@camstack/types'
+import type { DeviceHistorySeriesInfo } from '@dominevo/types'
 import { historyLanes } from '../history-lanes'
 import { groupDeviceSeries, type HistoryChartSpec } from '../history-model'
 

@@ -1,4 +1,4 @@
-import type { ExportRecord } from '@camstack/types'
+import type { ExportRecord } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { describeVariant, formatExpiry, formatRange, mergeLiveExports } from '../export-format'
 

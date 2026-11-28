@@ -12,8 +12,8 @@
  * expectation sees the shadow; pass the limit to the bus instead of cutting
  * after the filter and the "N asked is N answered" expectations lose a row.
  */
-import type { SystemEvent } from '@camstack/types'
-import { EventCategory } from '@camstack/types'
+import type { SystemEvent } from '@dominevo/types'
+import { EventCategory } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { makeCtx } from '../../../__tests__/cap-routers/harness.js'
 import { trpcRouter } from '../../trpc/trpc.middleware.js'

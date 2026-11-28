@@ -252,7 +252,7 @@ timer drops the whole bucket.
 
 ## 2. Answers to the five questions, side by side
 
-| | the reference NVR | CamStack |
+| | the reference NVR | Dominevo |
 | --- | --- | --- |
 | **Preview frames precomputed?** | No. Decoded on demand from `low-resolution`. | No. Demuxed on demand from `low`. **Same answer.** |
 | **Granularity** | ≥4 s media-time between frames, ≤33 frames per gesture, fixed 1 s window | sweep = frame-granular within 4 s; jump = 1 keyframe; rate bounded by credit cap 2 and 33 ms coalesce |
@@ -427,7 +427,7 @@ cold 531 ms segment read. It also turns on the census fields (`mapFine`,
 - Risk: low — client mapping and a hint field the server already parses.
 - Ship chain (all four, the embed page changed): `npm run update:patch` →
   `npm run sync:embed` → `npm run build:orchestrator` →
-  `camstack deploy packages/addon-pipeline-orchestrator` → pin the submodule.
+  `dominevo deploy packages/addon-pipeline-orchestrator` → pin the submodule.
 - Verify: `scrub-feeder:drag-end` with `mapFine > 0` and `sweeps ≫ jumps`;
   `recorded:warmed` present on timeline open.
 

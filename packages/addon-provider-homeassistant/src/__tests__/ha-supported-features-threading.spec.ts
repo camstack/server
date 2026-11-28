@@ -4,7 +4,7 @@
  * the container entities, the standalone config, the persisted and fresh specs, and
  * the drift patches. Dropping a line in any of them fails here.
  */
-import { DeviceType, type DeviceConfig, type IDevice } from '@camstack/types'
+import { DeviceType, type DeviceConfig, type IDevice } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { buildContainerEntities, diffContainerEntities } from '../ha-container-reconcile.js'
 import type { HaDiscoveredDevice, HaDiscoveredEntity } from '../ha-discovery-types.js'

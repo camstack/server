@@ -1,7 +1,7 @@
 /**
  * Pure rules-driven zone evaluator. Shared between every consumer
  * that gates items (motion regions, detections, future audio events,
- * …) by `(zones, rules)` pairs. Lives in `@camstack/types/utils` so
+ * …) by `(zones, rules)` pairs. Lives in `@dominevo/types/utils` so
  * addon-motion-wasm + addon-detection-pipeline share one canonical
  * implementation.
  *

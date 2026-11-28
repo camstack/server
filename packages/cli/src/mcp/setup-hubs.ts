@@ -13,7 +13,7 @@ import {
   normalizeHubAddress,
   resolveHubTls,
   type HubTlsConfig,
-} from '@camstack/develop'
+} from '@dominevo/develop'
 import { z } from 'zod'
 import type { McpContext } from './context.js'
 import { findHubs, type HubCandidate } from '../discovery/hub-finder.js'
@@ -23,7 +23,7 @@ import type { InstallGuideInput } from './setup-install-rules.js'
 const DEFAULT_DISCOVER_TIMEOUT_MS = 2_500
 const MAX_DISCOVER_TIMEOUT_MS = 15_000
 const HEALTH_TIMEOUT_MS = 5_000
-const LOGIN = (server: string): string => `run \`camstack login ${server}\` in a terminal`
+const LOGIN = (server: string): string => `run \`dominevo login ${server}\` in a terminal`
 
 export type HealthOutcome =
   | { readonly ok: true; readonly status: number }
@@ -36,7 +36,7 @@ export type HealthOutcome =
 export type HealthProbe = (url: string, tls: HubTlsConfig) => Promise<HealthOutcome>
 
 export interface SetupDeps {
-  /** Where `camstack login` keeps its cache; tests point it at a temp directory. */
+  /** Where `dominevo login` keeps its cache; tests point it at a temp directory. */
   readonly sessionDir?: string
   readonly env?: Readonly<Record<string, string | undefined>>
   readonly findHubs?: (timeoutMs: number) => Promise<readonly HubCandidate[]>

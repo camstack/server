@@ -3,7 +3,7 @@
  * integration never creates them, and an existing child still carrying one stops being
  * declared, which the kernel's accessory reconciliation turns into a (D49-gated) removal.
  */
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { ENERGY_SYSTEM_INPUT_SPEC_IDS, ENPAL_SPECS } from '../enpal-catalog.js'
 import { buildEnpalCandidates } from '../enpal-discovery.js'

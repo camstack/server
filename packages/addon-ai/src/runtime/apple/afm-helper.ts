@@ -25,7 +25,7 @@ import { spawn as spawnChild } from 'node:child_process'
 import * as fs from 'node:fs'
 import { createInterface } from 'node:readline'
 import type { Readable } from 'node:stream'
-import type { AppleFmUnavailableReason, IScopedLogger } from '@camstack/types'
+import type { AppleFmUnavailableReason, IScopedLogger } from '@dominevo/types'
 import { CrashPolicy, type CrashPolicyOptions, DEFAULT_CRASH_POLICY } from '../crash-policy.js'
 import { AfmEnvelopeSchema, type AfmRequest } from './afm-protocol.js'
 

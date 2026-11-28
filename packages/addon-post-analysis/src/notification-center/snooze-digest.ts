@@ -12,7 +12,7 @@
  * this message is the difference.
  */
 
-import type { NcSnooze, NcSnoozeSuppressed } from '@camstack/types'
+import type { NcSnooze, NcSnoozeSuppressed } from '@dominevo/types'
 import { genericDeviceName } from './device-directory.js'
 import type { NcTextCatalog } from './text-catalog.js'
 

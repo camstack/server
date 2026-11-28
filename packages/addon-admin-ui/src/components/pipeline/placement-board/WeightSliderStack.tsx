@@ -50,7 +50,7 @@ import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Lock, Unlock } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { Button, Slider } from '@camstack/ui-library'
+import { Button, Slider } from '@dominevo/ui-library'
 
 /**
  * Minimal shape the stack actually reads — `id` (stable key), `name` (row

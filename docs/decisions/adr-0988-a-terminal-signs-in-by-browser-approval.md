@@ -15,14 +15,14 @@ applies-to:
 
 ## Context
 
-An assistant's shell has no TTY, so `camstack login` could not prompt, and the
+An assistant's shell has no TTY, so `dominevo login` could not prompt, and the
 only non-interactive route was a token file the operator had to mint and place
 by hand. Typing a password into an assistant is refused (D783, D797), and a
 sign-in URL that carries the code lets whoever reads the transcript approve it.
 
 ## Decision
 
-`camstack login <host>` with no TTY (or `--browser`) starts a device-flow
+`dominevo login <host>` with no TTY (or `--browser`) starts a device-flow
 request: the hub returns a short code (8 Crockford characters) and a device
 secret held only in the CLI's memory. The operator opens `/approve` in the
 admin UI where they are already signed in, types the code and approves. The
@@ -34,7 +34,7 @@ hashed, single use, five minutes, bounded. The assistant tools `setup_login`
 and `setup_login_wait` return only the URL, the code and a status, never a
 session.
 
-`camstack mcp update <version>|--latest` and `mcp rollback` switch only the
+`dominevo mcp update <version>|--latest` and `mcp rollback` switch only the
 installer's managed layout: stage, run `mcp doctor --json`, then move `current`
 by an atomic symlink rename, keeping `previous`. `~/.camstack` is never touched.
 

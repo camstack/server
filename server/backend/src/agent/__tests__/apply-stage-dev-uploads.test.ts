@@ -28,7 +28,7 @@ describe('applyStageDevUploads', () => {
     fs.writeFileSync(path.join(versionDir, 'camstack-server.tgz'), Buffer.from('S'))
     writeDevUploadManifest(versionDir, {
       version: VERSION,
-      packages: { '@camstack/server': 'camstack-server.tgz' },
+      packages: { '@dominevo/server': 'camstack-server.tgz' },
     })
     const bundle = await packDevUploadVersionDir(versionDir)
     const sha = createHash('sha256').update(bundle).digest('hex')

@@ -7,7 +7,7 @@
  *  - By action lists the fleet's commands and then only the devices offering
  *    the picked one; switching mode keeps a compatible pick.
  */
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { useState } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -68,8 +68,8 @@ const CAPS = new Map<number, readonly string[]>([
   [7, ['siren']],
 ])
 
-vi.mock('@camstack/ui-library', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@camstack/ui-library')>()),
+vi.mock('@dominevo/ui-library', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@dominevo/ui-library')>()),
   useDeviceManagerListAll: () => ({ status: 'success', data: fleet }),
 }))
 

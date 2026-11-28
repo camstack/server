@@ -4,7 +4,7 @@
  * REAL generated catalog — the `consumables` cap is the one that declares it,
  * so a regression of its declaration fails here too.
  */
-import { DeviceType, HISTORY_ITEM_CATALOG } from '@camstack/types'
+import { DeviceType, HISTORY_ITEM_CATALOG } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import { type Harness, T0, makeHarness } from '../../__tests__/support/harness.js'
 import { emitState, rawOf, seriesOf } from '../../__tests__/support/read-helpers.js'

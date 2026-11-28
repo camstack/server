@@ -8,7 +8,7 @@ import type {
   DiscoveryMode,
   IDevice,
   SavedDevice,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   BaseDeviceProvider,
   defaultIntegrationApiOver,
@@ -18,8 +18,8 @@ import {
   DeviceType,
   errMsg,
   integrationInstancesCapability,
-} from '@camstack/types'
-import type { ProviderRegistration, RecordsAccess } from '@camstack/types'
+} from '@dominevo/types'
+import type { ProviderRegistration, RecordsAccess } from '@dominevo/types'
 import { ADDON_MIGRATIONS, PROVIDER_ONVIF_ID } from './migrations/index.js'
 import { readRawKeys } from './migrations/drop-keys.js'
 import {

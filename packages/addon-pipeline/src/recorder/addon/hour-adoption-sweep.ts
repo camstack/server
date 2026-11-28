@@ -37,8 +37,8 @@
  * re-stats a file for its size (the name IS the size, D307), and it never asks
  * the resident index anything.
  */
-import type { IScopedLogger } from '@camstack/types'
-import { errMsg } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
 import { type RecordingsLocation, locationForHydratedProfile, locationMayBeRead } from './roots.js'
 import { WALK_HOUR_BATCH, WALK_LIVE_TAIL_HOURS } from './ledger-walk-reconcile.js'
 import { type WalkedHourOutcome, hourStartMs } from './segment-hour-ledger.js'

@@ -1,5 +1,5 @@
 import type { BatteryUnit, Quantity, SensorCategory } from '@apocaliss92/nodewitt'
-import { DeviceRole, DeviceType, type ReadingQuantity } from '@camstack/types'
+import { DeviceRole, DeviceType, type ReadingQuantity } from '@dominevo/types'
 
 /**
  * Pure mapping from an Ecowitt {@link Quantity} to the camstack typed sensor cap

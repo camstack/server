@@ -1,4 +1,4 @@
-import type { FrameInput, FrameRef } from '@camstack/types'
+import type { FrameInput, FrameRef } from '@dominevo/types'
 
 export type ExecutorFrameSource = { readonly frameRef: FrameRef } | { readonly frame: FrameInput }
 

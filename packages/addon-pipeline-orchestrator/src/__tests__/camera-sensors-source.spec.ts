@@ -6,7 +6,7 @@
  * sustain tick at the D392 interval; and every rise that reaches nothing is
  * SAID. No I/O anywhere: the source reads only its own memory and the deps.
  */
-import type { IScopedLogger, MotionSources } from '@camstack/types'
+import type { IScopedLogger, MotionSources } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   type CameraSensorInput,

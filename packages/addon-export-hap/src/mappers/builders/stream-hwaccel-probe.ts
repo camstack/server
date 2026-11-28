@@ -25,8 +25,8 @@
  * session rather than after the next accessory rebuild. See
  * `stream-hwaccel-memo.ts`.
  */
-import type { AddonContext, IScopedLogger } from '@camstack/types'
-import { nodePin } from '@camstack/types'
+import type { AddonContext, IScopedLogger } from '@dominevo/types'
+import { nodePin } from '@dominevo/types'
 
 import type { DecoderReadingMemo } from './stream-hwaccel-memo.js'
 import type { DecoderHwaccelReading } from './stream-hwaccel.js'

@@ -45,7 +45,7 @@ function buildNpmTarball(): Buffer {
   fs.mkdirSync(distDir, { recursive: true })
   fs.writeFileSync(
     path.join(pkgDir, 'package.json'),
-    JSON.stringify({ name: '@camstack/test-addon', version: '1.2.3' }),
+    JSON.stringify({ name: '@dominevo/test-addon', version: '1.2.3' }),
   )
   fs.writeFileSync(path.join(distDir, 'x.js'), '"use strict"; exports.ok = true;\n')
 
@@ -93,7 +93,7 @@ describe('extractTgzStripped', () => {
       name?: string
       version?: string
     }
-    expect(manifest.name).toBe('@camstack/test-addon')
+    expect(manifest.name).toBe('@dominevo/test-addon')
     expect(manifest.version).toBe('1.2.3')
   })
 })

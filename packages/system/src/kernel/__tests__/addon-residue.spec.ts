@@ -3,7 +3,7 @@
  *
  * Every one of these cases was measured on the live cluster on 2026-08-07/08.
  * The directory name is decoration: three independent consumers key on the
- * `package.json` inside it, so renaming `@camstack/server/system` to
+ * `package.json` inside it, so renaming `@dominevo/server/system` to
  * `system.bak-pre-1272-…` left it loaded, scanned and REPORTED.
  */
 import * as fs from 'node:fs'
@@ -29,33 +29,33 @@ describe('classifyAddonDir', () => {
     })
   })
 
-  it('flags the live macmini residue — a `.bak` that still declares @camstack/system', () => {
+  it('flags the live macmini residue — a `.bak` that still declares @dominevo/system', () => {
     expect(
       classifyAddonDir({
         dirName: 'system.bak-pre-1272-1786129145',
-        declaredName: '@camstack/server',
+        declaredName: '@dominevo/server',
       }),
     ).toEqual({
       dirName: 'system.bak-pre-1272-1786129145',
       reason: 'backup-residue',
-      declaredName: '@camstack/server',
+      declaredName: '@dominevo/server',
     })
   })
 
   it('flags a renamed directory even when the new name looks nothing like a backup', () => {
     expect(
-      classifyAddonDir({ dirName: 'system-disabled', declaredName: '@camstack/server' }),
+      classifyAddonDir({ dirName: 'system-disabled', declaredName: '@dominevo/server' }),
     ).toEqual({
       dirName: 'system-disabled',
       reason: 'name-mismatch',
-      declaredName: '@camstack/server',
+      declaredName: '@dominevo/server',
     })
   })
 
   it('keeps a package whose directory matches its declared name', () => {
-    expect(classifyAddonDir({ dirName: 'server', declaredName: '@camstack/server' })).toBeNull()
+    expect(classifyAddonDir({ dirName: 'server', declaredName: '@dominevo/server' })).toBeNull()
     expect(
-      classifyAddonDir({ dirName: 'addon-pipeline', declaredName: '@camstack/addon-pipeline' }),
+      classifyAddonDir({ dirName: 'addon-pipeline', declaredName: '@dominevo/addon-pipeline' }),
     ).toBeNull()
   })
 
@@ -75,9 +75,9 @@ describe('classifyAddonDir', () => {
   it('selects only the residue out of a mixed listing', () => {
     expect(
       selectAddonResidue([
-        { dirName: 'addon-pipeline', declaredName: '@camstack/addon-pipeline' },
+        { dirName: 'addon-pipeline', declaredName: '@dominevo/addon-pipeline' },
         { dirName: 'system.bak-pre-unshadow', declaredName: null },
-        { dirName: 'server', declaredName: '@camstack/server' },
+        { dirName: 'server', declaredName: '@dominevo/server' },
         { dirName: '.staging', declaredName: null },
       ]).map((v) => v.dirName),
     ).toEqual(['system.bak-pre-unshadow'])
@@ -100,9 +100,9 @@ describe('quarantineAddonResidue', () => {
   }
 
   it('moves residue out of the scanned root, keeps the real package, and never deletes', () => {
-    const scope = path.join(root, '@camstack')
-    writePkg(path.join(scope, 'server'), '@camstack/server', '1.2.61')
-    writePkg(path.join(scope, 'system.bak-pre-1272-1786129145'), '@camstack/server', '1.2.3')
+    const scope = path.join(root, '@dominevo')
+    writePkg(path.join(scope, 'server'), '@dominevo/server', '1.2.61')
+    writePkg(path.join(scope, 'system.bak-pre-1272-1786129145'), '@dominevo/server', '1.2.3')
 
     const lines: string[] = []
     const result = quarantineAddonResidue(root, (m) => lines.push(m))
@@ -118,12 +118,12 @@ describe('quarantineAddonResidue', () => {
 
     // A silent quarantine reads as "nothing happened" — every move is named.
     expect(lines.join('\n')).toContain('system.bak-pre-1272-1786129145')
-    expect(lines.join('\n')).toContain('@camstack/server')
+    expect(lines.join('\n')).toContain('@dominevo/server')
   })
 
   it('the quarantine store is not itself an addon root', () => {
-    const scope = path.join(root, '@camstack')
-    writePkg(path.join(scope, 'system.bak-old'), '@camstack/server', '1.2.3')
+    const scope = path.join(root, '@dominevo')
+    writePkg(path.join(scope, 'system.bak-old'), '@dominevo/server', '1.2.3')
     quarantineAddonResidue(root, () => {})
 
     // Second pass sees nothing to do: the store is skipped, not re-scanned.
@@ -132,10 +132,10 @@ describe('quarantineAddonResidue', () => {
   })
 
   it('does not collide when the same residue name is quarantined twice', () => {
-    const scope = path.join(root, '@camstack')
-    writePkg(path.join(scope, 'system.bak-old'), '@camstack/server', '1.2.3')
+    const scope = path.join(root, '@dominevo')
+    writePkg(path.join(scope, 'system.bak-old'), '@dominevo/server', '1.2.3')
     const first = quarantineAddonResidue(root, () => {})
-    writePkg(path.join(scope, 'system.bak-old'), '@camstack/server', '1.2.4')
+    writePkg(path.join(scope, 'system.bak-old'), '@dominevo/server', '1.2.4')
     const second = quarantineAddonResidue(root, () => {})
 
     expect(first.quarantined[0]!.to).not.toEqual(second.quarantined[0]!.to)
@@ -144,7 +144,7 @@ describe('quarantineAddonResidue', () => {
   })
 
   it('is a no-op on a clean root', () => {
-    writePkg(path.join(root, '@camstack', 'addon-pipeline'), '@camstack/addon-pipeline', '1.2.46')
+    writePkg(path.join(root, '@dominevo', 'addon-pipeline'), '@dominevo/addon-pipeline', '1.2.46')
     const lines: string[] = []
     expect(quarantineAddonResidue(root, (m) => lines.push(m)).quarantined).toEqual([])
     expect(lines).toEqual([])

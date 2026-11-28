@@ -1,4 +1,4 @@
-import { errMsg, type IScopedLogger, isInstanceOn } from '@camstack/types'
+import { errMsg, type IScopedLogger, isInstanceOn } from '@dominevo/types'
 import {
   MatterIntegrationManager,
   sameConnection,

@@ -22,7 +22,7 @@ import {
   integrationRowsPortsOver,
   type RecordIntegrationInstances,
   rowsDepsOver,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { VELUX_DROP_POWER_RESTART_KEYS_MIGRATION } from './migrations/drop-power-restart-keys.js'
 import { VeluxReconciler, type IntegrationLifecycleKind } from './velux-reconciler.js'
 import { veluxActions } from './custom-actions.js'

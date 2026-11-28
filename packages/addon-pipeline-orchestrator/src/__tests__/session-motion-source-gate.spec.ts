@@ -8,7 +8,7 @@
  * gate — checked before the lock and again on the config re-read inside it —
  * and every drop is said, sampled per (camera, trigger) with the count.
  */
-import { CAMERA_TRIGGER } from '@camstack/types'
+import { CAMERA_TRIGGER } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { SOURCE_GATE_LOG_SAMPLE_EVERY } from '../session-dispatch-controller.js'
 import { makeHarness } from './session-dispatch-harness.js'

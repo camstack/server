@@ -35,7 +35,7 @@
  * Delete the shim first and those two functions are not "harder to reach" —
  * they are unreachable, and a camera left muted stays muted with no control
  * anywhere that can lift it. The recovery is a framework train, i.e. a
- * published `@camstack/server`, for a state an operator set with one click.
+ * published `@dominevo/server`, for a state an operator set with one click.
  *
  * That ordering was written down twice and is exactly the kind of constraint a
  * review does not catch six weeks later, when the deletion looks like tidying
@@ -232,7 +232,7 @@ const KNOWN_LEGACY_CALLERS: readonly string[] = [
   // The other seven cannot move yet, and the reason is specific rather than
   // "not done": the successor `applyCameraFunctionWrite` is reachable — it
   // takes its API slice as a PARAMETER and imports nothing but
-  // `@camstack/types`, so promoting it out of the addon is mechanical. What is
+  // `@dominevo/types`, so promoting it out of the addon is mechanical. What is
   // missing is its input. `resolveCameraFunctionWrite` needs
   // `CameraFunctionReads`: eight reads spanning device-manager, recording,
   // notification-rules, privacy-mask and stream-broker. The migration path

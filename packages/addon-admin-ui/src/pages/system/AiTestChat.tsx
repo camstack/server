@@ -49,7 +49,7 @@
  * this surface does not reintroduce it: the camera picker's own thumbnails come
  * off the snapshot data plane as ordinary browser-cached `<img>` requests.
  */
-import type { DeviceInfo, RecentTracksPage, Track } from '@camstack/types'
+import type { DeviceInfo, RecentTracksPage, Track } from '@dominevo/types'
 import {
   Badge,
   Button,
@@ -68,7 +68,7 @@ import {
   useDeviceSnapshotImage,
   useInstancesOfCap,
   useSystem,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useQuery } from '@tanstack/react-query'
 import {
   Box,

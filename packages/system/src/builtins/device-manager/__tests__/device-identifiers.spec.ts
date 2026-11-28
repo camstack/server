@@ -19,8 +19,8 @@ import type {
   IEventBus,
   IScopedLogger,
   ProviderRegistration,
-} from '@camstack/types'
-import { normaliseIdentifiers } from '@camstack/types'
+} from '@dominevo/types'
+import { normaliseIdentifiers } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { makeRecordsAccessForOwner } from '../../sqlite-storage/__tests__/support/records-world.js'
 import { DeviceRegistry } from '../../../kernel/device-registry.js'

@@ -9,7 +9,7 @@
  * in this package (`AUDIO_MACRO_LABELS`), and a second copy of "what a cleared
  * threshold writes" is a mirror free to drift. The viewer keeps its own copy
  * because it is a separate app with its own toolchain; every surface that CAN
- * import `@camstack/types` uses this one.
+ * import `@dominevo/types` uses this one.
  *
  * Four behaviours here are not cosmetic:
  *
@@ -50,7 +50,7 @@ export function normalizeAudioLabel(value: string): string {
 /**
  * The inverse: a macro id in the taxonomy's namespace (`dog` → `audio-dog`),
  * which is the `iconId` every UI resolves to a glyph (`EVENT_KIND_ICONS` in
- * `@camstack/ui-library`, `event-kind-icons.ts` in the viewer). Idempotent, so
+ * `@dominevo/ui-library`, `event-kind-icons.ts` in the viewer). Idempotent, so
  * a value that already carries the namespace is passed through unchanged.
  *
  * This lives here — beside `normalizeAudioLabel` and next to the vocabulary

@@ -21,7 +21,7 @@ import {
   type IDeviceRuntimeState,
   type IScopedLogger,
   type TerminalHelperSpec,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { TerminalCameraDevice } from '../terminal-camera-device.js'
 import { gatedTerminalCameraPass, TerminalCameraHost } from '../terminal-camera-host.js'

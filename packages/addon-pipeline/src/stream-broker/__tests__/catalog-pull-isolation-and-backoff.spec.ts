@@ -20,7 +20,7 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { StreamBrokerManager } from '../stream-broker/stream-broker-manager.js'
-import type { AddonApi, IScopedLogger, CamStreamDescriptor } from '@camstack/types'
+import type { AddonApi, IScopedLogger, CamStreamDescriptor } from '@dominevo/types'
 
 // ── Fakes ────────────────────────────────────────────────────────────
 

@@ -1,4 +1,4 @@
-import type { DecodedFrame } from '@camstack/types'
+import type { DecodedFrame } from '@dominevo/types'
 
 /**
  * Latest-frame-only buffer. Keeps only the most recent item, dropping all
@@ -11,7 +11,7 @@ import type { DecodedFrame } from '@camstack/types'
  * Frames arrive from the shm frame plane via a `FrameRingReader`, whose
  * `FrameRead.pixels` is **borrowed** — a view onto the reader's reusable
  * scratch buffer, valid only until that reader's next read (see
- * `@camstack/shm-ring`'s `FrameRead` contract). Both queue consumers retain
+ * `@dominevo/shm-ring`'s `FrameRead` contract). Both queue consumers retain
  * the frame PAST the next read:
  *
  *   - the **motion** queue is drained by the scheduler's `tick`, not by the

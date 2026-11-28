@@ -5,7 +5,7 @@
  * `mode: 0o600` and `chmod 0o600` restrict nothing on Windows (Node maps them
  * to the read-only attribute), so an `agent.json` written that way would hold
  * the mesh private key readable by every local user of a
- * Windows agent. `@camstack/types/node`'s `writeOwnerOnlyFileSync` /
+ * Windows agent. `@dominevo/types/node`'s `writeOwnerOnlyFileSync` /
  * `restrictFileToOwnerSync` do the POSIX chmod AND an owner+SYSTEM `icacls` ACL
  * on Windows; a new secret-bearing write goes through them.
  *
@@ -114,7 +114,7 @@ function main(): void {
   }
   console.error(
     'check-secret-files-owner-only: 0o600 restricts nothing on Windows — write a secret with ' +
-      "writeOwnerOnlyFileSync / restrictFileToOwnerSync from '@camstack/types/node':",
+      "writeOwnerOnlyFileSync / restrictFileToOwnerSync from '@dominevo/types/node':",
   )
   for (const f of findings) console.error(`  ${f.file}:${f.line}  ${f.text}`)
   process.exit(1)

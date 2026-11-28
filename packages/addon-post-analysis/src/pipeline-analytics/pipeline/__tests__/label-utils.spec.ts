@@ -15,7 +15,7 @@
  * and a refusal there.
  */
 
-import type { ScoredLabel } from '@camstack/types'
+import type { ScoredLabel } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { resolveTieredLabelWrite } from '../label-tier.js'
 import {

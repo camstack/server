@@ -12,7 +12,7 @@ import {
   APPEARANCE_BLOCKS,
   type AppearanceBlockName,
   type AppearanceDescriptor,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { APPEARANCE_DIFF_EPSILON } from './constants.js'
 
 export interface AppearanceVector {

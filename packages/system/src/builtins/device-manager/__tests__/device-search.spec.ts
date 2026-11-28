@@ -7,8 +7,8 @@
  * the "a failed read is a null reading, not a missing device" rule.
  */
 import { describe, expect, it, vi } from 'vitest'
-import { DeviceType } from '@camstack/types'
-import type { DeviceInfo } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
+import type { DeviceInfo } from '@dominevo/types'
 import { searchDevices, type DeviceSearchDeps } from '../device-search.js'
 
 const LOCATIONS = ['Kitchen', 'Garage', 'Garden', 'Hall', 'Office'] as const

@@ -10,7 +10,7 @@ import {
   type AutomationParallelStep,
   type AutomationWhen,
   CHOOSE_BRANCHES_MAX,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { ActionKind } from './recipe-parts'
 
 export type ChooseBranch = AutomationChooseStep['branches'][number]

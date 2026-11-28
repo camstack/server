@@ -14,12 +14,12 @@
  *   - offers "Reset to model default", which removes the override and its
  *     binding.
  *
- * The rule itself is `resolveModelBoundSetting` in `@camstack/types` — the same
+ * The rule itself is `resolveModelBoundSetting` in `@dominevo/types` — the same
  * one the runner applies — never re-derived here.
  */
 import { formatNumeric } from '../lib/format-numeric'
 import { Slider } from '../primitives/slider'
-import type { ConfigField, ConfigNumberField, ConfigSliderField } from '@camstack/types'
+import type { ConfigField, ConfigNumberField, ConfigSliderField } from '@dominevo/types'
 import { useUiText, type UiTextFn } from '../contexts/ui-text'
 import type { JSX } from 'react'
 import {
@@ -28,7 +28,7 @@ import {
   hasModelBoundOverrides,
   resolveModelBoundSetting,
   writeModelBoundSetting,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** A numeric field this control can render. */
 export type ModelBoundNumericField = ConfigSliderField | ConfigNumberField

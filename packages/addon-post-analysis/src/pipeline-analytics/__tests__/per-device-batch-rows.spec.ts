@@ -13,7 +13,7 @@
  * the others resolved — and collapsing to a batch is the moment it can be lost
  * silently.
  */
-import type { DeviceProxy, IScopedLogger, SceneCondition, StationaryObject } from '@camstack/types'
+import type { DeviceProxy, IScopedLogger, SceneCondition, StationaryObject } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { makeAnalyticsRecords } from './fake-records.js'
 import { SceneMonitorProvider } from '../scene/scene-monitor-provider.js'
@@ -180,7 +180,7 @@ describe('sceneMonitor.listScenesBatch — every id gets a row', () => {
 
 // ── pipeline-analytics: timeline heatmap density ────────────────────────────
 
-import { EVENT_DENSITY_BATCH_MAX } from '@camstack/types'
+import { EVENT_DENSITY_BATCH_MAX } from '@dominevo/types'
 import { AnalyticsQueryFacade } from '../analytics-query-facade.js'
 import type { EventDensityBucket, EventStore } from '../store/event-store.js'
 

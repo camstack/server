@@ -17,7 +17,7 @@ import {
   DeviceType,
   type IScopedLogger,
   type LogTags,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   ComposedPlaceholderDevice,
   composedDeviceClass,

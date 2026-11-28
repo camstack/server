@@ -58,8 +58,8 @@ import {
   resolveModeNotifyPolicy,
   ruleFireOfClaim,
   syncActiveAlarmProfileSettings,
-} from '@camstack/types'
-import { readCurrentCommandOrigin } from '@camstack/server/system/addon-utils'
+} from '@dominevo/types'
+import { readCurrentCommandOrigin } from '@dominevo/server/system/addon-utils'
 import { z } from 'zod'
 import { fireRefOf } from '../rule-fire-origin.js'
 import {
@@ -319,7 +319,7 @@ export interface NcAlarmRefusal {
 
 /**
  * One mode's non-blocking list. Derived from the settings type rather than
- * imported: the `NcAlarmNonBlocking` type is not on the `@camstack/types` barrel
+ * imported: the `NcAlarmNonBlocking` type is not on the `@dominevo/types` barrel
  * (only the cap file exports it), and adding it would be a framework change for
  * a name.
  */

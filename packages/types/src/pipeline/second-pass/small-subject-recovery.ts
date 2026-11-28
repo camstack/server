@@ -55,7 +55,7 @@
  * Pure: no runner state, no IPC, no pixels. The runner wires the lease, the
  * executor call and the rate limit around it.
  *
- * Lives in `@camstack/types` so the live runner (`addon-pipeline`) and the
+ * Lives in `@dominevo/types` so the live runner (`addon-pipeline`) and the
  * offline accuracy evaluation (`addon-benchmark`) plan the SAME crops: one
  * module, two callers, no copy to drift.
  */

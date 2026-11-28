@@ -11,7 +11,7 @@
  * it" verb, and it is the failure a green-looking restart would hide.
  */
 
-import type { CoreBlock } from '@camstack/types'
+import type { CoreBlock } from '@dominevo/types'
 import i18n from '../../i18n/index'
 
 export interface RestartGateInput {

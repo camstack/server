@@ -3,7 +3,7 @@
  * words (a `custom` refinement) is shown as the schema wrote it; a generic Zod
  * issue (too short, wrong shape) gets a sentence in the operator's language.
  */
-import type { RemoteSourceKind } from '@camstack/types'
+import type { RemoteSourceKind } from '@dominevo/types'
 import type { TFunction } from 'i18next'
 import type { SourceIssue } from './remote-config-model'
 

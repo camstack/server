@@ -8,7 +8,7 @@
  * if the fallback refuses to reintroduce it.
  */
 
-import type { EventMediaArtifact, IScopedLogger } from '@camstack/types'
+import type { EventMediaArtifact, IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 
 import {

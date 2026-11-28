@@ -10,7 +10,7 @@ import type {
   ClusterUpdateJob,
   ClusterUpdateOptions,
   ClusterUpdateStepStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** How often a followed job is read. The hub restart sits inside this gap. */
 export const CLUSTER_UPDATE_POLL_MS = 3_000

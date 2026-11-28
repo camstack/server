@@ -32,7 +32,7 @@ import {
   buildAddonRouteProvider,
   type IAddonHttpRoute,
   type IAddonRouteProvider,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** The single notifier kind this addon contributes an icon for. */
 const HA_ICON_KIND = 'homeassistant'

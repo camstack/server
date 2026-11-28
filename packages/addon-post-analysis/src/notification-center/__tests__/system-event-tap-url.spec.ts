@@ -47,7 +47,7 @@ describe("a node's own update taps through to the Cluster page, not to Addons", 
     )
   })
 
-  it('never routes a server update to the Addons page, which hides @camstack/server', () => {
+  it('never routes a server update to the Addons page, which hides @dominevo/server', () => {
     // The Addons page filters out every framework package AND the node root
     // package, so a link there would open a list that cannot contain the thing
     // the notification is about. This is the assertion that pins the WHY.

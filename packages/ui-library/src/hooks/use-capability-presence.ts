@@ -35,7 +35,7 @@
  * registry is the authority. The fix for a slow read was a smaller question,
  * not a local mirror of the big answer.
  */
-import type { CapabilityInfo } from '@camstack/types'
+import type { CapabilityInfo } from '@dominevo/types'
 import { trpc } from '../trpc-react.js'
 
 /**

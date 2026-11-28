@@ -13,7 +13,7 @@ import {
   reportSupport,
   type StaleGateContext,
 } from '../../agent/stale-addon-gate.js'
-import type { UnsupportedAddonTracker } from '@camstack/server/system'
+import type { UnsupportedAddonTracker } from '@dominevo/server/system'
 import { readRunningServerAddonMinimums, readRunningServerVersion } from './addon-requirements.js'
 import { readInstalledAddonVersions } from './installed-addon-versions.js'
 

@@ -4,7 +4,7 @@
  * matches; a SCHEDULED summary rule is never widened — it reports the bad
  * state at its time, not edges and never recoveries.
  */
-import type { InMemoryRecords, NcSystemEventKind } from '@camstack/types'
+import type { InMemoryRecords, NcSystemEventKind } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { makeLogRecorder } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import { ncRecordKinds } from '../record-kinds.js'

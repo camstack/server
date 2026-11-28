@@ -28,7 +28,7 @@ export function MeshNetworksPage(): ReactElement {
       title={t('system.meshNetworks.meshNetworks2', 'Mesh Networks')}
       subtitle={t(
         'system.meshNetworks.privateVpnMeshesThatConnect',
-        'Private VPN meshes that connect CamStack to your other devices (Tailscale, Headscale, …). Each provider can also expose this hub publicly via its ingress (Tailscale Funnel).',
+        'Private VPN meshes that connect Dominevo to your other devices (Tailscale, Headscale, …). Each provider can also expose this hub publicly via its ingress (Tailscale Funnel).',
       )}
       emptyTitle={t(
         'system.meshNetworks.noMeshNetworkProvidersInstalled',
@@ -36,7 +36,7 @@ export function MeshNetworksPage(): ReactElement {
       )}
       emptyDescription={t(
         'system.meshNetworks.installAMeshAddonE',
-        'Install a mesh addon (e.g. @camstack/addon-tailscale) to join this hub into a private VPN mesh.',
+        'Install a mesh addon (e.g. @dominevo/addon-tailscale) to join this hub into a private VPN mesh.',
       )}
       addLabel={t('system.meshNetworks.addMesh', 'Add mesh')}
       install={{ capability: CAPABILITY, label: t('system.meshNetworks.addMesh', 'Add mesh') }}

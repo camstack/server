@@ -14,13 +14,13 @@ import {
   REMOTE_BUTTON_TONES,
   type RemoteLayoutComponent,
   type RemoteLayoutPayload,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   iconCategoryLabel,
   type IconCategoryId,
   isRemoteCustomKey,
   customKeyOfRole,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   Button,
   Checkbox,
@@ -33,7 +33,7 @@ import {
   type OptionSelectOption,
   Select,
   Stepper,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import {
   ArrowDown,
   ArrowLeft,
@@ -46,7 +46,7 @@ import {
 } from 'lucide-react'
 import { type KeyboardEvent, type ReactNode, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { APP_BRANDS, appIconKey, resolveAppBrand } from '@camstack/ui-library'
+import { APP_BRANDS, appIconKey, resolveAppBrand } from '@dominevo/ui-library'
 import { ComponentPalette } from './ComponentPalette'
 import { placeComponent } from './layout-components'
 import { arrowStep, type DragItem, nudgeItem } from './layout-drag'
@@ -69,7 +69,7 @@ import {
   shiftButton,
   RemoteGrid,
   roleName,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useGridDrag } from './useGridDrag'
 
 const CUSTOM_CHOICE = '__custom__'

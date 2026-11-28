@@ -4,7 +4,7 @@
  * `authkey-to-instance` migration has run on this hub. Once a record exists the node settings are
  * never consulted again, so a stale leftover cannot out-vote what the operator saved.
  */
-import type { ResolvedInstance } from '@camstack/types'
+import type { ResolvedInstance } from '@dominevo/types'
 import type { TailnetBody } from './tailnet-record-kinds.js'
 
 export interface TailnetCredentials {

@@ -1,4 +1,4 @@
-import type { ModelCatalogEntry, ModelFormat, IAddonModelManager } from '@camstack/types'
+import type { ModelCatalogEntry, ModelFormat, IAddonModelManager } from '@dominevo/types'
 import * as path from 'node:path'
 import { downloadFile, ensureModel, isModelDownloaded } from './model-downloader.js'
 

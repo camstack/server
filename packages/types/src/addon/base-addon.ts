@@ -189,7 +189,7 @@ function boundOf<TPorts>(
 }
 
 /**
- * Base class for CamStack addons. Eliminates settings boilerplate:
+ * Base class for Dominevo addons. Eliminates settings boilerplate:
  *
  * - Typed `config` property with automatic resolution from store + defaults
  * - the scoped settings API (`clusterSettings` / `nodeSettings` / `deviceDefaults`) auto-implemented
@@ -1676,7 +1676,7 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
    * cap, which returns the hub's `/data/models` to every node and breaks any node
    * whose real data dir differs (e.g. the macOS electron agent).
    *
-   * `node:path`/`node:fs` are imported dynamically so the `@camstack/types` root
+   * `node:path`/`node:fs` are imported dynamically so the `@dominevo/types` root
    * barrel (re-exported into browser bundles) stays free of node builtins.
    */
   protected async resolveModelsDir(): Promise<string> {

@@ -10,7 +10,7 @@
  * delete) and `EventDetailPanel` (whole-track delete) import from here so the
  * detection + fallback live in exactly one place.
  */
-import { usePipelineAnalyticsDeleteTracks } from '@camstack/ui-library'
+import { usePipelineAnalyticsDeleteTracks } from '@dominevo/ui-library'
 
 export interface DeleteTracksVariables {
   readonly deviceId: number

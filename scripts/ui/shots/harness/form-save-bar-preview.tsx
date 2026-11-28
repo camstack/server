@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
   ThemeProvider,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import type { ReactElement } from 'react'
 import { FormSaveBar } from '../../../../packages/addon-admin-ui/src/components/form-builder/FormSaveBar'
 

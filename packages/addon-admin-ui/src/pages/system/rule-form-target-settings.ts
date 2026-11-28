@@ -25,8 +25,8 @@ import {
   sanitizeTargetOverride,
   type Target,
   type TargetKindLevel,
-} from '@camstack/types'
-import type { NotificationTargetOption } from '@camstack/ui-library'
+} from '@dominevo/types'
+import type { NotificationTargetOption } from '@dominevo/ui-library'
 import type { DeliveryKindRef } from './rule-form-delivery'
 import type { NcTargetParamsMap } from './rule-form-state'
 

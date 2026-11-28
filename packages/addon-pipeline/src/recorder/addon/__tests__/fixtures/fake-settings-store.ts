@@ -11,7 +11,7 @@
  * assertion than "the statement was right": a boot that fetched `paths` and
  * then discarded them in JS would pass an outcome test and still be the OOM.
  */
-import type { SettingsStoreClient } from '@camstack/types'
+import type { SettingsStoreClient } from '@dominevo/types'
 
 export interface FakeQuery {
   readonly collection: string

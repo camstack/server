@@ -19,7 +19,7 @@
  *    never sees a frozen frame or a partial picture. A broker that cannot
  *    produce one inside the budget is abandoned and the old source stays.
  */
-import type { BrokerConsumerAttribution, IStreamBroker, Unsubscribe } from '@camstack/types'
+import type { BrokerConsumerAttribution, IStreamBroker, Unsubscribe } from '@dominevo/types'
 
 /**
  * How long a switch waits for the new rendition's first switchable keyframe.

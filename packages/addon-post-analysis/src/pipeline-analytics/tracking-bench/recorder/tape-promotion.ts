@@ -26,7 +26,7 @@
  * leaves nothing behind but, at worst, the file it was writing, which it
  * removes before stopping.
  */
-import { errMsg } from '@camstack/types'
+import { errMsg } from '@dominevo/types'
 import type {
   TrackingTapeIndexStore,
   TrackingTapeRow,

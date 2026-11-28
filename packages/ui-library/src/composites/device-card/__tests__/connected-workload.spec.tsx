@@ -9,7 +9,7 @@ import {
   type WorkloadOptions,
   type WorkloadResources,
   type WorkloadStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { WorkloadInlineControl } from '../../device-controls/workload-control'

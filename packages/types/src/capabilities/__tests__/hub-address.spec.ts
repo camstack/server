@@ -179,7 +179,7 @@ describe('a flagged address', () => {
 })
 
 describe('notificationTaps', () => {
-  it('automatic is the CamStack app link (D709)', () => {
+  it('automatic is the Dominevo app link (D709)', () => {
     expect(resolveNotificationTapAddress(flags())).toEqual({
       flagged: null,
       resolved: 'https://camstack.zentik.app',

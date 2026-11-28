@@ -4,7 +4,7 @@
  *
  * Pure — no sockets, no clock — so the limits are unit-testable.
  */
-import type { LocalInterface } from '@camstack/types'
+import type { LocalInterface } from '@dominevo/types'
 
 /** Total hosts one scan may visit across every subnet. */
 export const MAX_SCAN_HOSTS = 4096

@@ -2,7 +2,7 @@
  * D898 — `logs.query`'s page: the source's page merged with the hub tail.
  */
 import { describe, expect, it } from 'vitest'
-import type { ILogDestination, LogEntry, LogReadQuery, LogReadResult } from '@camstack/types'
+import type { ILogDestination, LogEntry, LogReadQuery, LogReadResult } from '@dominevo/types'
 import { readLogHistory, RING_LOG_SOURCE } from '../log-history'
 
 const T = Date.parse('2026-10-21T10:00:00.000Z')

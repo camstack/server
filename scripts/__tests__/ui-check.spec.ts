@@ -150,7 +150,7 @@ describe('local look-alikes', () => {
 
   it('accepts a re-export and the library itself', () => {
     expect(
-      rules(ADMIN, "export { StatusBadge } from '@camstack/ui-library'\n", new Map(), library),
+      rules(ADMIN, "export { StatusBadge } from '@dominevo/ui-library'\n", new Map(), library),
     ).toEqual([])
     expect(
       rules(

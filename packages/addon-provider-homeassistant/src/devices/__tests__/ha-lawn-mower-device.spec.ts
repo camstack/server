@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { DeviceType, type IDeviceRuntimeState } from '@camstack/types'
+import { DeviceType, type IDeviceRuntimeState } from '@dominevo/types'
 import { HaLawnMowerDevice } from '../ha-lawn-mower-device.js'
 import type { HaEntityState } from '../../ha-types.js'
 
@@ -7,7 +7,7 @@ function buildMowerCtx(
   entityId: string,
   publishMutate = vi.fn(async () => null),
 ): {
-  ctx: import('@camstack/types').DeviceContext
+  ctx: import('@dominevo/types').DeviceContext
   setCapStateCalls: Array<Record<string, unknown>>
 } {
   // Only the lawn-mower slice: the device also pushes `running-state` (D933).
@@ -94,12 +94,12 @@ function buildMowerCtx(
       addContext: vi.fn(),
       with: vi.fn(),
     },
-  } as unknown as import('@camstack/types').DeviceContext
+  } as unknown as import('@dominevo/types').DeviceContext
 
   return { ctx, setCapStateCalls }
 }
 
-function getMowerProvider(ctx: import('@camstack/types').DeviceContext): {
+function getMowerProvider(ctx: import('@dominevo/types').DeviceContext): {
   startMowing: (i: { deviceId: number }) => Promise<void>
   pause: (i: { deviceId: number }) => Promise<void>
   dock: (i: { deviceId: number }) => Promise<void>

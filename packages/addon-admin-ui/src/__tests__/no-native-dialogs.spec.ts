@@ -12,7 +12,7 @@
  * style or test.
  *
  * Every one of them is now served by the ONE dialog provider in
- * `@camstack/ui-library` (`useConfirm` / `useAlert` / `usePrompt`). This file
+ * `@dominevo/ui-library` (`useConfirm` / `useAlert` / `usePrompt`). This file
  * is what stops the next one coming back: a rule nothing checks has already
  * been broken somewhere.
  *
@@ -159,7 +159,7 @@ describe('admin UI has no native browser dialogs', () => {
       offences,
       offences.length === 0
         ? ''
-        : `Native browser dialogs found. Use useConfirm / useAlert / usePrompt from @camstack/ui-library instead:\n  ${offences.join('\n  ')}`,
+        : `Native browser dialogs found. Use useConfirm / useAlert / usePrompt from @dominevo/ui-library instead:\n  ${offences.join('\n  ')}`,
     ).toEqual([])
   })
 })

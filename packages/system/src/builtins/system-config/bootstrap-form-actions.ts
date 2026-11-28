@@ -17,7 +17,7 @@ import {
   defineCustomActions,
   type ConfigUISchemaWithValues,
   type CustomActionsSpec,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** The hydrated form: schema with each field's stored value inline. */
 const BootstrapFormSchema = z.custom<ConfigUISchemaWithValues>(

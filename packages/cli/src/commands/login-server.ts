@@ -1,7 +1,7 @@
-import { normalizeHubAddress } from '@camstack/develop'
+import { normalizeHubAddress } from '@dominevo/develop'
 
 /**
- * The hub `camstack login` was told about, canonical, or `undefined` to
+ * The hub `dominevo login` was told about, canonical, or `undefined` to
  * discover. `login <host>` and `--server <host>` are the same thing; naming two
  * different hubs is an error. `$CAMSTACK_SERVER`, then `$CAMSTACK_HUB_URL`, are
  * the fallback. Every form goes through the one shared normaliser.

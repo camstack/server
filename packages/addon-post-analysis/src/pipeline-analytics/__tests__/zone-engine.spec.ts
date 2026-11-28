@@ -8,7 +8,7 @@
  * otherwise).
  */
 import { describe, it, expect } from 'vitest'
-import type { Zone, ZoneRule } from '@camstack/types'
+import type { Zone, ZoneRule } from '@dominevo/types'
 import { ZoneEngine } from '../pipeline/zones/zone-engine.js'
 
 const FRAME_W = 1000

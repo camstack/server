@@ -11,7 +11,7 @@
  * again.
  */
 
-import type { IScopedLogger, RetrainCollection, RetrainVerdictSubject } from '@camstack/types'
+import type { IScopedLogger, RetrainCollection, RetrainVerdictSubject } from '@dominevo/types'
 import type { NcVerdictFrameOutcome } from '../../notification-center/center-deps.js'
 
 export const VERDICT_COLLECTION_NAME = 'Notification verdicts'

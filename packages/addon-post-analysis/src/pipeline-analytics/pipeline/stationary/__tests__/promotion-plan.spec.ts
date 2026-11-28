@@ -26,7 +26,7 @@
  *    nothing" fails (and `cascade-over-real-sqlite.spec.ts`, whose fixture
  *    position carries no box, throws inside `closeActive`).
  */
-import type { BoundingBox } from '@camstack/types'
+import type { BoundingBox } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { RETRO_1441_PARKED_CAR } from '../../tracker/__tests__/scenes/retro-1441-parked-car.js'
 import { EMPTY_MOVED_PROBE, planPromotion, probeMoved, stepMovedProbe } from '../promotion-plan.js'

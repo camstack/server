@@ -11,7 +11,7 @@ import {
   type IScopedLogger,
   type LogExtras,
   instanceApiOverTargets,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 
 import type { AlexaPrincipal } from '../access/access-gate.js'

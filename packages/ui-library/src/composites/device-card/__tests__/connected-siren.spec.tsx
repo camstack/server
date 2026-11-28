@@ -3,7 +3,7 @@
  * The connected siren: pending until a slice answers, the served state only,
  * one command per tap (the one-shot claim) and a held button while it flies.
  */
-import type { SirenOptions, SirenRuntimeState, SwitchStatus } from '@camstack/types'
+import type { SirenOptions, SirenRuntimeState, SwitchStatus } from '@dominevo/types'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import type { ReactElement } from 'react'

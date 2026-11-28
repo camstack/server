@@ -3,7 +3,7 @@
  * resolution of a device-scoped `getStatus` asks before it is answered: is this
  * `(cap, device)` claimed on the hub, and if so, what does the merged slice say?
  *
- * Declared here, in `@camstack/types`, because `ICapabilityRegistry` carries
+ * Declared here, in `@dominevo/types`, because `ICapabilityRegistry` carries
  * the setter and the question; the kernel's `status-overlay.ts` re-exports the
  * types so the registry and the transport both import from it and neither
  * imports the other.

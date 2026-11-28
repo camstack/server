@@ -2,10 +2,10 @@
  * Codegen'd `llm-runtime` (internal, node-side) router spec (framework train).
  *
  * Same worktree caveat as `llm.router.spec.ts`: skips its body when the
- * `@camstack/server/system` build predates the cap; the file satisfies `_meta.spec.ts`.
+ * `@dominevo/server/system` build predates the cap; the file satisfies `_meta.spec.ts`.
  */
 
-import type { ILlmRuntimeProvider } from '@camstack/types'
+import type { ILlmRuntimeProvider } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { buildCapRouterForTest, invokeProcedure, makeCtx } from './harness.js'
 

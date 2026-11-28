@@ -13,7 +13,7 @@ import {
   conditionVisibleForKind,
   NC_CONDITION_CATALOG,
   type NcConditionDescriptor,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { layoutConditionGroups } from '../notification-condition-layout'
 

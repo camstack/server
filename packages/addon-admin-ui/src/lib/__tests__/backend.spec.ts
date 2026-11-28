@@ -15,7 +15,7 @@ const mocks = vi.hoisted(() => ({
   systems: [] as FakeSystem[],
 }))
 
-vi.mock('@camstack/sdk', () => ({
+vi.mock('@dominevo/sdk', () => ({
   createSystem: mocks.createSystem,
 }))
 

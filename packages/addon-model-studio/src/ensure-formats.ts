@@ -4,7 +4,7 @@
  *
  * Used by Custom import, plus catalog import, and Library "Distribute to all".
  */
-import type { ConvertArtifact, ModelCatalogEntry, ModelFormat } from '@camstack/types'
+import type { ConvertArtifact, ModelCatalogEntry, ModelFormat } from '@dominevo/types'
 import {
   runPlusConversions,
   type PlusConversionDeps,

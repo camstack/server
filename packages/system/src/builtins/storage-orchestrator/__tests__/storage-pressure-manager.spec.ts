@@ -1,4 +1,4 @@
-import type { IScopedLogger, IStorageEvictableProvider } from '@camstack/types'
+import type { IScopedLogger, IStorageEvictableProvider } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { type PressureManagerDeps, StoragePressureManager } from '../storage-pressure-manager.js'
 

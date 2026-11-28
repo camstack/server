@@ -17,8 +17,8 @@
  * fall back to, so the clear tile wears `Ban` rather than the pin, which would
  * be indistinguishable from picking the pin.
  */
-import { IconPicker, type IconPickerLabels } from '@camstack/ui-library'
-import { type IconKey, LOCATION_ICON_FALLBACK, canonicalIconKey } from '@camstack/types'
+import { IconPicker, type IconPickerLabels } from '@dominevo/ui-library'
+import { type IconKey, LOCATION_ICON_FALLBACK, canonicalIconKey } from '@dominevo/types'
 import { Ban, MapPin } from 'lucide-react'
 
 export interface LocationIconPickerProps {

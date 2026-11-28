@@ -11,7 +11,7 @@ import {
   SOURCE_CAP_CHANGED_AT_FIELD,
   type LevelSample,
   stepPulse,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   Button,
   Dialog,
@@ -22,7 +22,7 @@ import {
   DialogTitle,
   useDeviceManagerListAll,
   useDeviceStateGetSnapshot,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { readPath, toPickerDevices, type PickerDevice } from '../source-picker-model'

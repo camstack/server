@@ -18,7 +18,7 @@ import {
   usePipelineOrchestratorListAgentSettings,
   useUiText,
   Button,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Cpu, Globe, Server, Video } from 'lucide-react'
 import { lastSeenToMs } from '../../lib/last-seen'
 import { CLUSTER_NODE_ID } from '../../pages/Pipeline'

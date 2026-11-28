@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import type { AppDeclaration, IAppSourceProvider } from '@camstack/types'
+import type { AppDeclaration, IAppSourceProvider } from '@dominevo/types'
 import { aggregateApps } from './aggregate-apps.js'
 
 function makeApp(id: string, over: Partial<AppDeclaration> = {}): AppDeclaration {

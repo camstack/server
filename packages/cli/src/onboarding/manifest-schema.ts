@@ -77,7 +77,7 @@ export type CoreAddonNeed = z.infer<typeof CoreAddonNeedSchema>
 /** An addon by id, with the package that ships it (several ids can share one). */
 export const CoreAddonRefSchema = z.object({
   id: z.string().min(1),
-  package: z.string().startsWith('@camstack/'),
+  package: z.string().startsWith('@dominevo/'),
 })
 export type CoreAddonRef = z.infer<typeof CoreAddonRefSchema>
 

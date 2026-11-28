@@ -1,6 +1,6 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
-import { asJsonObject, asNumber, asString, parseJsonUnknown } from '@camstack/types'
+import { asJsonObject, asNumber, asString, parseJsonUnknown } from '@dominevo/types'
 
 /**
  * RestartCoordinator — shared primitives for the framework live-update flow.

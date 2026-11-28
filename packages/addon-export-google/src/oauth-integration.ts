@@ -1,4 +1,4 @@
-import type { OauthIntegrationDescriptor } from '@camstack/types'
+import type { OauthIntegrationDescriptor } from '@dominevo/types'
 
 /**
  * The `export-google` OAuth client — the descriptor behind

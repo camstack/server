@@ -16,7 +16,7 @@ interface PackageDocsFixture {
 }
 
 const docs: PackageDocsFixture = {
-  name: '@camstack/addon-tailscale',
+  name: '@dominevo/addon-tailscale',
   version: '1.4.2',
   readme: { status: 'ok', markdown: '# Tailscale\n\nConnects the hub.' },
   changelog: { status: 'missing' },
@@ -28,7 +28,7 @@ let docsState: {
   isError: boolean
 } = { data: docs, isPending: false, isError: false }
 
-vi.mock('@camstack/ui-library', () => ({
+vi.mock('@dominevo/ui-library', () => ({
   Button: ({
     children,
     onClick,
@@ -85,7 +85,7 @@ vi.mock('@camstack/ui-library', () => ({
 import { InstallAddonDialog } from '../InstallAddonDialog'
 
 const target = {
-  name: '@camstack/addon-tailscale',
+  name: '@dominevo/addon-tailscale',
   version: '1.4.2',
   description: 'Tailnet client',
 }
@@ -109,15 +109,15 @@ describe('InstallAddonDialog', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Show older versions (1)' }))
     expect(screen.getByRole('option', { name: '1.0.0 (deprecated)' })).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Install' }))
-    expect(onInstall).toHaveBeenCalledWith('@camstack/addon-tailscale', '1.4.2')
+    expect(onInstall).toHaveBeenCalledWith('@dominevo/addon-tailscale', '1.4.2')
   })
 
   it('shows a registry error on the document instead of an empty page', () => {
     docsState = {
       data: {
         ...docs,
-        readme: { status: 'error', message: 'registry GET @camstack/addon-tailscale → 503' },
-        changelog: { status: 'error', message: 'registry GET @camstack/addon-tailscale → 503' },
+        readme: { status: 'error', message: 'registry GET @dominevo/addon-tailscale → 503' },
+        changelog: { status: 'error', message: 'registry GET @dominevo/addon-tailscale → 503' },
       },
       isPending: false,
       isError: false,
@@ -130,7 +130,7 @@ describe('InstallAddonDialog', () => {
         onInstall={vi.fn()}
       />,
     )
-    expect(screen.getAllByText(/registry GET @camstack\/addon-tailscale → 503/).length).toBe(2)
+    expect(screen.getAllByText(/registry GET @dominevo\/addon-tailscale → 503/).length).toBe(2)
     expect(screen.queryByText('Connects the hub.')).toBeNull()
   })
 })

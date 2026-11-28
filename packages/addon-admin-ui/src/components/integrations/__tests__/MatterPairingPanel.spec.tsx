@@ -3,7 +3,7 @@
  * commissioning failures. The broker hooks are stubbed; the dialog itself
  * decides what to show.
  */
-import { Dialog, DialogContent } from '@camstack/ui-library'
+import { Dialog, DialogContent } from '@dominevo/ui-library'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen } from '@testing-library/react'
 import type { ReactElement } from 'react'
@@ -32,9 +32,9 @@ const harness = vi.hoisted(() => {
   return { publish: vi.fn(), getState: vi.fn(), box }
 })
 
-vi.mock('@camstack/ui-library', async () => {
+vi.mock('@dominevo/ui-library', async () => {
   const actual =
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+    await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return {
     ...actual,
     useBrokerInstances: () => ({

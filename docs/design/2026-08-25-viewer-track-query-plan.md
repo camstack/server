@@ -48,8 +48,8 @@ They apply to **every** task, without repeating them:
 
 | What changes | How it reaches production |
 | --- | --- |
-| only an addon's `src` | `camstack deploy packages/<addon>` |
-| `@camstack/system`, `@camstack/types`, a `*.cap.ts`, the generated routers | `Publish Packages` train → `serverManagement.applyServerUpdate` on **agents first, hub last** |
+| only an addon's `src` | `dominevo deploy packages/<addon>` |
+| `@dominevo/system`, `@dominevo/types`, a `*.cap.ts`, the generated routers | `Publish Packages` train → `serverManagement.applyServerUpdate` on **agents first, hub last** |
 | manifest `placement`, image seed | image rebuild |
 
 ---
@@ -234,7 +234,7 @@ own. That is why *"no photo"* and *"only the face"* are the same failure.
       `debug.storeCensus` (`pipeline-analytics/index.ts`), including the rule
       `armMs: 0` reads, does not re-arm.
 - [ ] **Step 2** — red. **Step 3** — implement. **Step 4** — green.
-- [ ] **Step 5** — commit + `camstack deploy packages/addon-post-analysis`
+- [ ] **Step 5** — commit + `dominevo deploy packages/addon-post-analysis`
       (no train: custom actions do not go through the generated routers).
 
 ### Task 2.2 — Make the face-crop copy honest
@@ -591,7 +591,7 @@ is not the bump but what hangs off it:
       1.2.168 running): a rebuild converges that too, which is
       an argument in favour, but only if it is planned and not incidental.
 - [ ] **Step 4** — verify on a **throwaway** container before touching
-      production. Never on the live `CamStack`.
+      production. Never on the live `Dominevo`.
 
 ### Task 8.3 — The decision
 

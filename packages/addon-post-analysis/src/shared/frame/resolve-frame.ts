@@ -4,7 +4,7 @@
  * Post-shm (2026-07-16): the frame is ALWAYS fetched over tRPC from the runner
  * that owns it, routed by `handle.nodeId` — same-node the call resolves
  * in-process / over UDS, cross-node over Moleculer. There is no co-located
- * `/dev/shm` read anymore (that dependency on `@camstack/shm-ring`, the last
+ * `/dev/shm` read anymore (that dependency on `@dominevo/shm-ring`, the last
  * native host-external in the data plane, is gone). The fetch is injected as a
  * callback so this helper stays free of any cap-client coupling and trivially
  * testable; the caller wires it to
@@ -12,7 +12,7 @@
  *
  * See `docs/design/2026-07-16-shm-removal-one-process-design.md`.
  */
-import type { DecodedFrame, FrameHandle } from '@camstack/types'
+import type { DecodedFrame, FrameHandle } from '@dominevo/types'
 
 export interface ResolveFrameDeps {
   /**

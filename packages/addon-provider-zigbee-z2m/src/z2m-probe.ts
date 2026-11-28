@@ -3,7 +3,7 @@
  * server pushes on connect. A refused token is a definite no (`rejected`); anything else that stops
  * the probe (unreachable, timeout) is `inconclusive`, never a pass and never a verdict on the token.
  */
-import type { IntegrationTestConnectionResult } from '@camstack/types'
+import type { IntegrationTestConnectionResult } from '@dominevo/types'
 import {
   buildZ2mUrl,
   nativeSocketFactory,

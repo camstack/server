@@ -30,7 +30,7 @@ import type {
   TransportListenOptions,
   TransportConnectOptions,
 } from '../types.js'
-import type { Unsubscribe } from '@camstack/types'
+import type { Unsubscribe } from '@dominevo/types'
 
 const URL_SCHEME = 'unix://'
 

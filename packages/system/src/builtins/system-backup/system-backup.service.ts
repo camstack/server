@@ -24,7 +24,7 @@ import {
   type DatabaseSnapshotWritten,
   type DataStoreDatabase,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import * as tar from 'tar'
 import {
   BACKUP_ENCRYPTION_SCHEME,
@@ -169,7 +169,7 @@ export const DEFAULT_BACKUP_EXCLUDES = [
 /**
  * Directory name excluded wherever it appears in the tree.
  * `AddonInstaller` materialises runtime deps under
- * `addons/@camstack/<addon>/node_modules` (~196 MB on the hub); only
+ * `addons/@dominevo/<addon>/node_modules` (~196 MB on the hub); only
  * built `dist` + package.json + assets are restore-worthy — deps are
  * reinstalled from npm on demand. node_modules is NEVER archived.
  */

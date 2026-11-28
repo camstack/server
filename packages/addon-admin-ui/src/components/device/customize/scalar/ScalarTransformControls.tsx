@@ -2,8 +2,8 @@
  * Transform controls generated from the declaration: invert, threshold
  * with named watt defaults, or linear scale.
  */
-import type { CustomizeCatalogTransform, DeviceType } from '@camstack/types'
-import { Input, Select, Switch } from '@camstack/ui-library'
+import type { CustomizeCatalogTransform, DeviceType } from '@dominevo/types'
+import { Input, Select, Switch } from '@dominevo/ui-library'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { ScalarTransformKind } from './scalar-fit'

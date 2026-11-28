@@ -15,7 +15,7 @@ import {
   type CompositionFieldsFeature,
   type CompositionSourceRef,
   type SourceReading,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { CompositionRuntime } from '../composition-runtime.js'
 import { FakeTarget, FakeTimer, LOOKUP_CAP, recordingLogger } from './fixtures.js'

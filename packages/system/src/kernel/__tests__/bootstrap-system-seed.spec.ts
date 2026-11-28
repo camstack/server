@@ -1,11 +1,11 @@
 /**
- * `@camstack/server/system` must not be seeded into /data/addons when the running
+ * `@dominevo/server/system` must not be seeded into /data/addons when the running
  * closure already provides it — and MUST still be seeded when it does not.
  *
  * Both halves matter, and they were learned in opposite directions:
  *
  *  - seeding when the closure has it produced a copy that WINS over the
- *    closure and is never refreshed (`camstack deploy` of a framework package
+ *    closure and is never refreshed (`dominevo deploy` of a framework package
  *    is rejected on an image hub), so a node ran first-boot builtins forever
  *    while `getServerPackageStatus` reported the new version. Measured on two
  *    agents: a 1.2.0 copy from 2026-07-21 against a 1.2.29 closure;
@@ -15,7 +15,7 @@
  *    RESOLVABILITY rather than a blanket removal.
  *
  * The second branch is unreachable without the injection point: in a test
- * process `@camstack/server/system` always resolves.
+ * process `@dominevo/server/system` always resolves.
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import * as fs from 'node:fs'
@@ -35,31 +35,31 @@ afterEach(() => {
 const isInstalled = (pkg: string): boolean =>
   fs.existsSync(path.join(addonsDir, pkg, 'package.json'))
 
-describe('bootstrap seeding of @camstack/server/system', () => {
+describe('bootstrap seeding of @dominevo/server/system', () => {
   it('does NOT seed a copy when the closure provides it', async () => {
     const installer = new AddonInstaller({
       addonsDir,
       isPackageResolvable: () => true,
     })
 
-    await installer.ensureRequiredPackages(['@camstack/server'])
+    await installer.ensureRequiredPackages(['@dominevo/server'])
 
-    expect(isInstalled('@camstack/server')).toBe(false)
+    expect(isInstalled('@dominevo/server')).toBe(false)
   })
 
   it('does NOT skip when the closure lacks it — the branch that keeps a fresh node bootable', () => {
     // Asserted on the decision rather than the loop: the loop would go to the
     // network, and a test that reaches npm proves nothing about the rule.
-    expect(shouldSkipClosureProvidedSeed('@camstack/server', false)).toBe(false)
+    expect(shouldSkipClosureProvidedSeed('@dominevo/server', false)).toBe(false)
   })
 
   it('never skips anything other than the closure-provided package', () => {
-    expect(shouldSkipClosureProvidedSeed('@camstack/addon-pipeline', true)).toBe(false)
-    expect(shouldSkipClosureProvidedSeed('@camstack/server', true)).toBe(true)
+    expect(shouldSkipClosureProvidedSeed('@dominevo/addon-pipeline', true)).toBe(false)
+    expect(shouldSkipClosureProvidedSeed('@dominevo/server', true)).toBe(true)
   })
 
   it('leaves an EXISTING copy alone — removing a stale one is an operator action', async () => {
-    const dir = path.join(addonsDir, '@camstack/server')
+    const dir = path.join(addonsDir, '@dominevo/server')
     fs.mkdirSync(dir, { recursive: true })
     fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ version: '1.2.0' }))
 
@@ -67,7 +67,7 @@ describe('bootstrap seeding of @camstack/server/system', () => {
       addonsDir,
       isPackageResolvable: () => true,
     })
-    await installer.ensureRequiredPackages(['@camstack/server'])
+    await installer.ensureRequiredPackages(['@dominevo/server'])
 
     const raw: unknown = JSON.parse(fs.readFileSync(path.join(dir, 'package.json'), 'utf-8'))
     expect(raw).toEqual({ version: '1.2.0' })

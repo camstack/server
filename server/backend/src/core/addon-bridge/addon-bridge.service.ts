@@ -1,12 +1,12 @@
 import * as path from 'node:path'
-import type { IScopedLogger } from '@camstack/types'
-import { errMsg } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
 import { LoggingService } from '../logging/logging.service'
 
 // Dynamically imported to tolerate missing / unbuilt packages at startup
-type AddonLoader = import('@camstack/server/system').AddonLoader
-type AddonInstaller = import('@camstack/server/system').AddonInstaller
-type RegisteredAddon = import('@camstack/server/system').RegisteredAddon
+type AddonLoader = import('@dominevo/server/system').AddonLoader
+type AddonInstaller = import('@dominevo/server/system').AddonInstaller
+type RegisteredAddon = import('@dominevo/server/system').RegisteredAddon
 
 /**
  * AddonBridgeService — slim package-management surface.
@@ -43,7 +43,7 @@ export class AddonBridgeService {
     // Initialize installer eagerly in constructor (no async needed).
     // This ensures install/uninstall works even before onModuleInit completes.
     try {
-      const kernel = require('@camstack/server/system') as typeof import('@camstack/server/system')
+      const kernel = require('@dominevo/server/system') as typeof import('@dominevo/server/system')
       const dataDir = process.env.CAMSTACK_DATA ?? 'camstack-data'
       const addonsDir = process.env.CAMSTACK_ADDONS_DIR ?? path.resolve(dataDir, 'addons')
       this.installer = new kernel.AddonInstaller({ addonsDir })
@@ -58,7 +58,7 @@ export class AddonBridgeService {
     this.logger.info('Initializing addon bridge (package management only)...')
 
     try {
-      const kernel = await import('@camstack/server/system')
+      const kernel = await import('@dominevo/server/system')
 
       this.loader = new kernel.AddonLoader(this.logger.child('AddonLoader'))
 
@@ -114,7 +114,7 @@ export class AddonBridgeService {
       return
     }
 
-    const kernel = await import('@camstack/server/system')
+    const kernel = await import('@dominevo/server/system')
     this.loader = new kernel.AddonLoader(this.logger.child('AddonLoader'))
 
     const dataDir = process.env.CAMSTACK_DATA ?? 'camstack-data'

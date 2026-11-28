@@ -2,7 +2,7 @@ import type { ChildProcess } from 'node:child_process'
 import { EventEmitter } from 'node:events'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
-import type { EncodedPacket, PushAudioInfo } from '@camstack/types'
+import type { EncodedPacket, PushAudioInfo } from '@dominevo/types'
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   FfmpegSourceReader,

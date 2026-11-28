@@ -5,7 +5,7 @@
  * from the controls.
  */
 import { describe, it, expect } from 'vitest'
-import { DeviceType, DeviceRole } from '@camstack/types'
+import { DeviceType, DeviceRole } from '@dominevo/types'
 import { buildContainerEntities, deriveChildLayout } from '../ha-container-reconcile.js'
 import type { HaDiscoveredDevice, HaDiscoveredEntity } from '../ha-discovery-types.js'
 

@@ -36,7 +36,7 @@ import {
   Filter,
   Search,
 } from 'lucide-react'
-import { ALL_CAPABILITY_DEFINITIONS, EventCategory } from '@camstack/types'
+import { ALL_CAPABILITY_DEFINITIONS, EventCategory } from '@dominevo/types'
 import { trpc } from '../trpc-react'
 import { useSystem } from '../contexts/system-context'
 import { useDeviceProxy } from '../hooks/use-device-proxy'

@@ -18,7 +18,7 @@ import {
   type PaletteResult,
   type SetPaletteInput,
   type StoredKeyRead,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** Key inside the orchestrator's addon store. Not a settings-schema field. */
 export const DISPLAY_PALETTE_STORE_KEY = 'displayPalette'

@@ -5,7 +5,7 @@
  * recorded exactly as before.
  */
 import { makeNcRecords, ncTable } from './support/nc-test-deps.js'
-import { NcRuleInputSchema, scheduleForSendTimes } from '@camstack/types'
+import { NcRuleInputSchema, scheduleForSendTimes } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import type { NcTargetRef } from '../dispatcher.js'

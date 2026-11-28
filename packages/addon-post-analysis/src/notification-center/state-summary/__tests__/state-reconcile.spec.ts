@@ -4,7 +4,7 @@
  * against the directories before it is listed.
  */
 import { makeNcRecords } from '../../__tests__/support/nc-test-deps.js'
-import { DeviceType, NcRuleInputSchema, type NcRuleInput } from '@camstack/types'
+import { DeviceType, NcRuleInputSchema, type NcRuleInput } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { NcDeviceIdentity } from '../../device-directory.js'
 import type { NcLivenessRow } from '../../liveness-ledger.js'
@@ -60,12 +60,12 @@ describe('I1 — a stream row closes on ANY stream.online', () => {
 
 describe('I3 — an update.available list REPLACES the rows of its node', () => {
   const recorder = {
-    packageName: '@camstack/addon-recorder',
+    packageName: '@dominevo/addon-recorder',
     currentVersion: '1',
     latestVersion: '2',
   }
   const notifiers = {
-    packageName: '@camstack/addon-notifiers',
+    packageName: '@dominevo/addon-notifiers',
     currentVersion: '3',
     latestVersion: '4',
   }
@@ -105,7 +105,7 @@ describe('I3 — an update.available list REPLACES the rows of its node', () => 
     const full = updateListOf({
       target: 'server',
       nodeId: 'hub',
-      packages: [{ ...notifiers, packageName: '@camstack/server' }],
+      packages: [{ ...notifiers, packageName: '@dominevo/server' }],
     })
     const empty = updateListOf({
       target: 'server',

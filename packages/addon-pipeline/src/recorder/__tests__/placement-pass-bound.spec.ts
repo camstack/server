@@ -29,7 +29,7 @@
  *      the stickiness that keeps a camera on its disk, and rewrites the whole
  *      plan on the evidence that the store was briefly unreachable.
  */
-import { createDurableState, type IScopedLogger } from '@camstack/types'
+import { createDurableState, type IScopedLogger } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { RecordingOpsLogSink } from '../addon/ops-log-store.js'
 import {

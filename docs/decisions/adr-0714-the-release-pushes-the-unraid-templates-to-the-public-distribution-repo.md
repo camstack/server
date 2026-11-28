@@ -11,7 +11,7 @@ applies-to:
 ## Context
 
 [D22](adr-0022.md) generates `unraid/` from the image contract and distributes it
-from the public `camstack/unraid-templates`, with the copy between the two repos
+from the public `dominevo/unraid-templates`, with the copy between the two repos
 left as a deliberate manual step: "it will be forgotten. That is accepted rather
 than automated … If it becomes a real problem, automate it then."
 
@@ -26,7 +26,7 @@ guard were green throughout; the hop they cannot see is the one that rotted.
 ## Decision
 
 The `sync-unraid-templates` job in `release.yml` copies `unraid/` into
-`camstack/unraid-templates` on every tag release, after the release is
+`dominevo/unraid-templates` on every tag release, after the release is
 published, on the self-hosted `agent-a` runner only. It first re-runs
 `deployment-templates.ts --check`, so a stale tree is refused rather than
 shipped. It authenticates with the `UNRAID_TEMPLATES_TOKEN` secret (a

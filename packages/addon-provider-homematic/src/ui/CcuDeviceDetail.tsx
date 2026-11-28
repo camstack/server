@@ -9,7 +9,7 @@ import {
   Skeleton,
   type AddonPageProps,
   type DataColumn,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { ArrowLeft, ExternalLink, MousePointerClick, SlidersHorizontal } from 'lucide-react'
 import {
   CcuDeviceStateSchema,

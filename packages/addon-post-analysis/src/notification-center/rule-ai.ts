@@ -10,19 +10,19 @@
  *
  * ## Why this block is not a field on `NcRule`
  *
- * `NcRule` lives in `@camstack/types`. The addon builds self-contained and
+ * `NcRule` lives in `@dominevo/types`. The addon builds self-contained and
  * INLINES that package, so its own copy is never stale — but the hub's cap
  * router (`notificationRules.createRule` / `updateRule`) validates rule input
- * against the copy `@camstack/server/system` inlines (`bundleTypesMainEntry`). A new
+ * against the copy `@dominevo/server/system` inlines (`bundleTypesMainEntry`). A new
  * key on `NcRuleInputSchema` is therefore *silently stripped at save* on every
- * hub until a `@camstack/server` release carrying it is installed — the
+ * hub until a `@dominevo/server` release carrying it is installed — the
  * failure `summary/summary-rule.ts` documents and the timelapse rule paid for
  * with three cascaded bugs in one day.
  *
  * So the block is addon-owned: this schema, `rule-ai-store.ts` for the durable
  * side table keyed by rule id, and the `nc.getRuleAi` / `nc.setRuleAi` bridge
  * actions (`addons.custom`, no cap, no codegen, no train). A field added here is
- * live on the next `camstack deploy packages/addon-post-analysis`.
+ * live on the next `dominevo deploy packages/addon-post-analysis`.
  *
  * It is a side table and not a second opinion: nothing else in this repo stores
  * whether a rule narrates itself, so there is no authority for it to disagree

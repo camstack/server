@@ -5,7 +5,7 @@
  * aliasing a stale ref, shipping frameRef cross-node, or leaving resident bytes.
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { DecodedFrame, FrameResult, IScopedLogger, ObjectDetection } from '@camstack/types'
+import type { DecodedFrame, FrameResult, IScopedLogger, ObjectDetection } from '@dominevo/types'
 import { LocalFrameRegistry } from '../../session-decode/local-frame-registry.js'
 import {
   CONTENT_SIZED_RESERVE_BYTES,

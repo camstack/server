@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Handle, Position } from '@xyflow/react'
-import { formatLastSeen, useUiText, Button } from '@camstack/ui-library'
+import { formatLastSeen, useUiText, Button } from '@dominevo/ui-library'
 import type { ClusterGraphNode } from './build-cluster-graph'
 import { RunnerBlock } from './RunnerBlock'
 import { lastSeenToMs } from '../../../lib/last-seen'

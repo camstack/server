@@ -10,7 +10,7 @@
  *   1. the phone, as an EAS OTA update (`npm run update:patch` in `camstack/`);
  *   2. the browser and the DESKTOP SHELL, as the web bundle the orchestrator
  *      serves at `/viewer/camstack/` (`npm run build:orchestrator`, then
- *      `camstack deploy packages/addon-pipeline-orchestrator`);
+ *      `dominevo deploy packages/addon-pipeline-orchestrator`);
  *   3. this repository's record of which viewer is current — the submodule pin.
  *
  * They were three manual steps, and on 2026-09-09 they diverged twice in one

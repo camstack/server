@@ -29,7 +29,7 @@ import {
   CLIP_STILL_DISPOSITION_HEADER,
   CLIP_STILL_REASON_CODE_HEADER,
   CLIP_STILL_REASON_HEADER,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { defaultUiText, type UiTextFn } from '../../contexts/ui-text.js'
 import { describeRefusal, type ClipTileMedia, type MintRefusalHeaders } from './clip-tile-media.js'
 

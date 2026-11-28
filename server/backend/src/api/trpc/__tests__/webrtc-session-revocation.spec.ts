@@ -4,8 +4,8 @@
  * drop the `hold(...)` calls in `wrapWebrtcSessionProviderWithRelay` and the
  * "closes" claim goes red.
  */
-import type { InferProvider } from '@camstack/types'
-import { webrtcSessionCapability } from '@camstack/types'
+import type { InferProvider } from '@dominevo/types'
+import { webrtcSessionCapability } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   __resetSessionConnectionsForTests,

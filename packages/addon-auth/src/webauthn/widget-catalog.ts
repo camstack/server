@@ -14,7 +14,7 @@
  * Pure data — NO React imports here, so the server addon entry can pull
  * these constants without dragging the widget bundle into the node build.
  */
-import type { LoginMethodContribution, WidgetMetadata } from '@camstack/types'
+import type { LoginMethodContribution, WidgetMetadata } from '@dominevo/types'
 
 /** MF remote name — must match `vite.widgets.config.ts` `federation.name`. */
 export const AUTH_WEBAUTHN_REMOTE_NAME = 'addon_auth_webauthn_widgets'

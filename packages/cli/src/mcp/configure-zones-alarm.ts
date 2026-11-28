@@ -15,8 +15,8 @@
  */
 import { randomUUID } from 'node:crypto'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
-import { AlarmArmModeSchema, ZoneKindEnum } from '@camstack/types'
-import { type DryRunOutcome, type GatedToolSpec, type HubClient } from '@camstack/develop'
+import { AlarmArmModeSchema, ZoneKindEnum } from '@dominevo/types'
+import { type DryRunOutcome, type GatedToolSpec, type HubClient } from '@dominevo/develop'
 import { text } from './tool-result.js'
 import { z } from 'zod'
 import {
@@ -382,7 +382,7 @@ export async function alarmSet(
 }
 
 const GATE_HOW =
-  'Two steps: call without confirm_token for a preview and a one-shot token, then call again with the SAME arguments and that token. Needs an admin `camstack login` session.'
+  'Two steps: call without confirm_token for a preview and a one-shot token, then call again with the SAME arguments and that token. Needs an admin `dominevo login` session.'
 
 export function registerZonesAlarmTools(server: McpServer, ctx: McpContext): void {
   server.tool(

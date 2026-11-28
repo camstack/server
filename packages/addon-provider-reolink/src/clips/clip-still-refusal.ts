@@ -19,7 +19,7 @@
  * lands in `refuseStill`'s domain automatically and a branch has to opt INTO
  * deferring it.
  */
-import type { ClipStillDisposition, ClipStillRefusalCode } from '@camstack/types'
+import type { ClipStillDisposition, ClipStillRefusalCode } from '@dominevo/types'
 
 /** The stills that are merely waiting: the work is queued, or the host is
  *  resting after a refusal and only an interactive request may probe it. */

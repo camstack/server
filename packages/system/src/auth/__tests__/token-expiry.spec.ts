@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { DEFAULT_TOKEN_EXPIRY } from '@camstack/types'
+import { DEFAULT_TOKEN_EXPIRY } from '@dominevo/types'
 import { parseTokenExpiry } from '../token-expiry.js'
 
 /**

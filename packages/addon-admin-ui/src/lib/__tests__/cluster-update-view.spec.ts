@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { ClusterUpdateJob, ClusterUpdateStep } from '@camstack/types'
+import type { ClusterUpdateJob, ClusterUpdateStep } from '@dominevo/types'
 import {
   classifyJobRead,
   dialogMode,

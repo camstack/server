@@ -11,8 +11,8 @@
  * dropped; a missed one costs latency until the next ring, and the migration
  * lease path still invalidates too.
  */
-import type { IEventBus, IScopedLogger, StorageLocation } from '@camstack/types'
-import { errMsg, EventCategory, resolveLocationMode } from '@camstack/types'
+import type { IEventBus, IScopedLogger, StorageLocation } from '@dominevo/types'
+import { errMsg, EventCategory, resolveLocationMode } from '@dominevo/types'
 import { DEFAULT_MEDIA_LOCATION } from './store/media-store.js'
 import { type MediaLocation, pickWritableMediaLocation } from './media-locations.js'
 

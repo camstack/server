@@ -1,14 +1,14 @@
 #!/usr/bin/env tsx
 /**
  * Runner-footprint guard (D28) — fail the build if the addon-runner's transitive
- * SOURCE closure imports a runtime VALUE from the `@camstack/types` root barrel.
+ * SOURCE closure imports a runtime VALUE from the `@dominevo/types` root barrel.
  *
  * ── The bug class this prevents ────────────────────────────────────────────
  * A forked addon-runner must never load the schema barrel: importing
- * `@camstack/types` eagerly builds the Zod graph of all ~266 caps (+~146MB RSS
- * PER runner; the lightweight `@camstack/types/addon` entry is +20MB). There is
+ * `@dominevo/types` eagerly builds the Zod graph of all ~266 caps (+~146MB RSS
+ * PER runner; the lightweight `@dominevo/types/addon` entry is +20MB). There is
  * NO runtime tree-shaking in Node and the package is externalized, so ONE bare
- * `import { x } from '@camstack/types'` anywhere in the runner's transitive graph
+ * `import { x } from '@dominevo/types'` anywhere in the runner's transitive graph
  * re-drags the entire 992KB schema chunk and silently reverts the win. This is
  * exactly how the first attempt failed: `trpc-links.ts` still pulled `readNodePin`
  * from the barrel, dragging the whole chunk back into the runner. See
@@ -16,9 +16,9 @@
  *
  * ── What this guard does ───────────────────────────────────────────────────
  * BFS from `addon-runner.ts` over relative (`./` / `../`) imports inside
- * `packages/system/src`, and flag any VALUE import from the bare `@camstack/types`
+ * `packages/system/src`, and flag any VALUE import from the bare `@dominevo/types`
  * specifier (type-only imports are erased at runtime and allowed). Runner-surface
- * utilities must be imported from `@camstack/types/addon` / `/node` / `/enums`.
+ * utilities must be imported from `@dominevo/types/addon` / `/node` / `/enums`.
  *
  * Run manually: npx tsx scripts/check-runner-barrel-free.ts
  */
@@ -32,7 +32,7 @@ const ROOT = path.resolve(__dirname, '..')
 /**
  * Every entry whose closure must stay schema-free. The addon-runner is loaded by
  * every forked process; `addon-utils` is loaded by every addon that downloads a
- * model or registers a custom action (7 hub runners) — one bare `@camstack/types`
+ * model or registers a custom action (7 hub runners) — one bare `@dominevo/types`
  * value import in `model-downloader.ts` cost each of them ~105 MB.
  */
 export const GUARDED_ENTRIES: readonly string[] = [
@@ -97,7 +97,7 @@ function* importStatements(source: string): Generator<{ stmt: string; line: numb
       String.raw`\bimport\s+(?:type\s+)?(?:\*\s+as\s+[\w$]+|[\w$]+(?:\s*,\s*(?:\{[^}]*\}|\*\s+as\s+[\w$]+))?|\{[^}]*\})\s*from\s*['"][^'"]+['"]`,
       // export [type] { … } from '<spec>'  /  export [type] * [as ns] from '<spec>'
       String.raw`\bexport\s+(?:type\s+)?(?:\*(?:\s+as\s+[\w$]+)?|\{[^}]*\})\s*from\s*['"][^'"]+['"]`,
-      // import '<spec>'  /  import('./relative') (a bare import('@camstack/types') is
+      // import '<spec>'  /  import('./relative') (a bare import('@dominevo/types') is
       // nearly always a type position — `import('…').Foo` — so it is not followed)
       String.raw`\bimport\s*['"][^'"]+['"]`,
       String.raw`\bimport\s*\(\s*['"]\.[^'"]*['"]\s*\)`,
@@ -149,7 +149,7 @@ export function findBarrelViolations(
     }
     for (const { stmt, line } of importStatements(src)) {
       const spec = specifierOf(stmt)
-      if (spec === '@camstack/types' && !isTypeOnly(stmt)) {
+      if (spec === '@dominevo/types' && !isTypeOnly(stmt)) {
         violations.push({
           file: path.relative(root, file),
           line,
@@ -197,9 +197,9 @@ function* addonServerFiles(dir: string): Generator<string> {
 
 /**
  * Addon SERVER code that names `ALL_CAPABILITY_DEFINITIONS` (comments ignored).
- * An addon bundles `@camstack/types`, so the identifier inlines every cap's Zod
+ * An addon bundles `@dominevo/types`, so the identifier inlines every cap's Zod
  * schema (~+100 MB heap per runner). Facts addons need come as codegen'd plain
- * data from `@camstack/types/addon` (`scripts/generate-addon-cap-facts.ts`).
+ * data from `@dominevo/types/addon` (`scripts/generate-addon-cap-facts.ts`).
  */
 export function findAddonDefinitionUses(root: string): readonly Violation[] {
   const packagesDir = path.join(root, 'packages')
@@ -234,9 +234,9 @@ function main(): void {
     console.error(
       `\n✗ runner-barrel-free guard (D28): addon SERVER code names ALL_CAPABILITY_DEFINITIONS\n` +
         `  (inlines every cap's Zod schema: +~100MB heap per runner that holds the addon).\n` +
-        `  Read the fact from a codegen'd table on '@camstack/types/addon' instead: add it to\n` +
+        `  Read the fact from a codegen'd table on '@dominevo/types/addon' instead: add it to\n` +
         `  scripts/generate-addon-cap-facts.ts, run 'npm run codegen', import it from\n` +
-        `  '@camstack/types/addon' (CAP_ADVANCE_FIELDS, CAP_STATE_LEAVES). See docs/decisions/adr-0028.md.\n`,
+        `  '@dominevo/types/addon' (CAP_ADVANCE_FIELDS, CAP_STATE_LEAVES). See docs/decisions/adr-0028.md.\n`,
     )
     for (const v of definitionUses) {
       // eslint-disable-next-line no-console
@@ -249,9 +249,9 @@ function main(): void {
     // eslint-disable-next-line no-console
     console.error(
       `\n✗ runner-barrel-free guard (D28): a guarded closure imports runtime VALUES\n` +
-        `  from the '@camstack/types' schema barrel (+~100-146MB RSS per process).\n` +
+        `  from the '@dominevo/types' schema barrel (+~100-146MB RSS per process).\n` +
         `  Guarded entries: ${GUARDED_ENTRIES.join(', ')}\n` +
-        `  Import runner-surface utilities from '@camstack/types/addon' (or /node, /enums)\n` +
+        `  Import runner-surface utilities from '@dominevo/types/addon' (or /node, /enums)\n` +
         `  instead (a type-only import is fine: 'import type' / '{ type X }'). See docs/decisions/adr-0028.md.\n`,
     )
     for (const v of violations) {

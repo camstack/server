@@ -130,7 +130,7 @@ describe('customize coverage guard', () => {
     const checkbox = customizeCoverageHits({
       ...base,
       kindFiles: [file],
-      read: text("import { Checkbox } from '@camstack/ui-library'"),
+      read: text("import { Checkbox } from '@dominevo/ui-library'"),
     })
     expect(checkbox.map((hit) => hit.surface)).toEqual([`kind folder ${file}`])
     const picker = customizeCoverageHits({

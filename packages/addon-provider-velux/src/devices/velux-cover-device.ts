@@ -7,7 +7,7 @@ import {
   DeviceType,
   errMsg,
   type InferNativeProvider,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { veluxCoverSchema } from '../config.js'
 import type { VeluxGatewayClient, VeluxNode } from '../velux-client-contract.js'
 import { veluxGateways } from '../velux-node-resolver.js'
@@ -22,7 +22,7 @@ const COLD_START: CoverStatus = {
 }
 
 /**
- * One Velux KLF-200 actuator (window or roller shutter) as a CamStack
+ * One Velux KLF-200 actuator (window or roller shutter) as a Dominevo
  * {@link DeviceType.Cover} device: a top-level device of its integration, or the
  * cover inside a window container. Registers ONE cap (`cover`) with the positional lifecycle surface
  * (open/close/stop/setPosition). Velux actuators are positional with NO tilt, so

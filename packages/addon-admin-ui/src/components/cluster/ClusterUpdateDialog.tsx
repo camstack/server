@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type JSX } from 'react'
-import type { ClusterUpdateJob, ClusterUpdateOptions, ClusterUpdatePlan } from '@camstack/types'
+import type { ClusterUpdateJob, ClusterUpdateOptions, ClusterUpdatePlan } from '@dominevo/types'
 import {
   Button,
   Checkbox,
@@ -9,7 +9,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 import {
   CLUSTER_UPDATE_POLL_MS,

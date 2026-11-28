@@ -12,7 +12,7 @@
  *    the keychain by an older hub is NOT recognised here, so it reads as an orphan the
  *    operator deletes by hand; nothing reads or writes it any more.
  */
-import type { SystemHeldSecretName } from '@camstack/types'
+import type { SystemHeldSecretName } from '@dominevo/types'
 import { JWT_SIGNING_KEY_REF, SYSTEM_SECRET_OWNER } from '../../auth/jwt-signing-key.js'
 import { DEVICE_CA_KEY_REF } from '../../auth/device-ca.js'
 import { MESH_CA_KEY_REF } from '../../kernel/moleculer/mesh-mtls/constants.js'

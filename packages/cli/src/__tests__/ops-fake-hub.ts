@@ -3,7 +3,7 @@ import {
   type ConnectOutcome,
   type HubClient,
   type HubHttpMethod,
-} from '@camstack/develop'
+} from '@dominevo/develop'
 import type { McpContext } from '../mcp/context.js'
 
 export interface RecordedCall {
@@ -45,7 +45,7 @@ export function fakeHub(
       tls: {},
       client,
       adminHint: tier === 'admin' ? null : 'log in as admin',
-      loginCommand: 'camstack login',
+      loginCommand: 'dominevo login',
     },
   }
   return {
@@ -66,7 +66,7 @@ export function noSessionContext(): McpContext {
       ok: false,
       reason: 'no-session',
       message: 'no usable hub session',
-      action: 'run `camstack login <host>` in a terminal',
+      action: 'run `dominevo login <host>` in a terminal',
     }),
     gate: new MutationGate({ allowMutations: false }),
     fetch: async () => new Response('{}'),

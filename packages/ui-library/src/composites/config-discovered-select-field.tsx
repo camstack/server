@@ -9,7 +9,7 @@
  * a list that did not come.
  */
 import { useMemo, type JSX } from 'react'
-import type { ConfigSelectField } from '@camstack/types'
+import type { ConfigSelectField } from '@dominevo/types'
 import {
   useIntegrationInstancesListInstances,
   useNotificationOutputDiscoverTargets,

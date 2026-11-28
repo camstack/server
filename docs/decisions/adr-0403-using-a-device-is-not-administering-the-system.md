@@ -95,8 +95,8 @@ actuation set is a decision made once, in a diff someone reviewed.
 - Un-granted callers are unaffected: `protected` still refuses a session with
   no matching scope, and the refusal now carries the matcher's human-readable
   reason instead of a bare admin denial.
-- The change is in `@camstack/types` and the generated cap routers, so it is
-  live only once a `@camstack/server` containing it is installed on the node —
+- The change is in `@dominevo/types` and the generated cap routers, so it is
+  live only once a `@dominevo/server` containing it is installed on the node —
   not when the registry has it.
 
 ## Enforcement

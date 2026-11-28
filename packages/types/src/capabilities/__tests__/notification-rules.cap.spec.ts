@@ -111,7 +111,7 @@ describe('notification-rules additive fields', () => {
           kinds: ['device-offline', 'addon-update-available'],
           deviceIds: [104],
           deviceTypes: ['camera'],
-          packageNames: ['@camstack/addon-pipeline'],
+          packageNames: ['@dominevo/addon-pipeline'],
         },
       },
       targets: [{ targetId: 't1' }],

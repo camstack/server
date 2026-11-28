@@ -5,8 +5,8 @@
  * still picks every one (D356). Everything it asks is read from the preset
  * registry, so a new preset needs no code here.
  */
-import { compositionSourceKey, type CompositionSourceRef } from '@camstack/types'
-import { Button, Input } from '@camstack/ui-library'
+import { compositionSourceKey, type CompositionSourceRef } from '@dominevo/types'
+import { Button, Input } from '@dominevo/ui-library'
 import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { SourceSelectorDevicesDialog } from '../device/customize/source-selector/SourceSelectorDevicesDialog'

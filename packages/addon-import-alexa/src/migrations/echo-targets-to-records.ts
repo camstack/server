@@ -9,7 +9,7 @@
  * may have edited it since). A row that does not parse is left where it is and keeps the setting in
  * place: nothing is destroyed on a guess (D49).
  */
-import { type MigrationProcedureResult, targetBody } from '@camstack/types'
+import { type MigrationProcedureResult, targetBody } from '@dominevo/types'
 import { alexaEchoTargetSchema } from '../config.js'
 import { ALEXA_SPEAK_KIND } from '../speak/constants.js'
 

@@ -2,7 +2,7 @@
  * A rename made in Quick edit reaches the open template editor, so pressing
  * Save afterwards sends the NEW name instead of reverting it.
  */
-import { AUTOMATION_TEMPLATE_VERSION } from '@camstack/types'
+import { AUTOMATION_TEMPLATE_VERSION } from '@dominevo/types'
 import { fireEvent, render, renderHook, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { useTemplateEditorState } from '../../../../components/remote/TemplateEditorDialog'

@@ -46,8 +46,8 @@ describe('closure pins file', () => {
     expect(readTarballEntry(tgz, 'package/missing.json')).toBeNull()
   })
 
-  it('accepts exact versions only and never a @camstack pin', () => {
-    expect(parseClosurePins(JSON.stringify({ ...PINS, '@camstack/sdk': '1.0.0' }))).toEqual({
+  it('accepts exact versions only and never a @dominevo pin', () => {
+    expect(parseClosurePins(JSON.stringify({ ...PINS, '@dominevo/sdk': '1.0.0' }))).toEqual({
       pins: PINS,
       miss: null,
     })
@@ -117,7 +117,7 @@ describe('staging a registry closure', () => {
       fs.writeFileSync(path.join(pkgDir, 'dist', 'launcher.js'), '// entry', 'utf-8')
       fs.writeFileSync(
         path.join(pkgDir, 'package.json'),
-        JSON.stringify({ name: '@camstack/server', version: '1.2.277' }),
+        JSON.stringify({ name: '@dominevo/server', version: '1.2.277' }),
         'utf-8',
       )
       return { stdout: '' }
@@ -126,7 +126,7 @@ describe('staging a registry closure', () => {
 
   async function stage(execNpm: NpmExecFn): Promise<void> {
     const runningPkg = path.join(tmp, 'running-package.json')
-    fs.writeFileSync(runningPkg, JSON.stringify({ name: '@camstack/server', version: '1.2.276' }))
+    fs.writeFileSync(runningPkg, JSON.stringify({ name: '@dominevo/server', version: '1.2.276' }))
     const service = new RootUpdateService({
       spec: HUB_ROOT_SPEC,
       envNames: ENV_NAMES,

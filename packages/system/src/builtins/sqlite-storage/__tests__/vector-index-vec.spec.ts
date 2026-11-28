@@ -14,7 +14,7 @@ import {
   type IScopedLogger,
   isVectorIndexDimConflict,
   VECTOR_INDEX_DIM_CONFLICT,
-} from '@camstack/types'
+} from '@dominevo/types'
 import Database from 'better-sqlite3'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { type RawSqliteDatabase, SqliteVecVectorIndex, VEC_KNN_MAX_K } from '../vector-index-vec.js'
@@ -211,7 +211,7 @@ describe('SqliteVecVectorIndex', () => {
  * `resolveRowBound` guards `data-store-provider.query` — the door 24 analytics
  * call sites use. `vector-store.query` reaches the SAME database file, on the
  * same connection, in the SAME process (hub-main: `sqlite-settings` is a
- * `@camstack/server/system` builtin and is never handed to `$process.spawnRunner`),
+ * `@dominevo/server/system` builtin and is never handed to `$process.spawnRunner`),
  * and its `topK` was `z.number().int().positive()` with no `.max()`, bound
  * straight into `k = ?` and `.all()`ed.
  *

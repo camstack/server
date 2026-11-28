@@ -23,7 +23,7 @@ import {
   customAction,
   defineCustomActions,
   RebuildObjectEmbeddingsRefusalSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 
 const RebuildInputSchema = z.object({

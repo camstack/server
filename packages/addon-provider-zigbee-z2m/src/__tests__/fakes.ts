@@ -1,4 +1,4 @@
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { Z2mSocket, Z2mSocketFactory, Z2mSocketHandlers, Z2mTimers } from '../z2m-client.js'
 
 export interface LogLine {

@@ -1,4 +1,4 @@
-import type { EncodedPacket } from '@camstack/types'
+import type { EncodedPacket } from '@dominevo/types'
 
 import { backingStoreBytes, detachFromPool } from './owned-buffer.js'
 

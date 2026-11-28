@@ -50,7 +50,7 @@ import type {
   SettingsStoreClient,
   UnstampedEventMediaCount,
   UnstampedRows,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { MediaBlobStorage } from './location-aware-media-storage.js'
 import { isRetentionExemptOwnerKind } from './retention/retention-model.js'
 import { rowIsDurableRetrainCopy } from './retrain/retrain-frame-store.js'

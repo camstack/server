@@ -19,8 +19,8 @@
  * Hot path: a line with no meta, no `://`, no `--` and no registered values
  * costs a few `includes` checks.
  */
-import type { LogEntry } from '@camstack/types'
-import { maskUrlCredentials, scrubKnownSecrets } from '@camstack/types/addon'
+import type { LogEntry } from '@dominevo/types'
+import { maskUrlCredentials, scrubKnownSecrets } from '@dominevo/types/addon'
 
 const REDACTED = '***'
 

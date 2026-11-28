@@ -25,7 +25,7 @@
  *  - version negotiation (we pin `singleton: true` everywhere; the host
  *    wins by default).
  *  - cross-bundle context invariant preserved automatically: every
- *    remote's `@camstack/ui-library` import resolves to the host's
+ *    remote's `@dominevo/ui-library` import resolves to the host's
  *    instance, so `createContext()` references match across bundles.
  *
  * Live-update — listens to `addon.widget-ready` so newly-loaded addons
@@ -46,7 +46,7 @@ import {
 } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { registerRemotes, loadRemote } from '@module-federation/runtime'
-import type { UiContributionRemote, EnrichedWidgetMetadata } from '@camstack/types'
+import type { UiContributionRemote, EnrichedWidgetMetadata } from '@dominevo/types'
 
 import { createSharedContext } from '../lib/shared-context'
 import { ensureMfHostInit } from '../lib/mf-runtime-init'

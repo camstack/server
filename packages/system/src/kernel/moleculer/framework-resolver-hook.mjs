@@ -5,15 +5,15 @@ import { pathToFileURL } from 'node:url'
 // hooks run as raw ESM (no TS build). The host-externals.spec + this file's
 // spec both pin the list; if they drift a test fails.
 const HOST_EXTERNAL_SPECIFIERS = [
-  '@camstack/server/system',
-  '@camstack/types',
-  '@camstack/sdk',
+  '@dominevo/server/system',
+  '@dominevo/types',
+  '@dominevo/sdk',
   'zod',
   '@trpc/server',
   '@trpc/client',
   // Common native deps addons genuinely import (sharp, node-av) — resolved from
   // the framework's node_modules. better-sqlite3 is intentionally excluded: no
-  // addon imports it (only @camstack/server/system's hub-side sqlite-storage builtin),
+  // addon imports it (only @dominevo/server/system's hub-side sqlite-storage builtin),
   // so a stray addon import must fail rather than be silently redirected. Keep
   // in sync with host-externals.ts (a spec pins both).
   'sharp',
@@ -33,7 +33,7 @@ let anchorParentURL = null
 
 // Receives { frameworkDir } via module.register(..., { data }). Computes the
 // anchor file URL inside frameworkDir/node_modules so nextResolve walks up from
-// there and finds @camstack/* via standard package resolution (honors exports).
+// there and finds @dominevo/* via standard package resolution (honors exports).
 export function initialize(data) {
   const frameworkDir = data && typeof data.frameworkDir === 'string' ? data.frameworkDir : null
   anchorParentURL = frameworkDir

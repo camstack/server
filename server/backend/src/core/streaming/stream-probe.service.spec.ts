@@ -3,7 +3,7 @@
  * pinned binary, a refused dial, a timeout) cached for an hour turned one bad
  * moment into the camera's metadata for an hour.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { StreamProbeService } from './stream-probe.service'
 

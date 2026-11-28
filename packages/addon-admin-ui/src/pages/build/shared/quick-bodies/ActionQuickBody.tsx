@@ -2,8 +2,8 @@
  * Action quick body: what it does (steps, the devices it names), and a Run button. Its
  * last executions are their own tab (`QuickLastRuns`).
  */
-import type { ActionEntry } from '@camstack/types'
-import { Badge, Button, useActionsRun } from '@camstack/ui-library'
+import type { ActionEntry } from '@dominevo/types'
+import { Badge, Button, useActionsRun } from '@dominevo/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { Play } from 'lucide-react'
 import type { ReactNode } from 'react'

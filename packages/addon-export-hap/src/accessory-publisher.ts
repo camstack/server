@@ -21,7 +21,7 @@
 import { type Accessory, HAPStorage, type PublishInfo } from '@homebridge/hap-nodejs'
 import { createHash } from 'node:crypto'
 import * as fs from 'node:fs/promises'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 let hapStorageDir: string | null = null
 

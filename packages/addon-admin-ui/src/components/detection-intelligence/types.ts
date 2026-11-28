@@ -1,7 +1,7 @@
 /**
  * Local mirrors of the `face-gallery` capability schema, shared across the
  * detection-intelligence components. Kept local (not imported from
- * `@camstack/types`) to match the existing convention in this folder and to
+ * `@dominevo/types`) to match the existing convention in this folder and to
  * keep the admin bundle free of a cross-package type import.
  */
 

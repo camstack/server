@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
-import type { DeviceTransition } from '@camstack/types'
-import { DEVICE_TRANSITIONS_RECORD_BATCH_MAX } from '@camstack/types'
+import type { DeviceTransition } from '@dominevo/types'
+import { DEVICE_TRANSITIONS_RECORD_BATCH_MAX } from '@dominevo/types'
 import { TransitionSender } from '../transitions-sender.js'
 
 function row(i: number, deviceId = 1): DeviceTransition {

@@ -16,7 +16,7 @@ import {
   errMsg,
   resyncCapability,
   resyncThroughAdoption,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import {
   DREAME_AUTO_SELECTS,

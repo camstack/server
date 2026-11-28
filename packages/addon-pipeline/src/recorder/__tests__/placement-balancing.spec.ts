@@ -11,7 +11,7 @@
  * And the invariant that lets this ship onto a live single-disk hub: with one
  * writable location, every decision is byte-for-byte what it is today.
  */
-import { type CamProfile, createDurableState, type IScopedLogger } from '@camstack/types'
+import { type CamProfile, createDurableState, type IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import type { RecordingOpsLogSink } from '../addon/ops-log-store.js'
 import { PlacementService, type PlacementServiceDeps } from '../addon/placement-service.js'

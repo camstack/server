@@ -5,7 +5,7 @@
  * Confirm or Replace sensor can suppress the camera's own. Both sites: the
  * per-tick `detected: true` heartbeat and the inactivity-timer clear.
  */
-import { EventCategory, type IScopedLogger } from '@camstack/types'
+import { EventCategory, type IScopedLogger } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createAlarmIngressLog } from '../hikvision-alarm-ingress-log.js'
 import { HikvisionCamera } from '../hikvision-camera.js'

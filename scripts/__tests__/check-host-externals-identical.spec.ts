@@ -8,12 +8,12 @@ const mjs = (items: string) => `const HOST_EXTERNAL_SPECIFIERS = [\n${items}\n]\
 describe('check-host-externals-identical', () => {
   it('reads the quoted entries and ignores comments', () => {
     expect(
-      extractHostExternals(ts(`  '@camstack/server/system',\n  // 'zod' is not here\n  'sharp',`)),
-    ).toEqual(['@camstack/server/system', 'sharp'])
+      extractHostExternals(ts(`  '@dominevo/server/system',\n  // 'zod' is not here\n  'sharp',`)),
+    ).toEqual(['@dominevo/server/system', 'sharp'])
   })
 
   it('is silent when the lists agree', () => {
-    const items = `  '@camstack/server/system',\n  'sharp',`
+    const items = `  '@dominevo/server/system',\n  'sharp',`
     expect(
       findHostExternalDrift([
         { rel: 'a.ts', content: ts(items) },
@@ -24,12 +24,12 @@ describe('check-host-externals-identical', () => {
 
   it('names the file that lacks a specifier the others carry', () => {
     const drift = findHostExternalDrift([
-      { rel: 'a.ts', content: ts(`  '@camstack/server/system',\n  'sharp',`) },
-      { rel: 'b.mjs', content: mjs(`  '@camstack/system',\n  'sharp',`) },
+      { rel: 'a.ts', content: ts(`  '@dominevo/server/system',\n  'sharp',`) },
+      { rel: 'b.mjs', content: mjs(`  '@dominevo/system',\n  'sharp',`) },
     ])
     expect(drift.map((d) => d.file)).toEqual(['a.ts', 'b.mjs'])
-    expect(drift[0]?.missing).toEqual(['@camstack/system'])
-    expect(drift[1]?.missing).toEqual(['@camstack/server/system'])
+    expect(drift[0]?.missing).toEqual(['@dominevo/system'])
+    expect(drift[1]?.missing).toEqual(['@dominevo/server/system'])
   })
 
   it('fails a file whose array it cannot find', () => {

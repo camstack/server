@@ -19,7 +19,7 @@
  * retained shelf, whose own age/count/size bounds sweep them; only the
  * browsable index rows go.
  */
-import type { DefinedRecordKind, IScopedLogger } from '@camstack/types'
+import type { DefinedRecordKind, IScopedLogger } from '@dominevo/types'
 import type { DurableLedgerBodySchema } from '../durable/durable-record-body.js'
 import type { DurableKindDeps } from '../durable/durable-wiring.js'
 import { ncDurableRecordKinds } from './nc-durable-record-kinds.js'

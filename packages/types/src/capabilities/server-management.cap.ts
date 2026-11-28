@@ -7,7 +7,7 @@ import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
  * server-management — per-NODE singleton capability for a node's ROOT
  * package lifecycle (runtime-updatable node packages).
  *
- * Every node role runs the SAME root package (`@camstack/server`), which
+ * Every node role runs the SAME root package (`@dominevo/server`), which
  * carries the whole software stack in its npm dep tree, so ONE version
  * describes the node. Updates stage into `<dataDir>/server-root/` and apply
  * on restart via the baked starter (single-copy in-place swap — no probation,
@@ -113,7 +113,7 @@ const ImageContractSchema = z.object({
  * ## The rule: observe what you can, declare only what you cannot
  *
  * On 2026-08-02 `check-deployment-templates.ts` proved every day that the
- * templates declared `ghcr.io/camstack/camstack:intel-latest` while the hub
+ * templates declared `ghcr.io/dominevo/dominevo:intel-latest` while the hub
  * actually ran `camstack-server:intel-1.1.74` from a repository that had been
  * renamed and received no builds. The declaration was right; reality was not;
  * nothing compared them. A `CAMSTACK_WRAPPER=docker` written into a template
@@ -284,7 +284,7 @@ const RunnerBootCheckSchema = z.object({
 })
 
 const ServerPackageStatusSchema = z.object({
-  /** Root package name (`@camstack/server` on the hub). */
+  /** Root package name (`@dominevo/server` on the hub). */
   packageName: z.string(),
   /**
    * Version of the code THIS PROCESS loaded — captured once, at boot, from the
@@ -509,7 +509,7 @@ export const serverManagementCapability = {
         auth: 'admin',
         /*
          * `applyServerUpdate` STAGES synchronously before replying: the handler
-         * (`RootUpdateService.applyServerUpdate` in `@camstack/node-root`) awaits
+         * (`RootUpdateService.applyServerUpdate` in `@dominevo/node-root`) awaits
          * a full `npm install` of the target closure (bounded by its own
          * `NPM_INSTALL_TIMEOUT_MS = 15min`) and closure validation, THEN arms the
          * swap + returns `{accepted, restarting}`. On the hub the caller reaches
@@ -573,7 +573,7 @@ export const serverManagementCapability = {
       auth: 'admin',
     }),
   },
-  /** BIG PLAN 2: declarative mount hint — read by `@camstack/server/system` `buildCapRouters`. */
+  /** BIG PLAN 2: declarative mount hint — read by `@dominevo/server/system` `buildCapRouters`. */
   mount: { kind: 'server-provided' },
   vocabulary: { notOperatorFacing: NOT_A_DEVICE.CLUSTER },
 } as const satisfies CapabilityDefinition

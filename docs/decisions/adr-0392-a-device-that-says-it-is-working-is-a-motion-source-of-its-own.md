@@ -84,7 +84,7 @@ Three properties follow, and each is the decision as much as the enum entry is:
   decode restart.
 - **`MotionSourceEnum` is a framework type, so this ships on a train.** An
   attach payload can now carry a value an older node's copy of the schema
-  rejects — until every node runs a `@camstack/server` containing it, a session
+  rejects — until every node runs a `@dominevo/server` containing it, a session
   placed on a stale agent for a camera whose `motionSources` includes
   `device-activity` is refused at validation. The blast radius is bounded by the
   default: the source arrives only where `recording-signal` exists, which today

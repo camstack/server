@@ -3,7 +3,7 @@
  * and its conversion to and from the capability's settings. Nothing here judges
  * day or night: the phase and the reason come from `daylightPhase.getPhase`.
  */
-import type { DaylightSettings } from '@camstack/types'
+import type { DaylightSettings } from '@dominevo/types'
 
 /** What a fresh sensor choice starts from. */
 export const DEFAULT_DARK_BELOW_LUX = 10

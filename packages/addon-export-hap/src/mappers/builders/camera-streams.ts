@@ -46,8 +46,8 @@ import type { ChildProcess } from 'node:child_process'
 import { spawn } from 'node:child_process'
 import { createSocket, type Socket as UdpSocket } from 'node:dgram'
 import { networkInterfaces } from 'node:os'
-import type { IScopedLogger, PinnedFfmpegResolver } from '@camstack/types'
-import { buildFfmpegArgs } from '@camstack/types'
+import type { IScopedLogger, PinnedFfmpegResolver } from '@dominevo/types'
+import { buildFfmpegArgs } from '@dominevo/types'
 import {
   AudioBitrate,
   AudioStreamingCodecType,

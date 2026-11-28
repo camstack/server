@@ -49,9 +49,9 @@
  * themselves, and `captureDisplayCrop`'s fallback translates it to `null` at
  * its own wiring. The ROI fetches want the `null`. Do not unify them.
  */
-import type { AddonContext, DecodedFrame, FrameHandle, IScopedLogger } from '@camstack/types'
+import type { AddonContext, DecodedFrame, FrameHandle, IScopedLogger } from '@dominevo/types'
 import { NativeCropDedupe } from './native-crop-dedupe.js'
-import { errMsg, nodePin } from '@camstack/types'
+import { errMsg, nodePin } from '@dominevo/types'
 import { decodeJpegToRgb, encodeRgbCropToJpeg } from '../../shared/frame/encode-crop.js'
 import { extractCrop } from '../../shared/frame/crop-extractor.js'
 import { createCaptureCrop } from '../pipeline/capture-crop.js'

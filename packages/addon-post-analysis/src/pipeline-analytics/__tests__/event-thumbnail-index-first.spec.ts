@@ -21,7 +21,7 @@
  * this kind of quiet drop.
  */
 
-import type { MediaFileInfo } from '@camstack/types'
+import type { MediaFileInfo } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { makeTestMediaFileInfo } from '../../__tests__/support/media-file.js'
 import {

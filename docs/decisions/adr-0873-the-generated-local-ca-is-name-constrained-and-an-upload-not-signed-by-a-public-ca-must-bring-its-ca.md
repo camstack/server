@@ -101,7 +101,7 @@ upload made before this change is copied aside by the revert itself.
   agent's HTTPS leaf, which is certified by address.
 - A hostname the operator sets later is covered only when it sits under a permitted
   suffix; a new single-label hostname is not (the CA is never re-issued for it).
-- Two new direct dependencies of `@camstack/system`, `@peculiar/asn1-schema` and
+- Two new direct dependencies of `@dominevo/system`, `@peculiar/asn1-schema` and
   `@peculiar/asn1-x509`, already in the tree through `@peculiar/x509`, which has no
   name-constraints class.
 

@@ -84,7 +84,7 @@ are permanent and are removed only by `removeSample` / `deleteIdentity`.
 
 ## 3. Server work (`camstack-server`) — one deploy
 
-### 3.1 `@camstack/types` (workspace, no npm publish needed)
+### 3.1 `@dominevo/types` (workspace, no npm publish needed)
 
 - `MediaFile.kind` enum: add `'faceCrop'`, `'plateCrop'` (kept additive; no exhaustive
   switch exists over kinds in the monorepo — verified in the prior session).
@@ -128,8 +128,8 @@ are permanent and are removed only by `removeSample` / `deleteIdentity`.
 
 ### 3.3 Deploy
 
-Rebuild `@camstack/types` (`npm run build -w packages/types`), then
-`camstack deploy packages/addon-post-analysis --server https://localhost:4443`.
+Rebuild `@dominevo/types` (`npm run build -w packages/types`), then
+`dominevo deploy packages/addon-post-analysis --server https://localhost:4443`.
 Verify on cam99: events produce `faceCrop`/`plateCrop`; `face-gallery` methods reachable.
 
 ---
@@ -141,7 +141,7 @@ first section **People**. Uses the auto-generated tRPC hooks for the **system-sc
 `face-gallery` cap (`useFaceGalleryListIdentities`, `…ListRecentFaces`, `…AssignFace`, …) —
 **no device enumeration**.
 
-Components (built on `@camstack/ui-library`: `Card`, `Dialog`, `Button`, `Badge`, grid; base64→`<img>`):
+Components (built on `@dominevo/ui-library`: `Card`, `Dialog`, `Button`, `Badge`, grid; base64→`<img>`):
 - **People list** — cover (`coverMediaKey` via sample base64) + sample count; create / rename / delete.
 - **Per-person gallery** — `listIdentitySamples(identityId)`; remove a sample.
 - **Unassigned buffer** — `listRecentFaces({ filter })` with a filter (unassigned /
@@ -149,7 +149,7 @@ Components (built on `@camstack/ui-library`: `Card`, `Dialog`, `Button`, `Badge`
   the fly**, or dissociate.
 
 Page is structured so "People" is the first of possibly several future sections.
-Deploy: `camstack deploy packages/addon-admin-ui`.
+Deploy: `dominevo deploy packages/addon-admin-ui`.
 
 ---
 
@@ -158,7 +158,7 @@ Deploy: `camstack deploy packages/addon-admin-ui`.
 ### 5.1 Cluster card = crop only (WS-A)
 `EventThumb` requests `getEventMedia({ eventId, kind: 'crop' })` (drop the "first base64"
 path for cards) and renders `contentFit="contain"` (already changed). Cap calls stay
-untyped via `capQuery` — no `@camstack/types` bump.
+untyped via `capQuery` — no `@dominevo/types` bump.
 
 ### 5.2 Event detail redesign (WS-C)
 Evolve `srcV2/components/camera/theater/detail/`:

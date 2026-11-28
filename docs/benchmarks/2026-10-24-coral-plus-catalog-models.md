@@ -48,7 +48,7 @@ than PCIe on every model, which is the bus, not a CPU fallback.
 
 `.50` already had the three Corals enabled at weight 1 with default model
 `yolov9s-320-edgetpu`. That map was not written. Model Studio was absent on
-the fresh hub; `@camstack/addon-model-studio@1.1.289` was installed from the
+the fresh hub; `@dominevo/addon-model-studio@1.1.289` was installed from the
 registry so the public catalog import could register, and it was left
 installed. No setting on `.9` was changed, and `importPlusCatalogModel` was
 not called there, so no plus catalog file was downloaded onto production.
@@ -377,4 +377,4 @@ The two base yolov9s models are the ones this run actually scored. At 0.65 / 0.6
 
 The five base MobileDet models do not answer the bar. The SSD decoder scores them on COCO-90, so a car the graph emits at the Plus index never becomes a vehicle. Until that decoder reads the imported label list, a MobileDet row in this table is not a reason to adopt or reject the weights.
 
-Adopting a plus catalog base model as the Coral default, had one cleared the bar, would still need a licence these terms do not give. The Model License at `https://plus.frigate.video/terms-and-conditions/` (read 2026-10-24) is non-exclusive, non-transferable and non-sublicensable: download and use on camera systems the subscriber owns or operates, for their own purposes. It does not allow distributing the weights, hosting them for a third party, or deploying them on a customer's site. A default that ships inside CamStack, or a hub that hands the file to someone else's cameras, is the case the terms point at `sales@plus catalog.video`. The operator's own cameras are inside the licence they already hold. That is not a licence to make the file the product default. The weights stay on `.9` and `.50` as imported models, not in the catalog.
+Adopting a plus catalog base model as the Coral default, had one cleared the bar, would still need a licence these terms do not give. The Model License at `https://plus.frigate.video/terms-and-conditions/` (read 2026-10-24) is non-exclusive, non-transferable and non-sublicensable: download and use on camera systems the subscriber owns or operates, for their own purposes. It does not allow distributing the weights, hosting them for a third party, or deploying them on a customer's site. A default that ships inside Dominevo, or a hub that hands the file to someone else's cameras, is the case the terms point at `sales@plus catalog.video`. The operator's own cameras are inside the licence they already hold. That is not a licence to make the file the product default. The weights stay on `.9` and `.50` as imported models, not in the catalog.

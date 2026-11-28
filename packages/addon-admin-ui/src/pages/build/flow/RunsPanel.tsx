@@ -9,7 +9,7 @@ import {
   type AutomationRunTrace,
   foldHoldEpisodes,
   type SchedulerOutcome,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   Badge,
   type BadgeVariant,
@@ -21,7 +21,7 @@ import {
   Skeleton,
   useIsMidWidth,
   useIsMobile,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { History } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'

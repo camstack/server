@@ -21,8 +21,8 @@
  * the device, and the entry is delivered exactly as before.
  */
 
-import type { FrameHandle, IScopedLogger, NativeCropCapResult } from '@camstack/types'
-import { errMsg, nodePin } from '@camstack/types'
+import type { FrameHandle, IScopedLogger, NativeCropCapResult } from '@dominevo/types'
+import { errMsg, nodePin } from '@dominevo/types'
 import { encodeRgbCropToJpeg } from '../../../shared/frame/encode-crop.js'
 import type { MediaSubjectBox } from '../../store/media-store.js'
 import type { StationaryEntry } from '../stationary/stationary-types.js'

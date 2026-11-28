@@ -14,8 +14,8 @@ import {
   type CompositionView,
   type CoreBlock,
   DeviceType,
-} from '@camstack/types'
-import { ConfirmDialogProvider } from '@camstack/ui-library'
+} from '@dominevo/types'
+import { ConfirmDialogProvider } from '@dominevo/ui-library'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { MemoryRouter } from 'react-router-dom'
@@ -96,8 +96,8 @@ function MockDataTable<T>({ columns, rows, emptyMessage }: MockTableProps<T>) {
   )
 }
 
-vi.mock('@camstack/ui-library', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@camstack/ui-library')>()
+vi.mock('@dominevo/ui-library', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dominevo/ui-library')>()
   return {
     ...actual,
     useCoreBlocksListCompositions: () => compositionsQuery,

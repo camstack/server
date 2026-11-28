@@ -21,7 +21,7 @@
  *
  * Every device, not just cameras: an alarm panel arms locks and sirens.
  */
-import { NC_ALARM_SENSORS_MAX, type NcAlarmConfig, type NcAlarmSensors } from '@camstack/types'
+import { NC_ALARM_SENSORS_MAX, type NcAlarmConfig, type NcAlarmSensors } from '@dominevo/types'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -185,8 +185,8 @@ const mockCustom = vi.fn((call: CustomInput): Promise<unknown> => {
   return Promise.resolve({ success: true })
 })
 
-vi.mock('@camstack/ui-library', async () => {
-  const real = await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+vi.mock('@dominevo/ui-library', async () => {
+  const real = await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   const { useQuery } = await import('@tanstack/react-query')
   return {
     ...real,

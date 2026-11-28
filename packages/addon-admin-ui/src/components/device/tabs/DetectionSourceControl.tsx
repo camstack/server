@@ -8,8 +8,8 @@
  * below it grey out to match (`detection-source-model`). Not rendered for a
  * camera with no onboard detector: a control with one option is not shown.
  */
-import type { CameraDetectionSource } from '@camstack/types'
-import { SegmentedChoice, TEXT_HINT, TEXT_SECTION_LABEL } from '@camstack/ui-library'
+import type { CameraDetectionSource } from '@dominevo/types'
+import { SegmentedChoice, TEXT_HINT, TEXT_SECTION_LABEL } from '@dominevo/ui-library'
 import {
   geometryNote,
   sourceExplanation,

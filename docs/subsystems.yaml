@@ -164,7 +164,7 @@
     - packages/addon-post-analysis/src/durable/**
     - packages/addon-post-analysis/src/_analytics-schemas/**
     - packages/addon-post-analysis/python/**
-    # The media-key codec lives in `@camstack/types` because both an addon and
+    # The media-key codec lives in `@dominevo/types` because both an addon and
     # the UI packages must reach it and addons may not import each other — but
     # it is post-analysis's grammar, and it belongs to this chapter (D476/D482).
     - packages/types/src/media/**
@@ -327,7 +327,7 @@
   title: Shared types, schemas and enums
   purpose: >
     The vocabulary every package agrees on — the Zod schemas, enums, catalogues
-    and unit helpers exported from `@camstack/types`.
+    and unit helpers exported from `@dominevo/types`.
   globs:
     - packages/types/src/schemas/**
     - packages/types/src/helpers/**
@@ -359,7 +359,7 @@
 - id: ecosystem-exports
   title: Ecosystem exports — HomeKit, Home Assistant, Alexa, Google Home, Matter, MQTT
   purpose: >
-    Publishes CamStack's devices into somebody else's ecosystem, and imports
+    Publishes Dominevo's devices into somebody else's ecosystem, and imports
     theirs.
   globs:
     - packages/addon-export-hap/**
@@ -440,7 +440,7 @@
 - id: admin-ui
   title: Admin UI and the shared component library
   purpose: >
-    The operator's web console, and the design-system package every CamStack
+    The operator's web console, and the design-system package every Dominevo
     surface renders with.
   owner-doc: docs/architecture/ui.md
   globs:
@@ -479,7 +479,7 @@
 - id: tooling
   title: Benchmarks, model studio and developer tooling
   purpose: >
-    Everything that measures or builds CamStack rather than running it — the
+    Everything that measures or builds Dominevo rather than running it — the
     benchmark addon, the model studio, the CLI, the SDK and the repo's guards.
   owner-doc: docs/reference/guards.md
   globs:

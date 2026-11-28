@@ -15,7 +15,7 @@ import {
   workloadCapability,
   resyncCapability,
   resyncThroughAdoption,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { unifiInfraSchema } from '../config.js'
 import {
   capsForDescriptor,
@@ -214,7 +214,7 @@ export class UnifiInfraDevice extends BaseDevice<typeof unifiInfraSchema> {
 
   /**
    * Keep the device name on the controller's, unless the operator renamed the device in
-   * CamStack (`infraNameWrite`). A refused rename is logged once per controller name.
+   * Dominevo (`infraNameWrite`). A refused rename is logged once per controller name.
    */
   private async followControllerName(): Promise<void> {
     const desired = unifiControllers.getLiveInfra(this.integrationId, this.infraNativeId)?.name
@@ -233,7 +233,7 @@ export class UnifiInfraDevice extends BaseDevice<typeof unifiInfraSchema> {
       this.lastDesiredName = desired
       if (decision.kind === 'keep') {
         if (meta.name !== desired) {
-          this.ctx.logger.info('UniFi device keeps its CamStack name, the operator renamed it', {
+          this.ctx.logger.info('UniFi device keeps its Dominevo name, the operator renamed it', {
             tags: { deviceId: this.id },
             meta: { name: meta.name, controllerName: desired },
           })

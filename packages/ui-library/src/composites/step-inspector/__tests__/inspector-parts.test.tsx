@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
-import type { PipelineAddonSchema } from '@camstack/types'
+import type { PipelineAddonSchema } from '@dominevo/types'
 import { GateControl } from '../gate-control'
 import { SegmentedChoice } from '../segmented-choice'
 import { dockBox } from '../step-detail-dock'

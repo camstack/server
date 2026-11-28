@@ -44,7 +44,7 @@ Three properties decide whether this helps or hurts, and each has a test:
 1. **Compare the PHYSICAL root, not the path string.** A symlink or bind mount
    reaches one disk under two names, and a string comparison misses exactly the
    case that matters. The derivation is `physicalRootOf` in
-   `@camstack/types/node` — ONE derivation, which the recorder's
+   `@dominevo/types/node` — ONE derivation, which the recorder's
    `physicalRootKey` now delegates to. Two implementations of "is this the same
    disk" are two answers waiting to disagree.
 2. **CONTAINMENT, not just equality, in both directions.** A location nested
@@ -82,8 +82,8 @@ refused.
 - The recorder's `physicalRootKey` is now a delegate. If the shared derivation
   changes, the eviction domain and this refusal change together — which is the
   point.
-- `@camstack/types` and `@camstack/system` ship inside the published
-  `@camstack/server` closure, so this is not live until a server containing it
+- `@dominevo/types` and `@dominevo/system` ship inside the published
+  `@dominevo/server` closure, so this is not live until a server containing it
   is installed.
 
 ## Enforcement

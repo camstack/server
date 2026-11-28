@@ -2,7 +2,7 @@ import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import type { ConnectOutcome } from '@camstack/develop'
+import type { ConnectOutcome } from '@dominevo/develop'
 import {
   doctorExitCode,
   formatDoctor,
@@ -29,7 +29,7 @@ function connected(tier: 'admin' | 'protected'): ConnectOutcome {
       tls: {},
       client: { call: async () => null },
       adminHint: tier === 'admin' ? null : 'log in as admin',
-      loginCommand: 'camstack login',
+      loginCommand: 'dominevo login',
     },
   }
 }
@@ -53,7 +53,7 @@ const byId = (checks: readonly DoctorCheck[], id: DoctorCheck['id']): DoctorChec
   return found
 }
 
-describe('camstack mcp doctor', () => {
+describe('dominevo mcp doctor', () => {
   it('names the saved session it acts as', async () => {
     const outcome = connected('admin')
     if (!outcome.ok) throw new Error('fixture')
@@ -114,7 +114,7 @@ describe('camstack mcp doctor', () => {
           ok: false,
           reason: 'no-session',
           message: 'none',
-          action: 'run camstack login',
+          action: 'run dominevo login',
         }),
       }),
     )

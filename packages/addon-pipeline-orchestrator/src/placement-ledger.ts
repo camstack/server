@@ -34,8 +34,8 @@ import type {
   PipelineAssignment,
   PipelineCameraAssignmentPayload,
   RunnerCameraConfig,
-} from '@camstack/types'
-import { createEvent, EventCategory, type IEventBus, type IScopedLogger } from '@camstack/types'
+} from '@dominevo/types'
+import { createEvent, EventCategory, type IEventBus, type IScopedLogger } from '@dominevo/types'
 
 /** Why a camera is currently unassigned (pending). */
 export type PendingReason =

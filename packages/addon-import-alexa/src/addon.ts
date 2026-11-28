@@ -31,7 +31,7 @@ import {
   VENDOR_LOGIN_PROXY_PREFIX,
   VendorLoginProxy,
   isInstanceOn,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { settingsToAlexaConnection, type AlexaAddonConfig, type AlexaConnection } from './config.js'
 import { AlexaDeviceCodeManager } from './alexa-device-code-manager.js'
 import { AlexaProxyLoginManager } from './alexa-proxy-login-manager.js'
@@ -100,7 +100,7 @@ const ALEXA_DEVICE_TYPES: readonly DeviceType[] = [
  * Alexa device-import addon (any-node). Imports the smart-home devices in an
  * Amazon Alexa account via the unofficial alexa-remote2 cookie/token client
  * (behind the {@link alexaCommands} / {@link alexaAccounts} seams). One Amazon
- * account = one "broker"; each mappable appliance becomes a flat CamStack device
+ * account = one "broker"; each mappable appliance becomes a flat Dominevo device
  * (NOT a container — Alexa appliances are standalone). Poll-based state sync.
  * Modelled on the Ecowitt / Matter device-provider template.
  *

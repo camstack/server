@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, afterEach } from 'vitest'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import {
   MatterSubscriptionSupervisor,
   SUBSCRIPTION_BACKOFF_INITIAL_MS,

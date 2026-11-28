@@ -17,7 +17,7 @@ import {
   type DeviceHistoryQueryPoint,
   type DeviceHistoryQueryResult,
   type DeviceHistorySeriesInfo,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { BarBucket } from '../charts/bar-series-model'
 import type { StateChange, StateSegment, TimePoint } from '../charts/chart-data'
 import { segmentsFromChanges } from '../charts/chart-data'

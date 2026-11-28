@@ -8,7 +8,7 @@
  * sweep — forever. `redispatchCamera` reads the catalog from the cache only: the
  * wedged node's camera stays pending, named, and the rest of the sweep runs.
  */
-import type { PipelineSchema } from '@camstack/types'
+import type { PipelineSchema } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import PipelineOrchestratorAddon from '../index.js'
 import type { PendingReason } from '../placement-ledger.js'

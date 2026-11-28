@@ -3,7 +3,7 @@
  * off" must reach the server as `reasoning_effort: "none"`, or a thinking model
  * spends the whole completion on reasoning and returns an empty `content`.
  */
-import { LlmProfileFieldSchema, LlmProfileSchema } from '@camstack/types'
+import { LlmProfileFieldSchema, LlmProfileSchema } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { createLlmClient } from '../client/llm-client.js'
 import { AI_KIND_DESCRIPTORS } from '../kinds/descriptors.js'

@@ -6,7 +6,7 @@
  *  - the VOLUME (`location-used-percent`, `location-free-bytes`) from the same
  *    statfs probe the UI's capacity reads (`readLocalVolumeCapacity`), which
  *    answers only for a location THIS node can measure;
- *  - what CamStack HOLDS there (`location-owned-bytes`) from the
+ *  - what Dominevo HOLDS there (`location-owned-bytes`) from the
  *    `storage-occupancy` slice (D388).
  *
  * A figure that is unknown is NO point, never 0 (D393, D315): a failed statfs,
@@ -15,7 +15,7 @@
  * Subject: the node the location lives on (`nodeId`), else the node that
  * measured it. Scope: the location id, so a location keeps one series for life.
  */
-import type { DeviceHistoryIngestResult, IScopedLogger } from '@camstack/types'
+import type { DeviceHistoryIngestResult, IScopedLogger } from '@dominevo/types'
 
 export const LOCATION_HISTORY_NAMES = {
   usedPercent: 'location-used-percent',
@@ -29,7 +29,7 @@ export interface LocationReading {
   readonly nodeId: string
   /** `null` when this node cannot take a measurement that is about the location. */
   readonly capacity: { readonly totalBytes: number; readonly availableBytes: number } | null
-  /** `undefined` when no provider reports what CamStack holds there. */
+  /** `undefined` when no provider reports what Dominevo holds there. */
   readonly ownedBytes: number | undefined
 }
 
@@ -66,7 +66,7 @@ const DECLARATIONS = [
   { name: LOCATION_HISTORY_NAMES.freeBytes, displayName: 'Location volume free', unit: 'bytes' },
   {
     name: LOCATION_HISTORY_NAMES.ownedBytes,
-    displayName: 'Location held by CamStack',
+    displayName: 'Location held by Dominevo',
     unit: 'bytes',
   },
 ] as const

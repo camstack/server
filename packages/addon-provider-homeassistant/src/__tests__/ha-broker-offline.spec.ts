@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import type { IDevice } from '@camstack/types'
+import type { IDevice } from '@dominevo/types'
 import { markBrokerDevicesOffline } from '../ha-broker-offline.js'
 
 /** Minimal IDevice stub: a mutable online flag (read through a getter, written

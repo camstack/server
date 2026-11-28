@@ -1,7 +1,7 @@
 /**
  * Transport-agnostic reverse-proxy from the hub to an addon's `127.0.0.1`
  * data-plane listener. Operates on RAW Node http objects (`request.raw` /
- * `reply.raw`) so `@camstack/server/system` stays free of any HTTP-framework dependency.
+ * `reply.raw`) so `@dominevo/server/system` stays free of any HTTP-framework dependency.
  *
  * The hub authenticates first (its existing scoped-token / admin / cookie logic),
  * then hands the raw request+response here. We forward method + headers (incl.
@@ -16,7 +16,7 @@ import {
   type ServerResponse,
   type OutgoingHttpHeaders,
 } from 'node:http'
-import { DATAPLANE_SECRET_HEADER } from '@camstack/types'
+import { DATAPLANE_SECRET_HEADER } from '@dominevo/types'
 
 export interface ReverseProxyOptions {
   /** Addon listener base, e.g. `http://127.0.0.1:54123`. */

@@ -10,7 +10,7 @@ import type {
   ModelCatalogEntry,
   RootInputSource,
   StepDefinition,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { resolveFrameViewGeometry } from '../../../session-decode/frame-view-geometry.js'
 import { resolveRootFrameViewSpec } from '../../root-frame-view.js'

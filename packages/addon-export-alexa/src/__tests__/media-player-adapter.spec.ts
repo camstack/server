@@ -3,7 +3,7 @@
  * the features and the readings, a property exists only for a known value, and
  * every directive lands on the `media-player` cap with its step count.
  */
-import { DeviceFeature, type AddonContext } from '@camstack/types'
+import { DeviceFeature, type AddonContext } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { resolveGenericDirective } from '../endpoints/adapters/index.js'
 import type { AdapterDirectiveContext } from '../endpoints/adapters/types.js'

@@ -3,8 +3,8 @@
  * identity block. Hidden lives beside role. Nothing here writes: the page's
  * one Save does, through the identity draft.
  */
-import type { DeviceInfo } from '@camstack/types'
-import { DeviceType, baseUnitOf, unitDimension } from '@camstack/types'
+import type { DeviceInfo } from '@dominevo/types'
+import { DeviceType, baseUnitOf, unitDimension } from '@dominevo/types'
 import {
   Button,
   ROLE_DESCRIPTOR,
@@ -17,7 +17,7 @@ import {
   useDeviceManagerSetRoleDisplayDefaults,
   useUiText,
   Input,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'

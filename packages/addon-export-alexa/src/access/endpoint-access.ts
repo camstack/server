@@ -12,7 +12,7 @@
  *   2. for an accessory endpoint, is the addressed device really a CHILD of it?
  *   3. does the linking user's live grant cover that device at the access asked?
  */
-import type { MethodAccess } from '@camstack/types'
+import type { MethodAccess } from '@dominevo/types'
 import type { AlexaEndpoint } from '../endpoints/types.js'
 import { parseCameraEndpointId } from '../handlers/endpoint-id.js'
 import {

@@ -23,7 +23,7 @@
  * A refused chain re-appears under a new id with a row of its own — extra ids
  * are preferred over mix-ups (operator decision, D683).
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { TrackFusion } from './tracker-v2/index.js'
 import {
   type FusionLeafReport,

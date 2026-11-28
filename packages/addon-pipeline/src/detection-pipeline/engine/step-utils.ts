@@ -1,4 +1,4 @@
-import type { PipelineDefaultStep } from '@camstack/types'
+import type { PipelineDefaultStep } from '@dominevo/types'
 
 /**
  * Flatten a step tree into a list of enabled video steps (DFS).

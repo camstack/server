@@ -2,7 +2,7 @@ import {
   type CustomModelDescriptor,
   inferModelProvider,
   type ModelCatalogEntry,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /**
  * Group a flat list of custom-model descriptors (as returned by the

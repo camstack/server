@@ -26,7 +26,7 @@ import {
   type SystemResourceSnapshot,
   ROOT_BUCKET_KEY,
   UNATTRIBUTED_BUCKET_KEY,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { RetainedProcess, RetainedSample } from './load-series-types.js'
 
 const ADDON_ID = 'metrics-native' as const

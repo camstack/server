@@ -34,7 +34,7 @@ Three pieces are already in production and cover half of the problem.
 
 **`image-contract.ts` already answers the question "is my shell old?"**
 It does so without a docker socket and without credentials, because it uses the `seedVersion` —
-the `@camstack/server` closure baked into the image — as the fingerprint
+the `@dominevo/server` closure baked into the image — as the fingerprint
 of the image itself. The release workflow guarantees that the image
 `intel-X.Y.Z` carries seed `X.Y.Z`, so `seed vs current release` **is**
 `running image vs contract image`. When neither of the two
@@ -70,7 +70,7 @@ the declaration be the only source.**
 
 This repo has already paid for the opposite case. On 2026-08-02
 `check-deployment-templates.ts` proved every day that the templates
-declared `ghcr.io/camstack/camstack:intel-latest`, while the hub was running
+declared `ghcr.io/dominevo/dominevo:intel-latest`, while the hub was running
 `camstack-server:intel-1.1.74` from a renamed repository. **The declaration
 was right, reality was not, and nothing compared them.** A `CAMSTACK_WRAPPER=docker`
 written in the template is exactly that same declaration.
@@ -110,15 +110,15 @@ it is true — the same discipline as `serverUpdateButtonRefusal` (D325).
 
 ## The work, in slices
 
-1. **`WrapperIdentity` in `@camstack/types`** — `kind`
+1. **`WrapperIdentity` in `@dominevo/types`** — `kind`
    (`docker | electron | native | contradictory | unknown`), `evidence[]` (what
    was observed, what was declared), `currentVersion`, `canSelfUpdate`.
    Zero-dep, next to `image-contract.ts`, so the starter can use it.
 2. **`detectWrapperIdentity()`** in `packages/node-root` — pure, with the proofs as
    input, testable without a filesystem.
 3. **`wrapper` field on `ServerPackageStatusSchema`** — additive, so only the
-   node that produces it needs to be republished... **no**: it is `@camstack/types`, so
-   it is a framework change and needs a published `@camstack/server` (D16). It goes
+   node that produces it needs to be republished... **no**: it is `@dominevo/types`, so
+   it is a framework change and needs a published `@dominevo/server` (D16). It goes
    in an already scheduled release.
 4. **Fifth target in the scheduler** — `checkWrapperUpdate`, which publishes
    `wrapper-update-available` through the same `UpdateAvailabilityEmitter`

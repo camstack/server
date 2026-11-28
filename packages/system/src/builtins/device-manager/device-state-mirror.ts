@@ -29,7 +29,7 @@
  * the public routers refuse (D224).
  */
 import { randomUUID } from 'node:crypto'
-import type { AddonContext, ClaimOutcome, DeviceStatus } from '@camstack/types'
+import type { AddonContext, ClaimOutcome, DeviceStatus } from '@dominevo/types'
 import {
   DeviceStatusSchema,
   deviceStatusCapability,
@@ -37,7 +37,7 @@ import {
   runtimeStatePolicyFor,
   WORKLOAD_TRANSITION_CATEGORY,
   workloadCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { DeviceManagerSettings } from './device-meta-store.js'
 import { RunningFlipDetector } from './running-flip.js'
 import { WorkloadTransitionDetector } from './workload-transition.js'

@@ -1,8 +1,8 @@
 /**
- * Minimal interfaces for kernel services consumed by @camstack/server/system.
+ * Minimal interfaces for kernel services consumed by @dominevo/server/system.
  *
  * These abstractions break the direct core -> kernel import dependency,
- * allowing core to depend only on @camstack/types while kernel provides
+ * allowing core to depend only on @dominevo/types while kernel provides
  * the concrete implementations.
  */
 import type { AddonDeclaration } from './addon.js'
@@ -19,7 +19,7 @@ import type { StatusOverlay, StatusOverlayAnswer } from './status-overlay.js'
 
 /**
  * Capability registry interface exposing what core/addon consumers need.
- * The full CapabilityRegistry in @camstack/server/system implements this and more.
+ * The full CapabilityRegistry in @dominevo/server/system implements this and more.
  */
 export interface ICapabilityRegistry {
   /** Get all active collection providers for a capability. */

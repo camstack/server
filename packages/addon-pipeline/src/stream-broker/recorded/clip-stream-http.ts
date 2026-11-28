@@ -19,7 +19,7 @@ import {
   CLIP_STILL_REASON_CODE_HEADER,
   CLIP_STILL_REASON_HEADER,
   CLIP_STREAM_TRANSPORT_HEADER,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type {
   ClipIncompleteReport,
   ClipStreamHandlers,

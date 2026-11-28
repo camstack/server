@@ -1,5 +1,5 @@
 /**
- * Settings for an Installed CamStack model on one inference accelerator.
+ * Settings for an Installed Dominevo model on one inference accelerator.
  * Same store as Pipeline → node → steps×accelerators (`AgentStepEditor`).
  */
 import { useCallback, useEffect, useState } from 'react'
@@ -8,8 +8,8 @@ import {
   AgentStepEditor,
   type AddonPageProps,
   Button,
-} from '@camstack/ui-library'
-import type { DeviceStepConfig, NodeInferenceDevice, PipelineAddonSchema } from '@camstack/types'
+} from '@dominevo/ui-library'
+import type { DeviceStepConfig, NodeInferenceDevice, PipelineAddonSchema } from '@dominevo/types'
 import { listPipelineAddon, setAgentInferenceDevices } from '../ui/api.js'
 import { applyStepSettingsOnDevice } from '../ui/installed-activation.js'
 import { useT } from '../i18n/index.js'

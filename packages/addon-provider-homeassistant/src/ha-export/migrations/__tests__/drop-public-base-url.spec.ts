@@ -11,7 +11,7 @@ import {
   type MigrationOwnerResult,
   preconditionOf,
   runAddonMigrations,
-} from '@camstack/types'
+} from '@dominevo/types'
 import Database from 'better-sqlite3'
 import { describe, expect, it } from 'vitest'
 import { ADDON_SETTINGS_TABLE, HA_EXPORT_ADDON_ID } from '../drop-public-base-url.js'

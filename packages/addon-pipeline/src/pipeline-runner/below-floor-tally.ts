@@ -14,7 +14,7 @@
  * even continuation evidence), `0.65` the person default; `>=0.65` is what an
  * operator floor set above the default removes.
  */
-import type { DiscardedDetection } from '@camstack/types'
+import type { DiscardedDetection } from '@dominevo/types'
 
 export const BELOW_FLOOR_BANDS = ['<0.35', '0.35-0.50', '0.50-0.65', '>=0.65'] as const
 export type BelowFloorBand = (typeof BELOW_FLOOR_BANDS)[number]

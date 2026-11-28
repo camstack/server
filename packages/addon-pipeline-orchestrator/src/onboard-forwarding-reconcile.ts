@@ -33,7 +33,7 @@
  * A read that FAILED never causes a write (D49): the mechanism is only ever
  * moved when the current value is known. Unknown is not "off".
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 /** The `detectionSources` member that means "this camera's own firmware". */
 export const ONBOARD_DETECTION_SOURCE = 'onboard'

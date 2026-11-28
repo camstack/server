@@ -28,7 +28,7 @@
  *
  * ## Why yuv420p, and why everything here must be even
  *
- * yuv420p is the one pixel format every consumer of a CamStack profile reads,
+ * yuv420p is the one pixel format every consumer of a Dominevo profile reads,
  * and a plane copy in it is a strided memcpy — no arithmetic per pixel, which
  * is the whole reason compositing can be cheaper than the filter graph it
  * replaces.

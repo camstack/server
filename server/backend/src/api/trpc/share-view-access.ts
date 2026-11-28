@@ -17,8 +17,8 @@
  * a new surface shipped. A new perimeter needs a new mint.
  *
  * The grid enumeration mirrors the embed grid page's real call graph
- * (`packages/addon-pipeline/embed/src`, via `@camstack/sdk` +
- * `@camstack/ui-library` hooks):
+ * (`packages/addon-pipeline/embed/src`, via `@dominevo/sdk` +
+ * `@dominevo/ui-library` hooks):
  *   • `auth.me`                              — SDK boot/auth probe
  *   • `deviceManager.listAll`                — tile names/online state
  *   • `snapshot.getSnapshot`                 — cold-start tile poster
@@ -51,7 +51,7 @@
  * Pure module — no tRPC machinery — so the spec exercises it directly
  * (same pattern as `scope-access.ts`).
  */
-import type { ShareViewGrant } from '@camstack/types'
+import type { ShareViewGrant } from '@dominevo/types'
 
 export type ShareViewAccessResult = { ok: true } | { ok: false; reason: string }
 

@@ -4,7 +4,7 @@ import {
   type IScopedLogger,
   type OauthLandingOutcome,
   type VendorLoginProxy,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type {
   AlexaCapturedCookie,
   AlexaProxyLoginPhase,

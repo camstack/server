@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { RotateCw, ScrollText, ChevronDown, ChevronRight } from 'lucide-react'
-import { FloatingLogStream, useNodesRestartAddon, Button } from '@camstack/ui-library'
+import { FloatingLogStream, useNodesRestartAddon, Button } from '@dominevo/ui-library'
 import { formatBytes } from '../../../lib/format-size'
 import type { RunnerBlock as RunnerBlockData } from './build-cluster-graph'
 import { useTranslation } from 'react-i18next'
-import { formatNumeric } from '@camstack/ui-library'
+import { formatNumeric } from '@dominevo/ui-library'
 
 export interface RunnerBlockProps {
   readonly runner: RunnerBlockData

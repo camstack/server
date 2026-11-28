@@ -1,4 +1,4 @@
-import { inferModelProvider, type CustomModelDescriptor, type ModelFormat } from '@camstack/types'
+import { inferModelProvider, type CustomModelDescriptor, type ModelFormat } from '@dominevo/types'
 import { parseDisplayName } from './display-name.js'
 import type { z } from 'zod'
 import type {
@@ -106,7 +106,7 @@ export interface RenameResult {
  * Rename one IMPORTED registry row in place. Only `entry.name` changes — the
  * id, step, formats and every pin keyed by the id stay exactly as they were.
  * An empty name resets the row to the name it was imported with. Throws on an
- * unknown id, a CamStack catalog row, or a name `parseDisplayName` rejects.
+ * unknown id, a Dominevo catalog row, or a name `parseDisplayName` rejects.
  */
 export function renameCustomModel(
   list: readonly CustomModelDescriptor[],
@@ -118,7 +118,7 @@ export function renameCustomModel(
   if (row === undefined) throw new Error(`renameCustomModel: model "${modelId}" is not registered`)
   if (!isRenameableEntry(row.entry)) {
     throw new Error(
-      `renameCustomModel: "${modelId}" is a CamStack catalog model and keeps its name`,
+      `renameCustomModel: "${modelId}" is a Dominevo catalog model and keeps its name`,
     )
   }
   const parsed = parseDisplayName(rawName)
@@ -136,7 +136,7 @@ export function renameCustomModel(
   return { list: next, importedNames: nextNames, name }
 }
 
-/** An imported row can be renamed; a CamStack catalog model cannot. */
+/** An imported row can be renamed; a Dominevo catalog model cannot. */
 export function isRenameableEntry(entry: CustomModelDescriptor['entry']): boolean {
   return (
     inferModelProvider({

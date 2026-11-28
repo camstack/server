@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { RecordingConfig } from '@camstack/types'
+import type { RecordingConfig } from '@dominevo/types'
 import { bandAudioAt } from '../band-decision.js'
 
 /**

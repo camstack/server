@@ -40,8 +40,8 @@ import * as fs from 'node:fs'
 import * as net from 'node:net'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import type { AddonDeclaration, RunnerAddonPlacement, RunnerPlan } from '@camstack/types'
-import { isIsolatedBuiltin, resolveAddonPlacement, resolveRunnerId } from '@camstack/types'
+import type { AddonDeclaration, RunnerAddonPlacement, RunnerPlan } from '@dominevo/types'
+import { isIsolatedBuiltin, resolveAddonPlacement, resolveRunnerId } from '@dominevo/types'
 import { ServiceBroker } from 'moleculer'
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
 import type { HubServiceDeps } from '../../moleculer/hub-service.js'
@@ -720,7 +720,7 @@ describe('addon-runner is UDS-only — no ServiceBroker (F1)', () => {
 //
 // `AddonRegistryService.buildAddonGroupPlan` is the single authority for the
 // hub↔runner topology. Its rule, distilled:
-//   - drop `@camstack/server/system` builtins (stay in-process on the hub) UNLESS the
+//   - drop `@dominevo/server/system` builtins (stay in-process on the hub) UNLESS the
 //     entry declares `execution.isolate` (the snapshot wrapper);
 //   - drop `placement: 'agent-only'` addons (run on a remote agent);
 //   - key every surviving addon by `resolveRunnerId(decl, addonId)` — the
@@ -739,7 +739,7 @@ interface PlanAddonEntry {
  * Faithful re-derivation of `AddonRegistryService.buildAddonGroupPlan` —
  * the authority lives in `server/backend/src/core/addon/addon-registry.service.ts`
  * (method `buildAddonGroupPlan`). The three filter conditions below
- * (`@camstack/server/system` builtins minus the `execution.isolate` opt-out,
+ * (`@dominevo/server/system` builtins minus the `execution.isolate` opt-out,
  * `agent-only` placement, `resolveRunnerId` keying) mirror that method's body
  * exactly.
  * If that method grows new filter conditions, update this function too.
@@ -747,7 +747,7 @@ interface PlanAddonEntry {
 function deriveRunnerPlan(entries: readonly PlanAddonEntry[]): RunnerPlan {
   const plan = new Map<string, RunnerAddonPlacement[]>()
   for (const planEntry of entries) {
-    if (planEntry.packageName === '@camstack/server' && !isIsolatedBuiltin(planEntry.declaration)) {
+    if (planEntry.packageName === '@dominevo/server' && !isIsolatedBuiltin(planEntry.declaration)) {
       continue
     }
     if (resolveAddonPlacement(planEntry.declaration) === 'agent-only') continue
@@ -771,7 +771,7 @@ function entry(
   return {
     addonId,
     addonDir: `/opt/addons/${addonId}`,
-    packageName: opts.packageName ?? `@camstack/addon-${addonId}`,
+    packageName: opts.packageName ?? `@dominevo/addon-${addonId}`,
     declaration: {
       execution: {
         group,
@@ -846,21 +846,21 @@ describe('runner-plan contract (D2 — one addon, one process)', () => {
     expect(plan.get('addon-c')!.map((a) => a.addonId)).toEqual(['addon-c'])
   })
 
-  it('excludes @camstack/server/system builtins — they stay in-process on the hub', () => {
+  it('excludes @dominevo/server/system builtins — they stay in-process on the hub', () => {
     const plan = deriveRunnerPlan([
-      entry('sqlite-storage', undefined, { packageName: '@camstack/server' }),
-      entry('settings-store', undefined, { packageName: '@camstack/server' }),
+      entry('sqlite-storage', undefined, { packageName: '@dominevo/server' }),
+      entry('settings-store', undefined, { packageName: '@dominevo/server' }),
       entry('provider-onvif', undefined),
     ])
     // Only the non-core addon gets a runner; core builtins are absent.
     expect([...plan.keys()]).toEqual(['provider-onvif'])
   })
 
-  it('INCLUDES a @camstack/server/system builtin that declares execution.isolate', () => {
+  it('INCLUDES a @dominevo/server/system builtin that declares execution.isolate', () => {
     const plan = deriveRunnerPlan([
-      entry('storage-orchestrator', undefined, { packageName: '@camstack/server' }),
-      entry('sqlite-settings', undefined, { packageName: '@camstack/server', isolate: true }),
-      entry('snapshot', undefined, { packageName: '@camstack/server', isolate: true }),
+      entry('storage-orchestrator', undefined, { packageName: '@dominevo/server' }),
+      entry('sqlite-settings', undefined, { packageName: '@dominevo/server', isolate: true }),
+      entry('snapshot', undefined, { packageName: '@dominevo/server', isolate: true }),
       entry('provider-onvif', undefined),
     ])
     // Isolated builtins get their OWN runner keyed by addon id (D2). The
@@ -877,7 +877,7 @@ describe('runner-plan contract (D2 — one addon, one process)', () => {
   it('an isolated builtin declaring agent-only placement is STILL dropped from the hub plan', () => {
     const plan = deriveRunnerPlan([
       entry('edge-builtin', undefined, {
-        packageName: '@camstack/server',
+        packageName: '@dominevo/server',
         isolate: true,
         placement: 'agent-only',
       }),

@@ -8,7 +8,7 @@
  * (AddonPageProps.trpc) — parametrized by a minimal tRPC proxy shape.
  */
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import type { CamProfile, WebrtcSessionDebug } from '@camstack/types'
+import type { CamProfile, WebrtcSessionDebug } from '@dominevo/types'
 import type { StreamChoice } from '../composites/stream-panel'
 import type {
   ClientStreamHints,

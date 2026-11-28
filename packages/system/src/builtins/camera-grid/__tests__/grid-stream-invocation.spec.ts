@@ -3,10 +3,10 @@
  *
  * This suite exists to prove ONE child does N decodes, one composition and ONE
  * encode — and that the composite is assembled by the shared builder in
- * `@camstack/types`, never by a second argv builder of this addon's own
+ * `@dominevo/types`, never by a second argv builder of this addon's own
  * (`scripts/check-ffmpeg-primitive.ts`, Rule 1).
  */
-import { buildFfmpegArgs } from '@camstack/types'
+import { buildFfmpegArgs } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { GridLayout } from '../grid-filter-graph.js'
 import { gridStreamInvocation } from '../grid-stream-invocation.js'

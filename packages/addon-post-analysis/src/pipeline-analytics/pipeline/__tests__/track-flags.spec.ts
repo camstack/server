@@ -4,7 +4,7 @@
  * booting the addon (same shape as `sweepTrackRetention` / `rankKeyEvents`).
  */
 
-import type { RetrainStatus, Track } from '@camstack/types'
+import type { RetrainStatus, Track } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { makeSilentLogger } from '../../__tests__/test-helpers.js'
 import { type PeakLookup, rankKeyEvents } from '../key-event-query.js'

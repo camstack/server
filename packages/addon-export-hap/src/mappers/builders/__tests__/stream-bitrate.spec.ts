@@ -18,8 +18,8 @@ import type {
   ProfileSlot,
   StreamParamsStatus,
   WebrtcStreamChoice,
-} from '@camstack/types'
-import { buildFfmpegArgs } from '@camstack/types'
+} from '@dominevo/types'
+import { buildFfmpegArgs } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 
 import {
@@ -579,7 +579,7 @@ describe('withSlotCodecs', () => {
 })
 
 describe('buildVideoPlan', () => {
-  // This module now describes the encode; `buildFfmpegArgs` in `@camstack/types`
+  // This module now describes the encode; `buildFfmpegArgs` in `@dominevo/types`
   // emits it (D67 — the repo keeps ONE argv builder). The assertions below run
   // the plan THROUGH that builder rather than reading its fields, so they still
   // fail if the shared builder ever stops emitting a flag HomeKit depends on.

@@ -1,7 +1,7 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import type { AddonHttpReply } from '@camstack/types'
+import type { AddonHttpReply } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { ALEXA_SPEAK_ICON_URL } from '../speak/constants.js'
 import { ALEXA_ICON_SVG, speakIconRoutes } from '../speak/icon-routes.js'

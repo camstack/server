@@ -10,7 +10,7 @@ import {
   type IntegrationTestConnectionResult,
   type RecordsAccess,
   RecordIntegrationInstances,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { alexaBrokersEntryKind, type AlexaBrokerBody } from './broker-record-kinds.js'
 import { buildConnectionFormSchema } from './config.js'
 import { ALEXA_BROKER_KIND, ALEXA_SPEAK_ICON_URL } from './speak/constants.js'

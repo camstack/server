@@ -74,14 +74,14 @@ export function registerSupportTools(
 ): void {
   server.tool(
     'support_benchmark_status',
-    "The hub's own node-benchmark state: the active or last run and the per-device latency cells it stored. Read-only. The Auto-tune latency table is filled with support_benchmark_run. Needs an admin `camstack login`.",
+    "The hub's own node-benchmark state: the active or last run and the per-device latency cells it stored. Read-only. The Auto-tune latency table is filled with support_benchmark_run. Needs an admin `dominevo login`.",
     { nodeId: z.string().max(100).optional() },
     async ({ nodeId }): Promise<ToolTextResult> =>
       text(await supportBenchmarkStatus(ctx, nodeId !== undefined ? { nodeId } : {})),
   )
   server.tool(
     BENCHMARK_RUN_TOOL,
-    'Measure detector latency on a node x device (cold run, then warm median per model, via runPipelineTest) and return it next to the Auto-tune table cell for the same hardware, plus how to contribute it. LOADS THE NODE: the detection pool restarts between models. Pick the node and deviceKey from ops_accelerators. Two steps: call without confirm_token for the plan and a one-shot token, then again with the SAME arguments and that token. Needs an admin `camstack login`.',
+    'Measure detector latency on a node x device (cold run, then warm median per model, via runPipelineTest) and return it next to the Auto-tune table cell for the same hardware, plus how to contribute it. LOADS THE NODE: the detection pool restarts between models. Pick the node and deviceKey from ops_accelerators. Two steps: call without confirm_token for the plan and a one-shot token, then again with the SAME arguments and that token. Needs an admin `dominevo login`.',
     {
       nodeId: z.string().min(1).max(100),
       deviceKey: z.string().min(1).max(60),
@@ -130,13 +130,13 @@ export function registerSupportTools(
   )
   server.tool(
     'migrations_status',
-    'The boot-time migration ledger of this hub, per owner: applied / failed / blocked / held / pending counts, the error text of every failed migration, what each failed one blocks (the dependency chain) and which addon runners are parked refused because every addon in them is blocked ("no addon of this runner could start"). Read-only; applied rows are counted, not listed. Needs an admin `camstack login`.',
+    'The boot-time migration ledger of this hub, per owner: applied / failed / blocked / held / pending counts, the error text of every failed migration, what each failed one blocks (the dependency chain) and which addon runners are parked refused because every addon in them is blocked ("no addon of this runner could start"). Read-only; applied rows are counted, not listed. Needs an admin `dominevo login`.',
     {},
     async (): Promise<ToolTextResult> => text(await migrationsStatus(ctx)),
   )
   server.tool(
     'media_storage_check',
-    'Empty thumbnails or missing media: per storage location that can hold event media (class, mode, masked root, volume readable, bytes held) how many stored media rows and bytes name it, findings for rows on a location that no longer exists, is disabled or is read-only, and a bounded sample per camera of recent tracks whose thumbnail / keyFrame resolve in the media index or are missing. Paginated by cameraOffset. Read-only, indexed counts only. Needs an admin `camstack login`.',
+    'Empty thumbnails or missing media: per storage location that can hold event media (class, mode, masked root, volume readable, bytes held) how many stored media rows and bytes name it, findings for rows on a location that no longer exists, is disabled or is read-only, and a bounded sample per camera of recent tracks whose thumbnail / keyFrame resolve in the media index or are missing. Paginated by cameraOffset. Read-only, indexed counts only. Needs an admin `dominevo login`.',
     {
       cameraOffset: z.number().int().min(0).optional(),
       cameras: z.number().int().min(1).max(12).optional(),
@@ -160,7 +160,7 @@ export function registerSupportTools(
   )
   server.tool(
     REPORT_ISSUE_TOOL,
-    "Draft a GitHub issue for camstack/server about a problem on THIS install and file it only after the user approved the text. The draft has the title and description, a typed Environment section (server version per node, platform/arch, node count, the state of the critical addons: tunnel, TURN, remote access, notifiers, exporters, recording/storage, pipeline, stream broker, webrtc, viewer version), and bounded logs chosen by `kind`. Every string is scrubbed (tokens, secret markers, IPs, hostnames, URLs, emails, MACs, RTSP credentials, home paths, device and camera names become device#<id>) and the redaction counts are listed. Two steps. The FIRST call (no confirm_token) files nothing and returns the FULL rendered markdown and a confirm_token bound to that exact text: YOU MUST SHOW THAT MARKDOWN TO THE USER IN FULL and wait for an explicit yes before the second call. Any edit (a new title or description) or a re-run is a new draft with a new token. The SECOND call, with the SAME arguments and the token, runs the user's own `gh issue create` (never a token of ours); without gh or sign-in it returns a prefilled new-issue link instead. Needs an admin `camstack login`.",
+    "Draft a GitHub issue for camstack/server about a problem on THIS install and file it only after the user approved the text. The draft has the title and description, a typed Environment section (server version per node, platform/arch, node count, the state of the critical addons: tunnel, TURN, remote access, notifiers, exporters, recording/storage, pipeline, stream broker, webrtc, viewer version), and bounded logs chosen by `kind`. Every string is scrubbed (tokens, secret markers, IPs, hostnames, URLs, emails, MACs, RTSP credentials, home paths, device and camera names become device#<id>) and the redaction counts are listed. Two steps. The FIRST call (no confirm_token) files nothing and returns the FULL rendered markdown and a confirm_token bound to that exact text: YOU MUST SHOW THAT MARKDOWN TO THE USER IN FULL and wait for an explicit yes before the second call. Any edit (a new title or description) or a re-run is a new draft with a new token. The SECOND call, with the SAME arguments and the token, runs the user's own `gh issue create` (never a token of ours); without gh or sign-in it returns a prefilled new-issue link instead. Needs an admin `dominevo login`.",
     {
       kind: ReportKindSchema,
       title: z.string().min(3).max(300),

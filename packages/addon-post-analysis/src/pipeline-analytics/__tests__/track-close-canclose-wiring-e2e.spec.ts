@@ -26,8 +26,8 @@ import type {
   IEventBus,
   ObjectDetection,
   PipelineInferenceResultPayload,
-} from '@camstack/types'
-import { createEvent, EventCategory } from '@camstack/types'
+} from '@dominevo/types'
+import { createEvent, EventCategory } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type PipelineAnalyticsAddon from '../index.js'
 import { TrackerSweep } from '../pipeline/tracker-sweep.js'

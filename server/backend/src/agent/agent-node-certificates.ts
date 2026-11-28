@@ -22,7 +22,7 @@
  * under `<dataDir>/tls`, hot-swapped into the sniffing listener.
  */
 import { createPrivateKey, X509Certificate } from 'node:crypto'
-import type { INodeCertificatesProvider } from '@camstack/types'
+import type { INodeCertificatesProvider } from '@dominevo/types'
 import {
   collectAgentNames,
   createAgentHttpsRequest,
@@ -35,7 +35,7 @@ import {
   installAgentHttps,
   loadAgentHttps,
   pinnedHttpsCaFingerprint,
-} from '@camstack/server/system'
+} from '@dominevo/server/system'
 import { readJsonFile, writeJsonFile0600 } from './agent-json-file.js'
 import type { SniffingListener } from './agent-sniffing-listener.js'
 

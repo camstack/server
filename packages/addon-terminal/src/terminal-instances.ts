@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { isInstanceOn } from '@camstack/types'
+import { isInstanceOn } from '@dominevo/types'
 import type { TerminalBody } from './terminal-record-kinds.js'
 
 const TerminalInstanceSchema = z.object({

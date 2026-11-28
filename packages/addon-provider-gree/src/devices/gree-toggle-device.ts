@@ -7,7 +7,7 @@ import {
   type InferNativeProvider,
   type SwitchStatus,
   switchCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { greeConnections } from '../gree-gateway.js'
 

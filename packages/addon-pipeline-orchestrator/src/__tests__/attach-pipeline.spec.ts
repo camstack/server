@@ -4,7 +4,7 @@
  * standing path resolved on that default format before election: faces were
  * dropped even for a camera the balancer then put on the GPU.
  */
-import type { RunnerCameraConfig } from '@camstack/types'
+import type { RunnerCameraConfig } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   type AttachPipeline,

@@ -39,8 +39,8 @@ import {
   type ActionStep,
   type AutomationBodyStep,
   type NcRule,
-} from '@camstack/types'
-import { NC_ALARM_SYSTEM_EVENT_KINDS, findVocabAction } from '@camstack/types'
+} from '@dominevo/types'
+import { NC_ALARM_SYSTEM_EVENT_KINDS, findVocabAction } from '@dominevo/types'
 
 /** The cap whose presence in an Action makes the rule the alarm's trigger. */
 const ALARM_PANEL_CAP = 'alarm-panel'

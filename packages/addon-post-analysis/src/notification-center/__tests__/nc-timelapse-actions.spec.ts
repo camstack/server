@@ -13,8 +13,8 @@
 
 import { NcRuleAiStore } from '../rule-ai-store.js'
 import { ncRecordKinds } from '../record-kinds.js'
-import type { RecordingConfig, TimelapseRuleInput } from '@camstack/types'
-import { RecordingConfigSchema, TimelapseRuleInputSchema } from '@camstack/types'
+import type { RecordingConfig, TimelapseRuleInput } from '@dominevo/types'
+import { RecordingConfigSchema, TimelapseRuleInputSchema } from '@dominevo/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import {
   type FakeSettingsStore,

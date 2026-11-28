@@ -35,7 +35,7 @@ function closure(dir: string, version: string): void {
   fs.writeFileSync(path.join(pkgDir, 'dist', 'launcher.js'), '// entry')
   fs.writeFileSync(
     path.join(pkgDir, 'package.json'),
-    JSON.stringify({ name: '@camstack/server', version }),
+    JSON.stringify({ name: '@dominevo/server', version }),
   )
   for (const rel of [
     'better-sqlite3/build/Release/better_sqlite3.node',
@@ -172,7 +172,7 @@ describe('a starter checks the range at boot for a closure already on disk (plan
     fs.mkdirSync(imageDir, { recursive: true })
     fs.writeFileSync(
       path.join(imageDir, 'package.json'),
-      JSON.stringify({ name: '@camstack/server', version }),
+      JSON.stringify({ name: '@dominevo/server', version }),
     )
   }
 

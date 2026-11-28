@@ -8,7 +8,7 @@
  * that took one are what a camera-scoped rule matches on (D630 §6).
  */
 
-import type { SensorEvent } from '@camstack/types'
+import type { SensorEvent } from '@dominevo/types'
 import { makeDeviceStateChangedEvent } from '../../__tests__/support/events.js'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { NotificationCenter } from '../../notification-center/index.js'

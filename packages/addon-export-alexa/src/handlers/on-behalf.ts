@@ -1,4 +1,4 @@
-import { commandOrigin } from '@camstack/types/addon'
+import { commandOrigin } from '@dominevo/types/addon'
 import type { VerifiedDirectiveIdentity } from '../directive-router.js'
 
 /**

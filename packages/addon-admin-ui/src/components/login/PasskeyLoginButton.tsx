@@ -1,7 +1,7 @@
 /**
  * PasskeyLoginButton — shell-native WebAuthn ceremony button, replacing
  * the retired `passkey-direct-login` / `passkey-login` Module-Federation
- * widgets (`@camstack/addon-auth`'s `PasskeyDirectLogin.tsx` / `PasskeyLogin.tsx`).
+ * widgets (`@dominevo/addon-auth`'s `PasskeyDirectLogin.tsx` / `PasskeyLogin.tsx`).
  * `@simplewebauthn/browser` now lives directly in `addon-admin-ui` — no
  * remote code fetched pre-auth (see `docs/superpowers/specs/2026-07-15-declarative-login-passkey-design.md`
  * §2).
@@ -28,7 +28,7 @@ import { startAuthentication } from '@simplewebauthn/browser'
 import { getSystem } from '../../lib/backend'
 import { isPasskeyAuthenticationOptions } from '../../lib/passkey-wire.js'
 import type { PasskeyLoginMethod } from './PrimaryLoginMethods'
-import { Button } from '@camstack/ui-library'
+import { Button } from '@dominevo/ui-library'
 
 /** Handed to the shell when a primary-stage passkey sign-in still owes
  *  a second factor (TOTP). Never produced by the second-factor stage —

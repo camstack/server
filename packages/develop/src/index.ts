@@ -1,4 +1,4 @@
-/** @camstack/develop — shared developer tooling for CLI + MCP. */
+/** @dominevo/develop — shared developer tooling for CLI + MCP. */
 
 export type {
   AddonCapabilityRef,
@@ -138,7 +138,7 @@ export type {
 } from './hub/hub-client.js'
 
 // MCP shared helpers: the query gate, the mutation gate (D836), the secret
-// scrubbers and the output redaction, shared by `camstack mcp` and the private
+// scrubbers and the output redaction, shared by `dominevo mcp` and the private
 // operator MCP.
 export { scrubSecrets, scrubValue } from './mcp/scrub.js'
 export { text, textError } from './mcp/text.js'
@@ -190,7 +190,7 @@ export {
   type IssuedToken,
   type MutationGateOptions,
 } from './mcp/mutation-gate.js'
-// Hub payload slices and the per-track audit rules, shared by `camstack mcp`
+// Hub payload slices and the per-track audit rules, shared by `dominevo mcp`
 // (ops toolset) and the private operator MCP.
 export * from './mcp/ops/wire.js'
 export * from './mcp/ops/track-findings.js'

@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest'
 
 const reauthenticate = vi.fn()
 vi.mock('@simplewebauthn/browser', () => ({ startAuthentication: vi.fn() }))
-vi.mock('@camstack/ui-library', () => ({
+vi.mock('@dominevo/ui-library', () => ({
   useSystem: () => ({ reauthenticate, reauthBeginPasskey: vi.fn() }),
   Dialog: ({ open, children }: { open: boolean; children: unknown }) =>
     open ? <div role="dialog">{children as never}</div> : null,

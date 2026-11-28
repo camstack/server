@@ -2,7 +2,7 @@
  * Reolink integrations as typed records (planning#416, D1007): the rows-to-record migration moves
  * each integration's OWN settings and secret into its record, and the runtime reads the record.
  */
-import type { RecordIntegrationInstances } from '@camstack/types'
+import type { RecordIntegrationInstances } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { REOLINK_ROWS_TO_RECORD_ID, REOLINK_ROWS_TO_RECORD_MIGRATION } from '../migrations/index.js'
 import {

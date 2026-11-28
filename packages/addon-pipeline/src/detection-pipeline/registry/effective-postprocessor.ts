@@ -17,7 +17,7 @@
  * applied the CTC size floor, i.e. the one combination measured at 4/21 instead
  * of 19/21, and it produced no error anywhere.
  */
-import type { ModelCatalogEntry, PostprocessorType, StepDefinition } from '@camstack/types'
+import type { ModelCatalogEntry, PostprocessorType, StepDefinition } from '@dominevo/types'
 
 export function resolveEffectivePostprocessor(
   definition: StepDefinition,

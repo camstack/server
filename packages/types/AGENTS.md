@@ -1,7 +1,7 @@
 # packages/types — contracts and generated code
 
-`@camstack/types` holds capability definitions, the device model, and every
-generated artifact. It is the single source of truth for what CamStack's parts
+`@dominevo/types` holds capability definitions, the device model, and every
+generated artifact. It is the single source of truth for what Dominevo's parts
 promise each other.
 
 Inventory: `docs/reference/capabilities.md` (generated).
@@ -51,12 +51,12 @@ imports generates nothing.
   Shapes: `hasX`/`supportsX`, `{min,max,step}`, choice arrays. See
   `docs/architecture/capabilities.md`.
 - **`z.infer<>`, never a duplicated shape.** Named types only.
-- **The bare `@camstack/types` entry is bundled into addons; every subpath is
+- **The bare `@dominevo/types` entry is bundled into addons; every subpath is
   host-resolved.** `types/node` carries the filesystem storage provider, so it must
   not be duplicated. ([D15](../../docs/decisions/adr-0015.md))
 
 ## Shipping
 
-A new or changed capability is a framework change: `camstack deploy packages/types`
-in development, a published `@camstack/server` in production. An *additive* field
+A new or changed capability is a framework change: `dominevo deploy packages/types`
+in development, a published `@dominevo/server` in production. An *additive* field
 on an existing method needs only the providing addon redeployed.

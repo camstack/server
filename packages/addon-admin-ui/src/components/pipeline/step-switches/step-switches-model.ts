@@ -8,7 +8,7 @@
  * a query that did not answer is `unknown` — never "off" (an unanswered read is
  * not an empty answer).
  */
-import type { StepSwitchCell, StepSwitchMatrix } from '@camstack/types'
+import type { StepSwitchCell, StepSwitchMatrix } from '@dominevo/types'
 
 export type StepSwitchRow = StepSwitchMatrix['steps'][number]
 export type StepSwitchNode = StepSwitchRow['nodes'][number]

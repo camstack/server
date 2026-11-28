@@ -1,4 +1,4 @@
-import { DeviceType, defaultIntegrationName, type DiscoveryCandidate } from '@camstack/types'
+import { DeviceType, defaultIntegrationName, type DiscoveryCandidate } from '@dominevo/types'
 
 /**
  * Flatten a host (IP / hostname) into a flat row-key slug — shared by `generateStableId` and the

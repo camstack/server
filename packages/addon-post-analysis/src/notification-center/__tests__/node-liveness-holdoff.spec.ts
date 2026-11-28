@@ -11,9 +11,9 @@
  * nothing, an outage that outlasts it is announced once (with the reason and
  * the display name), and the recovery says how long the node was gone.
  */
-import type { InMemoryRecords } from '@camstack/types'
+import type { InMemoryRecords } from '@dominevo/types'
 import { ncTable, makeNcRecords } from './support/nc-test-deps.js'
-import { createEvent, NcRuleInputSchema, type SystemEvent } from '@camstack/types'
+import { createEvent, NcRuleInputSchema, type SystemEvent } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import { NotificationCenter } from '../index.js'

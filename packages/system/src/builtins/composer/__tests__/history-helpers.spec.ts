@@ -7,7 +7,7 @@ import {
   type StatisticHelperSpec,
   type IntegralHelperSpec,
   type DerivativeHelperSpec,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { DeadlineTimer } from '../composition-runtime.js'
 import {
   HistoryHelpers,

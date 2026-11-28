@@ -225,8 +225,8 @@ files.**
   that prunes one with it) are both silent losses.
 - The `database-snapshot` capability is hub-only. An agent boots no
   `sqlite-settings` (it forwards to the hub's door) and runs no backup.
-- A change to `@camstack/types` and `@camstack/system` is live only after a
-  `@camstack/server` that contains it is installed (D16).
+- A change to `@dominevo/types` and `@dominevo/system` is live only after a
+  `@dominevo/server` that contains it is installed (D16).
 - Archives made before this change still contain the torn trio. Restoring one
   is still a gamble: follow it with `PRAGMA integrity_check`, as D679 says.
 

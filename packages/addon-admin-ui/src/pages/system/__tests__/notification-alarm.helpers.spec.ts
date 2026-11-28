@@ -7,7 +7,7 @@
  *  - a cleared number box must not commit 0, because 0 on these three fields
  *    is a BEHAVIOUR (no delay / no limit), not a quantity.
  */
-import type { NcAlarmConfig, NcAlarmModeCoverage, NcAlarmSettings } from '@camstack/types'
+import type { NcAlarmConfig, NcAlarmModeCoverage, NcAlarmSettings } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { alarmDeviceNamer } from '../alarm-nonblocking.helpers'
 import {

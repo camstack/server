@@ -4,7 +4,7 @@
  * in use or styled and deletes the style rows. A marked field per owner kind survives, a
  * rerun and a restored older snapshot converge, and a record the operator edited is kept.
  */
-import { type IconKey, tagIdFromKey, type TagBody, type TagStyle } from '@camstack/types'
+import { type IconKey, tagIdFromKey, type TagBody, type TagStyle } from '@dominevo/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { ActionsStore } from '../../actions-store.js'
 import { coreBlocksRecordKinds } from '../../record-kinds.js'

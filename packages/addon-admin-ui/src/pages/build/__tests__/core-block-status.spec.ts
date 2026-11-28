@@ -8,7 +8,7 @@
  * enabled.
  */
 
-import type { CoreBlock } from '@camstack/types'
+import type { CoreBlock } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   badgeVariantForTone,

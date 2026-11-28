@@ -1110,7 +1110,7 @@ export const NcConditionsSchema = z.object({
   /**
    * DEVICE-EVENT only (D640). Fire on one edge of a boolean sensor —
    * {@link NcSensorTransitionSchema}. Which field of the slice means "raised"
-   * is `@camstack/types` → `notification/sensor-raised.ts`. A reading the
+   * is `@dominevo/types` → `notification/sensor-raised.ts`. A reading the
    * engine cannot place (a kind with no raise, an unreadable slice) PASSES:
    * the condition fails open towards notifying, never towards silence. Editors
    * offer it only when every chosen {@link sensorKinds} member has a raise
@@ -1578,7 +1578,7 @@ export const NcRuleInputSchema = z.object({
    *  detection, the clean scene for a sensor or a sound. Set explicitly on save (D897). */
   media: NcMediaPolicySchema.default({}),
   throttle: NcThrottleSchema.default({ cooldownSec: 60, scope: 'rule-device' }),
-  /** `{{var}}` title/body. The variables are declared in `NC_TEMPLATE_VARS` (@camstack/types) and depend on the rule kind — see `templateVarsFor`. */
+  /** `{{var}}` title/body. The variables are declared in `NC_TEMPLATE_VARS` (@dominevo/types) and depend on the rule kind — see `templateVarsFor`. */
   template: z
     .object({
       title: z.string().max(NC_TEMPLATE_TITLE_MAX_CHARS).optional(),
@@ -1925,7 +1925,7 @@ export const NcRuleKindSchema = z.enum([
 /**
  * The kinds a SERVED template-variable descriptor may name: the five that
  * existed before D637, frozen. `getTemplateCatalog` ships `kinds` to every
- * installed viewer, and a viewer at `@camstack/types` 1.2.25x parses them with a
+ * installed viewer, and a viewer at `@dominevo/types` 1.2.25x parses them with a
  * strict five-member enum — one `device-events` in one descriptor fails the
  * whole catalog parse. So the WIRE says `system`, and the MATCH widens it:
  * `templateVarKindApplies` reads a `system` descriptor as applying to every
@@ -3031,7 +3031,7 @@ const NcAlarmSecureOnArmOffListSchema = z
  * They live on the NOTIFICATION-RULES cap, not on `alarm-panel`, on purpose:
  * `alarm-panel` is `deviceNative` and its other provider mirrors somebody
  * else's panel, which has its own delays and no way to be told these. This is
- * configuration of the panel CamStack owns, and the Notification Center owns
+ * configuration of the panel Dominevo owns, and the Notification Center owns
  * that panel.
  */
 export const NcAlarmSettingsSchema = z.object({

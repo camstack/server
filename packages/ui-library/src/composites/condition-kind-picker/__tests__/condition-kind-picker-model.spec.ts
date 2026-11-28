@@ -1,4 +1,4 @@
-import { AUTOMATION_LEAF_KINDS, type AutomationLeafKind } from '@camstack/types'
+import { AUTOMATION_LEAF_KINDS, type AutomationLeafKind } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   buildKindPicker,

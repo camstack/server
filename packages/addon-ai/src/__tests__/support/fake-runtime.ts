@@ -9,7 +9,7 @@ import type {
   LlmGenerateResult,
   LlmRuntimeAppleCompleteInput,
   LlmRuntimeCompleteInput,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { RuntimeClient } from '../../provider.js'
 
 export const OK_RESULT: LlmGenerateResult = {

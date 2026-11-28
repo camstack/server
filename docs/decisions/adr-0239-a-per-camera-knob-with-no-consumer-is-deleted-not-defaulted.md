@@ -47,7 +47,7 @@ An admin-ui bundle older than this change that still sends `scrubThumbnails` on
 save will be REJECTED by the strict wire schema rather than silently stripped.
 That is the intended direction — the same contract the 2026-07-30 retirement of
 `schedule`/`triggers`/`rules` chose — and the surface is bounded: `ui-library`
-ships inside the `@camstack/server` closure, and the viewer app never had this
+ships inside the `@dominevo/server` closure, and the viewer app never had this
 field.
 
 The retired key is now named in the `RecordingConfigSchema` docblock beside the

@@ -1,4 +1,4 @@
-import { AutomationRepeatStepSchema } from '@camstack/types'
+import { AutomationRepeatStepSchema } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   clampCount,

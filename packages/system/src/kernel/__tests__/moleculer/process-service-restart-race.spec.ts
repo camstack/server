@@ -1,8 +1,8 @@
 /**
- * Regression test for the `camstack deploy` stale-runner LEAK.
+ * Regression test for the `dominevo deploy` stale-runner LEAK.
  *
  * Root cause: two concurrent lifecycle ops for the SAME runnerId (e.g. two
- * overlapping `camstack deploy`s firing `void restartAddon`, or a deploy
+ * overlapping `dominevo deploy`s firing `void restartAddon`, or a deploy
  * overlapping a crash-respawn) interleaved with NO per-runner serialization.
  * Each `$process.restart` captured the OLD child, killed it, `processes.delete`d
  * the map key, then `spawnRunner` re-`set` a fresh child. When two interleaved,

@@ -1,6 +1,6 @@
 /** The live state of a mesh provider as badges: Joined / Not joined, peer count, a daemon error. */
 import type { ReactElement } from 'react'
-import { Badge } from '@camstack/ui-library'
+import { Badge } from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 import { STATUS_BADGE_CLASS } from '../integration-hub/addon-controls'
 import { useMeshStatus } from './use-mesh-status'

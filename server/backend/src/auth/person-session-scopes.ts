@@ -5,7 +5,7 @@
  * person. A person with no viewer row keeps only the session extras (addon
  * routes, own preferences) and is refused every labelled method.
  */
-import { capabilityScopesOf, viewerScopeOf, type CredentialScope } from '@camstack/types'
+import { capabilityScopesOf, viewerScopeOf, type CredentialScope } from '@dominevo/types'
 
 /** A session extra a person keeps. `'*'` is not one: only an admin session carries it. */
 function isSessionExtra(scope: CredentialScope): boolean {

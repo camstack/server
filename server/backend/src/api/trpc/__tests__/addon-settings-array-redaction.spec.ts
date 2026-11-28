@@ -14,7 +14,7 @@
  * `BaseAddon.getScopedSettings` answers with. The server never imports an
  * addon, not even in a spec, so the shape is restated here.
  */
-import { type ConfigUISchema, hydrateSchema } from '@camstack/types'
+import { type ConfigUISchema, hydrateSchema } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   NON_ADMIN_CONFIG_REDACTED_METHODS,

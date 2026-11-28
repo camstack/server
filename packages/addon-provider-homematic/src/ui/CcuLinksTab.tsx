@@ -10,7 +10,7 @@ import {
   type DataColumn,
   type DataTableFilterConfig,
   type KebabMenuItem,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Pencil, Plus, Trash2 } from 'lucide-react'
 import {
   CcuLinksResultSchema,

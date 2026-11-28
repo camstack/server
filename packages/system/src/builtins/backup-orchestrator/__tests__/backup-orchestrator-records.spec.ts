@@ -1,4 +1,4 @@
-import type { ISettingsStoreProvider } from '@camstack/types'
+import type { ISettingsStoreProvider } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { BackupDestinationPolicyService } from '../destination-policy.js'
 import { BackupEncryptionKeyStore } from '../encryption-key-store.js'

@@ -54,10 +54,10 @@ for n in hub agent-a agent-mac.localdomain agent-b; do
 done
 
 if [ "$PUBFILE" != "-" ] && [ -f "$PUBFILE" ]; then
-  for line in $(grep -oE "@camstack/addon-[a-z0-9-]+@[0-9.]+" "$PUBFILE" | grep -v device-history); do
+  for line in $(grep -oE "@dominevo/addon-[a-z0-9-]+@[0-9.]+" "$PUBFILE" | grep -v device-history); do
     n=$(echo "$line" | cut -d@ -f2 | cut -d/ -f2); v=$(echo "$line" | cut -d@ -f3)
-    "${DEV[@]}" POST addons.updatePackage "{\"name\":\"@camstack/$n\",\"version\":\"$v\"}" >/dev/null 2>&1
-    "${HUB[@]}" POST addons.updatePackage "{\"name\":\"@camstack/$n\",\"version\":\"$v\"}" >/dev/null 2>&1
+    "${DEV[@]}" POST addons.updatePackage "{\"name\":\"@dominevo/$n\",\"version\":\"$v\"}" >/dev/null 2>&1
+    "${HUB[@]}" POST addons.updatePackage "{\"name\":\"@dominevo/$n\",\"version\":\"$v\"}" >/dev/null 2>&1
     echo "updatePackage $n $v"
   done
   sleep 120; capsok

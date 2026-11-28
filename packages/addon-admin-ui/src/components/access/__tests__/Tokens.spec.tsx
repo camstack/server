@@ -7,7 +7,7 @@
  * is a view of some cameras; an admin script's token holds all permissions and
  * needs a fresh re-authentication first.
  */
-import { selectOption, selectOptionValues } from '@camstack/ui-library/testing'
+import { selectOption, selectOptionValues } from '@dominevo/ui-library/testing'
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -35,8 +35,8 @@ let confirmAnswer = true
 let isAdmin = true
 let tokens: Token[] = []
 
-vi.mock('@camstack/ui-library', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@camstack/ui-library')>()),
+vi.mock('@dominevo/ui-library', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@dominevo/ui-library')>()),
   usePrompt: () => async (opts: { validate?: (v: string) => string | null }) => {
     promptSpy(opts)
     return promptAnswer

@@ -43,7 +43,7 @@
  */
 
 import { deriveConsumableBand } from './consumable-band.js'
-import { EventCategory, type IScopedLogger } from '@camstack/types'
+import { EventCategory, type IScopedLogger } from '@dominevo/types'
 import type { NcDeviceIdentity } from '../device-directory.js'
 import {
   isProviderVerdictDetail,

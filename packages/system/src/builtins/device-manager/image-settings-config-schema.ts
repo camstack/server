@@ -1,8 +1,8 @@
 /**
  * image-settings — server-side `ConfigUISchema` builder + form-patch
  * parser. Sibling of `day-night-config-schema.ts` — see that file's
- * header for why this lives in `@camstack/server/system` rather than
- * `@camstack/types`.
+ * header for why this lives in `@dominevo/server/system` rather than
+ * `@dominevo/types`.
  *
  * Field keys use the `imageSettings_<prop>` prefix so a flat form patch
  * can be re-parsed into an `ImageSettingsPatch` by
@@ -19,7 +19,7 @@ import type {
   ImageSettingsPatch,
   ImageSettingsStatus,
   WhiteBalanceMode,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 const ROTATE_LABELS: Readonly<Record<ImageRotate, string>> = {
   '0': '0°',

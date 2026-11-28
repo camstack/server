@@ -10,7 +10,7 @@ import {
   readRecipeLiteral,
   type AutomationTemplatePayload,
   type CoreBlock,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { makeRecordsWorld } from '../../sqlite-storage/__tests__/support/records-world.js'
 import { automationTemplateInstancesOver } from '../automation-template-instances.js'

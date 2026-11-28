@@ -1,7 +1,7 @@
 #!/usr/bin/env tsx
 /**
  * One number rule for the UI: a reading or measurement is formatted by `formatNumeric`
- * (`@camstack/ui-library`, `lib/format-numeric.ts`): the operator's precision wins, with none at most two
+ * (`@dominevo/ui-library`, `lib/format-numeric.ts`): the operator's precision wins, with none at most two
  * decimals, trailing zeros trimmed. A hand-written `toFixed(`, `toPrecision(`, `minimumFractionDigits` or `maximumFractionDigits` in runtime code of
  * `packages/ui-library/src` or `packages/addon-admin-ui/src` is a second rule, so it is refused.
  *
@@ -162,7 +162,7 @@ export function violations(counts: ReadonlyMap<string, number>): string[] {
     const cap = allowed.get(file) ?? 0
     if (n > cap) {
       out.push(
-        `${file}: ${String(n)} toFixed/toPrecision/FractionDigits use(s), ${String(cap)} allowed — format a reading with formatNumeric(value, precision) from @camstack/ui-library`,
+        `${file}: ${String(n)} toFixed/toPrecision/FractionDigits use(s), ${String(cap)} allowed — format a reading with formatNumeric(value, precision) from @dominevo/ui-library`,
       )
     }
   }

@@ -7,7 +7,7 @@
  * unsupported host says so instead of going quiet, and "the package manager
  * exited 0" is not accepted as "the binary is there".
  */
-import type { AddonDeclaration, IScopedLogger } from '@camstack/types'
+import type { AddonDeclaration, IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { installManifestSystemDeps } from '../manifest-system-deps.js'
 

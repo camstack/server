@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { FULL_IMAGE_BBOX, type RunStatelessStepInput } from '@camstack/types'
+import { FULL_IMAGE_BBOX, type RunStatelessStepInput } from '@dominevo/types'
 import { testFaceEmbeddingDetail } from '../../__tests__/support/run-stateless-step.js'
 import type { FaceReembedSample } from '../face-reembed-pass.js'
 import { FaceReembedEmbedder, shouldAutoReembed } from '../face-reembed-wiring.js'

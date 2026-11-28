@@ -13,7 +13,7 @@
  *    and the frame is already gone.
  */
 import { describe, expect, it, vi } from 'vitest'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import {
   createSessionDecodeCoordinator,
   type ForkedChildLike,

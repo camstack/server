@@ -21,7 +21,7 @@ import {
   type ConfigSectionWithValues,
   type ConfigUISchema,
   hydrateSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** Appended to the description of a field whose value comes from the cluster. */
 export const INHERITED_FROM_GLOBAL_NOTE =

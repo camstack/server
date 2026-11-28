@@ -10,7 +10,7 @@
 | Code licence | Apache-2.0 |
 | **Weights licence** | Apache-2.0 ([`LICENSES/Apache-2.0.txt`](../../LICENSES/Apache-2.0.txt)) |
 | Training data | not stated upstream |
-| CamStack modifications | converted from TensorFlow with tf2onnx; OpenVINO IR and CoreML derived from the ONNX; the Edge TPU build (`tflite/`) is the Google full-integer quantised TFLite of the same model, compiled with `edgetpu_compiler` 14 |
+| Dominevo modifications | converted from TensorFlow with tf2onnx; OpenVINO IR and CoreML derived from the ONNX; the Edge TPU build (`tflite/`) is the Google full-integer quantised TFLite of the same model, compiled with `edgetpu_compiler` 14 |
 | Commercial use | permitted by Apache-2.0 |
 
 ## Formats
@@ -24,9 +24,9 @@
 
 The Edge TPU file is built from `mobilenet_v2_1.0_224_inat_bird_quant.tflite`
 (google-coral/test_data commit `104342d2`, sha256 `350fcd8c…04f9`) by
-`scripts/build-bird-classifier-edgetpu.py` in the CamStack repository. Every
+`scripts/build-bird-classifier-edgetpu.py` in the Dominevo repository. Every
 compile writes a fresh random parameter-cache token, so a rebuild differs from
 this file in those 16 bytes only. Labels: the ONNX folder's labels file (same
 965 entries, same order).
 
-CamStack redistributes the files in this folder; every change from the upstream is stated above. Converting a model does not change its licence. The collection statement is [`LICENSE`](../../LICENSE); every model's attribution is in [`THIRD_PARTY_MODELS.md`](../../THIRD_PARTY_MODELS.md).
+Dominevo redistributes the files in this folder; every change from the upstream is stated above. Converting a model does not change its licence. The collection statement is [`LICENSE`](../../LICENSE); every model's attribution is in [`THIRD_PARTY_MODELS.md`](../../THIRD_PARTY_MODELS.md).

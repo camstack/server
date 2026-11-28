@@ -3,7 +3,7 @@ import {
   userError,
   type PackageRequires,
   type UnmetRequirement,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { execFile } from 'node:child_process'
 import { randomUUID } from 'node:crypto'
 import * as fs from 'node:fs'
@@ -17,7 +17,7 @@ import {
   ensureDir,
   scheduleSelfRestart,
   writePendingRestart,
-} from '@camstack/server/system'
+} from '@dominevo/server/system'
 import type {
   AutoUpdateChannel,
   InstalledPackage,
@@ -26,8 +26,8 @@ import type {
   PackageVersionInfo,
   PendingRestartMarkerPayload,
   UpdateResult,
-} from '@camstack/types'
-import { EventCategory, errMsg } from '@camstack/types'
+} from '@dominevo/types'
+import { EventCategory, errMsg } from '@dominevo/types'
 import { ConfigService } from '../config/config.service'
 import { EventBusService } from '../events/event-bus.service'
 import { LoggingService } from '../logging/logging.service'
@@ -62,11 +62,11 @@ const execFileAsync = promisify(execFile)
 
 /**
  * The package that carries the kernel and the builtins. They ship INSIDE
- * `@camstack/server` (`@camstack/server/system`) — there is no second framework
+ * `@dominevo/server` (`@dominevo/server/system`) — there is no second framework
  * package any more. Kept as a named export because `lifecycle-job-runner` and
  * several tests reference it directly.
  */
-export const SYSTEM_PACKAGE = '@camstack/server'
+export const SYSTEM_PACKAGE = '@dominevo/server'
 
 /**
  * Packages the npm auto-updater must NEVER touch: the framework/system tier
@@ -76,11 +76,11 @@ export const SYSTEM_PACKAGE = '@camstack/server'
  */
 export const AUTO_UPDATE_EXCLUDED_PACKAGES: ReadonlySet<string> = new Set([
   SYSTEM_PACKAGE,
-  '@camstack/types',
-  '@camstack/kernel',
-  '@camstack/core',
-  '@camstack/sdk',
-  '@camstack/ui-library',
+  '@dominevo/types',
+  '@dominevo/kernel',
+  '@dominevo/core',
+  '@dominevo/sdk',
+  '@dominevo/ui-library',
 ])
 
 /**
@@ -112,25 +112,25 @@ export function isVersionNewer(target: string, current: string): boolean {
 
 /**
  * Host-provided framework packages that take a special path through
- * `camstack deploy` (the addon-upload route) instead of the normal
+ * `dominevo deploy` (the addon-upload route) instead of the normal
  * addon-install path.
  *
  * Since the runtime-updatable root package shipped (2026-07-12 design), a
  * framework upload on a DEPLOYED hub is rejected with guidance to update the
- * `@camstack/server` root instead — the hub main + framework deps update as
+ * `@dominevo/server` root instead — the hub main + framework deps update as
  * ONE npm closure via the `server-management` cap. In a WORKSPACE checkout
  * the upload still triggers a plain restart: the hub resolves the framework
  * from `packages/<pkg>/dist`, which the CLI rebuilt before uploading, so the
- * dev loop (`camstack deploy packages/system`) is unchanged.
+ * dev loop (`dominevo deploy packages/system`) is unchanged.
  *
  * Membership is by package NAME, independent of the `camstack.system` manifest
- * flag (`@camstack/types` declares `system: false` yet is a framework package
+ * flag (`@dominevo/types` declares `system: false` yet is a framework package
  * here) — that flag drives Admin-UI grouping; this gate drives upload routing.
  */
 export const FRAMEWORK_PACKAGES: readonly string[] = [
   SYSTEM_PACKAGE,
-  '@camstack/types',
-  '@camstack/sdk',
+  '@dominevo/types',
+  '@dominevo/sdk',
 ]
 
 /**
@@ -237,7 +237,7 @@ export type RegistryLookup =
     }
   | { readonly ok: false; readonly error: string }
 
-type AddonLoader = import('@camstack/server/system').AddonLoader
+type AddonLoader = import('@dominevo/server/system').AddonLoader
 
 // ---------------------------------------------------------------------------
 // Npm search types
@@ -308,11 +308,11 @@ interface NpmPackument {
 // ---------------------------------------------------------------------------
 
 /** Core packages that live in the server's own node_modules */
-const CORE_MANAGED_PACKAGES: readonly string[] = [SYSTEM_PACKAGE, '@camstack/types']
+const CORE_MANAGED_PACKAGES: readonly string[] = [SYSTEM_PACKAGE, '@dominevo/types']
 
 /**
  * Framework packages that get their own "System packages" status row. Empty
- * since the fold: the kernel and builtins are part of `@camstack/server`, whose
+ * since the fold: the kernel and builtins are part of `@dominevo/server`, whose
  * update is announced and applied by the server-update path
  * (`serverManagement.checkServerUpdate`), so a row here would announce the same
  * update twice.
@@ -327,7 +327,7 @@ type FetchedRequires =
 export class AddonPackageService {
   private readonly logger: IScopedLogger
 
-  /** AddonInstaller from @camstack/server/system (may be null if kernel unavailable) */
+  /** AddonInstaller from @dominevo/server/system (may be null if kernel unavailable) */
   private installer: AddonInstaller | null = null
 
   /** AddonLoader for reloadPackages (may be null) */
@@ -482,7 +482,7 @@ export class AddonPackageService {
       throw userError(
         'server.package-not-allowed',
         { name: String(name) },
-        `Package "${name}" is not an allowed @camstack/* package`,
+        `Package "${name}" is not an allowed @dominevo/* package`,
       )
     }
     if (AUTO_UPDATE_EXCLUDED_PACKAGES.has(name)) {
@@ -661,7 +661,7 @@ export class AddonPackageService {
   listInstalled(): InstalledPackage[] {
     if (!this.installer) {
       throw new Error(
-        'AddonInstaller is not available — cannot list installed packages. Ensure @camstack/server/system is installed and the addons directory is accessible',
+        'AddonInstaller is not available — cannot list installed packages. Ensure @dominevo/server/system is installed and the addons directory is accessible',
       )
     }
     return this.installer.listInstalled()
@@ -677,7 +677,7 @@ export class AddonPackageService {
    *
    * Fallback: if the registry hasn't loaded yet (early-boot install
    * paths, tests with stub registries), fall back to the legacy list
-   * so we don't accidentally allow uninstalling `@camstack/server` etc.
+   * so we don't accidentally allow uninstalling `@dominevo/server` etc.
    * during a window where protection metadata isn't yet readable.
    */
   isProtected(name: string): boolean {
@@ -709,7 +709,7 @@ export class AddonPackageService {
   // =========================================================================
 
   /**
-   * Check npm registry for newer versions of all managed @camstack/* packages.
+   * Check npm registry for newer versions of all managed @dominevo/* packages.
    * Includes both core packages (server root) and addon packages (data/addons).
    * Results are cached for 6 hours.
    */
@@ -781,7 +781,7 @@ export class AddonPackageService {
         if (!this.isAllowedPackage(name)) return
         // Never OFFER a framework package as an addon update: clicking it would
         // route to `updatePackage`, which now refuses it anyway. Filtering here
-        // keeps the UI honest (no dead "Update" button for @camstack/server).
+        // keeps the UI honest (no dead "Update" button for @dominevo/server).
         if (AUTO_UPDATE_EXCLUDED_PACKAGES.has(name)) return
         const lookup = await this.lookupLatestVersion(name)
         if (!lookup.ok) {
@@ -832,9 +832,9 @@ export class AddonPackageService {
    * The addon back-fill's own comment has always said "bytes come from the
    * hub's own resolution of the package", and it was not true: it called
    * `packPackage`, which is `npm pack <name>@<version>` — the REGISTRY. A
-   * version string is not a build. `@camstack/addon-pipeline@1.2.43` deployed
-   * from the workspace and `@camstack/addon-pipeline@1.2.43` on npm were two
-   * different bundles all of 2026-08-07, and every `camstack deploy` to
+   * version string is not a build. `@dominevo/addon-pipeline@1.2.43` deployed
+   * from the workspace and `@dominevo/addon-pipeline@1.2.43` on npm were two
+   * different bundles all of 2026-08-07, and every `dominevo deploy` to
    * agent-a was silently reverted ~1.5s later: the deploy's own
    * `$agent.reload` briefly emptied the node's reported addon list, the hub's
    * reconcile read it as "package missing", and the back-fill repaired the node
@@ -1201,7 +1201,7 @@ export class AddonPackageService {
         success: false,
         version: '',
         requiresRestart: false,
-        error: `Package "${name}" is not an allowed @camstack/* package`,
+        error: `Package "${name}" is not an allowed @dominevo/* package`,
       }
     }
     const frameworkRefusal = this.refuseExcludedFramework(name)
@@ -1210,7 +1210,7 @@ export class AddonPackageService {
     // Dev-mode npm-install gate REMOVED (2026-05-12). The legacy
     // workspace-link flow assumed addons in dev came from `packages/*`
     // and a stray "Update" click would clobber the source. With the
-    // CLI's `camstack push` flow taking over that responsibility, the
+    // CLI's `dominevo push` flow taking over that responsibility, the
     // hub now treats every install identically — straight from npm
     // (or from the operator's deliberate push). No more env var
     // gymnastics required to update an addon from the UI.
@@ -1300,11 +1300,11 @@ export class AddonPackageService {
 
       // Core package -- install to data/addons/. Self-contained addon
       // bundles no longer require the reverse symlink under
-      // hub/node_modules/@camstack/ — addons resolve everything from
+      // hub/node_modules/@dominevo/ — addons resolve everything from
       // their own inlined deps.
       const addonsDir = this.resolveAddonsDir()
-      const { installPackageFromNpm } = await import('@camstack/server/system')
-      const dirName = name.replace(/^@camstack\//, '')
+      const { installPackageFromNpm } = await import('@dominevo/server/system')
+      const dirName = name.replace(/^@dominevo\//, '')
       const targetDir = path.join(addonsDir, dirName)
       const packageSpec = version ? `${name}@${version}` : name
       await installPackageFromNpm(packageSpec, targetDir)
@@ -1350,7 +1350,7 @@ export class AddonPackageService {
         success: false,
         version: '',
         requiresRestart: false,
-        error: `Package "${name}" is not an allowed @camstack/* package`,
+        error: `Package "${name}" is not an allowed @dominevo/* package`,
       }
     }
     const frameworkRefusal = this.refuseExcludedFramework(name)
@@ -1596,7 +1596,7 @@ export class AddonPackageService {
   }
 
   /**
-   * Announce framework updates. This surface SHOWED `@camstack/server` had an
+   * Announce framework updates. This surface SHOWED `@dominevo/server` had an
    * update and emitted nothing, so the operator was never told — it was the
    * only discovery path with no publish at all.
    *
@@ -1650,7 +1650,7 @@ export class AddonPackageService {
   /** Re-discover addons from the addons directory (call after install/uninstall) */
   async reloadPackages(): Promise<void> {
     try {
-      const kernel = await import('@camstack/server/system')
+      const kernel = await import('@dominevo/server/system')
       this.loader = new kernel.AddonLoader(this.logger.child('AddonLoader'))
 
       const addonsDir = this.resolveAddonsDir()
@@ -1781,7 +1781,7 @@ export class AddonPackageService {
    * channel, then route ALL addon packages that have a newer version through ONE
    * durable engine bulk job (F3 Task 5); auto-updates survive a reboot via the
    * boot reconcile, exactly like a manual "Update all". The framework
-   * (`@camstack/server`) is NOT applied by the engine — it ships via
+   * (`@dominevo/server`) is NOT applied by the engine — it ships via
    * `applyServerUpdate` (single-copy collapse), so a swept framework target is
    * skipped by the engine.
    *
@@ -1810,7 +1810,7 @@ export class AddonPackageService {
         // wedge (mass staged swap right after a publish train).
         if (AUTO_UPDATE_EXCLUDED_PACKAGES.has(pkg.name)) continue
         // Determine effective channel for this addon
-        const addonId = pkg.name.replace('@camstack/addon-', '').replace('@camstack/', '')
+        const addonId = pkg.name.replace('@dominevo/addon-', '').replace('@dominevo/', '')
         const override = this.autoUpdateConfig.overrides[addonId]
         const effectiveChannel = this.getEffectiveAutoUpdateChannel(
           addonId,
@@ -2271,15 +2271,15 @@ export class AddonPackageService {
    * has no readable copy.
    *
    * Delegates to the installer, which is the one place that knows the on-disk
-   * layout (`<addonsDir>/@camstack/<pkg>/`, with the pre-scope flat form as a
+   * layout (`<addonsDir>/@dominevo/<pkg>/`, with the pre-scope flat form as a
    * fallback). This method used to restate that path and got it wrong —
-   * `packageName.replace(/^@camstack\//, '')` looked ONLY in the flat form, so
+   * `packageName.replace(/^@dominevo\//, '')` looked ONLY in the flat form, so
    * every scoped install missed. It then fell back to
    * `require.resolve('<pkg>/package.json')`, which cannot succeed either: an
    * addon is installed under the data directory, not in the hub's own
    * node_modules. Both misses landed on the literal `'0.0.0'`, and that string
    * was published on the `addon.updated` event as the version the operator had
-   * been running ("@camstack/addon-terminal 0.0.0 → latest", 2026-08-30).
+   * been running ("@dominevo/addon-terminal 0.0.0 → latest", 2026-08-30).
    *
    * `null`, not `'0.0.0'`: a version nobody installed is indistinguishable
    * from one that was, and the caller must be forced to decide what to say
@@ -2366,18 +2366,18 @@ export class AddonPackageService {
     }
   }
 
-  /** Only allow @camstack/* scoped packages */
+  /** Only allow @dominevo/* scoped packages */
   private isAllowedPackage(name: string): boolean {
-    return name.startsWith('@camstack/')
+    return name.startsWith('@dominevo/')
   }
 
   /**
-   * A framework/system-tier package (`@camstack/server`, `system`, `types`,
+   * A framework/system-tier package (`@dominevo/server`, `system`, `types`,
    * `sdk`, `kernel`, `core`, `ui-library`) must NEVER be installed by the
    * addon-package path: it ships exclusively through `applyServerUpdate`
    * (single-copy collapse). The auto-updater already skips these; the MANUAL
    * entry points (`updatePackage`, `applyStagedAddonUpdate`, `rollbackPackage`)
-   * resolved them to `'core'` and ran a raw `npm install @camstack/server@X`,
+   * resolved them to `'core'` and ran a raw `npm install @dominevo/server@X`,
    * which bypasses the single-copy engine and — on 2026-08-13 — saturated the
    * host mid-`applyServerUpdate` publish. A refusal, not a silent no-op.
    */
@@ -2400,7 +2400,7 @@ export class AddonPackageService {
   }
 
   // `extractAddonId` (package name → single addon id) is GONE. It was wrong
-  // for every multi-addon package — `@camstack/addon-pipeline` declares six
+  // for every multi-addon package — `@dominevo/addon-pipeline` declares six
   // addons and none of them is `pipeline` — so the post-update restart it fed
   // silently targeted an addon that does not exist. Use
   // `addonRegistry.restartPackage(name)` / `listAddonIdsForPackage(name)`.
@@ -2423,7 +2423,7 @@ export class AddonPackageService {
   private requireInstaller(): void {
     if (!this.installer) {
       throw new Error(
-        'AddonInstaller is not available -- @camstack/server/system may not be installed',
+        'AddonInstaller is not available -- @dominevo/server/system may not be installed',
       )
     }
   }
@@ -2497,18 +2497,18 @@ export async function extractTgzStripped(tgz: Buffer, destDir: string): Promise<
 /**
  * Build the npm CLI args that pin every relevant registry to
  * `CAMSTACK_NPM_REGISTRY`. We pass BOTH the default `--registry` and
- * the scope-specific `--@camstack:registry=` flag because workspace or
+ * the scope-specific `--@dominevo:registry=` flag because workspace or
  * user-home `.npmrc` files commonly declare
- * `@camstack:registry=https://registry.npmjs.org/`, and that scoped
+ * `@dominevo:registry=https://registry.npmjs.org/`, and that scoped
  * entry takes precedence over the plain `--registry` CLI flag for
- * `@camstack/*` lookups.
+ * `@dominevo/*` lookups.
  *
  * Without this, an operator running their own private npm proxy via
- * `@camstack:registry` would have package downloads silently route around it.
+ * `@dominevo:registry` would have package downloads silently route around it.
  */
 function buildNpmRegistryArgs(registry: string | undefined): readonly string[] {
   if (registry === undefined || registry.length === 0) return []
-  return ['--registry', registry, `--@camstack:registry=${registry}`]
+  return ['--registry', registry, `--@dominevo:registry=${registry}`]
 }
 
 /**
@@ -2518,7 +2518,7 @@ function buildNpmRegistryArgs(registry: string | undefined): readonly string[] {
  *
  * `require.resolve('<pkg>/package.json')` is the happy path. Packages
  * whose `exports` map omits the `./package.json` subpath (e.g.
- * `@camstack/sdk`, `@camstack/ui-library`) make that throw — so we
+ * `@dominevo/sdk`, `@dominevo/ui-library`) make that throw — so we
  * fall back to resolving the package's main entry and walking up to
  * the first `package.json` whose `name` matches.
  */

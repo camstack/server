@@ -8,7 +8,7 @@
  * to `seconds: 0` must never open a hold in the first place.
  */
 import { describe, it, expect, vi } from 'vitest'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { StreamBrokerManager } from '../stream-broker/stream-broker-manager.js'
 import { StreamBroker } from '../stream-broker/stream-broker.js'
 

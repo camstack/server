@@ -1,6 +1,6 @@
 Source: https://raw.githubusercontent.com/meta-llama/llama-models/main/models/llama3_2/LICENSE
 Fetched: 2026-09-26 (verbatim below the line; nothing edited)
-Applies to: Llama 3.2 3B Instruct (catalog id llm-llama3.2-3b-instruct-q4), downloaded by the AI addon directly from https://huggingface.co/bartowski/Llama-3.2-3B-Instruct-GGUF; CamStack does not host it
+Applies to: Llama 3.2 3B Instruct (catalog id llm-llama3.2-3b-instruct-q4), downloaded by the AI addon directly from https://huggingface.co/bartowski/Llama-3.2-3B-Instruct-GGUF; Dominevo does not host it
 Note: Section 1.b.i asks anyone who makes a product containing Llama Materials available to provide a copy of this Agreement and to display "Built with Llama". Acceptable Use Policy: https://www.llama.com/llama3_2/use-policy
 --------------------------------------------------------------------------------
 LLAMA 3.2 COMMUNITY LICENSE AGREEMENT

@@ -14,14 +14,14 @@ import type {
   ResolvedInferenceConfig,
   HwAccelBackend,
   AcceleratorRescan,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   BaseAddon,
   platformProbeCapability,
   errMsg,
   emitReadiness,
   EventCategory,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { PlatformScorer } from './platform-scorer.js'
 import { InferenceConfigResolver } from './inference-config-resolver.js'
 import { nodeCoralFs } from './coral-accelerators.js'

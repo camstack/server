@@ -8,7 +8,7 @@
  * on every tick that does not promote, the broker logs it on CHANGE, and the
  * session debug carries it to the viewer's "Quality ladder" line.
  */
-import type { WebrtcClimbHold, WebrtcClimbHoldCode, WebrtcTryBlocker } from '@camstack/types'
+import type { WebrtcClimbHold, WebrtcClimbHoldCode, WebrtcTryBlocker } from '@dominevo/types'
 
 /**
  * - `stall-building` — the client is receiving ≪ what is sent; not yet a stall.

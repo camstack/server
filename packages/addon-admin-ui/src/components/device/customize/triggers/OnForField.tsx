@@ -3,8 +3,8 @@
  * fields. A valid time goes to the section's draft as it is typed; the write
  * happens when the section is saved, never from here.
  */
-import { ON_FOR_MAX_SECONDS } from '@camstack/types'
-import { DurationInput } from '@camstack/ui-library'
+import { ON_FOR_MAX_SECONDS } from '@dominevo/types'
+import { DurationInput } from '@dominevo/ui-library'
 import type { ReactNode } from 'react'
 
 export interface OnForFieldProps {

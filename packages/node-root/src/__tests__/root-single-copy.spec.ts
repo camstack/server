@@ -182,7 +182,7 @@ describe('applyPendingRootSwap', () => {
     // Corrupt the staged package version so validation fails.
     fs.writeFileSync(
       path.join(rootPackageDir(staging, HUB_ROOT_SPEC), 'package.json'),
-      JSON.stringify({ name: '@camstack/server', version: '9.9.9' }),
+      JSON.stringify({ name: '@dominevo/server', version: '9.9.9' }),
     )
     writePendingRootSwap(rootDir, {
       schemaVersion: 1,

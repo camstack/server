@@ -4,7 +4,7 @@ Post-Analysis bundle — enrichment, embedding-encoder, pipeline-analytics. Mult
 
 <!-- readme:generated:start (derived from the manifest; edit outside this block) -->
 
-Package `@camstack/addon-post-analysis` on npm.
+Package `@dominevo/addon-post-analysis` on npm.
 
 ## What it provides
 
@@ -16,14 +16,14 @@ Package `@camstack/addon-post-analysis` on npm.
 ## Requirements
 
 - Placement: any-node.
-- A CamStack hub. An agent is used only where the placement above allows it.
+- A Dominevo hub. An agent is used only where the placement above allows it.
 
 ## Documentation
 
-- [docs/architecture/notifications.md](https://github.com/camstack/server/blob/main/docs/architecture/notifications.md)
-- [docs/architecture/post-analysis.md](https://github.com/camstack/server/blob/main/docs/architecture/post-analysis.md)
-- [docs/architecture/cloud-training.md](https://github.com/camstack/server/blob/main/docs/architecture/cloud-training.md)
-- [docs/architecture/osd-manager.md](https://github.com/camstack/server/blob/main/docs/architecture/osd-manager.md)
+- [docs/architecture/notifications.md](https://github.com/dominevo/server/blob/main/docs/architecture/notifications.md)
+- [docs/architecture/post-analysis.md](https://github.com/dominevo/server/blob/main/docs/architecture/post-analysis.md)
+- [docs/architecture/cloud-training.md](https://github.com/dominevo/server/blob/main/docs/architecture/cloud-training.md)
+- [docs/architecture/osd-manager.md](https://github.com/dominevo/server/blob/main/docs/architecture/osd-manager.md)
 
 See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
 

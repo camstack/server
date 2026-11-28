@@ -10,7 +10,7 @@ import {
   streamCatalogCapability,
   CamProfileSchema,
   registerReachabilityRefresh,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type {
   CamStreamDescriptor,
   ConfigUISchema,
@@ -22,7 +22,7 @@ import type {
   StreamMetadata,
   StreamQuality,
   StreamSourceEntry,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { probeRtspReachable } from './rtsp-reachability.js'
 
 /**

@@ -4,7 +4,7 @@ import {
   type IScopedLogger,
   type lockControlCapability,
   errMsg,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { KiaBridgeError, type KiaCommand } from './kia-bridge.js'
 import type { KiaVehicleHandle } from './kia-device-handle.js'
 import { KIA_CLIMATE_MAX_C, KIA_CLIMATE_MIN_C, KIA_CLIMATE_STEP_C } from './kia-domain-mapping.js'

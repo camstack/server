@@ -13,9 +13,9 @@
  * pins that the HA device's REAL slices are of this shape and that the shared
  * edge rule reads them the same way. Addons never import each other, so the
  * two halves meet at the schema and at `evaluateSensorEdge`, both in
- * `@camstack/types`.
+ * `@dominevo/types`.
  */
-import { type IScopedLogger, MotionStatusSchema, type MotionStatus } from '@camstack/types'
+import { type IScopedLogger, MotionStatusSchema, type MotionStatus } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   type CameraSensorInput,

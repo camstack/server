@@ -14,11 +14,11 @@ applies-to:
 
 ## Context
 
-An operator update of `@camstack/addon-terminal` on 2026-08-30 produced this
+An operator update of `@dominevo/addon-terminal` on 2026-08-30 produced this
 notification, minted by code that was current at the time:
 
 ```
-@camstack/addon-terminal 0.0.0 → latest (hub)
+@dominevo/addon-terminal 0.0.0 → latest (hub)
 ```
 
 The real transition was `0.1.47 → 0.1.51`, and `addons.listUpdates` had reported
@@ -38,7 +38,7 @@ Two independent faults, each of which restated a version instead of reading one:
 - **`fromVersion` was a fallback.** `getInstalledPackageVersion` restated the
   on-disk layout as `<addonsDir>/<name-without-scope>/package.json`. Nothing
   has been installed flat since the scope directories landed — the package is
-  at `<addonsDir>/@camstack/addon-terminal/`, which is where
+  at `<addonsDir>/@dominevo/addon-terminal/`, which is where
   `AddonInstaller.applyUpdateFromStaged` swaps it and where
   `packInstalledPackage` reads it. The second chance,
   `require.resolve('<pkg>/package.json')`, cannot succeed either: an addon is
@@ -85,7 +85,7 @@ a placeholder shaped like a version.**
 3. **`null`, not `'0.0.0'`.** `getInstalledPackageVersion` returns
    `string | null`, `emitUpdateEvent` takes `string | null`, and
    `addonUpdatePayload` OMITS the key. `parseAddonUpdateComplete` accepts the
-   absent field and the sentence reads `@camstack/addon-terminal → 0.1.51`.
+   absent field and the sentence reads `@dominevo/addon-terminal → 0.1.51`.
    The notification still ARRIVES — the update happened — it just says nothing
    about the half it does not know. `toVersion` stays required, because it is
    what separates a package update from a settings save
@@ -130,7 +130,7 @@ a placeholder shaped like a version.**
   — the emitted event's versions, through the real service against a real
   addons tree. It deliberately names a package with **no workspace copy**:
   `require.resolve` walks up out of a worktree into
-  `camstack-server/node_modules/@camstack/*`, so a test named after the live
+  `camstack-server/node_modules/@dominevo/*`, so a test named after the live
   package read `0.1.51` from the developer's checkout and never reproduced the
   hub. A separate case pins the emitted PAYLOAD (`addonUpdatePayload`), because
   the service-level test stubs `emitUpdateEvent` and would pass just as well if

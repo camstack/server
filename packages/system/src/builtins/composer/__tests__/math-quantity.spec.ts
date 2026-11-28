@@ -4,7 +4,7 @@ import type {
   HelperSpec,
   IScopedLogger,
   ReadingQuantity,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { adoptMathQuantities, type MathQuantityPorts } from '../math-quantity.js'
 
 function reading(n: number) {

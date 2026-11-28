@@ -6,8 +6,8 @@
  * Driven through the REAL auth-oidc addon and the REAL connection form schema; the listed-view
  * behaviour itself (view, locked keychain) is pinned in the addon's own spec.
  */
-import { AuthOidcAddon } from '@camstack/addon-auth/oidc'
-import { makeSecretMarker, toSecretFieldView } from '@camstack/types'
+import { AuthOidcAddon } from '@dominevo/addon-auth/oidc'
+import { makeSecretMarker, toSecretFieldView } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { OIDC_CONNECTION_FORM_SCHEMA } from '../../../../../../packages/addon-auth/src/oidc/oidc-connection-schema.js'
 

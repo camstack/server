@@ -12,7 +12,7 @@
  *     stays on the OLD version after every redeploy;
  *   - a load that THREW is cached as a rejected module and replayed verbatim on
  *     every retry — 126 identical failed load retries over 10.5h for
- *     `@camstack/addon-export-hap` on 2026-08-12, none of which could ever have
+ *     `@dominevo/addon-export-hap` on 2026-08-12, none of which could ever have
  *     succeeded because the new bytes were never read.
  *
  * These tests pin the mtime to npm's normalised value so they fail against any
@@ -33,7 +33,7 @@ interface AddonFixture {
 }
 
 const ADDON_ID = 'export-hap'
-const PACKAGE_NAME = '@camstack/addon-export-hap'
+const PACKAGE_NAME = '@dominevo/addon-export-hap'
 
 let tmpRoot: string
 
@@ -88,7 +88,7 @@ describe('addonModuleCacheKey', () => {
   })
 
   it('changes when the entry bytes change at an identical version and mtime', () => {
-    // `camstack deploy` of an unbumped workspace package: version identical,
+    // `dominevo deploy` of an unbumped workspace package: version identical,
     // mtime normalised by npm pack, only the code differs.
     const dir = path.join(tmpRoot, 'pkg')
     const entry = writeAddonPackage(dir, { version: '1.0.0', entrySource: addonSource('A') })

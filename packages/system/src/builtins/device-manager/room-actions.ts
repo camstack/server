@@ -23,7 +23,7 @@ import {
   type Room,
   type RoomBody,
   type ZoneBody,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { Entity } from '../../records/named-entity-store.js'
 import { EntityNameTakenError, EntityNotFoundError } from '../../records/named-entity-store.js'
 import type { ProviderContext } from './device-provider-context.js'

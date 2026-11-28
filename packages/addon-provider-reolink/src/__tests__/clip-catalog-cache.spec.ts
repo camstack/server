@@ -12,7 +12,7 @@
  * "unknown" is the truth about a camera nobody reached.
  */
 
-import { OPERATOR_WRITTEN_STALE_MS } from '@camstack/types'
+import { OPERATOR_WRITTEN_STALE_MS } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { CLOSED_DAY_TTL_MS, ClipCatalogCache } from '../clips/clip-catalog-cache.js'
 

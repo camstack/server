@@ -8,7 +8,7 @@
  * "composer" and linked nowhere.
  */
 
-import { ConfirmDialogProvider } from '@camstack/ui-library'
+import { ConfirmDialogProvider } from '@dominevo/ui-library'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen } from '@testing-library/react'
 import type { ReactElement } from 'react'
@@ -39,9 +39,9 @@ const DEVICE = {
 const integrationState = vi.hoisted(() => ({ answered: true }))
 const historyState = vi.hoisted(() => ({ series: [] as readonly { readonly key: string }[] }))
 
-vi.mock('@camstack/ui-library', async () => {
+vi.mock('@dominevo/ui-library', async () => {
   const actual =
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+    await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   const mutationStub = () => ({ mutate: vi.fn(), mutateAsync: vi.fn(), isPending: false })
   const emptyQuery = () => ({ data: undefined, isLoading: false, isError: false, refetch: vi.fn() })
   return {

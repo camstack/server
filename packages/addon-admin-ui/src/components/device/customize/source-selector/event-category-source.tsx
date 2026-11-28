@@ -3,7 +3,7 @@
  * trigger. Customize's edge, debounce, timeout, cooldown and source mode are
  * a different host (`shape: 'pulse' | 'span'`).
  */
-import { Button, DeviceValueField, Select } from '@camstack/ui-library'
+import { Button, DeviceValueField, Select } from '@dominevo/ui-library'
 import { type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useDeviceBoundCaps } from '../../../device-do-action/use-device-bound-caps'

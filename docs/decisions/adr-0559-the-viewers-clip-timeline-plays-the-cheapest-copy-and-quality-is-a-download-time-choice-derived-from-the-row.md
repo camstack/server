@@ -32,7 +32,7 @@ What was found by reading the viewer, today:
   arm *"for exactly an onboard or HKSV clip"*. `clip-mapping.ts` parses rows
   **structurally**, on the stated grounds that the SDK lags the hub.
 - **That structural parse is load-bearing, not stylistic.** The viewer resolves
-  `@camstack/*` from `node_modules` by design. Installed `@camstack/types` is
+  `@dominevo/*` from `node_modules` by design. Installed `@dominevo/types` is
   **1.2.228** against a workspace **1.2.233**, and its `videoclips.cap.d.ts`
   still describes a substitutable single-provider wrapper: no `streams`, no
   `listSources`, no `playable`, no `switchedOff`.
@@ -115,7 +115,7 @@ timeline instead.
 
 ## Consequences
 
-- The first slice is a **framework train** — `@camstack/types` publish plus a
+- The first slice is a **framework train** — `@dominevo/types` publish plus a
   viewer bump — before any viewer-visible slice. The structural parse in
   `clip-mapping.ts` stays for the ROW; only the derived rule is imported.
 - `resolveClipsStatus` is the right shape and is one distinction short: it

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import type { NcSchedule } from '@camstack/types'
+import type { NcSchedule } from '@dominevo/types'
 import {
   GENERATE_GUARD_MS,
   INITIAL_WINDOW_STATE,

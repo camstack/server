@@ -30,7 +30,7 @@
  */
 import * as fs from 'node:fs'
 import * as path from 'node:path'
-import type { CameraOccupancySnapshot } from '@camstack/types'
+import type { CameraOccupancySnapshot } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 
 import { OccupancyWatcher } from '../occupancy-watcher.js'

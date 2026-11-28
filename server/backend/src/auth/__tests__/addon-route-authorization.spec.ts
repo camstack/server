@@ -15,8 +15,8 @@
  *   - drop the `access === 'admin'` refusal → the session and token rows reach
  *     the admin route.
  */
-import { attachUserManagementInternal, type UserManagementInternal } from '@camstack/server/system'
-import type { CredentialTokenClaims, TokenPayload, TokenScope } from '@camstack/types'
+import { attachUserManagementInternal, type UserManagementInternal } from '@dominevo/server/system'
+import type { CredentialTokenClaims, TokenPayload, TokenScope } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   authorizeAddonRoute,

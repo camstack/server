@@ -3,7 +3,7 @@ import type {
   PackageInstallations,
   UninstallNodeResult,
   UninstallPackageResult,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /**
  * Per-node and cluster-wide addon UNINSTALL — the body of
@@ -11,7 +11,7 @@ import type {
  * `addons.listInstallations`.
  *
  * Why it exists: `uninstallPackage` acted on the hub alone, and the lifecycle
- * job engine refuses agents. On 2026-10-08 `@camstack/addon-decoder-ffmpeg` was
+ * job engine refuses agents. On 2026-10-08 `@dominevo/addon-decoder-ffmpeg` was
  * uninstalled on the hub and stayed installed — runner running, `decoder`
  * advertised — on both agents, with no API that could remove it.
  *

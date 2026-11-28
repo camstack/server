@@ -6,7 +6,7 @@
  * tab, copy address).
  */
 import { useQueryClient } from '@tanstack/react-query'
-import { useSystem } from '@camstack/ui-library'
+import { useSystem } from '@dominevo/ui-library'
 import { useState, type MouseEvent, type JSX } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'

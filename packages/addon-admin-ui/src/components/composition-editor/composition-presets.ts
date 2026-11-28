@@ -13,7 +13,7 @@ import {
   type PetFountainCadenceSources,
   type PetFountainPumpCycleSources,
   petFountainFromEntitiesComposition,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** One entity a preset needs. */
 export interface PresetSlot {

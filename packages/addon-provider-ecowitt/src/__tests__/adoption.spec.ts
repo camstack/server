@@ -2,7 +2,7 @@
  * A NEW Ecowitt setup (an integration with no Hub device behind it) proposes the Gateway first,
  * as a sibling of the group Containers, and adopting it creates a top-level device.
  */
-import { DeviceType, type IScopedLogger } from '@camstack/types'
+import { DeviceType, type IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { ECOWITT_GATEWAY_DEVICE_KIND } from '../devices/ecowitt-gateway-device.js'
 import {

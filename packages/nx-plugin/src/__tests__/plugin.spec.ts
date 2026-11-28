@@ -45,7 +45,7 @@ describe('createNodesV2 auto-inference', () => {
 
   it('attaches a `deploy` target to any package that declares camstack.addons', async () => {
     writePkg('packages/addon-foo/package.json', {
-      name: '@camstack/addon-foo',
+      name: '@dominevo/addon-foo',
       camstack: {
         addons: [{ id: 'foo', name: 'Foo', entry: './dist/foo.js' }],
       },
@@ -55,9 +55,9 @@ describe('createNodesV2 auto-inference', () => {
     const [, payload] = out[0]!
     const project = Object.values(payload.projects)[0]
     expect(project).toBeDefined()
-    expect(project!.name).toBe('@camstack/addon-foo')
+    expect(project!.name).toBe('@dominevo/addon-foo')
     const deploy = project!.targets.deploy as Record<string, unknown>
-    expect(deploy.executor).toBe('@camstack/nx-plugin:deploy')
+    expect(deploy.executor).toBe('@dominevo/nx-plugin:deploy')
     expect(deploy.dependsOn).toEqual(['build'])
     expect(deploy.cache).toBe(false)
   })
@@ -73,7 +73,7 @@ describe('createNodesV2 auto-inference', () => {
 
   it('skips packages with empty camstack.addons array', async () => {
     writePkg('packages/empty/package.json', {
-      name: '@camstack/empty',
+      name: '@dominevo/empty',
       camstack: { addons: [] },
     })
     const out = await runFactory(root, ['packages/empty/package.json'])
@@ -110,15 +110,15 @@ describe('createNodesV2 auto-inference', () => {
 
   it('handles multiple matching configs in a single invocation', async () => {
     writePkg('packages/a/package.json', {
-      name: '@camstack/a',
+      name: '@dominevo/a',
       camstack: { addons: [{ id: 'a', name: 'A', entry: './e' }] },
     })
     writePkg('packages/b/package.json', {
-      name: '@camstack/b',
+      name: '@dominevo/b',
       camstack: { addons: [{ id: 'b', name: 'B', entry: './e' }] },
     })
     writePkg('packages/c/package.json', {
-      name: '@camstack/c-lib',
+      name: '@dominevo/c-lib',
       // no manifest — should be skipped
     })
     const out = await runFactory(root, [
@@ -128,6 +128,6 @@ describe('createNodesV2 auto-inference', () => {
     ])
     expect(out).toHaveLength(2)
     const names = out.map(([, p]) => Object.values(p.projects)[0]!.name).toSorted()
-    expect(names).toEqual(['@camstack/a', '@camstack/b'])
+    expect(names).toEqual(['@dominevo/a', '@dominevo/b'])
   })
 })

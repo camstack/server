@@ -1,5 +1,5 @@
 import * as net from 'node:net'
-import type { IScopedLogger, StreamSource } from '@camstack/types'
+import type { IScopedLogger, StreamSource } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { DEFAULT_PREBUFFER_SEC } from '../prebuffer'
 import { isSlabView } from '../stream-broker/slab-pool'

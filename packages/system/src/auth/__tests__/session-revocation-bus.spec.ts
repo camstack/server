@@ -4,7 +4,7 @@
  * `announce(...)` call out of `login-session-manager.ts` and the matching
  * claim below goes red.
  */
-import type { SettingsStoreClient } from '@camstack/types'
+import type { SettingsStoreClient } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import { makeStore } from '../../builtins/local-auth/__tests__/memory-settings-store.js'
 import { LoginSessionManager } from '../login-session-manager.js'

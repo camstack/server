@@ -6,7 +6,7 @@
  * alert even while the list still says offline. A completion older than the
  * alert does not.
  */
-import type { AlertStatus } from '@camstack/types'
+import type { AlertStatus } from '@dominevo/types'
 
 /** How often the centre re-reads the node list. An online event only hints. */
 export const CLUSTER_STATE_RECONCILE_MS = 30_000

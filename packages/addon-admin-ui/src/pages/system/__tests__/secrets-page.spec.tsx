@@ -74,8 +74,8 @@ const { reveal, deleteOrphans, confirm, acknowledge } = vi.hoisted(() => ({
   confirm: vi.fn(),
 }))
 
-vi.mock('@camstack/ui-library', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@camstack/ui-library')>()
+vi.mock('@dominevo/ui-library', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dominevo/ui-library')>()
   const mutation = (fn?: ReturnType<typeof vi.fn>) => () => ({
     mutate: fn ?? vi.fn(),
     mutateAsync: fn ?? vi.fn(async () => ({})),
@@ -101,7 +101,7 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
   }
 })
 
-import { SECRET_REVEAL_MS } from '@camstack/ui-library'
+import { SECRET_REVEAL_MS } from '@dominevo/ui-library'
 import { SecretsPage } from '../Secrets'
 
 function renderPage(path = '/system/data?tab=secrets') {

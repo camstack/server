@@ -1,6 +1,6 @@
 import type { MiotProp, PropertyResult, StateChangedEvent } from '@apocaliss92/nodedreame'
 import { DreameAuthError, Nodreame } from '@apocaliss92/nodedreame'
-import { errMsg, type IntegrationSessionSink, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IntegrationSessionSink, type IScopedLogger } from '@dominevo/types'
 import { type DreameConfig, toNodreameOptions } from './config.js'
 import { catalogProps } from './dreame-entity-catalog.js'
 import { dreameFacades } from './dreame-gateway.js'

@@ -33,7 +33,7 @@ data, and the ONNX had no checkpoint at all, so its AGPL "Corresponding Source"
 was the ONNX itself. It was also the reason the plate reader needed a +15%
 margin: its box clipped the leading glyph of an oblique plate (D200).
 
-No CamStack-trained replacement existed. The 2026-09-26 Coral study had named
+No Dominevo-trained replacement existed. The 2026-09-26 Coral study had named
 "train a clean plate detector" as a multi-day item. On 2026-10-06 open-lpr
 published a YOLOX-tiny plate detector (`faisalthaheem/open-lpr-models`, tag
 `detector-2026.10.1`), trained from Megvii's COCO `yolox_tiny.pth` and released

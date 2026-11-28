@@ -12,7 +12,7 @@
  */
 import { render } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import type { ObjectDetection, TrackState } from '@camstack/types'
+import type { ObjectDetection, TrackState } from '@dominevo/types'
 import { DetectionOverlay } from '../detection-overlay'
 
 function det(id: string, state?: TrackState): ObjectDetection {

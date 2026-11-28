@@ -21,7 +21,7 @@
  * in the Home app is a far smaller cost than a re-pair.
  */
 import { Accessory, Categories } from '@homebridge/hap-nodejs'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 import { bridgeHasRoom, MAX_BRIDGED_ACCESSORIES } from './bridge-policy.js'
 import { publishStandalone, unpublishAccessory } from './accessory-publisher.js'

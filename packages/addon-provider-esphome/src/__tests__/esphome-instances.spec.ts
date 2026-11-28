@@ -9,8 +9,8 @@ import {
   makeInMemoryRecords,
   REDACTED_SECRET,
   recordSecretRef,
-} from '@camstack/types'
-import { integrationRowsPortsOverApi } from '@camstack/types'
+} from '@dominevo/types'
+import { integrationRowsPortsOverApi } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import { espBrokersEntryKind } from '../broker-record-kinds.js'

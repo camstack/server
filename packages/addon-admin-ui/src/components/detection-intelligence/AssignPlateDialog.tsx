@@ -17,7 +17,7 @@ import {
   DialogDescription,
   DialogFooter,
   Input,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import type { Vehicle } from './plate-types.js'
 import { useTranslation } from 'react-i18next'
 

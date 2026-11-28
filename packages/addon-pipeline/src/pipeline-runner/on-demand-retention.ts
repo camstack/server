@@ -1,4 +1,4 @@
-import type { DecodedFrame, FrameHandle, FrameRef, FrameResult } from '@camstack/types'
+import type { DecodedFrame, FrameHandle, FrameRef, FrameResult } from '@dominevo/types'
 import type {
   FrameReleaseReason,
   LocalFrameRegistry,

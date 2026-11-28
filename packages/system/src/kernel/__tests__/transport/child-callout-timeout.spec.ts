@@ -1,4 +1,4 @@
-import { ACTION_RUN_TIMEOUT_MS } from '@camstack/types'
+import { ACTION_RUN_TIMEOUT_MS } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createLocalTransport } from '../../transport/create-local-transport.js'
 import { LocalChildClient } from '../../transport/local-child-client.js'

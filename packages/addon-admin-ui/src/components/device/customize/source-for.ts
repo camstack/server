@@ -6,7 +6,7 @@ import type {
   CompositionFieldKind,
   CompositionFieldSource,
   CompositionSourceRef,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export interface PresetSourceField {
   readonly source: CompositionSourceRef

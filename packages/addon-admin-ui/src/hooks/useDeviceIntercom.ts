@@ -33,7 +33,7 @@ import {
   useIntercomHandleAnswer,
   useIntercomStartSession,
   useIntercomStopSession,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 export type IntercomState =
   | 'idle'
   | 'requesting-mic'

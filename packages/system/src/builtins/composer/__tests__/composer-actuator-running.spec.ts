@@ -10,7 +10,7 @@ import {
   CompositionSchema,
   DeviceType,
   type CompositionFieldsFeature,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { planNew } from '../composer-plan.js'
 import { LOOKUP_CAP } from './fixtures.js'

@@ -13,7 +13,7 @@ import PipelineOrchestratorAddon from '../index.js'
 import { pipelineOrchestratorActions } from '../index.js'
 import { makeFakeContext, makeFakeBroker, enabledNodesFromBroker } from './e2e-helpers.js'
 import { resolveInferenceDeviceEligibility } from '../inference-device-model.js'
-import type { DeviceStepConfig, InferenceDeviceDescriptor } from '@camstack/types'
+import type { DeviceStepConfig, InferenceDeviceDescriptor } from '@dominevo/types'
 
 function mkDescriptor(
   key: string,

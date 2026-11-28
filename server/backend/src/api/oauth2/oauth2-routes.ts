@@ -1,4 +1,4 @@
-import type { CapabilityRegistry } from '@camstack/server/system'
+import type { CapabilityRegistry } from '@dominevo/server/system'
 import type {
   IOauthIntegrationProvider,
   IScopedLogger,
@@ -6,8 +6,8 @@ import type {
   OauthIntegrationDescriptor,
   OauthLandingReason,
   TokenScope,
-} from '@camstack/types'
-import { isAddonInstanceId, oauthLandingUrl } from '@camstack/types'
+} from '@dominevo/types'
+import { isAddonInstanceId, oauthLandingUrl } from '@dominevo/types'
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import {
   isSessionGradeJwtPayload,
@@ -471,7 +471,7 @@ function refuseAuthorize(
 
 /**
  * Answer a refused authorize. A BROWSER (it asked for HTML: a person who
- * followed a link) is sent to the CamStack completion page with a reason CODE
+ * followed a link) is sent to the Dominevo completion page with a reason CODE
  * — a bare JSON body is a dead end for them. A machine caller keeps the status
  * and JSON it always got. Relative: the browser is already on the hub's origin,
  * and nothing the request carried (the redirect target, the state, any code)

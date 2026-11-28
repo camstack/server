@@ -1,11 +1,11 @@
 ---
 name: hub-access
-description: Reach a CamStack hub from a client tool — the CLI, `camstack deploy`, the MCP servers, an operator script, a benchmark or probe. There is ONE credential, the `camstack login` session; this skill says how to log in once, how the address is found, how the session renews, the admin tier, what a 401 or an expired session means, and why an agent never logs in itself. Use for "how do I authenticate to the hub", "not logged in", "401 from the hub", "where does the token live", "my script needs a token", "headless service needs access".
+description: Reach a Dominevo hub from a client tool — the CLI, `dominevo deploy`, the MCP servers, an operator script, a benchmark or probe. There is ONE credential, the `dominevo login` session; this skill says how to log in once, how the address is found, how the session renews, the admin tier, what a 401 or an expired session means, and why an agent never logs in itself. Use for "how do I authenticate to the hub", "not logged in", "401 from the hub", "where does the token live", "my script needs a token", "headless service needs access".
 ---
 
 # Reaching a hub
 
-Every client tool reaches a hub the same way: the **`camstack login` session**.
+Every client tool reaches a hub the same way: the **`dominevo login` session**.
 There is no token flag, no token file, no `$CAMSTACK_TOKEN`, no rc file, and no
 password in a script. A tool that needs a credential asks the one resolver; a
 tool that needs a second way in is a bug to fix, not an exception to grant
@@ -14,7 +14,7 @@ tool that needs a second way in is a bug to fix, not an exception to grant
 ## 1. Log in once
 
 ```bash
-camstack login <host>        # interactive: the operator types it, once per hub
+dominevo login <host>        # interactive: the operator types it, once per hub
 ```
 
 The session is a file under `~/.camstack/` named for the hub address. It holds a
@@ -36,9 +36,9 @@ completed to the default port.
 
 | You write | Use |
 | --- | --- |
-| A package (CLI command, MCP, executor) | `resolveFreshCredentials` / `connectHub` from `@camstack/develop` |
+| A package (CLI command, MCP, executor) | `resolveFreshCredentials` / `connectHub` from `@dominevo/develop` |
 | An operator script in `scripts/` | `resolveHubAuth({ server })` from `scripts/hub/credentials.mjs`, or call `scripts/hub/hub.mjs` |
-| A shell script | wrap `camstack deploy` / `scripts/hub/hub.mjs`; never `curl` with a token |
+| A shell script | wrap `dominevo deploy` / `scripts/hub/hub.mjs`; never `curl` with a token |
 
 `connectHub` renews an expiring session before the call and once more after a
 401, so a long run does not die mid-way. Nothing in a tool reads a token from
@@ -49,21 +49,21 @@ the environment, argv or a file of its own.
 Most reads work with any login. Writes that change the hub (apply a review plan,
 deploy a server update, migrate secrets) need an **admin** login. The resolver
 reports the tier; when it is not admin the tool says so and prints the exact
-`camstack login` command. If the tier could not be confirmed (the hub did not
+`dominevo login` command. If the tier could not be confirmed (the hub did not
 answer), the tool says that instead of guessing "not admin".
 
 ## 5. When it fails
 
 | Symptom | Meaning | Do |
 | --- | --- | --- |
-| `Not logged in to <hub>` | no saved session for that address | `camstack login <host>` |
+| `Not logged in to <hub>` | no saved session for that address | `dominevo login <host>` |
 | 401 after the renewal | the refresh token was revoked or the user removed | log in again |
 | `--token` / `--token-file` "was removed" | an old command line | drop the flag; log in |
 | certificate error | self-signed hub | name its CA (`CAMSTACK_HUB_CA_FILE`); never switch verification off |
 
 ## 6. Agents never log in themselves
 
-A coding agent does not type a password, does not run `camstack login` on the
+A coding agent does not type a password, does not run `dominevo login` on the
 operator's behalf, and does not look for a credential. It uses the session the
 operator already created, through the tools above. If there is none, it stops
 and asks the operator to log in. (A dev hub with named test users is the only
@@ -71,6 +71,6 @@ place an agent may sign in, and only as the project instructions say.)
 
 ## Not this
 
-An agent's **join token** (`camstack agent --token`, the cluster pairing code)
+An agent's **join token** (`dominevo agent --token`, the cluster pairing code)
 is a node's identity at first pairing, not a client login; it is a different
 mechanism and unaffected.

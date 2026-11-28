@@ -4,7 +4,7 @@
  * goes through the section's own update carrying the steps, and whose Open
  * button leaves for the editor.
  */
-import type { ActionEntry } from '@camstack/types'
+import type { ActionEntry } from '@dominevo/types'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
@@ -26,8 +26,8 @@ const ENTRY: ActionEntry = {
 
 const updateMutate = vi.fn()
 
-vi.mock('@camstack/ui-library', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@camstack/ui-library')>()),
+vi.mock('@dominevo/ui-library', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@dominevo/ui-library')>()),
   useActionsList: () => ({ data: [ENTRY], error: null, refetch: vi.fn() }),
   useActionsRun: () => ({ mutate: vi.fn(), isPending: false, error: null }),
   useActionsGetTraces: () => ({ data: { traces: [] }, error: null }),

@@ -1,5 +1,5 @@
-import type { AddonContext, IScopedLogger, LogExtras, LogTags } from '@camstack/types'
-import { encodeVectorBase64 } from '@camstack/types'
+import type { AddonContext, IScopedLogger, LogExtras, LogTags } from '@dominevo/types'
+import { encodeVectorBase64 } from '@dominevo/types'
 /**
  * Provider integration (design §5.3 + §9): boot the addon, seed a device with a
  * persisted track + its object event + event/track/face media + an unassigned

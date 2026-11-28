@@ -10,7 +10,7 @@ covers:
 
 ## Context
 
-The CamStack Home Assistant integration (repository `camstack/homeassistant-component`) is installed today as a HACS custom repository. Operator docs and the `configure_ha_guide` MCP text describe that route.
+The Dominevo Home Assistant integration (repository `camstack/homeassistant-component`) is installed today as a HACS custom repository. Operator docs and the `configure_ha_guide` MCP text describe that route.
 
 Home Assistant is absorbing HACS. The HACS custom integration is superseded by a core "Marketplace" integration (home-assistant/core PR #183502, merged to `dev` 2026-10-01, announced on frenck.dev 2026-10-26). It ships in Home Assistant 2026.11, which was not released on 2026-10-30. HACS is not retired as a catalog: the catalog (`hacs/default`), `hacs.json` and the review are unchanged, and updates still come from GitHub releases. Existing HACS installs are migrated in place on first start and custom repositories carry over, after a one-time GitHub connection and a one-time community-content warning. Home Assistant older than 2026.11 keeps HACS.
 

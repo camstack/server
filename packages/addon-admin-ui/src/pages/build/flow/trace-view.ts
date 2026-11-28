@@ -9,13 +9,13 @@
  *   idle — never reached (a step after the failure, or a run the mode refused)
  */
 
-import { formatNumeric } from '@camstack/ui-library'
+import { formatNumeric } from '@dominevo/ui-library'
 import {
   type AutomationRunTrace,
   type TraceNodeOutcome,
   type TraceValue,
   tryConvertUnit,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export type BlockTone = 'pass' | 'fail' | 'idle'
 

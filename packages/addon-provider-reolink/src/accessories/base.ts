@@ -21,7 +21,7 @@
  *     new file + one factory case, no edits to existing kinds.
  */
 
-import { AccessoryKind, type AccessoryKindValue } from '@camstack/types'
+import { AccessoryKind, type AccessoryKindValue } from '@dominevo/types'
 import { z } from 'zod'
 
 /**

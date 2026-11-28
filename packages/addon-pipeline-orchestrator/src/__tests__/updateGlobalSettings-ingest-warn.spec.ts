@@ -7,7 +7,7 @@
  * byte-identical to slice-2 in that case.
  */
 import { describe, it, expect, afterEach } from 'vitest'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import PipelineOrchestratorAddon from '../index.js'
 import { makeFakeContext, makeFakeBroker, enabledNodesFromBroker } from './e2e-helpers.js'
 

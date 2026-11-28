@@ -15,7 +15,7 @@ import {
   type SavedDevice,
   type SystemEvent,
   rowsDepsOver,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { homeConnectActions } from './custom-actions.js'
 import { trackHomeConnectContainers } from './home-connect-container-tracker.js'
 import {

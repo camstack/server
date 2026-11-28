@@ -12,7 +12,7 @@ import {
   SectionCard,
   TEXT_HINT,
   useSystem,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 
 const METRICS_ADDON_ID = 'metrics-native'
 const METRICS_CAP = 'metrics-provider'

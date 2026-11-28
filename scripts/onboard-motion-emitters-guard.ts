@@ -42,7 +42,7 @@
  * provider specs remain the proof for the cameras.
  *
  * RELEASE AND ROLLBACK. Not restated here — it rots: the order follows the
- * `@camstack/server` closure (addon-pipeline, the orchestrator and the admin UI
+ * `@dominevo/server` closure (addon-pipeline, the orchestrator and the admin UI
  * move at the server step), and the windows, the floor, the preflight and the
  * rollback are in `docs/architecture/update-and-release.md` ("Release order for
  * a camera's motion path") and D696. What this guard enforces is only that no
@@ -67,7 +67,7 @@ export const MOTION_EMITTERS_ALLOWED: ReadonlySet<string> = new Set([
 export const MOTION_EMITTERS_DEFERRED: ReadonlyMap<string, string> = new Map([
   [
     'packages/system/src/builtins/camera-grid/grid-activity.ts',
-    'ships inside @camstack/server (@camstack/server/system), which cannot assume an orchestrator at the D673 floor (the closure re-aligns it only when strictly newer); split once the minimum orchestrator carries the D673 ProviderMotion subscription',
+    'ships inside @dominevo/server (@dominevo/server/system), which cannot assume an orchestrator at the D673 floor (the closure re-aligns it only when strictly newer); split once the minimum orchestrator carries the D673 ProviderMotion subscription',
   ],
 ])
 

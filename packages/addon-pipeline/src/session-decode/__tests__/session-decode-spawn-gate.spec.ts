@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { startSessionDecodePump } from '../session-decode-pump.js'
 import type { ForkedChildLike } from '../session-decode-coordinator.js'
 import type { WorkerReply, WorkerRequest } from '../worker-protocol.js'

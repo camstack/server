@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { DeviceRun } from '@camstack/types'
+import type { DeviceRun } from '@dominevo/types'
 import { DeviceRunsPanel } from '../DeviceRunsPanel'
 import { RUN_WINDOW_MARGIN_MS } from '../device-history/history-runs'
 

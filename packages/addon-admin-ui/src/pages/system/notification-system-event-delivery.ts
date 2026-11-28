@@ -14,7 +14,7 @@ import {
   type NcSystemEventDelivery,
   type NcSystemEventFamily,
   type NcSystemEventKind,
-} from '@camstack/types'
+} from '@dominevo/types'
 import i18n from '../../i18n/index'
 
 /** A new send time: every day at 08:00. */
@@ -214,7 +214,7 @@ export function previewVerdictOf(
     if (code === 'NOT_FOUND') {
       return {
         lines: [
-          'This hub does not serve summary rules yet — update @camstack/server first. A rule saved now would be stored without its summary, and stay instant.',
+          'This hub does not serve summary rules yet — update @dominevo/server first. A rule saved now would be stored without its summary, and stay instant.',
         ],
       }
     }
@@ -230,7 +230,7 @@ export function previewVerdictOf(
     // An older hub ignores the field: it would store the rule without it and
     // send ONE message — said, never shown as if it were split (D315).
     lines.push(
-      'This hub does not send per-category summaries yet — update @camstack/server first. Until then it sends one message.',
+      'This hub does not send per-category summaries yet — update @dominevo/server first. Until then it sends one message.',
     )
   }
   if (data.empty) {

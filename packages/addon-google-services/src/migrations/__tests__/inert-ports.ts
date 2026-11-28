@@ -1,4 +1,4 @@
-import type { CalendarRecordPorts } from '@camstack/types'
+import type { CalendarRecordPorts } from '@dominevo/types'
 import type { LegacyBrokerPorts } from '../legacy-brokers-to-records.js'
 import type { OauthAccountsPorts } from '../oauth-accounts-to-records.js'
 

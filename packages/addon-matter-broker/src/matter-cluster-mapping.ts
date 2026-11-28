@@ -1,7 +1,7 @@
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 
 /**
- * Pure mapping from a Matter endpoint's present cluster set to the CamStack typed
+ * Pure mapping from a Matter endpoint's present cluster set to the Dominevo typed
  * caps the accessory child registers. Unit-tested in isolation — NO matter.js
  * import here so the mapping stays a pure, total function over plain data.
  *
@@ -11,7 +11,7 @@ import { DeviceType } from '@camstack/types'
  * bulb = OnOff + LevelControl + ColorControl) yield several caps on one child.
  */
 
-/** The CamStack device-native caps a Matter endpoint can map onto (v1 subset). */
+/** The Dominevo device-native caps a Matter endpoint can map onto (v1 subset). */
 export type MatterEndpointCap =
   | 'switch'
   | 'brightness'
@@ -176,14 +176,14 @@ const CAP_ORDER: readonly MatterEndpointCap[] = [
 ]
 
 export interface MatterEndpointMapping {
-  /** The CamStack device type the endpoint materialises as. */
+  /** The Dominevo device type the endpoint materialises as. */
   readonly deviceType: DeviceType
   /** The caps the endpoint child registers (deterministic order). */
   readonly capabilities: readonly MatterEndpointCap[]
 }
 
 /**
- * Reduce an endpoint's present cluster ids to its CamStack device type + caps.
+ * Reduce an endpoint's present cluster ids to its Dominevo device type + caps.
  * Pure + total: an endpoint with no recognised cluster maps to a Generic device
  * with no caps (the adoption layer skips empty endpoints).
  */
@@ -229,7 +229,7 @@ function capsForCluster(
   }
 }
 
-/** Pick the most-specific CamStack device type for a cap set. */
+/** Pick the most-specific Dominevo device type for a cap set. */
 function deviceTypeForCaps(
   caps: readonly MatterEndpointCap[],
   hints: MatterEndpointHints | undefined,

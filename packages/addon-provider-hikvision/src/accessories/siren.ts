@@ -24,7 +24,7 @@
  * Notes on the persisted-state model: the alarm input's ISAPI document is
  * *configuration*, not activity, and nothing here reads the siren's real
  * activity. The runtime-state slice is the only source and is written by
- * CamStack's own triggers; a siren toggled outside CamStack is not tracked
+ * Dominevo's own triggers; a siren toggled outside Dominevo is not tracked
  * until the next trigger or stop.
  */
 
@@ -34,7 +34,7 @@ import type {
   DeviceContext,
   DeviceFeature,
   InferNativeProvider,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   BaseDevice,
   createRuntimeStateBridge,
@@ -52,7 +52,7 @@ import {
   sirenPlayChoices,
   sirenTriggeredStatus,
   switchCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { AccessoryKind, type HikvisionAccessoryHost, hikvisionAccessoryBaseSchema } from './base.js'
 import { buildHikvisionSirenOptions } from './siren-options.js'

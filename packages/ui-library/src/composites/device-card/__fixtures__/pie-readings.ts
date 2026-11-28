@@ -1,4 +1,4 @@
-import type { HeroMeasurement, HeroMeasurementQuantity, HeroTone } from '@camstack/types'
+import type { HeroMeasurement, HeroMeasurementQuantity, HeroTone } from '@dominevo/types'
 
 interface ReadingInput {
   /** The value as drawn ("—" = not reported). */

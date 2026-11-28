@@ -51,7 +51,7 @@ many were here", not a sum that scales with the frame rate.
 DEPRECATED. The ring stays only until they go, nothing else reads it, and the
 baseline sampler's gate no longer does — it keeps one timestamp per device.
 
-**The scope grammar lives in `@camstack/types`.** `occupancyScope(zoneId?,
+**The scope grammar lives in `@dominevo/types`.** `occupancyScope(zoneId?,
 className?)` and `parseOccupancyScope` are shared by the writer in the addon and
 every reader. A class dimension was added as NEW scopes (`'|className'`,
 `'zoneId|className'`) beside the aggregates, which keep their exact meaning, so
@@ -87,7 +87,7 @@ fetched by `useStationaryOverlay` — under the existing stationary switch.
 detections on the frame, that both switches govern it, and that an unfetched
 census draws nothing — verified to fail when the layer is removed.
 `lts-read-surface.spec.ts` pins that the addon imports the scope grammar from
-`@camstack/types` rather than re-declaring it, and that an aggregate scope is
+`@dominevo/types` rather than re-declaring it, and that an aggregate scope is
 never parsed as a class scope. `zone-analytics-provider.spec.ts` pins that the
 class split does not change what the aggregate scopes mean. Nothing guards that
 a NEW chart reaches for the deprecated ring instead of the long-term read; the

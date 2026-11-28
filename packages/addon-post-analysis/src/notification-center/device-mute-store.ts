@@ -28,7 +28,7 @@
  * the notification centre that had never delivered anything; this one is
  * visible on the device's own Notifications panel and on the camera's status.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 /** The per-device settings key a muted camera carries. Absent IS not-muted. */
 export const NOTIFICATION_MUTED_KEY = 'notificationMuted'

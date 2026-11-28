@@ -3,7 +3,7 @@ import {
   type DiscoveredChildDevice,
   type DiscoveredChildStatus,
   type SourceInfo,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { inferParentDeviceType } from './ha-domain-mapping.js'
 import type { HaDiscoveredDevice } from './ha-discovery-types.js'
 

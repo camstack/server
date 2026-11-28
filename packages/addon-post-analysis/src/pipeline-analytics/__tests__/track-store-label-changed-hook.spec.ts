@@ -5,7 +5,7 @@
  * the hook (its close carries the label).
  */
 import { beforeEach, describe, expect, it } from 'vitest'
-import type { SettingsStoreClient } from '@camstack/types'
+import type { SettingsStoreClient } from '@dominevo/types'
 import { TrackStore, type TrackLabelChanged, type TrackPosition } from '../store/track-store.js'
 import { type FakeSettingsStore, makeFakeSettingsStore, makeSilentLogger } from './test-helpers.js'
 

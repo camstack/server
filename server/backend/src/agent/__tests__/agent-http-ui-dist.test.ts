@@ -77,7 +77,7 @@ describe('readUiDistCandidate + resolveUiDistDir', () => {
     fs.writeFileSync(path.join(base, 'dist', 'index.html'), '<!doctype html>')
     fs.writeFileSync(
       path.join(base, 'package.json'),
-      JSON.stringify({ name: '@camstack/addon-agent-ui', version }),
+      JSON.stringify({ name: '@dominevo/addon-agent-ui', version }),
     )
   }
 
@@ -91,33 +91,33 @@ describe('readUiDistCandidate + resolveUiDistDir', () => {
   it('serves the bundled UI when it is newer than the seeded install (packaged app update)', () => {
     const dataDir = path.join(tmp, 'data')
     const bundledDir = path.join(tmp, 'bundled')
-    writePkg(path.join(dataDir, 'addons', '@camstack', 'addon-agent-ui'), '1.1.1')
+    writePkg(path.join(dataDir, 'addons', '@dominevo', 'addon-agent-ui'), '1.1.1')
     writePkg(path.join(bundledDir, 'addon-agent-ui'), '1.1.13')
     expect(resolveUiDistDir(dataDir, bundledDir)).toBe(
       path.join(bundledDir, 'addon-agent-ui', 'dist'),
     )
   })
 
-  it('serves the installed UI when it is newer (camstack deploy of a newer addon)', () => {
+  it('serves the installed UI when it is newer (dominevo deploy of a newer addon)', () => {
     const dataDir = path.join(tmp, 'data')
     const bundledDir = path.join(tmp, 'bundled')
-    writePkg(path.join(dataDir, 'addons', '@camstack', 'addon-agent-ui'), '1.2.0')
+    writePkg(path.join(dataDir, 'addons', '@dominevo', 'addon-agent-ui'), '1.2.0')
     writePkg(path.join(bundledDir, 'addon-agent-ui'), '1.1.13')
     expect(resolveUiDistDir(dataDir, bundledDir)).toBe(
-      path.join(dataDir, 'addons', '@camstack', 'addon-agent-ui', 'dist'),
+      path.join(dataDir, 'addons', '@dominevo', 'addon-agent-ui', 'dist'),
     )
   })
 
   it('reads the bundled copy out of the CLOSURE SCOPE dir the packaged app now passes', () => {
     // `CAMSTACK_BUNDLED_ADDONS_DIR` moved from a second `Resources/addons` tree
-    // to the closure's own `Resources/node_modules/@camstack` (2026-08-25). This
+    // to the closure's own `Resources/node_modules/@dominevo` (2026-08-25). This
     // function is the only RUNTIME reader that opens a package inside that dir,
     // so the scope layout is pinned here: break the coupling and the desktop
     // agent silently serves a stale UI instead of the one it shipped with.
     const dataDir = path.join(tmp, 'data')
     const resources = path.join(tmp, 'Resources')
-    const scopeDir = path.join(resources, 'node_modules', '@camstack')
-    writePkg(path.join(dataDir, 'addons', '@camstack', 'addon-agent-ui'), '1.1.1')
+    const scopeDir = path.join(resources, 'node_modules', '@dominevo')
+    writePkg(path.join(dataDir, 'addons', '@dominevo', 'addon-agent-ui'), '1.1.1')
     writePkg(path.join(scopeDir, 'addon-agent-ui'), '1.2.9')
     expect(resolveUiDistDir(dataDir, scopeDir)).toBe(path.join(scopeDir, 'addon-agent-ui', 'dist'))
   })
@@ -160,7 +160,7 @@ describe('resolveUiDistDir reads only the addon root', () => {
   })
 
   function installUi(version: string): string {
-    const dir = path.join(dataDir, 'addons', '@camstack', 'addon-agent-ui')
+    const dir = path.join(dataDir, 'addons', '@dominevo', 'addon-agent-ui')
     fs.mkdirSync(path.join(dir, 'dist'), { recursive: true })
     fs.writeFileSync(path.join(dir, 'dist', 'index.html'), '<html></html>')
     fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ version }))

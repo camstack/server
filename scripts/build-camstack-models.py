@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Rebuild every Ultralytics-derived (AGPL-3.0) model the CamStack mirror hosts.
+Rebuild every Ultralytics-derived (AGPL-3.0) model the Dominevo mirror hosts.
 
 This is the Corresponding Source for the AGPL-3.0 weights of
 https://huggingface.co/camstack/camstack-models in
@@ -55,7 +55,7 @@ INT8 calibration: the hosted INT8 IRs record subset_size 128 (YOLO26) and 300
 set is COCO val2017: unpack http://images.cocodataset.org/zips/val2017.zip and
 point --calib-dir at it — the recipe's N is taken in file-name order. Images are letterboxed to
 the recipe's input size, CENTRED with grey (114) padding, and scaled to [0, 1],
-exactly as the CamStack runtime feeds the model (the padding sat top-left until
+exactly as the Dominevo runtime feeds the model (the padding sat top-left until
 2026-10-08, which the runtime never does). A different calibration set yields an
 equivalent but not bit-identical IR (NNCF picks ranges from the data).
 

@@ -3,7 +3,7 @@ import { randomBytes } from 'node:crypto'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { hubRequest } from '../http/hub-http.js'
-import { type CredentialSource, withAuthHint } from '@camstack/develop'
+import { type CredentialSource, withAuthHint } from '@dominevo/develop'
 
 interface DeployResult {
   readonly success: boolean
@@ -131,7 +131,7 @@ function toDeployResult(value: unknown): DeployResult {
 /**
  * Render what a node actually DID, not just that the request returned 200.
  *
- * A `camstack deploy -n <agent>` printed `✓ agent-a: @camstack/addon-pipeline@1.2.43`
+ * A `dominevo deploy -n <agent>` printed `✓ agent-a: @dominevo/addon-pipeline@1.2.43`
  * while the node kept executing the previous dist, because the hub route
  * installed the bundle and never reloaded it. Four reproductions on 2026-08-07
  * were spent hunting a tarball cache that does not exist. A deploy line that
@@ -536,7 +536,7 @@ export interface DeployOptions {
 }
 
 /**
- * Build (if needed) and deploy an addon to one or more CamStack nodes.
+ * Build (if needed) and deploy an addon to one or more Dominevo nodes.
  */
 export async function deployAddon(addonPath: string, opts: DeployOptions): Promise<void> {
   // Path can be passed pre-resolved (e.g. dev command did its own

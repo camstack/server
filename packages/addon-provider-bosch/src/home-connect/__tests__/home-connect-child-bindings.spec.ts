@@ -1,4 +1,4 @@
-import { DeviceRole } from '@camstack/types'
+import { DeviceRole } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   childSliceFromValue,

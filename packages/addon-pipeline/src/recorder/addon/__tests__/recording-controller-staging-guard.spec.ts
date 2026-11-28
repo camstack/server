@@ -13,7 +13,7 @@
  * dual writers and 169 writer churns.
  */
 import path from 'node:path'
-import type { CamProfile, RecordingConfig } from '@camstack/types'
+import type { CamProfile, RecordingConfig } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ListedProcess, ProcessLister, ProcessSignaller } from '../process-table.js'
 import {

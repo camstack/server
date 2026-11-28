@@ -1,7 +1,7 @@
 import { promises as fs } from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import type { IScopedLogger, LogExtras, RelocateFootageInput } from '@camstack/types'
+import type { IScopedLogger, LogExtras, RelocateFootageInput } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { RecordingIndex } from '../../recording-index.js'
 import type { RelocateEngine } from '../../relocate-engine.js'
@@ -657,7 +657,7 @@ describe('buildRecordingSourceProvider — getDaysWithRecordings', () => {
 
 // ── deleteFootprint + ops-log ────────────────────────────────────────────────
 
-import type { OpsLogEntry } from '@camstack/types'
+import type { OpsLogEntry } from '@dominevo/types'
 import type { RecordingOpsLogAppendInput, RecordingOpsLogSink } from '../ops-log-store.js'
 
 /** Capturing ops-log sink — records appends + serves a fixed list. */

@@ -17,7 +17,7 @@ import {
   type RecordsAccess,
   type SiteReading,
   stableIdMapOf,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { boundCapsOver, directoryOver, invokeCapOver } from '../actions-wiring.js'
 import { coreBlocksRecordKinds } from '../record-kinds.js'
 import { type RunsLedger, schedulerOwner } from '../runs-ledger.js'

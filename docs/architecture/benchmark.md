@@ -20,7 +20,7 @@ covers:
 
 Benchmark answers **what one node can carry**, measured on the node itself,
 and feeds that answer to Auto tune and the automatic shares (D791). The
-Admin page (`@camstack/addon-benchmark`, **Detection → Benchmark**) has three
+Admin page (`@dominevo/addon-benchmark`, **Detection → Benchmark**) has three
 sections: **Node benchmark**, **Image** (one run of a step tree on one image)
 and **Audio** (one classification of a reference sound) — D792.
 
@@ -42,7 +42,7 @@ so the timed runs are warm and on the same device.
 | Lifecycle, benchmark mode, results store | `pipeline-orchestrator` (hub) | `src/node-benchmark/` |
 | The measurement | `pipeline-runner` on the measured node | `src/pipeline-runner/node-bench/` |
 | Plan editor, status, results table | `addon-benchmark` page | `src/node-benchmark/` |
-| Shapes and pure rules | `@camstack/types` | `src/pipeline/node-benchmark/` |
+| Shapes and pure rules | `@dominevo/types` | `src/pipeline/node-benchmark/` |
 
 The orchestrator owns the run because entering benchmark mode is a
 placement change, and only the owner of placement can promise to undo it.
@@ -213,9 +213,9 @@ dataset repo `camstack/camstack-bench-clips` and its sha256 pinned in
 
 ## Operator deploy
 
-The cap methods are a framework change: publish `@camstack/types`,
-`@camstack/server/system` (force), the pipeline addon and the orchestrator, then
-`camstack deploy packages/addon-benchmark`.
+The cap methods are a framework change: publish `@dominevo/types`,
+`@dominevo/server/system` (force), the pipeline addon and the orchestrator, then
+`dominevo deploy packages/addon-benchmark`.
 
 ## Offline detector evaluation (`scripts/eval/`)
 
@@ -254,4 +254,4 @@ uv venv -p 3.12 .venv-eval && uv pip install -p .venv-eval -r scripts/eval/requi
 - D791 (node benchmark: mode, measurement, results), D792 (the page)
 - D646 (a benchmark names its pool; no engine override)
 - D755 (capacity shares, `NodeCapacitySource`), D745/D786 (Auto tune)
-- Public user docs: `camstack/docs` → Tools → Benchmark
+- Public user docs: `dominevo/docs` → Tools → Benchmark

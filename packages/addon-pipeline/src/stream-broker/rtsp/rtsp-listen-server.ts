@@ -3,7 +3,7 @@ import { randomBytes } from 'node:crypto'
 import { parseRestreamPath, sdpVariantFor, type RestreamSdpVariant } from './restream-intent.js'
 import { RtspSession } from './rtsp-session.js'
 import { RtspRestreamer } from './rtsp-restreamer.js'
-import type { BrokerConsumerAttribution, IScopedLogger } from '@camstack/types'
+import type { BrokerConsumerAttribution, IScopedLogger } from '@dominevo/types'
 
 /**
  * Attribution of the synthetic consumer a {@link BrokerWarmUp} subscribes:

@@ -1,4 +1,4 @@
-import { defineEntryKind } from '@camstack/types'
+import { defineEntryKind } from '@dominevo/types'
 import { z } from 'zod'
 
 export const OIDC_PROVIDER_OWNER = 'auth'

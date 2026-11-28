@@ -59,7 +59,7 @@ is per accelerator.**
   sitting over a lower layer's binding would be judged against the wrong model.
 - The editors write DIFFS. A field equal to the next layer down is not stored,
   and resetting a field removes its key (both keys for a model-bound field)
-  from that layer only. The rule is `@camstack/types`
+  from that layer only. The rule is `@dominevo/types`
   `pipeline/step-settings-layers.ts`, shared by the admin UI.
 
 **Migration: none on deploy.** Behaviour must not change when this ships, so the

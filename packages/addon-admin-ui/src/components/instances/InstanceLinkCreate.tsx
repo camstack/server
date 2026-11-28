@@ -5,7 +5,7 @@
  * editor at once; several open the same chooser Add uses, one tile per kind with its icon. With
  * nothing creatable the button is not rendered. Kind VALUES are data; nothing here names one.
  */
-import { Button } from '@camstack/ui-library'
+import { Button } from '@dominevo/ui-library'
 import { Plus } from 'lucide-react'
 import { type JSX, useState } from 'react'
 import { useTranslation } from 'react-i18next'

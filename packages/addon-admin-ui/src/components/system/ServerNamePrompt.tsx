@@ -25,8 +25,8 @@ import {
   DialogTitle,
   FormField,
   Input,
-} from '@camstack/ui-library'
-import { SERVER_NAME_MAX_LENGTH, type ServerNameInfo, ServerNameSchema } from '@camstack/types'
+} from '@dominevo/ui-library'
+import { SERVER_NAME_MAX_LENGTH, type ServerNameInfo, ServerNameSchema } from '@dominevo/types'
 import { useQueryClient } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'

@@ -3,7 +3,7 @@
  * deletes every event (and its media) older than the cutoff across all cameras,
  * behind a danger confirm.
  */
-import { Button, Select, useConfirm, usePipelineAnalyticsPruneEvents } from '@camstack/ui-library'
+import { Button, Select, useConfirm, usePipelineAnalyticsPruneEvents } from '@dominevo/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { Loader2, Scissors } from 'lucide-react'
 import { useCallback, useState, type ReactElement } from 'react'

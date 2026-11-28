@@ -41,7 +41,7 @@
  * mislabelled resampler — the failure mode that made the Opus path write zero
  * bytes to the camera until `sourceSampleRate` was pinned to 48 kHz.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { IntercomAudioCodecApi } from './intercom-orchestrator.js'
 
 /** libav codec name of a linear little-endian 16-bit PCM decode session. */

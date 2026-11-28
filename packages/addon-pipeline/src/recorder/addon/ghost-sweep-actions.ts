@@ -14,7 +14,7 @@
  * `hoursDeferred`, so repeated dry runs preview the same 16 hours.
  */
 import { z } from 'zod'
-import { customAction, defineCustomActions } from '@camstack/types'
+import { customAction, defineCustomActions } from '@dominevo/types'
 import type { GhostPassRefusal, GhostSkipReason, GhostSweepResult } from './ghost-location-sweep.js'
 
 const GhostLocationSweepInputSchema = z.object({

@@ -1,6 +1,6 @@
 /**
  * Fmp4BoxSplitter — the cut between an fMP4 byte stream and the units HKSV's
- * delegate (and, per roadmap 4b, a CamStack clip source) consume.
+ * delegate (and, per roadmap 4b, a Dominevo clip source) consume.
  *
  * Two fixture strategies, deliberately both:
  *
@@ -244,11 +244,11 @@ describe.runIf(ffmpegAvailable())('Fmp4BoxSplitter — a real ffmpeg fMP4 stream
       outputArgs: [],
       sink: { kind: 'stdout', container: 'mp4', fragmentMs },
     })
-    // `@camstack/types` resolves to its BUILT dist from this package, so a
+    // `@dominevo/types` resolves to its BUILT dist from this package, so a
     // stale build silently produces the OLD sink args (`-f mp4 pipe:1`, no
     // movflags) and ffmpeg fails with "muxer does not support non seekable
     // output" — a message that names nothing useful. Say the real cause here.
-    expect(args.join(' '), 'the fMP4 sink flags are missing — is @camstack/types built?').toContain(
+    expect(args.join(' '), 'the fMP4 sink flags are missing — is @dominevo/types built?').toContain(
       '-movflags +frag_keyframe+empty_moov+default_base_moof',
     )
     const run = spawnSync('ffmpeg', args, { maxBuffer: 64 * 1024 * 1024 })

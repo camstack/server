@@ -10,7 +10,7 @@ import {
   hydrateSchema,
   type DeviceContext,
   type IDevice,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { DEFAULT_AC_CAPABILITIES, type AcCapabilities } from '@apocaliss92/nodegree'
 import { greeAcDeviceSchema, type GreeConfig, mergeConnectionPatch } from '../config.js'
 import { greeConnections } from '../gree-gateway.js'

@@ -6,7 +6,7 @@
  * got every exposed camera, its PTZ, its siren and the alarm panel. These specs
  * pin the gate that intersects the link with the linking user's LIVE grants.
  */
-import type { DeviceMetaLike, IScopedLogger, TokenScope } from '@camstack/types'
+import type { DeviceMetaLike, IScopedLogger, TokenScope } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   AlexaAccessGate,

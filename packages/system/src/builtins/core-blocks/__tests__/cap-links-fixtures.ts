@@ -9,7 +9,7 @@ import {
   type IScopedLogger,
   coreBlockComposition,
   compositionSourceKey,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { vi } from 'vitest'
 import { CapLinksService, type CapLinksPorts } from '../cap-links.js'
 

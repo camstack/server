@@ -17,7 +17,7 @@
  * it (de)serialises. `DeviceStateMirror` owns the state and the log lines.
  */
 import { z } from 'zod'
-import { type FieldClaimMode, FieldClaimModeSchema } from '@camstack/types'
+import { type FieldClaimMode, FieldClaimModeSchema } from '@dominevo/types'
 import type { RuntimeStatePolicyLookup } from './runtime-state-persist-gate.js'
 
 /** The row key under which claims travel. Not a cap name: `$` is not legal in one. */

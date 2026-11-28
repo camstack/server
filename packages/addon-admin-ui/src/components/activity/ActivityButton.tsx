@@ -17,8 +17,8 @@ import {
   Skeleton,
   useJobsGetSummary,
   useJobsList,
-} from '@camstack/ui-library'
-import type { Job } from '@camstack/types'
+} from '@dominevo/ui-library'
+import type { Job } from '@dominevo/types'
 import { Activity } from 'lucide-react'
 import { useMemo, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'

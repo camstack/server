@@ -21,7 +21,7 @@ import { sessionFromFragment, storeSession } from '../lib/admin-session'
 import { hubPath } from '../lib/mount'
 import { mountOauthLanding, oauthOutcomeOf } from './OauthLanding'
 import { useTranslation } from 'react-i18next'
-import { Button } from '@camstack/ui-library'
+import { Button } from '@dominevo/ui-library'
 
 const DONE_MESSAGE = 'Done — you can close this window.'
 /** How long a `window.close()` gets before the page says it is done instead. */

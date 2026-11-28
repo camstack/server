@@ -38,7 +38,7 @@ value goes stale exactly when someone replaces a file and forgets it.
 
 ## Decision
 
-Every catalog format hosted on the CamStack mirror has a revision: the sha256
+Every catalog format hosted on the Dominevo mirror has a revision: the sha256
 (the mirror's `lfs.oid`) of its weight file. For a Core ML package that is
 `weight.bin`, for an OpenVINO IR the `.bin` sibling, otherwise the file
 itself (`revisionWeightUrl`). The revisions are generated from the mirror's
@@ -76,8 +76,8 @@ file.
   IR `.xml`) was replaced would be accepted as current. Every known
   replacement changed the weights. A replacement that changes only the spec
   needs an inline revision, or a new file name.
-- The table ships inside `@camstack/system`, which is framework. A revision
-  change reaches nodes with a `@camstack/server` release, not with an addon
+- The table ships inside `@dominevo/system`, which is framework. A revision
+  change reaches nodes with a `@dominevo/server` release, not with an addon
   deploy.
 - After any upload to the mirror, run
   `npx tsx scripts/check-hosted-model-revisions.ts --write` and commit the

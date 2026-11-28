@@ -3,7 +3,7 @@
  * record kind (entry kinds included), the facet dimensions an operator filters
  * on, and the text the search matches. No React, no queries.
  */
-import type { EntryKindInfo, StorageKind } from '@camstack/types'
+import type { EntryKindInfo, StorageKind } from '@dominevo/types'
 import type { DataTableFacetGroupConfig } from '../data-table-filter'
 
 /** One table row: a declared kind, plus the entry catalog's title when it is an entry kind. */

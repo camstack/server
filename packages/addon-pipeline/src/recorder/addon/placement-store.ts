@@ -2,7 +2,7 @@
  * The recorder's OWN durable placement state (`recordingPlacement`).
  *
  * WHY NOT `RecordingConfigSchema`. That schema is strict, lives in
- * `@camstack/types`, and every field added to it needs a framework train before
+ * `@dominevo/types`, and every field added to it needs a framework train before
  * the recorder can read it back. Placement is recorder-owned bookkeeping, so it
  * belongs in the recorder's own addon-store blob — exactly like
  * `recordingConfigs` (config-store.ts) and `recordingOpsLog` (ops-log-store.ts),
@@ -27,7 +27,7 @@
  * assignment yet", which every caller already handles by planning from scratch.
  */
 
-import type { CamProfile, DurableState } from '@camstack/types'
+import type { CamProfile, DurableState } from '@dominevo/types'
 import { z } from 'zod'
 
 /** The addon-store key holding the placement blob. */

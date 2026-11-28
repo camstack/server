@@ -25,7 +25,7 @@
  * `null`, and `null` is a real answer.
  */
 import { spawn as nodeSpawn } from 'node:child_process'
-import { errMsg } from '@camstack/types'
+import { errMsg } from '@dominevo/types'
 import { GRID_WIRE_CONTAINER } from './grid-wire-format.js'
 import type { GridStreamLogger } from './grid-stream-session.js'
 

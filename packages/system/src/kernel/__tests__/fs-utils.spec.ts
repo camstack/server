@@ -97,10 +97,10 @@ describe('copyExtraFileDirs', () => {
 
 describe('stripBundledDeps', () => {
   const basePkg = {
-    name: '@camstack/addon-provider-reolink',
+    name: '@dominevo/addon-provider-reolink',
     version: '1.0.0',
     dependencies: {
-      '@camstack/types': '*',
+      '@dominevo/types': '*',
       '@apocaliss92/nodelink-js': '^0.4.24',
       'lucide-react': '^0.4.0',
       zod: '^4.0.0',
@@ -121,9 +121,9 @@ describe('stripBundledDeps', () => {
     // `addons/` stays node_modules-free for the whole-folder backup (ADR-0027).
     const pkg = {
       ...basePkg,
-      name: '@camstack/addon-post-analysis',
+      name: '@dominevo/addon-post-analysis',
       dependencies: {
-        '@camstack/types': '*',
+        '@dominevo/types': '*',
         'node-av': '^6.0.0',
         'better-sqlite3': '^11.0.0',
         sharp: '^0.35.0',
@@ -147,7 +147,7 @@ describe('stripBundledDeps', () => {
     // Only camstack.runtimeDependencies is kept now (RUNTIME_NATIVE_KEEP is
     // empty); a kept dep declared as a PEER must still fold into dependencies.
     const pkg = {
-      name: '@camstack/addon-pipeline',
+      name: '@dominevo/addon-pipeline',
       version: '1.0.0',
       camstack: { runtimeDependencies: ['some-runtime-lib'] },
       dependencies: { 'lucide-react': '^0.4.0' },
@@ -158,10 +158,10 @@ describe('stripBundledDeps', () => {
     expect(result.peerDependencies).toBeUndefined()
   })
 
-  it('never keeps @camstack/* even when listed in runtimeDependencies', () => {
+  it('never keeps @dominevo/* even when listed in runtimeDependencies', () => {
     const pkg = {
       ...basePkg,
-      camstack: { runtimeDependencies: ['@camstack/types', 'zod'] },
+      camstack: { runtimeDependencies: ['@dominevo/types', 'zod'] },
     }
     const result = stripBundledDeps(pkg)
     expect(result.dependencies).toEqual({ zod: '^4.0.0' })
@@ -169,10 +169,10 @@ describe('stripBundledDeps', () => {
 
   it('system packages (camstack.system: true) keep the legacy strip — they are not self-contained bundles', () => {
     const pkg = {
-      name: '@camstack/core',
+      name: '@dominevo/core',
       version: '1.0.0',
       camstack: { system: true },
-      dependencies: { '@camstack/types': '*', 'better-sqlite3': '^11.0.0', yaml: '^2.0.0' },
+      dependencies: { '@dominevo/types': '*', 'better-sqlite3': '^11.0.0', yaml: '^2.0.0' },
     }
     const result = stripBundledDeps(pkg)
     expect(result.dependencies).toEqual({ 'better-sqlite3': '^11.0.0', yaml: '^2.0.0' })
@@ -180,13 +180,13 @@ describe('stripBundledDeps', () => {
 })
 
 describe('stripCamstackDeps', () => {
-  it('removes @camstack/* dependencies', () => {
+  it('removes @dominevo/* dependencies', () => {
     const pkg = {
-      name: '@camstack/addon-motion-detection',
+      name: '@dominevo/addon-motion-detection',
       version: '0.1.0',
       dependencies: {
-        '@camstack/types': '^0.1.0',
-        '@camstack/server': '^0.1.0',
+        '@dominevo/types': '^0.1.0',
+        '@dominevo/server': '^0.1.0',
         lodash: '^4.17.21',
       },
       devDependencies: {
@@ -198,7 +198,7 @@ describe('stripCamstackDeps', () => {
 
     expect(result.dependencies).toEqual({ lodash: '^4.17.21' })
     expect(result.devDependencies).toBeUndefined() // devDeps always stripped
-    expect(result.name).toBe('@camstack/addon-motion-detection')
+    expect(result.name).toBe('@dominevo/addon-motion-detection')
   })
 
   it('handles package with no dependencies', () => {
@@ -207,12 +207,12 @@ describe('stripCamstackDeps', () => {
     expect(result.dependencies).toBeUndefined()
   })
 
-  it('strips peerDependencies with @camstack scope', () => {
+  it('strips peerDependencies with @dominevo scope', () => {
     const pkg = {
       name: 'test',
       version: '1.0.0',
       peerDependencies: {
-        '@camstack/kernel': '^0.1.0',
+        '@dominevo/kernel': '^0.1.0',
         express: '^4.0.0',
       },
     }
@@ -221,41 +221,41 @@ describe('stripCamstackDeps', () => {
     expect(result.peerDependencies).toEqual({ express: '^4.0.0' })
   })
 
-  // Contract: @camstack/shm-ring is a host-provided system package. The
-  // addon-installer must strip every @camstack/* entry from an addon's
+  // Contract: @dominevo/shm-ring is a host-provided system package. The
+  // addon-installer must strip every @dominevo/* entry from an addon's
   // package.json before `npm install`, so these packages are never fetched
   // from npm and instead resolve from the host's node_modules (the installed
   // addon lives inside the host tree; Node's upward resolution finds them).
   // Regression guard: shm-ring must be stripped from dependencies AND
   // devDependencies (it was previously declared in addon-pipeline's
   // peerDependencies + devDependencies).
-  it('strips @camstack/shm-ring while retaining non-camstack deps', () => {
+  it('strips @dominevo/shm-ring while retaining non-camstack deps', () => {
     const pkg = {
-      name: '@camstack/addon-pipeline',
+      name: '@dominevo/addon-pipeline',
       version: '0.1.0',
       dependencies: {
-        '@camstack/shm-ring': '^0.1.0',
-        '@camstack/server': '^0.1.0',
+        '@dominevo/shm-ring': '^0.1.0',
+        '@dominevo/server': '^0.1.0',
         lodash: '^4',
       },
       peerDependencies: {
-        '@camstack/types': '^0.1.0',
+        '@dominevo/types': '^0.1.0',
       },
       devDependencies: {
-        '@camstack/shm-ring': '*',
+        '@dominevo/shm-ring': '*',
       },
     }
 
     const result = stripCamstackDeps(pkg)
 
-    // dependencies: all @camstack/* removed, lodash retained.
+    // dependencies: all @dominevo/* removed, lodash retained.
     expect(result.dependencies).toEqual({ lodash: '^4' })
 
     // Explicit regression assertion: shm-ring is the package this test exists
     // to lock — it must not survive in dependencies.
-    expect(result.dependencies).not.toHaveProperty('@camstack/shm-ring')
+    expect(result.dependencies).not.toHaveProperty('@dominevo/shm-ring')
 
-    // peerDependencies: only @camstack/types present, so the section collapses
+    // peerDependencies: only @dominevo/types present, so the section collapses
     // to undefined once stripped.
     expect(result.peerDependencies).toBeUndefined()
 
@@ -264,7 +264,7 @@ describe('stripCamstackDeps', () => {
     expect(result.devDependencies).toBeUndefined()
 
     // Non-stripped fields are preserved.
-    expect(result.name).toBe('@camstack/addon-pipeline')
+    expect(result.name).toBe('@dominevo/addon-pipeline')
     expect(result.version).toBe('0.1.0')
   })
 })

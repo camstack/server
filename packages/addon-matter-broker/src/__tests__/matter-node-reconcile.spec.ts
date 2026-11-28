@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { MatterNodeSnapshot } from '../matter-controller.js'
 import type { MatterEndpointEntry } from '../devices/matter-node-device.js'
 import {

@@ -28,7 +28,7 @@
  * `scripts/check-orphan-reclaimers.ts`: restoring the original inline
  * `delete.mutate(...) !== undefined` turns that guard red.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { kindRows, makeAnalyticsWorld, seedLedgerRows } from '../../__tests__/fake-records.js'
 import { makeFakeSettingsStore, makeSilentLogger } from '../../__tests__/test-helpers.js'

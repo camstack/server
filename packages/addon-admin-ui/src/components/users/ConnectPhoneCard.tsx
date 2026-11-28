@@ -1,6 +1,6 @@
 /**
  * "Connect a phone" — a QR code + copyable central link that opens the
- * CamStack viewer app (or, without the app, the web viewer) on THIS hub.
+ * Dominevo viewer app (or, without the app, the web viewer) on THIS hub.
  *
  * The link carries the hub origin only (`lib/connect-phone-link.ts`); the app
  * signs in afterwards with the ordinary login. No cloud account, no token in
@@ -20,7 +20,7 @@ import {
   Select,
   useLocalNetworkGetAddresses,
   useLocalNetworkGetConnectionEndpoints,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 
 import {
   buildConnectLink,

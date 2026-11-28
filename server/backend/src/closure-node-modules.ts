@@ -1,7 +1,7 @@
 /**
- * The directory holding the closure's own copy of each `@camstack` package.
+ * The directory holding the closure's own copy of each `@dominevo` package.
  *
- * The launcher runs from `<root>/node_modules/@camstack/server/dist`. Every
+ * The launcher runs from `<root>/node_modules/@dominevo/server/dist`. Every
  * addon the server declares is HOISTED to that top-level `node_modules`, not
  * nested under the server package — npm does not create
  * `<server>/node_modules` at all.
@@ -19,6 +19,6 @@ import * as path from 'node:path'
 
 /** @param serverDistDir typically `__dirname` of the launcher. */
 export function resolveClosureNodeModules(serverDistDir: string): string {
-  // dist → server → @camstack → node_modules
+  // dist → server → @dominevo → node_modules
   return path.resolve(serverDistDir, '..', '..', '..')
 }

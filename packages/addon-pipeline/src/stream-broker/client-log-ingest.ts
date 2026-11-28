@@ -4,12 +4,12 @@
  * The mobile/web viewer batches its in-app logs and POSTs them here; each entry
  * is forwarded to the hub logger (with `meta.source`) so it lands in winston and
  * the admin logs query. Hosted on the stream-broker data-plane because it already
- * serves authenticated routes and ships via `camstack deploy` (no core/hub
+ * serves authenticated routes and ships via `dominevo deploy` (no core/hub
  * restart). Best-effort: never throws, bounds the body size, ignores malformed
  * entries. Carries diagnostic strings only — no media, token gated by the hub.
  */
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import { CALLER_USERNAME_HEADER } from '@camstack/types'
+import { CALLER_USERNAME_HEADER } from '@dominevo/types'
 import { z } from 'zod'
 
 const MAX_BODY_BYTES = 512 * 1024

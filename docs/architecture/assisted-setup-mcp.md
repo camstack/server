@@ -21,7 +21,7 @@ covers:
 
 # Assisted setup and troubleshooting with the public MCP
 
-A user guide for the tools of `camstack mcp` (D974) that help an assistant set a
+A user guide for the tools of `dominevo mcp` (D974) that help an assistant set a
 hub up, find out why something misbehaves, and report it. The operator-language
 version is on the public docs site ("Assisted setup and troubleshooting with the
 MCP"). Toolsets: `setup` needs no login, `ops` reads a hub, `configure` and
@@ -46,10 +46,10 @@ never `0` or an empty list (D393).
 
 | Tool | What it does | Ask the assistant |
 | --- | --- | --- |
-| `setup_about` | CLI and server versions, supported hosts | "Which CamStack version is current?" |
-| `setup_host_check` | Inspects the machine the MCP runs on (same report as `camstack host-check`): GPUs by vendor (NVIDIA through the `nvidia` / `nvidia-legacy` images), NPU, Coral, container or LXC; the image tag and the device flags for docker run, Compose, Unraid and a Proxmox LXC. Read-only, nothing sent | "Which devices should I pass to CamStack on this machine?" |
-| `setup_install_guide` | Interview, then the official template for docker-compose / docker / unraid / proxmox-lxc / macos-desktop | "Help me install CamStack on Unraid." |
-| `setup_discover_hubs` | Hubs on the local network | "Is there a CamStack hub here?" |
+| `setup_about` | CLI and server versions, supported hosts | "Which Dominevo version is current?" |
+| `setup_host_check` | Inspects the machine the MCP runs on (same report as `dominevo host-check`): GPUs by vendor (NVIDIA through the `nvidia` / `nvidia-legacy` images), NPU, Coral, container or LXC; the image tag and the device flags for docker run, Compose, Unraid and a Proxmox LXC. Read-only, nothing sent | "Which devices should I pass to Dominevo on this machine?" |
+| `setup_install_guide` | Interview, then the official template for docker-compose / docker / unraid / proxmox-lxc / macos-desktop | "Help me install Dominevo on Unraid." |
+| `setup_discover_hubs` | Hubs on the local network | "Is there a Dominevo hub here?" |
 | `setup_connect` | Does the hub answer, is its CA pinned, is there a session | "Connect to my hub." |
 | `setup_add_node` | Guide to add an agent; the operator types the six pairing digits on both screens, the tool never confirms one | "Add my Mac mini as a node." |
 | `setup_login`, `setup_login_wait` | Sign in by browser approval, no password | "Log me in." |
@@ -65,7 +65,7 @@ get-started pages, published as `/onboarding/v1/manifest.json` (D1077). The MCP
 reads that document live (3 s timeout, cached an hour) and falls back to the
 snapshot bundled in the package (`packages/cli/src/onboarding/manifest.snapshot.json`,
 refreshed with `npm run onboarding:sync`); the higher `revision` wins and the
-answer says which one it used. `camstack mcp --no-docs-fetch` never leaves the
+answer says which one it used. `dominevo mcp --no-docs-fetch` never leaves the
 machine for it. What stays code is how a step is judged
 (`packages/cli/src/onboarding/evaluators.ts`): a step the docs added after this
 CLI was built is `unknown` with "update the CLI", never guessed.
@@ -141,7 +141,7 @@ playback of camera 12?"
 ### Reporting it: `report_issue`
 
 `report_issue({ kind, title, description, deviceId?, since? })` drafts a GitHub
-issue for `camstack/server` and files it only after you read the whole text.
+issue for `dominevo/server` and files it only after you read the whole text.
 
 `kind` is one of `streams`, `media-thumbnails`, `ui`, `notifications`,
 `remote-access`, `pipeline-detection`, `recording-storage`, `integration`, `other`.
@@ -171,10 +171,10 @@ An addon identical on several nodes is one table row listing them. Each section 
 2. You edit: the assistant calls again with the new title or description. That is a
    new draft and a new token; a token never files text it was not issued for, and
    the execute step files the text the dry run showed, not a rebuild.
-3. Second call with the token: runs YOUR `gh issue create -R camstack/server
+3. Second call with the token: runs YOUR `gh issue create -R dominevo/server
    --title … --body-file <0600 temp file>` (the file is removed afterwards). It
    never uses a token of ours. Without `gh` or a sign-in, or when `gh` fails, the
-   answer is a prefilled `https://github.com/camstack/server/issues/new?title=…&body=…`
+   answer is a prefilled `https://github.com/dominevo/server/issues/new?title=…&body=…`
    link, cut at a line boundary to 6,500 characters with a note; nothing is filed.
 
 **What is sent.** The Environment is built only from an allow list

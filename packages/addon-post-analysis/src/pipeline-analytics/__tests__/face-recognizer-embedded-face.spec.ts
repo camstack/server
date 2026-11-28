@@ -28,7 +28,7 @@
  * precisely the face an operator most wants to assign, so gating the mark on
  * `recognizedIdentityId` would make it false exactly where it matters.
  */
-import type { FrameHandle } from '@camstack/types'
+import type { FrameHandle } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { FaceRecognizer, type FaceRecognizerDeps } from '../face-recognizer.js'
 import { FACE_DEFAULTS, type FaceSettings } from '../face-settings.js'

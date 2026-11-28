@@ -3,7 +3,7 @@
  * frame, derived from the track store at read time — the decision the
  * operator is correcting, not a re-run of a model.
  */
-import type { Track } from '@camstack/types'
+import type { Track } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   PIPELINE_BOX_TOLERANCE_MS,

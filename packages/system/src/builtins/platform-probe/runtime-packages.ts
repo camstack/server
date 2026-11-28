@@ -1,4 +1,4 @@
-import type { HardwareInfo } from '@camstack/types'
+import type { HardwareInfo } from '@dominevo/types'
 
 export interface RuntimePackageSet {
   requirementsFiles: string[]

@@ -135,8 +135,8 @@ describe('package directories', () => {
   it('resolves the sdk nx project to its directory — the npm workspace name is different', () => {
     const dirs = workspacePackageDirs()
     expect(dirs.get('sdk')).toBe('packages/sdk')
-    expect(dirs.get('@camstack/server-framework')).toBe('packages/system')
-    expect(dirs.get('@camstack/e2e')).toBe('e2e')
+    expect(dirs.get('@dominevo/server-framework')).toBe('packages/system')
+    expect(dirs.get('@dominevo/e2e')).toBe('e2e')
   })
 })
 
@@ -169,9 +169,9 @@ describe('local lane runner plan', () => {
         '--cpus',
         '12',
         '--heavy',
-        '@camstack/ui-library,@camstack/addon-admin-ui',
+        '@dominevo/ui-library,@dominevo/addon-admin-ui',
         '--light',
-        '@camstack/addon-ai,@camstack/addon-training',
+        '@dominevo/addon-ai,@dominevo/addon-training',
       ],
       {
         encoding: 'utf8',
@@ -194,7 +194,7 @@ describe('local lane runner plan', () => {
       heavyWorkers: 4,
       lightParallel: 2,
       lightWorkers: 2,
-      heavy: ['@camstack/addon-admin-ui', '@camstack/ui-library'],
+      heavy: ['@dominevo/addon-admin-ui', '@dominevo/ui-library'],
     })
   })
 
@@ -231,19 +231,19 @@ describe('heavy project order', () => {
   it('starts the longest measured projects first and puts an unknown project ahead of them', () => {
     expect(
       orderLongestFirst([
-        '@camstack/ui-library',
-        '@camstack/addon-pipeline',
-        '@camstack/addon-admin-ui',
-        '@camstack/brand-new',
+        '@dominevo/ui-library',
+        '@dominevo/addon-pipeline',
+        '@dominevo/addon-admin-ui',
+        '@dominevo/brand-new',
       ]),
     ).toEqual([
-      '@camstack/brand-new',
-      '@camstack/addon-admin-ui',
-      '@camstack/ui-library',
-      '@camstack/addon-pipeline',
+      '@dominevo/brand-new',
+      '@dominevo/addon-admin-ui',
+      '@dominevo/ui-library',
+      '@dominevo/addon-pipeline',
     ])
-    expect(HEAVY_WEIGHT_SECONDS['@camstack/addon-admin-ui']).toBeGreaterThan(
-      HEAVY_WEIGHT_SECONDS['@camstack/ui-library'],
+    expect(HEAVY_WEIGHT_SECONDS['@dominevo/addon-admin-ui']).toBeGreaterThan(
+      HEAVY_WEIGHT_SECONDS['@dominevo/ui-library'],
     )
   })
 })
@@ -253,25 +253,25 @@ describe('projects that failed last time', () => {
     expect(
       orderProjects(
         [
-          '@camstack/addon-admin-ui',
-          '@camstack/server',
-          '@camstack/types',
-          '@camstack/addon-pipeline',
+          '@dominevo/addon-admin-ui',
+          '@dominevo/server',
+          '@dominevo/types',
+          '@dominevo/addon-pipeline',
         ],
-        ['@camstack/types', '@camstack/addon-pipeline'],
+        ['@dominevo/types', '@dominevo/addon-pipeline'],
       ),
     ).toEqual([
-      '@camstack/addon-pipeline',
-      '@camstack/types',
-      '@camstack/addon-admin-ui',
-      '@camstack/server',
+      '@dominevo/addon-pipeline',
+      '@dominevo/types',
+      '@dominevo/addon-admin-ui',
+      '@dominevo/server',
     ])
   })
 
   it('a plan puts a previously failed light project at the front of its lane', () => {
     const plan = lanePlan({
       cpus: 12,
-      heavy: ['@camstack/server'],
+      heavy: ['@dominevo/server'],
       light: ['a', 'b', 'c'],
       failedBefore: ['c'],
     })
@@ -279,7 +279,7 @@ describe('projects that failed last time', () => {
   })
 
   it('with no history the order is the plain longest-first one', () => {
-    const heavy = ['@camstack/ui-library', '@camstack/addon-admin-ui']
+    const heavy = ['@dominevo/ui-library', '@dominevo/addon-admin-ui']
     expect(orderProjects(heavy)).toEqual(orderLongestFirst(heavy))
   })
 })

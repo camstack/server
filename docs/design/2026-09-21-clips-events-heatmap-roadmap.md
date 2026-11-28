@@ -168,7 +168,7 @@ the write into the store. The surface last.
 
 `Clip.eventIds` exists in the schema and is filled from **a single place**:
 `packages/addon-pipeline/src/recorder/addon/videoclip-visits.ts:237` — the
-recorder's analytic visits, i.e. CamStack's clips.
+recorder's analytic visits, i.e. Dominevo's clips.
 
 A native Reolink clip carries `nativeTypes: ["md","dog_cat"]` and `labels:
 ["animal"]` (read from `clip-alarm-labels.ts`), and **zero `eventIds`**. Therefore:

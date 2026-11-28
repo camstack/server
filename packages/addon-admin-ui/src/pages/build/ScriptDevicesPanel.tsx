@@ -9,8 +9,8 @@
  * what `reconcileBlockDevices` declared under the Blocks integration.
  */
 
-import { coreBlockAddonId } from '@camstack/types'
-import { Badge, DeviceName, useDeviceManagerListAll } from '@camstack/ui-library'
+import { coreBlockAddonId } from '@dominevo/types'
+import { Badge, DeviceName, useDeviceManagerListAll } from '@dominevo/ui-library'
 import { Loader2 } from 'lucide-react'
 import { useMemo, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'

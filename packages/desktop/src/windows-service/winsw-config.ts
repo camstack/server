@@ -12,7 +12,7 @@
  */
 
 export const SERVICE_ID = 'CamStackAgent'
-export const SERVICE_DISPLAY_NAME = 'CamStack Agent'
+export const SERVICE_DISPLAY_NAME = 'Dominevo Agent'
 
 export interface AgentServiceSpec {
   /** `<resources>\node\node.exe` — the bundled real Node. */
@@ -22,7 +22,7 @@ export interface AgentServiceSpec {
    * the asar): relaunches the starter on ANY exit, which WinSW alone does not.
    */
   readonly supervisorJs: string
-  /** The shared starter (`@camstack/server/dist/starter.js`). */
+  /** The shared starter (`@dominevo/server/dist/starter.js`). */
   readonly starterJs: string
   /** Working directory of the node (the starter's own dir). */
   readonly workingDir: string
@@ -61,7 +61,7 @@ export function buildWinswXml(spec: AgentServiceSpec): string {
     '<service>',
     `  <id>${SERVICE_ID}</id>`,
     `  <name>${SERVICE_DISPLAY_NAME}</name>`,
-    '  <description>CamStack agent node: runs detection and media work for a CamStack hub.</description>',
+    '  <description>Dominevo agent node: runs detection and media work for a Dominevo hub.</description>',
     `  <executable>${xmlEscape(spec.nodeExe)}</executable>`,
     `  <arguments>"${xmlEscape(spec.supervisorJs)}" "${xmlEscape(spec.starterJs)}"</arguments>`,
     `  <workingdirectory>${xmlEscape(spec.workingDir)}</workingdirectory>`,

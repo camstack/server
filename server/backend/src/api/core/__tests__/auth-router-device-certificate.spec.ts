@@ -2,7 +2,7 @@ import {
   buildDeviceSignatureMessage,
   deviceRefusalFromMessage,
   type DeviceSignaturePurpose,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { newTestDevice, type TestDevice } from '../../../auth/__tests__/device-test-kit.js'
 import { sessionHarness } from '../../../auth/__tests__/session-test-harness.js'

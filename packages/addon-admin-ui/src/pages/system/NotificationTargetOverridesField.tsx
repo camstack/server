@@ -8,8 +8,8 @@
  * (`TARGET_SETTINGS_SURFACES`). The catalog is read with the key the rule
  * editor uses, so opening either shares one answer.
  */
-import type { NcTargetOverrides, NcTemplateVarDescriptor } from '@camstack/types'
-import { type NotificationTargetOption, useSystem } from '@camstack/ui-library'
+import type { NcTargetOverrides, NcTemplateVarDescriptor } from '@dominevo/types'
+import { type NotificationTargetOption, useSystem } from '@dominevo/ui-library'
 import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { varsForContext } from '../../components/notifications/template-field.helpers'

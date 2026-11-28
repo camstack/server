@@ -1,4 +1,4 @@
-import type { AlarmArmMode, AlarmPanelStatus, AlarmState } from '@camstack/types'
+import type { AlarmArmMode, AlarmPanelStatus, AlarmState } from '@dominevo/types'
 import type { AlarmActivity } from '../scenes/alarm/model'
 
 export interface AlarmReading {

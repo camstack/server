@@ -21,7 +21,7 @@
  *     cadence a per-tick warning is 8 640 lines a day on a node that simply is
  *     not Linux.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   buildContainerMemorySnapshot,
@@ -37,7 +37,7 @@ import {
 
 /**
  * The live hub's own `memory.stat`, cgroup v2, read on 2026-08-29 from inside
- * the `CamStack` container. Trimmed in the middle only — every field we read
+ * the `Dominevo` container. Trimmed in the middle only — every field we read
  * is present, and so are plenty we do not, which is the point: the parse must
  * survive a file it does not fully understand.
  */

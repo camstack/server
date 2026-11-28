@@ -21,7 +21,7 @@
  *     lives on the camera's own cap, so the Alexa endpoint id encodes
  *     the routing.
  */
-import { isOutlet, isSwitchFan, isSwitchLight, type AlarmArmMode } from '@camstack/types'
+import { isOutlet, isSwitchFan, isSwitchLight, type AlarmArmMode } from '@dominevo/types'
 
 import { type DetectionSensorClass, detectionSensorEndpointId } from '../handlers/endpoint-id.js'
 import { supportedArmStatesFor } from '../handlers/security-panel-arm-state.js'
@@ -326,7 +326,7 @@ const MIN_MODE_CONTROLLER_MODES = 2
 
 /**
  * Preset names as distinct mode values. Two presets with the same name (the
- * camera allows it: `Stanza`, `Stanza`; `CamStack Home` ×3) produced two
+ * camera allows it: `Stanza`, `Stanza`; `Dominevo Home` ×3) produced two
  * identical modes, and Alexa rejected the capability — "Invalid capability
  * received." — and with it every endpoint of the camera. First wins,
  * case-insensitively: the SetMode handler resolves a value to the first
@@ -432,7 +432,7 @@ export function buildParentCameraEndpoint(input: BuildParentEndpointInput): Alex
   // No battery interface: `Alexa.BatteryLevelSensor` is not in Amazon's
   // interface list and no documented interface carries a battery level
   // (InventoryLevelSensor is for consumables; EndpointHealth documents only
-  // `connectivity`). Battery stays visible in CamStack. See D769.
+  // `connectivity`). Battery stays visible in Dominevo. See D769.
   const presetNames = distinctPresetNames(input.ptzPresetNames)
   if (presetNames.length >= MIN_MODE_CONTROLLER_MODES) {
     capabilities.push(ptzPresetModeController(presetNames))
@@ -450,7 +450,7 @@ export function buildParentCameraEndpoint(input: BuildParentEndpointInput): Alex
   return {
     endpointId: String(input.deviceId),
     manufacturerName: 'camstack',
-    description: 'CamStack camera',
+    description: 'Dominevo camera',
     friendlyName: input.friendlyName.length > 0 ? input.friendlyName : `Camera ${input.deviceId}`,
     displayCategories,
     capabilities,
@@ -464,7 +464,7 @@ export type ChildAccessoryKind = 'light' | 'switch' | 'siren' | 'outlet' | 'fan'
 
 /**
  * Which endpoint a child switch becomes, from its type and role. A switch
- * sub-role is read only through the `@camstack/types` accessors; a heater
+ * sub-role is read only through the `@dominevo/types` accessors; a heater
  * (`switch-heater`) and a helper boolean stay a plain switch for the reasons
  * written on `switchCategory` (`adapters/switch.ts`).
  */
@@ -537,7 +537,7 @@ export function buildChildAccessoryEndpoint(input: BuildChildEndpointInput): Ale
   return {
     endpointId: `${input.parentDeviceId}__${input.childDeviceId}`,
     manufacturerName: 'camstack',
-    description: `CamStack ${input.kind}`,
+    description: `Dominevo ${input.kind}`,
     friendlyName,
     displayCategories,
     capabilities,
@@ -561,7 +561,7 @@ export function buildAutotrackEndpoint(input: BuildAutotrackEndpointInput): Alex
   return {
     endpointId: `${input.parentDeviceId}__autotrack`,
     manufacturerName: 'camstack',
-    description: 'CamStack autotrack toggle',
+    description: 'Dominevo autotrack toggle',
     friendlyName:
       input.parentName.length > 0
         ? `${input.parentName} — Autotrack`
@@ -599,7 +599,7 @@ export function buildPrivacyEndpoint(input: BuildPrivacyEndpointInput): AlexaEnd
   return {
     endpointId: `${input.parentDeviceId}__privacy`,
     manufacturerName: 'camstack',
-    description: 'CamStack privacy mask toggle',
+    description: 'Dominevo privacy mask toggle',
     friendlyName:
       input.parentName.length > 0
         ? `${input.parentName} — Privacy`
@@ -676,7 +676,7 @@ export function buildAlarmPanelEndpoint(input: BuildAlarmPanelEndpointInput): Al
   return {
     endpointId: `${input.deviceId}__alarm`,
     manufacturerName: 'camstack',
-    description: 'CamStack alarm panel',
+    description: 'Dominevo alarm panel',
     friendlyName:
       input.friendlyName.trim().length > 0 ? input.friendlyName.trim() : `Alarm ${input.deviceId}`,
     displayCategories: ['SECURITY_PANEL'],
@@ -718,7 +718,7 @@ export function buildDetectionSensorEndpoint(input: BuildDetectionSensorInput): 
   return {
     endpointId: detectionSensorEndpointId(input.deviceId, input.detectionClass),
     manufacturerName: 'camstack',
-    description: `CamStack ${input.detectionClass} detection`,
+    description: `Dominevo ${input.detectionClass} detection`,
     friendlyName: `${camera} ${label}`,
     displayCategories: ['MOTION_SENSOR'],
     capabilities: [ALEXA_BASE_CAPABILITY, MOTION_SENSOR, ENDPOINT_HEALTH],

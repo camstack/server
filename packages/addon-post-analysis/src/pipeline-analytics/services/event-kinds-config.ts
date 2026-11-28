@@ -19,8 +19,8 @@
  * `'package'` (the COCO proxy the step no longer offers) never advertises the
  * package lane — that lane belongs to the dedicated step and its zone rule.
  */
-import type { CameraPipelineConfig } from '@camstack/types'
-import { FIRST_LEVEL_MACRO_CLASSES } from '@camstack/types'
+import type { CameraPipelineConfig } from '@dominevo/types'
+import { FIRST_LEVEL_MACRO_CLASSES } from '@dominevo/types'
 import { OBJECT_STEP_ID } from '../retrain/retrain-assist.js'
 
 type PipelineStep = CameraPipelineConfig['steps'][number]

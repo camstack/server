@@ -1,4 +1,4 @@
-import type { IScopedLogger, Notification, Target } from '@camstack/types'
+import type { IScopedLogger, Notification, Target } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { ALEXA_SPEAK_ADDON_ID, ALEXA_SPEAK_KIND, SPEAK_MIN_GAP_MS } from '../speak/constants.js'
 import {

@@ -2,10 +2,10 @@
  * ServerUpdateService (hub adapter) — SINGLE-COPY model (2026-07-18 collapse).
  *
  * The hub class is a thin binding over the shared `RootUpdateService`
- * (`@camstack/node-root`, bundled into `dist/server-root/index.js`); the engine
+ * (`@dominevo/node-root`, bundled into `dist/server-root/index.js`); the engine
  * itself is exhaustively covered by `packages/node-root/.../root-update-service.spec.ts`.
  * This suite verifies that the SAME single-copy behaviour holds THROUGH the hub
- * adapter's constructor (`@camstack/server` spec, `CAMSTACK_SERVER_*` env
+ * adapter's constructor (`@dominevo/server` spec, `CAMSTACK_SERVER_*` env
  * markers, hub data-dir + running package.json).
  *
  * Single-copy semantics under test:
@@ -24,7 +24,7 @@ import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import {
   readPendingRootSwap,
   serverPackageDir,
@@ -59,7 +59,7 @@ beforeEach(() => {
   runningPkgPath = path.join(tmp, 'running-package.json')
   fs.writeFileSync(
     runningPkgPath,
-    JSON.stringify({ name: '@camstack/server', version: '1.1.50' }),
+    JSON.stringify({ name: '@dominevo/server', version: '1.1.50' }),
     'utf-8',
   )
 })
@@ -111,7 +111,7 @@ function installExec(version: string): NpmExecFn {
     fs.writeFileSync(path.join(pkgDir, 'dist', 'launcher.js'), '// staged entry', 'utf-8')
     fs.writeFileSync(
       path.join(pkgDir, 'package.json'),
-      JSON.stringify({ name: '@camstack/server', version }),
+      JSON.stringify({ name: '@dominevo/server', version }),
       'utf-8',
     )
     for (const rel of NATIVE_PREBUILDS) {
@@ -127,7 +127,7 @@ describe('checkServerUpdate', () => {
   it('reports an available update from the registry', async () => {
     const execNpm: NpmExecFn = async (npmArgs) => {
       expect(npmArgs).toContain('view')
-      expect(npmArgs).toContain('@camstack/server@latest')
+      expect(npmArgs).toContain('@dominevo/server@latest')
       return { stdout: '1.1.51\n' }
     }
     const service = makeService({ execNpm })
@@ -241,7 +241,7 @@ describe('applyServerUpdate (single-copy stage + swap-on-restart)', () => {
       fs.writeFileSync(path.join(pkgDir, 'dist', 'launcher.js'), '// entry', 'utf-8')
       fs.writeFileSync(
         path.join(pkgDir, 'package.json'),
-        JSON.stringify({ name: '@camstack/server', version: '1.1.51' }),
+        JSON.stringify({ name: '@dominevo/server', version: '1.1.51' }),
         'utf-8',
       )
       return { stdout: '' }
@@ -345,7 +345,7 @@ describe('getServerPackageStatus', () => {
     fs.mkdirSync(seedDir, { recursive: true })
     fs.writeFileSync(
       path.join(seedDir, 'package.json'),
-      JSON.stringify({ name: '@camstack/server', version: '1.1.42' }),
+      JSON.stringify({ name: '@dominevo/server', version: '1.1.42' }),
       'utf-8',
     )
     const service = makeService({
@@ -359,7 +359,7 @@ describe('getServerPackageStatus', () => {
     await service.checkServerUpdate()
     const status = await service.getServerPackageStatus()
     expect(status).toMatchObject({
-      packageName: '@camstack/server',
+      packageName: '@dominevo/server',
       runningVersion: '1.1.50',
       activeVersion: '1.1.50',
       seedVersion: '1.1.42',

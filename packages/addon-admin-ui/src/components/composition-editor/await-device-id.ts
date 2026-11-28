@@ -1,4 +1,4 @@
-import { COMPOSED_DEVICE_STABLE_ID_PREFIX } from '@camstack/types'
+import { COMPOSED_DEVICE_STABLE_ID_PREFIX } from '@dominevo/types'
 
 export interface FleetRow {
   readonly id: number

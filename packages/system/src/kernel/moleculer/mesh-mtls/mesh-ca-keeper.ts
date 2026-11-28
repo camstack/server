@@ -3,7 +3,7 @@
  * signing-key keeper (D797). Generates at first boot; locked keychain → no
  * issuance (existing certs keep working until expiry).
  */
-import type { SecretsAccess } from '@camstack/types'
+import type { SecretsAccess } from '@dominevo/types'
 import { MESH_CA_FIELD, MESH_CA_KEY_REF, MESH_CA_SETTINGS_KEY } from './constants.js'
 import { generateMeshCa, loadMeshCa, type MeshCaSigner } from './mesh-ca.js'
 

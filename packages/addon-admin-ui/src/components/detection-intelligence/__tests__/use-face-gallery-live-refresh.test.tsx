@@ -1,11 +1,11 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { renderHook } from '@testing-library/react'
-import type { SystemLiveEvent } from '@camstack/sdk'
+import type { SystemLiveEvent } from '@dominevo/sdk'
 
 /**
  * useFaceGalleryLiveRefresh subscribes to the face-gallery-changed event
- * via `useLiveEvent` (from `@camstack/ui-library`) and, on the trailing
+ * via `useLiveEvent` (from `@dominevo/ui-library`) and, on the trailing
  * edge of a `createDebouncedInvalidate` window, invalidates the
  * `faceGallery` query on the ambient `useQueryClient()`. We mock both
  * seams so the test drives the subscribed callback directly and asserts
@@ -20,7 +20,7 @@ const { capturedCallback, mockInvalidateQueries } = vi.hoisted(() => ({
   mockInvalidateQueries: vi.fn(),
 }))
 
-vi.mock('@camstack/ui-library', () => ({
+vi.mock('@dominevo/ui-library', () => ({
   useLiveEvent: (_category: string, cb: (event: SystemLiveEvent<unknown>) => void) => {
     capturedCallback.current = cb
   },

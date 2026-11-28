@@ -15,7 +15,7 @@ import {
   runAddonMigrations,
   targetRowPortsOver,
   legacyTargetsOver,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { notifierDescriptors, notifiersRecordKinds } from '../../record-kinds.js'
 import { TargetStore } from '../../target-store.js'

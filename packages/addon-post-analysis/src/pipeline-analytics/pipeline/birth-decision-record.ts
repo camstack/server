@@ -17,7 +17,7 @@ import {
   type BirthDecisionRecord,
   type BirthDecisionVerdict,
   MAX_BIRTH_LATENCY_PROXY_MS,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** Everything the birth loop knows at the instant a verdict resolves. */
 export interface BirthDecisionRecordInput {

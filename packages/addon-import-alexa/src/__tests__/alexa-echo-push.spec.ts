@@ -1,5 +1,5 @@
 import { EventEmitter } from 'node:events'
-import { DeviceType, type IScopedLogger } from '@camstack/types'
+import { DeviceType, type IScopedLogger } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { alexaEchoSessions, type EchoSession } from '../alexa-echo-sessions.js'
 import { AlexaEchoDevice } from '../devices/alexa-echo-device.js'
@@ -126,7 +126,11 @@ describe('BrokerEcho: push lines', () => {
     push({ push: 'channel', state: 'down', reason: 'stream ended', retryInMs: 5000 })
     push({ push: 'channel', state: 'down', reason: 'open timeout', retryInMs: 10000 })
     push({ push: 'channel', state: 'up', reason: 'connected', retryInMs: 0 })
-    expect(sink.channel.mock.calls).toEqual([['b', 'up'], ['b', 'down'], ['b', 'up']])
+    expect(sink.channel.mock.calls).toEqual([
+      ['b', 'up'],
+      ['b', 'down'],
+      ['b', 'up'],
+    ])
     expect(echo.pushChannel).toBe('up')
     const messages = logs.filter((l) => l.level !== 'debug').map((l) => l.message)
     expect(messages).toEqual([
@@ -147,7 +151,9 @@ describe('BrokerEcho: push lines', () => {
       retryInMs: 5000,
     })
     const line = logs.find((l) => l.message.includes('push channel down'))
-    const reason = String((line?.extras as { meta: { reason: string } }).meta.reason)
+    expect(line).toBeDefined()
+    const extras = line?.extras as { meta: { reason: string } } | undefined
+    const reason = String(extras?.meta.reason)
     expect(reason).not.toContain('SECRET-TOKEN')
     expect(reason.length).toBeLessThanOrEqual(200)
   })
@@ -207,7 +213,11 @@ describe('AlexaEchoDevice: push', () => {
     }
   }
 
-  async function build(): Promise<{ device: AlexaEchoDevice; logs: LogLine[]; providers: Map<string, unknown> }> {
+  async function build(): Promise<{
+    device: AlexaEchoDevice
+    logs: LogLine[]
+    providers: Map<string, unknown>
+  }> {
     const logs: LogLine[] = []
     const { ctx, providers } = makeCtx(
       { brokerId: 'b', serial: 'S1', deviceType: 'T1', system: 'alexa' },

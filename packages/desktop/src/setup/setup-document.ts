@@ -15,7 +15,7 @@ export interface SetupDocument {
 
 export function setupDocument(content: SetupDocument): string {
   return `<!doctype html>
-<html><head><meta charset="utf-8" /><title>CamStack — Setup</title>
+<html><head><meta charset="utf-8" /><title>Dominevo — Setup</title>
 <style>
   * { box-sizing: border-box; }
   body {

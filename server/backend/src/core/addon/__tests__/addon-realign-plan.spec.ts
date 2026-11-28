@@ -3,7 +3,7 @@
  * operator meant.
  *
  * `/data/addons` is the only place an addon is ever loaded from — the copy
- * inside `@camstack/server`'s closure is never imported by anything. So a
+ * inside `@dominevo/server`'s closure is never imported by anything. So a
  * server update carries new addon versions that have no channel into the place
  * that runs them, and nothing closes the gap: `planFirstBootAddons` computes the
  * drift every boot and prints it at INFO, with a `PlanMode` whose `'enforce'`
@@ -29,7 +29,7 @@ const CLOSURE_LANDED = Date.parse('2026-09-17T10:56:40Z')
 
 function candidate(over: Partial<RealignCandidate> = {}): RealignCandidate {
   return {
-    pkg: '@camstack/addon-auth',
+    pkg: '@dominevo/addon-auth',
     installedVersion: '1.2.96',
     installedUpdatedAtMs: Date.parse('2026-09-09T07:55:13Z'),
     closureVersion: '1.2.115',
@@ -61,7 +61,7 @@ describe('planAddonRealignment', () => {
   })
 
   /**
-   * STRICTLY newer, never equal. A `camstack deploy` from the workspace carries
+   * STRICTLY newer, never equal. A `dominevo deploy` from the workspace carries
    * the same version number as the published package with different bytes;
    * overwriting it from the closure would silently undo the deploy.
    */
@@ -101,7 +101,7 @@ describe('planAddonRealignment', () => {
   it('decides each addon on its own', () => {
     const plan = planAddonRealignment([
       candidate(),
-      candidate({ pkg: '@camstack/addon-pipeline', installedUpdatedAtMs: CLOSURE_LANDED + 1 }),
+      candidate({ pkg: '@dominevo/addon-pipeline', installedUpdatedAtMs: CLOSURE_LANDED + 1 }),
     ])
     expect(plan.map((d) => d.action)).toEqual(['realign', 'keep'])
   })

@@ -1,28 +1,28 @@
-# @camstack/sdk
+# @dominevo/sdk
 
-The client library for talking to a **CamStack hub**.
+The client library for talking to a **Dominevo hub**.
 
 It gives you `System` — a connected client that owns the transport (tRPC over
 WebSocket, or HTTP), the login flow, a warm cache of the hub's devices, and live
 event subscriptions — plus the shared TypeScript types (detections, timeline,
 devices, cameras) that the hub's API speaks.
 
-This is what the CamStack Viewer app is built on.
+This is what the Dominevo Viewer app is built on.
 
 ## Install
 
 ```bash
-npm install @camstack/sdk @camstack/types @trpc/client
+npm install @dominevo/sdk @dominevo/types @trpc/client
 ```
 
-`@camstack/types` and `@trpc/client` are not bundled: the published build imports
+`@dominevo/types` and `@trpc/client` are not bundled: the published build imports
 both at runtime, so they must be installed alongside.
 
 ## Quickstart
 
 ```ts
-import { createSystem } from '@camstack/sdk'
-import { EventCategory } from '@camstack/types'
+import { createSystem } from '@dominevo/sdk'
+import { EventCategory } from '@dominevo/types'
 
 // Log in (a tokenless System is enough — `login` is a public procedure).
 const { token } = await createSystem({ serverUrl: 'http://hub.local:4443' })
@@ -77,7 +77,7 @@ token. Passkeys have an equivalent pair of methods.
 
 ## What it is not
 
-- **Not a REST wrapper.** Everything goes over tRPC to a CamStack hub. There is
+- **Not a REST wrapper.** Everything goes over tRPC to a Dominevo hub. There is
   no stable HTTP surface here to call by hand.
 - **Not a standalone NVR client.** It does not talk to plus catalog, plugin catalog, ONVIF
   or a camera directly — the hub does that. Names like `CameraSourceType` are
@@ -92,11 +92,11 @@ MIT
 
 <!-- readme:generated:start (derived from the manifest; edit outside this block) -->
 
-Package `@camstack/sdk` on npm.
+Package `@dominevo/sdk` on npm.
 
 ## Documentation
 
-- [docs/architecture/authentication.md](https://github.com/camstack/server/blob/main/docs/architecture/authentication.md)
+- [docs/architecture/authentication.md](https://github.com/dominevo/server/blob/main/docs/architecture/authentication.md)
 
 See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
 

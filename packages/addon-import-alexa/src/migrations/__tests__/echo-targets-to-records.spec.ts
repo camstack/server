@@ -10,7 +10,7 @@ import {
   makeInMemoryRecords,
   type MigrationOwnerResult,
   runAddonMigrations,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   alexaNotifyRecordKinds,

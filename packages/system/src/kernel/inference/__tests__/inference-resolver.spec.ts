@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { CoralInfo } from '@camstack/types'
+import type { CoralInfo } from '@dominevo/types'
 import { mapSignalsToInferenceHardware } from '../inference-resolver.js'
 import type { PlatformSignals } from '../../hwaccel/hwaccel-resolver.js'
 

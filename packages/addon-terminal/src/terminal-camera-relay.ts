@@ -4,7 +4,7 @@ import type {
   TerminalOutputBatch,
   TerminalProfileInfo,
   TerminalSessionInfo,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   renderTerminalJpeg,
   TERMINAL_CAMERA_COLS,

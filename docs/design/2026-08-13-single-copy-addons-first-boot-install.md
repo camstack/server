@@ -14,7 +14,7 @@ applies-to:
 Roadmap task 32, the last unfinished half of [D45](../decisions/adr-0045.md).
 Operator decisions, 2026-08-12:
 
-- the docker seed **stays** for `@camstack/server` and the system packages —
+- the docker seed **stays** for `@dominevo/server` and the system packages —
   *"mi va benissimo tenere il seed che va con docker … una copia di server e dei
   pacchetti di sistema"* [I am perfectly fine keeping the seed that ships with docker … one copy of the server and of the system packages];
 - everything else is single-copy, always — *"tutti gli altri addons devono
@@ -26,17 +26,17 @@ Operator decisions, 2026-08-12:
 ## 1. The copy landscape today — measured, not recalled
 
 Every number below was read on 2026-08-13 from the live containers (`du -sm`
-inside `CamStack` on the hub and `CamStack-Agent` on `agent-a`).
+inside `Dominevo` on the hub and `Dominevo-Agent` on `agent-a`).
 
 | Location | Hub | Agent | What it is | Task 32 verdict |
 | --- | --- | --- | --- | --- |
-| `/opt/camstack-hub` | 921 MB | 920 MB | image starter closure: `@camstack/server` + its whole dependency graph, incl. `@camstack/{system,types,sdk}` and the natives | **KEEP** — the operator's "una copia di server" |
+| `/opt/camstack-hub` | 921 MB | 920 MB | image starter closure: `@dominevo/server` + its whole dependency graph, incl. `@dominevo/{system,types,sdk}` and the natives | **KEEP** — the operator's "una copia di server" |
 | `/opt/camstack-seed-framework` | 510 MB | 510 MB | a SECOND copy of system/types/sdk + `better-sqlite3`, `sharp`, `node-av` (`@seydx` alone is 167 MB) | candidate — it duplicates what `/opt/camstack-hub/node_modules` already holds (see §5) |
 
-> **The measurement above is 2026-08-13 and both trees carried `@camstack/shm-ring`
+> **The measurement above is 2026-08-13 and both trees carried `@dominevo/shm-ring`
 > then. They do not any more.**
 > [D184](../decisions/adr-0184-the-closure-carries-no-package-nothing-imports.md)
-> took it out of the dependencies of `@camstack/system` and `@camstack/server` on
+> took it out of the dependencies of `@dominevo/system` and `@dominevo/server` on
 > 2026-08-19, so the hub closure no longer resolves it and the seed's own
 > `SYSTEM` list no longer asks for it — which it had to stop doing, because
 > `ver('shm-ring')` reads the version out of the freshly-installed hub closure
@@ -49,7 +49,7 @@ inside `CamStack` on the hub and `CamStack-Agent` on `agent-a`).
 >  after a bad slice briefly amputated the runtime stage); the
 > fallback now copies its framework subset directly out of
 > `/opt/camstack-hub/node_modules`, replacing rather than merging the
-> `@camstack` scope. This is the §4.4/§5 dedup this document filed as a
+> `@dominevo` scope. This is the §4.4/§5 dedup this document filed as a
 > deliberate separate step — it landed, see the note at the end of §5.
 >
 > **Re-checked 2026-09-23: it is in the image definition.** The `Dockerfile`
@@ -83,13 +83,13 @@ ambiguity plus 43 MB.
 Two more copies the decision does **not** remove, recorded so they are not
 rediscovered:
 
-- the agent still holds `<dataDir>/addons/@camstack/system@1.2.78` — a copy
+- the agent still holds `<dataDir>/addons/@dominevo/system@1.2.78` — a copy
   [D107](../decisions/adr-0107.md) says nothing should write any more, and the
   one that left both agents 17 versions behind. It is *installed*, not seeded, so
   removing the image seed does not touch it.
 - `<dataDir>/framework` is **not** removable by deleting it. The entrypoint
   re-creates it from `/opt/camstack-seed-framework` whenever
-  `$FRAMEWORK_DIR/node_modules/@camstack/system/package.json` is absent. The hub
+  `$FRAMEWORK_DIR/node_modules/@dominevo/system/package.json` is absent. The hub
   shows 509 MB and `system@1.2.78` today although the handover of 2026-08-12
   records it as purged — a container restart put it straight back.
 
@@ -98,7 +98,7 @@ rediscovered:
 Bootstrap already installs from npm when a package is missing
 (`AddonInstaller.ensureRequiredPackages` → `installFromNpm`). The seed simply
 gets there first: the Dockerfile sets
-`CAMSTACK_BUNDLED_ADDONS_DIR=/opt/camstack-seed-addons/@camstack`, which makes the
+`CAMSTACK_BUNDLED_ADDONS_DIR=/opt/camstack-seed-addons/@dominevo`, which makes the
 launcher resolve `installSource: 'local'` and copy. Delete the tree and unset the
 env and the same loop reaches the registry — **the hook already exists and does
 not move**. That is deliberate: no new boot phase, no second installer.
@@ -114,7 +114,7 @@ asks the registry for `latest` and keeps what lands.
 
 That deletes a machinery this design originally proposed — pin-from-the-closure
 plus adopt-by-semver — and with it a real trap: the pin is not always there.
-`@camstack/server` 1.2.90 → 1.2.94 were published with `"@camstack/addon-pipeline": "*"`
+`@dominevo/server` 1.2.90 → 1.2.94 were published with `"@dominevo/addon-pipeline": "*"`
 (`scripts/ci/pin-root-deps.mjs` did not run), 1.2.96+ carry exact versions, and
 the image the hub is running is one of the unpinned four. A design that depended
 on that field would have had nothing to read on the live fleet.
@@ -130,7 +130,7 @@ one node, two truthful versions, which is the condition task 32 exists to end.
     **The report never printed.** `planFirstBootAddons` read the closure through
     `path.resolve(__dirname, '..', 'node_modules')`, which reads as plausible and
     points at `<server>/node_modules` — a directory npm never creates, because
-    every `@camstack/addon-*` is HOISTED to the top-level `node_modules`, three
+    every `@dominevo/addon-*` is HOISTED to the top-level `node_modules`, three
     levels up. So the plan found no closure version for any package, computed
     `twoVersions: false` for all of them, and printed `8 package(s), 0 to
     install` on every boot for a month. A wrong path that answers "nothing" is
@@ -145,7 +145,7 @@ one node, two truthful versions, which is the condition task 32 exists to end.
     drift. `applyServerUpdate` had been advancing the closure's copy of every
     addon while nothing ever loaded one from there — six addons on the hub were
     behind by up to nineteen versions, each frozen at whenever somebody last ran
-    `camstack deploy`. A new install source, `closure`, distinct from `bundled`,
+    `dominevo deploy`. A new install source, `closure`, distinct from `bundled`,
     is what lets an operator tell "I deployed this" from "the server update
     brought it"; the six stale copies all read `upload`, because each HAD been a
     deliberate deploy, once. The failure policy is this design's and does not
@@ -162,7 +162,7 @@ It wins, always (D90 — the unconditional `cp -a` that would have rolled every
 deployed addon back). Bootstrap is seed-only: a package with a `package.json`
 under the addon root is adopted whatever its version, older or newer. Nothing in
 this path ever upgrades, downgrades or deletes an addon. That is what
-`camstack deploy`, the Admin UI update and the back-fill are for, each with an
+`dominevo deploy`, the Admin UI update and the back-fill are for, each with an
 operator or a registration behind it.
 
 ## 3. Boot must never be prevented — the offline / registry-down path
@@ -172,10 +172,10 @@ property worth stating precisely, because it is what makes the whole change safe
 
 - the four REQUIRED infra capabilities — `storage-provider`,
   `data-store-provider`, `storage`, `settings-store` — are **builtins of
-  `@camstack/system`**, which comes from the closure the image keeps. Zero addons
+  `@dominevo/system`**, which comes from the closure the image keeps. Zero addons
   installed is a kernel that boots.
 - `ensureRequiredPackages` already treats a failed install of a non-system
-  package as a logged error and continues; only `@camstack/system` throws, and
+  package as a logged error and continues; only `@dominevo/system` throws, and
   that path is unreachable while the closure resolves it.
 
 What is missing today is **loudness and recovery**, not survival:
@@ -198,14 +198,14 @@ The counter-case that decides the shape: a hub that boots with no `addon-auth`
 and no `addon-admin-ui` is reachable over SSH and fixable; a hub that refuses to
 boot records nothing and notifies nobody (D45 § Enforcement).
 
-## 4. How `camstack deploy` interacts
+## 4. How `dominevo deploy` interacts
 
 Unchanged, and simpler. Removing the seed removes a *writer* from the addon root,
 leaving the list in `update-and-release.md` one shorter:
 
 | Writer | Still there? |
 | --- | --- |
-| `camstack deploy` / Admin UI upload | yes — the operator gesture |
+| `dominevo deploy` / Admin UI upload | yes — the operator gesture |
 | `propagateToAgents` / `deliverAddonToAgent` | yes |
 | the addon back-fill | yes — and it becomes the main first-boot repair path for an agent |
 | `ensureRequiredPackages` (bootstrap, only when absent) | yes — now from npm rather than from `/opt` |
@@ -218,14 +218,14 @@ overwrite a deployed bundle — the seed-only rule is what protects this, and it
 kept verbatim.
 
 Superseded (#342): `CAMSTACK_INSTALL_SOURCE` and `bootstrap.installSource` no
-longer exist; a workspace build reaches a node through `camstack deploy`.
+longer exist; a workspace build reaches a node through `dominevo deploy`.
 
 ## 5. The Dockerfile diet
 
 What leaves:
 
 1. the whole **stage-1 addon seed step** (the `node -e` loop that installs each
-   bootstrap addon standalone into `/opt/camstack-seed-addons/@camstack/<n>`) and
+   bootstrap addon standalone into `/opt/camstack-seed-addons/@dominevo/<n>`) and
    its three `test -e` assertions;
 2. `COPY --from=fetch /opt/camstack-seed-addons …`;
 3. `ENV CAMSTACK_BUNDLED_ADDONS_DIR=…` — the env is what makes the launcher pick
@@ -242,7 +242,7 @@ happened.
 
 **What does NOT leave, and why it is a separate step.** `/opt/camstack-seed-framework`
 (510 MB) is redundant on paper — `/opt/camstack-hub/node_modules` already carries
-`@camstack/{system,types,sdk}` *and* `better-sqlite3`, `sharp`, `node-av` at its
+`@dominevo/{system,types,sdk}` *and* `better-sqlite3`, `sharp`, `node-av` at its
 root, which is exactly what the seed tree provides. But it is
 the source the entrypoint copies into `<dataDir>/framework`, which is still on
 `NODE_PATH` and is still the baked-mode fallback before the first
@@ -282,8 +282,8 @@ KEPT, deliberately: it is no longer a stale duplicate of the closure, it is the
 only copy a pre-[D18](../decisions/adr-0018.md) addon has left. Deleting it out
 from under a running process is the shape that made a fresh deployment
 unbootable once already. On `agent-a` that second one is real:
-`<dataDir>/addons/@camstack/system@1.2.78`, a copy **nothing loads** — both roles
-pass `['@camstack/system']` as the loader's skip list
+`<dataDir>/addons/@dominevo/system@1.2.78`, a copy **nothing loads** — both roles
+pass `['@dominevo/system']` as the loader's skip list
 (`addon-registry.service.ts`, `agent/addon-scan.ts`) — and which still wins for
 anything that resolves through the addon root.
 
@@ -297,7 +297,7 @@ first acked `registerNode`. Both call ONE function.
 | --- | --- |
 | boot confirmed healthy | before that, these copies ARE the recovery path |
 | an active closure exists | in baked mode the node is running FROM the fallback tree |
-| `@camstack/system` resolved from INSIDE that closure | otherwise the copy being deleted may be the one in memory |
+| `@dominevo/system` resolved from INSIDE that closure | otherwise the copy being deleted may be the one in memory |
 | candidate not inside the closure / not under `/opt` / not on the module search path | each is a live copy whatever the mode says |
 
 A blocked sweep is LOUD and names every copy it left behind — silence would be
@@ -311,13 +311,13 @@ that could not even be renamed is reported as failed.
 ## 7. The entrypoint stops re-creating the framework tree
 
 This is the half without which the sweep is theatre. `/data/framework` was
-re-seeded whenever `@camstack/system` was missing under it, so deleting 509 MB
+re-seeded whenever `@dominevo/system` was missing under it, so deleting 509 MB
 lasted exactly until the next container restart.
 
 Now the condition is the closure, not the tree:
 
 ```sh
-DATA_ROOT_SYSTEM="$DATA_DIR/server-root/current/node_modules/@camstack/system/package.json"
+DATA_ROOT_SYSTEM="$DATA_DIR/server-root/current/node_modules/@dominevo/system/package.json"
 [ ! -e "$DATA_ROOT_SYSTEM" ] && NEED_FRAMEWORK=1
 ```
 
@@ -334,7 +334,7 @@ and the tree stays gone.
 | 4.2 | remove `<dataDir>/framework` as a later step | remove it AND stop the entrypoint re-creating it; recreation only as the logged fallback | shipped together — separately, the removal does not stick |
 | 4.3 | pin from the closure + adopt-by-semver | **no pinning at all**, `latest` is the contract | `resolveWantedVersion`, `compareVersions`, `bootstrapPinsFrom` and the `pins?` argument on `ensureRequiredPackages` are DELETED, with their tests. Divergence survived as INFO until 2026-09-17, when it became a re-alignment — see the §2.1 note |
 | 4.4 | dedup `/opt/camstack-seed-framework` against `/opt/camstack-hub` | keep the `/opt` tree; kill its data-side effects | as of 2026-08-13 the 510 MB in-image duplicate stayed and only the 509 MB per-node copy went; as of 2026-08-25 the `/opt` duplicate is gone too, sourced from `/opt/camstack-hub` instead — see the §5 note. Not yet in a built/deployed image |
-| 4.5 | — | agent identical to hub; delete the agent's `addons/@camstack/system`; cap update backups at one | first two shipped as ONE function called from both roles. The third needs no code: `applyServerUpdate` already retains nothing ([D17](../decisions/adr-0017.md)) — the `current.bak-pre-*` dirs were made by hand |
+| 4.5 | — | agent identical to hub; delete the agent's `addons/@dominevo/system`; cap update backups at one | first two shipped as ONE function called from both roles. The third needs no code: `applyServerUpdate` already retains nothing ([D17](../decisions/adr-0017.md)) — the `current.bak-pre-*` dirs were made by hand |
 
 ## 9. What landed, and what the image still needs
 
@@ -351,7 +351,7 @@ and the tree stays gone.
   the whole `NEED_ADDONS` entrypoint block removed; the framework fallback
   re-conditioned on the closure; the seed fingerprint re-scoped (it covered
   `system`/`types`/`sdk` only; as of 2026-09-23 it is hashed over every baked
-  `@camstack/*` JS file in the one remaining tree, which is what the line above
+  `@dominevo/*` JS file in the one remaining tree, which is what the line above
   it always claimed — it therefore moves on more changes than before, the
   conservative direction);
 - `entrypoint-addon-seed.spec.ts` DELETED (its subject no longer exists) and
@@ -368,14 +368,14 @@ the commit that carries the post-boot sweep. The image half worked exactly as
 designed — no `/opt/camstack-seed-addons`, no `FALLBACK` line, `first-boot addon
 plan (observe) — 4 package(s), 0 to install`, every runner connected. **The sweep
 never ran, and nothing said why.** Both targets were still on disk three minutes
-later: `/data/framework` 549 MB, `/data/addons/@camstack/system` 81 MB.
+later: `/data/framework` 549 MB, `/data/addons/@dominevo/system` 81 MB.
 
 Measured on the node:
 
 | Question | Answer |
 | --- | --- |
-| `@camstack/server` at `server-root/current` | 1.2.101 |
-| `@camstack/server` in the image (`/opt/camstack-hub`) | **1.2.101 — the same** |
+| `@dominevo/server` at `server-root/current` | 1.2.101 |
+| `@dominevo/server` in the image (`/opt/camstack-hub`) | **1.2.101 — the same** |
 | `dist/first-boot-addon-plan.js` present | yes, in both |
 | `dist/single-copy-cleanup*.js` present | **no, in either** |
 
@@ -383,7 +383,7 @@ So the boundary is exact: the train published between this task's two commits.
 1.2.101 carries the observe plan and not the sweep.
 
 **And the deeper fact, which is not an ordering accident.** The image never
-contains this repo's backend: the Dockerfile installs `@camstack/server@latest`
+contains this repo's backend: the Dockerfile installs `@dominevo/server@latest`
 from npm. A backend change is therefore train-bound *by construction* — building
 an image from a commit does not ship that commit's server code, and the starter
 then prefers `server-root/current` anyway.
@@ -408,10 +408,10 @@ states, before Node starts, which backend is about to run and whether that copy
 carries the sweep:
 
 ```
-[entrypoint] backend @camstack/server@1.2.101 from /data/server-root/current/…
+[entrypoint] backend @dominevo/server@1.2.101 from /data/server-root/current/…
              — post-boot single-copy sweep ABSENT; the redundant data-side copies
              WILL REMAIN this boot (the sweep ships in a published
-             @camstack/server, never in an image build)
+             @dominevo/server, never in an image build)
 ```
 
 It reports and never gates. Pinned by three tests in
@@ -420,7 +420,7 @@ It reports and never gates. Pinned by three tests in
 ### Verifying it landed, on any node
 
 ```bash
-docker exec <container> sh -c 'ls /data/server-root/current/node_modules/@camstack/server/dist/single-copy-cleanup.js'
+docker exec <container> sh -c 'ls /data/server-root/current/node_modules/@dominevo/server/dist/single-copy-cleanup.js'
 ```
 
 Present → the next healthy boot converges. Absent → the node is running a
@@ -431,27 +431,27 @@ backend older than the sweep, whatever its image is labelled.
 Nothing below happened tonight. Order matters: the closure must be published
 before an image is built, or the image labels a version it does not contain.
 
-0. **The sweep needs a NEW `@camstack/server`.** Everything in §9b: the image
+0. **The sweep needs a NEW `@dominevo/server`.** Everything in §9b: the image
    installs the backend from npm, so the version that must carry
    `dist/single-copy-cleanup.js` is the one published for the next train. The
    image migration is already live and correct without it — a recreated node
    simply keeps its redundant copies and now SAYS so at boot.
-1. **Publish first.** `@camstack/server` must exist on npm and be `latest`
+1. **Publish first.** `@dominevo/server` must exist on npm and be `latest`
    (`scripts/ci/verify-release-npm.mjs` gates this) — the image installs
-   `@camstack/server@latest` and every addon comes from the registry now, so a
+   `@dominevo/server@latest` and every addon comes from the registry now, so a
    half-published release is a node with missing addons rather than an old one.
 2. **Build the image** from this Dockerfile (release workflow, tag
    `intel-<version>`). Expect it ~43 MB smaller and one build step shorter.
 3. **Recreate ONE container first — the agent** (`agent-a`), because it is
-   the node carrying the extra `addons/@camstack/system` and the smaller blast
+   the node carrying the extra `addons/@dominevo/system` and the smaller blast
    radius. Watch for, in order:
    - `[entrypoint]` printing **no** `FALLBACK` line (its closure is healthy);
    - `[launcher] first-boot addon plan (observe) — N package(s), 0 to install`
      (a node with its addons already installed fetches nothing);
    - `single-copy cleanup — 2 copy(ies) to remove`, then `removed /data/framework`
-     and `removed /data/addons/@camstack/system`.
+     and `removed /data/addons/@dominevo/system`.
 4. **Verify the agent is still running addons** (`nodes.topology`, and the
-   `[launcher] resolved @camstack/system@… from …` line naming
+   `[launcher] resolved @dominevo/system@… from …` line naming
    `server-root/current`). Then `du -sm /data` — expect ~550 MB back.
 5. **Recreate the hub** and watch the same three lines.
 6. **The one thing to check on a GREENFIELD volume** (a fresh `/data`): the
@@ -462,7 +462,7 @@ before an image is built, or the image labels a version it does not contain.
    with a terminal open.
 7. **If the registry is unreachable during a greenfield boot**: the node comes up
    with the kernel only (no Admin UI). The log names every package it could not
-   fetch. Recovery is `clusterNodes.repairNodeAddons` or a `camstack deploy`,
+   fetch. Recovery is `clusterNodes.repairNodeAddons` or a `dominevo deploy`,
    once the registry is back — not a container restart.
 
 Rollback: recreate the container on the previous `intel-<version>` image. The

@@ -8,7 +8,7 @@
  * nowhere else:
  *
  *  - the colours, radii, spacing and font stack are GENERATED from the theme
- *    the admin UI is built on (`@camstack/ui-library/theme/tokens`) - no hex is
+ *    the admin UI is built on (`@dominevo/ui-library/theme/tokens`) - no hex is
  *    typed in this file, so a theme change reaches these pages by itself;
  *  - the card, primary button, cancel link, error line and muted hint repeat the
  *    admin login page's look (`Login.tsx`: `rounded-xl border bg-surface p-6`,
@@ -18,8 +18,8 @@
  *    hand-pasted hash that can fall out of step with the CSS.
  */
 import { createHash } from 'node:crypto'
-import type { AppPageLang } from '@camstack/types'
-import { defaultTheme, themeToRootCss } from '@camstack/ui-library/theme/tokens'
+import type { AppPageLang } from '@dominevo/types'
+import { defaultTheme, themeToRootCss } from '@dominevo/ui-library/theme/tokens'
 
 /** The brand mark and wordmark, one per colour scheme (the files under `addon-admin-ui/public/brand`). */
 const LOGO_DARK =

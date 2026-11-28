@@ -8,7 +8,7 @@
  * network, no filesystem.
  */
 import { brotliDecompressSync, gunzipSync } from 'node:zlib'
-import type { AddonHttpReply, AddonHttpRequest, TargetKind, TargetKindCaps } from '@camstack/types'
+import type { AddonHttpReply, AddonHttpRequest, TargetKind, TargetKindCaps } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { NotifierAdapter } from '../adapters/adapter.js'
 import { iconMediaTypeFor, iconRoutes, hasIcon, iconUrlFor } from '../icon-routes.js'

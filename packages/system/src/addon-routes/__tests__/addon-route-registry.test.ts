@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { AddonRouteRegistry } from '../addon-route-registry.js'
-import type { IAddonRouteProvider, IAddonHttpRoute } from '@camstack/types'
+import type { IAddonRouteProvider, IAddonHttpRoute } from '@dominevo/types'
 
 function createMockProvider(id: string, routes: IAddonHttpRoute[]): IAddonRouteProvider {
   return {

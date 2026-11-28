@@ -3,7 +3,7 @@
  * type with no location, or with none still accepting writes, or of a `single` kind; the page
  * shows no Delete for those, so the operator never meets the refusal as an error.
  */
-import type { StorageLocation, StorageLocationDeclaration } from '@camstack/types'
+import type { StorageLocation, StorageLocationDeclaration } from '@dominevo/types'
 import { modeAcceptsWrites, resolveLocationMode } from './location-mode'
 
 type LocationFacts = Pick<StorageLocation, 'id' | 'enabled' | 'config'>

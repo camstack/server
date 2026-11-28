@@ -2,8 +2,8 @@
  * Fixture page for the three Bosch integration forms. Not an admin route:
  * `ui:shots` mounts it when the path is `/bosch-signin/…`.
  */
-import { ConfirmDialogProvider, ThemeProvider } from '@camstack/ui-library'
-import { ConfigFormBuilder } from '@camstack/ui-library'
+import { ConfirmDialogProvider, ThemeProvider } from '@dominevo/ui-library'
+import { ConfigFormBuilder } from '@dominevo/ui-library'
 import { useState, type ReactElement } from 'react'
 import { buildHomeConnectFormSchema } from '../../../../packages/addon-provider-bosch/src/home-connect/config'
 import { buildHomeComFormSchema } from '../../../../packages/addon-provider-bosch/src/homecom/config'

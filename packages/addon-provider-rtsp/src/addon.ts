@@ -1,10 +1,10 @@
-import { userError, defaultIntegrationDepsOver } from '@camstack/types'
+import { userError, defaultIntegrationDepsOver } from '@dominevo/types'
 import {
   type AddonInitResult,
   defaultIntegrationMigrations,
   defaultIntegrationPortsOver,
   integrationInstancesCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { buildRtspInstances, rtspConnectionsEntryKind, rtspRecordKinds } from './rtsp-instances.js'
 import type {
   ConfigUISchema,
@@ -13,13 +13,13 @@ import type {
   FieldProbeResult,
   IDevice,
   StreamQuality,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   BaseDeviceProvider,
   classifyStreams,
   DeviceType,
   maskUrlCredentials,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { RtspCamera, type RtspStreamEntry, rtspCameraSchema } from './rtsp-camera.js'
 
 function getString(obj: Record<string, unknown>, key: string): string {

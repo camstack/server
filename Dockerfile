@@ -1,8 +1,8 @@
 # syntax=docker/dockerfile:1
 # =============================================================================
-# CamStack Hub — Docker image (REGISTRY-INSTALL model)
+# Dominevo Hub — Docker image (REGISTRY-INSTALL model)
 #
-# The @camstack/* packages are PUBLIC on npm (registry.npmjs.org, --access
+# The @dominevo/* packages are PUBLIC on npm (registry.npmjs.org, --access
 # public) and published WITH their built dist (addon-pipeline ships
 # python/wasm/swift too) + native PREBUILDS (better-sqlite3/sharp
 # are linux-x64 prebuilt). So the image is assembled by INSTALLING the
@@ -18,7 +18,7 @@
 # yields `intel` (last stage). CI builds both via the release matrix.
 #
 # PRODUCT_VERSION is the product release (image tag / desktop app), not an
-# npm version. The closure installed below is `@camstack/server@latest`.
+# npm version. The closure installed below is `@dominevo/server@latest`.
 # The runtime stage re-declares PRODUCT_VERSION as CAMSTACK_PRODUCT_VERSION
 # so the About line can show it next to the running server package (D943).
 # =============================================================================
@@ -28,10 +28,10 @@ FROM node:24 AS fetch
 WORKDIR /opt
 ENV CI=true
 
-# 0) Hub run-dir: install @camstack/server@latest — pulls the WHOLE hub closure
+# 0) Hub run-dir: install @dominevo/server@latest — pulls the WHOLE hub closure
 #    (server + system/types/sdk/ui-library + the bootstrap addons +
 #    every third-party dep + native linux prebuilds). The launcher runs from
-#    here: node_modules/@camstack/server/dist/launcher.js.
+#    here: node_modules/@dominevo/server/dist/launcher.js.
 #    NEVER pin to the product version: packages are published to npm on their
 #    own line, and per-package versions drift. `@latest` is the closure this
 #    image bakes; the product tag is only the image label (intel-X.Y.Z).
@@ -45,17 +45,17 @@ COPY packages/node-root/src/closure-pins.ts /opt/packages/node-root/src/closure-
 RUN mkdir -p /opt/camstack-hub && cd /opt/camstack-hub && \
     npm init -y >/dev/null && \
     SERVER_VERSION="$(node /opt/scripts/closure-pins-install.mjs /opt/camstack-hub latest)" && \
-    echo "[image] installing @camstack/server@$SERVER_VERSION" && \
-    npm install --omit=dev --no-audit --no-fund "@camstack/server@$SERVER_VERSION" && \
-    test -e node_modules/@camstack/server/dist/launcher.js && \
-    test -e node_modules/@camstack/server/dist/starter.js
+    echo "[image] installing @dominevo/server@$SERVER_VERSION" && \
+    npm install --omit=dev --no-audit --no-fund "@dominevo/server@$SERVER_VERSION" && \
+    test -e node_modules/@dominevo/server/dist/launcher.js && \
+    test -e node_modules/@dominevo/server/dist/starter.js
 
 # 1) NO SECOND SEED TREE.
 #    There used to be a second baked framework tree under `/opt` here (removed
 #    2026-08-25; the path is in git history and in
 #    `docs/design/2026-08-13-single-copy-addons-first-boot-install.md` §4.4,
 #    which had already filed it as a candidate and left it "for now"): a SECOND
-#    npm install of the same `@camstack/{server,types,sdk}` plus the hoisted
+#    npm install of the same `@dominevo/{server,types,sdk}` plus the hoisted
 #    natives, existing only to be copied into `$FRAMEWORK_DIR` on the fallback
 #    boot. Measured on the live image 2026-08-25 it was 510 MB beside a 930 MB
 #    `/opt/camstack-hub` — and it was the THIRD copy of every framework package,
@@ -65,7 +65,7 @@ RUN mkdir -p /opt/camstack-hub && cd /opt/camstack-hub && \
 #    Redundant by inspection: `/opt/camstack-hub/node_modules` already hoists
 #    `better-sqlite3`, `node-av`, `sharp` and `zod` at its root — the exact
 #    reason the second tree was built that way — and already holds
-#    `@camstack/sdk` and `types` as dependencies of `@camstack/server`, which carries the kernel and builtins itself as `server/system`.
+#    `@dominevo/sdk` and `types` as dependencies of `@dominevo/server`, which carries the kernel and builtins itself as `server/system`.
 #    The fallback now takes the framework subset from that one tree; see the
 #    entrypoint.
 #
@@ -89,8 +89,8 @@ RUN mkdir -p /opt/camstack-hub && cd /opt/camstack-hub && \
 # ── Stage 2 — shared runtime (ubuntu:24.04); vendor stacks in `intel` / `amd` ─
 FROM ubuntu:24.04 AS runtime-common
 LABEL org.opencontainers.image.licenses="MIT" \
-      org.opencontainers.image.source="https://github.com/camstack/server" \
-      org.opencontainers.image.description="CamStack. Model weights are downloaded at runtime under their own licences: /usr/share/doc/camstack/THIRD_PARTY_MODELS.md"
+      org.opencontainers.image.source="https://github.com/dominevo/server" \
+      org.opencontainers.image.description="Dominevo. Model weights are downloaded at runtime under their own licences: /usr/share/doc/camstack/THIRD_PARTY_MODELS.md"
 
 # Base OS + libva (no vendor VA driver yet — those land in the `intel` / `amd`
 # final stages). gnupg stays: the intel stage needs it for the Intel GPU apt key.
@@ -155,11 +155,11 @@ COPY scripts/docker/pkg-allowlist.json /usr/local/share/camstack/pkg-allowlist.j
 # exercises vaInitialize through `vainfo`.
 COPY scripts/docker/check-libva-abi.sh /usr/local/bin/camstack-check-libva-abi.sh
 
-# Licence notices travel with the image: CamStack's own LICENSE, the notice for
+# Licence notices travel with the image: Dominevo's own LICENSE, the notice for
 # every model a node can download (THIRD_PARTY_MODELS.md), and the full licence
 # texts it cites. Copied from the build context of the commit being built (they
 # are whitelisted in .dockerignore), so the image carries them without waiting
-# for a @camstack/server publish; the npm closure carries its own copy of the
+# for a @dominevo/server publish; the npm closure carries its own copy of the
 # notice (server/backend/THIRD_PARTY_MODELS.md).
 COPY LICENSE THIRD_PARTY_MODELS.md /usr/share/doc/camstack/
 COPY licenses/models/ /usr/share/doc/camstack/licenses/models/
@@ -169,14 +169,14 @@ RUN groupadd -g 1001 camstack && \
     chown -R camstack:camstack /opt/camstack-hub && \
     mkdir -p /data /backups && chown -R camstack:camstack /data /backups
 
-# Seed VERSION fingerprint (content hash of every baked @camstack/* JS) — the
+# Seed VERSION fingerprint (content hash of every baked @dominevo/* JS) — the
 # entrypoint re-seeds /data on an image upgrade when this differs.
 # Hashed over the ONE baked tree: it used to cover only `system`/`types`/`sdk`,
-# now it covers every baked `@camstack/*` — which is what the line above always
+# now it covers every baked `@dominevo/*` — which is what the line above always
 # claimed. It therefore moves on more changes than before, the conservative
 # direction: a re-seed too many costs a copy, a re-seed too few leaves a node
 # booting old code out of `/data`.
-RUN find /opt/camstack-hub/node_modules/@camstack \
+RUN find /opt/camstack-hub/node_modules/@dominevo \
       -type f \( -name '*.js' -o -name '*.mjs' \) -exec md5sum {} + 2>/dev/null \
       | md5sum | cut -d' ' -f1 > /opt/camstack-seed-version \
     && echo "[build] seed version: $(cat /opt/camstack-seed-version)"
@@ -207,10 +207,10 @@ ENV CAMSTACK_BACKUP_ROOT=/backups
 # would send the bootstrap looking for a copy that is no longer there.
 # Runtime-updatable root package (2026-07-12 design): the baked closure is the
 # immutable SEED. The STARTER (entrypoint CMD below) boots the active
-# `@camstack/server` root from /data/server-root when present + healthy, else
+# `@dominevo/server` root from /data/server-root when present + healthy, else
 # falls back to this seed. The env names the seed dir so the starter's
 # fallback and the server-management status cap (seedVersion) can find it.
-ENV CAMSTACK_SEED_SERVER_DIR=/opt/camstack-hub/node_modules/@camstack/server
+ENV CAMSTACK_SEED_SERVER_DIR=/opt/camstack-hub/node_modules/@dominevo/server
 
 # Role selector (2026-07 single-image collapse): one image serves both roles.
 # `hub` (default) boots the full Fastify hub on 4443; `agent` boots the
@@ -254,12 +254,12 @@ ADDONS_DIR="${CAMSTACK_ADDONS_DIR:-$DATA_DIR/addons}"
 # directory is harmless, but re-creating it every restart is what made the
 # legacy tree impossible to retire; the fallback block below creates it on the
 # one path that needs it.
-mkdir -p "$DATA_DIR" "$ADDONS_DIR/@camstack"
+mkdir -p "$DATA_DIR" "$ADDONS_DIR/@dominevo"
 
 # WHICH BACKEND IS ABOUT TO RUN — and does that copy carry the post-boot sweep?
 #
 # The image NEVER contains this repo's backend: the Dockerfile installs
-# `@camstack/server@latest` from npm, and the starter then prefers
+# `@dominevo/server@latest` from npm, and the starter then prefers
 # `server-root/current`. So a backend change is TRAIN-BOUND by construction —
 # building an image from a commit does not ship that commit's server code.
 # On 2026-08-13 that cost a diagnosis: the agent was recreated on an image built
@@ -267,13 +267,13 @@ mkdir -p "$DATA_DIR" "$ADDONS_DIR/@camstack"
 # nothing said why — the published 1.2.101 the image installed predates it.
 # Silence is the failure here, so the entrypoint states the capability before
 # Node starts. It reports; it never gates.
-ACTIVE_SERVER="$DATA_DIR/server-root/current/node_modules/@camstack/server"
-[ -e "$ACTIVE_SERVER/package.json" ] || ACTIVE_SERVER="${CAMSTACK_SEED_SERVER_DIR:-/opt/camstack-hub/node_modules/@camstack/server}"
+ACTIVE_SERVER="$DATA_DIR/server-root/current/node_modules/@dominevo/server"
+[ -e "$ACTIVE_SERVER/package.json" ] || ACTIVE_SERVER="${CAMSTACK_SEED_SERVER_DIR:-/opt/camstack-hub/node_modules/@dominevo/server}"
 SERVER_VERSION="$(node -p "require('$ACTIVE_SERVER/package.json').version" 2>/dev/null || echo unknown)"
 if [ -e "$ACTIVE_SERVER/dist/single-copy-cleanup.js" ]; then
-  echo "[entrypoint] backend @camstack/server@$SERVER_VERSION from $ACTIVE_SERVER — post-boot single-copy sweep PRESENT"
+  echo "[entrypoint] backend @dominevo/server@$SERVER_VERSION from $ACTIVE_SERVER — post-boot single-copy sweep PRESENT"
 else
-  echo "[entrypoint] backend @camstack/server@$SERVER_VERSION from $ACTIVE_SERVER — post-boot single-copy sweep ABSENT; the redundant data-side copies WILL REMAIN this boot (the sweep ships in a published @camstack/server, never in an image build)"
+  echo "[entrypoint] backend @dominevo/server@$SERVER_VERSION from $ACTIVE_SERVER — post-boot single-copy sweep ABSENT; the redundant data-side copies WILL REMAIN this boot (the sweep ships in a published @dominevo/server, never in an image build)"
 fi
 
 SEED_VERSION="$(cat /opt/camstack-seed-version 2>/dev/null || echo unknown)"
@@ -284,18 +284,18 @@ RECORDED_VERSION="$(cat "$DATA_DIR/.camstack-seed-version" 2>/dev/null || echo n
 # `/data/framework` used to be re-seeded whenever it was missing, which made it
 # impossible to remove: the post-boot single-copy sweep deleted it and the next
 # container restart put all 509 MB straight back, on the module search path — a
-# second answer to "which @camstack/server/system is this node running". Operator,
+# second answer to "which @dominevo/server/system is this node running". Operator,
 # 2026-08-13: one version of everything per node, and the recreation is only the
 # explicit fallback path for a broken closure — logged loudly.
 #
-# So the ONE condition is: the active closure has no @camstack/server/system. That is
+# So the ONE condition is: the active closure has no @dominevo/server/system. That is
 # a genuinely fresh /data (before the first applyServerUpdate) or a closure that
 # did not survive an update — exactly the two boots that would otherwise fail.
 # In steady state this block does nothing and `/data/framework` stays gone.
 #
 # The bootstrap ADDON seed is gone entirely: every non-system addon is installed
 # from npm at first boot, single-copy, by the launcher.
-DATA_ROOT_SYSTEM="$DATA_DIR/server-root/current/node_modules/@camstack/server/system/package.json"
+DATA_ROOT_SYSTEM="$DATA_DIR/server-root/current/node_modules/@dominevo/server/system/package.json"
 NEED_FRAMEWORK=0
 if [ ! -e "$DATA_ROOT_SYSTEM" ]; then
   NEED_FRAMEWORK=1
@@ -307,22 +307,22 @@ if [ "$NEED_FRAMEWORK" = 1 ]; then
   mkdir -p "$FRAMEWORK_DIR/node_modules"
   # Seeded from the ONE baked tree: everything third-party comes over as-is (the
   # natives and `zod` are already hoisted at its root — that hoisting is the
-  # whole reason a second tree used to exist), then the `@camstack` scope is
+  # whole reason a second tree used to exist), then the `@dominevo` scope is
   # narrowed to the three framework packages (server carries the kernel and builtins as server/system).
   #
-  # The scope is REPLACED, not merged: copying `@camstack` wholesale would put
-  # `@camstack/server` and every baked addon into the framework dir — a fresh
+  # The scope is REPLACED, not merged: copying `@dominevo` wholesale would put
+  # `@dominevo/server` and every baked addon into the framework dir — a fresh
   # set of shadow copies, the exact fault D45 names.
   cp -a /opt/camstack-hub/node_modules/. "$FRAMEWORK_DIR/node_modules/"
-  rm -rf "$FRAMEWORK_DIR/node_modules/@camstack"
-  mkdir -p "$FRAMEWORK_DIR/node_modules/@camstack"
+  rm -rf "$FRAMEWORK_DIR/node_modules/@dominevo"
+  mkdir -p "$FRAMEWORK_DIR/node_modules/@dominevo"
   for pkg in server types sdk; do
-    src="/opt/camstack-hub/node_modules/@camstack/$pkg"
+    src="/opt/camstack-hub/node_modules/@dominevo/$pkg"
     # A missing framework package is fatal for this boot and must say so: the
     # node would otherwise start and then fail resolution with an error that
     # names nothing.
     [ -d "$src" ] || { echo "[entrypoint] FALLBACK FATAL: $src missing from the baked seed"; exit 1; }
-    cp -a "$src" "$FRAMEWORK_DIR/node_modules/@camstack/"
+    cp -a "$src" "$FRAMEWORK_DIR/node_modules/@dominevo/"
   done
   printf '%s' "$SEED_VERSION" > "$DATA_DIR/.camstack-seed-version"
   # ONLY this boot resolves from the seeded tree. A healthy boot never exports
@@ -339,12 +339,12 @@ fi
 # is already owned by `camstack`; only repair the mount roots and content that
 # this root entrypoint may have seeded itself.
 #
-# `$ADDONS_DIR/@camstack` is created above as root via `mkdir -p`. A
+# `$ADDONS_DIR/@dominevo` is created above as root via `mkdir -p`. A
 # non-recursive chown of `$ADDONS_DIR` alone leaves the scope dir root-owned,
 # and the `camstack` process then cannot seed AGENT_PACKAGES into it (fresh
-# AMD Proxmox agent 2026-10-10: empty /data/addons/@camstack, pipeline page
+# AMD Proxmox agent 2026-10-10: empty /data/addons/@dominevo, pipeline page
 # blank). Own the scope dir explicitly — still O(1), not a media-tree walk.
-for owned_path in "$DATA_DIR" "$FRAMEWORK_DIR" "$ADDONS_DIR" "$ADDONS_DIR/@camstack"; do
+for owned_path in "$DATA_DIR" "$FRAMEWORK_DIR" "$ADDONS_DIR" "$ADDONS_DIR/@dominevo"; do
   [ -e "$owned_path" ] && chown camstack:camstack "$owned_path" 2>/dev/null || true
 done
 [ "$NEED_FRAMEWORK" = 1 ] && chown -R camstack:camstack "$FRAMEWORK_DIR" 2>/dev/null || true
@@ -484,7 +484,7 @@ done
 # looked up in the active closure first, then in the baked seed (always present
 # in this image), so the only way to lose the allocator pair is a module that
 # crashes.
-launch_candidates="${CAMSTACK_DATA:-/data}/server-root/current/node_modules/@camstack/server/dist/launch-args.js /opt/camstack-hub/node_modules/@camstack/server/dist/launch-args.js"
+launch_candidates="${CAMSTACK_DATA:-/data}/server-root/current/node_modules/@dominevo/server/dist/launch-args.js /opt/camstack-hub/node_modules/@dominevo/server/dist/launch-args.js"
 # [launch-args-begin]
 launch_role="${CAMSTACK_ROLE:-hub}"
 launch_js=""
@@ -568,10 +568,10 @@ ENTRYPOINT ["/usr/bin/tini", "--", "/usr/local/bin/docker-entrypoint.sh"]
 # /data/server-root closure (with probation boot + auto-rollback) or falls
 # back to this baked seed's launcher. Update apply = graceful exit → the
 # container restart policy relaunches → the starter loads the new version.
-CMD ["/opt/camstack-hub/node_modules/@camstack/server/dist/starter.js"]
+CMD ["/opt/camstack-hub/node_modules/@dominevo/server/dist/starter.js"]
 
 # ── Final: AMD (Mesa VA / Vulkan; no Intel GPU repo, no Intel NPU) ────────────
-# Build: docker build --target amd -t ghcr.io/camstack/camstack:amd-local .
+# Build: docker build --target amd -t ghcr.io/dominevo/dominevo:amd-local .
 FROM runtime-common AS amd
 LABEL org.opencontainers.image.variant="amd"
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -585,7 +585,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Every new variant goes ABOVE it.
 
 # ── Final: Intel legacy (Gen8–Gen11 iGPU: UHD 6xx, Jasper Lake, Coffee Lake) ──
-# Build: docker build --target intel-legacy -t ghcr.io/camstack/camstack:intel-legacy-local .
+# Build: docker build --target intel-legacy -t ghcr.io/dominevo/dominevo:intel-legacy-local .
 # Intel's current compute runtime (25.x) dropped Gen8–Gen11; those iGPUs are
 # served by the `legacy1` line (24.35, the last to support them), published only
 # as GitHub release assets — Intel's `noble unified` apt repo carries NO legacy1
@@ -643,7 +643,7 @@ RUN curl -fsSL https://repositories.intel.com/gpu/intel-graphics.key \
 ENV LIBVA_DRIVER_NAME=iHD
 
 # ── Final: NVIDIA (Turing and newer, sm_75+: RTX 20/30/40/50, GTX 16) ─────────
-# Build: docker build --target nvidia -t ghcr.io/camstack/camstack:nvidia-local .
+# Build: docker build --target nvidia -t ghcr.io/dominevo/dominevo:nvidia-local .
 # Run:   needs the NVIDIA Container Toolkit on the host (`--gpus all` /
 #        `--runtime=nvidia`): the toolkit injects the DRIVER (libcuda,
 #        nvidia-smi) from the host, so the image carries only the CUDA 12.8
@@ -686,7 +686,7 @@ ENV NVIDIA_VISIBLE_DEVICES=all \
     NVIDIA_DRIVER_CAPABILITIES=compute,utility,video
 
 # ── Final: NVIDIA legacy (Pascal GTX 10 / Maxwell GTX 9, sm_50–sm_61) ─────────
-# Build: docker build --target nvidia-legacy -t ghcr.io/camstack/camstack:nvidia-legacy-local .
+# Build: docker build --target nvidia-legacy -t ghcr.io/dominevo/dominevo:nvidia-legacy-local .
 # CUDA 13 dropped Maxwell/Pascal/Volta offline compilation, and ORT 1.27+
 # defaults to CUDA 13; the CUDA-12.8/cuDNN-9 wheels have been reported to need
 # compute capability 7.0. The last line that is documented for these cards is

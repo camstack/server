@@ -19,7 +19,7 @@
  *    Past {@link MAX_AGE_MS} every entry reads `undefined` again.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 /**
  * How long a state may go unrefreshed before it stops counting.

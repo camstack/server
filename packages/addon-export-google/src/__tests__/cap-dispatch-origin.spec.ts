@@ -1,4 +1,4 @@
-import type { AddonApi } from '@camstack/types'
+import type { AddonApi } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { dispatchCapCall } from '../google-home/cap-dispatch.js'
 

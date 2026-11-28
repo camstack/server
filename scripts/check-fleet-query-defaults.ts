@@ -306,7 +306,7 @@ function main(): void {
             line: index + 1,
             text: text.trim(),
             rule: 'client-without-defaults',
-            fix: "call applyFleetQueryDefaults(client) on it — import from '@camstack/ui-library'",
+            fix: "call applyFleetQueryDefaults(client) on it — import from '@dominevo/ui-library'",
           })
         }
       }

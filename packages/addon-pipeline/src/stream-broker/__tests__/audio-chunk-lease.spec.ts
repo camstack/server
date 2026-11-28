@@ -14,7 +14,7 @@
  * So the lease has to do two things, and this file pins both: RELEASE the
  * subscription, and TELL the broker, which is what re-evaluates demand.
  */
-import type { DecodedAudioChunk, IScopedLogger, LogExtras } from '@camstack/types'
+import type { DecodedAudioChunk, IScopedLogger, LogExtras } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { AUDIO_SUBSCRIPTION_IDLE_MS, AudioChunkPlane } from '../stream-broker/audio-chunk-plane.js'

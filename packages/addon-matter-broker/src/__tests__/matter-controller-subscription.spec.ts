@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, afterEach } from 'vitest'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { MatterJsController, type MatterFabricServer } from '../matter-controller-impl.js'
 import { CommissionPhase } from '../matter-commission-progress.js'
 import type { CommissionProgress } from '../matter-commission-progress.js'

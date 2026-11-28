@@ -6,7 +6,7 @@
  */
 import { afterEach, describe, expect, it } from 'vitest'
 import { render, screen, cleanup } from '@testing-library/react'
-import type { ConfigField } from '@camstack/types'
+import type { ConfigField } from '@dominevo/types'
 import { ConfigSchemaField, type PipelineStepDisplayConfig } from '../pipeline-step'
 
 function displayStep(modelId: string): PipelineStepDisplayConfig {

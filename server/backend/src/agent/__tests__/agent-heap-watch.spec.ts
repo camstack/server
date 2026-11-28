@@ -9,7 +9,7 @@ import {
   AGENT_MAIN_HEAP_WATCH_LABEL,
   type HeapReclaimer,
   startHeapWatch,
-} from '@camstack/server/system'
+} from '@dominevo/server/system'
 import { describe, expect, it, vi } from 'vitest'
 import { startAgentHeapWatch } from '../agent-heap-watch.js'
 

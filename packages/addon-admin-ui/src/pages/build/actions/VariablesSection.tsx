@@ -4,8 +4,8 @@
  * in a step, the "{x}" button puts one into an argument.
  */
 
-import type { ActionVariable, ActionVariableType } from '@camstack/types'
-import { Button, Input, SectionCard } from '@camstack/ui-library'
+import type { ActionVariable, ActionVariableType } from '@dominevo/types'
+import { Button, Input, SectionCard } from '@dominevo/ui-library'
 import { Plus, Trash2, Variable } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { DraftNumberInput } from '../flow/DraftNumberInput'

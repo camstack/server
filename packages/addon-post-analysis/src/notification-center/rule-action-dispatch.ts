@@ -30,8 +30,8 @@ import { NC_RECOGNITION_CONDITIONS, evaluateRule } from './rule-engine.js'
 import { NcRuleStore } from './rule-store.js'
 import { NcSceneStateCache } from './scene-state-cache.js'
 import { NcZoneOwnershipCache } from './zone-owner-cache.js'
-import type { IScopedLogger, NcRule, NcSystemEventKind } from '@camstack/types'
-import { ruleAutoTriggersAlarm } from '@camstack/types'
+import type { IScopedLogger, NcRule, NcSystemEventKind } from '@dominevo/types'
+import { ruleAutoTriggersAlarm } from '@dominevo/types'
 import type { NcAlarmPanelPort } from './index.js'
 
 /**
@@ -147,7 +147,7 @@ export interface RuleActionDispatchHost {
 
 /**
  * Run this rule's onTrigger / onTriggerOff bindings for this match, and —
- * when the rule is gated on `armed_*` — auto-trigger the CamStack
+ * when the rule is gated on `armed_*` — auto-trigger the Dominevo
  * alarm-panel (never sirens).
  *
  * Called BEFORE the cooldown gate — see the call site for why. Everything
@@ -186,7 +186,7 @@ export function runRuleActions(
   return phase
 }
 /**
- * A rule gated on `armed_*` fires the CamStack panel on match — no
+ * A rule gated on `armed_*` fires the Dominevo panel on match — no
  * `onTrigger` sequence required. Sirens are never actuated here.
  *
  * Returns where the alarm stood for this match, read BEFORE the press (D706): the rule's

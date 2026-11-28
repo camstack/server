@@ -15,8 +15,8 @@
  * | --- | --- |
  * | the routes | `packages/addon-admin-ui/src/App.tsx` |
  * | `?node=` | `packages/addon-admin-ui/src/lib/node-url-selection.ts` |
- * | `stream-broker` | `WELL_KNOWN_TABS` in `@camstack/types` |
- * | `camera` | `DeviceType.Camera` in `@camstack/types` |
+ * | `stream-broker` | `WELL_KNOWN_TABS` in `@dominevo/types` |
+ * | `camera` | `DeviceType.Camera` in `@dominevo/types` |
  *
  * Rename a route, rename the query param, retire a tab id — and the link keeps
  * being minted, keeps looking right in a test that only checks it is a string,
@@ -32,7 +32,7 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 
-import { DeviceType, WELL_KNOWN_TABS } from '@camstack/types'
+import { DeviceType, WELL_KNOWN_TABS } from '@dominevo/types'
 import type { NcSystemEventTapSubject } from '../packages/addon-post-analysis/src/notification-center/system-event-tap-url.js'
 import { systemEventTapPath } from '../packages/addon-post-analysis/src/notification-center/system-event-tap-url.js'
 import { NODE_PARAM } from '../packages/addon-admin-ui/src/lib/node-url-selection.js'
@@ -62,7 +62,7 @@ interface TapCase {
    * Substrings that must NOT appear. The one that earns its keep is
    * `/system/addons` on a server update: that route EXISTS, so a mis-routed
    * link passes every positive check while opening a page that hides
-   * `@camstack/server`.
+   * `@dominevo/server`.
    */
   readonly forbids?: readonly string[]
 }
@@ -75,7 +75,7 @@ const CASES: readonly TapCase[] = [
     carries: [`${NODE_PARAM}=agent-a`],
   },
   {
-    label: 'server-update-available → the Cluster page (Addons hides @camstack/server)',
+    label: 'server-update-available → the Cluster page (Addons hides @dominevo/server)',
     subject: { kind: 'server-update-available', nodeId: 'agent-a' },
     route: '/system/nodes',
     carries: [`${NODE_PARAM}=agent-a`],
@@ -137,7 +137,7 @@ const CASES: readonly TapCase[] = [
     carries: ['/system/addons'],
   },
   {
-    label: 'summary section updates → the Cluster page (Addons hides @camstack/server)',
+    label: 'summary section updates → the Cluster page (Addons hides @dominevo/server)',
     subject: { kind: 'server-updated', summarySection: 'updates' },
     route: '/system/nodes',
     carries: ['/system/nodes'],

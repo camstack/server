@@ -28,7 +28,7 @@ import {
   extractOfferedH264ProfileLevelIds,
   deriveH264ProfileLevelId,
 } from '../webrtc/broker-webrtc-server.js'
-import type { EncodedPacket } from '@camstack/types'
+import type { EncodedPacket } from '@dominevo/types'
 
 /** A FrameSource that yields nothing — enough to construct a session. */
 function emptySource(): FrameSource {

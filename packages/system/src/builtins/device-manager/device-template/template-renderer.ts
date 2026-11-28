@@ -28,11 +28,11 @@ import {
   type DeviceTemplateTraceEntry,
   type DeviceTemplateView,
   resolveTemplateRef,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   deviceTemplateCallableBounds,
   deviceTemplateFilterMaxParams,
-} from '@camstack/types/device-template-catalogue'
+} from '@dominevo/types/device-template-catalogue'
 import {
   analyzeTemplate,
   type TemplateAnalysis,
@@ -54,7 +54,7 @@ export interface DeviceTemplateResolver {
 /** `dist/device-template-worker.js` at the package root, found through its own `package.json`. */
 export function defaultTemplateWorkerPath(): string {
   const require_ = createRequire(import.meta.url)
-  const packageRoot = path.dirname(require_.resolve('@camstack/server/system/package.json'))
+  const packageRoot = path.dirname(require_.resolve('@dominevo/server/system/package.json'))
   return path.join(packageRoot, 'dist', 'device-template-worker.js')
 }
 

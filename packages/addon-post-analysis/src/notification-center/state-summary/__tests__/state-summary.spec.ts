@@ -3,7 +3,7 @@
  * rule's own filters; cleared items absent; an unread source "unavailable",
  * never "none"; nothing to report = empty.
  */
-import { DeviceType, NcRuleInputSchema, type NcRuleInput } from '@camstack/types'
+import { DeviceType, NcRuleInputSchema, type NcRuleInput } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { NcOpenAlert } from '../../alerts/open-alert.js'
 import type { NcDeviceIdentity } from '../../device-directory.js'
@@ -204,26 +204,26 @@ describe('state summary — content', () => {
   it('applies nodeIds and packageNames on a system rule', () => {
     const rows: NcSystemStateRow[] = [
       {
-        key: 'update:addon:hub:@camstack/addon-recorder',
+        key: 'update:addon:hub:@dominevo/addon-recorder',
         kind: 'addon-update-available',
         since: NOW - 60_000,
         nodeId: 'hub',
-        packageName: '@camstack/addon-recorder',
+        packageName: '@dominevo/addon-recorder',
         params: {
-          packageName: '@camstack/addon-recorder',
+          packageName: '@dominevo/addon-recorder',
           currentVersion: '1.0.0',
           latestVersion: '1.0.1',
           nodeId: 'hub',
         },
       },
       {
-        key: 'update:addon:agent-1:@camstack/addon-notifiers',
+        key: 'update:addon:agent-1:@dominevo/addon-notifiers',
         kind: 'addon-update-available',
         since: NOW - 60_000,
         nodeId: 'agent-1',
-        packageName: '@camstack/addon-notifiers',
+        packageName: '@dominevo/addon-notifiers',
         params: {
-          packageName: '@camstack/addon-notifiers',
+          packageName: '@dominevo/addon-notifiers',
           currentVersion: '2.0.0',
           latestVersion: '2.1.0',
           nodeId: 'agent-1',
@@ -235,9 +235,9 @@ describe('state summary — content', () => {
       ports({ state: () => rows }),
     )
     // D708: an addon update is in the ADDON UPDATES section, under its node's heading.
-    expect(byNode.text).toBe('Addon updates:\nagent-1:\n• @camstack/addon-notifiers 2.0.0 → 2.1.0')
+    expect(byNode.text).toBe('Addon updates:\nagent-1:\n• @dominevo/addon-notifiers 2.0.0 → 2.1.0')
     const byPackage = collect(
-      rule({ kinds: ['addon-update-available'], packageNames: ['@camstack/addon-recorder'] }),
+      rule({ kinds: ['addon-update-available'], packageNames: ['@dominevo/addon-recorder'] }),
       ports({ state: () => rows }),
     )
     expect(byPackage.dropped).toEqual({ packageNames: 1 })

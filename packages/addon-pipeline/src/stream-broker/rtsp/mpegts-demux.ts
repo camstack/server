@@ -20,7 +20,7 @@
  * so the 90kHz MPEG-TS PTS is converted the same way here.
  */
 
-import type { EncodedPacket, IScopedLogger } from '@camstack/types'
+import type { EncodedPacket, IScopedLogger } from '@dominevo/types'
 
 const TS_PACKET_SIZE = 188
 const SYNC_BYTE = 0x47

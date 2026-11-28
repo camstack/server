@@ -467,8 +467,8 @@ const LoggingSettingsPatchSchema = z.object({
    * "what happened to my data".
    *
    * That placement has a cost worth stating: this document ships in the
-   * framework closure, so this knob needs a published `@camstack/server` while
-   * the four windows beside it (D485) reach a node on `camstack deploy`.
+   * framework closure, so this knob needs a published `@dominevo/server` while
+   * the four windows beside it (D485) reach a node on `dominevo deploy`.
    *
    * `retention-model.ts` argued this one must NOT follow a device window,
    * because the audit trail is the history of the SWEEP and not of the camera.
@@ -760,7 +760,7 @@ export const systemCapability = {
       auth: 'admin',
     }),
   },
-  /** BIG PLAN 2: declarative mount hint — read by `@camstack/server/system` `buildCapRouters`. */
+  /** BIG PLAN 2: declarative mount hint — read by `@dominevo/server/system` `buildCapRouters`. */
   mount: { kind: 'server-provided' },
   vocabulary: { notOperatorFacing: NOT_A_DEVICE.CLUSTER },
 } as const satisfies CapabilityDefinition

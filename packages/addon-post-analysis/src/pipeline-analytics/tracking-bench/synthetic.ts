@@ -19,7 +19,7 @@
  * from `frame.detections`, index-for-index with `record.dets`, before that
  * information is gone.
  */
-import type { FrameResult, ObjectDetection } from '@camstack/types'
+import type { FrameResult, ObjectDetection } from '@dominevo/types'
 import { DETECTION_SENSITIVITY_DEFAULTS } from '../detection-sensitivity-settings.js'
 import type {
   StationaryFrameGate,

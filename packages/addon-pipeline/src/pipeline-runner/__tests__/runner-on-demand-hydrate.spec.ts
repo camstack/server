@@ -3,7 +3,7 @@
  * must not materialize media; CAMSTACK_CONTINUOUS_RETAIN=1 restores the
  * previous post-success hydrate.
  */
-import type { DecodedFrame, FrameHandle, FrameResult } from '@camstack/types'
+import type { DecodedFrame, FrameHandle, FrameResult } from '@dominevo/types'
 import { makeObjectDetection } from '../../__tests__/support/object-detection.js'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { CAMSTACK_CONTINUOUS_RETAIN } from '../on-demand-retention.js'

@@ -3,10 +3,10 @@
  * `package-inventory.ts` (D45).
  *
  * WHAT THE OTHER ONE CANNOT SEE
- * `package-inventory.ts` answers "how many copies of `@camstack/server/system` exist
+ * `package-inventory.ts` answers "how many copies of `@dominevo/server/system` exist
  * under the roots this node resolves through". Every root it scans is derived
  * from the ACTIVE data dir, so a whole second data root — a different
- * `<dataDir>` with its own `addons/@camstack/` tree, belonging to a retired
+ * `<dataDir>` with its own `addons/@dominevo/` tree, belonging to a retired
  * app id or an abandoned layout — is structurally invisible to it. Yet that is
  * the copy people actually read versions out of, because it is a plausible
  * path with plausible package.json files in it.
@@ -14,13 +14,13 @@
  * MEASURED, 2026-08-07
  * The Mac agent node has FOUR addon roots on one disk:
  *
- *   ~/Library/Application Support/@camstack/desktop/data/addons/@camstack
+ *   ~/Library/Application Support/@dominevo/desktop/data/addons/@dominevo
  *       — LIVE (addon-pipeline 1.2.43, deployed that afternoon)
- *   ~/camstack-agent-data/addons/@camstack
+ *   ~/camstack-agent-data/addons/@dominevo
  *       — abandoned 2026-06-28, addon-pipeline 1.1.1
- *   ~/Library/Application Support/@camstack/electron-agent/agent-data/addons/@camstack
+ *   ~/Library/Application Support/@dominevo/electron-agent/agent-data/addons/@dominevo
  *       — abandoned 2026-07-20, addon-pipeline 1.1.70
- *   ~/Library/Application Support/@camstack/electron/data/addons/@camstack
+ *   ~/Library/Application Support/@dominevo/electron/data/addons/@dominevo
  *       — abandoned 2026-07-17, addon-pipeline 1.1.59
  *
  * Four truthful answers to "what version of addon-pipeline is on the Mac", one
@@ -40,7 +40,7 @@ import * as path from 'node:path'
 /** The one directory under a data root that holds installed addons. */
 export const ADDONS_SUBDIR = 'addons'
 /** The scope every first-party addon package sits under. */
-export const ADDON_SCOPE = '@camstack'
+export const ADDON_SCOPE = '@dominevo'
 
 export interface RivalRootInput {
   /** The data root this node is ACTUALLY running from (`CAMSTACK_DATA`). */
@@ -58,10 +58,10 @@ export interface RivalRootInput {
  * Enumerated, not searched. Each entry is a layout this project has actually
  * shipped, so the list documents its own history:
  *   - `~/camstack-agent-data` — the pre-Electron agent's data root.
- *   - `<appSupport>/@camstack/<appId>/data` — every Electron app id the product
+ *   - `<appSupport>/@dominevo/<appId>/data` — every Electron app id the product
  *     has carried (`electron`, `electron-agent`, `desktop`). The rename left the
  *     old ids' trees behind, each a complete addon install.
- *   - `<appSupport>/@camstack/electron-agent/agent-data` — the one app id that
+ *   - `<appSupport>/@dominevo/electron-agent/agent-data` — the one app id that
  *     used a different subdir name.
  *
  * A new app id must be ADDED here when it ships, and an id must never be
@@ -94,7 +94,7 @@ export function candidateDataRoots(input: RivalRootInput): readonly string[] {
 /** Filesystem operations the inventory needs, injected so it stays pure. */
 export interface AddonRootFs {
   exists(dir: string): boolean
-  /** Package directory names directly under an `addons/@camstack` dir. */
+  /** Package directory names directly under an `addons/@dominevo` dir. */
   listPackages(scopeDir: string): readonly string[]
   /** `version` from `<pkgDir>/package.json`, or null when missing/unparseable. */
   readVersion(packageDir: string): string | null
@@ -104,7 +104,7 @@ export interface AddonRootFs {
 
 /** One addon root found on this machine that is not the one we are running. */
 export interface RivalAddonRoot {
-  /** The `<root>/addons/@camstack` directory. */
+  /** The `<root>/addons/@dominevo` directory. */
   readonly scopeDir: string
   readonly packageCount: number
   /** A few `name@version` samples — enough to recognise how stale it is. */

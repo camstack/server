@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/schema",
   "version": 2,
-  "title": "CamStack addon deploy executor",
-  "description": "Pack + upload an addon to a running CamStack hub.",
+  "title": "Dominevo addon deploy executor",
+  "description": "Pack + upload an addon to a running Dominevo hub.",
   "type": "object",
   "properties": {
     "server": {
       "type": "string",
-      "description": "Hub base URL (e.g. https://hub.example.com:4443). Falls back to $CAMSTACK_SERVER, then the hub of the `camstack login` session.",
+      "description": "Hub base URL (e.g. https://hub.example.com:4443). Falls back to $CAMSTACK_SERVER, then the hub of the `dominevo login` session.",
       "examples": ["http://localhost:4443"]
     },
     "skipBuild": {

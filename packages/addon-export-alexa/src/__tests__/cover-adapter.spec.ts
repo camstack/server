@@ -15,7 +15,7 @@ import { fakeBuildContext, quietLogger } from './helpers/fake-device-api.js'
 import type { AsyncResponseInput } from '../handlers/deferred-response.js'
 import type { AdapterDirectiveContext } from '../endpoints/adapters/types.js'
 import type { DirectiveRouterDeps } from '../directive-router.js'
-import type { AddonContext } from '@camstack/types'
+import type { AddonContext } from '@dominevo/types'
 
 const base = { deviceId: 9, stableId: 's9', name: 'Tapparella', type: 'cover' }
 const POSITIONABLE = ['cover-positionable']

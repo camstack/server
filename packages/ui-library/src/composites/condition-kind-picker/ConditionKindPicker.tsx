@@ -2,7 +2,7 @@ import type {
   AutomationLeafCategory,
   AutomationLeafContext,
   AutomationLeafKind,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { Search } from 'lucide-react'
 import { type JSX, type KeyboardEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { useUiText } from '../../contexts/ui-text'

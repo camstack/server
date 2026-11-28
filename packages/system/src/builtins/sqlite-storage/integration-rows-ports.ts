@@ -12,7 +12,7 @@ import {
   RevConflictError,
   type SecretsAccess,
   collectSecretMarkerRefs,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   clearLegacyIntegrationRows,
   readLegacyIntegrationRows,

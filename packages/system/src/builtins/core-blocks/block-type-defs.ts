@@ -8,23 +8,23 @@
  *
  * The paths matter more than they look. Monaco resolves imports against the
  * extra-lib paths, so a file registered as anything other than
- * `file:///node_modules/@camstack/types/…` loads and then resolves NOTHING —
+ * `file:///node_modules/@dominevo/types/…` loads and then resolves NOTHING —
  * the failure that looks most like success, because the editor keeps working
  * and simply stops knowing anything.
  *
  * **Resolution must not use `import.meta.resolve`.** The hub loads the CJS
  * build of this package; the bundler erases `import.meta` to `{}`, so
- * `import.meta.resolve?.('@camstack/types')` is always undefined and the old
- * fallback — `process.cwd()/node_modules/@camstack/types` — wins. On a live
+ * `import.meta.resolve?.('@dominevo/types')` is always undefined and the old
+ * fallback — `process.cwd()/node_modules/@dominevo/types` — wins. On a live
  * hub `cwd` is the image seed (`/opt/camstack-hub`), not the active data-root
  * closure that actually runs. That served a months-old `ConfigSelectField`
  * without `optionsFrom` while `/data/server-root/current` already had it, and
  * Monaco blocked Save on a property the runtime hydrate already understood.
  * `createRequire(import.meta.url)` survives the CJS emit (becomes
  * `createRequire(pathToFileURL(__filename))`) and walks from THIS module to
- * the sibling `@camstack/types` the process loaded.
+ * the sibling `@dominevo/types` the process loaded.
  *
- * Beside `@camstack/types`, the editor also gets `zod` (real package `.d.ts`)
+ * Beside `@dominevo/types`, the editor also gets `zod` (real package `.d.ts`)
  * and a small Node ambient. Blocks are Node processes; without those, a
  * legitimate `import { z } from 'zod'` / `import net from 'node:net'` /
  * `process.env` is a Save-blocking Error even though esbuild will emit and
@@ -34,15 +34,15 @@
 import { createRequire } from 'node:module'
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 export interface BlockTypeLib {
   readonly filePath: string
   readonly content: string
 }
 
-/** Where Monaco must think `@camstack/types` lives for imports to resolve. */
-const TYPES_VIRTUAL_ROOT = 'file:///node_modules/@camstack/types'
+/** Where Monaco must think `@dominevo/types` lives for imports to resolve. */
+const TYPES_VIRTUAL_ROOT = 'file:///node_modules/@dominevo/types'
 /** Where Monaco must think `zod` lives. */
 const ZOD_VIRTUAL_ROOT = 'file:///node_modules/zod'
 /**
@@ -158,10 +158,10 @@ declare module 'node:buffer' {
 `.trim()
 
 /**
- * Read every declaration a block editor needs: `@camstack/types`, `zod`, and
+ * Read every declaration a block editor needs: `@dominevo/types`, `zod`, and
  * the Node ambient.
  *
- * Best-effort by design: a node that cannot find `@camstack/types` serves an
+ * Best-effort by design: a node that cannot find `@dominevo/types` serves an
  * EMPTY types list (plus whatever else resolved), and the editor then registers
  * an empty lib set rather than keeping a stale one — so an author sees "no
  * types" instead of validating against a contract that has moved.
@@ -169,9 +169,9 @@ declare module 'node:buffer' {
 export async function loadBlockTypeDefs(logger: IScopedLogger): Promise<readonly BlockTypeLib[]> {
   const out: BlockTypeLib[] = []
 
-  const typesRoot = await resolvePackageDist('@camstack/types')
+  const typesRoot = await resolvePackageDist('@dominevo/types')
   if (typesRoot === null) {
-    logger.warn('core-blocks: @camstack/types declarations not found — the editor gets no types')
+    logger.warn('core-blocks: @dominevo/types declarations not found — the editor gets no types')
   } else {
     await walkDts(typesRoot, typesRoot, TYPES_VIRTUAL_ROOT, out)
   }
@@ -192,13 +192,13 @@ export async function loadBlockTypeDefs(logger: IScopedLogger): Promise<readonly
  * Exported for the test that pins createRequire-over-cwd.
  */
 export async function resolveTypesDist(): Promise<string | null> {
-  return resolvePackageDist('@camstack/types')
+  return resolvePackageDist('@dominevo/types')
 }
 
 async function resolvePackageDist(pkg: string): Promise<string | null> {
   const root = await resolvePackageRoot(pkg)
   if (root === null) return null
-  // `@camstack/types` resolves to `dist/index.js` — declarations sit beside it.
+  // `@dominevo/types` resolves to `dist/index.js` — declarations sit beside it.
   if (await exists(path.join(root, 'index.d.ts'))) return root
   const dist = path.join(root, 'dist')
   if (await exists(path.join(dist, 'index.d.ts'))) return dist

@@ -2,7 +2,7 @@
  * Messages between the renderer and its worker thread. Pure types and guards:
  * the worker loads this file, so it imports nothing from the types barrel.
  */
-import type { DeviceTemplateRefusalReason } from '@camstack/types'
+import type { DeviceTemplateRefusalReason } from '@dominevo/types'
 
 /** One callable global's argument range, copied into the worker with the other limits. */
 export interface TemplateBoundMessage {

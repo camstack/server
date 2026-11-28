@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import type { LifecycleJob, LifecycleTask, TaskPhase } from '@camstack/types'
+import type { LifecycleJob, LifecycleTask, TaskPhase } from '@dominevo/types'
 import {
   LifecycleJobEngine,
   type ApplyAddonUpdateFn,
@@ -35,7 +35,7 @@ function makeFrameworkTask(overrides: Partial<LifecycleTask> = {}): LifecycleTas
     taskId: 'task-framework',
     target: 'framework',
     nodeId: 'hub',
-    packageName: '@camstack/kernel',
+    packageName: '@dominevo/kernel',
     fromVersion: '1.0.0',
     toVersion: '1.1.0',
     phase: 'queued',
@@ -123,14 +123,14 @@ describe('LifecycleJobEngine — reconcileJob (§10)', () => {
     ['queued', 'queued'],
     ['fetching', 'fetching'],
   ])('re-fetches a %s addon task then applies → done', async (_label, phase) => {
-    const task = makeAddonTask('@camstack/addon-x', { phase, stagedPath: null })
+    const task = makeAddonTask('@dominevo/addon-x', { phase, stagedPath: null })
     const job = makeJob('job-1', [task])
     journal.createJob(job)
 
     const result = await makeEngine().reconcileJob(journal.getJob('job-1')!)
 
-    expect(fetchSpy).toContain('@camstack/addon-x')
-    expect(applySpy.map((a) => a.name)).toContain('@camstack/addon-x')
+    expect(fetchSpy).toContain('@dominevo/addon-x')
+    expect(applySpy.map((a) => a.name)).toContain('@dominevo/addon-x')
     expect(result.tasks[0]?.phase).toBe('done')
     expect(result.state).toBe('completed')
   })
@@ -142,20 +142,20 @@ describe('LifecycleJobEngine — reconcileJob (§10)', () => {
   ])('reuses a valid stagedPath for a %s addon task (no re-fetch)', async (phase) => {
     stagedPathExistsResult = true
     const stagedPath = path.join(stagingDir, 'existing-staged')
-    const task = makeAddonTask('@camstack/addon-y', { phase, stagedPath })
+    const task = makeAddonTask('@dominevo/addon-y', { phase, stagedPath })
     const job = makeJob('job-2', [task])
     journal.createJob(job)
 
     const result = await makeEngine().reconcileJob(journal.getJob('job-2')!)
 
-    expect(fetchSpy).not.toContain('@camstack/addon-y')
-    expect(applySpy).toEqual([{ name: '@camstack/addon-y', stagedPath }])
+    expect(fetchSpy).not.toContain('@dominevo/addon-y')
+    expect(applySpy).toEqual([{ name: '@dominevo/addon-y', stagedPath }])
     expect(result.tasks[0]?.phase).toBe('done')
   })
 
   it('re-fetches a staged addon task when the stagedPath dir is gone', async () => {
     stagedPathExistsResult = false
-    const task = makeAddonTask('@camstack/addon-z', {
+    const task = makeAddonTask('@dominevo/addon-z', {
       phase: 'staged',
       stagedPath: '/gone/path',
     })
@@ -164,8 +164,8 @@ describe('LifecycleJobEngine — reconcileJob (§10)', () => {
 
     const result = await makeEngine().reconcileJob(journal.getJob('job-3')!)
 
-    expect(fetchSpy).toContain('@camstack/addon-z')
-    expect(applySpy.map((a) => a.name)).toContain('@camstack/addon-z')
+    expect(fetchSpy).toContain('@dominevo/addon-z')
+    expect(applySpy.map((a) => a.name)).toContain('@dominevo/addon-z')
     expect(result.tasks[0]?.phase).toBe('done')
   })
 
@@ -173,14 +173,14 @@ describe('LifecycleJobEngine — reconcileJob (§10)', () => {
   it('reuses a valid stagedPath for an applying addon task (idempotent re-apply)', async () => {
     stagedPathExistsResult = true
     const stagedPath = path.join(stagingDir, 'mid-apply-staged')
-    const task = makeAddonTask('@camstack/addon-mid', { phase: 'applying', stagedPath })
+    const task = makeAddonTask('@dominevo/addon-mid', { phase: 'applying', stagedPath })
     const job = makeJob('job-4', [task])
     journal.createJob(job)
 
     const result = await makeEngine().reconcileJob(journal.getJob('job-4')!)
 
-    expect(fetchSpy).not.toContain('@camstack/addon-mid')
-    expect(applySpy).toEqual([{ name: '@camstack/addon-mid', stagedPath }])
+    expect(fetchSpy).not.toContain('@dominevo/addon-mid')
+    expect(applySpy).toEqual([{ name: '@dominevo/addon-mid', stagedPath }])
     expect(result.tasks[0]?.phase).toBe('done')
   })
 
@@ -188,22 +188,22 @@ describe('LifecycleJobEngine — reconcileJob (§10)', () => {
   it('re-applies a restarting addon task reusing its stagedPath → done', async () => {
     stagedPathExistsResult = true
     const stagedPath = path.join(stagingDir, 'restart-staged')
-    const task = makeAddonTask('@camstack/addon-r', { phase: 'restarting', stagedPath })
+    const task = makeAddonTask('@dominevo/addon-r', { phase: 'restarting', stagedPath })
     const job = makeJob('job-5', [task])
     journal.createJob(job)
 
     const result = await makeEngine().reconcileJob(journal.getJob('job-5')!)
 
-    expect(applySpy).toEqual([{ name: '@camstack/addon-r', stagedPath }])
+    expect(applySpy).toEqual([{ name: '@dominevo/addon-r', stagedPath }])
     expect(result.tasks[0]?.phase).toBe('done')
   })
 
   // §10: restarting → apply throws (runner never returns) → failed
   it('marks a restarting addon task failed when re-apply throws', async () => {
     stagedPathExistsResult = true
-    applyThrowFor.add('@camstack/addon-bad')
+    applyThrowFor.add('@dominevo/addon-bad')
     const stagedPath = path.join(stagingDir, 'bad-staged')
-    const task = makeAddonTask('@camstack/addon-bad', { phase: 'restarting', stagedPath })
+    const task = makeAddonTask('@dominevo/addon-bad', { phase: 'restarting', stagedPath })
     const job = makeJob('job-6', [task])
     journal.createJob(job)
 
@@ -216,9 +216,9 @@ describe('LifecycleJobEngine — reconcileJob (§10)', () => {
   // terminal tasks are skipped
   it('skips terminal tasks (done/failed/skipped) — no fetch, no apply', async () => {
     const tasks = [
-      makeAddonTask('@camstack/addon-done', { phase: 'done' }),
-      makeAddonTask('@camstack/addon-failed', { phase: 'failed' }),
-      makeAddonTask('@camstack/addon-skipped', { phase: 'skipped' }),
+      makeAddonTask('@dominevo/addon-done', { phase: 'done' }),
+      makeAddonTask('@dominevo/addon-failed', { phase: 'failed' }),
+      makeAddonTask('@dominevo/addon-skipped', { phase: 'skipped' }),
     ]
     const job = makeJob('job-7', tasks)
     journal.createJob(job)
@@ -236,7 +236,7 @@ describe('LifecycleJobEngine — reconcileJob (§10)', () => {
   it('re-drives an addon task and skips a non-terminal framework task, finalizing the job', async () => {
     stagedPathExistsResult = true
     const stagedPath = path.join(stagingDir, 'fw-mixed-staged')
-    const addon = makeAddonTask('@camstack/addon-mix', { phase: 'applying', stagedPath })
+    const addon = makeAddonTask('@dominevo/addon-mix', { phase: 'applying', stagedPath })
     const framework = makeFrameworkTask({ phase: 'staged', stagedPath: '/tmp/fw' })
     const job = makeJob('job-8', [addon, framework])
     journal.createJob(job)
@@ -256,11 +256,11 @@ describe('LifecycleJobEngine — reconcileJob (§10)', () => {
   it('finalizes an all-addon job to completed', async () => {
     stagedPathExistsResult = true
     const tasks = [
-      makeAddonTask('@camstack/addon-1', {
+      makeAddonTask('@dominevo/addon-1', {
         phase: 'applying',
         stagedPath: path.join(stagingDir, 's1'),
       }),
-      makeAddonTask('@camstack/addon-2', {
+      makeAddonTask('@dominevo/addon-2', {
         phase: 'staged',
         stagedPath: path.join(stagingDir, 's2'),
       }),
@@ -276,13 +276,13 @@ describe('LifecycleJobEngine — reconcileJob (§10)', () => {
 
   it('finalizes a mixed-result addon job to partially-failed', async () => {
     stagedPathExistsResult = true
-    applyThrowFor.add('@camstack/addon-fail')
+    applyThrowFor.add('@dominevo/addon-fail')
     const tasks = [
-      makeAddonTask('@camstack/addon-ok', {
+      makeAddonTask('@dominevo/addon-ok', {
         phase: 'applying',
         stagedPath: path.join(stagingDir, 'ok'),
       }),
-      makeAddonTask('@camstack/addon-fail', {
+      makeAddonTask('@dominevo/addon-fail', {
         phase: 'applying',
         stagedPath: path.join(stagingDir, 'fail'),
       }),

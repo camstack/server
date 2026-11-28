@@ -1,7 +1,7 @@
 /**
  * Network Addresses — operator-managed allowlist of local interfaces, and the
  * Addresses table: every address this hub is reached at (detected, custom,
- * and the CamStack app link), each ticked for the roles it serves — app connections,
+ * and the Dominevo app link), each ticked for the roles it serves — app connections,
  * notification taps, public endpoint, internal.
  *
  * The roles are the hub's (`local-network.getAddresses` / `setAddressRole`):
@@ -20,7 +20,7 @@ import {
   useLocalNetworkResetAllowlistToBestMatch,
   useLocalNetworkSetAddressRole,
   useLocalNetworkSetAllowedAddresses,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { RefreshCw, RotateCcw, Save, Sparkles } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'

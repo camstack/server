@@ -14,7 +14,7 @@ import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { Puzzle } from 'lucide-react'
-import { Button, EmptyState, ErrorBox, Skeleton } from '@camstack/ui-library'
+import { Button, EmptyState, ErrorBox, Skeleton } from '@dominevo/ui-library'
 import { useCapabilityPresence } from '../lib/capability-presence'
 import { navChromeForPath, PAGE_REQUIRED_CAPABILITY } from '../lib/nav-items'
 

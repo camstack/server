@@ -1,4 +1,4 @@
-import { commandOrigin } from '@camstack/types/addon'
+import { commandOrigin } from '@dominevo/types/addon'
 import { describe, it, expect } from 'vitest'
 import { readCurrentCommandOrigin } from '../../cap-call-scope.js'
 import {

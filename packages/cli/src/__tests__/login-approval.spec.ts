@@ -62,7 +62,7 @@ function run(extra: { open?: boolean } = {}) {
   return { promise, printed, opened }
 }
 
-describe('camstack login by browser approval', () => {
+describe('dominevo login by browser approval', () => {
   it('prints the url and the code separately, never the code in the url, never the secret', async () => {
     replies = [begin(Date.now() + 300_000), ok({ status: 'pending' }), approved]
     const { promise, printed, opened } = run()
@@ -112,7 +112,7 @@ describe('camstack login by browser approval', () => {
     ]
     const err = await run().promise.catch((e: unknown) => e)
     expect(err).toBeInstanceOf(ApprovalFailedError)
-    expect(String((err as Error).message)).toContain('camstack login')
+    expect(String((err as Error).message)).toContain('dominevo login')
     expect(fs.readdirSync(dir)).toEqual([])
   })
 })

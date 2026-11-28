@@ -9,7 +9,7 @@ import {
   HISTORY_CATALOG,
   HISTORY_ITEM_CATALOG,
   type ReadingQuantity,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type {
   HistoryCatalog,
   HistoryItemCatalog,

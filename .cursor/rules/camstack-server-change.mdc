@@ -1,5 +1,5 @@
 ---
-description: CamStack server-side change — typecheck vs real build, .d.ts leaks, publish → applyServerUpdate → restart → verify, CI rules
+description: Dominevo server-side change — typecheck vs real build, .d.ts leaks, publish → applyServerUpdate → restart → verify, CI rules
 globs: server/backend/src/**, packages/system/src/**, packages/types/src/**, packages/sdk/src/**, packages/node-root/src/**
 alwaysApply: false
 ---

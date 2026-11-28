@@ -5,8 +5,8 @@
  * other step. The matrix is the one `use-step-switches` answer — a pending or
  * failed matrix draws nothing here (the notices say so), never an "off".
  */
-import { ErrorBox } from '@camstack/ui-library'
-import type { StepTreeNode } from '@camstack/ui-library'
+import { ErrorBox } from '@dominevo/ui-library'
+import type { StepTreeNode } from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 import { ClusterStepModeControl } from './ClusterStepModeControl'
 import { NodeStepSwitchControl } from './NodeStepSwitchControl'

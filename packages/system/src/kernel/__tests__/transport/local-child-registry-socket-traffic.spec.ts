@@ -8,7 +8,7 @@
  * spec drives real sockets: a registry, a real child, a real cap call, a real
  * fan-out event.
  */
-import type { SystemEvent } from '@camstack/types'
+import type { SystemEvent } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import type { CapCallMessage, ChildCapDescriptor } from '../../transport/child-cap-protocol.js'
 import { createLocalTransport } from '../../transport/create-local-transport.js'

@@ -26,9 +26,9 @@
  * event of that camera.
  */
 import { ncTable } from './support/nc-test-deps.js'
-import type { InMemoryRecords } from '@camstack/types'
-import type { MediaFile, NcRuleInput, SensorEvent } from '@camstack/types'
-import { NcRuleInputSchema } from '@camstack/types'
+import type { InMemoryRecords } from '@dominevo/types'
+import type { MediaFile, NcRuleInput, SensorEvent } from '@dominevo/types'
+import { NcRuleInputSchema } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   type FakeSettingsStore,

@@ -3,7 +3,7 @@ import {
   type RemoteBindingAction,
   type RemoteConfig,
   type RemoteLayoutPayload,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   applyDraft,
@@ -444,7 +444,7 @@ describe('remote-config-model: Flipper-IRDB import', () => {
 
 describe('a native infrared code', () => {
   it('round-trips through the draft and is summarised from its decoded pulses', async () => {
-    const { encodeTuya } = await import('@camstack/types')
+    const { encodeTuya } = await import('@dominevo/types')
     const code = encodeTuya([9000, -4500, 560, -560])
     const source = {
       id: 'tv',

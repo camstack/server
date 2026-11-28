@@ -24,7 +24,7 @@ import {
   type ExtensionSlotState,
   type ExtensionSlotUnreachable,
   type ExtensionSlotValue,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { defaultUiText, type UiTextFn } from '../../contexts/ui-text.js'
 
 /** The one field of a query error this module reads. */

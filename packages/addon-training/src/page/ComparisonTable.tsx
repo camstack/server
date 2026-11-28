@@ -1,6 +1,6 @@
 /** Baseline vs candidate (vs INT8) per class, and the per-camera recall changes. */
-import type { TrainingEvalClass, TrainingResult } from '@camstack/types'
-import { type DataColumn, DataTable, useIsPhone } from '@camstack/ui-library'
+import type { TrainingEvalClass, TrainingResult } from '@dominevo/types'
+import { type DataColumn, DataTable, useIsPhone } from '@dominevo/ui-library'
 import { useT } from '../i18n/index.js'
 import { type ComparisonRow, comparisonRows, formatPct, recallDeltaRows } from './view-model.js'
 

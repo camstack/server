@@ -17,7 +17,7 @@ import {
   type CropSupplyStepId,
   type RootStepSupply,
   type SupplyBox,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { AbsoluteBbox } from './crop-utils.js'
 import type { FrameIdGenerator, MutableObjectDetection } from './result-assembler.js'
 

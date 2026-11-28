@@ -18,7 +18,7 @@
  *    been closed and opened again — across a restart too.
  */
 
-import type { AlarmArmMode } from '@camstack/types'
+import type { AlarmArmMode } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { NcRuleFireRef } from '../../rule-engine.js'
 import { NcAlarmArmRefusedError, type NcAlarmOpenDevice } from '../alarm-arm-guard.js'

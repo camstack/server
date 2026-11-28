@@ -15,8 +15,8 @@
  * only when a SECOND read agrees.
  */
 import { describe, expect, it } from 'vitest'
-import type { IScopedLogger, LogExtras } from '@camstack/types'
-import { NC_CONSUMABLE_LOW_PERCENT_MAX } from '@camstack/types'
+import type { IScopedLogger, LogExtras } from '@dominevo/types'
+import { NC_CONSUMABLE_LOW_PERCENT_MAX } from '@dominevo/types'
 import { CONSUMABLE_LOW_HYSTERESIS_PCT } from '../consumable-band.js'
 import type { NcConsumableItemReading, NcIncomingEvent } from '../../event-intake.js'
 import type { NcAlertRow } from '../alert-episode.js'

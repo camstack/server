@@ -53,8 +53,8 @@ import type {
   ConfigSectionWithValues,
   ConfigFieldWithValue,
   ConfigField,
-} from '@camstack/types'
-import { WELL_KNOWN_TAB_MAP } from '@camstack/types'
+} from '@dominevo/types'
+import { WELL_KNOWN_TAB_MAP } from '@dominevo/types'
 import { FormSaveBar } from '../form-builder/FormSaveBar'
 import { SchemaTabBar } from '../form-builder/SchemaTabBar'
 import { StableTabPanel } from '../StableTabPanel'
@@ -81,7 +81,7 @@ import {
   useDecoderReprobeHwaccel,
   useSystem,
   Button,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 export type SettingsLevel = 'global' | 'device'
 
@@ -601,7 +601,7 @@ export function NodeAddonsSettingsPanel({
       // `[ADDON-DISPLAY-NAME]` — prefer the per-addon `manifest.name`
       // ("Local Backup", "Metrics Native", ...) over the bundle-wide
       // `packageDisplayName` ("Core"). Bundle packages like
-      // `@camstack/server/system` ship many addons under one displayName, and
+      // `@dominevo/server/system` ship many addons under one displayName, and
       // using the bundle name made every pane read "Core"
       // instead of the actual addon. Fall back to `packageDisplayName`
       // when an addon hasn't set a human-readable name of its own,

@@ -1,6 +1,6 @@
 /// <reference types="@testing-library/jest-dom" />
 
-import type { CameraBrokerStatus } from '@camstack/types'
+import type { CameraBrokerStatus } from '@dominevo/types'
 import * as jestDomMatchers from '@testing-library/jest-dom/matchers'
 import { render, screen } from '@testing-library/react'
 import React from 'react'
@@ -9,7 +9,7 @@ import { BrokerBlock } from '../runtime-blocks'
 
 expect.extend(jestDomMatchers)
 
-vi.mock('@camstack/ui-library', () => ({
+vi.mock('@dominevo/ui-library', () => ({
   getPhaseVisual: () => ({ label: '', textColor: '', badgeClass: '', dotClass: '' }),
   PhaseIcon: () => null,
 }))

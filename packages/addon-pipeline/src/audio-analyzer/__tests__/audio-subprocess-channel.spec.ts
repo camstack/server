@@ -10,7 +10,7 @@
  */
 import { spawn } from 'node:child_process'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import {
   AudioBackendExitedError,
   AudioSubprocessChannel,

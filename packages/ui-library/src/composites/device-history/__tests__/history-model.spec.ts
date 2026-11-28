@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { DeviceHistoryQueryResult, DeviceHistorySeriesInfo } from '@camstack/types'
+import type { DeviceHistoryQueryResult, DeviceHistorySeriesInfo } from '@dominevo/types'
 import {
   chartKeys,
   energyBuckets,

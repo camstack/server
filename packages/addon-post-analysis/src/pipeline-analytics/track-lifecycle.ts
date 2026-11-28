@@ -19,7 +19,7 @@
  * No timers, no machinery beyond a small per-track memory the caller
  * keeps (seeded at `start`, dropped at `end`).
  */
-import type { PipelineAnalyticsTrackLifecyclePayload, TrackLifecyclePhase } from '@camstack/types'
+import type { PipelineAnalyticsTrackLifecyclePayload, TrackLifecyclePhase } from '@dominevo/types'
 
 import { patchDisplayLabel, type TieredLabelPatch } from './pipeline/label-tier.js'
 

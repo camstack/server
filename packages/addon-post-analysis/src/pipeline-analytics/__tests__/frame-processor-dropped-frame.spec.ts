@@ -15,7 +15,7 @@
  * Disarm: remove the `classifyFrame` short-circuit at the top of `process()`:
  * every test here goes RED.
  */
-import type { FrameResult, ObjectDetection } from '@camstack/types'
+import type { FrameResult, ObjectDetection } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   FrameProcessor,

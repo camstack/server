@@ -1,6 +1,6 @@
 ---
 id: D839
-title: The agent finds hubs the way the CLI does — one shared mDNS browse in @camstack/develop
+title: The agent finds hubs the way the CLI does — one shared mDNS browse in @dominevo/develop
 status: accepted
 date: 2026-10-13
 supersedes:
@@ -21,10 +21,10 @@ used it.
 ## Decision
 
 - The mDNS browse, the https reachability probe and the host:port merge live
-  once, in `@camstack/develop/hub-discovery`. The CLI and the agent backend both
+  once, in `@dominevo/develop/hub-discovery`. The CLI and the agent backend both
   import it; `multicast-dns` is declared by `develop`, the owner. `develop` was
-  chosen over `@camstack/system` (the CLI would depend on, or bundle from, the
-  whole framework package) and `@camstack/types` (shipped to the viewer; a
+  chosen over `@dominevo/system` (the CLI would depend on, or bundle from, the
+  whole framework package) and `@dominevo/types` (shipped to the viewer; a
   socket library does not belong in a types barrel).
 - The agent exposes `GET /api/agent/hubs-found` (cached) and
   `POST /api/agent/hubs-found/refresh` (a bounded browse, shared between
@@ -41,5 +41,5 @@ used it.
 
 - An agent in Docker bridge mode sees no mDNS answers (same limit as D838); the
   picker then says nothing was found and the address is typed.
-- `@camstack/server` now depends on `@camstack/develop`; both must be published
+- `@dominevo/server` now depends on `@dominevo/develop`; both must be published
   for an agent to carry this.

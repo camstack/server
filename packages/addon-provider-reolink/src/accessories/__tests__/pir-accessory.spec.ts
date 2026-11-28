@@ -3,7 +3,7 @@
  * Baichuan request with a 400 and an empty body, so an operator write wakes it
  * first and never sends the write into a camera that stayed asleep.
  */
-import { type DeviceContext, DeviceType, type IDeviceRuntimeState } from '@camstack/types'
+import { type DeviceContext, DeviceType, type IDeviceRuntimeState } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { PirAccessory } from '../pir.js'
 

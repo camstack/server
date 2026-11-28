@@ -1,11 +1,11 @@
-import * as UiLibrary from '@camstack/ui-library'
-import * as Sdk from '@camstack/sdk'
-import * as Types from '@camstack/types'
+import * as UiLibrary from '@dominevo/ui-library'
+import * as Sdk from '@dominevo/sdk'
+import * as Types from '@dominevo/types'
 
 // Module Federation host globals — `vite.config.ts` skips the
 // `@module-federation/vite` host plugin in dev mode (it conflicts with
 // Vite's CJS dep prebundler), so `ensureMfHostInit()` (in ui-library)
-// has to register the workspace `@camstack/*` packages against the
+// has to register the workspace `@dominevo/*` packages against the
 // host's already-loaded module instances at runtime. Reading those
 // modules through globals avoids re-bundling them inside ui-library
 // solely for the federation-runtime registration. The npm-package

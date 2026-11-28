@@ -26,7 +26,7 @@ agree on — for 130 KB.
 
 THE BAKED INPUT CONTRACT — do not drop it
 -----------------------------------------
-Upstream YuNet expects **BGR, 0..255**. The CamStack pool feeds every float
+Upstream YuNet expects **BGR, 0..255**. The Dominevo pool feeds every float
 model **RGB, /255** (``inference_pool._preprocess``; the OpenVINO PPP fast path
 scales by 255 to the same range; the CoreML ``multiArrayType`` path letterboxes
 to the same ``/255`` array). Fed that, YuNet finds 0 faces on 413 person crops.
@@ -82,9 +82,9 @@ tags:
   - camstack
 ---
 
-# YuNet 2023mar — CamStack build
+# YuNet 2023mar — Dominevo build
 
-Face detector with 5 landmarks, re-packaged for the CamStack inference pool.
+Face detector with 5 landmarks, re-packaged for the Dominevo inference pool.
 Selectable on the `face-detection` step as `yunet-2023mar`.
 
 | Format | File | Precision |
@@ -113,13 +113,13 @@ input contract: the input `image` takes **RGB float in [0,1]** (NCHW,
 **BGR 0..255** tensor the upstream graph expects. Outputs are unchanged and
 named `cls_{8,16,32}`, `obj_{8,16,32}`, `bbox_{8,16,32}`, `kps_{8,16,32}`.
 The OpenVINO and CoreML files are converted from that patched ONNX. Built by
-`scripts/build-yunet-model.py` in the CamStack repository.
+`scripts/build-yunet-model.py` in the Dominevo repository.
 
 The TFLite files are built by `scripts/build-yunet-edgetpu.py` from the patched
 ONNX: the two-node prefix is folded into the first convolution (the same
 function — the Edge TPU has no Gather), the graph is quantised to full integer
 (int8, per-channel weights; input uint8 with scale 1/255, so raw RGB bytes are
-the [0,1] tensor) on CamStack person crops, and the Edge TPU file is that graph
+the [0,1] tensor) on Dominevo person crops, and the Edge TPU file is that graph
 compiled with `edgetpu_compiler` 14.1. Output names are unchanged.
 
 ## Training data
@@ -209,7 +209,7 @@ def _bake_input_contract(src: Path, dst: Path) -> None:
     model.producer_name = "camstack"
     model.doc_string = (
         "YuNet 2023mar (OpenCV Zoo, MIT, (c) 2020 Shiqi Yu). "
-        "Input `image`: RGB NCHW float in [0,1] (the CamStack pool's /255 tensor); "
+        "Input `image`: RGB NCHW float in [0,1] (the Dominevo pool's /255 tensor); "
         "the upstream BGR 0..255 contract is baked in as Mul(255)+Gather([2,1,0]). "
         "Outputs cls/obj/bbox/kps at strides 8/16/32."
     )
@@ -288,7 +288,7 @@ def _stage_coreml(onnx_path: Path, pkg: Path) -> None:
         convert_to="mlprogram",
         minimum_deployment_target=ct.target.iOS16,
     )
-    mlmodel.short_description = "YuNet 2023mar face detector (MIT, (c) 2020 Shiqi Yu), CamStack build"
+    mlmodel.short_description = "YuNet 2023mar face detector (MIT, (c) 2020 Shiqi Yu), Dominevo build"
     mlmodel.license = "MIT"
     pkg.parent.mkdir(parents=True, exist_ok=True)
     mlmodel.save(str(pkg))

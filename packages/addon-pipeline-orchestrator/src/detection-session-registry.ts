@@ -1,4 +1,4 @@
-import type { MotionTriggeredBy } from '@camstack/types'
+import type { MotionTriggeredBy } from '@dominevo/types'
 
 /**
  * Ephemeral registry of ACTIVE detection sessions (session-time dispatch,

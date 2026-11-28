@@ -35,8 +35,8 @@ import type {
   IScopedLogger,
   IStreamBroker,
   StreamSource,
-} from '@camstack/types'
-import { errMsg, nodePin } from '@camstack/types'
+} from '@dominevo/types'
+import { errMsg, nodePin } from '@dominevo/types'
 
 import { profileForStreamId } from '../../pipeline-runner/remote-restream.js'
 

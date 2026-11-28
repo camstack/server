@@ -15,7 +15,7 @@
  *    stop the page working under a different origin are dropped;
  *  - the TERMINAL condition is a function the addon provides: for each upstream
  *    response it answers `continue` or `done(payload)`; on `done` the addon's
- *    `onDone` finishes the sign-in and the browser is redirected to the CamStack
+ *    `onDone` finishes the sign-in and the browser is redirected to the Dominevo
  *    result page (`oauthLandingUrl`) with a status and a reason code — never a token.
  *
  * Nothing here logs a request or response body, a cookie, an Authorization value,

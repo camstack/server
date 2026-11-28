@@ -14,7 +14,7 @@ import {
   type IDeviceAdoptionProvider,
   type SystemEvent,
   rowsDepsOver,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { cascadeRemoveDevicesForIntegration } from '../shared/account-integration-cascade.js'
 import { setIntegrationDevicesOnline } from '../shared/account-integration-offline.js'
 import { homeComActions } from './custom-actions.js'

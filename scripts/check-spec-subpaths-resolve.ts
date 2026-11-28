@@ -5,19 +5,19 @@
  *
  * ## The failure this catches
  *
- * The root `vitest.config.ts` aliased `@camstack/types` to `dist/index.mjs` as
- * a string. A string alias also matches `@camstack/types/<sub>`, rewriting it to
+ * The root `vitest.config.ts` aliased `@dominevo/types` to `dist/index.mjs` as
+ * a string. A string alias also matches `@dominevo/types/<sub>`, rewriting it to
  * `dist/index.mjs/<sub>`: every spec that (transitively) imports
- * `@camstack/types/node` failed to LOAD with "Cannot find package". A file that
+ * `@dominevo/types/node` failed to LOAD with "Cannot find package". A file that
  * fails to load reports no test failure, so 13 specs of addon-export-hap read as
  * "nothing wrong" while none ran.
  *
  * ## What it checks
  *
- *   1. every subpath export of `@camstack/types` (its `package.json` `exports`)
+ *   1. every subpath export of `@dominevo/types` (its `package.json` `exports`)
  *      resolves, through the root vitest alias table and with Vite's alias
  *      semantics, to exactly that export's `import` file;
- *   2. every `@camstack/<pkg>/<sub>` specifier written in a spec file names an
+ *   2. every `@dominevo/<pkg>/<sub>` specifier written in a spec file names an
  *      export that `<pkg>` declares (`*` patterns honoured).
  *
  * Static: it needs no `dist/`. Usage: npx tsx scripts/check-spec-subpaths-resolve.ts
@@ -65,9 +65,9 @@ export function isExported(facts: ExportsFacts, subpath: string): boolean {
 
 /** Only module positions: `from '…'`, `import('…')`, `vi.mock('…')`, `require('…')`. */
 const SPECIFIER =
-  /(?:\bfrom\s*|\bimport\s*\(?\s*|\bmock\s*\(\s*|\brequire\s*\(\s*)['"](@camstack\/[a-z0-9-]+)\/([^'"\s]+)['"]/g
+  /(?:\bfrom\s*|\bimport\s*\(?\s*|\bmock\s*\(\s*|\brequire\s*\(\s*)['"](@dominevo\/[a-z0-9-]+)\/([^'"\s]+)['"]/g
 
-/** `@camstack/<pkg>/<sub>` specifiers named in a source text. */
+/** `@dominevo/<pkg>/<sub>` specifiers named in a source text. */
 export function subpathSpecifiers(
   source: string,
 ): readonly { readonly pkg: string; readonly sub: string }[] {
@@ -108,7 +108,7 @@ async function typesAliasFailures(): Promise<readonly string[]> {
     const importFile: unknown =
       typeof target === 'object' && target !== null ? Reflect.get(target, 'import') : undefined
     if (typeof importFile !== 'string') continue
-    const specifier = key === '.' ? '@camstack/types' : `@camstack/types/${key.slice(2)}`
+    const specifier = key === '.' ? '@dominevo/types' : `@dominevo/types/${key.slice(2)}`
     const got = applyAlias(aliases, specifier)
     const want = path.join(pkgDir, importFile)
     if (got !== want) {
@@ -150,7 +150,7 @@ async function main(): Promise<void> {
     process.exit(1)
   }
   console.log(
-    '✔ every @camstack/types subpath resolves under the vitest alias; spec subpaths are exported',
+    '✔ every @dominevo/types subpath resolves under the vitest alias; spec subpaths are exported',
   )
 }
 

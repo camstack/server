@@ -218,7 +218,7 @@ export const integrationsCapability = {
     /** List the integration types that can be added. */
     getAvailableTypes: method(z.void(), z.array(AvailableIntegrationTypeSchema), { auth: 'admin' }),
   },
-  /** BIG PLAN 2: declarative mount hint — read by `@camstack/server/system` `buildCapRouters`. */
+  /** BIG PLAN 2: declarative mount hint — read by `@dominevo/server/system` `buildCapRouters`. */
   mount: { kind: 'server-provided' },
   vocabulary: { notOperatorFacing: NOT_A_DEVICE.ADDON_ADMIN },
 } as const satisfies CapabilityDefinition

@@ -20,8 +20,8 @@
  * Memory only: a restart drops every hold. Nothing here does I/O; the timers
  * are unref'd so a hold never keeps a process alive.
  */
-import type { CommandEffect, IScopedLogger, VocabEffectValue } from '@camstack/types'
-import { ONE_SHOT_HOLD_MS } from '@camstack/types'
+import type { CommandEffect, IScopedLogger, VocabEffectValue } from '@dominevo/types'
+import { ONE_SHOT_HOLD_MS } from '@dominevo/types'
 
 type Slice = Readonly<Record<string, unknown>>
 

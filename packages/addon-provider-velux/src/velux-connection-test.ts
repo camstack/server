@@ -5,7 +5,7 @@ import {
   type ConnectionTestOutcome,
   type IConnectionProbe,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { KlfProbeTimeoutError, type KlfProbeResult, probeKlfGateway } from './klf-probe.js'
 import { VeluxLoginRefusedError } from './velux-client-contract.js'
 
@@ -75,9 +75,7 @@ export function classifyProbeFailure(err: unknown): { kind: ProbeFailureKind; te
   return { kind: 'other', text }
 }
 
-export function buildVeluxConnectionTestProvider(
-  deps: VeluxConnectionTestDeps,
-): IConnectionProbe {
+export function buildVeluxConnectionTestProvider(deps: VeluxConnectionTestDeps): IConnectionProbe {
   const {
     logger,
     probe = probeKlfGateway,
@@ -120,7 +118,7 @@ export function buildVeluxConnectionTestProvider(
       })
       return {
         outcome: 'inconclusive',
-        error: `${host} already has ${KLF_MAX_SESSIONS} sessions open from CamStack, and the gateway accepts no more. Save the settings and check again later.`,
+        error: `${host} already has ${KLF_MAX_SESSIONS} sessions open from Dominevo, and the gateway accepts no more. Save the settings and check again later.`,
       }
     }
     const startedAt = Date.now()

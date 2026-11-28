@@ -14,7 +14,7 @@
  *  - drop the `heldRowForceCloseMs` bound (or widen it past the scene's own
  *    numbers): "force-closes a row the bound has outrun" fails.
  */
-import type { FrameResult, ObjectDetection } from '@camstack/types'
+import type { FrameResult, ObjectDetection } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { FrameProcessor } from '../pipeline/frame-processor.js'
 import { sequentialTrackIdMinter } from '../pipeline/track-id.js'

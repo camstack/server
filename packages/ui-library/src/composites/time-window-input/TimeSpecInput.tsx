@@ -1,12 +1,12 @@
 /**
  * One moment of the day, as data: a clock time, a sun event plus or minus an
  * offset, or (only when the caller allows it) one local date and time. The
- * value is a `TimeSpec` from `@camstack/types`; nothing is converted.
+ * value is a `TimeSpec` from `@dominevo/types`; nothing is converted.
  *
  * A sun time cannot be judged on a site without a location: the caller flags
  * that with `siteHasNoLocation` and the sun choice is disabled with its reason.
  */
-import { DaylightPhaseSchema, SunEventSchema, type TimeSpec } from '@camstack/types'
+import { DaylightPhaseSchema, SunEventSchema, type TimeSpec } from '@dominevo/types'
 import { type ReactNode, useState } from 'react'
 import { useUiText } from '../../contexts/ui-text.js'
 import { Input } from '../../primitives/input.js'

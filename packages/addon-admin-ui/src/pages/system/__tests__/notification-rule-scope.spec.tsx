@@ -11,14 +11,14 @@ import {
   type NcConditions,
   type NcRule,
   type NcTaxonomy,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { useState } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('@camstack/ui-library', async () => {
-  const real = await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+vi.mock('@dominevo/ui-library', async () => {
+  const real = await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return {
     ...real,
     useSystem: () => ({
@@ -33,7 +33,7 @@ vi.mock('@camstack/ui-library', async () => {
   }
 })
 
-import { SystemProvider } from '@camstack/ui-library'
+import { SystemProvider } from '@dominevo/ui-library'
 import { RuleConditionsEditor } from '../NotificationRuleConditions'
 import { NotificationRuleDeviceScope } from '../NotificationRuleDevices'
 import {

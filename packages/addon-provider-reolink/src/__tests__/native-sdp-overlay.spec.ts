@@ -1,4 +1,4 @@
-import type { CamStreamDescriptor } from '@camstack/types'
+import type { CamStreamDescriptor } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { type LiveRfc4571Endpoint, overlayLiveNativeRfc4571Sdp } from '../native-sdp-overlay.js'
 

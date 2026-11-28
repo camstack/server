@@ -4,7 +4,7 @@
  * override (icon, label, unit, precision, hidden) wait here; nothing writes
  * until that Save.
  */
-import type { DeviceDisplayOverride } from '@camstack/types'
+import type { DeviceDisplayOverride } from '@dominevo/types'
 
 /** Editable form state — every field a string (empty = "inherit"). */
 export interface DisplayForm {

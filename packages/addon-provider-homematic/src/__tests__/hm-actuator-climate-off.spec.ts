@@ -5,7 +5,7 @@ import {
   type IDeviceRuntimeState,
   type InferNativeProvider,
   climateControlCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { HmCustomEntity, HmDevice, Homematic } from 'nodehomematic'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { HmActuatorDevice } from '../devices/hm-actuator-device.js'

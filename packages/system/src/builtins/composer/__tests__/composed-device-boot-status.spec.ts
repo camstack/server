@@ -9,7 +9,7 @@ import {
   type DeviceStatus,
   type IDeviceRuntimeState,
   DeviceType,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { ComposedDevice, ComposedPlaceholderDevice } from '../composed-device.js'
 

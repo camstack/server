@@ -83,7 +83,7 @@ import type {
   ProfileSlot,
   RunnerCameraConfig,
   Zone,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   EventCategory,
   errMsg,
@@ -91,7 +91,7 @@ import {
   type IScopedLogger,
   makeSourceBrokerId,
   NativeObjectDetectionStatusSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { AudioSubscriptionController } from './audio-subscription-controller.js'
 import type { DetectionBlindMonitor } from './detection-blind-monitor.js'
 import {

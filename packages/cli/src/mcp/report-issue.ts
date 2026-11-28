@@ -17,7 +17,7 @@ import { createHash } from 'node:crypto'
 import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { MUTATIONS_DISABLED_REASON } from '@camstack/develop'
+import { MUTATIONS_DISABLED_REASON } from '@dominevo/develop'
 import { z } from 'zod'
 import type { McpContext } from './context.js'
 import { parseSince } from './debug-logs.js'
@@ -29,7 +29,7 @@ import { collectLogs, REPORT_KINDS, type LogSection, type ReportKind } from './r
 import { createRedactor, describeRedactions, type RedactionCounts } from './report-scrub.js'
 
 export const REPORT_ISSUE_TOOL = 'report_issue'
-export const REPORT_REPO = 'camstack/server'
+export const REPORT_REPO = 'dominevo/server'
 export const TITLE_MAX = 140
 export const DEFAULT_SINCE_MINUTES = 30
 export const MAX_SINCE_MINUTES = 24 * 60
@@ -112,7 +112,7 @@ export async function buildIssueDraft(
   ]
   const counts = redactor.counts()
   const summary = describeRedactions(counts)
-  const footer = `_Drafted with the \`camstack mcp\` support toolset and read by the reporter before filing. ${summary}._`
+  const footer = `_Drafted with the \`dominevo mcp\` support toolset and read by the reporter before filing. ${summary}._`
   const body = [...sections, footer].join('\n\n')
   return {
     repo: REPORT_REPO,

@@ -18,7 +18,7 @@ import type {
   DeviceStepConfig,
   PipelineStepInputOutput,
   RunnerJumpStepProvisioning,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** One step's camera layer: settings only — a camera never carries a model (D927). */
 export interface CameraStepLayer {

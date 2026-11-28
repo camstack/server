@@ -26,8 +26,8 @@ took a newer label stuck there after the registry is rolled back.
 
 D175's rule for the **framework** row is a different question and stays: a
 framework announcement is still strictly newer, because a `-dev` build ahead
-of the npm tag must not be offered as a downgrade of `@camstack/server`.
-D15's host-provided skew stays too: `@camstack/system` is still not seeded
+of the npm tag must not be offered as a downgrade of `@dominevo/server`.
+D15's host-provided skew stays too: `@dominevo/system` is still not seeded
 into the addon root when the closure provides it. D840 stays: an agent does
 not ask npm.
 

@@ -6,7 +6,7 @@ export function ReplPage() {
     <AdminPage>
       <ReplTerminal
         scope={{ type: 'system' }}
-        greeting="CamStack REPL — system console"
+        greeting="Dominevo REPL — system console"
         className="min-h-[400px]"
       />
     </AdminPage>

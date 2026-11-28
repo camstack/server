@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ──────────────────────────────────────────────────────────────────────────────
-# dev-pack.sh — build + `npm pack` changed @camstack packages into `dev-overlay/`
+# dev-pack.sh — build + `npm pack` changed @dominevo packages into `dev-overlay/`
 # for a TEMPORARY dev image (`Dockerfile.dev`) — NO public npm publish.
 #
 # This is the fast counterpart to `scripts/publish.sh`: instead of releasing 40+
@@ -9,13 +9,13 @@
 # image. Seconds per rebuild vs a full release.
 #
 # Usage:
-#   ./scripts/dev-pack.sh @camstack/server @camstack/types   # by package name
+#   ./scripts/dev-pack.sh @dominevo/server @dominevo/types   # by package name
 #   ./scripts/dev-pack.sh server/backend packages/types      # or by workspace dir
 #   ./scripts/dev-pack.sh --affected                         # nx-affected publishable pkgs since last publish tag
 #   ./scripts/dev-pack.sh --all                              # COMPLETE image: every publishable workspace package
-#   ./scripts/dev-pack.sh --no-build @camstack/server        # skip nx build (dist already fresh)
+#   ./scripts/dev-pack.sh --no-build @dominevo/server        # skip nx build (dist already fresh)
 #
-# `--all` produces a COMPLETE dev image (overlay every @camstack package + server
+# `--all` produces a COMPLETE dev image (overlay every @dominevo package + server
 # + addons onto the base) — use it when you want a full, self-consistent build
 # preserving volumes, not just the couple of packages you touched. `Dockerfile.dev`
 # overlays whatever tarballs are present, so `--all` + Dockerfile.dev = full image.

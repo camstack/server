@@ -1,4 +1,4 @@
-import { type NarrowActionStep, type SchedulerInput, occurrenceOn, siteFor } from '@camstack/types'
+import { type NarrowActionStep, type SchedulerInput, occurrenceOn, siteFor } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { ALL_DAYS, at, harness } from './scheduler-support.js'
 

@@ -11,7 +11,7 @@
  * it launched WITHOUT `--mmproj`, blind, with nothing said. We do not read GGUF
  * headers (`general.type` / `clip.*`), so the name is the only signal there is.
  */
-import type { ModelExtraFile } from '@camstack/types'
+import type { ModelExtraFile } from '@dominevo/types'
 
 /**
  * `mmproj`, optionally glued to a precision (`mmprojfp16`, `mmproj-q8_0`),

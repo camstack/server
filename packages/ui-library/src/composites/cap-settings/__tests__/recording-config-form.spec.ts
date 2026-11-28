@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import type { RecordingBand, RecordingConfig } from '@camstack/types'
+import type { RecordingBand, RecordingConfig } from '@dominevo/types'
 import {
   alwaysBand,
   emptyBand,

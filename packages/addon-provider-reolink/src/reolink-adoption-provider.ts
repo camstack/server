@@ -6,7 +6,7 @@ import {
   gatewayDeviceName,
   type IDeviceAdoptionProvider,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { ReolinkHubConnection } from './hub-connection.js'
 import {
   type HubChannel,

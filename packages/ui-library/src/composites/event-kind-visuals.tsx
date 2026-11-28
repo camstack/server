@@ -1,6 +1,6 @@
 /**
  * Event-kind VISUALS — the UI-side half of the unified taxonomy dictionary
- * (`@camstack/types` `EVENT_TAXONOMY` owns the serializable data:
+ * (`@dominevo/types` `EVENT_TAXONOMY` owns the serializable data:
  * color / iconId / labelKey; this owns `iconId → lucide component` and
  * `labelKey → t()`).
  *
@@ -57,7 +57,7 @@ import {
   Wind,
   type LucideIcon,
 } from 'lucide-react'
-import type { EventKindDescriptor } from '@camstack/types'
+import type { EventKindDescriptor } from '@dominevo/types'
 import type { TranslationFn } from './config-form-builder'
 
 /**

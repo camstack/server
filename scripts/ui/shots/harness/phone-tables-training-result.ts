@@ -1,5 +1,5 @@
 /** A training result with an INT8 build and two per-camera recall changes, for the comparison table shot. */
-import type { TrainingResult } from '@camstack/types'
+import type { TrainingResult } from '@dominevo/types'
 
 const CLASS = {
   positives: 120,

@@ -7,10 +7,10 @@
  * `constructor`-style member names, no filter outside the allow-list. The
  * worker re-runs this over what it receives (defence in depth).
  *
- * Type-only imports from `@camstack/types`: this module is loaded by the
+ * Type-only imports from `@dominevo/types`: this module is loaded by the
  * render worker, which must not load the types barrel (D453).
  */
-import type { DeviceTemplateRef, DeviceTemplateRefusal } from '@camstack/types'
+import type { DeviceTemplateRef, DeviceTemplateRefusal } from '@dominevo/types'
 import { parseTemplateSource, type TemplateNode } from './nunjucks-internals.js'
 
 /**

@@ -9,8 +9,8 @@
  * documented type boundary the `as unknown as` below stands on.
  */
 
-import type { AddonContext, DeviceProxy } from '@camstack/types'
-import { DeviceRole, DeviceType } from '@camstack/types'
+import type { AddonContext, DeviceProxy } from '@dominevo/types'
+import { DeviceRole, DeviceType } from '@dominevo/types'
 import { Accessory, Characteristic, Service, uuid } from '@homebridge/hap-nodejs'
 import { describe, expect, it } from 'vitest'
 

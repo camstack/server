@@ -22,9 +22,9 @@ import {
   eventStoreLedgers,
   makeAnalyticsRecords,
 } from '../../pipeline-analytics/__tests__/fake-records.js'
-import type { InMemoryRecords, IScopedLogger, ObjectEvent, ObjectEventDraft } from '@camstack/types'
+import type { InMemoryRecords, IScopedLogger, ObjectEvent, ObjectEventDraft } from '@dominevo/types'
 import { makeNcRecords, ncTable } from './support/nc-test-deps.js'
-import { NcRuleInputSchema } from '@camstack/types'
+import { NcRuleInputSchema } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   makeFakeSettingsStore,

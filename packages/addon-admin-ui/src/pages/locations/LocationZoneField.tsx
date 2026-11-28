@@ -1,5 +1,5 @@
-import type { SiteZone } from '@camstack/types'
-import { Label, Select, type SelectOption } from '@camstack/ui-library'
+import type { SiteZone } from '@dominevo/types'
+import { Label, Select, type SelectOption } from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 
 /**

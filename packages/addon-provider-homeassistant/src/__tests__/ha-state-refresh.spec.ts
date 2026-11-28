@@ -5,7 +5,7 @@ import {
   type DeviceContext,
   type IDeviceRuntimeState,
   type CoverStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { HaCoverDevice } from '../devices/ha-cover-device.js'
 
 interface Registration {

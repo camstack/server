@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { CalendarEvent } from '@camstack/types'
+import type { CalendarEvent } from '@dominevo/types'
 import { NcTextCatalog } from '../../text-catalog.js'
 import {
   CALENDAR_EVENTS_DAY_DELIMITER,

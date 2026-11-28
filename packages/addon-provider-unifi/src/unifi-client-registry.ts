@@ -1,4 +1,4 @@
-import { errMsg, type IntegrationInstanceStatus, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IntegrationInstanceStatus, type IScopedLogger } from '@dominevo/types'
 import { sameConnection, type UnifiConnectionConfig } from './config.js'
 import type { UnifiControllerClientFactory } from './unifi-client-contract.js'
 import { classifyUnifiError } from './unifi-connection-test.js'

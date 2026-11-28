@@ -3,10 +3,10 @@
  * page (`/integrations/<addonId>?instance=<integrationId>`) and the rule that
  * reads it. The one place that builds the URL.
  *
- * Pure: no router, no React. The address itself is `integrationPageHref` in `@camstack/types`,
+ * Pure: no router, no React. The address itself is `integrationPageHref` in `@dominevo/types`,
  * shared with the addons that link to their own page (an alert action).
  */
-import { INTEGRATION_INSTANCE_PARAM, integrationPageHref } from '@camstack/types'
+import { INTEGRATION_INSTANCE_PARAM, integrationPageHref } from '@dominevo/types'
 
 export const INSTANCE_PARAM = INTEGRATION_INSTANCE_PARAM
 

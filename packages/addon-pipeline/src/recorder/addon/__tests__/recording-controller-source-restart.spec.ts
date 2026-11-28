@@ -9,7 +9,7 @@
  * controller recovers the device's writers straight away.
  */
 
-import type { RecordingConfig } from '@camstack/types'
+import type { RecordingConfig } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   RecordingController,

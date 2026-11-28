@@ -1,9 +1,9 @@
 import { describe, it, expect, vi } from 'vitest'
-import { DeviceType, baseUnitOf, type IDeviceRuntimeState } from '@camstack/types'
+import { DeviceType, baseUnitOf, type IDeviceRuntimeState } from '@dominevo/types'
 import { HaControlDevice } from '../ha-control-device.js'
 import type { HaEntityState } from '../../ha-types.js'
 
-function buildControlCtx(role: string, entityId: string): import('@camstack/types').DeviceContext {
+function buildControlCtx(role: string, entityId: string): import('@dominevo/types').DeviceContext {
   let runtimeStateRef: IDeviceRuntimeState | null = null
 
   return {
@@ -72,7 +72,7 @@ function buildControlCtx(role: string, entityId: string): import('@camstack/type
       addContext: vi.fn(),
       with: vi.fn(),
     },
-  } as unknown as import('@camstack/types').DeviceContext
+  } as unknown as import('@dominevo/types').DeviceContext
 }
 
 function makeNumericState(value: string, attributes: Record<string, unknown> = {}): HaEntityState {
@@ -259,7 +259,7 @@ function buildDatetimeCtx(
   entityId: string,
   publishMutate = vi.fn(async () => null),
 ): {
-  ctx: import('@camstack/types').DeviceContext
+  ctx: import('@dominevo/types').DeviceContext
   setCapStateCalls: Array<Record<string, unknown>>
 } {
   const ctx = buildControlCtx('datetime-control', entityId)
@@ -298,7 +298,7 @@ function makeDatetimeState(value: string, attributes: Record<string, unknown> = 
   } as HaEntityState
 }
 
-function getControlProvider(ctx: import('@camstack/types').DeviceContext): {
+function getControlProvider(ctx: import('@dominevo/types').DeviceContext): {
   setValue: (i: { deviceId: number; control: { kind: 'datetime'; value: string } }) => Promise<void>
 } {
   const registerNativeCap = ctx.registerNativeCap as ReturnType<typeof vi.fn>
@@ -368,7 +368,7 @@ describe('HaControlDevice — datetime format derivation', () => {
     // 'time' (D944 §4 — not a slice unit) and the value stays verbatim; the
     // browser <input type=time> shape is derived by trimming to 'HH:MM'.
     // `toTimeInput` is the canonical helper
-    // in @camstack/ui-library (control-panel) — pure `value.slice(0, 5)`,
+    // in @dominevo/ui-library (control-panel) — pure `value.slice(0, 5)`,
     // unit-tested there. Re-expressed locally to avoid importing the React
     // composite barrel into this self-contained addon's backend test.
     const toTimeInput = (value: string): string => value.slice(0, 5)

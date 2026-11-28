@@ -5,7 +5,7 @@ import {
   type IDeviceRuntimeState,
   type IScopedLogger,
   type EventEmitterStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { HaEventBusDevice } from '../ha-event-bus-device.js'
 
 const BROKER_ID = 'ha_001'

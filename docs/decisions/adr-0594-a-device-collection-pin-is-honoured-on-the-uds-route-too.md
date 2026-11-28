@@ -74,7 +74,7 @@ Unlike the global pin this applies to ARRAY methods too: naming the provider is
 required on `listClips` as well (D554), and the narrowing happens inside the
 shared dispatcher, which decides fan-out or scalar afterwards.
 
-**The pin has ONE spelling.** `PROVIDER_PIN_FIELD` lives in `@camstack/types`
+**The pin has ONE spelling.** `PROVIDER_PIN_FIELD` lives in `@dominevo/types`
 and is imported by all three dispatchers. Three layers each fixed separately,
 each in its own spelling, is how this bug kept returning wearing a different
 addon's name.
@@ -90,9 +90,9 @@ addon's name.
   would be a second way to say the same thing."* It had been failing since the
   pin became required, and it is the clearest example in the repo of a leftover
   that reads as verification.
-- Shipping is wider than D593's: the constant is in `@camstack/types` and the
-  route is in `@camstack/server`, so this needs a publish of types + system +
-  server and a server INSTALL. A `camstack deploy` ships none of it.
+- Shipping is wider than D593's: the constant is in `@dominevo/types` and the
+  route is in `@dominevo/server`, so this needs a publish of types + system +
+  server and a server INSTALL. A `dominevo deploy` ships none of it.
 
 ## Enforcement
 

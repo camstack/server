@@ -43,7 +43,7 @@
  * marker is an optimisation, not a correctness requirement.
  */
 
-import type { IScopedLogger, SettingsStoreClient } from '@camstack/types'
+import type { IScopedLogger, SettingsStoreClient } from '@dominevo/types'
 import { MIGRATION_STEP_ID } from '../pipeline/label-tier.js'
 import { isMacroClass } from '../pipeline/label-utils.js'
 import type { MigrationMarkerPort } from './migration-marker-store.js'

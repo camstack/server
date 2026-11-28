@@ -5,13 +5,13 @@
  * becomes `dismissed` and every feature it stamped is taken back. The confirm
  * names the device and each of those features.
  */
-import type { CompositionFieldsFeature, DeviceInfo } from '@camstack/types'
+import type { CompositionFieldsFeature, DeviceInfo } from '@dominevo/types'
 import {
   IconButton,
   useDeviceManagerGetDevice,
   useDeviceManagerListIdentityLinks,
   useDeviceManagerUnlinkIdentity,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { Unlink } from 'lucide-react'
 import type { ReactNode } from 'react'

@@ -14,7 +14,7 @@ applies-to:
 
 ## Context
 
-`camstack login` found a hub by listening to Moleculer's UDP multicast
+`dominevo login` found a hub by listening to Moleculer's UDP multicast
 (`239.0.0.0:4445`, `namespace|nodeID|tcpPort`) and probing `:4443` on the sender.
 D826 turned that channel off on every hub on purpose (the mesh listens only on
 mutual TLS). From then on the CLI's zero-config discovery could only ever see
@@ -49,7 +49,7 @@ needs.
   known hub); advertising failure never breaks boot. The Unraid templates, the
   Proxmox install script and the public Docker docs must say so (D717, D822).
 - `local-network` has a `mdnsAdvertise` switch (default on).
-- The browse and the https probe live in `@camstack/develop/hub-discovery`, shared
+- The browse and the https probe live in `@dominevo/develop/hub-discovery`, shared
   by the CLI and the agent backend (D839); the agent's local UI lists the hubs it
   finds and no longer relies on mesh UDP discovery.
 - The mesh UDP discovery code on the agent is gone (D843); mDNS is the only way a

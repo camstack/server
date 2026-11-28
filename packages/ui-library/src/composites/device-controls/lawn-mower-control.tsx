@@ -8,7 +8,7 @@
  */
 import type { ReactNode } from 'react'
 import { Play, Pause, Home, BatteryMedium } from 'lucide-react'
-import type { LawnMowerControlStatus } from '@camstack/types'
+import type { LawnMowerControlStatus } from '@dominevo/types'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
 import { useUiText } from '../../contexts/ui-text'
 import { cn } from '../../lib/cn'

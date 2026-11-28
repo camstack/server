@@ -1,7 +1,7 @@
 /**
  * AddonInstaller.installFromTgz — robust eviction of the previous install dir.
  *
- * Regression guard for the shfs/FUSE deploy-gutting bug: a `camstack deploy`
+ * Regression guard for the shfs/FUSE deploy-gutting bug: a `dominevo deploy`
  * of an addon whose live runner holds native prebuilds (`.node`/`.so`) open
  * cannot recursively `rm` the existing addon dir in place — FUSE returns
  * `ENOTEMPTY` on the held subdir, the rm throws BEFORE the new files are
@@ -44,7 +44,7 @@ function makeTgz(tmpRoot: string, manifest: TgzManifest): string {
         camstack: {
           addons: [
             {
-              id: manifest.name.replace('@camstack/', ''),
+              id: manifest.name.replace('@dominevo/', ''),
               name: manifest.name,
               version: manifest.version,
               entry: './dist/index.js',
@@ -62,13 +62,13 @@ function makeTgz(tmpRoot: string, manifest: TgzManifest): string {
   )
   const tgzPath = path.join(
     tmpRoot,
-    `${manifest.name.replace('@camstack/', '')}-${manifest.version}.tgz`,
+    `${manifest.name.replace('@dominevo/', '')}-${manifest.version}.tgz`,
   )
   execFileSync('tar', ['-czf', tgzPath, '-C', stage, 'package'])
   return tgzPath
 }
 
-const PKG = '@camstack/test-pipe'
+const PKG = '@dominevo/test-pipe'
 
 describe('AddonInstaller.installFromTgz — rename-aside eviction (FUSE held-open)', () => {
   let tmpRoot: string

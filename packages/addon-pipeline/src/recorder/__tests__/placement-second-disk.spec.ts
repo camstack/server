@@ -17,7 +17,7 @@
  * improvement check broke the loop on its first iteration — every tick,
  * forever, in silence.
  */
-import { type CamProfile, createDurableState, type IScopedLogger } from '@camstack/types'
+import { type CamProfile, createDurableState, type IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import type { RecordingOpsLogSink } from '../addon/ops-log-store.js'
 import { PlacementService } from '../addon/placement-service.js'

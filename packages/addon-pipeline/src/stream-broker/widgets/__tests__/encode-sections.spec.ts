@@ -1,4 +1,4 @@
-import type { EncodeProfile } from '@camstack/types'
+import type { EncodeProfile } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   NO_SECTIONS,

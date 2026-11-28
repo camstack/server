@@ -18,7 +18,7 @@
  * read that quietly drops rows is how this repo lost 2 131 segments for 13 days.
  */
 
-import type { IScopedLogger, MediaFile, MediaFileKind } from '@camstack/types'
+import type { IScopedLogger, MediaFile, MediaFileKind } from '@dominevo/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { AnalyticsQueryFacade } from '../analytics-query-facade.js'
 import { MediaStore } from '../store/media-store.js'

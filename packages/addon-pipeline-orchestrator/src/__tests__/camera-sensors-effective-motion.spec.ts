@@ -10,7 +10,7 @@
  * no ready Confirm). The operator's original formula (2026-09-30) made a lone
  * Confirm a no-op; the ruling is reversible in one function.
  */
-import type { CameraSensorMode } from '@camstack/types'
+import type { CameraSensorMode } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   cameraOwnMotionRule,

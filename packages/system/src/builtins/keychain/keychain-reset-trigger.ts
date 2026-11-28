@@ -38,7 +38,7 @@ import {
   KEYCHAIN_RESET_TRIGGER_ACTOR,
   type KeychainResetRecord,
   type KeychainUnavailableReason,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { KeychainLogger, KeychainService } from './keychain-service.js'
 
 /** The trigger's name, inside `<dataDir>/.keychain/`. */

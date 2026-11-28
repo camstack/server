@@ -1,4 +1,4 @@
-import type { BoardKeyListResult, BoardKeyResult, BoardKeySource } from '@camstack/types'
+import type { BoardKeyListResult, BoardKeyResult, BoardKeySource } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { EspBrokerEntry } from '../config.js'
 import type { KeyImportBoards, KeySourceClient } from '../esphome-key-import.js'

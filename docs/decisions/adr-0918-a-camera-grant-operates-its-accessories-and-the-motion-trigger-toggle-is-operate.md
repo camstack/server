@@ -61,8 +61,8 @@ make it.
 - A View user still cannot, because `create` is required. A child of a camera
   outside the grant is refused by the matcher with its own reason, never the
   tier's.
-- The change is in `@camstack/types` and the generated cap routers. It is live
-  only once a `@camstack/server` containing it is applied to the hub.
+- The change is in `@dominevo/types` and the generated cap routers. It is live
+  only once a `@dominevo/server` containing it is applied to the hub.
 
 ## Enforcement
 

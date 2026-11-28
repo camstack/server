@@ -5,7 +5,7 @@ import {
   type DeviceContext,
   type IDeviceRuntimeState,
   type SwitchStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** The LAN client: a connected fake that keeps the datapoints the "device" reports. */
 const lan = vi.hoisted(() => ({

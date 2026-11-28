@@ -16,11 +16,11 @@
  * DeviceReady subscription gating.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { EventCategory } from '@camstack/types'
-import type { SystemEvent } from '@camstack/types'
+import { EventCategory } from '@dominevo/types'
+import type { SystemEvent } from '@dominevo/types'
 import { BridgeInstance } from '../bridge-instance.js'
 import type { BridgeHost } from '../bridge-host.js'
-import type { DurableState } from '@camstack/types'
+import type { DurableState } from '@dominevo/types'
 import type { z } from 'zod'
 import { ExportHapAddon, type ExportSyncStateSchema } from '../hap-export.addon.js'
 import { HAP_DEFAULT_INSTANCE_ID } from '../hap-instance-kinds.js'

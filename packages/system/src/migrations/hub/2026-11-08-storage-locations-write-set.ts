@@ -15,7 +15,7 @@
  *
  * A second run finds nothing to change. `tolerate`: a node without the records tables still boots.
  */
-import { legacyModeOf, withLocationMode, type MigrationMeta } from '@camstack/types'
+import { legacyModeOf, withLocationMode, type MigrationMeta } from '@dominevo/types'
 import type {
   HubSqlMigration,
   MigrationDatabase,

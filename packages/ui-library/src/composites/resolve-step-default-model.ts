@@ -15,7 +15,7 @@
  * `scripts/check-step-model-single-owner.ts` is what stops the next copy.
  *
  * The rest of this file is the pure, UI-side mirror of the runner's
- * `getDefaultModelForFormat` (`@camstack/addon-pipeline`
+ * `getDefaultModelForFormat` (`@dominevo/addon-pipeline`
  * `registry/step-definitions.ts`). The steps×device matrices need to show, per
  * cell, the model a STEP would actually run on a device's engine format — but
  * that resolver lives in a self-contained addon and can't be imported here, so

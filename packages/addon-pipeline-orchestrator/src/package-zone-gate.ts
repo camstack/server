@@ -36,7 +36,7 @@
  * package zone keeps its detector for one extra resolve; the cost of the
  * alternative is the silent strip this class exists to prevent.
  */
-import type { IScopedLogger, ZoneRule } from '@camstack/types'
+import type { IScopedLogger, ZoneRule } from '@dominevo/types'
 
 import type { ZoneRulesRead } from './zone-rules-provider.js'
 

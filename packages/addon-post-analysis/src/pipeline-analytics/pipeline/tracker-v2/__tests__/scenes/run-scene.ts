@@ -8,7 +8,7 @@
  * `names` are the recognizer's settled verdicts, delivered through
  * `noteIdentity` on the id that subject was emitted under on that frame.
  */
-import type { AppearanceDescriptor, BoundingBox, SpatialDetection } from '@camstack/types'
+import type { AppearanceDescriptor, BoundingBox, SpatialDetection } from '@dominevo/types'
 import { sequentialTrackIdMinter } from '../../../track-id.js'
 import { TrackerV2 } from '../../tracker-v2.js'
 import {

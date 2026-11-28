@@ -4,7 +4,7 @@
  * and remove controls of each. A group input is authored by the shipped
  * templates and shown read-only.
  */
-import type { AutomationTemplatePayload, TemplateInput } from '@camstack/types'
+import type { AutomationTemplatePayload, TemplateInput } from '@dominevo/types'
 import {
   Badge,
   Button,
@@ -15,7 +15,7 @@ import {
   Select,
   Switch,
   Textarea,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Pencil, Plus, Trash2 } from 'lucide-react'
 import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'

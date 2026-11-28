@@ -6,7 +6,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
-import { useUrlQueryParam } from '@camstack/ui-library'
+import { useUrlQueryParam } from '@dominevo/ui-library'
 
 vi.mock('../NotificationRules', () => ({
   NotificationRulesPage: () => {

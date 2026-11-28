@@ -24,7 +24,7 @@ import {
   faceGalleryCapability,
   pipelineAnalyticsCapability,
   plateGalleryCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import type { AliasResolveFailure } from '../track-alias-resolution.js'

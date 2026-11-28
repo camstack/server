@@ -5,7 +5,7 @@
  * overrides. Wraps `CapabilityRegistry` directly (kernel primitive).
  */
 import { z } from 'zod'
-import type { CapabilityRegistry } from '@camstack/server/system'
+import type { CapabilityRegistry } from '@dominevo/server/system'
 import type { ConfigService } from '../../core/config/config.service.js'
 import { trpcRouter, adminProcedure } from '../trpc/trpc.middleware.js'
 import {

@@ -22,8 +22,8 @@
  * exposure, declared classes, the user's choice in the app) is one dep,
  * `reportableClasses`; an empty answer means "report nothing for this camera".
  */
-import type { AddonContext, IScopedLogger } from '@camstack/types'
-import { EventCategory, errMsg } from '@camstack/types'
+import type { AddonContext, IScopedLogger } from '@dominevo/types'
+import { EventCategory, errMsg } from '@dominevo/types'
 import { z } from 'zod'
 import { detectionClassOf } from '../detection-sensors/detection-tracker.js'
 import type { SmartVisionClass } from '../endpoints/builder.js'

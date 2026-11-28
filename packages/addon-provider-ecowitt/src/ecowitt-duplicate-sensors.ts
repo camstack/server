@@ -1,4 +1,4 @@
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import { isEcowittGroupType } from './ecowitt-mapping.js'
 import { isStationReadingSensorId } from './station-reading.js'
 import { configDeviceGroup, sensorKeyOf, sensorOwnerOf } from './ecowitt-sensor-groups.js'

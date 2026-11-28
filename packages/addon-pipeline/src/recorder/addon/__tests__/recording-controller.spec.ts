@@ -14,8 +14,8 @@
  */
 
 import path from 'node:path'
-import { nodePin, type RecordingConfig } from '@camstack/types'
-import type { IScopedLogger, ProfileSlot } from '@camstack/types'
+import { nodePin, type RecordingConfig } from '@dominevo/types'
+import type { IScopedLogger, ProfileSlot } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest'
 import { specRoot } from './spec-root.js'
 import { DEFAULT_SEGMENT_SECONDS } from '../recorder-defaults'

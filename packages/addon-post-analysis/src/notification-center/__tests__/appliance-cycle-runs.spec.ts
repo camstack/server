@@ -1,4 +1,4 @@
-import type { DeviceRun } from '@camstack/types'
+import type { DeviceRun } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   applianceCycleFactsFromRuns,

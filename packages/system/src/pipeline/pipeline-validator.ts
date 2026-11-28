@@ -3,7 +3,7 @@ import type {
   PipelineNode,
   ValidationIssue,
   ValidationResult,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export type { ValidationIssue, ValidationResult }
 

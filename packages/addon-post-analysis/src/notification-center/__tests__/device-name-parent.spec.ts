@@ -5,7 +5,7 @@
  * an unknown parent and a parent whose name the child already carries keep the
  * bare name — never an id.
  */
-import { DeviceType, NcRuleInputSchema, type NcRuleInput } from '@camstack/types'
+import { DeviceType, NcRuleInputSchema, type NcRuleInput } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import {

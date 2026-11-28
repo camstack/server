@@ -13,7 +13,7 @@
  * degraded broker, and the recorder went silent for 27 minutes while four
  * cameras recorded nothing.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { startPeriodicPass } from '../periodic-pass.js'
 

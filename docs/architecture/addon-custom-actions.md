@@ -70,7 +70,7 @@ runner's refusal (`custom action "x" rejected its input — …`), not as a
 
 ## Verifying a new action actually landed
 
-A `camstack deploy` reporting success is not evidence. Neither is the version
+A `dominevo deploy` reporting success is not evidence. Neither is the version
 in `addons.list` — it is recorded at INSTALL time and does not track a
 redeploy: a hub was observed reporting `manifest 1.2.40 | package 1.2.42` after
 a clean redeploy onto a freshly restarted hub.

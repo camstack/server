@@ -1,4 +1,4 @@
-import { DeviceType, type IScopedLogger } from '@camstack/types'
+import { DeviceType, type IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import type { ReolinkHubConnection } from '../hub-connection.js'
 import {

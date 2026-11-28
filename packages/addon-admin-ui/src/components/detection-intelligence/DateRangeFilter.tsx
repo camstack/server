@@ -15,7 +15,7 @@ import {
   dateInputToEndMs,
 } from '../../lib/face-gallery-filters.js'
 import { useTranslation } from 'react-i18next'
-import { Button, Input } from '@camstack/ui-library'
+import { Button, Input } from '@dominevo/ui-library'
 
 interface DateRangeFilterProps {
   readonly onChange: (next: DateRange) => void

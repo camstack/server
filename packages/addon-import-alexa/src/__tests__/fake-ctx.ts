@@ -3,7 +3,7 @@ import {
   type DeviceContext,
   type IDeviceRuntimeState,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export interface LogLine {
   readonly level: string

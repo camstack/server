@@ -4,8 +4,8 @@
  * dialog holds a draft; the rules are the schema's, read back through
  * `draftIssues` (the whole config is parsed).
  */
-import type { RemoteConfig, RemoteSource, RemoteSourceKind } from '@camstack/types'
-import { REMOTE_SOURCE_KINDS } from '@camstack/types'
+import type { RemoteConfig, RemoteSource, RemoteSourceKind } from '@dominevo/types'
+import { REMOTE_SOURCE_KINDS } from '@dominevo/types'
 import {
   Button,
   FormField,
@@ -14,7 +14,7 @@ import {
   ItemFormDialog,
   Select,
   Textarea,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { ArrowDown, ArrowUp, Trash2 } from 'lucide-react'
 import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'

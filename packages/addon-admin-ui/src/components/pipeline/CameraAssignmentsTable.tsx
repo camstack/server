@@ -33,7 +33,7 @@ import {
   usePipelineOrchestratorListAgentSettings,
   usePipelineOrchestratorSetPipelineDevicePin,
   usePipelineOrchestratorUnassignPipeline,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useEventInvalidation } from '../../hooks/useEventInvalidation'
 import {
   type ClusterAssignmentRow,

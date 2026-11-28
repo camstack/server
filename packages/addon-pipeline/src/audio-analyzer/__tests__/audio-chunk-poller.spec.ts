@@ -9,8 +9,8 @@
  * fake-api + `toHaveBeenCalledWith(..., nodePin(...))` pattern from
  * `packages/addon-pipeline/src/pipeline-runner/__tests__/session-decode-acquire.spec.ts`.
  */
-import type { AddonApi, IScopedLogger } from '@camstack/types'
-import { nodePin } from '@camstack/types'
+import type { AddonApi, IScopedLogger } from '@dominevo/types'
+import { nodePin } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { startAudioChunkPoller } from '../audio-chunk-poller.js'

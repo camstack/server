@@ -1,5 +1,5 @@
 /**
- * @deprecated Import BaseDevice from '@camstack/types' instead.
+ * @deprecated Import BaseDevice from '@dominevo/types' instead.
  * This re-export is kept for backwards compatibility.
  */
-export { BaseDevice } from '@camstack/types'
+export { BaseDevice } from '@dominevo/types'

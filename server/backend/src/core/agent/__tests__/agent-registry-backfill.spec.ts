@@ -4,7 +4,7 @@ import type { CapabilityService } from '../../capability/capability.service'
 import type { EventBusService } from '../../events/event-bus.service'
 import type { MoleculerService } from '../../moleculer/moleculer.service'
 import { MAX_BACKFILL_ATTEMPTS, type NodePackageEntry } from '../agent-addon-backfill'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { DELIVERY_GRACE_MS } from '../agent-delivery-ledger'
 import { AgentRegistryService } from '../agent-registry.service'
 import type { ClusterNodeHistoryStore } from '../cluster-node-history-store'
@@ -32,17 +32,17 @@ interface HubAddonRow {
 
 const HUB_ROWS: readonly HubAddonRow[] = [
   {
-    manifest: { id: 'recorder', packageName: '@camstack/addon-pipeline', packageVersion: '1.2.14' },
+    manifest: { id: 'recorder', packageName: '@dominevo/addon-pipeline', packageVersion: '1.2.14' },
     declaration: { id: 'recorder', execution: { placement: 'any-node' } },
   },
   {
-    manifest: { id: 'llm', packageName: '@camstack/addon-ai', packageVersion: '1.2.14' },
+    manifest: { id: 'llm', packageName: '@dominevo/addon-ai', packageVersion: '1.2.14' },
     declaration: { id: 'llm', execution: { placement: 'any-node' } },
   },
   {
     manifest: {
       id: 'embedding-encoder',
-      packageName: '@camstack/addon-post-analysis',
+      packageName: '@dominevo/addon-post-analysis',
       packageVersion: '1.2.14',
     },
     declaration: { id: 'embedding-encoder', execution: { placement: 'any-node' } },
@@ -177,17 +177,17 @@ function makeHarness(opts: HarnessOptions) {
 }
 
 const WIPED_AGENT = [
-  { id: 'sqlite-settings', packageName: '@camstack/server', version: '1.2.14' },
-  { id: 'agent-ui', packageName: '@camstack/addon-agent-ui', version: '1.2.14' },
-  { id: 'recorder', packageName: '@camstack/addon-pipeline', version: '1.2.14' },
+  { id: 'sqlite-settings', packageName: '@dominevo/server', version: '1.2.14' },
+  { id: 'agent-ui', packageName: '@dominevo/addon-agent-ui', version: '1.2.14' },
+  { id: 'recorder', packageName: '@dominevo/addon-pipeline', version: '1.2.14' },
 ]
 
 const FULL_ROSTER: readonly NodePackageEntry[] = [
-  { name: '@camstack/server', version: '1.2.14' },
-  { name: '@camstack/addon-agent-ui', version: '1.2.14' },
-  { name: '@camstack/addon-pipeline', version: '1.2.14' },
-  { name: '@camstack/addon-ai', version: '1.2.10' },
-  { name: '@camstack/addon-post-analysis', version: '1.2.10' },
+  { name: '@dominevo/server', version: '1.2.14' },
+  { name: '@dominevo/addon-agent-ui', version: '1.2.14' },
+  { name: '@dominevo/addon-pipeline', version: '1.2.14' },
+  { name: '@dominevo/addon-ai', version: '1.2.10' },
+  { name: '@dominevo/addon-post-analysis', version: '1.2.10' },
 ]
 
 describe('AgentRegistryService — addon back-fill', () => {
@@ -199,7 +199,7 @@ describe('AgentRegistryService — addon back-fill', () => {
 
     await h.service.reconcileAgentAddons('agent-a')
 
-    expect(h.deployed).toEqual(['@camstack/addon-ai', '@camstack/addon-post-analysis'])
+    expect(h.deployed).toEqual(['@dominevo/addon-ai', '@dominevo/addon-post-analysis'])
     expect(h.reloads).toEqual(['agent-a'])
     expect(h.undeployed).toEqual([])
   })
@@ -223,8 +223,8 @@ describe('AgentRegistryService — addon back-fill', () => {
     await h.service.reconcileAgentAddons('agent-a')
 
     expect(packCalls).toEqual([
-      ['@camstack/addon-ai', '1.2.14'],
-      ['@camstack/addon-post-analysis', '1.2.14'],
+      ['@dominevo/addon-ai', '1.2.14'],
+      ['@dominevo/addon-post-analysis', '1.2.14'],
     ])
   })
 
@@ -232,10 +232,10 @@ describe('AgentRegistryService — addon back-fill', () => {
     const h = makeHarness({
       agentAddons: [
         ...WIPED_AGENT,
-        { id: 'llm', packageName: '@camstack/addon-ai', version: '1.2.14' },
+        { id: 'llm', packageName: '@dominevo/addon-ai', version: '1.2.14' },
         {
           id: 'embedding-encoder',
-          packageName: '@camstack/addon-post-analysis',
+          packageName: '@dominevo/addon-post-analysis',
           version: '1.2.14',
         },
       ],
@@ -253,31 +253,31 @@ describe('AgentRegistryService — addon back-fill', () => {
     const h = makeHarness({
       agentAddons: [
         ...WIPED_AGENT,
-        { id: 'llm', packageName: '@camstack/addon-ai', version: '1.2.14' },
+        { id: 'llm', packageName: '@dominevo/addon-ai', version: '1.2.14' },
       ],
       recorded: { 'agent-a': FULL_ROSTER },
     })
 
     await h.service.reconcileAgentAddons('agent-a')
 
-    expect(h.deployed).toEqual(['@camstack/addon-post-analysis'])
+    expect(h.deployed).toEqual(['@dominevo/addon-post-analysis'])
   })
 
   it('records what the node declares, so the next wipe has something to converge to', async () => {
     const h = makeHarness({
       agentAddons: [
         ...WIPED_AGENT,
-        { id: 'llm', packageName: '@camstack/addon-ai', version: '1.2.14' },
+        { id: 'llm', packageName: '@dominevo/addon-ai', version: '1.2.14' },
       ],
     })
 
     await h.service.reconcileAgentAddons('agent-a')
 
     expect((h.rosters.get('agent-a') ?? []).map((p) => p.name).toSorted()).toEqual([
-      '@camstack/addon-agent-ui',
-      '@camstack/addon-ai',
-      '@camstack/addon-pipeline',
-      '@camstack/server',
+      '@dominevo/addon-agent-ui',
+      '@dominevo/addon-ai',
+      '@dominevo/addon-pipeline',
+      '@dominevo/server',
     ])
   })
 
@@ -285,7 +285,7 @@ describe('AgentRegistryService — addon back-fill', () => {
     const h = makeHarness({
       agentAddons: WIPED_AGENT,
       recorded: { 'agent-a': FULL_ROSTER },
-      packFails: new Set(['@camstack/addon-ai']),
+      packFails: new Set(['@dominevo/addon-ai']),
     })
 
     // Reconcile repeatedly — a reconnect flap must not retry unboundedly.
@@ -309,19 +309,19 @@ describe('AgentRegistryService — addon back-fill', () => {
     expect(aiAttempts).toBe(MAX_BACKFILL_ATTEMPTS + 3)
 
     const failures = h.service.getBackfillFailures('agent-a')
-    expect(failures.map((f) => f.name)).toContain('@camstack/addon-ai')
-    expect(failures.find((f) => f.name === '@camstack/addon-ai')?.attempts).toBe(
+    expect(failures.map((f) => f.name)).toContain('@dominevo/addon-ai')
+    expect(failures.find((f) => f.name === '@dominevo/addon-ai')?.attempts).toBe(
       MAX_BACKFILL_ATTEMPTS,
     )
     // The healthy sibling still gets delivered every pass it is missing.
-    expect(h.deployed).toContain('@camstack/addon-post-analysis')
+    expect(h.deployed).toContain('@dominevo/addon-post-analysis')
   })
 
   it("does not undo an operator's deliberate undeploy (tombstone)", async () => {
     const h = makeHarness({
       agentAddons: [
         ...WIPED_AGENT,
-        { id: 'llm', packageName: '@camstack/addon-ai', version: '1.2.14' },
+        { id: 'llm', packageName: '@dominevo/addon-ai', version: '1.2.14' },
       ],
       recorded: { 'agent-a': FULL_ROSTER },
     })
@@ -331,7 +331,7 @@ describe('AgentRegistryService — addon back-fill', () => {
     await h.service.reconcileAgentAddons('agent-a')
 
     expect(h.deployed).toEqual([])
-    expect([...(h.tombstones.get('agent-a') ?? [])]).toEqual(['@camstack/addon-post-analysis'])
+    expect([...(h.tombstones.get('agent-a') ?? [])]).toEqual(['@dominevo/addon-post-analysis'])
   })
 
   it('delivers an any-node addon the hub added to a node that ALREADY has a roster', async () => {
@@ -343,7 +343,7 @@ describe('AgentRegistryService — addon back-fill', () => {
 
     await h.service.reconcileAgentAddons('agent-a')
 
-    expect(h.deployed).toEqual(['@camstack/addon-ai', '@camstack/addon-post-analysis'])
+    expect(h.deployed).toEqual(['@dominevo/addon-ai', '@dominevo/addon-post-analysis'])
   })
 
   it('updates agent-ui from the hub-tracked version', async () => {
@@ -351,14 +351,14 @@ describe('AgentRegistryService — addon back-fill', () => {
     const h = makeHarness({
       agentAddons: [
         ...WIPED_AGENT,
-        { id: 'llm', packageName: '@camstack/addon-ai', version: '1.2.14' },
+        { id: 'llm', packageName: '@dominevo/addon-ai', version: '1.2.14' },
         {
           id: 'embedding-encoder',
-          packageName: '@camstack/addon-post-analysis',
+          packageName: '@dominevo/addon-post-analysis',
           version: '1.2.14',
         },
       ],
-      trackedVersions: { '@camstack/addon-agent-ui': '1.3.0' },
+      trackedVersions: { '@dominevo/addon-agent-ui': '1.3.0' },
     })
     h.service.setAddonBackfill({
       pack: async (name: string, version: string) => {
@@ -373,28 +373,28 @@ describe('AgentRegistryService — addon back-fill', () => {
 
     await h.service.reconcileAgentAddons('agent-a')
 
-    expect(packCalls).toEqual([['@camstack/addon-agent-ui', '1.3.0']])
-    expect(h.deployed).toEqual(['@camstack/addon-agent-ui'])
+    expect(packCalls).toEqual([['@dominevo/addon-agent-ui', '1.3.0']])
+    expect(h.deployed).toEqual(['@dominevo/addon-agent-ui'])
   })
 
   it('removes a hub-only leftover on the scheduled round and logs the reason', async () => {
     const h = makeHarness({
       agentAddons: [
         ...WIPED_AGENT,
-        { id: 'llm', packageName: '@camstack/addon-ai', version: '1.2.14' },
+        { id: 'llm', packageName: '@dominevo/addon-ai', version: '1.2.14' },
         {
           id: 'embedding-encoder',
-          packageName: '@camstack/addon-post-analysis',
+          packageName: '@dominevo/addon-post-analysis',
           version: '1.2.14',
         },
-        { id: 'benchmark', packageName: '@camstack/addon-benchmark', version: '1.0.0' },
+        { id: 'benchmark', packageName: '@dominevo/addon-benchmark', version: '1.0.0' },
       ],
       hubRows: [
         ...HUB_ROWS,
         {
           manifest: {
             id: 'benchmark',
-            packageName: '@camstack/addon-benchmark',
+            packageName: '@dominevo/addon-benchmark',
             packageVersion: '1.1.0',
           },
           declaration: { id: 'benchmark', execution: { placement: 'hub-only' } },
@@ -405,7 +405,7 @@ describe('AgentRegistryService — addon back-fill', () => {
     await h.service.reconcileAgentAddons('agent-a', 'periodic')
 
     expect(h.undeployCalls).toEqual([
-      { packageName: '@camstack/addon-benchmark', addonId: 'benchmark' },
+      { packageName: '@dominevo/addon-benchmark', addonId: 'benchmark' },
     ])
     expect(
       h.logLines.some((l) => l.includes('removed a package') && l.includes('hub-only placement')),
@@ -416,13 +416,13 @@ describe('AgentRegistryService — addon back-fill', () => {
     const h = makeHarness({
       agentAddons: [
         ...WIPED_AGENT,
-        { id: 'llm', packageName: '@camstack/addon-ai', version: '1.2.14' },
+        { id: 'llm', packageName: '@dominevo/addon-ai', version: '1.2.14' },
         {
           id: 'embedding-encoder',
-          packageName: '@camstack/addon-post-analysis',
+          packageName: '@dominevo/addon-post-analysis',
           version: '1.2.14',
         },
-        { id: 'stranger', packageName: '@camstack/addon-not-on-hub', version: '1.0.0' },
+        { id: 'stranger', packageName: '@dominevo/addon-not-on-hub', version: '1.0.0' },
       ],
     })
 
@@ -436,14 +436,14 @@ describe('AgentRegistryService — addon back-fill', () => {
     const h = makeHarness({
       agentAddons: [
         ...WIPED_AGENT,
-        { id: 'benchmark', packageName: '@camstack/addon-benchmark', version: '1.0.0' },
+        { id: 'benchmark', packageName: '@dominevo/addon-benchmark', version: '1.0.0' },
       ],
       hubRows: [
         ...HUB_ROWS,
         {
           manifest: {
             id: 'benchmark',
-            packageName: '@camstack/addon-benchmark',
+            packageName: '@dominevo/addon-benchmark',
             packageVersion: '1.1.0',
           },
           declaration: { id: 'benchmark', execution: { placement: 'hub-only' } },
@@ -470,14 +470,14 @@ describe('AgentRegistryService — addon back-fill', () => {
     const h = makeHarness({
       agentAddons: [
         ...WIPED_AGENT,
-        { id: 'benchmark', packageName: '@camstack/addon-benchmark', version: '1.0.0' },
+        { id: 'benchmark', packageName: '@dominevo/addon-benchmark', version: '1.0.0' },
       ],
       hubRows: [
         ...HUB_ROWS,
         {
           manifest: {
             id: 'benchmark',
-            packageName: '@camstack/addon-benchmark',
+            packageName: '@dominevo/addon-benchmark',
             packageVersion: '1.1.0',
           },
           declaration: { id: 'benchmark', execution: { placement: 'hub-only' } },
@@ -506,7 +506,7 @@ describe('AgentRegistryService — addon back-fill', () => {
       h.service.reconcileAgentAddons('agent-a'),
     ])
 
-    expect(h.deployed).toEqual(['@camstack/addon-ai', '@camstack/addon-post-analysis'])
+    expect(h.deployed).toEqual(['@dominevo/addon-ai', '@dominevo/addon-post-analysis'])
   })
 
   it('back-fills nothing when $agent.status is malformed (fail closed)', async () => {

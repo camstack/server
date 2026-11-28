@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { AppDeclarationSchema, type IAppSourceProvider } from '@camstack/types'
+import { AppDeclarationSchema, type IAppSourceProvider } from '@dominevo/types'
 import { createBenchmarkAppSourceProvider } from '../../../addon-benchmark/src/app-source'
 import { createModelStudioAppSourceProvider } from '../../../addon-model-studio/src/app-source'
 import { createHomematicAppSourceProvider } from '../../../addon-provider-homematic/src/app-source'

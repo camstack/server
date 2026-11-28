@@ -1,4 +1,4 @@
-import type { PostprocessorType } from '@camstack/types'
+import type { PostprocessorType } from '@dominevo/types'
 
 /** Labels forwarded to the Python pool — SSD stock Coral keeps COCO-90 in Python. */
 export function labelsForDecoder(

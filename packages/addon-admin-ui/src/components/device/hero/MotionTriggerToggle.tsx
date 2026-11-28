@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Activity } from 'lucide-react'
-import { useDeviceStateSlice, readMotionTrigger, Button } from '@camstack/ui-library'
-import type { DeviceProxy } from '@camstack/types'
+import { useDeviceStateSlice, readMotionTrigger, Button } from '@dominevo/ui-library'
+import type { DeviceProxy } from '@dominevo/types'
 import { useTranslation } from 'react-i18next'
 
 /**

@@ -34,7 +34,7 @@ function endpoint(patch: Partial<AlexaEndpoint> = {}): AlexaEndpoint {
   return {
     endpointId: '101',
     manufacturerName: 'camstack',
-    description: 'CamStack camera',
+    description: 'Dominevo camera',
     friendlyName: 'Camera front door',
     displayCategories: ['CAMERA'],
     capabilities: [BASE, CAMERA_STREAM],

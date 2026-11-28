@@ -6,16 +6,16 @@
  */
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { Zone } from '@camstack/types'
+import type { Zone } from '@dominevo/types'
 
 const hoisted = vi.hoisted(() => ({
   setRules: vi.fn(),
   slice: { motion: [], detection: [], package: [] },
 }))
 
-vi.mock('@camstack/ui-library', async () => {
+vi.mock('@dominevo/ui-library', async () => {
   const actual =
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+    await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return {
     Button: actual.Button,
     Input: actual.Input,

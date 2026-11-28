@@ -1,4 +1,4 @@
-import { type CustomActionsSpec, customAction, defineCustomActions } from '@camstack/types'
+import { type CustomActionsSpec, customAction, defineCustomActions } from '@dominevo/types'
 import { z } from 'zod'
 
 /**

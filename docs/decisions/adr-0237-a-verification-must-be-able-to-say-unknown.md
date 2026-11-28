@@ -19,7 +19,7 @@ boot, calling `/data/server-root/current/node_modules` — the copies the launch
 had just resolved and put on `NODE_PATH`, one line above — "UNEXPECTED — remove
 it", and then declared the two baked seeds in conflict with each other. The
 runtime's own sweep disagreed in the same boot: `single-copy cleanup — 0 copy(ies)
-to remove`. Cause: `serverNodeModules` was `@camstack/server/node_modules`, the
+to remove`. Cause: `serverNodeModules` was `@dominevo/server/node_modules`, the
 NESTED tree; the closure the framework actually resolves from arrived only via
 `NODE_PATH` and fell through to `unexpected`. A banner that fires on the healthy
 state is a banner nobody reads on the broken one.

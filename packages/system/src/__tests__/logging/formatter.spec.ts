@@ -6,7 +6,7 @@
  */
 import { describe, it, expect } from 'vitest'
 import { formatLogLine as rawFormatLogLine } from '../../logging/formatter.js'
-import type { LogEntry } from '@camstack/types'
+import type { LogEntry } from '@dominevo/types'
 
 // Strip ANSI escapes so structural assertions are independent of the
 // runner's TTY / FORCE_COLOR state (the colour-toggle test below exercises

@@ -1,4 +1,4 @@
-import type { HeroMeasurementReading } from '@camstack/types'
+import type { HeroMeasurementReading } from '@dominevo/types'
 import { type ReactElement, useMemo } from 'react'
 import type { SparklinePoint } from '../../charts/Sparkline'
 import { HISTORY_WINDOW_MS } from '../../device-history/history-window'

@@ -1,6 +1,6 @@
 /**
  * `proposeRunningThreshold` — read a SOURCE device's power history and hand it
- * to the pure algorithm in `@camstack/types` (planning#405).
+ * to the pure algorithm in `@dominevo/types` (planning#405).
  *
  * The slices are read newest first, one day of RAW at a time so a day never
  * exceeds the point cap; a truncated slice is dropped, not trusted. When the
@@ -23,7 +23,7 @@ import {
   proposeRunningThreshold,
   type RunningProposalTier,
   type RunningThresholdProposal,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { capSeriesKey } from '../device-history/capture/capture-engine.js'
 
 /** The newest slices the proposal reads: a fortnight shows a weekly habit twice. */

@@ -10,9 +10,9 @@
  * `liveTracks` (the tracker's own count on the last tracked frame), and a close
  * that ends live tracks is a WARN.
  */
-import { CAMERA_TRIGGER } from '@camstack/types'
+import { CAMERA_TRIGGER } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { CameraDetectionConfig, IScopedLogger, LogExtras, LogTags } from '@camstack/types'
+import type { CameraDetectionConfig, IScopedLogger, LogExtras, LogTags } from '@dominevo/types'
 import {
   MIN_SESSION_OPEN_MS,
   SUBJECT_PRESENT_STALE_MS,

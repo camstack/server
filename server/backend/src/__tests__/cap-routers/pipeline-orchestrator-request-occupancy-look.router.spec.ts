@@ -5,12 +5,12 @@
  * dial. Its input is relative (`afterMs`) so the caller's clock never has to
  * agree with the hub's, and a malformed ask never reaches the provider.
  */
-import type { CapabilityDefinition } from '@camstack/types'
+import type { CapabilityDefinition } from '@dominevo/types'
 import {
   type CapabilityMethodSchema,
   pipelineOrchestratorCapability,
   resolveMethodAuth,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { buildCapRouterForTest, invokeProcedure, makeCtx } from './harness.js'
 

@@ -3,7 +3,7 @@
  * fake): what it registers, how it follows the integration's session, and what
  * it refuses to claim.
  */
-import { type DeviceContext, DeviceType, type IDeviceRuntimeState } from '@camstack/types'
+import { type DeviceContext, DeviceType, type IDeviceRuntimeState } from '@dominevo/types'
 import type { HmSysVar, HmValue, Homematic } from 'nodehomematic'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { HomematicConfig } from '../config.js'

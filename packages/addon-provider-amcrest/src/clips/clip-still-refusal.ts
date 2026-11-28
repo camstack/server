@@ -27,7 +27,7 @@
  * {@link refuseStill}'s domain automatically and a branch has to opt INTO
  * deferring it.
  */
-import type { ClipStillDisposition, ClipStillRefusalCode } from '@camstack/types'
+import type { ClipStillDisposition, ClipStillRefusalCode } from '@dominevo/types'
 
 /** The mint is queued behind the camera's one replay, or the camera is
  *  resting. It is coming. */

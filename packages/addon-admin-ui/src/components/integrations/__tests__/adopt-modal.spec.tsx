@@ -2,12 +2,12 @@
  * AdoptDevicesModal — the generic, cap-driven adopt surface bound by the
  * `device-adoption` cap (NOT HA-specific). It previews candidate devices
  * (commit-on-Add) via the `device-manager` adoption PROXY methods and
- * adopts the selected ones. These tests partial-mock `@camstack/ui-library`
+ * adopts the selected ones. These tests partial-mock `@dominevo/ui-library`
  * so only the adoption hooks are stubbed; the rest of the library keeps its
  * real implementation.
  */
 
-import type { AdoptionJob } from '@camstack/types'
+import type { AdoptionJob } from '@dominevo/types'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
@@ -175,8 +175,8 @@ let availableTypesResult: AvailableTypesResult = {
   data: [{ addonId: 'ha', supportsLocationImport: true }],
 }
 
-vi.mock('@camstack/ui-library', async (orig) => ({
-  ...(await orig<typeof import('@camstack/ui-library')>()),
+vi.mock('@dominevo/ui-library', async (orig) => ({
+  ...(await orig<typeof import('@dominevo/ui-library')>()),
   useDeviceManagerAdoptionListCandidateFilters: () => filtersResult,
   useDeviceManagerAdoptionListCandidates: (args: ListCandidatesArgs) => {
     listCandidatesSpy(args)

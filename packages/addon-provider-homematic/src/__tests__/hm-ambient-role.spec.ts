@@ -9,7 +9,7 @@ import {
   DeviceRole,
   DeviceType,
   type IDeviceRuntimeState,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { Homematic } from 'nodehomematic'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { deriveHmEntitySpecs } from '../devices/hm-entity-spec.js'

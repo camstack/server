@@ -9,9 +9,9 @@
  * (`addon-post-analysis/src/pipeline-analytics/map-with-concurrency.ts`). It is
  * copied rather than imported because neither of the two ways to share it is
  * deployable: an addon may never import another addon (`ctx.api` is the only
- * cross-addon layer), and `@camstack/types` is an EXTERNAL of every addon bundle
- * — a helper placed there is not live until a `@camstack/server` train installs
- * it, while this file ships with `camstack deploy`.
+ * cross-addon layer), and `@dominevo/types` is an EXTERNAL of every addon bundle
+ * — a helper placed there is not live until a `@dominevo/server` train installs
+ * it, while this file ships with `dominevo deploy`.
  *
  * Why bounded rather than a plain `Promise.all`: every unit here is a UDS
  * round-trip to the settings store, on a channel every other addon shares.

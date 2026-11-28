@@ -15,8 +15,8 @@ import {
   MembershipResponder,
   MeshCertificateRegistry,
   MeshCrl,
-} from '@camstack/server/system'
-import type { SettingsStoreClient } from '@camstack/types'
+} from '@dominevo/server/system'
+import type { SettingsStoreClient } from '@dominevo/types'
 import Fastify, { type FastifyInstance } from 'fastify'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { registerMeshMembershipRoutes } from '../../api/mesh-membership-routes'

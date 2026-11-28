@@ -524,7 +524,7 @@ low-score tier may continue on, so such a frame reaches the tracker.
 **And read the docker log, not `logs.query`, for anything older than ~25
 minutes.** The ring holds ~5 000 rows per addon. A "zero refusal lines in
 three hours" measured through it on 2026-09-10 was the ring's horizon, not the
-camera's — `docker logs CamStack` on the hub still held the
+camera's — `docker logs Dominevo` on the hub still held the
 `unconfirmed-spawn-lost` line for the animal in question.
 
 ## The confirmation gate
@@ -1474,11 +1474,11 @@ its own rows.
 column never arrived — and a missing column does NOT error, `compileFilter`
 skips a predicate it cannot express and the query returns everything.
 
-1. `applyServerUpdate` with a `@camstack/server` carrying the fingerprint fix
-   (and this `@camstack/types` — the cap schema is what makes the new fields
+1. `applyServerUpdate` with a `@dominevo/server` carrying the fingerprint fix
+   (and this `@dominevo/types` — the cap schema is what makes the new fields
    survive the backend's Zod output parse).
-2. `camstack deploy packages/addon-pipeline` — the tier declarations.
-3. `camstack deploy packages/addon-post-analysis` — the columns, the write rule
+2. `dominevo deploy packages/addon-pipeline` — the tier declarations.
+3. `dominevo deploy packages/addon-post-analysis` — the columns, the write rule
    and the migration.
 
 Out of order, the migration writes columns the table does not have and the
@@ -1734,9 +1734,9 @@ another reset runs.
 ### The two gestures
 
 Both ride `addons.custom` on `pipeline-analytics`, NOT the `face-gallery` cap:
-a cap method's wire schema lives in `@camstack/types` and is therefore not
+a cap method's wire schema lives in `@dominevo/types` and is therefore not
 callable until a server train ships, while an action's schema travels inside the
-addon's own dist. `camstack deploy` is the whole delivery.
+addon's own dist. `dominevo deploy` is the whole delivery.
 
 - **`photo.analyze`** first bakes the photo's EXIF orientation into the raster
   (`photo-orientation.ts`) — the decoder reads pixels and ignores EXIF, so an

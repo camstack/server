@@ -69,7 +69,7 @@ export const SKILLS: readonly SkillEntry[] = [
     agents: [],
     cursor: {
       description:
-        'CamStack entry point for any change — phases, gates and the definition of done; how to ask the operator',
+        'Dominevo entry point for any change — phases, gates and the definition of done; how to ask the operator',
       globs: [],
       alwaysApply: true,
       body: [
@@ -105,11 +105,11 @@ export const SKILLS: readonly SkillEntry[] = [
   },
   {
     id: 'camstack-addon',
-    when: 'A new or changed addon or manifest entry; `camstack deploy`',
+    when: 'A new or changed addon or manifest entry; `dominevo deploy`',
     agents: 'addon-packages',
     cursor: {
       description:
-        'CamStack addon authoring — manifest, vite entries, BaseAddon traps, forked vs in-process, device settings stores, camstack deploy',
+        'Dominevo addon authoring — manifest, vite entries, BaseAddon traps, forked vs in-process, device settings stores, dominevo deploy',
       globs: [
         'packages/addon-*/package.json',
         'packages/addon-*/vite.config.ts',
@@ -125,7 +125,7 @@ export const SKILLS: readonly SkillEntry[] = [
     agents: [TYPES, SYSTEM, BACKEND],
     cursor: {
       description:
-        'CamStack capability change end to end — cap schema, codegen, registerProvider, bindings, CAP_INPUT_DEFAULTS, what to publish',
+        'Dominevo capability change end to end — cap schema, codegen, registerProvider, bindings, CAP_INPUT_DEFAULTS, what to publish',
       globs: [
         'packages/types/src/capabilities/**',
         'packages/types/src/generated/**',
@@ -141,7 +141,7 @@ export const SKILLS: readonly SkillEntry[] = [
     agents: [BACKEND, SYSTEM, TYPES],
     cursor: {
       description:
-        'CamStack server-side change — typecheck vs real build, .d.ts leaks, publish → applyServerUpdate → restart → verify, CI rules',
+        'Dominevo server-side change — typecheck vs real build, .d.ts leaks, publish → applyServerUpdate → restart → verify, CI rules',
       globs: [
         'server/backend/src/**',
         'packages/system/src/**',
@@ -158,7 +158,7 @@ export const SKILLS: readonly SkillEntry[] = [
     agents: [SYSTEM, BACKEND],
     cursor: {
       description:
-        'CamStack secrets — keychain, secret field types, no env vars, 0600 files for spawned children, the secret guards',
+        'Dominevo secrets — keychain, secret field types, no env vars, 0600 files for spawned children, the secret guards',
       globs: ['packages/system/src/builtins/keychain/**', 'scripts/check-*secret*.ts'],
     },
     docs: ['docs/architecture/secrets-keychain.md'],
@@ -169,7 +169,7 @@ export const SKILLS: readonly SkillEntry[] = [
     agents: [BACKEND],
     cursor: {
       description:
-        'Debug a live CamStack system — log tiers, hub.mjs and the tRPC API, topology, verifying where work ran, instrument before guessing',
+        'Debug a live Dominevo system — log tiers, hub.mjs and the tRPC API, topology, verifying where work ran, instrument before guessing',
       globs: [],
     },
     docs: ['docs/architecture/overview.md', 'docs/architecture/transport.md'],
@@ -180,7 +180,7 @@ export const SKILLS: readonly SkillEntry[] = [
     agents: [],
     cursor: {
       description:
-        'Audit CamStack tracks the operator flagged — missing media kinds, thumbnails, early track ends',
+        'Audit Dominevo tracks the operator flagged — missing media kinds, thumbnails, early track ends',
       globs: [],
     },
     docs: ['docs/architecture/post-analysis.md'],
@@ -191,7 +191,7 @@ export const SKILLS: readonly SkillEntry[] = [
     agents: [],
     cursor: {
       description:
-        'CamStack releases through GitHub Actions — Publish Packages, the release tag, registry lag, never dispatch Checks',
+        'Dominevo releases through GitHub Actions — Publish Packages, the release tag, registry lag, never dispatch Checks',
       globs: ['.github/workflows/**'],
     },
     docs: ['docs/architecture/update-and-release.md'],
@@ -202,7 +202,7 @@ export const SKILLS: readonly SkillEntry[] = [
     agents: [],
     cursor: {
       description:
-        'Ship a CamStack server-side change to a running hub/agent — applyServerUpdate, the restart, verification, when an image is needed',
+        'Ship a Dominevo server-side change to a running hub/agent — applyServerUpdate, the restart, verification, when an image is needed',
       globs: ['Dockerfile', 'Dockerfile.dev', 'packages/node-root/src/**'],
     },
     docs: ['docs/architecture/update-and-release.md', 'docs/architecture/deploying.md'],
@@ -213,7 +213,7 @@ export const SKILLS: readonly SkillEntry[] = [
     agents: [],
     cursor: {
       description:
-        'CamStack documentation — generated vs hand-written docs, ADRs, applies-to, docs:check, the public docs site',
+        'Dominevo documentation — generated vs hand-written docs, ADRs, applies-to, docs:check, the public docs site',
       globs: ['docs/**', '.claude/skills/**', '**/AGENTS.md'],
     },
     docs: ['docs/README.md', 'docs/decisions/conventions.md'],

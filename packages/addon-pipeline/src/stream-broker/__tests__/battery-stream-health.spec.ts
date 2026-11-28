@@ -8,8 +8,8 @@
  * LEVEL state — a camera that sleeps and then dies must still be reported.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { BATTERY_UNREACHABLE_AFTER_MS } from '@camstack/types'
-import type { AddonApi, EventFilter, IEventBus, IScopedLogger, SystemEvent } from '@camstack/types'
+import { BATTERY_UNREACHABLE_AFTER_MS } from '@dominevo/types'
+import type { AddonApi, EventFilter, IEventBus, IScopedLogger, SystemEvent } from '@dominevo/types'
 import { StreamBroker } from '../stream-broker/stream-broker.js'
 import { StreamBrokerManager } from '../stream-broker/stream-broker-manager.js'
 import {

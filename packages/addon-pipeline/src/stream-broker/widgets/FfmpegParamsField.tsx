@@ -1,5 +1,5 @@
-import { DerivedSourceRefSchema, type EncodeProfile } from '@camstack/types'
-import type { WidgetProps } from '@camstack/ui-library'
+import { DerivedSourceRefSchema, type EncodeProfile } from '@dominevo/types'
+import type { WidgetProps } from '@dominevo/ui-library'
 import {
   useDeviceManagerUpdateDeviceField,
   useStreamBrokerGetBrokerStats,
@@ -10,7 +10,7 @@ import {
   Switch,
   Textarea,
   Select,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { AlertCircle, Check, ChevronDown, ChevronRight, Loader2, Plus } from 'lucide-react'
 import * as React from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'

@@ -15,7 +15,7 @@
  * filtered on the DEVICE address only and both relays emit `STATE`.
  */
 
-import { type DeviceContext, DeviceType, type IDeviceRuntimeState } from '@camstack/types'
+import { type DeviceContext, DeviceType, type IDeviceRuntimeState } from '@dominevo/types'
 import type { HmDevice, Homematic, ValueChangedEvent } from 'nodehomematic'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { HmActuatorDevice } from '../devices/hm-actuator-device.js'

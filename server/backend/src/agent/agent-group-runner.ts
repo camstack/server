@@ -1,7 +1,7 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
-import { resolveAddonPlacement } from '@camstack/types'
-import type { AddonDeclaration, IScopedLogger } from '@camstack/types'
+import { resolveAddonPlacement } from '@dominevo/types'
+import type { AddonDeclaration, IScopedLogger } from '@dominevo/types'
 import type { LoadedAddonEntry } from './agent-service.js'
 
 /** A package's addon declarations read straight from package.json (NO module import). */

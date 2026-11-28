@@ -21,7 +21,7 @@
  *    reconcile, which re-applies every row's pins) is queued, so a late write
  *    is repaired at once instead of at the next operator action.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 /** Generous: a promotion reads its window's segments and walks back through
  *  the session for identities (at most `MAX_IDENTITY_LOOKBACK_SEGMENTS`). */

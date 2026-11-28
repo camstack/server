@@ -1,4 +1,4 @@
-import { deliverableFields } from '@camstack/types'
+import { deliverableFields } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { SPEECH_MAX_CHARS } from '../speak/constants.js'
 import { alexaTargetKind } from '../speak/provider.js'

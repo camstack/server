@@ -16,7 +16,7 @@ import {
   useLocalNetworkRevertToGeneratedCertificate,
   useLocalNetworkUseStoredUploadedCertificate,
   useLocalNetworkUploadCertificate,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { checkPem } from '../../pages/system/pem-file'
 import { PemField } from '../../pages/system/PemField'

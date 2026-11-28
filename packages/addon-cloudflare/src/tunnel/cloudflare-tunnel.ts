@@ -1,10 +1,10 @@
-import { userError } from '@camstack/types'
+import { userError } from '@dominevo/types'
 import { randomUUID } from 'node:crypto'
 import { spawn, type ChildProcessByStdio } from 'node:child_process'
 import type { Readable } from 'node:stream'
 
-import { EventCategory } from '@camstack/types'
-import type { IScopedLogger, IEventBus } from '@camstack/types'
+import { EventCategory } from '@dominevo/types'
+import type { IScopedLogger, IEventBus } from '@dominevo/types'
 import {
   buildCloudflaredArgs,
   removeTokenFile,
@@ -80,7 +80,7 @@ export interface CloudflareTunnelConfig {
   /** DNS record id of the CNAME (for cleanup on disable). */
   readonly customDnsRecordId: string
   /** Fully-qualified public hostname (e.g. "camstack.example.com") that
-   *  resolves to this CamStack hub via the cnamed tunnel. */
+   *  resolves to this Dominevo hub via the cnamed tunnel. */
   readonly customHostname: string
 
   // ── Form-only transient state (re-entered on each provisioning run) ──

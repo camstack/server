@@ -3,8 +3,8 @@
  * per source device, whether the fleet lists it and whether it is online. While
  * the fleet is unread `presence` is null — a row claims neither bound nor missing (D315).
  */
-import { compositionSourceKey } from '@camstack/types'
-import { useDeviceManagerListAll } from '@camstack/ui-library'
+import { compositionSourceKey } from '@dominevo/types'
+import { useDeviceManagerListAll } from '@dominevo/ui-library'
 import { useMemo } from 'react'
 import type { SourcePresence } from './field-rows'
 

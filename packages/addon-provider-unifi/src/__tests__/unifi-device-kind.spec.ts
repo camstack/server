@@ -3,7 +3,7 @@
  * The host kinds (console, switch, access point) are the future `workload` / `host` devices
  * (#585); until that type exists they keep today's Container, so nothing regresses.
  */
-import { DeviceRole, DeviceType } from '@camstack/types'
+import { DeviceRole, DeviceType } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   classifyUnifiInfra,

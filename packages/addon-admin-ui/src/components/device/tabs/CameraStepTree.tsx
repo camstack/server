@@ -3,8 +3,8 @@
  * consumes and produces, and On / Off / Auto. No accelerator columns and no
  * model names — a model is chosen where the step runs.
  */
-import type { PipelineSlot } from '@camstack/types'
-import { Badge, type BadgeVariant, GateControl, type StepGate } from '@camstack/ui-library'
+import type { PipelineSlot } from '@dominevo/types'
+import { Badge, type BadgeVariant, GateControl, type StepGate } from '@dominevo/ui-library'
 import { suppressedBadgeLabel } from '../../pipeline/step-inspector/detection-source-model'
 import { useTranslation } from 'react-i18next'
 import { type CameraStepBlock, type CameraStepRow } from './camera-step-tree-model'

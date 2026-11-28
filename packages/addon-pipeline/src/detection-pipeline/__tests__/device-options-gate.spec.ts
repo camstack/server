@@ -13,7 +13,7 @@
  * (Replaces the old `filterDeviceOptionsByHardware` tests; that helper was
  * removed when the offer became registry-driven.)
  */
-import { describeNvidia, type NvidiaInfo } from '@camstack/types'
+import { describeNvidia, type NvidiaInfo } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { runtimeDevices } from '../runtimes.js'
 

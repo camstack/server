@@ -1,4 +1,4 @@
-import { makeInMemoryRecords } from '@camstack/types'
+import { makeInMemoryRecords } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { googleBrokersEntryKind } from '../broker-record-kinds.js'
 import { buildGoogleInstances, googleAccountKind } from '../google-instances.js'

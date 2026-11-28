@@ -26,7 +26,7 @@
  * key with neither a durable row nor RAM state seeds silently.
  */
 
-import type { CameraOccupancySnapshot } from '@camstack/types'
+import type { CameraOccupancySnapshot } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { occupancyKey, OccupancyWatcher, type OccupancyStateRow } from '../occupancy-watcher.js'
 

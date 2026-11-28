@@ -21,7 +21,7 @@ import type {
   ActionStep,
   ActionVariableValue,
   IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { NcRuleFireRef } from './rule-engine.js'
 
 /** The `actions` cap as the centre uses it — a port, so a spec can stand in. */

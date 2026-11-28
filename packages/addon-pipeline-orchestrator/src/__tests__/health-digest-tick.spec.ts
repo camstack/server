@@ -3,7 +3,7 @@
  * bounded history, and logs what it cost and what changed.
  */
 import { describe, expect, it } from 'vitest'
-import type { CameraMetrics, LogExtras } from '@camstack/types'
+import type { CameraMetrics, LogExtras } from '@dominevo/types'
 import {
   CameraMetricsMirror,
   HealthDigestTick,

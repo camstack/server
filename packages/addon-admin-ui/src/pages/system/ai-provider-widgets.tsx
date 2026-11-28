@@ -12,7 +12,7 @@
  * replace) and the model selection (read and replace — a `model` placement
  * owns the model choice).
  */
-import { ManagedModelRefSchema } from '@camstack/types'
+import { ManagedModelRefSchema } from '@dominevo/types'
 import type { ComponentType } from 'react'
 import { AiModelPicker, type ModelChoice } from './AiModelPicker'
 import { AppleNodePicker } from './AppleNodePicker'

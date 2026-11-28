@@ -1,8 +1,8 @@
-# CamStack
+# Dominevo
 
 **Your cameras and your smart home, on your own hardware.**
 
-CamStack watches your cameras, records what matters, recognises people, cars,
+Dominevo watches your cameras, records what matters, recognises people, cars,
 animals and parcels, and lets you know — without sending your video anywhere.
 It runs on a home server, a NAS or a spare computer, and it is free and open
 source.
@@ -10,7 +10,7 @@ source.
 > **0.1 is a beta.** Guides and install steps: **[camstack-docs.zentik.app](https://camstack-docs.zentik.app)**
 
 <p align="center">
-  <img src="docs/assets/readme/viewer-grid-desktop.png" alt="CamStack camera grid" width="860">
+  <img src="docs/assets/readme/viewer-grid-desktop.png" alt="Dominevo camera grid" width="860">
 </p>
 
 ## What you get
@@ -31,7 +31,7 @@ source.
 - **Part of your smart home.** Your lights, sensors, locks, robot vacuums and
   climate units sit next to your cameras, and everything can be shared with
   Home Assistant, Apple Home, Alexa or Google Home.
-- **Grows with your house.** Add more computers as you add cameras. CamStack
+- **Grows with your house.** Add more computers as you add cameras. Dominevo
   spreads the work across them and moves it when one is busy.
 - **Make it yours.** Adjust how any device reports its state, combine sensors
   into new devices, write automations, and train the detector on your own
@@ -62,12 +62,12 @@ source.
 
 Each integration is a plugin you add from the admin page. Missing one? Plugins
 are ordinary npm packages — see [how to write one](CONTRIBUTING.md#publishing-your-own-addon-to-npm)
-and the [examples](https://github.com/camstack/addon-examples).
+and the [examples](https://github.com/dominevo/addon-examples).
 
 ## Private by design
 
 Everything — video, recordings, detections, faces — stays on your machines.
-There is no CamStack account.
+There is no Dominevo account.
 
 Two small hosted pieces exist because the other side requires them: the
 **Alexa** skill talks to a small cloud function — ours by default, or your own
@@ -82,19 +82,19 @@ integration you turned on yourself.
 
 | How | |
 | --- | --- |
-| **Docker** | `ghcr.io/camstack/camstack:intel-latest` (or `amd-latest`) — [guide](https://camstack-docs.zentik.app/docs/installation) |
+| **Docker** | `ghcr.io/dominevo/dominevo:intel-latest` (or `amd-latest`) — [guide](https://camstack-docs.zentik.app/docs/installation) |
 | **Unraid** | Community template — [guide](https://camstack-docs.zentik.app/docs/installation/unraid) |
 | **Proxmox** | One-line install script — [guide](https://camstack-docs.zentik.app/docs/installation/proxmox) |
-| **Desktop** | macOS and Linux apps on the [releases page](https://github.com/camstack/server/releases) |
+| **Desktop** | macOS and Linux apps on the [releases page](https://github.com/dominevo/server/releases) |
 
 Then open `https://<your-server>:4443`, sign in as `admin` / `changeme`, and
 pick a new password.
 
 ## Community
 
-Questions and ideas: [Discussions](https://github.com/camstack/server/discussions) ·
-Bugs: [Issues](https://github.com/camstack/server/issues) ·
+Questions and ideas: [Discussions](https://github.com/dominevo/server/discussions) ·
+Bugs: [Issues](https://github.com/dominevo/server/issues) ·
 Contributing: [CONTRIBUTING.md](CONTRIBUTING.md) ·
 Security: [SECURITY.md](SECURITY.md)
 
-CamStack is released under the [MIT licence](LICENSE).
+Dominevo is released under the [MIT licence](LICENSE).

@@ -14,8 +14,8 @@
  *   - producer tab   → that producer's own columns
  */
 
-import type { NcRule } from '@camstack/types'
-import { type DataColumn, forwardRowApi } from '@camstack/ui-library'
+import type { NcRule } from '@dominevo/types'
+import { type DataColumn, forwardRowApi } from '@dominevo/ui-library'
 import type { CalendarEventsRuleView } from './notification-calendar-events.helpers'
 import { calendarScheduleLabel } from './notification-calendar-events.helpers'
 import {

@@ -40,7 +40,7 @@ describe('the global default', () => {
   })
 
   it('states the uncommon meaning of the interval in the operator’s own text', () => {
-    // On a camera CamStack can reach it is a cheap read — nothing to explain.
+    // On a camera Dominevo can reach it is a cheap read — nothing to explain.
     // On a standalone battery camera it only marks the catalog stale and never
     // wakes it: one setting meaning something else silently is how this repo
     // has shipped knobs nobody could reason about, so that case is stated.

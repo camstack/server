@@ -3,7 +3,7 @@
  * value is a number. `onValue` gets the parsed number, or null while the text
  * is not one.
  */
-import { Input } from '@camstack/ui-library'
+import { Input } from '@dominevo/ui-library'
 import { type ComponentProps, useState } from 'react'
 
 export type DraftNumberInputProps = Omit<

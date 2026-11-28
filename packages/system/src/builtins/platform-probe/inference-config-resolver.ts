@@ -3,7 +3,7 @@ import type {
   HardwareInfo,
   ModelRequirement,
   ResolvedInferenceConfig,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export class InferenceConfigResolver {
   constructor(

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import type { NcSystemEventSubject } from '../rule-engine.js'
 import { readFileSync } from 'node:fs'
 import path from 'node:path'

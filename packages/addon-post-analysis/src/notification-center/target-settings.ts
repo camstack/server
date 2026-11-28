@@ -23,8 +23,8 @@ import type {
   NcTargetAttachment,
   NcTargetOverride,
   NcTargetOverrides,
-} from '@camstack/types'
-import type { IScopedLogger } from '@camstack/types'
+} from '@dominevo/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { isScheduleActive } from './rule-engine.js'
 
 /** What a rule must carry for its targets to have settings. */

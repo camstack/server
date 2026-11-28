@@ -4,7 +4,7 @@
  * block. There is no engine here and there must never be one: the block runner
  * is the runtime and `core_blocks` is the store.
  *
- * This is the module barrel; leaf files inside @camstack/types MUST import from
+ * This is the module barrel; leaf files inside @dominevo/types MUST import from
  * the deep modules (e.g. `../automation/recipe.js`), never through this file OR
  * the root barrel (see biome-plugins/no-types-barrel-leaf-import.grit).
  */

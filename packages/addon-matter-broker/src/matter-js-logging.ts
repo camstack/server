@@ -10,7 +10,7 @@
  */
 
 import { LogDestination, Logger, LogLevel } from '@matter/main'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 const DESTINATION_NAME = 'camstack-matter-broker'
 const DEFAULT_DESTINATION = 'default'

@@ -2,7 +2,7 @@
 import { selectOption } from '../../../testing/select-option'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
-import { DeviceFeature } from '@camstack/types'
+import { DeviceFeature } from '@dominevo/types'
 import { MediaPlayerPanel } from '../media-player-panel'
 
 const play = vi.fn()

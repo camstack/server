@@ -3,7 +3,7 @@
  * and every pending offer. From the agent's own machine nothing is asked; from
  * anywhere else the reset code printed at boot is required.
  */
-import { Button, FormField, Input } from '@camstack/ui-library'
+import { Button, FormField, Input } from '@dominevo/ui-library'
 import { RotateCcw } from 'lucide-react'
 import { useState } from 'react'
 import { useT } from './i18n'

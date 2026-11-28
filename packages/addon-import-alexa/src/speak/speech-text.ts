@@ -3,8 +3,8 @@
  * (title + body, sometimes markdown or html). Alexa would speak the markup,
  * so this is plain text, capped.
  */
-import type { Notification, RenderedAs, TargetKindCaps } from '@camstack/types'
-import { htmlToText, markdownToText, prepareNotification } from '@camstack/types'
+import type { Notification, RenderedAs, TargetKindCaps } from '@dominevo/types'
+import { htmlToText, markdownToText, prepareNotification } from '@dominevo/types'
 import { SPEECH_MAX_CHARS } from './constants.js'
 
 /** The level that follows Do Not Disturb. */

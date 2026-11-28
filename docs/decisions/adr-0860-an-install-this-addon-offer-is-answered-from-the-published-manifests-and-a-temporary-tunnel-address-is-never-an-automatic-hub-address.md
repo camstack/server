@@ -24,7 +24,7 @@ INSTALLED addons: the npm picker never received the capability, and the npm
 search returned no capabilities to filter on. Tailscale could never be offered
 for `network-access` while it was not installed — the one situation the button
 exists for. The Logging page carried the same button for `log-destination`,
-whose every provider is built into `@camstack/system`: a button to nothing.
+whose every provider is built into `@dominevo/system`: a button to nothing.
 
 A hand-kept keyword per package ("tailscale", "mesh") was the first idea. It
 would be a second declaration of what a package provides, next to the
@@ -62,7 +62,7 @@ named an address that died at the next restart.
    and `appConnections` (in `hub-address.ts`, the one resolver). The entry stays
    in the palette and on the Remote Access card; an operator who flags it on the
    Network page still gets it (D729, D732, D734). `notificationTaps` is unaffected:
-   its automatic answer is the CamStack app link.
+   its automatic answer is the Dominevo app link.
 
 ## Consequences
 
@@ -82,7 +82,7 @@ named an address that died at the next restart.
 `scripts/check-addon-install-links.ts` (wired into `checks.yml`): every
 `install: { capability }` and `addonCatalogHref(...)` names a capability a
 `packages/addon-*` package declares, and the catalog URL is spelled only by
-`addonCatalogHref` in `@camstack/types`. Specs: `search-npm-capability.spec.ts`,
+`addonCatalogHref` in `@dominevo/types`. Specs: `search-npm-capability.spec.ts`,
 `Addons.spec.tsx` (capability group, pending vs empty), `hub-address.spec.ts`,
 `address-book.spec.ts` and `tunnel-stability.spec.ts` (unstable address never
 automatic, flag still wins, named tunnel unchanged).

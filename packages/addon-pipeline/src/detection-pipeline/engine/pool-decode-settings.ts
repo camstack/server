@@ -26,7 +26,7 @@
  * inapplicable there, and the runtime must not pretend otherwise by shipping a
  * value the decode cannot consult (it would also churn the pool for nothing).
  */
-import type { ModelCatalogEntry, PoolModelConfig, StepDefinition } from '@camstack/types'
+import type { ModelCatalogEntry, PoolModelConfig, StepDefinition } from '@dominevo/types'
 import { resolveEffectivePostprocessorForEntry } from '../registry/effective-postprocessor.js'
 import { postprocessorConsumesNms } from '../registry/model-knob-applicability.js'
 

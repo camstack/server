@@ -7,7 +7,7 @@
  * stored by the old editor carries `video.height` only: it still encodes
  * correctly, and the editor reads it as the matching width.
  */
-import type { EncodeProfile } from '@camstack/types'
+import type { EncodeProfile } from '@dominevo/types'
 
 export interface SourceSize {
   readonly width: number

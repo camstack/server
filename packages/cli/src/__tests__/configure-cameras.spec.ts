@@ -46,7 +46,7 @@ const answers = (extra: { [path: string]: unknown } = {}): { [path: string]: unk
         id: 'provider-reolink',
         name: 'Reolink',
         description: 'Native Baichuan protocol connection to Reolink cameras',
-        packageName: '@camstack/addon-provider-reolink',
+        packageName: '@dominevo/addon-provider-reolink',
         packageVersion: '1.2.213',
         capabilities: [{ name: 'device-provider' }, { name: 'stream-params' }],
       },
@@ -54,7 +54,7 @@ const answers = (extra: { [path: string]: unknown } = {}): { [path: string]: unk
     {
       manifest: {
         id: 'sqlite-settings',
-        packageName: '@camstack/server',
+        packageName: '@dominevo/server',
         packageVersion: '1.2.523',
         capabilities: ['storage-provider'],
       },
@@ -65,7 +65,7 @@ const answers = (extra: { [path: string]: unknown } = {}): { [path: string]: unk
   },
   'addons.searchAvailable': [
     {
-      name: '@camstack/addon-provider-reolink',
+      name: '@dominevo/addon-provider-reolink',
       version: '1.2.213',
       description: 'Reolink',
       keywords: ['reolink'],
@@ -73,7 +73,7 @@ const answers = (extra: { [path: string]: unknown } = {}): { [path: string]: unk
       capabilities: ['device-provider'],
     },
     {
-      name: '@camstack/addon-provider-amcrest',
+      name: '@dominevo/addon-provider-amcrest',
       version: '0.2.162',
       description: 'Amcrest/Dahua camera device provider addon',
       keywords: ['amcrest', 'dahua', 'camera'],
@@ -93,7 +93,7 @@ describe('configure_camera_providers', () => {
     if (out.status !== 'ok') throw new Error('expected ok')
     expect(out.installed?.map((p) => p.addonId)).toEqual(['provider-reolink'])
     expect(out.installed?.[0]).toMatchObject({ discovery: true })
-    expect(out.available?.map((p) => p.packageName)).toEqual(['@camstack/addon-provider-amcrest'])
+    expect(out.available?.map((p) => p.packageName)).toEqual(['@dominevo/addon-provider-amcrest'])
   })
 
   it('a brand nothing matches is unsupported with the support pointer', async () => {
@@ -105,7 +105,7 @@ describe('configure_camera_providers', () => {
     })
     const hit = await configureCameraProviders(ctx, 'Dahua camera')
     if (hit.status !== 'ok') throw new Error('expected ok')
-    expect(hit.available?.map((p) => p.packageName)).toEqual(['@camstack/addon-provider-amcrest'])
+    expect(hit.available?.map((p) => p.packageName)).toEqual(['@dominevo/addon-provider-amcrest'])
   })
 })
 

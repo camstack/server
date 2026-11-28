@@ -19,7 +19,7 @@
  * every requested id a row and marks the unreadable ones `status: null`. They
  * are counted and surfaced, separately from the rows.
  */
-import { useSystem } from '@camstack/ui-library'
+import { useSystem } from '@dominevo/ui-library'
 import { useQuery } from '@tanstack/react-query'
 import type { SceneCameraResult } from '../pages/scenes.helpers.js'
 

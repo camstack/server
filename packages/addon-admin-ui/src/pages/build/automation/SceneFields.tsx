@@ -13,15 +13,15 @@ import type {
   DetectionSubject,
   StationaryLeaf,
   StationaryPresentLeaf,
-} from '@camstack/types'
-import { DeviceValuePicker, DurationInput, SegmentedChoice, Slider } from '@camstack/ui-library'
+} from '@dominevo/types'
+import { DeviceValuePicker, DurationInput, SegmentedChoice, Slider } from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 import { CAMERA_TYPES } from '../flow/build-device-filters'
 import { DraftNumberInput } from '../flow/DraftNumberInput'
 import { CameraPicker, FieldLabel, ZonePicker } from '../flow/scene-pickers'
 import type { AutomationDevice } from './automation-data'
 import { SubjectPicker } from './SubjectPicker'
-import { formatNumeric } from '@camstack/ui-library'
+import { formatNumeric } from '@dominevo/ui-library'
 
 type IntervalLeaf = Extract<AutomationLeaf, { kind: 'interval' }>
 type Phase = StationaryLeaf['phase']

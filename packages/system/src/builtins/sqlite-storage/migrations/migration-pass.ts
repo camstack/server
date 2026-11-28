@@ -30,7 +30,7 @@ import {
   type MigrationStatus,
   orderMigrations,
   errMsg,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { applyEdits } from './migration-edits.js'
 import {
   type AppliedPass,

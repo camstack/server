@@ -5,7 +5,7 @@
  * sensor card's own parts; this frame adds only the hero card's state corner.
  * Under `prefers-reduced-motion` the backdrop stands still (HERO_SCENE_CSS).
  */
-import { type HeroMeasurement, isNotReported } from '@camstack/types'
+import { type HeroMeasurement, isNotReported } from '@dominevo/types'
 import { ChevronRight } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useUiText } from '../../contexts/ui-text'

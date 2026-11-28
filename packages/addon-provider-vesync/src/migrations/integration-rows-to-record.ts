@@ -5,7 +5,7 @@
  * integration and putting the record.
  * Devices are not touched.
  */
-import { integrationRowsMigration } from '@camstack/types'
+import { integrationRowsMigration } from '@dominevo/types'
 import { vesyncConnectionsEntryKind } from '../vesync-instances.js'
 
 const base = integrationRowsMigration({

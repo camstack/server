@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import type { ExportRecord } from '@camstack/types'
+import type { ExportRecord } from '@dominevo/types'
 import { getExportRecord, upsertExport } from '../export-store.js'
 import { makeExportsState } from './exports-state-fixture.js'
 import { markDownloaded, sweepExpiredExports } from '../export-janitor.js'

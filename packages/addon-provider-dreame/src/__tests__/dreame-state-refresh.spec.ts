@@ -1,4 +1,4 @@
-import { deviceStateRefreshCapability } from '@camstack/types'
+import { deviceStateRefreshCapability } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   type DreameRefreshContext,

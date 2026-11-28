@@ -13,7 +13,7 @@
  */
 import { useEffect, useState } from 'react'
 import { AlertCircle, Check, Loader2 } from 'lucide-react'
-import { Button, Input } from '@camstack/ui-library'
+import { Button, Input } from '@dominevo/ui-library'
 import type { ReachableHostSaveStatus } from './board-model'
 import { useTranslation } from 'react-i18next'
 

@@ -6,8 +6,8 @@
  * without the real cap set; pass `runtimeStatePolicyFor` to test a real cap.
  */
 import { vi } from 'vitest'
-import type { AddonContext, RuntimeStatePolicy } from '@camstack/types'
-import { EventCategory } from '@camstack/types'
+import type { AddonContext, RuntimeStatePolicy } from '@dominevo/types'
+import { EventCategory } from '@dominevo/types'
 import { type ClaimsIndexView, DeviceStateMirror } from '../device-state-mirror.js'
 import type { DeviceManagerSettings } from '../device-meta-store.js'
 import type { RuntimeStatePolicyLookup } from '../runtime-state-persist-gate.js'

@@ -19,7 +19,7 @@
  * any read has ever succeeded does the addon config answer. A failed read never
  * swaps the encoder to a guess.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 /** How long a cluster-row read is trusted. The operator's flip lands within this. */
 export const ENCODER_ROW_TTL_MS = 30_000

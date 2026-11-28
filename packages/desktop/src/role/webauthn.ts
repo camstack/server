@@ -49,7 +49,7 @@ export function touchIdConfigFor(
   if (teamId === null || !hasProvisioningProfile) return null
   return {
     keychainAccessGroup: `${teamId}.${WEBAUTHN_GROUP_SUFFIX}`,
-    promptReason: 'sign in to CamStack with your passkey on $1',
+    promptReason: 'sign in to Dominevo with your passkey on $1',
   }
 }
 

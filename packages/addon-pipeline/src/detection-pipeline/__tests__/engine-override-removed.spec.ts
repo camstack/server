@@ -14,8 +14,8 @@
  * its accelerator by `deviceKey` from the roster, which is a LOCAL per-call
  * choice that never touches shared state.
  */
-import type { IScopedLogger, PipelineRunInput, PipelineStepInput } from '@camstack/types'
-import { pipelineExecutorCapability } from '@camstack/types'
+import type { IScopedLogger, PipelineRunInput, PipelineStepInput } from '@dominevo/types'
+import { pipelineExecutorCapability } from '@dominevo/types'
 import sharp from 'sharp'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { EngineFactory } from '../engine/engine-factory.js'

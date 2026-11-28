@@ -11,7 +11,7 @@ import {
   type HeroSceneId,
   type HeroSceneParams,
   ThemeProvider,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import type { ReactElement } from 'react'
 
 interface Case {

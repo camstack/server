@@ -15,11 +15,11 @@
  *     to where it is edited;
  *   - the selection lives in the URL.
  */
-import { selectOption, selectShowing } from '@camstack/ui-library/testing'
+import { selectOption, selectShowing } from '@dominevo/ui-library/testing'
 import * as jestDomMatchers from '@testing-library/jest-dom/matchers'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import type { StepSwitchMatrix } from '@camstack/types'
+import type { StepSwitchMatrix } from '@dominevo/types'
 import { NodeStepInspector } from '../NodeStepInspector'
 import {
   currentSearch,

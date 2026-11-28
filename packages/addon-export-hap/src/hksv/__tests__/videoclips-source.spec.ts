@@ -18,7 +18,7 @@ import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
-import type { CamProfile, ClipBytes, IScopedLogger } from '@camstack/types'
+import type { CamProfile, ClipBytes, IScopedLogger } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import type { HksvBuildOutcome } from '../build-outcome.js'

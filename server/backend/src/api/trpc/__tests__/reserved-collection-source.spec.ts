@@ -15,8 +15,8 @@
  * fault like this is asked per-camera or it cannot be asked at all.
  */
 
-import type { CapabilityRegistry } from '@camstack/server/system'
-import { recordingCapability } from '@camstack/types'
+import type { CapabilityRegistry } from '@dominevo/server/system'
+import { recordingCapability } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { requireDeviceCollection } from '../device-collection-dispatch.js'
 
@@ -31,7 +31,7 @@ interface SourceRow {
 /** The recorder's row — the legitimate one. */
 const OURS: SourceRow = {
   source: 'camstack',
-  label: 'CamStack recordings',
+  label: 'Dominevo recordings',
   addonId: 'recorder',
 }
 /** What a vendor provider is allowed to answer. */

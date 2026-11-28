@@ -1,4 +1,4 @@
-import type { Alert } from '@camstack/types'
+import type { Alert } from '@dominevo/types'
 
 /**
  * D911 — a robot camera that cannot open its monitor because the privacy PIN

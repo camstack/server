@@ -1,4 +1,4 @@
-import { SECRET_CLEAR } from '@camstack/types'
+import { SECRET_CLEAR } from '@dominevo/types'
 
 /** Account label from a sign-in, or the older username string when that is still plaintext. */
 export function homeComSignedInAccount(settings: Record<string, unknown>): string {

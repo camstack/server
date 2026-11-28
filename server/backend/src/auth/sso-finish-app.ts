@@ -32,7 +32,7 @@ import {
   appFlowLocation,
   parseAppAuthCallback,
   type SsoBridgeClaimsSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { z } from 'zod'
 import type { AppConfirmations } from './app-confirmations.js'
 import { bridgeProviderAddonId } from './auth-provider-gate.js'

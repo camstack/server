@@ -4,7 +4,7 @@
  * Calendar source get their access token from a refresh made with the MIGRATED refresh token.
  * The state key is gone by then, so a read path that still looked at it would find nothing.
  */
-import { makeInMemoryRecords, type StoredKeyRead } from '@camstack/types'
+import { makeInMemoryRecords, type StoredKeyRead } from '@dominevo/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('../../google-oauth.js', async (importOriginal) => {

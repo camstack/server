@@ -3,7 +3,7 @@ import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 import { applyDeployedBundle } from '../agent-deploy-swap.js'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 const noopLogger: IScopedLogger = {
   info() {},
@@ -98,21 +98,21 @@ describe('applyDeployedBundle', () => {
 
   it('handles a scoped package name (slash in addonId) without nesting temp dirs', async () => {
     const addonsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cs-deploy-'))
-    const live = path.join(addonsDir, '@camstack', 'addon-pipeline')
+    const live = path.join(addonsDir, '@dominevo', 'addon-pipeline')
     fs.mkdirSync(live, { recursive: true })
     fs.writeFileSync(
       path.join(live, 'package.json'),
-      JSON.stringify({ name: '@camstack/addon-pipeline', version: '1.0.0' }),
+      JSON.stringify({ name: '@dominevo/addon-pipeline', version: '1.0.0' }),
     )
 
     await applyDeployedBundle({
       addonsDir,
-      addonId: '@camstack/addon-pipeline',
+      addonId: '@dominevo/addon-pipeline',
       bundle: Buffer.from('x'),
       extract: async (_tgz, dest) => {
         fs.writeFileSync(
           path.join(dest, 'package.json'),
-          JSON.stringify({ name: '@camstack/addon-pipeline', version: '1.0.4' }),
+          JSON.stringify({ name: '@dominevo/addon-pipeline', version: '1.0.4' }),
         )
       },
       logger: noopLogger,
@@ -121,8 +121,8 @@ describe('applyDeployedBundle', () => {
     expect(JSON.parse(fs.readFileSync(path.join(live, 'package.json'), 'utf8')).version).toBe(
       '1.0.4',
     )
-    // No stray temp/backup dirs left under the @camstack scope dir.
-    const scopeEntries = fs.readdirSync(path.join(addonsDir, '@camstack'))
+    // No stray temp/backup dirs left under the @dominevo scope dir.
+    const scopeEntries = fs.readdirSync(path.join(addonsDir, '@dominevo'))
     expect(scopeEntries.filter((n) => n.startsWith('.addon-pipeline'))).toEqual([])
   })
 

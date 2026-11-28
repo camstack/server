@@ -52,7 +52,7 @@
  *    is live" — that inversion is what empties a table.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { MediaReclaimCandidate } from '../store/media-store.js'
 
 /** `'report'` counts and answers; `'reclaim'` also deletes. */

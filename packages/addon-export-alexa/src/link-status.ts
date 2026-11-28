@@ -45,8 +45,8 @@ export const ALEXA_OAUTH_INTEGRATION_ID = 'export-alexa'
  *
  * Declared locally rather than imported: `OauthSessionSummarySchema` is
  * exported from `user-management.cap.ts` but NOT re-exported from
- * `@camstack/types`' barrel, and widening that barrel would put this change on
- * the publish train instead of a `camstack deploy`. Same reason
+ * `@dominevo/types`' barrel, and widening that barrel would put this change on
+ * the publish train instead of a `dominevo deploy`. Same reason
  * `lwa-tokens-callback.ts` declares its own `OauthVerifiedResultSchema`.
  */
 export const OauthSessionRowSchema = z.object({

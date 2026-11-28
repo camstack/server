@@ -173,7 +173,7 @@ npx tsx scripts/check-no-heap-dump-command.ts || exit 1
 # D718: no heap-snapshot env and no event-fanout mode switch (always filter).
 npx tsx scripts/check-no-retired-fanout-heap-env.ts || exit 1
 # The container-child precedence is defined once and copied twice, by two
-# consumers that cannot import it (the viewer resolves @camstack/types from its
+# consumers that cannot import it (the viewer resolves @dominevo/types from its
 # own node_modules; the HA provider expresses it over the DeviceType enum). A
 # comment asking them to stay in sync is not a rule — this is.
 npx tsx scripts/check-container-priority-in-sync.ts || exit 1

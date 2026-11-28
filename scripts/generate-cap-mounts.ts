@@ -141,7 +141,7 @@ async function loadCapabilities(): Promise<readonly CapInfo[]> {
     // `status: {...}` is set) and the three contribution methods (when
     // `exposesDeviceSettings: true`). Caps with zero declared methods
     // can still have a generated router if any of these flags trigger.
-    const { expandCapMethods } = await import('@camstack/types')
+    const { expandCapMethods } = await import('@dominevo/types')
     const effectiveMethods = expandCapMethods(capDef)
     if (Object.keys(effectiveMethods).length === 0) continue
 
@@ -426,11 +426,11 @@ async function generate(): Promise<void> {
       : ' *   (none — every cap with a generated router is mounted)',
     ' */',
     '',
-    `import type { CapabilityRegistry } from '@camstack/server/system'`,
-    `import type { InferProvider } from '@camstack/types'`,
+    `import type { CapabilityRegistry } from '@dominevo/server/system'`,
+    `import type { InferProvider } from '@dominevo/types'`,
     `import {`,
     ...requiredCapExports.map((n) => `  ${n},`),
-    `} from '@camstack/types'`,
+    `} from '@dominevo/types'`,
     `import type { MoleculerService } from '../../core/moleculer/moleculer.service.js'`,
     ...(mounted.some((c) => emitsCollectionMount(c) && c.arrayOutputMethods.length > 0)
       ? [`import { concatCollection, requireDeviceScoped } from './cap-mount-helpers.js'`]

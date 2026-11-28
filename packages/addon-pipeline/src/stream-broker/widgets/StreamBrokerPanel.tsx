@@ -26,8 +26,8 @@ import type {
   CameraStream,
   CamProfile,
   ProfileSlot,
-} from '@camstack/types'
-import { makeSourceBrokerId } from '@camstack/types'
+} from '@dominevo/types'
+import { makeSourceBrokerId } from '@dominevo/types'
 import {
   useDeviceProxy,
   useEventInvalidation,
@@ -43,7 +43,7 @@ import {
   useSystem,
   type WidgetProps,
   Button,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { ChevronDown, ChevronRight, Radio, Volume2, VolumeX, X } from 'lucide-react'
 import { type ReactNode, useCallback, useRef, useState } from 'react'

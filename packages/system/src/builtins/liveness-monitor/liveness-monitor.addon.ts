@@ -26,7 +26,7 @@ import {
   type ProviderRegistration,
   RECORDING_SOURCE_CAMSTACK_ADDON,
   RecordingStatusSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   type CameraFootage,
   evaluateLiveness,

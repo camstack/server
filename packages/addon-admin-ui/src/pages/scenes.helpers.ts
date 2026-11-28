@@ -9,7 +9,7 @@
  * row the operator opened it for.
  */
 
-import type { SceneMonitor } from '@camstack/types'
+import type { SceneMonitor } from '@dominevo/types'
 
 export interface SceneCamera {
   readonly deviceId: number

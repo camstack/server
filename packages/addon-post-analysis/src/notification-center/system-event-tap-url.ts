@@ -14,7 +14,7 @@
  *
  *  - **The page must be able to ACT on the thing the event reports.** That is
  *    why `server-update-available` does not go to `/system/addons`: that page
- *    deliberately hides `@camstack/server` and every framework package
+ *    deliberately hides `@dominevo/server` and every framework package
  *    (`Addons.tsx`, `FRAMEWORK_PACKAGE_NAMES`), so an operator sent there for a
  *    node's own update would find a list that does not contain it. The node's
  *    update/restart lives in the Cluster page's node card
@@ -38,7 +38,7 @@
  * URL.
  */
 
-import type { NcSystemEventKind } from '@camstack/types'
+import type { NcSystemEventKind } from '@dominevo/types'
 
 /**
  * The facts a system-event tap reads, and nothing else.
@@ -93,7 +93,7 @@ const ADDON_UPDATE_KINDS: ReadonlySet<NcSystemEventKind> = new Set<NcSystemEvent
   'addon-update-available',
 ])
 
-/** Kinds whose action is "go and apply a NODE's own (`@camstack/server`) update". */
+/** Kinds whose action is "go and apply a NODE's own (`@dominevo/server`) update". */
 const NODE_UPDATE_KINDS: ReadonlySet<NcSystemEventKind> = new Set<NcSystemEventKind>([
   'server-update-available',
   // The SHELL has no apply action anywhere — but the node card is still the
@@ -159,7 +159,7 @@ const CAMERA_BY_CONSTRUCTION_KINDS: ReadonlySet<NcSystemEventKind> = new Set<NcS
 const SUMMARY_SECTION_PATHS: Readonly<Record<string, string>> = {
   nodes: ADMIN_NODES_PATH,
   'addon-updates': ADMIN_ADDONS_PATH,
-  // `@camstack/server` and the container are answered on the Cluster page —
+  // `@dominevo/server` and the container are answered on the Cluster page —
   // the Addons page hides the framework packages (see the header).
   updates: ADMIN_NODES_PATH,
 }

@@ -1,10 +1,10 @@
 /**
- * Spawns the CamStack node (hub OR agent) as a child process and forwards
+ * Spawns the Dominevo node (hub OR agent) as a child process and forwards
  * lifecycle (kill on app quit, restart on crash, log capture).
  *
  * Runtime-updatable node packages, phase 3: the shell spawns the shared
- * STARTER (`@camstack/server/dist/starter.js`), NOT `launcher.js` directly. The
- * starter resolves the active `@camstack/server` root from the user data dir
+ * STARTER (`@dominevo/server/dist/starter.js`), NOT `launcher.js` directly. The
+ * starter resolves the active `@dominevo/server` root from the user data dir
  * (`<userData>/data/server-root/...`) and falls back to the baked SEED closure
  * (Resources) on first boot / offline. The `CAMSTACK_ROLE` env the shell passes
  * selects hub vs agent inside the launcher. Node + framework updates then land
@@ -13,7 +13,7 @@
  * Resolution (the starter lives INSIDE the baked closure so its `__dirname`
  * anchors the seed package dir):
  *   - Production (`app.isPackaged`):
- *       `${resourcesPath}/node_modules/@camstack/server/dist/starter.js`
+ *       `${resourcesPath}/node_modules/@dominevo/server/dist/starter.js`
  *   - Dev: `<workspace>/server/backend/dist/starter.js` (the starter detects
  *     the workspace checkout and defers to plain launcher resolution).
  */
@@ -82,46 +82,46 @@ function existsDir(p: string): boolean {
 /**
  * Resolve the baked SEED server package dir (the immutable first-boot/offline
  * fallback closure) inside the packaged app's Resources:
- * `${resourcesPath}/node_modules/@camstack/server`. This dir holds the starter,
+ * `${resourcesPath}/node_modules/@dominevo/server`. This dir holds the starter,
  * `dist/launcher.js`, its `package.json`, and — as npm siblings under
- * `${resourcesPath}/node_modules/@camstack/*` — the host-external framework
+ * `${resourcesPath}/node_modules/@dominevo/*` — the host-external framework
  * packages the seed launcher resolves. Passed to the starter as
  * `CAMSTACK_SEED_SERVER_DIR`. Returns null in dev (no packaged Resources).
  */
 export function resolveSeedServerDir(resourcesPath: string | null): string | null {
   if (!resourcesPath) return null
-  const seedDir = path.join(resourcesPath, 'node_modules', '@camstack', 'server')
+  const seedDir = path.join(resourcesPath, 'node_modules', '@dominevo', 'server')
   return existsDir(seedDir) ? seedDir : null
 }
 
 /**
- * Resolve the dir the packaged app seeds addons from: the `@camstack` SCOPE dir
- * of the baked closure, `${resourcesPath}/node_modules/@camstack`. Exported to
+ * Resolve the dir the packaged app seeds addons from: the `@dominevo` SCOPE dir
+ * of the baked closure, `${resourcesPath}/node_modules/@dominevo`. Exported to
  * the node as `CAMSTACK_BUNDLED_ADDONS_DIR`. Returns null in dev / a build
  * without the closure — the launcher then falls back to npm.
  *
  * ── Why the closure scope dir and not a second `Resources/addons` tree ──────
  * The app used to ship BOTH: `extraResources` copied `.deps/node_modules` whole
- * into `Resources/node_modules`, then re-copied six addons + `@camstack/server/system`
+ * into `Resources/node_modules`, then re-copied six addons + `@dominevo/server/system`
  * one by one into `Resources/addons/<short-name>`. Measured 2026-08-25 on the
- * mac-arm64 bundle: 285 MB of `@camstack` packages plus 41 MB of seven of those
+ * mac-arm64 bundle: 285 MB of `@dominevo` packages plus 41 MB of seven of those
  * SAME packages again — a second copy of everything the seed reads (D45).
  *
  * An npm scope dir is laid out exactly the way the second tree was hand-built:
- * `AddonInstaller.findLocalPackage('@camstack/addon-pipeline')` strips the scope
- * and joins `<dir>/addon-pipeline`, which is `node_modules/@camstack/addon-pipeline`
+ * `AddonInstaller.findLocalPackage('@dominevo/addon-pipeline')` strips the scope
+ * and joins `<dir>/addon-pipeline`, which is `node_modules/@dominevo/addon-pipeline`
  * verbatim. So the seed source is a rename, not a rewrite — and it fixes a live
  * defect: electron-builder DROPPED each package's own `node_modules` on the
  * per-addon `extraResources` entries, so the prebuilt natives `stage-deps.mjs`
  * plants (and loudly verifies) never reached `Resources/addons/*`. Measured on
  * the same bundle: zero `.node` files under `Resources/addons`, all of them
- * under `Resources/node_modules/@camstack`. `copyBundledNativeModules` and
+ * under `Resources/node_modules/@dominevo`. `copyBundledNativeModules` and
  * `ensureAddonNativePrebuilds({ bundledSourceDir })` were both no-ops against
  * the shipped seed tree; against the closure they are not.
  */
 export function resolveBundledAddonsDir(resourcesPath: string | null): string | null {
   if (!resourcesPath) return null
-  const scopeDir = path.join(resourcesPath, 'node_modules', '@camstack')
+  const scopeDir = path.join(resourcesPath, 'node_modules', '@dominevo')
   return existsDir(scopeDir) ? scopeDir : null
 }
 
@@ -129,10 +129,10 @@ export function resolveNodeEntry(opts: ResolveEntryOptions): string | null {
   const candidates: string[] = []
   if (opts.resourcesPath) {
     // The starter lives INSIDE the full baked closure so its `__dirname`
-    // (`.../@camstack/server/dist`) anchors the seed package dir + npm-sibling
+    // (`.../@dominevo/server/dist`) anchors the seed package dir + npm-sibling
     // framework resolution.
     candidates.push(
-      path.join(opts.resourcesPath, 'node_modules', '@camstack', 'server', 'dist', 'starter.js'),
+      path.join(opts.resourcesPath, 'node_modules', '@dominevo', 'server', 'dist', 'starter.js'),
     )
   }
   if (opts.devWorkspaceRoot) {

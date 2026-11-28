@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { MutationGate } from '@camstack/develop'
+import { MutationGate } from '@dominevo/develop'
 import { z } from 'zod'
 import { runHostCheck } from '../commands/host-check.js'
 import type { McpContext } from '../mcp/context.js'
@@ -76,7 +76,7 @@ describe('setup_feasibility', () => {
     expect(answer.report.hardware.measured).toBe(false)
     expect(answer.report.verdict).toBe('hub-plus-agents')
     const url = new URL(answer.hardwareReport?.url ?? '')
-    expect(`${url.origin}${url.pathname}`).toBe('https://github.com/camstack/server/issues/new')
+    expect(`${url.origin}${url.pathname}`).toBe('https://github.com/dominevo/server/issues/new')
     expect(url.searchParams.get('template')).toBe('hardware_report.yml')
     expect(url.searchParams.get('host-check')).toContain('i5-8500')
   })
@@ -94,7 +94,7 @@ describe('setup_feasibility', () => {
   })
 })
 
-describe('camstack host-check sizing flags', () => {
+describe('dominevo host-check sizing flags', () => {
   async function run(args: readonly string[], cpuModel: string): Promise<string> {
     const out: string[] = []
     await runHostCheck(args, {
@@ -116,7 +116,7 @@ describe('camstack host-check sizing flags', () => {
     expect(measured).not.toContain('issues/new')
 
     const unmeasured = await run(['--cameras', '6'], UNMEASURED_CPU)
-    expect(unmeasured).toContain('https://github.com/camstack/server/issues/new')
+    expect(unmeasured).toContain('https://github.com/dominevo/server/issues/new')
   })
 
   it('--json carries the feasibility report next to the host check', async () => {

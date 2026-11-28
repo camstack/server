@@ -40,7 +40,7 @@ export const toastCapability = {
     /** Stream toast notifications from the hub to the admin UI. */
     onToast: method(z.void(), ToastSchema, { kind: 'subscription' }),
   },
-  /** BIG PLAN 2: declarative mount hint — read by `@camstack/server/system` `buildCapRouters`. */
+  /** BIG PLAN 2: declarative mount hint — read by `@dominevo/server/system` `buildCapRouters`. */
   mount: { kind: 'server-provided' },
   vocabulary: { notOperatorFacing: NOT_A_DEVICE.UI_PLUMBING },
 } as const satisfies CapabilityDefinition

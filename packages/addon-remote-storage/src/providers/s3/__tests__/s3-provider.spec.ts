@@ -26,7 +26,7 @@ import {
   ListObjectsV2Command,
   type S3ClientConfig,
 } from '@aws-sdk/client-s3'
-import type { IScopedLogger, StorageLocation, LogExtras, LogTags } from '@camstack/types'
+import type { IScopedLogger, StorageLocation, LogExtras, LogTags } from '@dominevo/types'
 import { S3StorageProvider } from '../s3-provider.js'
 
 const noopLogger: IScopedLogger = {

@@ -4,7 +4,7 @@
  * dropped (D8), so past the bound the OLDEST rows go, loudly, and a failed
  * flush keeps its batch for the next tick.
  */
-import { DEVICE_TRANSITIONS_RECORD_BATCH_MAX, type DeviceTransition } from '@camstack/types'
+import { DEVICE_TRANSITIONS_RECORD_BATCH_MAX, type DeviceTransition } from '@dominevo/types'
 
 export const TRANSITIONS_QUEUE_MAX = 10_000
 const DROP_LOG_DEVICES_MAX = 10

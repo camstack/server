@@ -5,7 +5,7 @@
 import { Field } from './Form.js'
 import { useT } from '../i18n/index.js'
 import { MODEL_DISPLAY_NAME_MAX, parseDisplayName } from '../display-name.js'
-import { Input } from '@camstack/ui-library'
+import { Input } from '@dominevo/ui-library'
 
 export interface DisplayNameFieldProps {
   readonly value: string

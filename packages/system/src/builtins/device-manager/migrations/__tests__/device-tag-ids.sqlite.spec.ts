@@ -3,7 +3,7 @@
  * derived from the folded name so every owner mints the same one, the names stay, a row that
  * already has ids is left alone and a rerun plans nothing.
  */
-import { tagIdFromKey } from '@camstack/types'
+import { tagIdFromKey } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { DEVICE_TAG_IDS_ID } from '../device-tag-ids.js'
 import { makeMigrationWorld } from './device-manager-migration-world.js'

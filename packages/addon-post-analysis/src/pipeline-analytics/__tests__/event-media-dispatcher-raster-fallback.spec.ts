@@ -5,7 +5,7 @@ import {
   WIDE_THUMBNAIL_ASPECT_W,
   wideCentralSquareLayout,
 } from '../../shared/frame/wide-central-square-crop.js'
-import type { DecodedFrame, FrameHandle, IScopedLogger } from '@camstack/types'
+import type { DecodedFrame, FrameHandle, IScopedLogger } from '@dominevo/types'
 import {
   EventMediaDispatcher,
   type EventMediaDispatcherDeps,

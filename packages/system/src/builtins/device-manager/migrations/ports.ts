@@ -3,7 +3,7 @@
  * (three-way read, so an unreadable key fails the migration instead of reading as "nothing to
  * move"), the raw device columns, and the room and zone records.
  */
-import type { RecordKindHandle, RoomBody, StoredKeyRead, ZoneBody } from '@camstack/types'
+import type { RecordKindHandle, RoomBody, StoredKeyRead, ZoneBody } from '@dominevo/types'
 import { readAllRows } from '../../../records/read-all-rows.js'
 import type { DeviceRowStore } from '../device-row-store.js'
 import type { DeviceManagerStatePorts } from './index.js'

@@ -9,7 +9,7 @@
  * batch id is stamped only on what the sink actually received.
  */
 import { createHash } from 'node:crypto'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { tarBlocks, tarNameTooLong, tarTrailer } from '../training-export/tar-stream.js'
 import type { RetrainExportManifest, RetrainManifestAnnotation } from './retrain-export.js'
 import type { RetrainFrame } from './retrain-frame-store.js'

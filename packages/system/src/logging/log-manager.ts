@@ -4,7 +4,7 @@ import type { LoggingGate } from './logging-gate.js'
 import { getLoggingGate } from './logging-gate.singleton.js'
 import { PartitionedLogBuffer, type PartitionedLogBufferOptions } from './partitioned-log-buffer.js'
 import { type IScopedLogger, ScopedLogger } from './scoped-logger.js'
-import type { ILogDestination } from '@camstack/types'
+import type { ILogDestination } from '@dominevo/types'
 
 export type { ILogDestination }
 

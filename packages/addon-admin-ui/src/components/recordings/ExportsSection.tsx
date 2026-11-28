@@ -13,9 +13,9 @@
  * reload mid-render still shows the freshest state.
  */
 
-import type { ExportRecord } from '@camstack/types'
-import { EventCategory } from '@camstack/types'
-import type { DataColumn } from '@camstack/ui-library'
+import type { ExportRecord } from '@dominevo/types'
+import { EventCategory } from '@dominevo/types'
+import type { DataColumn } from '@dominevo/ui-library'
 import {
   DataTable,
   EmptyState,
@@ -28,7 +28,7 @@ import {
   useRecordingExportListExports,
   useSystem,
   Button,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { Download, Film, Loader2, Trash2, XCircle } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'

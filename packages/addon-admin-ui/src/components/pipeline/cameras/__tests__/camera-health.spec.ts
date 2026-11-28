@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { cameraHealth } from '../camera-health'
-import type { CameraStatus } from '@camstack/types'
+import type { CameraStatus } from '@dominevo/types'
 
 // ---------------------------------------------------------------------------
 // Fixtures

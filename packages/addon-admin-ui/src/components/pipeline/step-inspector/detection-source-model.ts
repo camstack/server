@@ -14,8 +14,8 @@
  * Pure: the Steps editor greys cells from {@link stepsSuppressedBySource} and
  * words the control from the functions here.
  */
-import type { CameraDetectionSource } from '@camstack/types'
-import type { StepTreeNode } from '@camstack/ui-library'
+import type { CameraDetectionSource } from '@dominevo/types'
+import type { StepTreeNode } from '@dominevo/ui-library'
 import i18n from '../../../i18n/index'
 
 /** The root detector step of the video pipeline. */

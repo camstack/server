@@ -1,4 +1,4 @@
-import { DeviceFeature, DeviceType } from '@camstack/types'
+import { DeviceFeature, DeviceType } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { alexaEchoSessions, type EchoSession } from '../alexa-echo-sessions.js'
 import { AlexaEchoDevice } from '../devices/alexa-echo-device.js'
@@ -455,7 +455,9 @@ describe('AlexaEchoDevice', () => {
     })
 
     it('a set drops the shared volume list so the next poll does not reuse an older one', async () => {
-      const s = session({ playerState: vi.fn(async (): Promise<PlayerInfo> => ({ state: 'IDLE' })) })
+      const s = session({
+        playerState: vi.fn(async (): Promise<PlayerInfo> => ({ state: 'IDLE' })),
+      })
       alexaEchoSessions.setResolver(() => s)
       const { device, providers } = await build()
       const player = providers.get('media-player') as Player

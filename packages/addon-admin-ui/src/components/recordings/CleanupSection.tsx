@@ -7,7 +7,7 @@
  * so the browser never waits on the 60 s UDS deadline.
  */
 
-import type { StorageCleanupJob } from '@camstack/types'
+import type { StorageCleanupJob } from '@dominevo/types'
 import {
   useConfirm,
   useStorageMigrationCleanupCancel,
@@ -15,7 +15,7 @@ import {
   useStorageMigrationCleanupStatus,
   Button,
   Checkbox,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Loader2, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { useCapabilityPresence } from '../../lib/capability-presence'

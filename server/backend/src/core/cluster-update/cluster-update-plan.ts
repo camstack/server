@@ -9,7 +9,7 @@ import {
   type ClusterUpdatePlan,
   type ClusterUpdateStep,
   type ServerPackageStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { errText, type ClusterNodeView, type ClusterUpdateSeams } from './cluster-update-seams.js'
 
 /** Does a node running `status` need the target? Unknown running = yes. */

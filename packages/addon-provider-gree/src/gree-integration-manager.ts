@@ -4,7 +4,7 @@ import {
   GreeAuthError,
   Nodegree,
 } from '@apocaliss92/nodegree'
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IScopedLogger } from '@dominevo/types'
 import { type GreeConfig, settingsToGreeConfig, toNodegreeOptions } from './config.js'
 import { type GreeExtras, readGreeExtras } from './gree-extras.js'
 import { type GreeConnectionSurface, macKey } from './gree-gateway.js'

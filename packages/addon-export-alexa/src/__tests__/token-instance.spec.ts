@@ -4,7 +4,7 @@
  * that names no instance keeps working where it worked before: on the default skill, and on a
  * skill whose ledger already lists the user — nothing is re-linked.
  */
-import type { AddonContext, AddonHttpReply, AddonHttpRequest, IScopedLogger } from '@camstack/types'
+import type { AddonContext, AddonHttpReply, AddonHttpRequest, IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { buildRoutes, BROKER_HEADER, type HttpRouteDeps, type RoutedSkill } from '../http-server.js'
 import type { SkillLookup } from '../instance-routing.js'

@@ -51,7 +51,7 @@
  * testable without real clocks.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 /** What a capture request is FOR — drives its default priority. */
 export type CaptureKind =

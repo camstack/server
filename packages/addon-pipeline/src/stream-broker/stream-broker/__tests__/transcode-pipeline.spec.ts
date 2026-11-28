@@ -19,7 +19,7 @@
  * egress wiring by `transcode-egress.spec.ts`. Here we inject egress fakes and
  * assert the manager's source-selection / refcount / teardown behaviour.
  */
-import type { CameraStream, CamProfile, IScopedLogger } from '@camstack/types'
+import type { CameraStream, CamProfile, IScopedLogger } from '@dominevo/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { makeSpawnFn } from '../../../__tests__/support/spawn-fake-child.js'
 import { restreamEntry } from '../../../__tests__/support/rtsp-restream-entry.js'

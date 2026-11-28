@@ -129,7 +129,7 @@ owners' write paths (`applyLinkedDevicesPatch`, `persistDoorbellSources`) stay.
   `_linkedDeviceIds` on 2026-09-22 and has a spec forbidding it).
 - **Framework change**, like D648: types (cap + value schema), system (owners),
   ui-library (widget) and the server's generated routers. Live only in a
-  published `@camstack/server` containing it; the admin UI must ship with it.
+  published `@dominevo/server` containing it; the admin UI must ship with it.
   An older admin UI against a new server loses its Locations rebuild (the
   method is gone); a new admin UI against an older server gets rows without
   `trackedDeviceIds` and therefore no toggle, and its rebuild's `setSlot`

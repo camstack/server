@@ -2,7 +2,7 @@
  * `resolveBundledAddonsDir` — the ONE tree the packaged app seeds addons from.
  *
  * Measured 2026-08-25 on `release/mac-arm64/camstack.app/Contents/Resources`:
- * the app shipped `node_modules/@camstack` (285 MB, 15 packages) AND a second
+ * the app shipped `node_modules/@dominevo` (285 MB, 15 packages) AND a second
  * `addons/` tree (41 MB) holding 7 of those SAME packages, copied one by one by
  * `extraResources`. The second tree was not merely redundant, it was DEGRADED —
  * electron-builder dropped each package's own `node_modules`, so the very
@@ -26,8 +26,8 @@ afterEach(() => {
 })
 
 describe('resolveBundledAddonsDir', () => {
-  it('is the @camstack scope dir INSIDE the bundled closure, not a second tree', () => {
-    const scope = path.join(tmp, 'node_modules', '@camstack')
+  it('is the @dominevo scope dir INSIDE the bundled closure, not a second tree', () => {
+    const scope = path.join(tmp, 'node_modules', '@dominevo')
     fs.mkdirSync(path.join(scope, 'addon-pipeline'), { recursive: true })
     expect(resolveBundledAddonsDir(tmp)).toBe(scope)
   })
@@ -43,19 +43,19 @@ describe('resolveBundledAddonsDir', () => {
   it('never points at a file', () => {
     const nm = path.join(tmp, 'node_modules')
     fs.mkdirSync(nm, { recursive: true })
-    fs.writeFileSync(path.join(nm, '@camstack'), 'not a dir')
+    fs.writeFileSync(path.join(nm, '@dominevo'), 'not a dir')
     expect(resolveBundledAddonsDir(tmp)).toBeNull()
   })
 
   it('names the packages by their SHORT dir name — what AddonInstaller.findLocalPackage joins', () => {
-    // `findLocalPackage('@camstack/addon-pipeline')` strips the scope and joins
+    // `findLocalPackage('@dominevo/addon-pipeline')` strips the scope and joins
     // `<workspaceDir>/addon-pipeline`. An npm scope dir is laid out exactly that
     // way, which is why it can replace the hand-copied `addons/` tree verbatim.
-    const scope = path.join(tmp, 'node_modules', '@camstack')
+    const scope = path.join(tmp, 'node_modules', '@dominevo')
     fs.mkdirSync(path.join(scope, 'addon-pipeline'), { recursive: true })
     fs.writeFileSync(
       path.join(scope, 'addon-pipeline', 'package.json'),
-      JSON.stringify({ name: '@camstack/addon-pipeline', version: '1.0.0' }),
+      JSON.stringify({ name: '@dominevo/addon-pipeline', version: '1.0.0' }),
     )
     const resolved = resolveBundledAddonsDir(tmp)
     expect(resolved).not.toBeNull()
@@ -63,6 +63,6 @@ describe('resolveBundledAddonsDir', () => {
     const parsed: unknown = JSON.parse(
       fs.readFileSync(path.join(resolved, 'addon-pipeline', 'package.json'), 'utf-8'),
     )
-    expect(parsed).toMatchObject({ name: '@camstack/addon-pipeline' })
+    expect(parsed).toMatchObject({ name: '@dominevo/addon-pipeline' })
   })
 })

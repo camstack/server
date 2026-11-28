@@ -4,7 +4,7 @@
  *
  * This DUPLICATES the executor's per-device model resolution (P0-3:
  * `resolveDeviceEngine` + `MODEL_BY_CLASS` + the object-detection step's
- * `defaultModelIdByFormat` in `@camstack/addon-pipeline`). It is duplicated —
+ * `defaultModelIdByFormat` in `@dominevo/addon-pipeline`). It is duplicated —
  * not imported — because cross-addon imports are forbidden (the orchestrator
  * and the detection-pipeline are separate addons; only tRPC crosses the
  * boundary). Keep this in sync with `default-detection-model.ts` /
@@ -30,7 +30,7 @@ import {
   type ModelFormat,
   type PipelineSchema,
   type RunnerInferenceDevice,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { deviceDisabledSteps, type NodeStepSource } from './node-step-settings.js'
 import type { ClusterStepModesBlob } from './orchestrator-store-schemas.js'
 import { addonHasCompatibleModel, gateStep, OBJECT_DETECTION_STEP_ID } from './pipeline-resolver.js'
@@ -92,7 +92,7 @@ export function makeRootSwitchGuard(
 }
 
 /** Split a deviceKey (`<backend>:<device>`, or bare `cpu`) into its parts + format.
- *  Format comes from the shared {@link deviceBackendToFormat} SSOT (`@camstack/types`)
+ *  Format comes from the shared {@link deviceBackendToFormat} SSOT (`@dominevo/types`)
  *  — the previously-local `BACKEND_FORMAT` copy is gone (R3/node-F2). Used only for
  *  STORED-ONLY keys (a configured device the live probe didn't return); a probed
  *  device carries its own honest `format` from the descriptor. */
@@ -297,7 +297,7 @@ export function inferenceDeviceCaps(
  * Why a device the node HAS is not a candidate for the camera-root election.
  *
  * The reason list is the CAP CONTRACT (`INFERENCE_DEVICE_EXCLUSION_REASONS` in
- * `@camstack/types`) rather than a local union, because it is now RENDERED:
+ * `@dominevo/types`) rather than a local union, because it is now RENDERED:
  * `getNodeInferenceDevices` carries it per device so the admin UI names the
  * reason an enabled accelerator is not being used instead of leaving the
  * operator to deduce it. A local copy would drift the moment one side gains a

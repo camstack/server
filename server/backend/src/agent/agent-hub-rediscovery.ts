@@ -8,8 +8,8 @@
  * address is persisted only after that hub answers a membership query the
  * pinned CA verifies (the id itself is public). The next boot then dials it.
  */
-import type { BrowseOptions, MdnsHub } from '@camstack/develop/hub-discovery'
-import { dialableHubHost, isAnnouncedHubId } from '@camstack/server/system'
+import type { BrowseOptions, MdnsHub } from '@dominevo/develop/hub-discovery'
+import { dialableHubHost, isAnnouncedHubId } from '@dominevo/server/system'
 import { readJsonFile, writeJsonFile0600 } from './agent-json-file.js'
 import { isAgentPaired, readPairedHubIdentity } from './agent-pairing-store.js'
 import { askHubMembership } from './hub-membership-client.js'
@@ -82,7 +82,7 @@ export interface HubRediscoveryDeps {
 
 async function defaultBrowse(options: BrowseOptions): Promise<readonly MdnsHub[]> {
   // Lazy: the socket library is loaded only when an agent actually lost its hub.
-  const { browseHubsMdns } = await import('@camstack/develop/hub-discovery')
+  const { browseHubsMdns } = await import('@dominevo/develop/hub-discovery')
   return browseHubsMdns(options)
 }
 

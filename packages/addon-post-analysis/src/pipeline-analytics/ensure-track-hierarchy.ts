@@ -3,7 +3,7 @@
  * also get a body crop (person / vehicle) and a full frame from that same
  * handle. A tight face JPEG is not a person crop; a class icon is not a tile.
  */
-import type { FrameHandle } from '@camstack/types'
+import type { FrameHandle } from '@dominevo/types'
 
 export interface LiveHierarchyCapture {
   readonly deviceId: number

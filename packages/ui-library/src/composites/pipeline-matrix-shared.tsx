@@ -9,7 +9,7 @@
  */
 import { useUiText, type UiTextFn } from '../contexts/ui-text'
 import { type ReactNode, type JSX } from 'react'
-import type { PipelineSlot } from '@camstack/types'
+import type { PipelineSlot } from '@dominevo/types'
 import type { StepTreeNode } from './step-tree'
 import { cn } from '../lib/cn'
 

@@ -7,8 +7,8 @@
  * The locator is driven the way production drives it: `resolve` per blob, and
  * `invalidate` from the `StorageLocationsChanged` doorbell (D387).
  */
-import type { IScopedLogger, StorageLocation, StorageLocationMode } from '@camstack/types'
-import { EventCategory } from '@camstack/types'
+import type { IScopedLogger, StorageLocation, StorageLocationMode } from '@dominevo/types'
+import { EventCategory } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   EventMediaWriteLocator,

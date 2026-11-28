@@ -12,7 +12,7 @@ import {
   deviceStateRefreshCapability,
   type InferNativeProvider,
   type StateRefreshPolicy,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { HUB_CHILD_SLEEP_RECONCILE_MS, type HubSessionHandle } from './reolink-hub-session.js'
 
 export function hubChildRefreshPolicy(integrationId: string): StateRefreshPolicy {

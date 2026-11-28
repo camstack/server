@@ -7,9 +7,9 @@ import {
   useMeshNetworkLeave,
   useMeshNetworkLogout,
   useSystem,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
-import { MeshStatusSchema } from '@camstack/types'
+import { MeshStatusSchema } from '@dominevo/types'
 import { useTranslation } from 'react-i18next'
 import { MeshStatusBadges } from './MeshStatusBadges'
 import { useMeshStatus } from './use-mesh-status'

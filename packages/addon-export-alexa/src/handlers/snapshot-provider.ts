@@ -12,7 +12,7 @@
  * Alexa tile refresh is not an operator. A doorbell does not support on-demand
  * snapshots anyway (Amazon); the latest frame is what it shows.
  */
-import type { AddonContext, IScopedLogger } from '@camstack/types'
+import type { AddonContext, IScopedLogger } from '@dominevo/types'
 import { z } from 'zod'
 import type { VerifiedDirectiveIdentity } from '../directive-router.js'
 import type { PublicEndpointReader } from '../public-endpoint.js'

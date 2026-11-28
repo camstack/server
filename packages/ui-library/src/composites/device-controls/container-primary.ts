@@ -27,7 +27,7 @@
  * Resolution prefers `primaryChildEntityId` and only consults `linkDeviceId`
  * when no durable override is present, so existing persisted links keep working.
  */
-import type { ContainerPrimaryChildPreference } from '@camstack/types'
+import type { ContainerPrimaryChildPreference } from '@dominevo/types'
 import type { ChildRef } from './primary-child'
 import { resolvePrimaryChild } from './primary-child'
 

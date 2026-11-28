@@ -16,7 +16,7 @@ import {
   FULL_IMAGE_BBOX,
   type RunStatelessStepInput,
   type RunStatelessStepResult,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { FaceReembedOutcome, FaceReembedSample } from './face-reembed-pass.js'
 import { PHOTO_ENROLL_DEVICE_ID, PHOTO_FACE_EMBEDDING_STEP_ID } from './photo-enrollment.js'
 import { NodeRotation } from './rebuild-node-rotation.js'

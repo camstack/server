@@ -10,9 +10,9 @@
  * plain-object fakes — stayed green.
  */
 import { createTRPCClient, type TRPCLink } from '@trpc/client'
-import type { AppRouter } from '@camstack/types'
+import type { AppRouter } from '@dominevo/types'
 import { observable } from '@trpc/server/observable'
-import type { AddonPageProps } from '@camstack/ui-library'
+import type { AddonPageProps } from '@dominevo/ui-library'
 import { describe, expect, it } from 'vitest'
 import { listCustomModels, MODEL_STUDIO_TRPC_CONTRACT, requireTrpcMember } from '../ui/api.js'
 

@@ -7,8 +7,8 @@ import type {
   DeviceCommandObservation,
   IScopedLogger,
   LogExtras,
-} from '@camstack/types'
-import { ONE_SHOT_HOLD_MS } from '@camstack/types'
+} from '@dominevo/types'
+import { ONE_SHOT_HOLD_MS } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   __resetCommandObserverRegistryForTests,

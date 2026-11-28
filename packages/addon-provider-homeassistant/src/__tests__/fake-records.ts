@@ -1,7 +1,7 @@
 /**
  * HA specs declare the provider's kinds on the shared in-memory records fake.
  */
-import { makeInMemoryRecords, type InMemoryRecords } from '@camstack/types'
+import { makeInMemoryRecords, type InMemoryRecords } from '@dominevo/types'
 import { haNotifyRecordKinds } from '../ha-notification-output.js'
 import { haAllRecordKinds } from '../record-kinds.js'
 

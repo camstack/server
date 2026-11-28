@@ -4,7 +4,7 @@
  * two reads to agree (D49). Every entry point runs on ONE promise chain, so an
  * event never loses to a hydration in flight (R3).
  */
-import { compositionSliceKey, ROOM_EXAMPLE_TEMPERATURE_SOURCES } from '@camstack/types'
+import { compositionSliceKey, ROOM_EXAMPLE_TEMPERATURE_SOURCES } from '@dominevo/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { SourceTracker } from '../source-tracker.js'
 import { FakeHub, type RecordingLogger, recordingLogger } from './fixtures.js'

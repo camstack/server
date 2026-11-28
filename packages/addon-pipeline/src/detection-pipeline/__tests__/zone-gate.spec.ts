@@ -8,7 +8,7 @@
  * discard trail's `[x1,y1,x2,y2]` tuple.
  */
 
-import type { FrameResult, ObjectDetection, Zone, ZoneRule } from '@camstack/types'
+import type { FrameResult, ObjectDetection, Zone, ZoneRule } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { applyZoneRuleGate } from '../zone-gate.js'
 

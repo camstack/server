@@ -3,7 +3,7 @@
  * decides, so a list that has not answered is never drawn as "none" (D315).
  */
 import type { ReactNode } from 'react'
-import { Button, Skeleton } from '@camstack/ui-library'
+import { Button, Skeleton } from '@dominevo/ui-library'
 import { useT } from '../i18n/index.js'
 import type { AsyncState } from './use-async.js'
 

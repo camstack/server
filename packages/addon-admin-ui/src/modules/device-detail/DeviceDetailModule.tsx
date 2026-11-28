@@ -21,8 +21,8 @@ import {
   useDeviceManagerGetDevice,
   useDeviceSeriesList,
   useIsPhone,
-} from '@camstack/ui-library'
-import { DeviceFeature, DeviceType } from '@camstack/types'
+} from '@dominevo/ui-library'
+import { DeviceFeature, DeviceType } from '@dominevo/types'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
 import { I18nextProvider, useTranslation } from 'react-i18next'

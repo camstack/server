@@ -11,8 +11,8 @@
  * decides when Confirm is allowed. Controlled: the value is the draft target
  * and action id; the output step is `{ target, actionId, args }`.
  */
-import { offeredActionsWith, REPEAT_ITEM_VAR } from '@camstack/types'
-import type { ActionTarget, ResolvedVocabAction } from '@camstack/types'
+import { offeredActionsWith, REPEAT_ITEM_VAR } from '@dominevo/types'
+import type { ActionTarget, ResolvedVocabAction } from '@dominevo/types'
 import {
   type DeviceListState,
   DeviceValueGroupList,
@@ -24,7 +24,7 @@ import {
   SegmentedChoice,
   useDeviceManagerListAll,
   useRecentDevices,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useDevicesBoundCaps } from './use-device-bound-caps'

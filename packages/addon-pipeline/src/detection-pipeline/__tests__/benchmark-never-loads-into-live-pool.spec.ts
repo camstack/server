@@ -22,7 +22,7 @@ import type {
   IScopedLogger,
   PipelineStepInput,
   PoolModelConfig,
-} from '@camstack/types'
+} from '@dominevo/types'
 import sharp from 'sharp'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { assumeKnownClusterRowIsDefaults } from './fixtures/known-cluster-row.js'

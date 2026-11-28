@@ -6,7 +6,7 @@ import { useDeviceCapability } from '../../hooks/use-device-capability'
 import { useDeviceCommand } from '../../hooks/use-device-command'
 import { useDragValue } from '../../hooks/use-drag-value'
 import { cn } from '../../lib/cn'
-import type { FanControlStatus } from '@camstack/types'
+import type { FanControlStatus } from '@dominevo/types'
 import type { ControlPanelProps } from './types'
 
 export function FanPanel({ trpc, deviceId, features, layout }: ControlPanelProps): ReactNode {

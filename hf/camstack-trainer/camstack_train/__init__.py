@@ -1,4 +1,4 @@
-"""CamStack trainer: fine-tune a root detector on a hub's annotated export.
+"""Dominevo trainer: fine-tune a root detector on a hub's annotated export.
 
 The hub never imports this package. It talks to it through files only:
 ``job.json`` + ``dataset.tar`` in, ``bundle.tar`` + ``result.json`` out, and

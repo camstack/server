@@ -24,7 +24,7 @@ that; it does not claim more than the LICENSE file supports.
 THE UNBAKED RESCALE — why the graph is patched
 ----------------------------------------------
 Upstream takes ``uint8`` NHWC and opens with ``Cast(uint8→float) →
-Mul(1/255)``. The CamStack inference pool feeds every float model an RGB tensor
+Mul(1/255)``. The Dominevo inference pool feeds every float model an RGB tensor
 ALREADY in [0,1] (``inference_pool.resize_image`` divides by 255) and has no
 "feed me uint8 instead" switch — a uint8 input would need a second preprocess
 branch in the pool for one model.
@@ -174,7 +174,7 @@ def _strip_rescale(src: Path, dst: Path) -> None:
     model.producer_name = "camstack"
     model.doc_string = (
         "fast-plate-ocr cct-s-v2-global (ankandrew, MIT). Input `input`: RGB NHWC "
-        "float32 in [0,1] (the CamStack pool's /255 tensor); upstream's uint8 Cast + "
+        "float32 in [0,1] (the Dominevo pool's /255 tensor); upstream's uint8 Cast + "
         "Mul(1/255) head is REMOVED because it computes exactly that tensor. "
         "Batch is pinned to 1 (the Intel NPU compiler rejects a dynamic dim). "
         "Outputs: `plate` [1,10,37] per-slot softmax over "

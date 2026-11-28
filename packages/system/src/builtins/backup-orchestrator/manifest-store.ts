@@ -17,7 +17,7 @@
  * snapshot of the embedded `ArchiveManifest` so `getEntries` can
  * serve the contents preview without re-reading the tarball.
  */
-import type { AddonApi, DataStoreDatabase } from '@camstack/types'
+import type { AddonApi, DataStoreDatabase } from '@dominevo/types'
 import {
   type ArchiveManifest,
   DEFAULT_BACKUP_DATABASES,

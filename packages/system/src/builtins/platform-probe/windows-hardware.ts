@@ -1,4 +1,4 @@
-import type { GpuInfo, NpuInfo, NvidiaProbe } from '@camstack/types'
+import type { GpuInfo, NpuInfo, NvidiaProbe } from '@dominevo/types'
 import { xdnaInfoForDevice } from './amd-npu.js'
 
 /**

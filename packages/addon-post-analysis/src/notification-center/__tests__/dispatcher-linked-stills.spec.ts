@@ -22,7 +22,7 @@ import {
   type MediaFile,
   prepareNotification,
   type TargetKindCaps,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { makeTestMediaFile } from '../../__tests__/support/media-file.js'
 import { withNcNotificationFormat } from './support/nc-test-deps.js'

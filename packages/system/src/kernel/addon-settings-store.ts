@@ -9,8 +9,8 @@
  * ({@link ./device-settings-store.ts}): reads are three-way, a write is ONE
  * `transact`, a merge never reads, errors propagate.
  */
-import type { ISettingsStoreProvider } from '@camstack/types'
-import { nodeIdOfScopedKey } from '@camstack/types/addon'
+import type { ISettingsStoreProvider } from '@dominevo/types'
+import { nodeIdOfScopedKey } from '@dominevo/types/addon'
 import { prefixRange } from '../builtins/sqlite-storage/prefix-range.js'
 import { loadPrefixed, unwrapStoredValue } from './prefix-walk.js'
 

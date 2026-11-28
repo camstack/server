@@ -13,7 +13,7 @@
  * it for one room, and what it writes is the same manual list they can then
  * prune in the picker. The answer comes from `legacyAutoLinkIds` — the SAME
  * function the hub's boot backfill uses, which is why it moved into
- * `@camstack/types` instead of being copied here.
+ * `@dominevo/types` instead of being copied here.
  *
  * ## What it costs
  *
@@ -37,7 +37,7 @@ import {
   legacyAutoLinkIds,
   type ExtensionSetSlotInput,
   type LinkCandidate,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { SiteDevice } from './site-locations'
 
 /** What the rebuild would write to ONE camera. */

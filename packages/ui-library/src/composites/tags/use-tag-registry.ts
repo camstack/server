@@ -5,7 +5,7 @@
  * `undefined` until the list ANSWERED, and the writes are offered only when the
  * cap is known to be present.
  */
-import type { IconKey, TagColorId, TagEntry } from '@camstack/types'
+import type { IconKey, TagColorId, TagEntry } from '@dominevo/types'
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'
 import {

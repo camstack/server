@@ -24,7 +24,7 @@ import type {
   ChildCustomActionCatalogs,
   CustomActionCatalogDescriptor,
   CustomActionsSpec,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 
 /**

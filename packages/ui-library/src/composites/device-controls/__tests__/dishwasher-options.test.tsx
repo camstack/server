@@ -3,7 +3,7 @@
  * The options the dishwasher card does not draw: toggles only for methods the
  * binding implements, plus delayed start, events and care reminders.
  */
-import type { DishwasherStatus } from '@camstack/types'
+import type { DishwasherStatus } from '@dominevo/types'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { DishwasherOptionsPanel } from '../dishwasher-options'

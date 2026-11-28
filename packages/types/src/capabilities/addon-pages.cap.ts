@@ -13,7 +13,7 @@ import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
  * rebuilds without manual reload.
  *
  * The hub-local builtin `addon-pages-aggregator` (see
- * `@camstack/server/system/builtins/addon-pages-aggregator`) registers the
+ * `@dominevo/server/system/builtins/addon-pages-aggregator`) registers the
  * provider. Splitting the public aggregator from the raw collection
  * keeps both ends in codegen — there's no hand-written
  * `addon-pages.router.ts` wrapper anymore.

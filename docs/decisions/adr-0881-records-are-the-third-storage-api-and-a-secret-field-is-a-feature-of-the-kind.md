@@ -103,8 +103,8 @@ records, integrations, device-manager; a new provider that reads the stamp must 
 
 ## Consequences
 
-- A framework change: `@camstack/types` and `@camstack/system` (a new capability, a new builtin, a
-  changed `storage-admin` cap), so it is live only in a `@camstack/server` closure installed on the
+- A framework change: `@dominevo/types` and `@dominevo/system` (a new capability, a new builtin, a
+  changed `storage-admin` cap), so it is live only in a `@dominevo/server` closure installed on the
   hub; one hub restart. Nothing adopts records yet, so the closure changes no behaviour until
   phase 2.
 - The `records`, `_record_kinds` and `_record_sequences` tables are created by the first declaration

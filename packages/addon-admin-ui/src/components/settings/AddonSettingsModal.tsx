@@ -9,7 +9,7 @@
  * input to a single addonId. If a future caller needs N at once,
  * the underlying panel already accepts an array.
  */
-import { Dialog, DialogBody, DialogContent, DialogHeader, DialogTitle } from '@camstack/ui-library'
+import { Dialog, DialogBody, DialogContent, DialogHeader, DialogTitle } from '@dominevo/ui-library'
 import type { SettingsFieldScope } from '../../lib/settings-field-scope'
 import { NodeAddonsSettingsPanel } from './NodeAddonsSettingsPanel'
 

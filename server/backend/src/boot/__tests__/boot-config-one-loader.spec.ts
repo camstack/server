@@ -1,7 +1,7 @@
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import { ConfigManager } from '@camstack/server/system'
+import { ConfigManager } from '@dominevo/server/system'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { loadBootstrapConfig } from '../boot-config'
 

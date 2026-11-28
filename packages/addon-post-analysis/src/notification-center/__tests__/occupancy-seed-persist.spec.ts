@@ -26,7 +26,7 @@
  * once per key so the log answers "this rule can never count".
  */
 
-import type { CameraOccupancySnapshot } from '@camstack/types'
+import type { CameraOccupancySnapshot } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   occupancyKey,

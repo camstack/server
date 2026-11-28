@@ -3,8 +3,8 @@
  * is typed here; nothing in the URL pre-fills it. An approval ends on the
  * existing completion page (`/sso-complete`, action `cli-login`).
  */
-import { oauthLandingUrl } from '@camstack/types'
-import { Button, useThemeMode } from '@camstack/ui-library'
+import { oauthLandingUrl } from '@dominevo/types'
+import { Button, useThemeMode } from '@dominevo/ui-library'
 import { useState, type JSX } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
@@ -27,7 +27,7 @@ export function ApprovePage(): JSX.Element {
                 ? hubPath('/brand/logo-horizontal-light.svg')
                 : hubPath('/brand/logo-horizontal-dark.svg')
             }
-            alt={t('cliLogin.brand', 'CamStack')}
+            alt={t('cliLogin.brand', 'Dominevo')}
             className="h-12"
           />
         </div>
@@ -38,7 +38,7 @@ export function ApprovePage(): JSX.Element {
                 {t('cliLogin.deniedBody', 'The sign-in was denied. The terminal stays signed out.')}
               </p>
               <Button type="button" variant="ghost" onClick={() => void navigate('/')}>
-                {t('cliLogin.back', 'Back to CamStack')}
+                {t('cliLogin.back', 'Back to Dominevo')}
               </Button>
             </div>
           ) : (

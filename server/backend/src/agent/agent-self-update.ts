@@ -1,12 +1,12 @@
 /**
- * An agent keeps its own `@camstack/server` closure current, with nobody driving it.
+ * An agent keeps its own `@dominevo/server` closure current, with nobody driving it.
  *
  * Until now a closure reached an agent only when the HUB called `applyServerUpdate` on it. A
  * freshly installed desktop agent boots the seed closure baked into the app and, being unpaired,
  * had no hub to receive a fix from — not even the fix for its own unpaired boot (D857).
  *
  * The target version:
- *  - UNPAIRED: the npm `latest` of `@camstack/server` — there is no hub to follow;
+ *  - UNPAIRED: the npm `latest` of `@dominevo/server` — there is no hub to follow;
  *  - PAIRED: the version the HUB runs (carried on the registration ack), never npm latest, so
  *    the cluster has no hub/agent skew.
  *
@@ -94,7 +94,7 @@ export interface AgentSelfUpdateApplyResult {
 export interface AgentSelfUpdatePorts {
   readonly enabled: () => boolean
   readonly isPaired: () => boolean
-  /** The hub's running `@camstack/server` version from the last registration ack. */
+  /** The hub's running `@dominevo/server` version from the last registration ack. */
   readonly getHubServerVersion: () => string | null
   readonly runningVersion: () => string | null
   readonly checkLatest: () => Promise<{

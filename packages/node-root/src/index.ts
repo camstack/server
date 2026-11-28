@@ -1,5 +1,5 @@
 /**
- * @camstack/node-root — the shared, zero-runtime-dep node-root boot core.
+ * @dominevo/node-root — the shared, zero-runtime-dep node-root boot core.
  *
  * PRIVATE workspace package: it is BUNDLED at build time into the hub's
  * `dist/server-root/index.js` (tsup) and into the agent's tsup output —

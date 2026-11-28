@@ -11,7 +11,7 @@ import {
   type HubClient,
   type HubConnection,
   type NoSessionOutcome,
-} from '@camstack/develop'
+} from '@dominevo/develop'
 import type { z } from 'zod'
 import type { McpContext } from './context.js'
 

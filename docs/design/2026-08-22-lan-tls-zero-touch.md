@@ -11,7 +11,7 @@ covers:
 > The operator's request,
 > verbatim: *"Intendo automatizzare lato server, un user installa server ed
 > applicazione e generiamo certificati che poi l'applicazione auto installa,
-> meccanismi simili."* [I mean automating on the server side: a user installs the server and the application and we generate certificates that the application then installs automatically, similar mechanisms.] A user installs CamStack and the app; the **local**
+> meccanismi simili."* [I mean automating on the server side: a user installs the server and the application and we generate certificates that the application then installs automatically, similar mechanisms.] A user installs Dominevo and the app; the **local**
 > connection is valid TLS with **no certificate to install, no warning to
 > accept, and no domain of their own**.
 >

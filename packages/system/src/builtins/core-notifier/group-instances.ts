@@ -9,7 +9,7 @@ import {
   GroupMemberSchema,
   type NotificationTargetInstancesSpec,
   NOTIFIER_GROUP_KIND,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { groupRecordKinds, groupTargetKind } from './group-descriptor.js'
 
 /** The admin widget that draws the member editor of a group (a generic id the client maps to a component). */

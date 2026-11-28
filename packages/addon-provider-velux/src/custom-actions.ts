@@ -1,4 +1,4 @@
-import { customAction, defineCustomActions } from '@camstack/types'
+import { customAction, defineCustomActions } from '@dominevo/types'
 import { z } from 'zod'
 
 /** Custom actions of the Velux addon: the LAN scan behind the integration form's gateway picker. */

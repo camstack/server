@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { AlexaBrokerEntrySchema } from '../config.js'
 import { AlexaBrokerStore } from '../alexa-broker-store.js'
-import { makeInMemoryRecords } from '@camstack/types'
+import { makeInMemoryRecords } from '@dominevo/types'
 import { alexaBrokersEntryKind } from '../broker-record-kinds.js'
 
 async function makeAlexaRecords() {

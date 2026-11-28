@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { observable } from '@trpc/server/observable'
 import { createTRPCClient } from '@trpc/client'
-import { nodePin } from '@camstack/types'
+import { nodePin } from '@dominevo/types'
 import { ipcParentLink } from '../../moleculer/trpc-links.js'
 import { UDS_NO_ROUTE_PREFIX } from '../../transport/local-child-registry.js'
 import type { CapCallInput } from '../../transport/child-cap-protocol.js'

@@ -105,7 +105,7 @@ export class WindowsServiceManager {
       return {
         ok: false,
         reason:
-          'The service needs CamStack installed for all users (under Program Files). This copy ' +
+          'The service needs Dominevo installed for all users (under Program Files). This copy ' +
           'runs from a folder your user account can write, and a service running as SYSTEM must ' +
           'not execute code from there. Reinstall choosing "Install for all users".',
       }

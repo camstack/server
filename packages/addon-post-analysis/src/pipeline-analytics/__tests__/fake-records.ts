@@ -1,9 +1,9 @@
 /**
  * The records world of the post-analysis specs: `makeInMemoryRecords` from
- * `@camstack/types` — the REAL `ctx.records` facade over an in-memory engine
+ * `@dominevo/types` — the REAL `ctx.records` facade over an in-memory engine
  * that keeps the real engine's contract, refusals included (an unindexed
  * `where`, an `order` next to a `where`, a page that cannot be resumed). The
- * contract spec `records-in-memory-contract.spec.ts` in `@camstack/server/system`
+ * contract spec `records-in-memory-contract.spec.ts` in `@dominevo/server/system`
  * holds it to the engine. Test-only; fabricated data.
  *
  * Every event ledger is a records kind on every node, so a spec builds its
@@ -16,7 +16,7 @@ import {
   makeInMemoryRecords,
   type RecordKindHandle,
   type RecordsAccess,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { pipelineAnalyticsRecordKinds } from '../record-kinds.js'
 import type { EventLedgerCollection } from '../store/event-ledger-collection.js'
 import {

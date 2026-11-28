@@ -19,7 +19,7 @@ import {
   useDataTableFilter,
   type DataTableFilterConfig,
   type DataTableFilterState,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Loader2, Trash2, X } from 'lucide-react'
 import { useMemo, useState, type ReactNode } from 'react'
 

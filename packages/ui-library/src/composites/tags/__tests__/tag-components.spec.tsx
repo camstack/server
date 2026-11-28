@@ -5,7 +5,7 @@
  * the search matches tag names, and the by-tag view lists a row with two tags
  * under both, untagged last.
  */
-import type { TagEntry } from '@camstack/types'
+import type { TagEntry } from '@dominevo/types'
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { useState } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'

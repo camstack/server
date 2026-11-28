@@ -1,5 +1,5 @@
 /** A Matter node device registers the device-mesh capability, bound to its broker's fabric view. */
-import type { DeviceContext, IDeviceRuntimeState } from '@camstack/types'
+import type { DeviceContext, IDeviceRuntimeState } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { MatterNodeDevice } from '../devices/matter-node-device.js'
 

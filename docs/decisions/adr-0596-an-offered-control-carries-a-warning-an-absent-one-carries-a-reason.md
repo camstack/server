@@ -63,7 +63,7 @@ beside a working control is the honest surface.
   `!row.available` so it can never be a second opinion on a current hub.
 - An unrecognised warning code renders `warnUnknown` rather than nothing:
   silence beside a live control is the same gap D62 exists to close.
-- Train: `@camstack/types` must be published and a `@camstack/server` carrying
+- Train: `@dominevo/types` must be published and a `@dominevo/server` carrying
   it installed before the hub sends `warning`. Until then the viewer's fallback
   is what runs — and the write stays refused, because that refusal is in the
   orchestrator's copy of the derivation.

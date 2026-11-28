@@ -4,8 +4,8 @@
  * Verifies the THREE states are distinguishable: rows, empty (query succeeded
  * with zero rows), and unavailable (query errored → "requires server update").
  */
-import { selectOption, waitForSelectRows } from '@camstack/ui-library/testing'
-import type { NcHistoryEntry } from '@camstack/types'
+import { selectOption, waitForSelectRows } from '@dominevo/ui-library/testing'
+import type { NcHistoryEntry } from '@dominevo/types'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
@@ -48,8 +48,8 @@ const listAllHook = vi.fn(
     fleetListResult(FLEET_ROWS),
 )
 
-vi.mock('@camstack/ui-library', async () => {
-  const real = await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+vi.mock('@dominevo/ui-library', async () => {
+  const real = await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return {
     ...real,
     useDeviceManagerListAll: (input?: FleetListInput, options?: FleetListOptions) =>

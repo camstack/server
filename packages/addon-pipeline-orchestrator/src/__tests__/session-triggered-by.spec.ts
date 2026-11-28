@@ -11,7 +11,7 @@ import {
   type IScopedLogger,
   type MotionSource,
   type MotionTriggeredBy,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   type OrchestratorSubscriptionsDeps,

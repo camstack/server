@@ -45,4 +45,4 @@ export function findFreePresetSlot(
  * own web UI — an operator who finds an unexplained preset has no way to know
  * it is ours.
  */
-export const HOME_PRESET_NAME = 'CamStack Home'
+export const HOME_PRESET_NAME = 'Dominevo Home'

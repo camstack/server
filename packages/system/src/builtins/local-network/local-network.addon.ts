@@ -33,7 +33,7 @@ import type {
   MeshStatus,
   NotificationEndpoint,
   ProviderRegistration,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   BaseAddon,
   defineAddonMigrations,
@@ -51,7 +51,7 @@ import {
   resolveNotificationTapAddress,
   shortHostname,
   validateCustomAddress,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { ADDON_MIGRATIONS, LOCAL_NETWORK_ID } from './migrations/index.js'
 import { readRawKeys } from './migrations/hub-node-fields.js'
 import { applyLanHttp, DEFAULT_LAN_HTTP_PORT, readLanHttpState } from '../../http/lan-http-bind.js'
@@ -190,7 +190,7 @@ interface LocalNetworkConfig {
   readonly bootSeeded: boolean
   /**
    * Role flag `notificationTaps` (D709, D734): the ONE address a notification
-   * TAP opens. Empty = automatic (the CamStack app link). Stored VERBATIM
+   * TAP opens. Empty = automatic (the Dominevo app link). Stored VERBATIM
    * rather than as an index into the candidate list — interfaces come and go,
    * and an index would silently re-point after a reboot. See `address-book.ts`.
    */
@@ -231,7 +231,7 @@ interface LocalNetworkConfig {
   readonly rememberedPublicEndpointUrl: string
   readonly rememberedPublicEndpointAddon: string
   /**
-   * Advertise this hub over mDNS (`_camstack._tcp`, D838) so `camstack login`
+   * Advertise this hub over mDNS (`_camstack._tcp`, D838) so `dominevo login`
    * finds it. On by default; needs UDP 5353 multicast to reach the LAN.
    */
   readonly mdnsAdvertise: boolean
@@ -899,7 +899,7 @@ export class LocalNetworkAddon extends BaseAddon<LocalNetworkConfig> {
               label: 'Announce this hub on the LAN (mDNS)',
               labelKey: 'server:globalSettings.s_local-access.mdnsAdvertise.label',
               description:
-                'Lets `camstack login` find the hub without an address. Advertises only the HTTPS address, never a secret. Needs UDP 5353 multicast to reach the LAN (host networking or a dedicated container IP).',
+                'Lets `dominevo login` find the hub without an address. Advertises only the HTTPS address, never a secret. Needs UDP 5353 multicast to reach the LAN (host networking or a dedicated container IP).',
               descriptionKey: 'server:globalSettings.s_local-access.mdnsAdvertise.description',
               style: 'switch',
               default: true,
@@ -1507,7 +1507,7 @@ export interface LanHttpAdvertisement {
 }
 
 /**
- * The CamStack app link as a palette entry (D709): the one address on the
+ * The Dominevo app link as a palette entry (D709): the one address on the
  * Network page that is not this hub's. Flagging it for notifications (the
  * default) makes viewer taps open the native app, with the hub carried as
  * `hub=`. `kind: 'app-link'` keeps it out of every race and ranking; it is
@@ -1515,7 +1515,7 @@ export interface LanHttpAdvertisement {
  */
 export function appLinkEndpoint(): ConnectionEndpoint {
   return {
-    label: 'CamStack app link',
+    label: 'Dominevo app link',
     baseUrl: CAMSTACK_APP_LINK_ORIGIN,
     kind: 'app-link',
     interfaceKind: 'public',

@@ -11,7 +11,7 @@
  *    than nothing;
  *  - inside an `editable-array` row it is the same control, writing the row.
  */
-import type { ConfigField } from '@camstack/types'
+import type { ConfigField } from '@dominevo/types'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { beforeAll, describe, expect, it, vi } from 'vitest'
 import { FormField } from '../config-form-field'

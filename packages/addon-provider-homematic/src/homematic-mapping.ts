@@ -1,12 +1,12 @@
-import { DeviceType, DeviceRole } from '@camstack/types'
-import type { DeviceFeature } from '@camstack/types'
+import { DeviceType, DeviceRole } from '@dominevo/types'
+import type { DeviceFeature } from '@dominevo/types'
 import type { HmChannel, HmDevice } from 'nodehomematic'
 
 /**
- * Homematic channel `TYPE` → CamStack materialisation triplet. Pure:
+ * Homematic channel `TYPE` → Dominevo materialisation triplet. Pure:
  * same channel shape always yields the same mapping. Mirrors the Home
  * Assistant `ha-domain-mapping.ts` design — the single source of truth
- * for which CamStack `DeviceType` + caps a Homematic device exposes.
+ * for which Dominevo `DeviceType` + caps a Homematic device exposes.
  *
  * Homematic(IP) devices are channel-based: one physical device exposes
  * several channels, each with a `TYPE`. The controllable channel is
@@ -29,14 +29,14 @@ import type { HmChannel, HmDevice } from 'nodehomematic'
 export interface HmChannelMapping {
   readonly deviceType: DeviceType
   readonly role: DeviceRole | null
-  /** CamStack cap names to register on the device for this channel. */
+  /** Dominevo cap names to register on the device for this channel. */
   readonly capabilities: readonly string[]
   /** Optional DeviceFeature flags surfaced on `device.features`. */
   readonly features?: readonly DeviceFeature[]
 }
 
 /**
- * Map a single Homematic channel to its CamStack triplet. The channel
+ * Map a single Homematic channel to its Dominevo triplet. The channel
  * `TYPE` is the discriminator. Only the controllable / primary channel
  * types map; status-only `*_TRANSMITTER` mirrors and the various key /
  * remote / week-profile channels return `null` (their datapoints are

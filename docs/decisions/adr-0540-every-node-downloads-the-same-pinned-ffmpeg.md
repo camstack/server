@@ -11,7 +11,7 @@ applies-to:
 
 ## Context
 
-D536 stopped CamStack from ever running the host's ffmpeg, and the way it did
+D536 stopped Dominevo from ever running the host's ffmpeg, and the way it did
 that was to prefer the binary our container image installed. It worked, and it
 left three things wrong:
 

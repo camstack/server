@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import type { PlayerOverlayLayer } from '@camstack/ui-library'
+import type { PlayerOverlayLayer } from '@dominevo/ui-library'
 
 export interface SplitOverlayLayers {
   readonly frame: readonly PlayerOverlayLayer[]

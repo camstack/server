@@ -5,7 +5,7 @@
  * caller's recognition values) are listed here. The grammar's allow-list and
  * argument caps are derived from this module; nothing else keeps a second list.
  * The renderer imports this module through the
- * `@camstack/types/device-template-catalogue` subpath, never the types barrel
+ * `@dominevo/types/device-template-catalogue` subpath, never the types barrel
  * (D453), and sends the derived caps to the worker. The worker does not import it.
  */
 import { z } from 'zod'

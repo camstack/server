@@ -16,8 +16,8 @@ import { useClassPainter } from './display-palette-context'
 // Types
 // ---------------------------------------------------------------------------
 
-export type { ObjectDetection, ScoredLabel, DetectionBoundingBox } from '@camstack/types'
-import type { ObjectDetection, ScoredLabel, DetectionBoundingBox } from '@camstack/types'
+export type { ObjectDetection, ScoredLabel, DetectionBoundingBox } from '@dominevo/types'
+import type { ObjectDetection, ScoredLabel, DetectionBoundingBox } from '@dominevo/types'
 
 /** Legacy alias kept so pre-rework consumers don't need a coordinated rename. */
 export type Detection = ObjectDetection

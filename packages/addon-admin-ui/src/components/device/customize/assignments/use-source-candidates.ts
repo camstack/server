@@ -1,10 +1,10 @@
 /** The picker's candidates for a source-cap kind (doorbell, motion): ONE fleet read + the cap index. */
-import { type DeviceInfo, SOURCE_CAPS } from '@camstack/types'
+import { type DeviceInfo, SOURCE_CAPS } from '@dominevo/types'
 import {
   resolveDeviceIntegration,
   useDeviceManagerListAll,
   useIntegrationsList,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useMemo } from 'react'
 import { type Known, knownOf } from '../known'
 import {

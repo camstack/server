@@ -11,7 +11,7 @@ import {
   useDeviceManagerSetTags,
   useConfirm,
   Button,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   createContext,

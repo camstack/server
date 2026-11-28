@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import type { Alert } from '@camstack/types'
+import type { Alert } from '@dominevo/types'
 import { connectionFromSettings, HOMECOM_GATEWAYS_PATH, type HomeComConfig } from '../config.js'
 import { createHomeComApiClient, HomeComAuthError, type FetchFn } from '../homecom-api-client.js'
 import { HomeComIntegrationManager } from '../homecom-integration-manager.js'

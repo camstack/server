@@ -1,7 +1,7 @@
 /**
  * Public-docs staleness — the pure half of `check-public-docs-staleness.ts`.
  *
- * The public site (repo `camstack/docs`, pages under `content/docs/**.mdx`) is a
+ * The public site (repo `dominevo/docs`, pages under `content/docs/**.mdx`) is a
  * separate repository, so the internal drift guard cannot see it and nothing told
  * anyone when a page there started describing last week's server. A page now
  * declares, in its frontmatter, the server code it describes — with the same two

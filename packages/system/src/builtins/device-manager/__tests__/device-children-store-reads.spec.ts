@@ -34,7 +34,7 @@ import type {
   IScopedLogger,
   ISettingsStoreProvider,
   ProviderRegistration,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { makeRecordsAccessForOwner } from '../../sqlite-storage/__tests__/support/records-world.js'
 import type { AddonSettingsView } from '../../../kernel/config-manager.js'

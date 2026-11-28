@@ -35,7 +35,7 @@ import {
   issueMeshLeafForNode,
   MeshIdentityGate,
   type MeshCaSigner,
-} from '@camstack/server/system'
+} from '@dominevo/server/system'
 import type { ServiceBroker } from 'moleculer'
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { requestAgentRegistration } from '../../../core/moleculer/agent-registration-request.js'

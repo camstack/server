@@ -3,7 +3,7 @@ import {
   SMTP_INBOUND_RING_MAX_MESSAGES,
   type SmtpInboundMessage,
   type SmtpInboundSince,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export type DraftMessage = Omit<SmtpInboundMessage, 'seq'>
 

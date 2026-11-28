@@ -1,5 +1,5 @@
-import type { StorageAccess, StorageLocationDeclaration } from '@camstack/types'
-import { STORAGE_ACCESS_FALLBACK } from '@camstack/types'
+import type { StorageAccess, StorageLocationDeclaration } from '@dominevo/types'
+import { STORAGE_ACCESS_FALLBACK } from '@dominevo/types'
 
 /**
  * Read-only view over all aggregated storage-location declarations.

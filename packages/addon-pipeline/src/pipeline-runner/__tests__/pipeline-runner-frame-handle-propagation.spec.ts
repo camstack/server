@@ -11,8 +11,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- test file: vi.fn() mocks need narrow casts to match callback signatures */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { PipelineRunner } from '../runner.js'
-import type { DecodedFrame, FrameHandle, FrameResult, SystemEvent } from '@camstack/types'
-import { EventCategory } from '@camstack/types'
+import type { DecodedFrame, FrameHandle, FrameResult, SystemEvent } from '@dominevo/types'
+import { EventCategory } from '@dominevo/types'
 
 function makeFrame(timestamp: number): DecodedFrame {
   return {

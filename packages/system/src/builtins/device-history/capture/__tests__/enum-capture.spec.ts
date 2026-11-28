@@ -4,7 +4,7 @@
  * in each state; a query names the states; the value list is append-only, so a
  * reordered `z.enum` or a restart never changes what a stored ordinal means.
  */
-import { DEVICE_HISTORY_ENERGY_KEY, DeviceType } from '@camstack/types'
+import { DEVICE_HISTORY_ENERGY_KEY, DeviceType } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import { type Harness, T0, makeHarness } from '../../__tests__/support/harness.js'
 import { emitState, rawOf, rollupOf } from '../../__tests__/support/read-helpers.js'

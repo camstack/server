@@ -10,7 +10,7 @@
  * counterpart here and is not carried.
  */
 import { describe, expect, it } from 'vitest'
-import { PLUS_CATALOG_CLASS_FLOORS, PLUS_CATALOG_STOCK_CLASS_FLOORS } from '@camstack/types'
+import { PLUS_CATALOG_CLASS_FLOORS, PLUS_CATALOG_STOCK_CLASS_FLOORS } from '@dominevo/types'
 import { buildPlusCatalogCatalogDescriptor } from '../plus-catalog/plus-catalog-catalog.js'
 import {
   buildPlusCatalogDescriptor,

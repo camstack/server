@@ -3,8 +3,8 @@
  * whatever it does not carry the operator will never be told.
  *
  * On 2026-08-19 the hub's own log read
- * `Restart completed {kind=framework-update nodeId=hub packageName=@camstack/server
- * toVersion=1.2.138 requestedBy="server-update: @camstack/server@1.2.138"}` — no
+ * `Restart completed {kind=framework-update nodeId=hub packageName=@dominevo/server
+ * toVersion=1.2.138 requestedBy="server-update: @dominevo/server@1.2.138"}` — no
  * `fromVersion` anywhere, because the reason STRING was the only channel and it
  * spells one version. The notification then fell back to its version-less
  * sentence and said neither.
@@ -22,9 +22,9 @@ describe('buildRestartMarker', () => {
   it('records the version the node LEFT alongside the one it went to', () => {
     expect(
       buildRestartMarker({
-        requestedBy: 'server-update: @camstack/server@1.2.138',
+        requestedBy: 'server-update: @dominevo/server@1.2.138',
         update: {
-          packageName: '@camstack/server',
+          packageName: '@dominevo/server',
           fromVersion: '1.2.137',
           toVersion: '1.2.138',
         },
@@ -33,8 +33,8 @@ describe('buildRestartMarker', () => {
     ).toEqual({
       kind: 'framework-update',
       requestedAt: REQUESTED_AT,
-      requestedBy: 'server-update: @camstack/server@1.2.138',
-      packageName: '@camstack/server',
+      requestedBy: 'server-update: @dominevo/server@1.2.138',
+      packageName: '@dominevo/server',
       fromVersion: '1.2.137',
       toVersion: '1.2.138',
     })
@@ -43,14 +43,14 @@ describe('buildRestartMarker', () => {
   it('still records the target when only the reason string is available', () => {
     expect(
       buildRestartMarker({
-        requestedBy: 'server-update: @camstack/server@1.2.138',
+        requestedBy: 'server-update: @dominevo/server@1.2.138',
         requestedAt: REQUESTED_AT,
       }),
     ).toEqual({
       kind: 'framework-update',
       requestedAt: REQUESTED_AT,
-      requestedBy: 'server-update: @camstack/server@1.2.138',
-      packageName: '@camstack/server',
+      requestedBy: 'server-update: @dominevo/server@1.2.138',
+      packageName: '@dominevo/server',
       toVersion: '1.2.138',
     })
   })

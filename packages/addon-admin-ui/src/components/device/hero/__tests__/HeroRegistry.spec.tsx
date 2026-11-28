@@ -7,7 +7,7 @@
  * triggered, disarmed — rendered "Controls coming soon", and nothing said so.
  *
  * This is the guard rather than a paragraph: the type→control-kind decision in
- * @camstack/types already says which types have a real card, so the two maps
+ * @dominevo/types already says which types have a real card, so the two maps
  * can be compared instead of trusted.
  *
  * The guard has since done its job twice: `Script` and `Automation` were the
@@ -15,7 +15,7 @@
  * failed with `stranded: ['script']` until the registry entry followed.
  */
 
-import { DeviceType, resolveDeviceControlKind } from '@camstack/types'
+import { DeviceType, resolveDeviceControlKind } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { ControlHero } from '../ControlHero'
 import { DummyHero } from '../DummyHero'
@@ -33,7 +33,7 @@ describe('every type with a real hero card gets it', () => {
     const stranded: string[] = []
     for (const type of Object.values(DeviceType)) {
       if (NOT_ROUTED_HERE.includes(type)) continue
-      // The type→kind decision is single-sourced in @camstack/types. A kind
+      // The type→kind decision is single-sourced in @dominevo/types. A kind
       // other than `dummy` means ui-library HAS a real card for it — the
       // dummy kind carries a HeroCard too, so "a card exists" is not the
       // question, "which kind" is.

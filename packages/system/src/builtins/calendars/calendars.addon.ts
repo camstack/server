@@ -15,7 +15,7 @@ import {
   type ICalendarSourceProvider,
   type ICalendarsProvider,
   type ProviderRegistration,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { settleSourcesWithTimeout } from '../shared/settle-sources.js'
 import { defaultCalendarColor } from './calendar-color.js'
 import { CalendarPrefsStore, patchCalendarPreference } from './calendar-prefs-store.js'

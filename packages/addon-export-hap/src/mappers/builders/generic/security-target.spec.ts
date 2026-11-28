@@ -1,4 +1,4 @@
-import type { AlarmArmMode } from '@camstack/types'
+import type { AlarmArmMode } from '@dominevo/types'
 import { Characteristic } from '@homebridge/hap-nodejs'
 import { describe, expect, it } from 'vitest'
 import { armModeForTarget, targetValidValuesFor } from './security-target.js'

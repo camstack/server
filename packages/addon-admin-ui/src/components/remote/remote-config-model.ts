@@ -1,7 +1,7 @@
 /**
  * The pure model of the Remote Customize extension's editor (D964): the roles a
  * device's remote can bind, the binding edits, and the SmartIR import. The
- * config shape is `RemoteConfig` from `@camstack/types`; every function returns
+ * config shape is `RemoteConfig` from `@dominevo/types`; every function returns
  * a new config. A SmartIR file is parsed here, in the browser, with the one
  * parser (`parseSmartIr` then `smartIrDraft`) — the file is never stored and the
  * server never receives it.
@@ -29,8 +29,8 @@ import {
   type SmartIrSkipped,
   smartIrDraft,
   toTimings,
-} from '@camstack/types'
-import { humanRole } from '@camstack/ui-library'
+} from '@dominevo/types'
+import { humanRole } from '@dominevo/ui-library'
 
 export const IR_CAP = 'ir-transmitter'
 export const IR_SEND = 'send'

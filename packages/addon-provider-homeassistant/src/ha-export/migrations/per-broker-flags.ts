@@ -17,7 +17,7 @@
  *
  * Both are idempotent.
  */
-import { type MigrationPlan, type MigrationProcedureResult, preconditionOf } from '@camstack/types'
+import { type MigrationPlan, type MigrationProcedureResult, preconditionOf } from '@dominevo/types'
 import type {
   HaInstanceRow,
   HaInstanceSettingsPorts,

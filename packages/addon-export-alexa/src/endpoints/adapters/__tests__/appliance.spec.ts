@@ -1,4 +1,4 @@
-import { applianceExport, DeviceType } from '@camstack/types'
+import { applianceExport, DeviceType } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { planGenericDevice } from '../index.js'
 import type { AdapterDevice } from '../types.js'

@@ -13,7 +13,7 @@
  * payload — zero round-trip.
  */
 import { randomUUID } from 'node:crypto'
-import { EventCategory } from '@camstack/types'
+import { EventCategory } from '@dominevo/types'
 
 type Unsubscribe = () => void
 

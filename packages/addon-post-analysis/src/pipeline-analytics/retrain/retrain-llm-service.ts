@@ -21,7 +21,7 @@
  * profile, the counts and the outcome only.
  */
 
-import type { IScopedLogger, RetrainLlmAssistResult, RetrainMacroClass } from '@camstack/types'
+import type { IScopedLogger, RetrainLlmAssistResult, RetrainMacroClass } from '@dominevo/types'
 import type { RetrainFrameStore } from './retrain-frame-store.js'
 import { proposalOrigin } from './retrain-origin.js'
 import {

@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
-import type { SystemEvent } from '@camstack/types'
-import { EventCategory } from '@camstack/types'
+import type { SystemEvent } from '@dominevo/types'
+import { EventCategory } from '@dominevo/types'
 
 /**
  * The operator alert for an addon that RUNS below the version the server needs.

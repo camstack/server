@@ -1,4 +1,4 @@
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { BelowFloorAccumulator, type BelowFloorTally } from './below-floor-tally.js'
 import { MotionWithoutInferenceDetector } from './motion-without-inference.js'
 

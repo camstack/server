@@ -30,7 +30,7 @@ export interface NativeTypeClassification {
   readonly kind: NativeClipKind
 }
 
-/** Cap on `ClipSchema.labels`, mirrored from `@camstack/types` MAX_CLIP_LABELS. */
+/** Cap on `ClipSchema.labels`, mirrored from `@dominevo/types` MAX_CLIP_LABELS. */
 const MAX_LABELS = 3
 
 /** Native → object class. The same rule `native-detection-mapping.ts` applies

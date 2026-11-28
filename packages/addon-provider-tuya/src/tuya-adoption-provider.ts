@@ -1,10 +1,10 @@
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IScopedLogger } from '@dominevo/types'
 import type {
   AdoptionFilter,
   AdoptionStatus,
   DiscoveredChildDevice,
   IDeviceAdoptionProvider,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { buildTuyaCandidates } from './tuya-discovery.js'
 import type { TuyaCatalogEntry } from './tuya-gateway.js'
 
@@ -12,7 +12,7 @@ import type { TuyaCatalogEntry } from './tuya-gateway.js'
  * `device-adoption` cap provider for the Tuya addon (account mode). Broker-less:
  * candidates + adoption resolve DIRECTLY by `integrationId` → the per-integration
  * cloud CATALOG (published on the shared resolver). Each adopted cloud device
- * becomes one top-level CamStack device (a `switch` device, or a `container`
+ * becomes one top-level Dominevo device (a `switch` device, or a `container`
  * kettle that fans out its per-DP children). Mirrors `buildDreameAdoptionProvider`.
  */
 export interface TuyaAdoptionProviderDeps {
@@ -35,7 +35,7 @@ export interface TuyaAdoptionProviderDeps {
 
 const DEVICES_FILTER: AdoptionFilter = { id: 'devices', label: 'Devices', isDefault: true } as const
 
-/** Build a `tuyaDeviceId → CamStack deviceId` map for a single integration. */
+/** Build a `tuyaDeviceId → Dominevo deviceId` map for a single integration. */
 async function adoptedMapForIntegration(
   integrationId: string,
   listAdoptedTuya: TuyaAdoptionProviderDeps['listAdoptedTuya'],

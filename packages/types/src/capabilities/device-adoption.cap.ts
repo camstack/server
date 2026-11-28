@@ -25,7 +25,7 @@ import type { SourceInfo } from '../device/source-info.js'
  *      `children`) for the accordion render.
  *   3. User clicks "Adopt" on one or more candidates →
  *      `adopt({integrationId, childNativeIds, perCandidate?})`
- *      materialises one parent CamStack device per candidate plus its
+ *      materialises one parent Dominevo device per candidate plus its
  *      accessory children. `perCandidate[childNativeId]` carries an
  *      optional display-name override + a `hiddenChildIds` pre-hide set
  *      (the parent's `accessories.hiddenChildIds` gates UI visibility).
@@ -240,7 +240,7 @@ export const AdoptionRecordSchema = z.object({
   childNativeId: z.string(),
   /** The granularity the candidate was adopted under; absent = the default `devices`. */
   filter: z.string().optional(),
-  /** The parent CamStack device the adoption created. */
+  /** The parent Dominevo device the adoption created. */
   deviceId: z.number().int().nonnegative(),
   adoptedBy: AdoptedBySchema,
   adoptedAt: z.number().int().nonnegative(),
@@ -304,7 +304,7 @@ export const AdoptInputSchema = z.object({
    */
   filter: z.string().optional(),
   /** When true, import each adopted device's source-system location (e.g. HA
-   *  area) into CamStack — fuzzy-match an existing location or create it, then
+   *  area) into Dominevo — fuzzy-match an existing location or create it, then
    *  assign. Omitted/false = no location work (back-compat). */
   importLocations: z.boolean().optional(),
   perCandidate: z.record(z.string(), PerCandidateSchema).optional(),
@@ -323,13 +323,13 @@ export const AdoptResultSchema = z.object({
 
 export const ReleaseInputSchema = z.object({
   integrationId: z.string(),
-  /** Parent CamStack device id (NOT an accessory child id). Removing
+  /** Parent Dominevo device id (NOT an accessory child id). Removing
    *  the parent cascades into every accessory. */
   camDeviceId: z.number().int().nonnegative(),
 })
 
 export const ResyncInputSchema = z.object({
-  /** Parent CamStack device id of an adopted device. The provider resolves its
+  /** Parent Dominevo device id of an adopted device. The provider resolves its
    *  source (integration/broker + native id) and re-aligns the device's
    *  structural spec (type/role/capabilities/units) with the live mapping,
    *  rebuilding any child whose class changed while preserving operator edits. */

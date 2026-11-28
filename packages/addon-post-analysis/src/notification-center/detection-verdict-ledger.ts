@@ -15,7 +15,7 @@
  * (`device-removal.ts`).
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { z } from 'zod'
 import { DurableLedger, type DurableLedgerSpec } from '../durable/durable-ledger.js'
 import { type DurableKindDeps } from '../durable/durable-wiring.js'

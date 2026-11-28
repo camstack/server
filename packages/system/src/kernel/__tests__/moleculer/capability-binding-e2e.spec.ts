@@ -26,7 +26,7 @@ import {
   withAddonScope,
   __resetBindingSubscriptionForTests,
 } from '../../moleculer/addon-context-factory.js'
-import { EventCategory, type AddonDeclaration } from '@camstack/types'
+import { EventCategory, type AddonDeclaration } from '@dominevo/types'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'

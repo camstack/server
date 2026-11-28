@@ -1,5 +1,5 @@
-import type { DayNightMode } from '@camstack/types'
-import { userError } from '@camstack/types'
+import type { DayNightMode } from '@dominevo/types'
+import { userError } from '@dominevo/types'
 
 /**
  * Maps between the vendor-neutral `day-night` cap's `DayNightMode` and

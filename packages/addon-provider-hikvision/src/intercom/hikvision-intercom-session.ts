@@ -25,7 +25,7 @@
  * this class is the camera-facing leg only.
  */
 
-import type { IntercomAbility, IScopedLogger } from '@camstack/types'
+import type { IntercomAbility, IScopedLogger } from '@dominevo/types'
 import type { AudioDataStream, HikvisionTwoWayAudioChannel } from '../hikvision-isapi-client.js'
 import {
   encodePcm16,

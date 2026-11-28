@@ -13,8 +13,8 @@
  * error, it is the panel telling the operator which door is open.
  */
 
-import type { AlarmArmMode } from '@camstack/types'
-import { Button, Card, ErrorBox, useSystem } from '@camstack/ui-library'
+import type { AlarmArmMode } from '@dominevo/types'
+import { Button, Card, ErrorBox, useSystem } from '@dominevo/ui-library'
 import { useMutation } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
 import { useState } from 'react'

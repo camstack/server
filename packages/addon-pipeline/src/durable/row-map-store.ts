@@ -51,7 +51,7 @@ import type {
   CollectionIndex,
   IScopedLogger,
   SettingsStoreClient,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { ZodType } from 'zod'
 
 /**

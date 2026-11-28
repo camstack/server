@@ -185,7 +185,7 @@ it caused (D9/D18).
 - **Coverage limits, stated rather than discovered.** Only a camera with an
   enabled H.264 slot ≤ 1080p and a GOP ≤ 8 s records at all (D550 9), so a
   camera with no source row or an `index-empty` one is usually the camera's
-  configuration and not a CamStack fault. A clip's duration is whatever iOS
+  configuration and not a Dominevo fault. A clip's duration is whatever iOS
   pulled — the prebuffer replay plus however long the hub kept the HDS stream
   open — never a window we choose, so short clips are normal and only
   `truncated` means truncated.

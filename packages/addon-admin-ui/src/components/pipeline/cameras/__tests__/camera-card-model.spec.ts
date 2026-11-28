@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import type { CameraStatus, PipelineStepInputOutput } from '@camstack/types'
+import type { CameraStatus, PipelineStepInputOutput } from '@dominevo/types'
 import {
   cameraSensorsSummary,
   deriveCameraProblems,

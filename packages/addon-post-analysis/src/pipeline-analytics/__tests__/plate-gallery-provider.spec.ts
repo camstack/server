@@ -5,7 +5,7 @@
  * `recomputeTrackImportance` runs against real Track/Event stores.
  */
 
-import type { PipelineAnalyticsPlateGalleryChangedPayload } from '@camstack/types'
+import type { PipelineAnalyticsPlateGalleryChangedPayload } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { mediaFileUrl } from '../media-file-url.js'
 import { PlateGalleryProvider } from '../plate-gallery-provider.js'

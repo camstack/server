@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import type { LogEntry } from '@camstack/types'
+import type { LogEntry } from '@dominevo/types'
 import { LokiDestination, type LokiConfig, type LokiFetch } from '../loki-destination.js'
 
 const config = (over: Partial<LokiConfig> = {}): LokiConfig => ({

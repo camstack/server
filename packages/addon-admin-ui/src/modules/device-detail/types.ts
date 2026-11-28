@@ -1,4 +1,4 @@
-import type { SystemTrpcClient } from '@camstack/ui-library'
+import type { SystemTrpcClient } from '@dominevo/ui-library'
 import type { QueryClient } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 

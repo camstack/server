@@ -4,7 +4,7 @@ import {
   type DeviceContext,
   type InferNativeProvider,
   type NumericSensorStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { dreameQuantity, dreameToBase } from '../dreame-reading.js'
 import { dreameChildSchema } from './dreame-child-device.js'
 import { DreameChildDevice } from './dreame-child-device.js'

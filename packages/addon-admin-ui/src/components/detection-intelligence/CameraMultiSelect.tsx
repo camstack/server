@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Camera, Check, ChevronDown } from 'lucide-react'
 import type { CameraOption } from './types.js'
 import { useTranslation } from 'react-i18next'
-import { Button } from '@camstack/ui-library'
+import { Button } from '@dominevo/ui-library'
 
 interface CameraMultiSelectProps {
   readonly cameras: readonly CameraOption[]

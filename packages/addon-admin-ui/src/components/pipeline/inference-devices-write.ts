@@ -22,7 +22,7 @@
  * opt-OUT accelerator came straight back on. Do not reintroduce pruning; the
  * unit guard (`__tests__/inference-devices-write.spec.ts`) pins this.
  */
-import type { DeviceStepConfig } from '@camstack/types'
+import type { DeviceStepConfig } from '@dominevo/types'
 
 /** One device row as a write surface sees it (its draft or the live view). */
 export interface InferenceDeviceWriteSource {

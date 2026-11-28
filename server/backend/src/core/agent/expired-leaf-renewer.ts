@@ -13,7 +13,7 @@ import type {
   MeshLog,
   MeshRegistrations,
   RenewMeshResult,
-} from '@camstack/server/system'
+} from '@dominevo/server/system'
 
 const DEFAULT_REGISTRATION_TIMEOUT_MS = 120_000
 

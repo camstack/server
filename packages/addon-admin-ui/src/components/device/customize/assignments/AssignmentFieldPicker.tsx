@@ -4,7 +4,7 @@
  * step 2 is `DeviceFields` (`sourceFor`); step 3 is the caller's `extra`.
  * Confirm waits for a field and for `extraComplete`.
  */
-import type { CompositionFieldKind } from '@camstack/types'
+import type { CompositionFieldKind } from '@dominevo/types'
 import {
   Button,
   type DeviceListState,
@@ -20,7 +20,7 @@ import {
   type PickerItem,
   TEXT_SECTION_LABEL,
   useDeviceManagerListAll,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DeviceFields } from '../source-picker-device-fields'

@@ -12,8 +12,8 @@
  * viewer). The label goes back to being only the words.
  */
 import { describe, it, expect } from 'vitest'
-import { AUDIO_MACRO_LABELS, audioKindId } from '@camstack/types'
-import type { ConfigField, ConfigMultiSelectField } from '@camstack/types'
+import { AUDIO_MACRO_LABELS, audioKindId } from '@dominevo/types'
+import type { ConfigField, ConfigMultiSelectField } from '@dominevo/types'
 
 import { getStep } from '../registry/step-definitions.js'
 

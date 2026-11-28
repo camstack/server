@@ -8,7 +8,7 @@ import type { NcIncomingEvent, NcIntakeReport } from './event-intake.js'
 import { deliveryForKind } from './event-intake.js'
 import type { NcDeliverResult, NcOutboxEntry } from './outbox.js'
 import { NcUpdateLandings } from './restart-supersede.js'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 export interface EvaluationCycleHost {
   readonly dispatcher: NcDispatcher

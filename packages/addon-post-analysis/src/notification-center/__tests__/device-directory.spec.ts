@@ -13,7 +13,7 @@
  * silences every camera-offline notification on the hub. So a failed refresh
  * keeps the previous snapshot indefinitely, and says so.
  */
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import { type NcDeviceIdentity, NcDeviceDirectory } from '../device-directory.js'

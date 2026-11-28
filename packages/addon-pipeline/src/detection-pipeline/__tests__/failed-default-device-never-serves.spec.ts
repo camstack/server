@@ -23,7 +23,7 @@ import type {
   IScopedLogger,
   PipelineStepInput,
   PoolModelConfig,
-} from '@camstack/types'
+} from '@dominevo/types'
 import sharp from 'sharp'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { EngineFactory } from '../engine/engine-factory.js'

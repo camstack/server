@@ -20,8 +20,8 @@
 import { resolveHubAuth } from './hub/credentials.mjs'
 import { readFileSync, statSync } from 'node:fs'
 
-// The `camstack login` session is the only credential (D1101): log in once with
-// `camstack login <host>`; nothing here asks for a password.
+// The `dominevo login` session is the only credential (D1101): log in once with
+// `dominevo login <host>`; nothing here asks for a password.
 const hubAuth = await resolveHubAuth(
   process.env['CAMSTACK_SERVER'] ? { server: process.env['CAMSTACK_SERVER'] } : {},
 )

@@ -26,7 +26,7 @@
 import * as fs from 'node:fs'
 import * as fsp from 'node:fs/promises'
 import * as path from 'node:path'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 /** Basename of the staging dir under the node data root. */
 export const STAGING_DIR_NAME = 'backup-staging'

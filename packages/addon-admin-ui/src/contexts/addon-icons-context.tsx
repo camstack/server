@@ -9,7 +9,7 @@
  * Outside the provider (the Showroom, tests that render one component) the map
  * is empty and every icon draws its glyph — no request, nothing broken.
  */
-import { useAddonsList } from '@camstack/ui-library'
+import { useAddonsList } from '@dominevo/ui-library'
 import { createContext, type ReactElement, type ReactNode, useContext, useMemo } from 'react'
 
 import { buildAddonIconMap, resolveAddonIconPath } from '../lib/addon-icons'

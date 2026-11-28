@@ -10,7 +10,7 @@
  * {@link NcTextCatalogStore.load} — bounded staleness, never wrongness (D8).
  */
 
-import type { IScopedLogger, RecordKindHandle, RecordsAccess } from '@camstack/types'
+import type { IScopedLogger, RecordKindHandle, RecordsAccess } from '@dominevo/types'
 import {
   NC_DEFAULT_TEXT_SNAPSHOT,
   type NcLanguage,

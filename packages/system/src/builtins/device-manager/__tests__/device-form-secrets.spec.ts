@@ -19,7 +19,7 @@ import {
   type KeychainTransport,
   makeSecretMarker,
   SECRET_CLEAR,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   loadDeviceConfigWithSecrets,
@@ -270,7 +270,7 @@ describe('device-manager — the aggregate and the save route apply it', () => {
   async function setup() {
     const { CapabilityRegistry } = await import('../../../kernel/capability-registry.js')
     const { DeviceRegistry } = await import('../../../kernel/device-registry.js')
-    const { deviceOpsCapability } = await import('@camstack/types')
+    const { deviceOpsCapability } = await import('@dominevo/types')
     const { DeviceManagerAddon } = await import('../device-manager.addon.js')
     const { makeSettingsStoreApi } = await import('./settings-store-api.js')
 

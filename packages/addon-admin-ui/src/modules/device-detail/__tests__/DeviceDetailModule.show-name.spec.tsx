@@ -1,5 +1,5 @@
-import { DeviceType } from '@camstack/types'
-import type { SystemTrpcClient } from '@camstack/ui-library'
+import { DeviceType } from '@dominevo/types'
+import type { SystemTrpcClient } from '@dominevo/ui-library'
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { DeviceDetailModule } from '../DeviceDetailModule'
@@ -11,8 +11,8 @@ interface NamedProps {
 
 // Both renderers stand in as probes: the spec is about what the module hands
 // them, not about how they draw a name (their own specs cover that).
-vi.mock('@camstack/ui-library', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@camstack/ui-library')>()
+vi.mock('@dominevo/ui-library', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dominevo/ui-library')>()
   return {
     ...actual,
     ConnectedDeviceCard: ({ showName }: NamedProps) => (

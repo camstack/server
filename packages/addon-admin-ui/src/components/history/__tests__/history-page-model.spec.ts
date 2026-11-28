@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { DeviceHistorySeriesInfo } from '@camstack/types'
+import type { DeviceHistorySeriesInfo } from '@dominevo/types'
 import {
   buildCatalog,
   builtInSelection,

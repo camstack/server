@@ -6,8 +6,8 @@
  * "start" and answered HTML, which the admin UI could not parse.
  */
 import { describe, expect, it, vi } from 'vitest'
-import type { IScopedLogger } from '@camstack/types'
-import { VENDOR_LOGIN_PROXY_PREFIX } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
+import { VENDOR_LOGIN_PROXY_PREFIX } from '@dominevo/types'
 import { buildAlexaLoginRoutes } from '../alexa-login-routes.js'
 import type { AlexaLoginRouteDeps } from '../alexa-login-routes.js'
 import type { AlexaDeviceCodeManager } from '../alexa-device-code-manager.js'

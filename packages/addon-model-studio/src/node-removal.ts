@@ -10,7 +10,7 @@
  * Idempotent. The map is read through the durable handle; a failed read throws
  * so the hub retries (D49).
  */
-import type { DurableState, INodeRemovalHookProvider, IScopedLogger } from '@camstack/types'
+import type { DurableState, INodeRemovalHookProvider, IScopedLogger } from '@dominevo/types'
 import type { z } from 'zod'
 import type { ModelAvailabilityMapSchema } from './model-studio-actions.js'
 

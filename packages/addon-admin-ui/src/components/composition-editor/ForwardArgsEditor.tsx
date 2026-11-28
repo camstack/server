@@ -4,8 +4,8 @@
  * method is a constant or `{ $input: '<field>' }` of the caller's input. A
  * source with no input has nothing to map, so the control is not drawn.
  */
-import type { CompositionForwardArg } from '@camstack/types'
-import { Input, Select, Switch } from '@camstack/ui-library'
+import type { CompositionForwardArg } from '@dominevo/types'
+import { Input, Select, Switch } from '@dominevo/ui-library'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {

@@ -4,8 +4,8 @@
  * automation step (`{ kind: 'command', target, actionId, args }`). These two
  * functions translate at the editor's edge, through the vocabulary index.
  */
-import { findVocabAction, vocabActionIdFor, vocabCall } from '@camstack/types'
-import type { RemoteBindingAction } from '@camstack/types'
+import { findVocabAction, vocabActionIdFor, vocabCall } from '@dominevo/types'
+import type { RemoteBindingAction } from '@dominevo/types'
 import type { CommandStep } from '../../pages/build/flow/command-vocab'
 
 /** The binding as a command step; an unpicked or unknown command is an empty one. */

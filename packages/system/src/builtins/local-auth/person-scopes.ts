@@ -3,7 +3,7 @@
  * 2026-10-24): nothing (an admin) or exactly one viewer row. Any other row
  * is refused. There is no conversion of an older grant set (D900).
  */
-import { userError, type UserScope } from '@camstack/types'
+import { userError, type UserScope } from '@dominevo/types'
 
 export function assertPersonScopes(scopes: readonly UserScope[]): void {
   if (scopes.length === 0) return

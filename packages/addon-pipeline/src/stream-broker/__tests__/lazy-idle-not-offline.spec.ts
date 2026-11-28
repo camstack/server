@@ -7,7 +7,7 @@
  * an always-on source that goes quiet, stay outages.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { IEventBus, IScopedLogger, StreamSource, SystemEvent } from '@camstack/types'
+import type { IEventBus, IScopedLogger, StreamSource, SystemEvent } from '@dominevo/types'
 import { StreamBroker } from '../stream-broker/stream-broker.js'
 import { StreamBrokerManager } from '../stream-broker/stream-broker-manager.js'
 

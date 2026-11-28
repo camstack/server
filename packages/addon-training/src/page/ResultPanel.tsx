@@ -7,8 +7,8 @@
  * accelerator that runs it (D927), and every camera balanced onto one runs it.
  */
 import { useState } from 'react'
-import type { TrainingAcceleratorRef, TrainingJob, TrainingResult } from '@camstack/types'
-import { Badge, Button, Checkbox, useConfirm, type AddonPageProps } from '@camstack/ui-library'
+import type { TrainingAcceleratorRef, TrainingJob, TrainingResult } from '@dominevo/types'
+import { Badge, Button, Checkbox, useConfirm, type AddonPageProps } from '@dominevo/ui-library'
 import { Trans, useT, type TFn } from '../i18n/index.js'
 import { ComparisonTable } from './ComparisonTable.js'
 import { errorText, useAsync } from './use-async.js'

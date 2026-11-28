@@ -11,7 +11,7 @@
  *
  * All functions are pure and side-effect free.
  */
-import type { TrackZoneFilter } from '@camstack/types'
+import type { TrackZoneFilter } from '@dominevo/types'
 
 export interface NormalizedEnvelope {
   readonly minX: number

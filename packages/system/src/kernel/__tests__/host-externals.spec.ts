@@ -5,17 +5,17 @@ import { isHostExternal, HOST_EXTERNAL_SPECIFIERS } from '../host-externals.js'
 
 describe('isHostExternal', () => {
   it('matches exact host-provided specifiers', () => {
-    expect(isHostExternal('@camstack/server/system')).toBe(true)
+    expect(isHostExternal('@dominevo/server/system')).toBe(true)
     expect(isHostExternal('zod')).toBe(true)
   })
 
   it('matches subpath exports of host-provided specifiers', () => {
-    expect(isHostExternal('@camstack/types/node')).toBe(true)
+    expect(isHostExternal('@dominevo/types/node')).toBe(true)
     expect(isHostExternal('@trpc/server/adapters/standalone')).toBe(true)
   })
 
   it('does not match unrelated or partial-prefix specifiers', () => {
-    expect(isHostExternal('@camstack/addon-pipeline')).toBe(false)
+    expect(isHostExternal('@dominevo/addon-pipeline')).toBe(false)
     expect(isHostExternal('zod-extra')).toBe(false) // prefix but not a subpath
     expect(isHostExternal('node:fs')).toBe(false)
   })
@@ -35,9 +35,9 @@ describe('isHostExternal', () => {
   })
 
   it('exposes the canonical set', () => {
-    expect(HOST_EXTERNAL_SPECIFIERS).toContain('@camstack/server/system')
+    expect(HOST_EXTERNAL_SPECIFIERS).toContain('@dominevo/server/system')
     // Deleted with D763 — a native host-external nothing imports.
-    expect(HOST_EXTERNAL_SPECIFIERS).not.toContain('@camstack/shm-ring')
+    expect(HOST_EXTERNAL_SPECIFIERS).not.toContain('@dominevo/shm-ring')
     expect(HOST_EXTERNAL_SPECIFIERS).toContain('sharp')
     expect(HOST_EXTERNAL_SPECIFIERS).toContain('node-av')
     expect(HOST_EXTERNAL_SPECIFIERS).toContain('node-pty')

@@ -9,7 +9,7 @@ are in the root `AGENTS.md`; `CLAUDE.md` beside this file is a one-line
 <!-- camstack-skills-pointer:begin — written by `npx tsx scripts/skills/gen-skill-pointers.ts`; edit the generator, not this block -->
 Follow the skill; do not reconstruct the procedure (any agent can open the file):
 
-- A new or changed addon or manifest entry; `camstack deploy` → `camstack-addon` (`.claude/skills/camstack-addon/SKILL.md`)
+- A new or changed addon or manifest entry; `dominevo deploy` → `camstack-addon` (`.claude/skills/camstack-addon/SKILL.md`)
 - Filling DETECTOR_PERF / detector-latency for a node×device → `camstack-benchmark-detection` (`.claude/skills/camstack-benchmark-detection/SKILL.md`)
 <!-- camstack-skills-pointer:end -->
 

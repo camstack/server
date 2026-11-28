@@ -18,7 +18,7 @@ import type {
   NcAlarmProfilesView,
   NcAlarmSettings,
   NcAlarmSettingsPatch,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   activateAlarmProfile,
   applyBlockingEdit,
@@ -34,7 +34,7 @@ import {
   NcRuleInputSchema,
   renameAlarmProfile,
   syncActiveAlarmProfileSettings,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import type { NcAlarmOpening } from '../alarm/alarm-openings.js'

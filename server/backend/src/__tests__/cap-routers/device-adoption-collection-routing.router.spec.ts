@@ -9,9 +9,9 @@
  * same way `connectionTest` / `broker` do.
  */
 
-import { buildCapRouters, CapabilityRegistry } from '@camstack/server/system'
-import type { IScopedLogger } from '@camstack/types'
-import { deviceAdoptionCapability, kebabToCamel } from '@camstack/types'
+import { buildCapRouters, CapabilityRegistry } from '@dominevo/server/system'
+import type { IScopedLogger } from '@dominevo/types'
+import { deviceAdoptionCapability, kebabToCamel } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   type CapProxyProvider,

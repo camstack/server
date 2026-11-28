@@ -2,7 +2,7 @@
 
 Date: 2026-10-08 (updated 2026-10-10). Target box is live as agent `agent-b`
 (CT201 on PVE `.63`): Ryzen 7640HS, Radeon 760M gfx1103, XDNA1 (`1022:1502`).
-P0+P1 shipped in `@camstack/server@1.2.499` and verified on the box (VAAPI +
+P0+P1 shipped in `@dominevo/server@1.2.499` and verified on the box (VAAPI +
 `onnx:webgpu` + `openvino:cpu`). **P2 NPU spike closed no-go** the same day:
 XRT validate PASS; Linux VitisAI has no Phoenix target (see §5 P2).
 
@@ -15,7 +15,7 @@ XRT validate PASS; Linux VitisAI has no Phoenix target (see §5 P2).
 | **CPU inference** | Live + measured | ORT CPU floor + opt-IN `openvino:cpu` (Zen4 VNNI). **`amd-phoenix/x86-cpu` measured** 2026-10-10: INT8 OV ≫ ONNX (e.g. `yolov9m-320-int8` 21 ms vs ONNX 67 ms). Prefer OV-CPU for live YOLO. |
 | **HW decode (VAAPI)** | Live | `amd-*` image (D822): Mesa `radeonsi`, no `LIBVA_DRIVER_NAME` pin. Decoded as `vaapi` on the box. |
 | **iGPU inference** | Live (OD + crop) | `onnx:webgpu` via ORT WebGPU EP + RADV. Catalog OK; child per model (D823). **Corrected 2026-10-13 (D845):** the 10-10 latencies (`yolov9m-320` 1076 ms) were a software path — the pool could not open the render node. On the GPU: `yolov9t-320` 13 ms, `s-320` 23 ms, `m-320` 52 ms, `m-640` 170 ms; K processes serialise on one queue. `docs/benchmarks/2026-10-13-phoenix-npu-and-igpu.md`. No ROCm. |
-| **NPU (XDNA1)** | **No-go on Linux Phoenix** | Driver + `xrt-smi validate` PASS. Ryzen AI 1.8 Linux is STX/KRK only; VitisAI aborts on PHX fingerprint even with a real `4x4` xclbin. 2026-10-13: mlir-aie/IRON runs a kernel on it (no ONNX path); `iree-amd-aie` dormant, no wheels; Windows-VM passthrough feasible but has no CamStack node. No `vitisai:npu` device. XDNA2 present-only until wired. |
+| **NPU (XDNA1)** | **No-go on Linux Phoenix** | Driver + `xrt-smi validate` PASS. Ryzen AI 1.8 Linux is STX/KRK only; VitisAI aborts on PHX fingerprint even with a real `4x4` xclbin. 2026-10-13: mlir-aie/IRON runs a kernel on it (no ONNX path); `iree-amd-aie` dormant, no wheels; Windows-VM passthrough feasible but has no Dominevo node. No `vitisai:npu` device. XDNA2 present-only until wired. |
 | **Proxmox** | Live | Unprivileged Ubuntu 24.04 LXC + Docker; `devN:` for dri/accel. Not a VM (AMD iGPU reset bug). |
 
 Phasing:
@@ -76,7 +76,7 @@ I found **no published YOLOv9 numbers on 760M/780M** for any of these runtimes. 
 - **Verdict (spike closed 2026-10-10)**: driver works (`xrt-smi validate`
   PASS); Linux VitisAI has no Phoenix target — even a real WHQL `4x4` xclbin
   aborts on fingerprint. Value would also be low (~10 TOPS vs the live iGPU).
-  **No CamStack NPU device.** Re-check only if AMD lists Phoenix on Linux.
+  **No Dominevo NPU device.** Re-check only if AMD lists Phoenix on Linux.
 
 ## 3. Hardware decode (VAAPI)
 
@@ -163,7 +163,7 @@ ls -l /dev/accel/accel0
 
 **cloudflared** for the Alexa demo: run it as a second compose service or with apt in the same CT.
 
-## 5. Plan for CamStack
+## 5. Plan for Dominevo
 
 ### What exists today (code read)
 - `platform-scorer.ts probeHardware`:
@@ -183,7 +183,7 @@ ls -l /dev/accel/accel0
     `amd-igpu` / `amd-npu`. `acceleratorKindOf('onnx:webgpu')` → `amd-igpu`.
   - `DETECTOR_PERF` is mirrored from `docs/benchmarks/detector-latency.json`, with a spec holding the two equal.
 - Models: yolov9 t/s/m at 320/640 ship static ONNX fp32, CoreML fp16, OpenVINO fp16 and int8 (`model-catalogs.ts`, `scripts/build-camstack-models.py`, HF `camstack/camstack-models`).
-- Image: `ubuntu:24.04`, variant label `intel`, Intel apt repo, `intel-media-va-driver-non-free`, `ENV LIBVA_DRIVER_NAME=iHD`. ffmpeg is downloaded at runtime (jellyfin portable). Tag `ghcr.io/camstack/camstack:intel-latest`.
+- Image: `ubuntu:24.04`, variant label `intel`, Intel apt repo, `intel-media-va-driver-non-free`, `ENV LIBVA_DRIVER_NAME=iHD`. ffmpeg is downloaded at runtime (jellyfin portable). Tag `ghcr.io/dominevo/dominevo:intel-latest`.
 
 ### P0: CPU + VAAPI decode on Proxmox (Alexa demo hub). ~4-5 dev days
 1. **Image** — **done as two Dockerfile targets** (`intel` / `amd`), same npm
@@ -240,7 +240,7 @@ no-go — no wheels, dormant since 2026-06, source build out of budget;
 XRT 2.27 + in-tree `amdxdna`, Peano wheels, `cmake ≥ 3.30`) but is a kernel
 toolchain with no ONNX front-end; (c) no Ryzen AI release lists Phoenix on
 Linux; (d) a Windows VM with the NPU (`66:00.1`, alone in IOMMU group 25)
-passed through is feasible at the hypervisor but CamStack has no Windows
+passed through is feasible at the hypervisor but Dominevo has no Windows
 node. Lab toolchains stay in `/opt/npu-lab` on CT201 (snapshot
 `pre-npu-igpu-20261013`). Original spike:
 
@@ -267,7 +267,7 @@ Spike run on CT201:
 
 **Verdict: no-go.** Hardware and XRT validate work; Linux VOE/VitisAI has no
 Phoenix target. Do **not** add `vitisai:npu`. Re-open the spike only when AMD
-documents Phoenix on Linux Ryzen AI (or a CamStack Windows/NPU product exists).
+documents Phoenix on Linux Ryzen AI (or a Dominevo Windows/NPU product exists).
 
 ### CI considerations
 - No AMD hardware in CI. Classifiers, provider resolution and capability offers get unit tests with injected sysfs/`ort` fakes.

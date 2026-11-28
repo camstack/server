@@ -16,7 +16,7 @@ import {
   type NetworkLinkType,
   signalPercentFromBars,
   signalPercentFromRssi,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export interface NetworkReadout {
   /** `getNetworkInfo().activeLink` — a firmware label, absent on some models. */

@@ -41,7 +41,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { IncomingMessage } from 'node:http'
 import { Socket } from 'node:net'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { ClientRequest } from '../client-ip.js'
 import {
   BATCH_OVERFLOW_PROCEDURE,

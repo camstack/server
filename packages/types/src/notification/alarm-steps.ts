@@ -3,7 +3,7 @@
  * membership, the admin rule editor and the viewer read (a step is stored by
  * vocabulary action id, D983).
  *
- * The ids are a literal on purpose: a client bundle (`@camstack/types/client`)
+ * The ids are a literal on purpose: a client bundle (`@dominevo/types/client`)
  * reaches this module without the whole vocabulary. `alarm-steps.spec.ts`
  * keeps the list equal to the vocabulary's `alarm-panel` actions.
  */

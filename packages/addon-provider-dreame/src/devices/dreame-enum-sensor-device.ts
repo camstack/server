@@ -4,7 +4,7 @@ import {
   type DeviceContext,
   type EnumSensorStatus,
   type InferNativeProvider,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { enumSensorOptionsFor } from '../dreame-entity-catalog.js'
 import { dreameChildSchema } from './dreame-child-device.js'
 import { DreameChildDevice } from './dreame-child-device.js'

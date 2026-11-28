@@ -11,7 +11,7 @@
  * pool-config builder and the real model manager; only the Python pool and
  * the download are stubbed.
  */
-import type { IScopedLogger, ModelCatalogEntry, PipelineDefaultStep } from '@camstack/types'
+import type { IScopedLogger, ModelCatalogEntry, PipelineDefaultStep } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { EngineFactory } from '../engine/engine-factory.js'
 import { PipelineModelManager } from '../engine/pipeline-model-manager.js'

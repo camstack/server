@@ -12,7 +12,7 @@
  *    RECORDINGS when the ring has lost it (review M2: one `recordingExport`
  *    cut under D686's 30 s bound), the frame decoded on the pinned ffmpeg.
  */
-import type { OccupancyLookAnswer, OccupancyLookRequest } from '@camstack/types'
+import type { OccupancyLookAnswer, OccupancyLookRequest } from '@dominevo/types'
 import { NC_RECORDED_FOOTAGE_WAIT_MS } from '../notification-center/dispatcher.js'
 import type {
   NcRecordedClipRequest,

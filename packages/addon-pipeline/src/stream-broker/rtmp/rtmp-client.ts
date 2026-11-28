@@ -8,7 +8,7 @@
  *   - Async-friendly `destroy()` for the broker's reconnect cycle.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { once } from 'events'
 import { Socket, type SocketConnectOpts } from 'net'
 import { Readable } from 'stream'

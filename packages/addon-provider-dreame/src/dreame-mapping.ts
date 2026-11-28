@@ -1,4 +1,4 @@
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 
 /**
  * The Dreame device kind we support, derived from the cloud `model` prefix.

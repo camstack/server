@@ -25,7 +25,7 @@
  * fills), and after a long dwell a whole walk-in survives there as ONE box —
  * indistinguishable, on the trail alone, from a truncated first box.
  */
-import type { BoundingBox } from '@camstack/types'
+import type { BoundingBox } from '@dominevo/types'
 import {
   DEFAULT_STILL_SPAN_FRACTION,
   type StillScale,

@@ -15,7 +15,7 @@ import {
   type CamStreamDescriptor,
   DeviceFeature,
   hubAddressHostname,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** The one stream the robot camera offers. Half of the broker id (`<deviceId>/live`). */
 export const CAMERA_STREAM_ID = 'live'

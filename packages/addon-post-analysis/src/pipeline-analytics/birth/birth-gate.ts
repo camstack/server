@@ -5,7 +5,7 @@ import type {
   DetectionSource,
   FrameHandle,
   NativeRecoveryEvidence,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   type BirthCandidate,
   type BirthConfirmationRun,

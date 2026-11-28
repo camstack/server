@@ -13,7 +13,7 @@
  * The rows are the orchestrator's `destination-policies` records kind
  * (D881); there is no `backup_destination_policies` table any more (D902).
  */
-import type { RecordKindHandle } from '@camstack/types'
+import type { RecordKindHandle } from '@dominevo/types'
 import { readAllRows } from '../../records/read-all-rows.js'
 import { backupOrchestratorRecordKinds, type BackupDestinationPolicyBody } from './record-kinds.js'
 

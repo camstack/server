@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import type { FrameHandle, IScopedLogger } from '@camstack/types'
+import type { FrameHandle, IScopedLogger } from '@dominevo/types'
 import { createCaptureCrop } from '../capture-crop.js'
 
 /**

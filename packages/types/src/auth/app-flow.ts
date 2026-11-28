@@ -33,7 +33,7 @@ export function parseAppPageLang(value: unknown): AppPageLang | undefined {
 }
 
 /** Where the app is sent when the request names no `redirect`. */
-export const APP_FLOW_DEFAULT_REDIRECT = 'camstack://auth-callback'
+export const APP_FLOW_DEFAULT_REDIRECT = 'dominevo://auth-callback'
 
 /**
  * A browser OIDC flow started for an app carries this prefix on the IdP

@@ -22,7 +22,7 @@ last-verified: 2026-10-13
 # The Windows agent
 
 The Electron desktop app can run as an **agent** node on Windows x64: the same
-app, the same `@camstack/server` closure, the same agent role as macOS and
+app, the same `@dominevo/server` closure, the same agent role as macOS and
 Linux. This page is what was done to make that true, **what has been checked
 and what has not** (everything below was built on a Mac, with no Windows host),
 and how to install and test it on one.
@@ -39,7 +39,7 @@ ffmpeg/Python build is verified for it; the code refuses it by name).
 | 3 | `inference_pool.py` imported `fcntl` and `resource` at module level — and asyncio cannot adopt Node's child stdin/stdout pipes on Windows | `pool_platform.py`: `flock` on POSIX / a one-byte `msvcrt` range lock on Windows; `psapi` for memory; on Windows stdin is read on a thread and stdout written through an executor. Linux/macOS take the same calls as before. |
 | 4 | No `win32-x64` ffmpeg | jellyfin-ffmpeg `win64-clang-gpl` zip, same release and feature set as the other targets — see [ffmpeg.md](ffmpeg.md). |
 | 5 | The hardware probe read only `/sys` | `windows-hardware.ts`: GPU vendor/model and the AMD XDNA NPU (`VEN_1022&DEV_1502` / `DEV_17F0`) from WMI via PowerShell, `wmic` as the fallback, bounded, never blocking boot. NVIDIA keeps `nvidia-smi` for exact VRAM. OpenVINO's requirements install on win32; **WebGPU is not scored, offered or installed there** until it has its own device key. |
-| 6 | `chmod 0600` is a no-op on Windows, so `agent.json` (the mesh key) was readable by every local user | `@camstack/types/node` `writeOwnerOnlyFileSync` & co: chmod on POSIX; on Windows `icacls` (owner + SYSTEM, no inheritance) applied to the still-empty temp file *before* the secret is written. A failure is raised, not swallowed. `scripts/check-secret-files-owner-only.ts` refuses a new bare `0o600`. |
+| 6 | `chmod 0600` is a no-op on Windows, so `agent.json` (the mesh key) was readable by every local user | `@dominevo/types/node` `writeOwnerOnlyFileSync` & co: chmod on POSIX; on Windows `icacls` (owner + SYSTEM, no inheritance) applied to the still-empty temp file *before* the secret is written. A failure is raised, not swallowed. `scripts/check-secret-files-owner-only.ts` refuses a new bare `0o600`. |
 | 7 | Startup was a login item only | Opt-in **Run as Windows service** — see below. The login item stays the default. |
 | 8 | No `icon.ico`; unknown whether a Windows build packages | `packages/desktop/scripts/png-to-ico.mjs` packs the icon (no ImageMagick). `electron-builder --win` produced both `win-unpacked` and an NSIS installer from macOS **without wine**. The release workflow's Windows leg is still off (TODO in `release.yml`). |
 
@@ -83,7 +83,7 @@ write):
    `stage-deps` is not a cross-builder): `npm ci`, then
    `npm run desktop:dist:win` (= `build` + `stage-deps` + `electron-builder --win`).
    Needs Node 24, `curl.exe` and `tar.exe` (both ship with Windows 10 1803+).
-2. Run `CamStack-Setup-<v>.exe`. For the service, choose **Install for all
+2. Run `Dominevo-Setup-<v>.exe`. For the service, choose **Install for all
    users**.
 3. First launch: role **Agent**, hub address (or automatic). The setup window asks for
    no secret (D857): the hub pairs the agent (Cluster → Nodes, "Agents found on the network", the same six digits on
@@ -140,7 +140,7 @@ child_process fakes, plus real artifacts):
 | Pinned WinSW | `packages/desktop/scripts/winsw-bundle.mjs` |
 | Service definition, installer script, manager, supervisor | `packages/desktop/src/windows-service/` |
 | Shared node environment | `packages/desktop/src/node-env.ts` |
-| Owner-only files | `packages/types/src/util/owner-only-file.ts` (shell: alias `@camstack/owner-only-file`, `tsup.config.ts`) |
+| Owner-only files | `packages/types/src/util/owner-only-file.ts` (shell: alias `@dominevo/owner-only-file`, `tsup.config.ts`) |
 | Archive extraction | `packages/types/src/deps/archive-extract.ts`, `zip-extract.ts` |
 | Windows hardware probe | `packages/system/src/builtins/platform-probe/windows-hardware.ts` |
 | Python pool seams | `packages/addon-pipeline/python/pool_platform.py` |

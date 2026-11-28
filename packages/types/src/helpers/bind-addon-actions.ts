@@ -10,7 +10,7 @@ import type { AddonApi } from '../generated/addon-api.js'
  *   - Outputs are typed as `z.infer<spec.output>`
  *
  * Example:
- *   import { benchmarkActions } from '@camstack/addon-benchmark'
+ *   import { benchmarkActions } from '@dominevo/addon-benchmark'
  *   const benchmark = bindAddonActions(ctx.api, 'benchmark', benchmarkActions)
  *   const { runId } = await benchmark.runBenchmark({ iterations: 100, target: 'cam-01' })
  */

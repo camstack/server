@@ -2,18 +2,18 @@
  * D640 in the admin editor: "Notify when" on a sensor rule — shown only when
  * every chosen sensor kind has a raise, and pruned on save when it is not.
  */
-import { selectOption, selectOptionLabels } from '@camstack/ui-library/testing'
+import { selectOption, selectOptionLabels } from '@dominevo/ui-library/testing'
 import {
   NC_CONDITION_CATALOG,
   type NcConditionDescriptor,
   type NcConditions,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('@camstack/ui-library', async () => {
-  const real = await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+vi.mock('@dominevo/ui-library', async () => {
+  const real = await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return {
     ...real,
     useSystem: () => ({
@@ -88,8 +88,8 @@ describe('buildConditions — sensorTransition is pruned where it cannot mean an
 
 function renderEditor(
   conditions: NcConditions,
-  actions?: import('@camstack/types').NcRuleActions,
-  actionStepsOf?: (actionId: string) => readonly import('@camstack/types').ActionStep[] | undefined,
+  actions?: import('@dominevo/types').NcRuleActions,
+  actionStepsOf?: (actionId: string) => readonly import('@dominevo/types').ActionStep[] | undefined,
 ): { readonly changes: NcConditions[] } {
   const changes: NcConditions[] = []
   const queryClient = new QueryClient({

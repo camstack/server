@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DeviceFeature } from '@camstack/types'
+import { DeviceFeature } from '@dominevo/types'
 import { sleepingCameraProbe, type SleepingCameraProbeClient } from '../sleeping-camera-probe.js'
 
 /**

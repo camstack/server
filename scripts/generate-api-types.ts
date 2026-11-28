@@ -26,7 +26,7 @@
  * procedures that lost their type.
  *
  * PREREQUISITE: the core half is expanded with the SERVER tsconfig, which
- * resolves `@camstack/types` and `@camstack/server/system` through their
+ * resolves `@dominevo/types` and `@dominevo/server/system` through their
  * `dist/*.d.ts` — not their sources. On a fresh clone or worktree those
  * dists do not exist, the checker resolves the imports to error types, and
  * the guard trips on procedures that are perfectly well typed in source.
@@ -251,7 +251,7 @@ function expandCoreRouters(
   // non-deterministic because it depends on whether `dist` happens to exist
   // when codegen runs. Unsetting `baseUrl` here removes the baseUrl-relative
   // candidate entirely, so TS falls back to the package-name specifier
-  // (`@camstack/types`) via ordinary node_modules resolution — the same form
+  // (`@dominevo/types`) via ordinary node_modules resolution — the same form
   // regardless of dist state. `cleanupExpandedRouterType` still normalizes
   // the absolute-path form as a defensive backstop; see its module header.
   const project = new Project({
@@ -347,7 +347,7 @@ async function main(): Promise<void> {
     capEntries.push({ key, cap })
   }
 
-  // The expansion resolves `@camstack/types` / `@camstack/server/system` through
+  // The expansion resolves `@dominevo/types` / `@dominevo/server/system` through
   // their dist — an unbuilt or stale dist degrades every signature that flows
   // through it to `any`. Answer that question BEFORE spending 4s in the
   // checker and blaming the routers for it.
@@ -447,7 +447,7 @@ type AugmentedErrorShape = {
   data: Record<string, unknown>
 }
 
-/** The full CamStack tRPC AppRouter type (server-side router definition). */
+/** The full Dominevo tRPC AppRouter type (server-side router definition). */
 export type AppRouter = ${appRouter}
 
 /**

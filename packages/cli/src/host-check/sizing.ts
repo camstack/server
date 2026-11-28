@@ -11,7 +11,7 @@
  * A fact that could not be read is `null` and its verdict is `unknown` — never
  * a zero that would read as "no memory" (D393).
  */
-import { classifyCpuModel, type HardwareClassId } from '@camstack/types'
+import { classifyCpuModel, type HardwareClassId } from '@dominevo/types'
 import type { Sizing } from '../onboarding/manifest-schema.js'
 import type { HostCheckReport } from './host-check.js'
 
@@ -56,7 +56,7 @@ export interface FeasibilityReport {
     readonly hardwareClass: HardwareClassId
     /** Whether the detector latency table has a column for this class. */
     readonly measured: boolean
-    /** The accelerators the host check found that CamStack uses. */
+    /** The accelerators the host check found that Dominevo uses. */
     readonly accelerators: readonly string[]
   }
   readonly ram: { readonly needGb: Range; readonly haveGb: number | null; readonly fit: Fit }
@@ -159,7 +159,7 @@ export function assessFeasibility(
   if (used.length === 0) {
     verdict = 'hub-plus-agents'
     reasons.push(
-      'no accelerator CamStack uses was found here, and detection on a CPU alone was never measured: plan for an agent with a GPU, an NPU or a Coral, or expect to detect on few cameras',
+      'no accelerator Dominevo uses was found here, and detection on a CPU alone was never measured: plan for an agent with a GPU, an NPU or a Coral, or expect to detect on few cameras',
     )
   } else if (!measured) {
     verdict = 'hub-plus-agents'
@@ -229,7 +229,7 @@ const VERDICT_TEXT: Readonly<Record<FeasibilityVerdict, string>> = {
   'not-a-hub': 'this machine is too small to be the hub',
 }
 
-/** The plain-text form `camstack host-check --cameras …` prints. */
+/** The plain-text form `dominevo host-check --cameras …` prints. */
 export function renderFeasibility(report: FeasibilityReport): string {
   const have = (n: number | null, unit: string): string =>
     n === null ? 'unknown' : `${String(n)} ${unit}`

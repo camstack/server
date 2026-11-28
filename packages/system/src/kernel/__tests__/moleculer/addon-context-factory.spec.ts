@@ -14,7 +14,7 @@ import {
   type AddonDeclaration,
   type SystemEvent,
   type ReadinessScope,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { CapabilityUnavailableError } from '../../capability-handle.js'
 import { LocalChildClient } from '../../transport/local-child-client.js'
 import { LocalChildRegistry } from '../../transport/local-child-registry.js'

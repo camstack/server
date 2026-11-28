@@ -9,7 +9,7 @@
  * those one at a time, by key, once the plan is known.
  */
 
-import type { IScopedLogger, MediaFileRef, ObjectEvent, Track } from '@camstack/types'
+import type { IScopedLogger, MediaFileRef, ObjectEvent, Track } from '@dominevo/types'
 import type { MediaProvenance } from '../store/media-store.js'
 import {
   type DebugAnalyzeInput,

@@ -1,4 +1,4 @@
-import { DeviceRole } from '@camstack/types'
+import { DeviceRole } from '@dominevo/types'
 import type { CoverDrag, CoverDrawing } from '../../illustrations/CoverIllustration'
 import type { CardCommon, CardCommonActions } from '../../shell/model'
 

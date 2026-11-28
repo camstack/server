@@ -79,7 +79,7 @@
  * not finished.
  */
 
-import type { EventOwnerType, IScopedLogger } from '@camstack/types'
+import type { EventOwnerType, IScopedLogger } from '@dominevo/types'
 import {
   FACE_MEDIA_OWNER_PREFIX,
   isRetiredMediaOwnerKind,

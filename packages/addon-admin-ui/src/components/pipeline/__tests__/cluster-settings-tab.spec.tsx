@@ -17,7 +17,7 @@ import {
   CLUSTER_STEP_SETTING_FIELDS,
   clusterModelSettingKey,
   clusterStepSettingKey,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   CLUSTER_SETTINGS_SECTIONS,

@@ -10,8 +10,8 @@ import type {
   SchedulerIssue,
   SchedulerPoint,
   SchedulerPointMode,
-} from '@camstack/types'
-import { Button, Select, TimeSpecInput } from '@camstack/ui-library'
+} from '@dominevo/types'
+import { Button, Select, TimeSpecInput } from '@dominevo/ui-library'
 import { Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { ActionList } from '../automation/ActionList'

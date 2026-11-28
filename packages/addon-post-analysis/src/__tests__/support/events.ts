@@ -4,7 +4,7 @@ import {
   type EventSource,
   type ObjectEvent,
   type SystemEvent,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 let eventIdSeq = 100_000
 

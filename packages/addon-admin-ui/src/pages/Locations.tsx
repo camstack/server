@@ -17,7 +17,7 @@
  * See `docs/design/2026-09-01-locations-page-design.md`.
  */
 
-import { type IconKey, locationIconKey } from '@camstack/types'
+import { type IconKey, locationIconKey } from '@dominevo/types'
 import {
   type PickerItem,
   trpc,
@@ -38,7 +38,7 @@ import {
   useDeviceManagerSetSiteZone,
   useDeviceManagerSetLocationIcon,
   useConfirm,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { MapPin } from 'lucide-react'
 import { useMemo, useState } from 'react'

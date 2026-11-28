@@ -28,9 +28,9 @@
  * double every source's connection count and wake battery cameras nobody asked
  * for.
  */
-import type { FfmpegVideoEncoderId, IScopedLogger } from '@camstack/types'
+import type { FfmpegVideoEncoderId, IScopedLogger } from '@dominevo/types'
 import { FlvJoinPoint, type FlvReader } from './flv-join.js'
-import { errMsg } from '@camstack/types'
+import { errMsg } from '@dominevo/types'
 import type { Readable } from 'node:stream'
 import type { GridLayout } from './grid-filter-graph.js'
 

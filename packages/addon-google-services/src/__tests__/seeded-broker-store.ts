@@ -3,7 +3,7 @@
  * holding one connected Google account. The addon persists sessions here, so a spec asserts on
  * what the record holds, not on a mock.
  */
-import { makeInMemoryRecords } from '@camstack/types'
+import { makeInMemoryRecords } from '@dominevo/types'
 import { googleBrokersEntryKind } from '../broker-record-kinds.js'
 import { GoogleBrokerStore } from '../google-broker-store.js'
 import type { GoogleServicesAddon } from '../google-services.addon.js'

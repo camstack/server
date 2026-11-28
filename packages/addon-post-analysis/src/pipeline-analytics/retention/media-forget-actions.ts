@@ -11,7 +11,7 @@
  * so the forget only ever deletes a population a human has already read.
  */
 
-import { customAction, defineCustomActions } from '@camstack/types'
+import { customAction, defineCustomActions } from '@dominevo/types'
 import { z } from 'zod'
 
 /** Hard ceiling on rows one call examines — the call is synchronous. */

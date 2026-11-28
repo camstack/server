@@ -1,4 +1,4 @@
-import type { LinkableInstance } from '@camstack/ui-library'
+import type { LinkableInstance } from '@dominevo/ui-library'
 import { describe, expect, it } from 'vitest'
 import { targetsFromInstances } from '../use-notification-targets'
 

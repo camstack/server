@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { batteryCapability, DeviceRuntimeState } from '@camstack/types'
+import { batteryCapability, DeviceRuntimeState } from '@dominevo/types'
 import {
   attemptLedgerOverSlice,
   BatteryHourlyRefresh,

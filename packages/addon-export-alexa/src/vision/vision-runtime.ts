@@ -20,8 +20,8 @@ import type {
   ConfigFieldWithValue,
   IScopedLogger,
   MediaFileKind,
-} from '@camstack/types'
-import { errMsg } from '@camstack/types'
+} from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
 import { z } from 'zod'
 import type { SmartVisionClass } from '../endpoints/builder.js'
 import type { PublicEndpointReader } from '../public-endpoint.js'

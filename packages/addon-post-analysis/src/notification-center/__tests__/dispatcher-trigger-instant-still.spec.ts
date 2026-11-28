@@ -24,7 +24,7 @@
  * render), the reported degrade, and that a non-`immediate` rule is untouched.
  */
 
-import type { IScopedLogger, MediaFile } from '@camstack/types'
+import type { IScopedLogger, MediaFile } from '@dominevo/types'
 import { makeTestMediaFile } from '../../__tests__/support/media-file.js'
 import { describe, expect, it } from 'vitest'
 import {

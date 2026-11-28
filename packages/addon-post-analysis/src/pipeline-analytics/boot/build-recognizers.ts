@@ -10,7 +10,7 @@ import type {
   IScopedLogger,
   PipelineAnalyticsFaceGalleryChangedPayload,
   PipelineAnalyticsPlateGalleryChangedPayload,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { BUILTIN_CLIP_MODELS } from '../../shared/clip/clip-model-registry.js'
 import { extractCrop } from '../../shared/frame/crop-extractor.js'
 import { decodeJpegToRgb } from '../../shared/frame/encode-crop.js'

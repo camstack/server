@@ -20,7 +20,7 @@ index f79bc9b..b103ca3 100644
   * @extends {Writable}
   * @implements {ParserClass}
 + *
-+ * ── CamStack patch (D457) — the accumulator is no longer quadratic ─────────
++ * ── Dominevo patch (D457) — the accumulator is no longer quadratic ─────────
 + *
 + * The shipped `_write` did, ONCE PER SOCKET CHUNK that left a partial packet:
 + *
@@ -28,13 +28,13 @@ index f79bc9b..b103ca3 100644
 + *     this.buf = Buffer.from(packet);              // copies it AGAIN
 + *
 + * so a message of M bytes arriving in chunks of c copied ~2·M²/2c bytes on the
-+ * receiving event loop — quadratic in the chunk COUNT. On CamStack's hub the
++ * receiving event loop — quadratic in the chunk COUNT. On Dominevo's hub the
 + * mesh carries base64 JPEG cross-node (`pipelineRunner.getNativeCrop`
 + * with `encodeJpeg`, `pipelineRunner.runStatelessStep{frameJpeg}`) at
 + * `maxPacketSize: 10 MiB`, and a 50 s V8 profile of hub-main put **20.8 % of
 + * its busy main thread inside this one function**.
 + *
-+ * The fix is the same one CamStack applied to its own UDS `FrameDecoder`:
++ * The fix is the same one Dominevo applied to its own UDS `FrameDecoder`:
 + * hold the pending chunks in a LIST, concatenate ONCE when a whole packet is
 + * available, and never at all while one is still incomplete. Everything else —
 + * the framing, the CRC check and its position, the `maxPacketSize` rule

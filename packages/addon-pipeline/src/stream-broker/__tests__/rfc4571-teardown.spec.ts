@@ -1,6 +1,6 @@
 import * as net from 'node:net'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { IScopedLogger, StreamSource } from '@camstack/types'
+import type { IScopedLogger, StreamSource } from '@dominevo/types'
 import { StreamBroker } from '../stream-broker/stream-broker'
 import { DEFAULT_PREBUFFER_SEC } from '../prebuffer'
 

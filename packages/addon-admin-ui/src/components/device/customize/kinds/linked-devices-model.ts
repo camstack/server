@@ -13,7 +13,7 @@ import {
   type ExtensionSlotState,
   type ExtensionSlotValue,
   type ExtensionSourceHealth,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   type AssignmentCandidate,
   type CandidateDevice,

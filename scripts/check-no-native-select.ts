@@ -42,7 +42,7 @@ for (const root of ROOTS) {
 
 if (offenders.length > 0) {
   console.error(
-    '✗ native <select> — the browser popup is not ours; use `Select` from @camstack/ui-library',
+    '✗ native <select> — the browser popup is not ours; use `Select` from @dominevo/ui-library',
   )
   for (const o of offenders) console.error(`  ${o}`)
   process.exit(1)

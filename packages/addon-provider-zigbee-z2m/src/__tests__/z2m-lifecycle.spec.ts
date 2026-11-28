@@ -1,4 +1,4 @@
-import { type DeviceContext, DeviceType, type IDeviceRuntimeState } from '@camstack/types'
+import { type DeviceContext, DeviceType, type IDeviceRuntimeState } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ZigbeeDevice } from '../z2m-device.js'
 import { planZ2mDevice } from '../z2m-exposes.js'

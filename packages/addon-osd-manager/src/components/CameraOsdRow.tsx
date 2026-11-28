@@ -7,9 +7,9 @@ import {
   useOsdManagerGetDeviceOsd,
   useOsdManagerRenderDevice,
   useOsdManagerSetSlotBinding,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Loader2, Monitor } from 'lucide-react'
-import type { OsdNamedTemplate, OsdSlotBinding } from '@camstack/types'
+import type { OsdNamedTemplate, OsdSlotBinding } from '@dominevo/types'
 import { useT } from '../i18n/index.js'
 import { OsdCameraSection } from './OsdCameraSection.js'
 import {

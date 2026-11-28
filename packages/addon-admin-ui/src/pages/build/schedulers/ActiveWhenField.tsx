@@ -3,8 +3,8 @@
  * `activeWhen`. The same WhenTree the automation editor uses; the save check
  * (`SchedulerStateTreeSchema`) is what refuses an event leaf, with its reason.
  */
-import type { AutomationRecipe, AutomationWhen } from '@camstack/types'
-import { Switch } from '@camstack/ui-library'
+import type { AutomationRecipe, AutomationWhen } from '@dominevo/types'
+import { Switch } from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 import type { AutomationDevice } from '../automation/automation-data'
 import { WhenTree } from '../automation/WhenTree'

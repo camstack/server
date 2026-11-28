@@ -11,7 +11,7 @@
  *   3. a shed output (`dropped: true`) stays an inert empty result.
  */
 
-import type { EngineOutput, ModelCatalogEntry, StepDefinition } from '@camstack/types'
+import type { EngineOutput, ModelCatalogEntry, StepDefinition } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { dispatchPostprocess } from '../dispatch.js'
 

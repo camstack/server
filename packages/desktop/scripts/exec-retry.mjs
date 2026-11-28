@@ -5,7 +5,7 @@
  * without spawning a real process.
  *
  * Problem this addresses (release v1.2.104, linux x64 desktop leg): the closure
- * install (`npm install @camstack/server@<version>`) was terminated 124 s in by
+ * install (`npm install @dominevo/server@<version>`) was terminated 124 s in by
  * an EXTERNAL SIGTERM on the self-hosted agent-a runner — npm's own arborist
  * signal handler caught it, rolled the reify back and exited 1. The exact same
  * command on the exact same runner had succeeded in 90 s eighteen hours before

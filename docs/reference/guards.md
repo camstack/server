@@ -42,7 +42,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-cap-vocabulary.ts` | Cap vocabulary guard (D920) — the map of what every capability lets an operator DO to a device and WATCH it for must be complete and true. The map is generated from what the caps declare (D1050): an action on its method, a `notOperatorFa… |
 | `scripts/check-capability-metadata-drift.ts` | D4 codegen guard — fail the build if any addon `package.json` manifest declares behavioural capability metadata (`kind` / `defaultActive`). |
 | `scripts/check-capability-union-complete.ts` | Union guard — every capability DEFINED in `packages/types/src/capabilities` must be a member of the `AnyCapability` union and a VALUE export of the barrel. |
-| `scripts/check-catalog-licence.ts` | Catalog-licence guard — a model CamStack can download declares, in the catalog, what it is and on what terms (D661). |
+| `scripts/check-catalog-licence.ts` | Catalog-licence guard — a model Dominevo can download declares, in the catalog, what it is and on what terms (D661). |
 | `scripts/check-catalog-per-device-isolation.ts` | NO PER-DEVICE FAILURE MAY ABORT A FLEET-WIDE CATALOG BUILD. |
 | `scripts/check-cgroup-path-single-owner.ts` | A cgroup path is RESOLVED, never written down. |
 | `scripts/check-changelog-unreleased.ts` | A published package whose own files changed since the last `publish-*` tag must have at least one entry under `## [Unreleased]` in its CHANGELOG.md. |
@@ -63,21 +63,21 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-container-priority-in-sync.ts` | The container-child precedence has ONE definition and one copy that cannot import it. This makes that fact checkable instead of asking for it in a comment. |
 | `scripts/check-customize-apply-add.ts` | Customize apply guard (D944). An extension target is `apply: 'add'`, or a `replace` its cap lists in `overridable` (D984). |
 | `scripts/check-customize-bespoke-card.ts` | Customize bespoke-card guard (D936). A cap that declares `customize` is offered by the generic scalar, keyed-array and event cards. A component or builder named after that cap outside those folders is a second card, and a new override ha… |
-| `scripts/check-customize-coverage.ts` | Customize coverage guard (D936, D944, D984, D1004). Every Customize cardinality, event shape, apply authority, extension slot, catalog cap title and stored composition link declared in `@camstack/types` has a renderer in the admin UI. A … |
+| `scripts/check-customize-coverage.ts` | Customize coverage guard (D936, D944, D984, D1004). Every Customize cardinality, event shape, apply authority, extension slot, catalog cap title and stored composition link declared in `@dominevo/types` has a renderer in the admin UI. A … |
 | `scripts/check-customize-declaration.ts` | Customize declaration guard (D936). A cap may offer a generic override only by declaring `customize`, and that declaration has to name paths, types and vocabulary the cap actually has. |
 | `scripts/check-customize-parameters.ts` | Customize parameter guard (D944). An extension's transform parameters — threshold, comparison, dwell, scale, offset, clamp, debounce, edges, source modes, timeout — have to appear on the catalog the editor reads. |
 | `scripts/check-dbfs-era.ts` | Every absolute-dBFS constant states which amplitude era it was calibrated in (D460). |
 | `scripts/check-decision-ids-unique.ts` | Decision-id guard — two records may never claim the same `D<n>`. |
 | `scripts/check-declared-device-single-owner.ts` | Declared-device ownership guard — there is ONE get-or-create for a device an addon declares, and it is `DeclaredDevices`. |
 | `scripts/check-decode-worker-child-lean.ts` | Guard: nothing reachable from the decode-worker CHILD entry may VALUE-import a workspace package. Type-only imports are free; a value import is not. |
-| `scripts/check-deps.ts` | Verify that every @camstack/* import in each package is declared as a dependency (dependencies, peerDependencies, or devDependencies). |
+| `scripts/check-deps.ts` | Verify that every @dominevo/* import in each package is declared as a dependency (dependencies, peerDependencies, or devDependencies). |
 | `scripts/check-desktop-update-feeds.ts` | Desktop update-feed guard — two products, never one feed file. |
 | `scripts/check-destructive-through-primitive.ts` | One behaviour for every destructive action in the admin UI: the operator confirms, and a loader stays on screen until the work settles. Two paths give that, and nothing else does: 1. INSIDE a `DataTable`: a column's `render(row, index, t… |
 | `scripts/check-device-card-parts.ts` | GUARD: a device card is assembled from the shared parts, never redrawn. |
 | `scripts/check-device-card-scene-layout.ts` | GUARD: every device-card scene sits on the one fixed layout. |
 | `scripts/check-device-field-quantity-names.ts` | A device-scoped capability's status field names its QUANTITY, not its unit (`power`, not `watts`; `signal`, not `signalPercent`). The unit is the D944 base of the quantity, displayed and converted elsewhere. |
 | `scripts/check-device-identifiers-declared.ts` | A provider that writes a device's MAC, serial or vendor uid into its free-form metadata also DECLARES it as a typed identifier (D1059). |
-| `scripts/check-device-name-in-sync.ts` | The device-name rule has one definition. The viewer cannot import ui-library (it is a web package; the viewer is React Native) and it resolves `@camstack/types` from an installed release, so it keeps a copy of `format-device-name.ts`. Th… |
+| `scripts/check-device-name-in-sync.ts` | The device-name rule has one definition. The viewer cannot import ui-library (it is a web package; the viewer is React Native) and it resolves `@dominevo/types` from an installed release, so it keeps a copy of `format-device-name.ts`. Th… |
 | `scripts/check-device-name-rendered-via-component.ts` | A device's name is painted by `DeviceName` / `useDeviceLabel`. A JSX file that interpolates `device.name` (and the sibling shapes below) is a second naming rule. |
 | `scripts/check-device-scoped-wrapper-mounts.ts` | Device-scoped wrapper mount guard — a cap that is one provider PER DEVICE must not be SERVED as one provider for the whole fleet. |
 | `scripts/check-device-selection-authority.ts` | An operator-facing activation verb must not write a store nothing reads. |
@@ -137,7 +137,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-nc-system-filter-scope.ts` | System-event filter-scope guard — the ENGINE narrows exactly what the EDITOR says it narrows. |
 | `scripts/check-nc-text-catalog.ts` | Notification-Center text-catalog guard — the shipped locales must agree. |
 | `scripts/check-no-addon-level-settings.ts` | No addon-level settings (planning#440 step 8 / M5, D986). |
-| `scripts/check-no-adhoc-number-format.ts` | One number rule for the UI: a reading or measurement is formatted by `formatNumeric` (`@camstack/ui-library`, `lib/format-numeric.ts`): the operator's precision wins, with none at most two decimals, trailing zeros trimmed. A hand-written… |
+| `scripts/check-no-adhoc-number-format.ts` | One number rule for the UI: a reading or measurement is formatted by `formatNumeric` (`@dominevo/ui-library`, `lib/format-numeric.ts`): the operator's precision wins, with none at most two decimals, trailing zeros trimmed. A hand-written… |
 | `scripts/check-no-array-event-subscribe.ts` | Event-subscribe guard — no ARRAY category filter in a `.subscribe(...)` call. |
 | `scripts/check-no-bare-ffmpeg.ts` | No bare `ffmpeg` / `ffprobe` in runtime source — the enforcement D540 lacked. |
 | `scripts/check-no-camera-model-layer.ts` | A model is chosen by the accelerator that runs it; a camera only turns steps on or off (D927). |
@@ -177,9 +177,9 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-no-settings-fallback-for-kinds.ts` | A record kind has ONE store (planning#440 step 5, D1013). |
 | `scripts/check-no-stacked-provider-lists.ts` | One collection, one surface (planning#505, sibling of #504; D996/D1007/D1013). |
 | `scripts/check-no-state-unit-sibling.ts` | D944 §4 — device state has no root `unit` / `precision` / `*Unit` sibling, and every device-native numeric reading names a quantity (or is listed in the debt file until it is classified). |
-| `scripts/check-no-system-package.ts` | The old system package is gone: its source ships as `@camstack/server/system`. |
+| `scripts/check-no-system-package.ts` | The old system package is gone: its source ships as `@dominevo/server/system`. |
 | `scripts/check-no-third-party-products.ts` | Third-party product names — name the mechanism. |
-| `scripts/check-no-token-file-lookup.ts` | No tool looks for a specific token file: the `camstack login` session is the credential. |
+| `scripts/check-no-token-file-lookup.ts` | No tool looks for a specific token file: the `dominevo login` session is the credential. |
 | `scripts/check-no-tsc6-typecheck.ts` | TypeScript 7 (tsgo) is the only type-check engine (D832). No TS 6 type-check path comes back. |
 | `scripts/check-no-ui-optimism.ts` | The client-side optimism helpers stay removed from the UI (D1061). |
 | `scripts/check-notification-tap-targets.ts` | A notification's tap URL lands on a page that PARSES it. |
@@ -214,7 +214,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-requires-declared.ts` | Every package a node installs separately from the server declares the server it needs (D989). |
 | `scripts/check-reserved-collection-sources.ts` | A RESERVED collection source id is spelled by its OWNER and by nobody else (D625). |
 | `scripts/check-retention-settings-consumed.ts` | Retention-settings guard — **an operator-visible retention value has exactly one consumer, and a retired one does not come back.** ## The failure this catches D61 collapsed retention into one age sweep over tracks. It did not touch the s… |
-| `scripts/check-runner-barrel-free.ts` | Runner-footprint guard (D28) — fail the build if the addon-runner's transitive SOURCE closure imports a runtime VALUE from the `@camstack/types` root barrel. |
+| `scripts/check-runner-barrel-free.ts` | Runner-footprint guard (D28) — fail the build if the addon-runner's transitive SOURCE closure imports a runtime VALUE from the `@dominevo/types` root barrel. |
 | `scripts/check-runner-group-isolation.ts` | Runner-group guard — a DEVICE PROVIDER never shares a runner (D29). |
 | `scripts/check-runtime-deps-reachable-from-dist.ts` | A published package declares as a runtime `dependency` only what its shipped artefact `require`s or `import`s at run time (D479, extending D477). A UI whose `files` is a bundled `dist` — the bundler, framework, icon set, editor, or playe… |
 | `scripts/check-runtime-state-durability.ts` | Runtime-state durability guard — a value reaches disk only because its own capability asked for it, in a diff someone reviewed. |
@@ -230,7 +230,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-settings-help-length.ts` | Provider settings help-text guard — a settings field explains only what an operator cannot read off its label. |
 | `scripts/check-settings-key-has-reader.ts` | Settings-key guard — a form must not offer a knob that writes a store NOBODY READS. |
 | `scripts/check-silent-observation-drop.ts` | Silent-observation-drop guard — enforcement for D237 (docs/decisions/adr-0237-a-verification-must-be-able-to-say-unknown.md). |
-| `scripts/check-single-client-login.ts` | A client tool reaches a hub through ONE credential: the `camstack login` session (D1101). Every other way is retired, and anything that depended on one was migrated, not exempted. |
+| `scripts/check-single-client-login.ts` | A client tool reaches a hub through ONE credential: the `dominevo login` session (D1101). Every other way is retired, and anything that depended on one was migrated, not exempted. |
 | `scripts/check-single-composition-creator.ts` | One caller of `createComposition` outside tests (D1004). |
 | `scripts/check-single-copy-layout.ts` | Single-copy layout guard — enforcement step 3 of D45 (docs/decisions/adr-0045). |
 | `scripts/check-single-prebuffer-knob.ts` | There is ONE prebuffer configuration, and it lives in one file. |
@@ -263,7 +263,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-viewer-build-carries-no-server.ts` | Viewer-build guard — the reduced product stays reduced, and owns its own name. |
 | `scripts/check-viewer-calls-allowed.ts` | The viewer app can do what a VIEWER may do (D921). |
 | `scripts/check-viewer-condition-mirror.ts` | Viewer condition-mirror guard — the app must be able to render every condition the hub serves. |
-| `scripts/check-viewer-link-builder-is-the-only-source.ts` | Viewer-link guard — **`buildViewerLink` (`@camstack/types` `viewer-link-url.ts`) is the only place a link to a VIEWER page, or to the CamStack app link domain, is assembled.** (D709) ## The failure this catches The address a notification… |
+| `scripts/check-viewer-link-builder-is-the-only-source.ts` | Viewer-link guard — **`buildViewerLink` (`@dominevo/types` `viewer-link-url.ts`) is the only place a link to a VIEWER page, or to the Dominevo app link domain, is assembled.** (D709) ## The failure this catches The address a notification… |
 | `scripts/check-viewer-pin-resolves.ts` | Viewer ship-chain guard — refuses a `camstack` submodule pointer that is not a viewer commit. |
 | `scripts/check-viewer-web-build.ts` | Viewer ship-chain guard — refuses a commit whose EMBEDDED WEB VIEWER lags the viewer version the repository pins. |
 | `scripts/check-vitest-max-workers.ts` | Every `vitest.config.ts` takes the ONE shared worker default. |
@@ -294,7 +294,7 @@ rule that matters, wiring it into `checks.yml` is a one-line change.
 | `scripts/check-addon-types-reachability.ts` | Types-reachability guard on the BUILT addon dists (D1074, amends D28). |
 | `scripts/check-capability-activation-single-authority.ts` | Capability activation has ONE authority: the addon manifest's `autoActivate`. |
 | `scripts/check-device-local-state-schema-free.ts` | The generated device-local-state table is schema-free (D1074, amends D28). |
-| `scripts/check-hosted-model-revisions.ts` | Hosted-revision guard — every artefact on the CamStack model mirror has a revision, and that revision is the sha256 the mirror holds for its weight file (D743, D744). |
+| `scripts/check-hosted-model-revisions.ts` | Hosted-revision guard — every artefact on the Dominevo model mirror has a revision, and that revision is the sha256 the mirror holds for its weight file (D743, D744). |
 | `scripts/check-public-docs-staleness.ts` | Public-docs staleness reminder — lists public docs pages whose described server code changed after they were verified. |
 | `scripts/check-runner-dist-barrel-free.ts` | Runner-footprint guard on the BUILT output (D28) — the twin of `check-runner-barrel-free.ts`, which reads SOURCE. |
 | `scripts/check-trainer-vendor.ts` | The trainer's vendored code must be byte-identical to its source. |

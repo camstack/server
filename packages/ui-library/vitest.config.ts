@@ -8,7 +8,7 @@ const catalogue = fileURLToPath(
 
 export default defineConfig({
   resolve: {
-    alias: [{ find: /^@camstack\/types\/device-template-catalogue$/, replacement: catalogue }],
+    alias: [{ find: /^@dominevo\/types\/device-template-catalogue$/, replacement: catalogue }],
   },
   test: {
     ...vitestWorkers(),

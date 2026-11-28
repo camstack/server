@@ -9,7 +9,7 @@
  *  (a) the repoint copies and deletes only its own class subtree;
  *  (b) it is mutually exclusive with a mover on the same physical root.
  */
-import type { IScopedLogger, StorageLocation, StorageMigrationMover } from '@camstack/types'
+import type { IScopedLogger, StorageLocation, StorageMigrationMover } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { LocationRepointer, RepointRefusedError } from '../location-repointer.js'
 import type { RepointMoveIo } from '../location-repoint-move.js'

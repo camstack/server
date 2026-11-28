@@ -56,7 +56,7 @@
  * ffmpeg lane.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { pickProfile, type TimelapseAvailabilityRange } from './timelapse/timelapse-renderer.js'
 
 /** How often the render is polled while it runs. */

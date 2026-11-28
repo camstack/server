@@ -745,7 +745,7 @@ export const ClipSourceSchema = z.object({
   /** The value this source stamps on {@link ClipSchema.source}, and the prefix
    *  of every clip id it mints. `getClipPlayback` routes on it. */
   source: z.string(),
-  /** Operator-facing name of the source ("CamStack recordings", "SD card"). */
+  /** Operator-facing name of the source ("Dominevo recordings", "SD card"). */
   label: z.string(),
   /**
    * The addon that SERVES this row.
@@ -833,7 +833,7 @@ export const videoclipsCapability = {
          * answered by another one (D552's `rejectUnresolvedAddonPin` rule).
          *
          * It was optional, documented as "absent means the device's BOUND
-         * provider, which is CamStack on every camera". No code implemented
+         * provider, which is Dominevo on every camera". No code implemented
          * that. Measured on the live hub 2026-09-20 — device 107, bound to
          * `recorder` AND `provider-reolink` — a bare call with `limit: 3`
          * answered SIX rows, three from each source, merged newest-first:
@@ -844,7 +844,7 @@ export const videoclipsCapability = {
          * There is nothing to restore the default to. `getBindings` answers a
          * collection cap with a DERIVED, PLURAL set (D554 amended, step 0);
          * `setWrapperActive` — the singleton authority that could name one —
-         * throws for a collection cap by design. Naming CamStack here instead
+         * throws for a collection cap by design. Naming Dominevo here instead
          * would privilege one addon by id inside a surface whose premise is
          * that sources are peers, and would be wrong on the first camera with
          * no recorder binding. So absence is REFUSED, in the schema, where the

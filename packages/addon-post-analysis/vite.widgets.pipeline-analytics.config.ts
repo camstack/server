@@ -25,7 +25,7 @@ export default defineConfig({
       name: 'addon_pipeline_analytics_widgets',
       filename: 'remoteEntry.js',
       // Disable MF DTS generation — it walks the exposed modules' imports
-      // through the `@camstack/*` → src aliases and leaks a `.d.ts` next to
+      // through the `@dominevo/*` → src aliases and leaks a `.d.ts` next to
       // every framework source file (Bug-1, guarded by
       // scripts/check-no-dts-in-src.sh). These widget types are not
       // consumed cross-package.
@@ -41,9 +41,9 @@ export default defineConfig({
         '@tanstack/react-query': { singleton: true, requiredVersion: false, import: false },
         '@trpc/client': { singleton: true, requiredVersion: false, import: false },
         '@trpc/react-query': { singleton: true, requiredVersion: false, import: false },
-        '@camstack/ui-library': { singleton: true, requiredVersion: false, import: false },
-        '@camstack/sdk': { singleton: true, requiredVersion: false, import: false },
-        '@camstack/types': { singleton: true, requiredVersion: false, import: false },
+        '@dominevo/ui-library': { singleton: true, requiredVersion: false, import: false },
+        '@dominevo/sdk': { singleton: true, requiredVersion: false, import: false },
+        '@dominevo/types': { singleton: true, requiredVersion: false, import: false },
       },
     }),
   ],

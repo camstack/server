@@ -200,7 +200,7 @@ DERIVED at query time (it always was).
 is still the only reader of a legacy key. It can go when no stored column and
 no cached client holds one: concretely, after the reset below, once
 `select count(*) from "pipeline-analytics:media" where typeof(id) = 'text'` is
-0 on every hub in the fleet and no `@camstack/server` older than this release
+0 on every hub in the fleet and no `@dominevo/server` older than this release
 is installed anywhere. `formatMediaOwnerKey` has no remaining producer and is
 retained only as the codec's other half; a future session may delete it first.
 
@@ -255,7 +255,7 @@ retained only as the codec's other half; a future session may delete it first.
   row of `slotTs` (~4 MB) arrive. D474 bought 263 MB; this record buys none, and
   saying otherwise would be a false claim in its favour.
 - **`upsert` is a new method on a SYSTEM cap**, so it reaches a node only inside
-  a published `@camstack/server`. An addon deploy alone cannot expose it: a hub
+  a published `@dominevo/server`. An addon deploy alone cannot expose it: a hub
   running an older closure will answer "method not found" for every media write.
 - **Clients break, by authorisation.** `getEventMedia` / `listEventMedia`
   reject a call with no `ownerType`, and every consumer of `MediaFileRef.key`

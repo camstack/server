@@ -22,7 +22,7 @@
  * hand the operator the downscale and never say so.
  */
 
-import type { MediaFileKind, MediaFileRef } from '@camstack/types'
+import type { MediaFileKind, MediaFileRef } from '@dominevo/types'
 
 /**
  * Media kinds that are a whole, unannotated frame — the only ones a retrain

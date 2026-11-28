@@ -16,7 +16,7 @@ import {
   type IntegrationTestConnectionResult,
   RecordIntegrationInstances,
   type RecordsAccess,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 
 export const <%= className %>ConnectionsKind = defineEntryKind('connections', {
@@ -95,7 +95,7 @@ import {
   type IntegrationTestConnectionResult,
   integrationInstancesCapability,
   type RecordIntegrationInstances,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   build<%= className %>Instances,
   <%= className %>RecordKinds,

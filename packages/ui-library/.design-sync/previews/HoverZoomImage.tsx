@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { HoverZoomImage } from '@camstack/ui-library'
+import { HoverZoomImage } from '@dominevo/ui-library'
 
 const Frame = ({ children }: { children: ReactNode }) => (
   <div className="dark bg-background text-foreground p-5 rounded-lg">{children}</div>

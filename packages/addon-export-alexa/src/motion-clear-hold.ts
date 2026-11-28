@@ -121,7 +121,7 @@ export class MotionClearHold {
    * whole reason this branch is spelled out. This map is in-memory: after an
    * addon restart it is empty, while Alexa's copy of `detectionState` is
    * whatever we last told it. If the addon respawned during a motion — which a
-   * `camstack deploy` does routinely — treating "unknown" as "already clear"
+   * `dominevo deploy` does routinely — treating "unknown" as "already clear"
    * leaves the Alexa app showing motion until that camera happens to trigger
    * again, which on a quiet camera is hours. The cost of the other choice is
    * at most one redundant NOT_DETECTED per camera per restart.

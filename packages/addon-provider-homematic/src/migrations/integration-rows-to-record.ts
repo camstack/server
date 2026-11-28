@@ -14,7 +14,7 @@ import {
   moveIntegrationRowsToRecords,
   type RowsIntegration,
   type RowsMigrationLog,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   type HomematicConnectionBody,
   homematicConnectionsEntryKind,

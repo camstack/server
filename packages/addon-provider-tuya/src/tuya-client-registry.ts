@@ -9,7 +9,7 @@
  * unchanged, `retain` drops vanished integrations.
  */
 
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IScopedLogger } from '@dominevo/types'
 import { sameConnection, type TuyaConfig } from './config.js'
 import { TuyaIntegrationManager, type TuyaConnectionInfo } from './tuya-integration-manager.js'
 import { type TuyaConnectionResolver } from './tuya-gateway.js'

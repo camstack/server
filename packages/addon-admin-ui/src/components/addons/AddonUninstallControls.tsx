@@ -1,11 +1,11 @@
-import type { UninstallPackageResult } from '@camstack/types'
+import type { UninstallPackageResult } from '@dominevo/types'
 import {
   useAddonsListInstallations,
   useAddonsUninstallPackage,
   useAlert,
   useConfirm,
   Button,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { Globe, Trash2 } from 'lucide-react'
 import {

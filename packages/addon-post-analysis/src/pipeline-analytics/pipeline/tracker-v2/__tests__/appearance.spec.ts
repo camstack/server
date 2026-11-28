@@ -7,7 +7,7 @@
  *  - in `foldAppearance`, fold every read into `colour`: "gray and colour
  *    reads are kept apart" fails.
  */
-import { APPEARANCE_BIN_COUNT, type AppearanceDescriptor } from '@camstack/types'
+import { APPEARANCE_BIN_COUNT, type AppearanceDescriptor } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   aggregateDistance,

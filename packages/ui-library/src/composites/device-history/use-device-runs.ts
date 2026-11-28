@@ -4,7 +4,7 @@
  * empty page - both read as "no runs panel". A query still in flight is not
  * an answer either (D315): `undefined` until the cap answers with rows.
  */
-import type { DeviceRun } from '@camstack/types'
+import type { DeviceRun } from '@dominevo/types'
 import { useDeviceRunsListRuns } from '../../generated/system-hooks'
 
 /** How many runs the panel and the bands are given; the cap's page size. */

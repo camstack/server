@@ -38,7 +38,7 @@ for pkg in "$REPO_ROOT"/packages/addon-*/; do
   fi
 
   name=$(node -e "console.log(require('$pkg/package.json').name)")
-  dirname=$(echo "$name" | sed 's/@camstack\///')
+  dirname=$(echo "$name" | sed 's/@dominevo\///')
 
   echo "Building $name..."
   (cd "$pkg" && npx tsup 2>&1 | tail -1) || {

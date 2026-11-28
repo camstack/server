@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
-import type { Zone, IScopedLogger, DeviceProxy } from '@camstack/types'
-import type { StationaryObject } from '@camstack/types'
+import type { Zone, IScopedLogger, DeviceProxy } from '@dominevo/types'
+import type { StationaryObject } from '@dominevo/types'
 import {
   ZoneAnalyticsProvider,
   computeSnapshot,

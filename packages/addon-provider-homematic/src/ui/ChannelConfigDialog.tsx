@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Button, ErrorBox, FormField, ItemFormDialog, Select } from '@camstack/ui-library'
+import { Button, ErrorBox, FormField, ItemFormDialog, Select } from '@dominevo/ui-library'
 import { SlidersHorizontal } from 'lucide-react'
 import {
   DeviceConfigSchema,

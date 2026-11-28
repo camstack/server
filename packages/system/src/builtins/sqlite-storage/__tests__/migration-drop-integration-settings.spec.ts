@@ -5,7 +5,7 @@
  * after a drop changes nothing.
  */
 import { fileURLToPath } from 'node:url'
-import { moveIntegrationRowsToRecords } from '@camstack/types'
+import { moveIntegrationRowsToRecords } from '@dominevo/types'
 import Database from 'better-sqlite3'
 import { afterEach, describe, expect, it } from 'vitest'
 import {

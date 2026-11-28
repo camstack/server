@@ -22,7 +22,7 @@
   "globalSettings.s_custom.localPort.label": "Porta",
   "globalSettings.s_custom.localPort.description": "Porta HTTPS locale a cui cloudflared inoltra il traffico. Deve accettare richieste https:// (l'addon aggiunge noTLSVerify per il certificato autofirmato).",
   "globalSettings.s_custom.noTLSVerify.label": "Salta la verifica TLS",
-  "globalSettings.s_custom.noTLSVerify.description": "Cloudflared accetta il certificato TLS dell'origine senza verificare la catena della CA. Necessario quando l'hub serve HTTPS con un certificato autofirmato (il caso predefinito di CamStack).",
+  "globalSettings.s_custom.noTLSVerify.description": "Cloudflared accetta il certificato TLS dell'origine senza verificare la catena della CA. Necessario quando l'hub serve HTTPS con un certificato autofirmato (il caso predefinito di Dominevo).",
   "globalSettings.s_custom.originServerName.label": "Override SNI (facoltativo)",
   "globalSettings.s_custom.originServerName.description": "Server Name Indication inviato nell'handshake TLS. Lascia vuoto a meno che il certificato dell'origine non sia emesso per un nome host diverso dall'indirizzo LAN.",
   "globalSettings.s_custom.httpHostHeader.label": "Override dell'header Host (facoltativo)",

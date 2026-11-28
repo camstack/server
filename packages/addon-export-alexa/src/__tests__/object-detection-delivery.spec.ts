@@ -16,7 +16,7 @@
  *  - At most one event per camera and class per 30 s: fragmented tracks of
  *    the same few people posted one event every ~8 s on one camera.
  */
-import type { AddonHttpReply, AddonHttpRequest, IScopedLogger } from '@camstack/types'
+import type { AddonHttpReply, AddonHttpRequest, IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { redactedObjectDetectionSample } from '../lwa-event-gateway.js'
 import { handleSnapshotFetch } from '../snapshots/snapshot-route.js'

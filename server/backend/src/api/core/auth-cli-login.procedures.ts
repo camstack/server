@@ -5,7 +5,7 @@
  */
 import { TRPCError } from '@trpc/server'
 import { z } from 'zod'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { CliApprovalService } from '../../core/auth/cli-approval.service.js'
 import type { SessionIssue } from '../../auth/session-mint.js'
 import { limitByUser } from './auth-limits.js'

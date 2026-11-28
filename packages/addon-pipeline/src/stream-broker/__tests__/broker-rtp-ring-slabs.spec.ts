@@ -1,4 +1,4 @@
-import type { IScopedLogger, StreamSource } from '@camstack/types'
+import type { IScopedLogger, StreamSource } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { StreamBroker } from '../stream-broker/stream-broker'
 import { holdPacket, isSlabView, readSlabTotals, releasePacket } from '../stream-broker/slab-pool'

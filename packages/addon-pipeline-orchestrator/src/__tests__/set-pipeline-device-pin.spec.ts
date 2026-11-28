@@ -12,8 +12,8 @@
  * `assign-pipeline-session-migration.spec.ts`.
  */
 import { afterEach, describe, expect, it } from 'vitest'
-import { EventCategory } from '@camstack/types'
-import type { CameraDetectionConfig } from '@camstack/types'
+import { EventCategory } from '@dominevo/types'
+import type { CameraDetectionConfig } from '@dominevo/types'
 import PipelineOrchestratorAddon from '../index.js'
 import {
   makeFakeBroker,

@@ -54,8 +54,8 @@ import type {
   MediaFileInfo,
   MediaFileRef,
   MediaOwnerType,
-} from '@camstack/types'
-import { isEventOwnerType } from '@camstack/types'
+} from '@dominevo/types'
+import { isEventOwnerType } from '@dominevo/types'
 
 /** Path segment that introduces a media-row ADDRESS. */
 export const MEDIA_ID_SEGMENT = 'm'

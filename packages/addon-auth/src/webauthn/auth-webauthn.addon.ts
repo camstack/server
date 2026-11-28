@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return -- mirror of the eslint debt in @camstack/addon-auth-oidc; tracked separately. */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return -- mirror of the eslint debt in @dominevo/addon-auth-oidc; tracked separately. */
 /**
  * WebAuthn / Passkey authentication addon.
  *
@@ -44,7 +44,7 @@ import {
   type PasskeySummary,
   type ProviderRegistration,
   userPasskeysCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   generateAuthenticationOptions,
   generateRegistrationOptions,
@@ -73,7 +73,7 @@ interface WebauthnConfig {
 
 const DEFAULT_CONFIG: WebauthnConfig = {
   rpID: '',
-  rpName: 'CamStack',
+  rpName: 'Dominevo',
   origin: '',
   challengeTtlSec: 300,
 }
@@ -197,7 +197,7 @@ export class AuthWebauthnAddon extends BaseAddon<WebauthnConfig> {
               type: 'text',
               key: 'rpName',
               label: 'Product name',
-              description: 'Shown in the OS authenticator UI (e.g. "CamStack"). Cosmetic only.',
+              description: 'Shown in the OS authenticator UI (e.g. "Dominevo"). Cosmetic only.',
               default: DEFAULT_CONFIG.rpName,
             }),
             this.field({

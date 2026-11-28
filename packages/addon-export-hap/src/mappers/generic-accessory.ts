@@ -22,7 +22,7 @@
  */
 import { Accessory } from '@homebridge/hap-nodejs'
 
-import { type AddonContext, DeviceType, type DeviceProxy } from '@camstack/types'
+import { type AddonContext, DeviceType, type DeviceProxy } from '@dominevo/types'
 
 import { populateAccessoryInfo } from './builders/accessory-info.js'
 import {
@@ -34,12 +34,7 @@ import {
 } from './builders/generic/cap-service-table.js'
 import { accessoryUuidFor } from './kind.js'
 import { shapeCapsFor } from '../reconcile/accessory-shape.js'
-import type {
-  BuilderContext,
-  BuilderHandle,
-  CameraMapperOptions,
-  DeviceMapper,
-} from './types.js'
+import type { BuilderContext, BuilderHandle, CameraMapperOptions, DeviceMapper } from './types.js'
 
 export interface GenericAccessoryInput {
   readonly ctx: AddonContext
@@ -48,9 +43,7 @@ export interface GenericAccessoryInput {
   readonly options: CameraMapperOptions
 }
 
-export async function buildGenericAccessory(
-  input: GenericAccessoryInput,
-): Promise<DeviceMapper> {
+export async function buildGenericAccessory(input: GenericAccessoryInput): Promise<DeviceMapper> {
   const { ctx, deviceId, displayName, options } = input
   const numericId = Number.parseInt(deviceId, 10)
   if (!Number.isFinite(numericId)) {

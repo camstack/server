@@ -20,7 +20,7 @@
  * not a read that returned nothing (2026-08-25, 57 `trigger history using the
  * DEFAULT post-buffer` lines on correctly configured cameras).
  */
-import type { IScopedLogger, RecordingConfig } from '@camstack/types'
+import type { IScopedLogger, RecordingConfig } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { createRecordingConfigMirror } from '../config-mirror'
 

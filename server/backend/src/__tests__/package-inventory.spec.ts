@@ -3,7 +3,7 @@
  *
  * D45: "more than one copy of a host-provided package on a node is an error,
  * reported loudly, not a warning nobody reads." The record exists because one
- * agent held FOUR copies of `@camstack/server/system` (1.2.28 / 1.2.28 / 1.2.0 /
+ * agent held FOUR copies of `@dominevo/server/system` (1.2.28 / 1.2.28 / 1.2.0 /
  * 1.2.30) and every one of them could be truthfully quoted as "the version",
  * while three consecutive diagnoses of which one ran were each disproved by the
  * next measurement.
@@ -74,7 +74,7 @@ describe('hostProvidedSearchRoots', () => {
     expect(paths).toContain(SEED_HUB)
     expect(paths).toContain(SEED_FRAMEWORK)
     expect(paths).toContain(STALE_FRAMEWORK)
-    // `/data/addons/@camstack/server` is the bootstrap-install layout D45
+    // `/data/addons/@dominevo/server` is the bootstrap-install layout D45
     // forbids — the package sits DIRECTLY under the addons dir, so the addons
     // dir is itself a search root.
     expect(paths).toContain('/data/addons')
@@ -141,9 +141,9 @@ describe('hostProvidedSearchRoots', () => {
 describe('inventoryHostProvided', () => {
   it('reports ONE copy per package as clean', () => {
     const fs = fakeFs({
-      '/closure/node_modules/@camstack/server': '1.2.36',
-      '/closure/node_modules/@camstack/types': '1.2.23',
-      '/closure/node_modules/@camstack/sdk': '1.2.20',
+      '/closure/node_modules/@dominevo/server': '1.2.36',
+      '/closure/node_modules/@dominevo/types': '1.2.23',
+      '/closure/node_modules/@dominevo/sdk': '1.2.20',
     })
     const result = inventoryHostProvided([root('/closure/node_modules', 'active')], fs)
 
@@ -154,25 +154,25 @@ describe('inventoryHostProvided', () => {
 
   it('names a copy by the pre-fold package name as a violation — nothing provides it any more', () => {
     const fs = fakeFs({
-      '/closure/node_modules/@camstack/server': '1.2.36',
-      '/closure/node_modules/@camstack/system': '1.2.30',
+      '/closure/node_modules/@dominevo/server': '1.2.36',
+      '/closure/node_modules/@dominevo/system': '1.2.30',
     })
     const result = inventoryHostProvided([root('/closure/node_modules', 'active')], fs)
 
-    expect(result.copies.map((c) => c.pkg).sort()).toEqual(['@camstack/server', '@camstack/system'])
+    expect(result.copies.map((c) => c.pkg).sort()).toEqual(['@dominevo/server', '@dominevo/system'])
   })
 
   it('finds every copy of a duplicated package, with path AND version', () => {
     const fs = fakeFs({
-      [`${SEED_HUB}/@camstack/server`]: '1.2.28',
-      [`${SEED_FRAMEWORK}/@camstack/server`]: '1.2.28',
-      [`${STALE_FRAMEWORK}/@camstack/server`]: '1.2.0',
-      [`${ACTIVE_ROOT}/@camstack/server`]: '1.2.30',
+      [`${SEED_HUB}/@dominevo/server`]: '1.2.28',
+      [`${SEED_FRAMEWORK}/@dominevo/server`]: '1.2.28',
+      [`${STALE_FRAMEWORK}/@dominevo/server`]: '1.2.0',
+      [`${ACTIVE_ROOT}/@dominevo/server`]: '1.2.30',
     })
     const result = inventoryHostProvided([...FLEET_ROOTS, root(STALE_FRAMEWORK, 'unexpected')], fs)
 
-    expect(result.violations).toEqual(['@camstack/server'])
-    const system = result.copies.filter((c) => c.pkg === '@camstack/server')
+    expect(result.violations).toEqual(['@dominevo/server'])
+    const system = result.copies.filter((c) => c.pkg === '@dominevo/server')
     expect(system).toHaveLength(4)
     expect(system.map((c) => c.version).sort()).toEqual(['1.2.0', '1.2.28', '1.2.28', '1.2.30'])
     // A version alone is what misled: every entry carries its path.
@@ -181,78 +181,78 @@ describe('inventoryHostProvided', () => {
 
   it('does NOT call the image seeds a violation — the deposit shadows them every release', () => {
     const fs = fakeFs({
-      [`${ACTIVE_ROOT}/@camstack/server`]: '1.2.100',
-      [`${SEED_HUB}/@camstack/server`]: '1.2.78',
-      [`${SEED_FRAMEWORK}/@camstack/server`]: '1.2.78',
+      [`${ACTIVE_ROOT}/@dominevo/server`]: '1.2.100',
+      [`${SEED_HUB}/@dominevo/server`]: '1.2.78',
+      [`${SEED_FRAMEWORK}/@dominevo/server`]: '1.2.78',
     })
     const result = inventoryHostProvided(FLEET_ROOTS, fs)
 
     // Three copies, and all three are exactly where the image put them.
     expect(result.copies).toHaveLength(3)
     expect(result.violations).toEqual([])
-    const system = result.packages.find((p) => p.pkg === '@camstack/server')
-    expect(system?.activeCandidates.map((c) => c.path)).toEqual([`${ACTIVE_ROOT}/@camstack/server`])
+    const system = result.packages.find((p) => p.pkg === '@dominevo/server')
+    expect(system?.activeCandidates.map((c) => c.path)).toEqual([`${ACTIVE_ROOT}/@dominevo/server`])
     expect(system?.shadowedSeeds).toHaveLength(2)
     expect(system?.unexpected).toEqual([])
   })
 
   it('screams for an UNEXPECTED location even when the seeds are shadowed', () => {
     const fs = fakeFs({
-      [`${ACTIVE_ROOT}/@camstack/server`]: '1.2.100',
-      [`${SEED_HUB}/@camstack/server`]: '1.2.78',
-      [`${SEED_FRAMEWORK}/@camstack/server`]: '1.2.78',
-      [`${STALE_FRAMEWORK}/@camstack/server`]: '1.2.0',
+      [`${ACTIVE_ROOT}/@dominevo/server`]: '1.2.100',
+      [`${SEED_HUB}/@dominevo/server`]: '1.2.78',
+      [`${SEED_FRAMEWORK}/@dominevo/server`]: '1.2.78',
+      [`${STALE_FRAMEWORK}/@dominevo/server`]: '1.2.0',
     })
     const result = inventoryHostProvided([...FLEET_ROOTS, root(STALE_FRAMEWORK, 'unexpected')], fs)
 
-    expect(result.violations).toEqual(['@camstack/server'])
-    const system = result.packages.find((p) => p.pkg === '@camstack/server')
-    expect(system?.unexpected.map((c) => c.path)).toEqual([`${STALE_FRAMEWORK}/@camstack/server`])
+    expect(result.violations).toEqual(['@dominevo/server'])
+    const system = result.packages.find((p) => p.pkg === '@dominevo/server')
+    expect(system?.unexpected.map((c) => c.path)).toEqual([`${STALE_FRAMEWORK}/@dominevo/server`])
   })
 
   it('screams when two copies could BOTH be the one that runs', () => {
     // No deposit for this package: the two seeds are then rival candidates and
     // "which one runs" is back to being a module-resolution outcome.
     const fs = fakeFs({
-      [`${SEED_HUB}/@camstack/server`]: '1.2.78',
-      [`${SEED_FRAMEWORK}/@camstack/server`]: '1.2.28',
+      [`${SEED_HUB}/@dominevo/server`]: '1.2.78',
+      [`${SEED_FRAMEWORK}/@dominevo/server`]: '1.2.28',
     })
     const result = inventoryHostProvided(FLEET_ROOTS, fs)
 
-    expect(result.violations).toEqual(['@camstack/server'])
-    const system = result.packages.find((p) => p.pkg === '@camstack/server')
+    expect(result.violations).toEqual(['@dominevo/server'])
+    const system = result.packages.find((p) => p.pkg === '@dominevo/server')
     expect(system?.activeCandidates).toHaveLength(2)
     expect(system?.shadowedSeeds).toEqual([])
   })
 
   it('accepts a single seed copy with no deposit — one copy is one copy', () => {
-    const fs = fakeFs({ [`${SEED_HUB}/@camstack/server`]: '1.2.78' })
+    const fs = fakeFs({ [`${SEED_HUB}/@dominevo/server`]: '1.2.78' })
     const result = inventoryHostProvided(FLEET_ROOTS, fs)
     expect(result.violations).toEqual([])
   })
 
   it('counts a copy installed under /data/addons — the layout D45 forbids', () => {
     const fs = fakeFs({
-      [`${ACTIVE_ROOT}/@camstack/server`]: '1.2.36',
-      '/data/addons/@camstack/server': '1.1.57',
+      [`${ACTIVE_ROOT}/@dominevo/server`]: '1.2.36',
+      '/data/addons/@dominevo/server': '1.1.57',
     })
     const result = inventoryHostProvided(
       [root(ACTIVE_ROOT, 'active'), root('/data/addons', 'unexpected')],
       fs,
     )
-    expect(result.violations).toEqual(['@camstack/server'])
+    expect(result.violations).toEqual(['@dominevo/server'])
   })
 
   it('does NOT count the same directory twice when two roots resolve to it', () => {
     const tree: Record<string, string> = {
-      '/closure/node_modules/@camstack/server': '1.2.36',
-      '/symlinked/node_modules/@camstack/server': '1.2.36',
+      '/closure/node_modules/@dominevo/server': '1.2.36',
+      '/symlinked/node_modules/@dominevo/server': '1.2.36',
     }
     const fs: InventoryFs = {
       exists: (p) => Object.hasOwn(tree, p),
       readVersion: (p) => tree[p] ?? null,
       // Both roots are the same directory on disk.
-      realPath: () => '/closure/node_modules/@camstack/server',
+      realPath: () => '/closure/node_modules/@dominevo/server',
     }
     const result = inventoryHostProvided(
       [root('/closure/node_modules', 'active'), root('/symlinked/node_modules', 'unexpected')],
@@ -264,24 +264,24 @@ describe('inventoryHostProvided', () => {
 
   it('records a copy whose package.json will not parse rather than dropping it', () => {
     const fs = fakeFs({
-      [`${ACTIVE_ROOT}/@camstack/server`]: '1.2.36',
-      '/data/addons/@camstack/server': null,
+      [`${ACTIVE_ROOT}/@dominevo/server`]: '1.2.36',
+      '/data/addons/@dominevo/server': null,
     })
     const result = inventoryHostProvided(
       [root(ACTIVE_ROOT, 'active'), root('/data/addons', 'unexpected')],
       fs,
     )
     // An unreadable copy is still a copy — dropping it would under-report.
-    expect(result.violations).toEqual(['@camstack/server'])
+    expect(result.violations).toEqual(['@dominevo/server'])
     expect(
-      result.copies.find((c) => c.path === '/data/addons/@camstack/server')?.version,
+      result.copies.find((c) => c.path === '/data/addons/@dominevo/server')?.version,
     ).toBeNull()
   })
 
   it('covers system, types and sdk by default', () => {
-    expect(HOST_PROVIDED_PACKAGES).toContain('@camstack/server')
-    expect(HOST_PROVIDED_PACKAGES).toContain('@camstack/types')
-    expect(HOST_PROVIDED_PACKAGES).toContain('@camstack/sdk')
+    expect(HOST_PROVIDED_PACKAGES).toContain('@dominevo/server')
+    expect(HOST_PROVIDED_PACKAGES).toContain('@dominevo/types')
+    expect(HOST_PROVIDED_PACKAGES).toContain('@dominevo/sdk')
   })
 })
 
@@ -321,8 +321,8 @@ describe('seedNodeModulesRoots', () => {
 describe('formatInventoryReport', () => {
   it('names every copy with its path and version', () => {
     const fs = fakeFs({
-      [`${ACTIVE_ROOT}/@camstack/server`]: '1.2.30',
-      [`${STALE_FRAMEWORK}/@camstack/server`]: '1.2.0',
+      [`${ACTIVE_ROOT}/@dominevo/server`]: '1.2.30',
+      [`${STALE_FRAMEWORK}/@dominevo/server`]: '1.2.0',
     })
     const result = inventoryHostProvided(
       [root(ACTIVE_ROOT, 'active'), root(STALE_FRAMEWORK, 'unexpected')],
@@ -330,8 +330,8 @@ describe('formatInventoryReport', () => {
     )
     const report = formatInventoryReport(result)
 
-    expect(report).toContain('@camstack/server')
-    expect(report).toContain(`${STALE_FRAMEWORK}/@camstack/server`)
+    expect(report).toContain('@dominevo/server')
+    expect(report).toContain(`${STALE_FRAMEWORK}/@dominevo/server`)
     expect(report).toContain('1.2.0')
     expect(report).toContain('1.2.30')
     // It must say what is wrong, not merely list paths.
@@ -341,31 +341,31 @@ describe('formatInventoryReport', () => {
   })
 
   it('is empty when the node is clean, so a good boot stays quiet', () => {
-    const fs = fakeFs({ [`${ACTIVE_ROOT}/@camstack/server`]: '1.2.36' })
+    const fs = fakeFs({ [`${ACTIVE_ROOT}/@dominevo/server`]: '1.2.36' })
     const result = inventoryHostProvided([root(ACTIVE_ROOT, 'active')], fs)
     expect(formatInventoryReport(result)).toBe('')
   })
 
   it('is empty for the fleet layout — an expected seed is not a violation banner', () => {
     const fs = fakeFs({
-      [`${ACTIVE_ROOT}/@camstack/server`]: '1.2.100',
-      [`${SEED_HUB}/@camstack/server`]: '1.2.78',
-      [`${SEED_FRAMEWORK}/@camstack/server`]: '1.2.78',
-      [`${ACTIVE_ROOT}/@camstack/types`]: '1.2.100',
-      [`${SEED_HUB}/@camstack/types`]: '1.2.78',
+      [`${ACTIVE_ROOT}/@dominevo/server`]: '1.2.100',
+      [`${SEED_HUB}/@dominevo/server`]: '1.2.78',
+      [`${SEED_FRAMEWORK}/@dominevo/server`]: '1.2.78',
+      [`${ACTIVE_ROOT}/@dominevo/types`]: '1.2.100',
+      [`${SEED_HUB}/@dominevo/types`]: '1.2.78',
     })
     expect(formatInventoryReport(inventoryHostProvided(FLEET_ROOTS, fs))).toBe('')
   })
 
   it('says WHICH copies could both run when two candidates conflict', () => {
     const fs = fakeFs({
-      [`${SEED_HUB}/@camstack/server`]: '1.2.78',
-      [`${SEED_FRAMEWORK}/@camstack/server`]: '1.2.28',
+      [`${SEED_HUB}/@dominevo/server`]: '1.2.78',
+      [`${SEED_FRAMEWORK}/@dominevo/server`]: '1.2.28',
     })
     const report = formatInventoryReport(inventoryHostProvided(FLEET_ROOTS, fs))
     expect(report).toMatch(/D45 violation/)
-    expect(report).toContain(`${SEED_HUB}/@camstack/server`)
-    expect(report).toContain(`${SEED_FRAMEWORK}/@camstack/server`)
+    expect(report).toContain(`${SEED_HUB}/@dominevo/server`)
+    expect(report).toContain(`${SEED_FRAMEWORK}/@dominevo/server`)
   })
 })
 
@@ -381,12 +381,12 @@ describe('the inventory is never fatal', () => {
    * unit test cannot reach without booting a node.
    */
   const worstLayout: Record<string, string | null> = {
-    [`${ACTIVE_ROOT}/@camstack/server`]: '1.2.100',
-    [`${SEED_HUB}/@camstack/server`]: '1.2.78',
-    [`${SEED_FRAMEWORK}/@camstack/server`]: '1.2.28',
-    [`${STALE_FRAMEWORK}/@camstack/server`]: '1.2.0',
-    '/data/addons/@camstack/server': null,
-    [`${STALE_FRAMEWORK}/@camstack/types`]: '0.9.0',
+    [`${ACTIVE_ROOT}/@dominevo/server`]: '1.2.100',
+    [`${SEED_HUB}/@dominevo/server`]: '1.2.78',
+    [`${SEED_FRAMEWORK}/@dominevo/server`]: '1.2.28',
+    [`${STALE_FRAMEWORK}/@dominevo/server`]: '1.2.0',
+    '/data/addons/@dominevo/server': null,
+    [`${STALE_FRAMEWORK}/@dominevo/types`]: '0.9.0',
   }
   const worstRoots: readonly InventoryRoot[] = [
     ...FLEET_ROOTS,
@@ -407,7 +407,7 @@ describe('the inventory is never fatal', () => {
     const result = inventoryHostProvided(worstRoots, fakeFs(worstLayout))
     // Two packages in violation, and the whole verdict is data — there is no
     // fatal flag, no exit code and no thrown error anywhere in the surface.
-    expect(result.violations).toEqual(['@camstack/server', '@camstack/types'])
+    expect(result.violations).toEqual(['@dominevo/server', '@dominevo/types'])
     expect(typeof formatInventoryReport(result)).toBe('string')
     expect(formatInventoryReport(result)).not.toBe('')
   })
@@ -427,16 +427,16 @@ describe('the inventory is never fatal', () => {
 describe('formatShadowingNotes', () => {
   it('states the expected shadowing in ONE compact line per package', () => {
     const fs = fakeFs({
-      [`${ACTIVE_ROOT}/@camstack/server`]: '1.2.100',
-      [`${SEED_HUB}/@camstack/server`]: '1.2.78',
-      [`${SEED_FRAMEWORK}/@camstack/server`]: '1.2.78',
+      [`${ACTIVE_ROOT}/@dominevo/server`]: '1.2.100',
+      [`${SEED_HUB}/@dominevo/server`]: '1.2.78',
+      [`${SEED_FRAMEWORK}/@dominevo/server`]: '1.2.78',
     })
     const notes = formatShadowingNotes(inventoryHostProvided(FLEET_ROOTS, fs))
 
     expect(notes).toHaveLength(1)
     const note = notes[0] ?? ''
     expect(note).not.toContain('\n')
-    expect(note).toContain('@camstack/server')
+    expect(note).toContain('@dominevo/server')
     expect(note).toContain('seed 1.2.78 shadowed by active 1.2.100')
     // Not a violation banner: this is the documented behaviour of every release.
     expect(note).not.toMatch(/violation/i)
@@ -444,9 +444,9 @@ describe('formatShadowingNotes', () => {
 
   it('collapses two seeds at the same version instead of repeating it', () => {
     const fs = fakeFs({
-      [`${ACTIVE_ROOT}/@camstack/server`]: '1.2.100',
-      [`${SEED_HUB}/@camstack/server`]: '1.2.78',
-      [`${SEED_FRAMEWORK}/@camstack/server`]: '1.2.78',
+      [`${ACTIVE_ROOT}/@dominevo/server`]: '1.2.100',
+      [`${SEED_HUB}/@dominevo/server`]: '1.2.78',
+      [`${SEED_FRAMEWORK}/@dominevo/server`]: '1.2.78',
     })
     const note = formatShadowingNotes(inventoryHostProvided(FLEET_ROOTS, fs))[0] ?? ''
     expect(note.match(/1\.2\.78/g)).toHaveLength(1)
@@ -454,9 +454,9 @@ describe('formatShadowingNotes', () => {
 
   it('names both seed versions when the seeds disagree with each other', () => {
     const fs = fakeFs({
-      [`${ACTIVE_ROOT}/@camstack/server`]: '1.2.100',
-      [`${SEED_HUB}/@camstack/server`]: '1.2.78',
-      [`${SEED_FRAMEWORK}/@camstack/server`]: '1.2.28',
+      [`${ACTIVE_ROOT}/@dominevo/server`]: '1.2.100',
+      [`${SEED_HUB}/@dominevo/server`]: '1.2.78',
+      [`${SEED_FRAMEWORK}/@dominevo/server`]: '1.2.28',
     })
     const note = formatShadowingNotes(inventoryHostProvided(FLEET_ROOTS, fs))[0] ?? ''
     expect(note).toContain('1.2.78')
@@ -464,7 +464,7 @@ describe('formatShadowingNotes', () => {
   })
 
   it('says nothing when there is no seed to shadow', () => {
-    const fs = fakeFs({ [`${ACTIVE_ROOT}/@camstack/server`]: '1.2.36' })
+    const fs = fakeFs({ [`${ACTIVE_ROOT}/@dominevo/server`]: '1.2.36' })
     expect(formatShadowingNotes(inventoryHostProvided([root(ACTIVE_ROOT, 'active')], fs))).toEqual(
       [],
     )
@@ -474,15 +474,15 @@ describe('formatShadowingNotes', () => {
     // The banner lists every copy of a violating package; a reassuring
     // "expected shadowing" line next to it would read as verification.
     const fs = fakeFs({
-      [`${ACTIVE_ROOT}/@camstack/server`]: '1.2.100',
-      [`${SEED_HUB}/@camstack/server`]: '1.2.78',
-      [`${STALE_FRAMEWORK}/@camstack/server`]: '1.2.0',
+      [`${ACTIVE_ROOT}/@dominevo/server`]: '1.2.100',
+      [`${SEED_HUB}/@dominevo/server`]: '1.2.78',
+      [`${STALE_FRAMEWORK}/@dominevo/server`]: '1.2.0',
     })
     const result = inventoryHostProvided(
       [root(ACTIVE_ROOT, 'active'), root(SEED_HUB, 'seed'), root(STALE_FRAMEWORK, 'unexpected')],
       fs,
     )
-    expect(result.violations).toEqual(['@camstack/server'])
+    expect(result.violations).toEqual(['@dominevo/server'])
     expect(formatShadowingNotes(result)).toEqual([])
   })
 })
@@ -490,7 +490,7 @@ describe('formatShadowingNotes', () => {
 /**
  * The guard spent every boot accusing the healthy layout.
  *
- * Live hub, 2026-08-25: the launcher resolved `@camstack/server@1.2.126` from
+ * Live hub, 2026-08-25: the launcher resolved `@dominevo/server@1.2.126` from
  * `/data/server-root/current/node_modules` and logged it as the framework dir
  * on NODE_PATH — then the very next line called that same directory
  * "UNEXPECTED — remove it", and, left with the two baked seeds as the only
@@ -498,7 +498,7 @@ describe('formatShadowingNotes', () => {
  * other. The runtime's own sweep disagreed in the same boot: `single-copy
  * cleanup — 0 copy(ies) to remove`.
  *
- * Cause: `serverNodeModules` is `@camstack/server/node_modules`, the NESTED
+ * Cause: `serverNodeModules` is `@dominevo/server/node_modules`, the NESTED
  * tree for that package's own dependencies. The framework packages resolve one
  * level up, from the closure — which arrived only through NODE_PATH and so fell
  * through to `unexpected`.
@@ -510,7 +510,7 @@ describe('formatShadowingNotes', () => {
 describe('the closure directory is active, not unexpected', () => {
   const seedRoots = ['/opt/camstack-hub/node_modules', '/opt/camstack-seed-framework/node_modules']
   const closure = '/data/server-root/current/node_modules'
-  const nested = '/data/server-root/current/node_modules/@camstack/server/node_modules'
+  const nested = '/data/server-root/current/node_modules/@dominevo/server/node_modules'
 
   function rootsFor(frameworkRoots?: readonly string[]) {
     return hostProvidedSearchRoots({

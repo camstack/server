@@ -1,7 +1,7 @@
 /**
  * Frame Transport — public barrel.
  *
- * Addon authors should import from `@camstack/addon-stream-broker` which
+ * Addon authors should import from `@dominevo/addon-stream-broker` which
  * re-exports everything here. The layer is self-contained: types +
  * codecs + transports + server/client + auth helpers.
  *
@@ -9,7 +9,7 @@
  *
  *   import {
  *     createFrameServer, TcpTransport, decodedFrameCodec, createAuthPair,
- *   } from '@camstack/addon-stream-broker'
+ *   } from '@dominevo/addon-stream-broker'
  *
  *   const { signer, verifier } = createAuthPair()
  *   const server = await createFrameServer({
@@ -29,7 +29,7 @@
  *
  * Typical consumer:
  *
- *   import { createFrameClient, TcpTransport, decodedFrameCodec } from '@camstack/addon-stream-broker'
+ *   import { createFrameClient, TcpTransport, decodedFrameCodec } from '@dominevo/addon-stream-broker'
  *
  *   const client = createFrameClient({
  *     transport: new TcpTransport(),

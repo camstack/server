@@ -2,8 +2,8 @@
  * A statistic or integral on its device page: the reading history wrote,
  * and how many intervals were left out because history had a gap (D944).
  */
-import { derivativeUnitLabel, type HistoryHelperSpec } from '@camstack/types'
-import { ErrorBox, SECTION_BODY, SectionCard, StatCard } from '@camstack/ui-library'
+import { derivativeUnitLabel, type HistoryHelperSpec } from '@dominevo/types'
+import { ErrorBox, SECTION_BODY, SectionCard, StatCard } from '@dominevo/ui-library'
 import { BarChart3 } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'

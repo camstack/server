@@ -24,7 +24,7 @@
  * Both ends of the batch need it: `device-manager.cap.ts` bounds the input
  * schema with it, and `children-batch-loader.ts` — which runs INSIDE every
  * forked addon-runner — chunks its asks by it. The runner may not reach the
- * `@camstack/types` schema barrel (+~146MB RSS per fork, D28), and re-exporting
+ * `@dominevo/types` schema barrel (+~146MB RSS per fork, D28), and re-exporting
  * the constant from `addon.ts` VIA the cap file would drag `device-manager.cap.ts`
  * — zod, `device-provider.cap.js` and the streaming schemas behind it — onto the
  * lightweight entry, which is the same regression wearing a different import

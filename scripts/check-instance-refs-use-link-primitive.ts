@@ -10,7 +10,7 @@
  * 2. In an addon source (`packages/addon-*` except the admin UI), a zod or form key shaped like a
  *    reference to another instance (`brokerId`, `connectionId`, `accountId`, `smtpInstanceId`,
  *    `relayId`, `mailboxId`, `calendarIds`) must sit in a file that imports `declareLinkKind` or
- *    `linkField` from `@camstack/types`, or be listed in `scripts/instance-links-baseline.json`
+ *    `linkField` from `@dominevo/types`, or be listed in `scripts/instance-links-baseline.json`
  *    as `<package>:<path under src>:<key>`.
  * 3. The baseline only SHRINKS: every entry must still match a real violation; a migrated site
  *    leaves the list in the same change.
@@ -35,21 +35,21 @@ const BROKER_SELECT_RE = /\btype:\s*['"]broker-select['"]/
 const REF_KEY = String.raw`(?:[a-z]+)?(?:[Bb]rokerId|[Ii]nstanceId|[Cc]onnectionId|[Rr]elayId|[Mm]ailboxId|[Aa]ccountId)|calendarIds`
 /** Keys that match the shape and are not a reference to an instance. */
 const NOT_AN_INSTANCE_REF: ReadonlySet<string> = new Set([
-  // A Cloudflare tenant id typed by the operator, not the id of a CamStack instance.
+  // A Cloudflare tenant id typed by the operator, not the id of a Dominevo instance.
   'customAccountId',
 ])
 /**
  * Sites (`<package>:<path under src>:<key>`) whose key matches the shape and never will be a link to
- * another CamStack instance. Each carries its reason.
+ * another Dominevo instance. Each carries its reason.
  */
 export const NOT_AN_INSTANCE_REF_SITES: ReadonlyMap<string, string> = new Map([
   [
     'addon-cloudflare:tunnel/cloudflare-actions.ts:accountId',
-    'a Cloudflare account id typed or discovered at the Cloudflare API, not a CamStack instance',
+    'a Cloudflare account id typed or discovered at the Cloudflare API, not a Dominevo instance',
   ],
   [
     'addon-provider-vesync:config.ts:accountId',
-    'the VeSync cloud account id the vendor returns at sign-in, not a CamStack instance',
+    'the VeSync cloud account id the vendor returns at sign-in, not a Dominevo instance',
   ],
   [
     'addon-terminal:terminal-camera-device.ts:instanceId',
@@ -72,7 +72,7 @@ const REF_DECL_RE = new RegExp(
 /** Device classes and custom actions hold an owner id or an action input, not a link. */
 const NOT_A_LINK_PATH_RE = /(?:^|\/)devices\/|(?:^|\/)custom-actions\.ts$/
 const PRIMITIVE_IMPORT_RE =
-  /import\s*(?:type\s*)?\{[^}]*\b(?:declareLinkKind|linkField|linkFieldDescriptor|optionalLinkField)\b[^}]*\}\s*from\s*['"]@camstack\/types['"]/
+  /import\s*(?:type\s*)?\{[^}]*\b(?:declareLinkKind|linkField|linkFieldDescriptor|optionalLinkField)\b[^}]*\}\s*from\s*['"]@dominevo\/types['"]/
 const DECLARE_LINK_KIND_RE = /\bdeclareLinkKind\s*[(<]/g
 const CAP_LITERAL_RE = /\bcap:\s*['"]([^'"]+)['"]/g
 
@@ -126,7 +126,7 @@ export function siteViolations(files: readonly SourceFile[]): Violation[] {
       if (NOT_AN_INSTANCE_REF_SITES.has(id)) continue
       out.push({
         id,
-        message: `${file.path}: '${key}' references another instance without declareLinkKind / linkField from @camstack/types`,
+        message: `${file.path}: '${key}' references another instance without declareLinkKind / linkField from @dominevo/types`,
       })
     }
   }

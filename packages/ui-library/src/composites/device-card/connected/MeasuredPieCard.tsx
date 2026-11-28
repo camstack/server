@@ -1,4 +1,4 @@
-import type { HeroMeasurement, HeroMeasurementQuantity } from '@camstack/types'
+import type { HeroMeasurement, HeroMeasurementQuantity } from '@dominevo/types'
 import { type ReactElement, useEffect, useState } from 'react'
 import { useUiText } from '../../../contexts/ui-text'
 import { useUnitPreferences } from '../../../contexts/unit-preferences'

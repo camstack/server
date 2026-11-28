@@ -9,7 +9,7 @@ import {
   climateControlCapability,
   errMsg,
   lockControlCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { KiaVehicleHandle } from '../kia-device-handle.js'
 import { climateStatusOf, lockStateOf } from '../kia-domain-mapping.js'
 import { kiaConnections } from '../kia-gateway.js'

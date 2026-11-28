@@ -55,7 +55,7 @@ describe('AddonInstaller', () => {
 
     it('returns false for a scoped package that has not been installed', () => {
       const installer = makeInstaller()
-      expect(installer.isInstalled('@camstack/addon-motion-detection')).toBe(false)
+      expect(installer.isInstalled('@dominevo/addon-motion-detection')).toBe(false)
     })
 
     it('returns true when the package.json exists in the addon directory', () => {
@@ -64,10 +64,10 @@ describe('AddonInstaller', () => {
       fs.mkdirSync(pkgDir, { recursive: true })
       fs.writeFileSync(
         path.join(pkgDir, 'package.json'),
-        JSON.stringify({ name: '@camstack/addon-motion-detection', version: '1.0.0' }),
+        JSON.stringify({ name: '@dominevo/addon-motion-detection', version: '1.0.0' }),
       )
 
-      expect(installer.isInstalled('@camstack/addon-motion-detection')).toBe(true)
+      expect(installer.isInstalled('@dominevo/addon-motion-detection')).toBe(true)
     })
   })
 
@@ -96,7 +96,7 @@ describe('AddonInstaller', () => {
       fs.writeFileSync(
         path.join(pkgDir, 'package.json'),
         JSON.stringify({
-          name: '@camstack/addon-motion-detection',
+          name: '@dominevo/addon-motion-detection',
           version: '0.3.1',
           camstack: { addons: [{ id: 'vision', entry: './dist/index.js', slot: 'detector' }] },
         }),
@@ -105,7 +105,7 @@ describe('AddonInstaller', () => {
       const list = installer.listInstalled()
       expect(list).toHaveLength(1)
       expect(list[0]).toMatchObject({
-        name: '@camstack/addon-motion-detection',
+        name: '@dominevo/addon-motion-detection',
         version: '0.3.1',
         dir: pkgDir,
       })
@@ -154,10 +154,10 @@ describe('AddonInstaller', () => {
       fs.mkdirSync(pkgDir, { recursive: true })
       fs.writeFileSync(
         path.join(pkgDir, 'package.json'),
-        JSON.stringify({ name: '@camstack/addon-motion-detection' }),
+        JSON.stringify({ name: '@dominevo/addon-motion-detection' }),
       )
 
-      await installer.uninstall('@camstack/addon-motion-detection')
+      await installer.uninstall('@dominevo/addon-motion-detection')
       expect(fs.existsSync(pkgDir)).toBe(false)
     })
 

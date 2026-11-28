@@ -39,7 +39,7 @@
  * never says so.
  */
 
-import type { IScopedLogger, NcSceneCondition, SceneMonitor } from '@camstack/types'
+import type { IScopedLogger, NcSceneCondition, SceneMonitor } from '@dominevo/types'
 
 /**
  * How long an observation may go unrefreshed before it stops counting.

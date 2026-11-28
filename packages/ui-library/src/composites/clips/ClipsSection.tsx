@@ -65,7 +65,7 @@
  * vivono lì, ad esempio hksv c'è se la camera è esportata su homekit, reolink
  * la dà di suo così come il camstack."* [the enabled-or-not state of the sources is not necessary at all. They live there, for example hksv is there if the camera is exported to homekit, reolink provides it on its own, as does camstack.] HKSV is there if the camera is
  * exported to HomeKit; the Reolink source is there because Reolink is that
- * camera's provider; CamStack's is always there. None of that is a decision to
+ * camera's provider; Dominevo's is always there. None of that is a decision to
  * make in a clips list, so this surface offers no switch and writes no
  * authority (D557, amended). A directory-wide guard in
  * `clips-section-sources.test.tsx` keeps it that way.
@@ -84,11 +84,11 @@
  *
  * There is no "default" option and no empty value. This section used to send
  * no `provider` at all until the operator chose, because the cap documented
- * absence as "the device's bound provider, which is CamStack on every camera".
+ * absence as "the device's bound provider, which is Dominevo on every camera".
  * No code implemented that: measured on device 107 (2026-09-20, bound to
  * `recorder` AND `provider-reolink`) a bare `listClips` with `limit: 3`
  * answered SIX rows — three per source, merged — while the default option read
- * "CamStack recordings". The label named one thing and the query asked two.
+ * "Dominevo recordings". The label named one thing and the query asked two.
  *
  * Naming a provider is now required (D554 amended), and the default is this surface's
  * to make: the FIRST source the camera lists, shown selected in the control, so
@@ -104,7 +104,7 @@
  */
 import { useEffect, useMemo, useState, type JSX } from 'react'
 import { Clapperboard, Film } from 'lucide-react'
-import type { CamProfile, Clip } from '@camstack/types'
+import type { CamProfile, Clip } from '@dominevo/types'
 import {
   usePipelineAnalyticsGetEventDensity,
   useVideoclipsListClips,
@@ -280,7 +280,7 @@ export function ClipsSection({ deviceId }: ClipsSectionProps): JSX.Element | nul
   // One option per PROVIDER, labelled by the sources it serves (`clipProviderOptions`).
   // There is no "default" entry: it used to carry the FIRST provider's label
   // while sending no argument at all, so on a two-provider camera the control
-  // said "CamStack recordings" and the query asked both.
+  // said "Dominevo recordings" and the query asked both.
   const options = useMemo<SelectOption[]>(
     () => clipProviderOptions(sourceRows).map(({ value, label }) => ({ value, label })),
     [sourceRows],
@@ -363,7 +363,7 @@ export function ClipsSection({ deviceId }: ClipsSectionProps): JSX.Element | nul
         <p className="mt-1 text-[11px] text-foreground-subtle">
           {t(
             'uiLibrary.clipsSection.intro',
-            "Every source this camera has, side by side — CamStack's own recordings and whatever the camera or an export keeps of its own. A source is listed because it exists, not because it was switched on here; pick sources to narrow the view.",
+            "Every source this camera has, side by side — Dominevo's own recordings and whatever the camera or an export keeps of its own. A source is listed because it exists, not because it was switched on here; pick sources to narrow the view.",
           )}
         </p>
         <p className="mt-1 text-[11px] text-foreground-subtle">

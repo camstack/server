@@ -10,7 +10,7 @@ import {
   isSecretMarker,
   type LlmGenerateResult,
   recordSecretRef,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { LlmClient } from '../client/llm-client.js'
 import { DefaultsStore } from '../defaults-store.js'

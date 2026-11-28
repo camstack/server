@@ -8,10 +8,10 @@
  * template, customDevice) — found by name and by tag. Callers build a flat `SearchItem[]` from whatever data they
  * already have loaded (see `search-items.ts`) and pass it here; this module
  * knows nothing about tRPC, React Query, or React. Ranking is `searchRank`
- * in `@camstack/types` — the same function `deviceManager.search` uses.
+ * in `@dominevo/types` — the same function `deviceManager.search` uses.
  */
 import type { LucideIcon } from 'lucide-react'
-import { normalizeSearchText, searchRank } from '@camstack/types'
+import { normalizeSearchText, searchRank } from '@dominevo/types'
 
 export type SearchDomain =
   | 'device'

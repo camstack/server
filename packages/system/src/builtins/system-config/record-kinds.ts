@@ -4,7 +4,7 @@
  * Mesh admission keeps a RAM mirror (D857); records hold the durable copy.
  * OPERATOR-ONLY legacy drop after verify.
  */
-import { defineRecordKinds, type DefinedRecordKind } from '@camstack/types'
+import { defineRecordKinds, type DefinedRecordKind } from '@dominevo/types'
 import { z } from 'zod'
 import type { IsolatedRecordKinds } from '../records-isolated.js'
 

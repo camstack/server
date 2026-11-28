@@ -3,7 +3,7 @@ import {
   type RecordKindHandle,
   type RecordsAccess,
   RecordSecretUnavailableError,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { type AlexaSpeakSessionBody, alexaSpeakSessionsEntryKind } from '../broker-record-kinds.js'
 
 export interface SpeakSessionStore {

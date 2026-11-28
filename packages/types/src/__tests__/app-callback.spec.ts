@@ -5,9 +5,15 @@ import { APP_AUTH_CALLBACK_URLS, hasUrlScheme, parseAppAuthCallback } from '../a
 describe('parseAppAuthCallback', () => {
   it('accepts the production and dev app callbacks, canonicalised', () => {
     expect(APP_AUTH_CALLBACK_URLS).toEqual([
+      'dominevo://auth-callback',
+      'dominevo.dev://auth-callback',
       'camstack://auth-callback',
       'camstack.dev://auth-callback',
     ])
+    expect(parseAppAuthCallback('dominevo:///auth-callback')).toBe('dominevo://auth-callback')
+    expect(parseAppAuthCallback('dominevo.dev://auth-callback/')).toBe(
+      'dominevo.dev://auth-callback',
+    )
     expect(parseAppAuthCallback('camstack://auth-callback')).toBe('camstack://auth-callback')
     expect(parseAppAuthCallback('camstack:///auth-callback')).toBe('camstack://auth-callback')
     expect(parseAppAuthCallback('camstack.dev://auth-callback/')).toBe(

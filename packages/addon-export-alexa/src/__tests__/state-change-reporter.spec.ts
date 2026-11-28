@@ -4,8 +4,8 @@
  * may see the device (S1), deduplicated, and connectivity on every
  * EndpointHealth endpoint of the device (camera + its detection sensors).
  */
-import type { AddonContext } from '@camstack/types'
-import { EventCategory } from '@camstack/types'
+import type { AddonContext } from '@dominevo/types'
+import { EventCategory } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { endpointsSignature } from '../endpoint-signature.js'
 import {

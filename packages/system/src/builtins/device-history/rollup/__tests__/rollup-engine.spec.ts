@@ -3,7 +3,7 @@
  * is built: the day tier is hub-local, and a spec that passed only in the zone
  * of the machine running it would prove nothing about DST days.
  */
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
 import { type Harness, T0, makeHarness } from '../../__tests__/support/harness.js'
 import { emitState, rollupOf, seriesOf } from '../../__tests__/support/read-helpers.js'

@@ -5,8 +5,8 @@
 // registry, so the hub reaches each worker device through its `device-ops`
 // provider exactly as production does. Fakes: the devices and the hop.
 import { describe, expect, it, vi } from 'vitest'
-import type { AddonApi, IDevice } from '@camstack/types'
-import { ALL_CAPABILITY_DEFINITIONS } from '@camstack/types'
+import type { AddonApi, IDevice } from '@dominevo/types'
+import { ALL_CAPABILITY_DEFINITIONS } from '@dominevo/types'
 import { SystemEventBus } from '../../../events/system-event-bus.js'
 import { CapabilityRegistry } from '../../capability-registry.js'
 import { DeviceRegistry } from '../../device-registry.js'

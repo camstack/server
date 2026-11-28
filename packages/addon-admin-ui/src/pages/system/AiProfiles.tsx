@@ -9,7 +9,7 @@
  * The whole page is the `llm` capability's surface, so it asks the registry
  * first (D315): not-yet-known renders a placeholder, never "not installed".
  */
-import type { DataColumn } from '@camstack/ui-library'
+import type { DataColumn } from '@dominevo/ui-library'
 import {
   Badge,
   EmptyState,
@@ -18,8 +18,8 @@ import {
   STACK_GAP,
   useCapabilityPresence,
   useInstancesOfCap,
-} from '@camstack/ui-library'
-import type { LinkableInstance } from '@camstack/ui-library'
+} from '@dominevo/ui-library'
+import type { LinkableInstance } from '@dominevo/ui-library'
 import { Sparkles } from 'lucide-react'
 import { useMemo } from 'react'
 import type { ReactElement } from 'react'

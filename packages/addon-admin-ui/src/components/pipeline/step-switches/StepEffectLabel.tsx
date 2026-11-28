@@ -4,7 +4,7 @@
  * controls so the three say the same thing. `unknown` renders as its own
  * neutral dashed badge: a matrix that did not answer is never drawn as "off".
  */
-import { Badge } from '@camstack/ui-library'
+import { Badge } from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 import { heldOffBy, type OffLevel, type OwnLevel, type StepEffect } from './step-switches-model'
 

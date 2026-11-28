@@ -1,4 +1,4 @@
-import { DeviceType, type DiscoveredChildDevice, gatewayDeviceName } from '@camstack/types'
+import { DeviceType, type DiscoveredChildDevice, gatewayDeviceName } from '@dominevo/types'
 import { capsForShcKind, classifyShcDevice, deviceTypeForShcKind } from './shc-domain-mapping.js'
 import type { ShcDeviceKind, ShcDeviceSummary } from './shc-types.js'
 
@@ -13,7 +13,7 @@ export interface BuildShcCandidatesInput {
   readonly integrationId: string
   readonly integrationName: string
   readonly devices: readonly ShcDeviceSummary[]
-  /** shcDeviceId → adopted CamStack device id. */
+  /** shcDeviceId → adopted Dominevo device id. */
   readonly adopted: ReadonlyMap<string, number>
 }
 

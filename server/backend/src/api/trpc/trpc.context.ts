@@ -5,8 +5,8 @@ import type {
   CredentialScope,
   CredentialTokenClaims,
   DeviceMetaLike,
-} from '@camstack/types'
-import { getUserManagementInternal } from '@camstack/server/system'
+} from '@dominevo/types'
+import { getUserManagementInternal } from '@dominevo/server/system'
 import { DEFAULT_AUTH_NETWORK_POLICY } from '../../auth/auth-network-policy.js'
 import {
   createCredentialVerifier,

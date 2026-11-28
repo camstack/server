@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { readErrorI18n } from '@camstack/types'
+import { readErrorI18n } from '@dominevo/types'
 import { sessionHarness } from '../../../auth/__tests__/session-test-harness.js'
 import { HandoffCodeService } from '../../../core/auth/handoff-code.service.js'
 import type { AuthenticatedAgent, TrpcContext } from '../../trpc/trpc.context.js'

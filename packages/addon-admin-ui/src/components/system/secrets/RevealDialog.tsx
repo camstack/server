@@ -8,7 +8,7 @@
  * the settings forms' eye uses. The hub has already audited the reveal; the
  * dialog says so.
  */
-import type { KeychainAdminSecret } from '@camstack/types'
+import type { KeychainAdminSecret } from '@dominevo/types'
 import {
   Button,
   CopyButton,
@@ -20,7 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
   SECRET_REVEAL_MS,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 

@@ -9,7 +9,7 @@
  * arrives (`onCapabilityStateChange`), and its snapshot says whether it already
  * has (`useCapability(...).isReady`).
  */
-import type { ReadinessScope } from '@camstack/types'
+import type { ReadinessScope } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('../proc-process-table.js', async (importOriginal) => {

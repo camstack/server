@@ -13,7 +13,7 @@ last-verified: 2026-10-02
 
 # Architecture overview
 
-CamStack is a kernel plus addons. The kernel owns processes, transport and
+Dominevo is a kernel plus addons. The kernel owns processes, transport and
 registries; **every user-visible feature is an addon** — device providers, the
 detection pipeline, streaming, recording, analytics, the Admin UI itself.
 
@@ -28,7 +28,7 @@ For the current inventory, read the generated pages, not this one:
 
 ## The six things worth knowing first
 
-**1. A node is a process running `@camstack/server`.** Hub and agent are the same
+**1. A node is a process running `@dominevo/server`.** Hub and agent are the same
 package; the role is `CAMSTACK_ROLE` ([D16](../decisions/adr-0016.md)). A hub
 orchestrates; an agent contributes capabilities and hardware.
 

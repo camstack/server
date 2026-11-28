@@ -1,4 +1,4 @@
-import type { AddonMigration } from '@camstack/types'
+import type { AddonMigration } from '@dominevo/types'
 import { type IngressSettingsPorts, planIngressSettingsPerNode } from './settings-per-node.js'
 
 export type { IngressSettingsPorts } from './settings-per-node.js'

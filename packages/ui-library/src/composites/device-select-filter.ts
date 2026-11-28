@@ -5,7 +5,7 @@ import {
   DeviceType,
   primaryChildPreferenceOf,
   resolveContainerPrimaryChild,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /**
  * Pure, render-free helpers backing the `device-select` / `device-multiselect`

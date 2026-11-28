@@ -5,7 +5,7 @@
  * numbers that must agree is a defect waiting for the day they do not.
  */
 import { describe, expect, it } from 'vitest'
-import type { NcRule } from '@camstack/types'
+import type { NcRule } from '@dominevo/types'
 import {
   confirmExpectFromOccupancy,
   frozenConfirmPolicy,

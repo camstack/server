@@ -1,4 +1,4 @@
-import type { AddonMigration, MigrationPlan } from '@camstack/types'
+import type { AddonMigration, MigrationPlan } from '@dominevo/types'
 import { type BlobToRowsPorts, planBlobToDeviceRows, planBlobToNodeRows } from './blob-to-rows.js'
 import { type DropKeysPorts, planDropKeys } from './drop-keys.js'
 

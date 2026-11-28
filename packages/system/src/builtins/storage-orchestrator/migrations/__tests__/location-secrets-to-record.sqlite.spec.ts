@@ -7,7 +7,7 @@ import {
   createSecretsAccess,
   makeSecretMarker,
   type RecordKindHandle,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   makeFakeKeychain,

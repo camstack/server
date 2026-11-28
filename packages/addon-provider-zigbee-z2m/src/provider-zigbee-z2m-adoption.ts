@@ -9,11 +9,11 @@ import {
   errMsg,
   type IDeviceAdoptionProvider,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { Z2M_GATEWAY_ID, updateEquipmentOf } from './z2m-device-config.js'
 import type { Z2mPlan } from './z2m-exposes.js'
 
-/** A device the Zigbee2MQTT server lists and CamStack could adopt: its ieee address and its plan. */
+/** A device the Zigbee2MQTT server lists and Dominevo could adopt: its ieee address and its plan. */
 export interface RemoteZigbeeDevice {
   readonly id: string
   readonly name: string

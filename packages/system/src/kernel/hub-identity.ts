@@ -16,7 +16,7 @@ import { randomBytes } from 'node:crypto'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 
-/** `hub-<16 hex>`. The same shape as `@camstack/types` `isHubId`. */
+/** `hub-<16 hex>`. The same shape as `@dominevo/types` `isHubId`. */
 const HUB_ID_PATTERN: RegExp = /^hub-[0-9a-f]{16}$/
 
 export function isAnnouncedHubId(value: unknown): value is string {

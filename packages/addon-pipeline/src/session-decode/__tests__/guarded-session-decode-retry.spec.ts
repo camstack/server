@@ -22,7 +22,7 @@
  * silent by design.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { startGuardedSessionDecode, type GuardedPumpHooks } from '../guarded-session-decode.js'
 import { LiveDecodeWorkerAdmission } from '../live-worker-admission.js'

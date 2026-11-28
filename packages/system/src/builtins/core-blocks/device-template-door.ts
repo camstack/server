@@ -9,7 +9,7 @@ import type {
   DeviceTemplateRender,
   DeviceTemplateRefusal,
   RenderStepTemplates,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export type TemplateCheckResult =
   | {
@@ -36,7 +36,8 @@ export interface DeviceTemplateDoor {
 export function templateDoorOver(api: () => AddonApi | undefined): DeviceTemplateDoor {
   const need = (): AddonApi => {
     const current = api()
-    if (current === undefined) throw new Error('no ctx.api on this node — templates cannot be rendered')
+    if (current === undefined)
+      throw new Error('no ctx.api on this node — templates cannot be rendered')
     return current
   }
   return {

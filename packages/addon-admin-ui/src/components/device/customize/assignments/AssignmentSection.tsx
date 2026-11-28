@@ -1,5 +1,5 @@
 /** One assignment card (spec §5) in the tab's {@link CustomizeCard}: header (icon, title, header control, "+ Add"), notices, rows. */
-import { Button } from '@camstack/ui-library'
+import { Button } from '@dominevo/ui-library'
 import { type LucideIcon, Sparkles } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'

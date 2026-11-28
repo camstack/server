@@ -36,8 +36,8 @@
  * here would be a field the next save deletes.
  */
 
-import type { NcTaxonomy } from '@camstack/types'
-import { pickerForCondition } from '@camstack/types'
+import type { NcTaxonomy } from '@dominevo/types'
+import { pickerForCondition } from '@dominevo/types'
 import {
   Button,
   Dialog,
@@ -53,7 +53,7 @@ import {
   Textarea,
   useInstancesOfCap,
   useSystem,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useMutation } from '@tanstack/react-query'
 import { Images, Loader2 } from 'lucide-react'
 import { useMemo, useState } from 'react'

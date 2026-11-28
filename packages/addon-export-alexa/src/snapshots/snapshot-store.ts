@@ -16,7 +16,7 @@
  * turning this into a memory leak.
  */
 import { randomUUID } from 'node:crypto'
-import { signExpiringUrl, verifyExpiringUrl } from '@camstack/types/node'
+import { signExpiringUrl, verifyExpiringUrl } from '@dominevo/types/node'
 
 /** How long a minted image URL is valid — Amazon recommends ten minutes. */
 export const SNAPSHOT_URL_TTL_MS = 10 * 60_000

@@ -43,7 +43,7 @@ import {
   powerSourceActuatorConflicts,
   powerSourceLinkOfComposition,
   type SwitchOptions,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** What the service needs to know about a device it names. */
 export interface PowerSourceDevice {

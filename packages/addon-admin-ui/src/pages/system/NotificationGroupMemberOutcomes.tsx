@@ -2,7 +2,7 @@
  * The per-member breakdown of a send to a notifier group (`SendResult.members`):
  * who got it, who was skipped and why, who failed and with what error.
  */
-import type { GroupMemberOutcome, GroupSkipReason } from '@camstack/types'
+import type { GroupMemberOutcome, GroupSkipReason } from '@dominevo/types'
 import { useTranslation } from 'react-i18next'
 
 interface SkipReasonLabel {

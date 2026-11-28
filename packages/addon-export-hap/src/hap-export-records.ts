@@ -7,7 +7,7 @@
  * It replaces the `exposed` and `exposedActions` addon settings. The migration moved them; the
  * addon reads this record and nothing else.
  */
-import { type DefinedRecordKind, defineEntryKind } from '@camstack/types'
+import { type DefinedRecordKind, defineEntryKind } from '@dominevo/types'
 import { z } from 'zod'
 import type { ActionExportEntry } from './action-exports.js'
 import type { MapperKind } from './mappers/kind.js'
@@ -76,7 +76,7 @@ export interface ExportDeviceSettings {
    */
   readonly allowTranscode?: boolean
   /**
-   * Keep CamStack's OWN copy of every clip HomeKit Secure Video records from
+   * Keep Dominevo's OWN copy of every clip HomeKit Secure Video records from
    * this camera.
    *
    * ON unless the operator says otherwise, and ABSENT MEANS ON — the field did

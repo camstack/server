@@ -4,7 +4,7 @@
  * the slice has not arrived" draws loading, "bound and empty" says so. An
  * unanswered read must never look like "no consumables".
  */
-import type { ConsumablesStatus } from '@camstack/types'
+import type { ConsumablesStatus } from '@dominevo/types'
 import { cleanup, render, renderHook, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { plugFixtures } from '../__fixtures__/plug'

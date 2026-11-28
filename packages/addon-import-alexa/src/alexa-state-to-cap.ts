@@ -1,6 +1,6 @@
 /**
  * Pure decoders translating a single polled Alexa property value (as stored on
- * the {@link AlexaAccountResolver} by interface + property) into the CamStack cap
+ * the {@link AlexaAccountResolver} by interface + property) into the Dominevo cap
  * status field it drives. The inverse of the exporter's report-state mapping.
  *
  * Each function takes the raw `unknown` value (provider-specific) and returns a
@@ -19,7 +19,7 @@
  *   - humidity                                  → number (percent)
  */
 
-import type { MotionStatus } from '@camstack/types'
+import type { MotionStatus } from '@dominevo/types'
 
 /** Decode an Alexa `powerState` to a boolean on-state, or null. */
 export function decodePowerState(value: unknown): boolean | null {

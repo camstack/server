@@ -9,7 +9,7 @@ import {
   type MotionTriggerRuntimeState,
   type SirenOptions,
   type SirenStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { HikvisionSirenAccessory } from '../siren.js'
 

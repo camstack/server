@@ -22,7 +22,7 @@ import {
   DialogTitle,
   type PickerItem,
   TEXT_SECTION_LABEL,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 

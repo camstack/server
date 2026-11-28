@@ -1,4 +1,4 @@
-import type { ICamstackAddon } from '@camstack/types'
+import type { ICamstackAddon } from '@dominevo/types'
 
 type AddonConstructor = new () => ICamstackAddon
 

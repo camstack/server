@@ -8,7 +8,7 @@ import {
   type HumiditySensorStatus,
   type IDeviceRuntimeState,
   type TemperatureSensorStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { settingsToDreoConfig } from '../config.js'
 import { dreoConnections } from '../dreo-gateway.js'
 import { DreoIntegrationManager } from '../dreo-integration-manager.js'

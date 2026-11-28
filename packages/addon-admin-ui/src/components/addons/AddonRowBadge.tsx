@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { AlertOctagon, Check, Clock, Loader2, RefreshCw } from 'lucide-react'
-import type { BulkUpdateItem, BulkUpdateItemStatus } from '@camstack/types'
+import type { BulkUpdateItem, BulkUpdateItemStatus } from '@dominevo/types'
 import type { LucideIcon } from 'lucide-react'
 
 interface AddonRowBadgeProps {

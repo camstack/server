@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Bell } from 'lucide-react'
-import { useDeviceProxy, useDeviceStateSlice, useSystem } from '@camstack/ui-library'
+import { useDeviceProxy, useDeviceStateSlice, useSystem } from '@dominevo/ui-library'
 import { formatRelativeTime, isSameLocalDay } from './format'
 import type { HeroProps } from './HeroRegistry'
 import { useTranslation } from 'react-i18next'

@@ -7,7 +7,7 @@
  * 200 `WhoamiOk`; 401 `{ ok: false, error }` when the bearer authenticates
  * nobody (revoked, expired, never issued). Never the token, never a hash.
  */
-import type { CredentialScope } from '@camstack/types'
+import type { CredentialScope } from '@dominevo/types'
 import type { FastifyInstance } from 'fastify'
 import type { PrincipalAuditTag } from '../auth/credential-verifier.js'
 import { hubCredentialVerifier, type HubCredentialVerifierDeps } from './trpc/trpc.context.js'

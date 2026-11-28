@@ -30,7 +30,7 @@ import type {
   DiscoveredTarget,
   PreparedNotification,
   TargetKind,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type {
   HttpRequestBody,
   HttpRequestPlan,

@@ -8,7 +8,7 @@ import type {
   RecordQueryInput,
   RecordQueryOptions,
   RecordRow,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 const PAGE_SIZE = 1000
 /** 100 000 rows — far above anything the AI kinds hold. */

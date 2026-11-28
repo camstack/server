@@ -20,7 +20,7 @@ import { useMemo, type ReactNode, type JSX } from 'react'
 import type {
   ConfigNotificationTargetMultiSelectField,
   ConfigNotificationTargetSelectField,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { useNotificationOutputListTargetKinds } from '../generated/system-hooks'
 import type { TranslationFn } from './config-form-builder'
 import { useUiText } from '../contexts/ui-text'

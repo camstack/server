@@ -14,7 +14,7 @@
  * `home` stays: it is a destination, the one function worth recalling (the
  * HomeKit export draws the same line).
  */
-import type { AddonApi, AddonContext, IScopedLogger } from '@camstack/types'
+import type { AddonApi, AddonContext, IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { buildEndpointsForExposedDevice, type DeviceBuildContext } from '../handlers/discovery.js'
 import { handleSetMode } from '../handlers/ptz-preset.js'

@@ -33,7 +33,7 @@
  * notification of a still-open episode after the next restart — the direction
  * chosen on purpose, because a lost "your recorder has no space" is worse.
  */
-import type { IScopedLogger, NcSystemEventKind } from '@camstack/types'
+import type { IScopedLogger, NcSystemEventKind } from '@dominevo/types'
 import { DurableLedger, type DurableLedgerSpec } from '../durable/durable-ledger.js'
 import { type DurableKindDeps } from '../durable/durable-wiring.js'
 import { ncDurableRecordKinds } from './nc-durable-record-kinds.js'

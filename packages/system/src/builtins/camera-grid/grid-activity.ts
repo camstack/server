@@ -50,7 +50,7 @@ import {
   type MotionOnMotionChangedPayload,
   type ObjectDetection,
   type PipelineAudioInferenceResultPayload,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { GridActivityMirror, type GridMotionState } from './grid-activity-mirror.js'
 import { mapDetectionToCanvas, type GridMappingCell } from './grid-detection-mapping.js'
 

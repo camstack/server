@@ -5,7 +5,7 @@
  * check has run again. The host measures the wall-time budget and terminates
  * this thread when it is overrun.
  *
- * Lean by design (D453): no value import from `@camstack/types`'s barrel; the
+ * Lean by design (D453): no value import from `@dominevo/types`'s barrel; the
  * limits arrive in `workerData`.
  */
 import { parentPort, workerData } from 'node:worker_threads'

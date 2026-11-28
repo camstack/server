@@ -6,7 +6,7 @@
  */
 
 import type { NcResolveApplianceCycleFacts } from '../../notification-center/appliance-cycle.js'
-import type { AddonContext } from '@camstack/types'
+import type { AddonContext } from '@dominevo/types'
 import { NcArtifactPlane } from '../../notification-center/artifact-plane.js'
 import type { ArtifactEndpoint } from '../../notification-center/artifact-url.js'
 import type { NcEventMedia, NcEventMediaRequest } from '../../notification-center/dispatcher.js'

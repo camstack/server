@@ -12,7 +12,7 @@ import {
   resolveNodeInferenceUsability,
 } from '../inference-device-model.js'
 import { NodeInferenceUsabilityMirror } from '../node-inference-usability-mirror.js'
-import type { InferenceDeviceDescriptor } from '@camstack/types'
+import type { InferenceDeviceDescriptor } from '@dominevo/types'
 import type { StoredInferenceDevice } from '../inference-device-model.js'
 
 function probed(key: string, available = true): InferenceDeviceDescriptor {

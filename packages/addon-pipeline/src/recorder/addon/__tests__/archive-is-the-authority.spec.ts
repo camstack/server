@@ -38,7 +38,7 @@ import {
   type IScopedLogger,
   type LogExtras,
   type SettingsStoreClient,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { RecordingIndex } from '../../recording-index.js'
 import { RelocateEngine } from '../../relocate-engine.js'

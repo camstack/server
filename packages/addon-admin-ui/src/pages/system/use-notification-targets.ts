@@ -4,8 +4,8 @@
  * work with. `data` is `undefined` until every holder has answered, so an unanswered read never
  * looks like "no targets" (D315).
  */
-import { notificationTargetKindOf, type Target } from '@camstack/types'
-import { useInstancesOfCap, type LinkableInstance } from '@camstack/ui-library'
+import { notificationTargetKindOf, type Target } from '@dominevo/types'
+import { useInstancesOfCap, type LinkableInstance } from '@dominevo/ui-library'
 import { useMemo } from 'react'
 
 const NOTIFICATION_OUTPUT_CAP = 'notification-output'

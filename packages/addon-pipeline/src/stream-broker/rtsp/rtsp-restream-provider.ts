@@ -1,5 +1,5 @@
-import type { IScopedLogger } from '@camstack/types'
-import { parseProfileBrokerId } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
+import { parseProfileBrokerId } from '@dominevo/types'
 import { deviceIdFromBrokerId } from './broker-device-id.js'
 import type { RtspListenServer } from './rtsp-listen-server.js'
 

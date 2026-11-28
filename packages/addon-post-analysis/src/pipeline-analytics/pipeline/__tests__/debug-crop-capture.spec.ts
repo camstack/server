@@ -3,7 +3,7 @@
  * track, costs an unmarked track nothing, and every path that stores nothing
  * says why.
  */
-import type { FrameHandle } from '@camstack/types'
+import type { FrameHandle } from '@dominevo/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   type DebugCropCaptureDeps,

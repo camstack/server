@@ -11,7 +11,7 @@
 import * as fs from 'node:fs/promises'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import { restrictDirToOwnerSync, writeOwnerOnlyFileSync } from '@camstack/types/node'
+import { restrictDirToOwnerSync, writeOwnerOnlyFileSync } from '@dominevo/types/node'
 
 const REDACTED = '‹redacted›'
 

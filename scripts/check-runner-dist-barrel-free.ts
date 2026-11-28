@@ -7,7 +7,7 @@
  * The source guard answers "does any runner file import the barrel?". It cannot
  * answer the question that actually costs memory: "does the file the runner
  * will `require()` carry the Zod schema graph?". `bundleTypesMainEntry: true`
- * inlines the whole `@camstack/types` barrel (a ~2.4 MB chunk, ~2,500
+ * inlines the whole `@dominevo/types` barrel (a ~2.4 MB chunk, ~2,500
  * `z.object(` calls, ~90-115 MB of private heap once evaluated) into system's
  * dist, and a bundler may place it in any chunk the runner shares with hub-only
  * code. Source can look clean while the chunk graph is not; a re-export the
@@ -20,7 +20,7 @@
  *    MARKER = schema-call density: more than {@link MAX_SCHEMA_CALLS} occurrences of
  *    a zod builder call (`z.object(`, `z.enum(`, …). Why density and not the
  *    `//#region ../types/dist/…` banner: rolldown writes that banner for ANY
- *    inlined `@camstack/types` module, and a small schema-free leaf inlined on
+ *    inlined `@dominevo/types` module, and a small schema-free leaf inlined on
  *    purpose is fine; what costs memory is the schema graph itself. The
  *    barrel carries ~2,500 builder calls; a runner file that needs a handful
  *    (a config schema) stays far below the threshold.
@@ -139,7 +139,7 @@ export function probeClosure(entry: string, files: readonly string[]): Probe {
 /**
  * The built entries whose closure must stay schema-free. `addon-utils` is
  * required by every addon that downloads a model or registers a custom action
- * (7 hub runners): one bare `@camstack/types` import in its source inlined the
+ * (7 hub runners): one bare `@dominevo/types` import in its source inlined the
  * 2.4 MB barrel chunk and cost each of them ~105 MB of heap.
  */
 export const GUARDED_DIST_ENTRIES: readonly string[] = ['addon-runner', 'addon-utils']
@@ -184,11 +184,11 @@ function main(): void {
   if (failures.length > 0) {
     // eslint-disable-next-line no-console
     console.error(
-      `\n✗ runner-dist-barrel-free guard (D28): a BUILT guarded entry loads the @camstack/types schema barrel\n` +
+      `\n✗ runner-dist-barrel-free guard (D28): a BUILT guarded entry loads the @dominevo/types schema barrel\n` +
         `  (~90-115 MB private heap per process that loads it). The runner must have its own build entry with no\n` +
         `  chunk shared with hub-only code — see the addon-runner block in packages/system/vite.config.ts\n` +
         `  and docs/decisions/adr-0028.md. Guarded: ${GUARDED_DIST_ENTRIES.join(', ')}. Find the bare\n` +
-        `  '@camstack/types' value import with scripts/check-runner-barrel-free.ts.\n`,
+        `  '@dominevo/types' value import with scripts/check-runner-barrel-free.ts.\n`,
     )
     for (const f of failures) {
       // eslint-disable-next-line no-console

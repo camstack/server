@@ -4,7 +4,7 @@ import {
   type NumericSensorStatus,
   type PowerMeterStatus,
   type SwitchStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { EspActuatorDevice } from '../devices/esp-actuator-device.js'
 import { EspSensorDevice } from '../devices/esp-sensor-device.js'
 import { childConfigFor } from '../esphome-child-spec.js'
@@ -147,7 +147,12 @@ describe('EspActuatorDevice select navigation (#544)', () => {
     const link = new FakeLink([entity({ id: 'select-mode', type: 'select' })])
     espLinkHub.attach(BROKER, link)
     const { ctx, providers } = makeCtx(
-      { brokerId: BROKER, kind: 'select-control', entityId: 'select-mode', options: ['eco', 'comfort', 'boost'] },
+      {
+        brokerId: BROKER,
+        kind: 'select-control',
+        entityId: 'select-mode',
+        options: ['eco', 'comfort', 'boost'],
+      },
       { type: DeviceType.Control },
     )
     new EspActuatorDevice(ctx)

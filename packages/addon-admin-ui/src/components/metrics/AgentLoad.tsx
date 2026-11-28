@@ -1,4 +1,4 @@
-import { useClusterNodes } from '@camstack/ui-library'
+import { useClusterNodes } from '@dominevo/ui-library'
 import { CapabilityBadges } from '../shared/CapabilityBadges'
 import { Trans, useTranslation } from 'react-i18next'
 

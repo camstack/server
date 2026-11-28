@@ -15,7 +15,7 @@
  * form had no way to refuse.
  */
 
-import type { IScopedLogger, RetrainStatus, TrackFlags, TrackFlagsPatch } from '@camstack/types'
+import type { IScopedLogger, RetrainStatus, TrackFlags, TrackFlagsPatch } from '@dominevo/types'
 import { archiveNoteBeforeClear, type DebugNoteArchivePort } from './archive-debug-note.js'
 
 /**

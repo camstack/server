@@ -1,4 +1,4 @@
-import type { MediaFile, MediaFileBytes, MediaFileInfo } from '@camstack/types'
+import type { MediaFile, MediaFileBytes, MediaFileInfo } from '@dominevo/types'
 
 let nextMediaId = 10_000
 

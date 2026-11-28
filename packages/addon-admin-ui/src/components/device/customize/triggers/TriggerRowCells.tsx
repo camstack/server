@@ -4,7 +4,7 @@
  * its "on for" time (source column), and the active switch with edit and
  * remove (actions). Every control edits the hook's draft; none of them writes.
  */
-import { IconButton, Select } from '@camstack/ui-library'
+import { IconButton, Select } from '@dominevo/ui-library'
 import { Pencil, X } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'

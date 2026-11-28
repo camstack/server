@@ -6,8 +6,8 @@ import {
   useDisplayPaletteGetPalette,
   useDisplayPaletteListPresets,
   useDisplayPaletteSetPalette,
-} from '@camstack/ui-library'
-import type { SetPaletteInput } from '@camstack/types'
+} from '@dominevo/ui-library'
+import type { SetPaletteInput } from '@dominevo/types'
 import { PaletteEditor } from './palette-editor'
 
 export function ClusterPaletteTab(): JSX.Element {

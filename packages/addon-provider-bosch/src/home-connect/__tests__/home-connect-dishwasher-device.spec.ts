@@ -4,7 +4,7 @@ import {
   type DishwasherOptions,
   type DishwasherStatus,
   type RunningStateStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import { HomeConnectDishwasherDevice } from '../devices/home-connect-dishwasher-device.js'
 import { homeConnectConnections } from '../home-connect-gateway.js'

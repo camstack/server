@@ -12,7 +12,7 @@ import {
   type HeroMeasurement,
   type ReadingQuantity,
   ReadingQuantitySchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { useUiText } from '../../contexts/ui-text'
 import { useUnitPreferences } from '../../contexts/unit-preferences'
 import { type ResolvedSensorDisplay, resolveSensorDisplay } from '../../lib/resolve-sensor-display'

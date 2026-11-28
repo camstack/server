@@ -15,7 +15,7 @@
  * mid-room, and an operator who resumes gets a second clip rather than an
  * hour of a skirting board.
  */
-import type { RecordingSignalRuntimeState, VacuumState } from '@camstack/types'
+import type { RecordingSignalRuntimeState, VacuumState } from '@dominevo/types'
 
 /** Vacuum lifecycle states during which the camera asks to be recorded. */
 const ACTIVE_STATES: ReadonlySet<VacuumState> = new Set<VacuumState>(['cleaning', 'returning'])

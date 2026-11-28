@@ -1,6 +1,6 @@
 /**
- * `camstack host-check`: run on the machine where CamStack WILL run; it says
- * which accelerators that machine has, which ones CamStack uses, the image
+ * `dominevo host-check`: run on the machine where Dominevo WILL run; it says
+ * which accelerators that machine has, which ones Dominevo uses, the image
  * tag and the exact passthrough for Docker, Compose, Unraid and a Proxmox LXC.
  * Read-only, no root, no hub, nothing sent anywhere. The same report backs the
  * `setup_host_check` MCP tool.
@@ -38,24 +38,24 @@ export interface HostEnvironment {
 
 export interface HostCheckReport {
   readonly platform: HostPlatform
-  /** Set on macOS / Windows: CamStack runs as the native app, nothing to pass. */
+  /** Set on macOS / Windows: Dominevo runs as the native app, nothing to pass. */
   readonly nativeApp: string | null
   readonly environment: HostEnvironment
   readonly cpu: CpuInfo
   readonly accelerators: readonly DetectedAccelerator[]
-  /** `ghcr.io/camstack/camstack:<imageTag>`; null for the native app. */
+  /** `ghcr.io/dominevo/dominevo:<imageTag>`; null for the native app. */
   readonly imageTag: string | null
   readonly passthrough: Passthrough
   readonly hints: readonly string[]
 }
 
-export const IMAGE_REPOSITORY = 'ghcr.io/camstack/camstack'
+export const IMAGE_REPOSITORY = 'ghcr.io/dominevo/dominevo'
 
 const NATIVE_APP: Readonly<Record<'darwin' | 'win32', string>> = {
   darwin:
-    'macOS: install the CamStack desktop app (Apple silicon runs detection on the Neural Engine). Nothing to pass.',
+    'macOS: install the Dominevo desktop app (Apple silicon runs detection on the Neural Engine). Nothing to pass.',
   win32:
-    'Windows: install the CamStack desktop app; it finds the hardware itself. Nothing to pass.',
+    'Windows: install the Dominevo desktop app; it finds the hardware itself. Nothing to pass.',
 }
 
 const EMPTY_PASSTHROUGH: Passthrough = {
@@ -98,7 +98,7 @@ function hintsFor(inv: HostInventory, accelerators: readonly DetectedAccelerator
   }
   if (used.length === 0) {
     hints.push(
-      'No accelerator CamStack can use: detection runs on the CPU (expect hundreds of milliseconds per frame).',
+      'No accelerator Dominevo can use: detection runs on the CPU (expect hundreds of milliseconds per frame).',
     )
   }
   const hidden = used.filter((a) => a.visibleHere === false)
@@ -167,12 +167,12 @@ function section(title: string, body: readonly string[]): readonly string[] {
   return body.length === 0 ? [] : ['', title, ...body.map((l) => `  ${l}`)]
 }
 
-/** The human-readable report `camstack host-check` prints. */
+/** The human-readable report `dominevo host-check` prints. */
 export function renderHostCheck(report: HostCheckReport): string {
   if (report.nativeApp !== null) return report.nativeApp
   const p = report.passthrough
   const lines: string[] = [
-    `CamStack host check — ${where(report.environment)}${report.cpu.model !== null ? `, ${report.cpu.model}` : ''}`,
+    `Dominevo host check — ${where(report.environment)}${report.cpu.model !== null ? `, ${report.cpu.model}` : ''}`,
     '',
     'Accelerators:',
   ]

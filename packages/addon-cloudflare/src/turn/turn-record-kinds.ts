@@ -3,7 +3,7 @@
  * `cloudflare-turn` and named after it, listed on the TURN Servers page. The API token is a
  * keychain marker bound to the row.
  */
-import { type DefinedRecordKind, defineEntryKind } from '@camstack/types'
+import { type DefinedRecordKind, defineEntryKind } from '@dominevo/types'
 import { z } from 'zod'
 
 /** A single-instance addon keeps its record under its own addon id. */

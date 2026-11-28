@@ -1,5 +1,5 @@
 import { EventEmitter } from 'node:events'
-import type { EngineOutput, IInferenceEngine, StepDefinition } from '@camstack/types'
+import type { EngineOutput, IInferenceEngine, StepDefinition } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { dispatchPostprocess } from '../../postprocess/dispatch.js'
 

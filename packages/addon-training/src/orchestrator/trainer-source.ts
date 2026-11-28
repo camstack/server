@@ -5,7 +5,7 @@
  * repo at that revision. Bumping it is a code change: publish the trainer
  * (`hf/camstack-trainer/` → the HF repo), then set the new commit sha here.
  */
-import type { TrainerSourceRef } from '@camstack/types'
+import type { TrainerSourceRef } from '@dominevo/types'
 
 export const TRAINER_SOURCE: TrainerSourceRef = {
   repo: 'camstack/camstack-trainer',

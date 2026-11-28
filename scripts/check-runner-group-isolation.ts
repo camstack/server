@@ -11,9 +11,9 @@
  * minute the crash circuit-breaker stops respawning it. Every addon in the
  * group is then down, indefinitely, while each still reports `running`.
  *
- * This is not hypothetical. On 2026-08-09 `@camstack/addon-advanced-notifier`
+ * This is not hypothetical. On 2026-08-09 `@dominevo/addon-advanced-notifier`
  * was quarantined by renaming its directory while its manifest entry stayed in
- * `/data/addons/manifest.json`. `@camstack/addon-provider-homeassistant`
+ * `/data/addons/manifest.json`. `@dominevo/addon-provider-homeassistant`
  * declared `group: 'notifiers'` — "purely a process-count optimization"
  * (9b895fb5f) — so the loader's `No package.json at …addon-advanced-notifier`
  * killed the Home Assistant provider too:

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { StepSwitchCell } from '@camstack/types'
+import type { StepSwitchCell } from '@dominevo/types'
 import {
   cellEffect,
   findDevice,

@@ -15,8 +15,8 @@ import {
   MEMBERSHIP_PATHS,
   MembershipResponder,
   processMeshCrl,
-} from '@camstack/server/system'
-import type { IScopedLogger } from '@camstack/types'
+} from '@dominevo/server/system'
+import type { IScopedLogger } from '@dominevo/types'
 import { createRateLimiter } from '../auth/auth-rate-limit'
 
 export interface MeshMembershipRoutesOptions {

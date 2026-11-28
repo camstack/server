@@ -7,7 +7,7 @@
  * the state comes back off the store after a restart, and that switching the
  * location out of `drain` stops it and drops the state.
  */
-import type { IScopedLogger, IStorageEvictableProvider } from '@camstack/types'
+import type { IScopedLogger, IStorageEvictableProvider } from '@dominevo/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { DrainState } from '../drain-ratchet.js'
 import type { DrainPlanEntry, DrainStateStore } from '../storage-pressure-manager.js'

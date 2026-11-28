@@ -1,6 +1,6 @@
 /// <reference types="@testing-library/jest-dom" />
 
-import { selectOption } from '@camstack/ui-library/testing'
+import { selectOption } from '@dominevo/ui-library/testing'
 import * as jestDomMatchers from '@testing-library/jest-dom/matchers'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen } from '@testing-library/react'
@@ -31,8 +31,8 @@ const FORMS: Readonly<Record<string, { readonly key: string; readonly value: str
   'pipeline-analytics': { key: 'postProcessingNodeId', value: 'agent-a' },
 }
 
-vi.mock('@camstack/ui-library', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@camstack/ui-library')>()
+vi.mock('@dominevo/ui-library', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dominevo/ui-library')>()
   return {
     ...actual,
     useClusterNodes: () => ({ nodes: NODES }),

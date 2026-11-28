@@ -21,7 +21,7 @@ import {
   RoleSchema,
 } from './setup-install-rules.js'
 
-/** The kinds of host a CamStack hub or agent is installed on (P1 grows this). */
+/** The kinds of host a Dominevo hub or agent is installed on (P1 grows this). */
 export const SUPPORTED_HOST_KINDS: readonly string[] = HOST_KINDS
 
 const REGISTRY = 'https://registry.npmjs.org'
@@ -63,7 +63,7 @@ export interface AboutResult {
 export async function about(ctx: McpContext): Promise<AboutResult> {
   const [cli, server] = await Promise.all([
     latestOnNpm('camstack', ctx.fetch),
-    latestOnNpm('@camstack/server', ctx.fetch),
+    latestOnNpm('@dominevo/server', ctx.fetch),
   ])
   return {
     cli: { installed: ctx.cliVersion, ...cli },
@@ -75,13 +75,13 @@ export async function about(ctx: McpContext): Promise<AboutResult> {
 export function registerSetupTools(server: McpServer, ctx: McpContext, deps: SetupDeps = {}): void {
   server.tool(
     'setup_about',
-    'Versions of the camstack CLI (installed and latest on npm), the latest @camstack/server on npm, and the host kinds CamStack supports. Needs no hub and no login.',
+    'Versions of the camstack CLI (installed and latest on npm), the latest @dominevo/server on npm, and the host kinds Dominevo supports. Needs no hub and no login.',
     {},
     async (): Promise<ToolTextResult> => text(await about(ctx)),
   )
   server.tool(
     'setup_host_check',
-    'Read-only, no hub, no login, nothing sent anywhere. Inspects THE MACHINE THIS MCP RUNS ON (run it where CamStack will run, before setup_install_guide): GPUs by vendor (Intel, AMD, NVIDIA), Intel / AMD NPU, Coral USB and PCIe, Hailo, whether it is inside a container or LXC. Returns which accelerators CamStack will use and which it found but does not use, the image tag, and ready-to-paste docker run flags, Compose devices, Unraid template fields and Proxmox LXC lines, plus hints (an Intel iGPU switched off in the BIOS, a device not passed into this container). Follow it with setup_feasibility.',
+    'Read-only, no hub, no login, nothing sent anywhere. Inspects THE MACHINE THIS MCP RUNS ON (run it where Dominevo will run, before setup_install_guide): GPUs by vendor (Intel, AMD, NVIDIA), Intel / AMD NPU, Coral USB and PCIe, Hailo, whether it is inside a container or LXC. Returns which accelerators Dominevo will use and which it found but does not use, the image tag, and ready-to-paste docker run flags, Compose devices, Unraid template fields and Proxmox LXC lines, plus hints (an Intel iGPU switched off in the BIOS, a device not passed into this container). Follow it with setup_feasibility.',
     {},
     async (): Promise<ToolTextResult> => text(hostOf(ctx).check()),
   )
@@ -105,13 +105,13 @@ export function registerSetupTools(server: McpServer, ctx: McpContext, deps: Set
   )
   server.tool(
     'setup_discover_hubs',
-    'Find CamStack hubs on the local network (mDNS) plus the hubs this machine already knows, with host, port, name and version. Needs no login.',
+    'Find Dominevo hubs on the local network (mDNS) plus the hubs this machine already knows, with host, port, name and version. Needs no login.',
     { timeoutMs: z.number().int().min(200).max(15_000).optional() },
     async ({ timeoutMs }): Promise<ToolTextResult> => text(await discoverHubsTool(timeoutMs, deps)),
   )
   server.tool(
     'setup_connect',
-    'Check that a hub answers on https://<server>:4443/health, whether its CA is already pinned for TLS, and whether a `camstack login` session exists. Never takes a password: when there is no session it says to run `camstack login <server>` in a terminal.',
+    'Check that a hub answers on https://<server>:4443/health, whether its CA is already pinned for TLS, and whether a `dominevo login` session exists. Never takes a password: when there is no session it says to run `dominevo login <server>` in a terminal.',
     { server: z.string().min(1) },
     async ({ server: address }): Promise<ToolTextResult> => text(await connectTool(address, deps)),
   )
@@ -128,13 +128,13 @@ export function registerSetupTools(server: McpServer, ctx: McpContext, deps: Set
   )
   server.tool(
     WIZARD_TOOL,
-    'START HERE. The one entrypoint of the CamStack setup, from any state: nothing installed, a hub nobody signed in to, or a hub half set up. Read-only. It answers the ordered steps of the get-started guide (feasibility, install, first sign-in, agents, storage, core addons, cameras, detection and its benchmark, remote access, notifications, backups, keeping current), each done, missing, suggested, not-needed or unknown with its reason, and nextStep: the next thing to do with the exact tool calls and the same action by hand in the admin UI. Call it again after every step. The steps are read from the public docs, so they match the manual guide; a step that could not be read is unknown, never missing. state.verdict says what the install carries: an estimate before install, the measured figure (and whether decoding or detection is the limit) once the node benchmark ran. Pass remoteAccess once the person said whether they open CamStack away from home.',
+    'START HERE. The one entrypoint of the Dominevo setup, from any state: nothing installed, a hub nobody signed in to, or a hub half set up. Read-only. It answers the ordered steps of the get-started guide (feasibility, install, first sign-in, agents, storage, core addons, cameras, detection and its benchmark, remote access, notifications, backups, keeping current), each done, missing, suggested, not-needed or unknown with its reason, and nextStep: the next thing to do with the exact tool calls and the same action by hand in the admin UI. Call it again after every step. The steps are read from the public docs, so they match the manual guide; a step that could not be read is unknown, never missing. state.verdict says what the install carries: an estimate before install, the measured figure (and whether decoding or detection is the limit) once the node benchmark ran. Pass remoteAccess once the person said whether they open Dominevo away from home.',
     WizardArgsShape,
     async (args): Promise<ToolTextResult> => text(await setupWizard(ctx, args)),
   )
   server.tool(
     CORE_ADDONS_TOOL,
-    'Read-only. The addons a working install needs, judged against this hub: what ships with it, a camera integration, a TURN relay and a way in from outside (Cloudflare tunnel, Tailscale), off-box storage. Each group is configured, installed (present, nothing set up), missing, failed, suggested, not-needed or unknown with its reason, and the answer names the ONE next action: the package to install, or the admin page where the person types the account token. Pass remoteAccess once the person said whether they open CamStack away from home: a relay is required only then. Never reads a credential.',
+    'Read-only. The addons a working install needs, judged against this hub: what ships with it, a camera integration, a TURN relay and a way in from outside (Cloudflare tunnel, Tailscale), off-box storage. Each group is configured, installed (present, nothing set up), missing, failed, suggested, not-needed or unknown with its reason, and the answer names the ONE next action: the package to install, or the admin page where the person types the account token. Pass remoteAccess once the person said whether they open Dominevo away from home: a relay is required only then. Never reads a credential.',
     CoreAddonsArgsShape,
     async (args): Promise<ToolTextResult> => text(await setupCoreAddons(ctx, args)),
   )

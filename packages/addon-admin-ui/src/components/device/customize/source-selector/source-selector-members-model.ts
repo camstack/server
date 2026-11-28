@@ -8,7 +8,7 @@ import {
   sourcePickAcceptsDevice,
   type HelperMember,
   type SourcePickRequest,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export interface MemberDevice {
   readonly id: number

@@ -1,4 +1,4 @@
-# design-sync notes — @camstack/ui-library
+# design-sync notes — @dominevo/ui-library
 
 Repo-specific gotchas for syncing this DS to Claude Design. Read before any re-sync.
 
@@ -35,7 +35,7 @@ The fork repoints its `common.mjs` import to `../../.ds-sync/lib/common.mjs` and
   inline `style={{ width: N }}`.
 
 ## Dark-first FRAME convention (ALL authored previews)
-CamStack is dark-first; the Claude Design card chrome is light. Every preview wraps each
+Dominevo is dark-first; the Claude Design card chrome is light. Every preview wraps each
 story in a dark frame:
 ```tsx
 const Frame = ({ children }: { children: ReactNode }) => (

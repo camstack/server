@@ -26,7 +26,7 @@
  * Pure planning, then an executor over the cascade the retention paths already
  * use (`runTrackCascadeBatch`), with the media leaf wrapped to spare one id.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 import type { TrackCascadeLeafCount } from '../delete-track-cascade.js'
 import {

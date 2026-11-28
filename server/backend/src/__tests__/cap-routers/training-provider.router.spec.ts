@@ -10,7 +10,7 @@ import {
   trainingProviderCapability,
   type ITrainingCloudProvider,
   type TrainingProviderDescriptor,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { buildCapRouterForTest, checkAuthMatrix } from './harness.js'
 
 function descriptor(addonId: string): TrainingProviderDescriptor {
@@ -79,9 +79,7 @@ describe.skipIf(!routerAvailable())('training-provider router', () => {
 
   it('gates describe behind admin', async () => {
     const router = buildCapRouterForTest('training-provider', () => makeProvider('training-modal'))
-    for (const [procedure, input] of [
-      ['describe', {}],
-    ] as const) {
+    for (const [procedure, input] of [['describe', {}]] as const) {
       const matrix = await checkAuthMatrix(router, procedure, 'admin', input)
       for (const row of matrix) expect(row.outcome.ok).toBe(row.allowed)
     }

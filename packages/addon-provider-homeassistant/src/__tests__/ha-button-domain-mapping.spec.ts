@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import { mapHaEntityToCamStack } from '../ha-domain-mapping.js'
 
 describe('ha-domain-mapping — button / input_button (Phase C4)', () => {

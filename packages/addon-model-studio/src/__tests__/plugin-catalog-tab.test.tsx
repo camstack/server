@@ -4,9 +4,9 @@
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import { selectOption, selectOptionLabels } from '@camstack/ui-library/testing'
-import type { AddonPageProps } from '@camstack/ui-library'
-import type { ModelCatalogEntry } from '@camstack/types'
+import { selectOption, selectOptionLabels } from '@dominevo/ui-library/testing'
+import type { AddonPageProps } from '@dominevo/ui-library'
+import type { ModelCatalogEntry } from '@dominevo/types'
 import ModelStudioPage from '../page.js'
 import { PluginCatalogTab } from '../tabs/PluginCatalogTab.js'
 import { OperationModalProvider } from '../components/OperationModalProvider.js'
@@ -18,9 +18,9 @@ vi.mock('../components/NodeSelector.js', () => ({
   ),
 }))
 
-vi.mock('@camstack/ui-library', async () => {
+vi.mock('@dominevo/ui-library', async () => {
   const actual =
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+    await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return {
     ...actual,
     useClusterNodes: () => ({

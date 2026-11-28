@@ -16,7 +16,7 @@
  */
 
 import { createHash } from 'node:crypto'
-import type { IScopedLogger, PreparedTransactOp } from '@camstack/types'
+import type { IScopedLogger, PreparedTransactOp } from '@dominevo/types'
 import type { EventLedgerCollection } from '../store/event-ledger-collection.js'
 
 /**

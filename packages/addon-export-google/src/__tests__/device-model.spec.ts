@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { DeviceRole, DeviceType } from '@camstack/types'
+import { DeviceRole, DeviceType } from '@dominevo/types'
 import {
   buildSyncDevice,
   resolveGoogleDeviceType,
@@ -24,7 +24,7 @@ describe('buildSyncDevice', () => {
       traits: ['action.devices.traits.OnOff', 'action.devices.traits.Brightness'],
       name: { name: 'Kitchen lamp' },
       willReportState: false,
-      deviceInfo: { manufacturer: 'CamStack', model: 'light' },
+      deviceInfo: { manufacturer: 'Dominevo', model: 'light' },
     })
   })
 

@@ -10,7 +10,7 @@ import {
   type InferNativeProvider,
   type PowerMeterStatus,
   type TemperatureSensorStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /**
  * Registration of the read-only Homematic sensor caps. These are

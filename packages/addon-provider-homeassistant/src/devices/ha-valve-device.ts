@@ -4,7 +4,7 @@ import {
   type DeviceContext,
   type InferNativeProvider,
   type ValveStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { HaBaseChildDevice } from '../ha-base-child-device.js'
 import { readHaSource } from '../ha-device-source.js'
 import type { HaEntityState } from '../ha-types.js'

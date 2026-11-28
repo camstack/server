@@ -3,14 +3,14 @@ import * as os from 'node:os'
 import * as path from 'node:path'
 
 /**
- * Resolved deploy configuration. The credential is the `camstack login`
+ * Resolved deploy configuration. The credential is the `dominevo login`
  * session and nothing else (D1101): no executor token, no `$CAMSTACK_TOKEN`,
  * no rc file. The address is the executor `server` option, `$CAMSTACK_SERVER`,
  * or the most recently used saved session's hub.
  *
  * This package is bootstrapped with plain `tsc` on a fresh clone, before nx can
- * run (see `ci.yml`), so it must not import `@camstack/develop` (whose build
- * needs `@camstack/types`, a vite build). It reads the session file itself, the
+ * run (see `ci.yml`), so it must not import `@dominevo/develop` (whose build
+ * needs `@dominevo/types`, a vite build). It reads the session file itself, the
  * same `~/.camstack/<host>_<port>.json` the CLI writes. It does not renew an
  * expired session: any `camstack` command does, and this one says so.
  *
@@ -197,7 +197,7 @@ function mostRecentSession(dir: string): SavedSession | null {
 
 function notLoggedIn(server: string | undefined): Error {
   return new Error(
-    `Not logged in to ${server ?? 'any hub'}. Run \`camstack login ${server ?? '<host>'}\` once, interactively: every tool uses that session.`,
+    `Not logged in to ${server ?? 'any hub'}. Run \`dominevo login ${server ?? '<host>'}\` once, interactively: every tool uses that session.`,
   )
 }
 
@@ -218,7 +218,7 @@ export function resolveDeployConfig(inputs: ResolveInputs): ResolvedDeployConfig
   const expiresAt = session.expiresAt ?? jwtExpiry(session.token)
   if (expiresAt !== undefined && expiresAt <= now) {
     throw new Error(
-      `The saved session for ${session.server} has expired. Run any \`camstack\` command against it (it renews itself) or \`camstack login ${session.server}\`.`,
+      `The saved session for ${session.server} has expired. Run any \`camstack\` command against it (it renews itself) or \`dominevo login ${session.server}\`.`,
     )
   }
   return { server: (target ?? session.server).replace(/\/+$/, ''), token: session.token }

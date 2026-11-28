@@ -4,8 +4,8 @@ import type {
   ModelDownloadResult,
   ModelFormat,
   ModelFormatEntry,
-} from '@camstack/types'
-import { HF_REPO, MODEL_FORMATS, hfModelUrl } from '@camstack/types/addon'
+} from '@dominevo/types'
+import { HF_REPO, MODEL_FORMATS, hfModelUrl } from '@dominevo/types/addon'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { createHash } from 'node:crypto'
@@ -53,12 +53,12 @@ export function collectModelFiles(entry: ModelCatalogEntry, format: ModelFormat)
 }
 
 /**
- * Fetch headers for a model download. No credential: the CamStack model repos
+ * Fetch headers for a model download. No credential: the Dominevo model repos
  * are public, and no secret is ever read from the environment (operator rule —
  * a token, if a gated source ever needs one, is a keychain-backed setting).
  */
 function buildHeaders(_url: string): Record<string, string> {
-  return { 'User-Agent': 'CamStack/1.0' }
+  return { 'User-Agent': 'Dominevo/1.0' }
 }
 
 /**
@@ -491,13 +491,13 @@ function readRevisionRecord(modelPath: string): string | null {
   }
 }
 
-/** The CamStack model mirror. Every artefact under it has a generated revision. */
+/** The Dominevo model mirror. Every artefact under it has a generated revision. */
 export const HOSTED_MODEL_MIRROR_PREFIX: string = hfModelUrl(HF_REPO, '')
 
 /**
  * The revision a format must be at — the ONE rule every model download path
  * reads (D743, D744). An inline `revision` wins; otherwise a format hosted on
- * the CamStack mirror takes the revision generated for its path from the
+ * the Dominevo mirror takes the revision generated for its path from the
  * mirror's LFS metadata (`hosted-model-revisions.ts`); anything else has none.
  */
 export function resolveFormatRevision(formatEntry: ModelFormatEntry): string | undefined {

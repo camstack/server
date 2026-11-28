@@ -13,7 +13,7 @@ import type {
   KeychainResetRecord,
   RecordKindHandle,
   RecordsAccess,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { readAllRows } from '../../records/read-all-rows.js'
 import {
   keychainRecordKinds,

@@ -1,4 +1,4 @@
-import type { DeviceTemplateThisDevice } from '@camstack/types'
+import type { DeviceTemplateThisDevice } from '@dominevo/types'
 import type { ReactNode } from 'react'
 import { useUiText } from '../../contexts/ui-text'
 import {

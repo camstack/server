@@ -11,7 +11,7 @@ import {
   type CalendarPreferences,
   type RecordKindHandle,
   type RecordsAccess,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { calendarsRecordKinds, CalendarUserPrefsBodySchema } from './record-kinds.js'
 

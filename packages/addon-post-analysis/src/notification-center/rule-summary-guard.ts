@@ -4,7 +4,7 @@
  * else — the alarm stays instant; a rule with every mode off is refused too. Refused, loudly, on both save routes (the cap provider and the
  * `nc.*Rule` bridge), beside the D637 family guard.
  *
- * The rule is judged by `systemEventDeliveryProblems` (`@camstack/types`), the
+ * The rule is judged by `systemEventDeliveryProblems` (`@dominevo/types`), the
  * one statement both editors read too. On an update it is the MERGED rule —
  * merged the way the store merges it, `clear` included — and only when the
  * patch changes something the verdict reads: a rename of a stored rule is
@@ -20,8 +20,8 @@ import {
   type NcSystemEventDeliveryProblem,
   type NcSystemEventDeliverySubject,
   systemEventDeliveryProblems,
-} from '@camstack/types'
-import { canonicalHash } from '@camstack/types/node'
+} from '@dominevo/types'
+import { canonicalHash } from '@dominevo/types/node'
 import type { NcRuleFamilyGuardContext } from './rule-family-guard.js'
 
 export class NcSystemEventDeliveryRefusal extends Error {

@@ -3,7 +3,7 @@
  * the tags writes `tagIds: []`, and every later full-row write (a swap, a re-registration) must
  * keep that `[]`: a `null` would let the kept names read back as tags the operator removed.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   DEVICE_ROWS_COLLECTION,

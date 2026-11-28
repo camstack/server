@@ -1,6 +1,6 @@
-import { useMeshNetworkGetStatus } from '@camstack/ui-library'
-import { MeshStatusSchema } from '@camstack/types'
-import type { MeshStatus } from '@camstack/types'
+import { useMeshNetworkGetStatus } from '@dominevo/ui-library'
+import { MeshStatusSchema } from '@dominevo/types'
+import type { MeshStatus } from '@dominevo/types'
 
 export const STATUS_POLL_INTERVAL_MS = 5_000
 

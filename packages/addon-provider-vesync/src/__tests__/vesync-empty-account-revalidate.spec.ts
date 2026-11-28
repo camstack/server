@@ -3,7 +3,7 @@
  * reader left is the adoption page: a listing of a stale list starts ONE re-read (served from the
  * list at once), and the device added in the app shows on the next listing.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { vesyncConnectionSchema } from '../config.js'
 import { buildVeSyncAdoptionProvider } from '../vesync-adoption-provider.js'

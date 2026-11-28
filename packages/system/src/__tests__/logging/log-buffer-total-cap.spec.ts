@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import type { LogEntry, LogLevel } from '@camstack/types'
+import type { LogEntry, LogLevel } from '@dominevo/types'
 import { LogRingBuffer } from '../../logging/log-ring-buffer.js'
 import { PartitionedLogBuffer } from '../../logging/partitioned-log-buffer.js'
 

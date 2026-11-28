@@ -5,7 +5,7 @@ import type {
   IStorageEvictableProvider,
   IStorageOccupancyProvider,
   StorageOccupancyReport,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { selectEvictionsByBytes } from './evict-select.js'
 import { type DeviceRegistryRead, OrphanDeviceLane } from './orphan-device-lane.js'
 import type { SegmentStore } from './segment-store.js'

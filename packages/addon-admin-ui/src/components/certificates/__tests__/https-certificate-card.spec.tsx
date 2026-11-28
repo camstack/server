@@ -14,8 +14,8 @@ const h = vi.hoisted(() => ({
   tls: { current: undefined as unknown },
 }))
 
-vi.mock('@camstack/ui-library', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@camstack/ui-library')>()
+vi.mock('@dominevo/ui-library', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dominevo/ui-library')>()
   const mutation = () => ({ mutate: vi.fn(), mutateAsync: vi.fn(), isPending: false })
   return {
     ...actual,

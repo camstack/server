@@ -12,14 +12,14 @@ import {
   DeclaredDevices,
   DeviceType,
   petFountainFromEntitiesComposition,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type {
   AddonApi,
   Composition,
   ComposerApplyInput,
   IEventBus,
   SystemEvent,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { CapabilityRegistry } from '../../../kernel/capability-registry.js'
 import { DeviceRegistry } from '../../../kernel/device-registry.js'

@@ -1,7 +1,7 @@
 /**
  * Pure fuzzy matcher for adoption location import. Normalized
  * case-insensitive Levenshtein similarity, used to reuse an existing
- * CamStack location when an imported source location (e.g. an HA area) is
+ * Dominevo location when an imported source location (e.g. an HA area) is
  * close enough — otherwise the caller creates a new location.
  */
 

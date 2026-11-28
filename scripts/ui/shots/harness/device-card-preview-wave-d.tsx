@@ -20,7 +20,7 @@ import {
   type ValveCardActions,
   WeatherCard,
   WeatherStationCard,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import type { ReactElement, ReactNode } from 'react'
 import { alarmFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/alarm'
 import { humidifierFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/humidifier'

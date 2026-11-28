@@ -35,7 +35,7 @@ because hub-main retains every category. The UDS plane was already on
 
 ## Decision
 
-No CamStack process writes a heap snapshot, by any route: no cap method, no
+No Dominevo process writes a heap snapshot, by any route: no cap method, no
 tRPC route, no UI action, no signal, no environment flag. SIGUSR2 reports the
 memory and per-space numbers and nothing else. Finding out what a runner
 RETAINS needs a process that is not serving cameras.

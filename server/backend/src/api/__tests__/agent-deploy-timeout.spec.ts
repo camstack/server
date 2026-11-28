@@ -4,7 +4,7 @@
  * ## 2026-09-11 — the same node, the same symptom, a third cause
  *
  * `agent-a` spent an evening running a previous `addon-pipeline` dist
- * while three `camstack deploy` runs each printed `✓ Deployed to 1 target(s)`.
+ * while three `dominevo deploy` runs each printed `✓ Deployed to 1 target(s)`.
  * The hub log said what the CLI did not:
  *
  *   agent deploy: FAILED {nodeId=agent-a

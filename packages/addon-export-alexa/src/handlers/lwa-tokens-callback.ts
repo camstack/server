@@ -18,8 +18,8 @@
  *   - 200 `{ok: true}` on success.
  */
 import { z } from 'zod'
-import type { AddonContext, AddonHttpReply, AddonHttpRequest, IScopedLogger } from '@camstack/types'
-import { TokenScopeSchema } from '@camstack/types'
+import type { AddonContext, AddonHttpReply, AddonHttpRequest, IScopedLogger } from '@dominevo/types'
+import { TokenScopeSchema } from '@dominevo/types'
 
 import {
   describeTokenInstanceRefusal,

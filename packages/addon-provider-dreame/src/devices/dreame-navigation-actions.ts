@@ -1,4 +1,4 @@
-import type { NavigationActionId, NavigationMoveCommand } from '@camstack/types'
+import type { NavigationActionId, NavigationMoveCommand } from '@dominevo/types'
 
 /**
  * Pure translation of the `navigation` capability surface into calls on the

@@ -11,8 +11,8 @@
  * frames copied from tracks stay in the dataset.
  */
 
-import type { RetrainCollection } from '@camstack/types'
-import { Badge, Button, ConfirmActionButton, Input } from '@camstack/ui-library'
+import type { RetrainCollection } from '@dominevo/types'
+import { Badge, Button, ConfirmActionButton, Input } from '@dominevo/ui-library'
 import { Check, Pencil, Trash2, X } from 'lucide-react'
 import { useState } from 'react'
 import { useT } from '../../i18n/index.js'

@@ -29,7 +29,7 @@ import {
   type CoreBlockInput,
   coreBlockAddonId,
   resolveCoreBlockFiles,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   Badge,
   Button,
@@ -40,7 +40,7 @@ import {
   useSystem,
   useThemeMode,
   Select,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useMutation } from '@tanstack/react-query'
 import { CheckCircle2, Code2, Loader2, RotateCw, ScrollText } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'

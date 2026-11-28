@@ -20,8 +20,8 @@ import type {
   IStorageProviderImpl,
   StorageLocationDeclaration,
   SystemEvent,
-} from '@camstack/types'
-import { EventCategory } from '@camstack/types'
+} from '@dominevo/types'
+import { EventCategory } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { StorageOrchestratorAddon } from '../storage-orchestrator.addon.js'
 

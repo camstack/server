@@ -4,7 +4,7 @@
  * by name, detail, type or id. Section, notice and every other line are never
  * filtered, so the table keeps its shape while the entries narrow.
  */
-import type { DataTableFilterConfig } from '@camstack/ui-library'
+import type { DataTableFilterConfig } from '@dominevo/ui-library'
 import { isLinkedCameraLine } from '../kinds/LinkedCamerasRows'
 import { isLinkedDeviceLine } from '../kinds/LinkedDevicesRows'
 import { isTriggerLine } from '../triggers/useTriggeredBy'

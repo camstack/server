@@ -7,7 +7,7 @@ import {
   type ClipSearchStrictness,
   type RebuildObjectEmbeddingsRefusal,
   resolveClipSearchMinScore,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { ClipModelRegistry } from '../shared/clip/clip-model-registry.js'
 
 /** What a search asked for, minus the text and the prefilters. */

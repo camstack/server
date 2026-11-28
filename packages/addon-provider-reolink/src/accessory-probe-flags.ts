@@ -30,7 +30,7 @@ import {
   type AccessoryChildSpec,
   type AccessoryKindValue,
   accessoryChildrenUnknown,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /**
  * Reolink ability flags as stored in BOTH the `feature-probe` slice's

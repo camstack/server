@@ -1,5 +1,5 @@
-import type { ConfigUISchema } from '@camstack/types'
-import { pickDetailCropConvention } from '@camstack/types'
+import type { ConfigUISchema } from '@dominevo/types'
+import { pickDetailCropConvention } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import PipelineOrchestratorAddon from '../index.js'
 import { enabledNodesFromBroker, makeFakeBroker, makeFakeContext } from './e2e-helpers.js'

@@ -16,7 +16,7 @@ danni che altro — una persona con un animale non è affatto inusuale."* [this 
 walking a dog is the common case on this hub, and animals were vanishing.
 
 The case that was measured, camera 101 at 16:45:32 UTC: an independent system
-notified an animal; CamStack's native crop pass recovered it at **0.766**, in
+notified an animal; Dominevo's native crop pass recovered it at **0.766**, in
 the watched zone, and no `animal` track was ever born. Two more outcomes on the
 same camera, same rule, within 26 minutes: 16:49:18, a dog born on three
 native recoveries in one second, an event with `zones: []`, then lost the moment

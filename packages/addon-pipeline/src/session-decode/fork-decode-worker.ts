@@ -25,7 +25,7 @@
 import type { ChildProcess } from 'node:child_process'
 import { fork } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
-import { NO_COST_CLAIM, type ChildCostRegistry } from '@camstack/types/node'
+import { NO_COST_CLAIM, type ChildCostRegistry } from '@dominevo/types/node'
 import type { LiveDecodeWorkers } from './live-decode-workers.js'
 import type { ForkedChildLike, WorkerExitInfo } from './session-decode-coordinator.js'
 import type { VideoFrameSource } from './video-frame-generator.js'

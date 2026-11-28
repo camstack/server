@@ -1,18 +1,18 @@
 /**
  * Launcher -- entry point that ensures required addons are installed
  * before main.ts loads. This solves the chicken-and-egg problem:
- * main.ts has static imports from @camstack/server/system, but core lives in
+ * main.ts has static imports from @dominevo/server/system, but core lives in
  * data/addons/ and may not exist on first boot.
  *
  * 1. Run AddonInstaller.ensureRequiredPackages (zero core dependencies)
- * 2. Create symlinks so @camstack/server/system resolves from data/addons/
- * 3. Dynamically import main.ts (which has static @camstack/server/system imports)
+ * 2. Create symlinks so @dominevo/server/system resolves from data/addons/
+ * 3. Dynamically import main.ts (which has static @dominevo/server/system imports)
  *
- * Load-order invariant: @camstack/server/system is imported DYNAMICALLY inside
+ * Load-order invariant: @dominevo/server/system is imported DYNAMICALLY inside
  * launch() AFTER the active framework dir is resolved (the single-copy
  * collapse points CAMSTACK_FRAMEWORK_DIR at CAMSTACK_SERVER_ACTIVE_ROOT in
  * data-root mode, or the baked seed otherwise). NEVER add a top-level static
- * import of @camstack/server/system here — that would pin the resolver before the
+ * import of @dominevo/server/system here — that would pin the resolver before the
  * framework dir + NODE_PATH are set up. Framework/cap updates ship via the
  * node-root `applyServerUpdate` flow, not an in-launcher package swap.
  */
@@ -41,10 +41,10 @@ const DATA_DIR = process.env['CAMSTACK_DATA'] ?? 'camstack-data'
 
 /**
  * Derive the bootstrap package list from THIS server's own package.json — the
- * `@camstack/addon-*` deps plus `@camstack/server/system` (which ships the required
+ * `@dominevo/addon-*` deps plus `@dominevo/server/system` (which ships the required
  * infrastructure builtins), MINUS `camstack.agentOnlyBootstrapAddons`. Read by
  * absolute path (the package.json sits one level up from this launcher's dist
- * dir), so it works in the slim image where the `@camstack/*` node_modules
+ * dir), so it works in the slim image where the `@dominevo/*` node_modules
  * symlinks are stripped. Mirrors `AddonInstaller.deriveBootstrapList`, but
  * without `require.resolve` — the selection itself lives in
  * `bootstrap-packages.ts` so it is unit-testable (this module self-executes
@@ -59,7 +59,7 @@ function deriveBootstrapFromSelf(): readonly string[] {
  * THIS server closure's own `package.json` — the roster's source and, when
  * `pin-root-deps` ran for the release, the exact version of every bootstrap
  * addon. Read by absolute path for the same reason `deriveBootstrapFromSelf`
- * is: the slim image strips the `@camstack/*` symlinks, so `require.resolve`
+ * is: the slim image strips the `@dominevo/*` symlinks, so `require.resolve`
  * would answer nothing here.
  */
 function readOwnManifest(): ServerBootstrapManifest | null {
@@ -115,17 +115,17 @@ async function launch(): Promise<void> {
   const dataDir = DATA_DIR
 
   // Node role (hub | agent) — resolved ONCE here. Dynamic import keeps the
-  // launcher's zero-static-@camstack/*-import invariant intact even though
-  // `node-role.ts` imports no @camstack/* itself. The role selects both the
+  // launcher's zero-static-@dominevo/*-import invariant intact even though
+  // `node-role.ts` imports no @dominevo/* itself. The role selects both the
   // bootstrap package set (hub → all addons; agent → AGENT_PACKAGES) and,
   // at the very end of launch(), which runtime entry is loaded.
   const { resolveNodeRole } = await import('./node-role.js')
   const role = resolveNodeRole(process.env)
   console.log(`[launcher] Node role: ${role}`)
   // Addons live in a real `node_modules`-shaped dir so ESM `import` resolves
-  // every @camstack/* (system + addon-*) from there via the standard
+  // every @dominevo/* (system + addon-*) from there via the standard
   // walk-up — NODE_PATH only covers CJS, which is why forked ESM addon
-  // runners couldn't resolve `@camstack/types` from a plain `addons/` dir.
+  // runners couldn't resolve `@dominevo/types` from a plain `addons/` dir.
   // `CAMSTACK_ADDONS_DIR` lets the Docker/Electron images point at their
   // node_modules path (e.g. /data/node_modules); dev keeps `<dataDir>/addons`.
   const addonsDir = process.env['CAMSTACK_ADDONS_DIR'] ?? path.resolve(dataDir, 'addons')
@@ -151,18 +151,18 @@ async function launch(): Promise<void> {
   // A pre-migration snapshot the operator chose to go back to (D987).
   applyPendingPreMigrationRestore(dataDir, (line) => console.log(line))
 
-  // @camstack/server/system is imported DYNAMICALLY here — AFTER the active framework
+  // @dominevo/server/system is imported DYNAMICALLY here — AFTER the active framework
   // dir + NODE_PATH are resolved above — so the correct framework copy is what
   // gets loaded. Never import it at module top.
-  const { AddonInstaller, quarantineAddonResidue } = await import('@camstack/server/system')
+  const { AddonInstaller, quarantineAddonResidue } = await import('@dominevo/server/system')
 
   // Residue quarantine — FIRST thing that touches the addon root, before the
   // bootstrap seed writes into it and long before any loader scans it.
   //
-  // A directory under `addons/@camstack` whose name is not the package it
+  // A directory under `addons/@dominevo` whose name is not the package it
   // declares is not an archive: the loader, the agent's boot scan and the
   // install manifest all key on the `package.json` inside, so a rename
-  // INSTALLS. On 2026-08-07/08 that shipped `@camstack/server/system 1.2.3` as the
+  // INSTALLS. On 2026-08-07/08 that shipped `@dominevo/server/system 1.2.3` as the
   // reported version on a node running a 1.2.61 closure, and kept a 17-day-old
   // `better_sqlite3.node` mapped into the live process. Moved, never deleted —
   // the cleanup that deleted one of these gutted an agent the same evening.
@@ -182,9 +182,9 @@ async function launch(): Promise<void> {
   }
 
   // Provisioning source: CAMSTACK_BUNDLED_ADDONS_DIR — set by Electron-packaged
-  // builds to the closure's own scope dir, <resourcesPath>/node_modules/@camstack
+  // builds to the closure's own scope dir, <resourcesPath>/node_modules/@dominevo
   // — seeds first launch from that closure (D45). Otherwise addons come from
-  // npm; a workspace build reaches a node only through `camstack deploy`.
+  // npm; a workspace build reaches a node only through `dominevo deploy`.
   console.log('[launcher] Checking required packages...')
   const bundledDir = process.env['CAMSTACK_BUNDLED_ADDONS_DIR']
   let bundledAddonsDir: string | undefined
@@ -206,10 +206,10 @@ async function launch(): Promise<void> {
   //
   // We derive the list here rather than relying on
   // `AddonInstaller.REQUIRED_PACKAGES` (which uses
-  // `require.resolve('@camstack/server/package.json')`): in the slim image the
-  // `@camstack/*` workspace symlinks are stripped and NODE_PATH is only
+  // `require.resolve('@dominevo/server/package.json')`): in the slim image the
+  // `@dominevo/*` workspace symlinks are stripped and NODE_PATH is only
   // extended to include `/repo/node_modules` LATER in this launcher, so that
-  // static resolves to an EMPTY list at import time — and `@camstack/server/system`
+  // static resolves to an EMPTY list at import time — and `@dominevo/server/system`
   // (which provides the storage-provider / settings / logging infra builtins)
   // would never get installed into data/addons, aborting boot with
   // "No addon provides required infrastructure capability storage-provider".
@@ -241,12 +241,12 @@ async function launch(): Promise<void> {
       required: bootstrapRequired,
       installed: readInstalledAddonVersions(addonsDir, bootstrapRequired),
       closureVersions: readInstalledAddonVersions(closureNodeModules, bootstrapRequired),
-      // Mirrors `shouldSkipClosureProvidedSeed`: only `@camstack/server/system`, and
+      // Mirrors `shouldSkipClosureProvidedSeed`: only `@dominevo/server/system`, and
       // only while it actually resolves.
       closureProvided: (() => {
         try {
-          require.resolve('@camstack/server/system/package.json')
-          return ['@camstack/server']
+          require.resolve('@dominevo/server/system/package.json')
+          return ['@dominevo/server']
         } catch {
           return []
         }
@@ -269,7 +269,7 @@ async function launch(): Promise<void> {
   // loads one from there — the addon root is the only load path on every role.
   // So `applyServerUpdate` advanced the closure and changed nothing that runs:
   // six addons on this hub were behind by up to nineteen versions, each frozen
-  // at whenever somebody last ran `camstack deploy`. `planFirstBootAddons` has
+  // at whenever somebody last ran `dominevo deploy`. `planFirstBootAddons` has
   // printed that drift at INFO on every boot for a month, and its `PlanMode`
   // has an `'enforce'` arm that was never built. This is it.
   //
@@ -355,7 +355,7 @@ async function launch(): Promise<void> {
   // exist. Idempotent; safe every boot. Runs BEFORE any update can be in
   // flight, and never touches an entry holding a rollback pointer.
   //
-  // Guarded with a typeof check: the backend and @camstack/server/system normally
+  // Guarded with a typeof check: the backend and @dominevo/server/system normally
   // ship together in one image, but a system-only framework update can
   // swap in a build that predates `reconcileManifest`. A missing method
   // must not crash boot — the manifest is already persisted from a prior
@@ -376,7 +376,7 @@ async function launch(): Promise<void> {
   // the manifest's rollback target per addon (and never the last surviving
   // copy of an addon whose install dir is missing). Runs here, before any
   // update can be in flight. Same typeof guard as reconcileManifest: an
-  // older @camstack/server/system must not crash boot.
+  // older @dominevo/server/system must not crash boot.
   if (typeof installer.sweepBackups === 'function') {
     const swept = await installer.sweepBackups()
     if (swept.removed.length > 0) {
@@ -387,9 +387,9 @@ async function launch(): Promise<void> {
   }
 
   // Self-contained addon bundles (build preset `self-contained`) inline
-  // @camstack/types + zod + @camstack/sdk into each addon's dist. The
+  // @dominevo/types + zod + @dominevo/sdk into each addon's dist. The
   // hub no longer plants peer-dep symlinks under
-  // addonsDir/node_modules/@camstack/ — addons resolve everything from
+  // addonsDir/node_modules/@dominevo/ — addons resolve everything from
   // their own bundle. Kept the serverDir derivation in case future
   // tooling needs it (NODE_PATH extension below still uses it).
   const serverDir = path.resolve(__dirname, '..')
@@ -440,7 +440,7 @@ async function launch(): Promise<void> {
   // that can answer it, and it costs a stat call per package.
   //
   // A version number without a path is not evidence. Log both.
-  for (const pkg of ['@camstack/server', '@camstack/types']) {
+  for (const pkg of ['@dominevo/server', '@dominevo/types']) {
     try {
       const resolved = require.resolve(`${pkg}/package.json`)
       const version: unknown = (
@@ -458,7 +458,7 @@ async function launch(): Promise<void> {
   //
   // The line above says which copy this boot resolved. It cannot say what else
   // is lying around, and that is the half that produced three wrong diagnoses:
-  // one agent held FOUR copies of @camstack/server/system (1.2.28 / 1.2.28 / 1.2.0 /
+  // one agent held FOUR copies of @dominevo/server/system (1.2.28 / 1.2.28 / 1.2.0 /
   // 1.2.30), so every version the node reported was true of a copy nobody was
   // running.
   //
@@ -532,7 +532,7 @@ async function launch(): Promise<void> {
   // The inventory above scans roots derived from the ACTIVE data dir, so an
   // entire rival data root — a retired Electron app id, the pre-Electron
   // `~/camstack-agent-data` — is structurally invisible to it. Those trees hold
-  // complete `addons/@camstack/` installs with plausible package.json files,
+  // complete `addons/@dominevo/` installs with plausible package.json files,
   // and reading a version out of one answers a question about a node that has
   // not run since June. Measured on the Mac agent: four addon roots, four
   // truthful `addon-pipeline` versions, one of them the running node's.
@@ -595,8 +595,8 @@ async function launch(): Promise<void> {
   // [inventory-diagnostics-end]
 
   // Now safe to load the role's runtime entry (both have static imports from
-  // @camstack/server/system, resolved only after the framework dir + NODE_PATH setup
-  // above). The agent boots from THIS same @camstack/server closure — there is
+  // @dominevo/server/system, resolved only after the framework dir + NODE_PATH setup
+  // above). The agent boots from THIS same @dominevo/server closure — there is
   // no separate agent root package.
   if (role === 'agent') {
     console.log('[launcher] Starting agent runtime...')

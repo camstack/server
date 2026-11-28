@@ -1,6 +1,6 @@
 /**
  * Pure Matter attribute-report decoder. Maps a single
- * `(clusterId, attributeId, value)` report onto a partial CamStack cap slice
+ * `(clusterId, attributeId, value)` report onto a partial Dominevo cap slice
  * (`{ cap, patch }`), or `null` when the attribute carries no cap-relevant
  * value. NO matter.js import — operates on plain decoded numbers/booleans so it
  * stays a pure, unit-testable function (mirrors `matter-cluster-mapping.ts`).
@@ -90,13 +90,13 @@ export interface DecodedAttribute {
   readonly detail?: string
 }
 
-/** Thermostat.SystemMode enum → CamStack HvacMode (climate-control). */
+/** Thermostat.SystemMode enum → Dominevo HvacMode (climate-control). */
 const SYSTEM_MODE_TO_HVAC: ReadonlyMap<number, string> = new Map<number, string>([
   [0, 'off'],
   [1, 'auto'],
   [3, 'cool'],
   [4, 'heat'],
-  [5, 'auto'], // EmergencyHeat → closest CamStack mode
+  [5, 'auto'], // EmergencyHeat → closest Dominevo mode
   [7, 'fan_only'],
   [8, 'dry'],
 ])
@@ -349,7 +349,7 @@ function decodeLevel(attributeId: number, value: unknown, at: number): DecodedAt
   if (attributeId !== MatterAttributeId.CurrentLevel) return null
   const level = asNumber(value)
   if (level === null) return null
-  // Matter LevelControl.CurrentLevel is 0..254 → CamStack percentage 0..100.
+  // Matter LevelControl.CurrentLevel is 0..254 → Dominevo percentage 0..100.
   const percentage = Math.round((Math.max(0, Math.min(254, level)) / 254) * 100)
   return { cap: 'brightness', patch: { level: percentage, lastChangedAt: at } }
 }
@@ -358,7 +358,7 @@ function decodeContact(attributeId: number, value: unknown, at: number): Decoded
   if (attributeId !== MatterAttributeId.StateValue) return null
   const stateValue = asBoolean(value)
   if (stateValue === null) return null
-  // BooleanState.StateValue true = contact closed; CamStack `entryOpen` is the
+  // BooleanState.StateValue true = contact closed; Dominevo `entryOpen` is the
   // inverse (an open entry/door). A contact sensor reporting "closed" ⇒ not open.
   return { cap: 'contact', patch: { entryOpen: !stateValue, lastChangedAt: at } }
 }

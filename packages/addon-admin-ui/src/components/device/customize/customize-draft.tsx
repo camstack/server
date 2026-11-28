@@ -7,7 +7,7 @@
  * Discard resets every section to the server state. A refused write keeps the
  * draft and shows the reason.
  */
-import { FormSaveBar } from '@camstack/ui-library'
+import { FormSaveBar } from '@dominevo/ui-library'
 import { createContext, type ReactNode, useContext, useEffect, useRef, useState } from 'react'
 
 /** What a section hands the bar. `save` resolves to the refusal reason, or null when it wrote. */

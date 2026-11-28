@@ -1,4 +1,4 @@
-import type { DeclaredDeviceRow, DeviceManagerApi, IScopedLogger } from '@camstack/types'
+import type { DeclaredDeviceRow, DeviceManagerApi, IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   armBlocksIntegration,

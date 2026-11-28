@@ -12,7 +12,7 @@ const swanMock = vi.hoisted(() => ({
 vi.mock('@simplewebauthn/server', () => swanMock)
 
 import { AuthWebauthnAddon } from '../auth-webauthn.addon.js'
-import { makeInMemoryRecords } from '@camstack/types'
+import { makeInMemoryRecords } from '@dominevo/types'
 import { authWebauthnRecordKinds } from '../record-kinds.js'
 import { makeWebauthnTestRecords } from './webauthn-test-records.js'
 import type {
@@ -20,7 +20,7 @@ import type {
   IScopedLogger,
   IUserPasskeysProvider,
   RecordsAccess,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 // ---------------------------------------------------------------------------
 // Test harness — minimal AddonContext stub + in-memory settings-store.

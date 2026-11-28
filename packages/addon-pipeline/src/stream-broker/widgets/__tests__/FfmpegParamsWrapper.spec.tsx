@@ -12,7 +12,7 @@ interface QueryResult<T> {
 const previewHook = vi.fn<(input: unknown, options: unknown) => QueryResult<unknown>>()
 const statsHook = vi.fn<(input: unknown, options: unknown) => QueryResult<unknown>>()
 
-vi.mock('@camstack/ui-library', async (importOriginal) => ({
+vi.mock('@dominevo/ui-library', async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   useStreamBrokerPreviewDerivedEncode: (input: unknown, options: unknown) =>
     previewHook(input, options),

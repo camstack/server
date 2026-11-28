@@ -2,7 +2,7 @@
  * A Floodlight / Siren child whose parent does not advertise the ability
  * refuses operator writes instead of accepting them and writing the slice.
  */
-import { type DeviceContext, DeviceType, type IDeviceRuntimeState } from '@camstack/types'
+import { type DeviceContext, DeviceType, type IDeviceRuntimeState } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { AccessoryAbilityError } from '../ability-guard.js'
 import { FloodlightAccessory } from '../floodlight.js'

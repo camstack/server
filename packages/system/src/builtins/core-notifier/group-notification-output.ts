@@ -33,7 +33,7 @@ import {
   type Target,
   type TargetKind,
   type TargetKindCaps,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { groupTargetKind } from './group-descriptor.js'
 import { MemberLedger } from './member-ledger.js'
 
@@ -77,8 +77,8 @@ export interface GroupNotificationOutputDeps {
 }
 
 const CANNED: Notification = {
-  title: 'CamStack',
-  body: 'This is a CamStack test notification.',
+  title: 'Dominevo',
+  body: 'This is a Dominevo test notification.',
   format: 'text',
   priority: 3,
 }

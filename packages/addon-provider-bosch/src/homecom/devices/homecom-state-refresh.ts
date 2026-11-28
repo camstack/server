@@ -11,7 +11,7 @@ import {
   type DeviceContext,
   type InferNativeProvider,
   type StateRefreshPolicy,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { homeComConnections } from '../homecom-gateway.js'
 
 /** The cadence the integration's own timer ran at before the core took over. */

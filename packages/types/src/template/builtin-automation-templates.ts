@@ -1,5 +1,5 @@
 /**
- * Automation templates shipped with CamStack (#527). They are read-only records
+ * Automation templates shipped with Dominevo (#527). They are read-only records
  * of the template store: `template.list` returns them beside the operator's
  * own, under `builtin:` ids, and an update or delete of one is refused. They
  * are code, not seeded rows, so a new release changes them without a

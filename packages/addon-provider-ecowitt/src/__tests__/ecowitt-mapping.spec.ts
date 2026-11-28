@@ -17,7 +17,7 @@ import {
   type EcowittDiscoverableSensor,
 } from '../ecowitt-discovery.js'
 import { settingsToEcowittConfig } from '../config.js'
-import { DeviceRole, DeviceType } from '@camstack/types'
+import { DeviceRole, DeviceType } from '@dominevo/types'
 
 describe('capForQuantity', () => {
   it('maps temp/humidity/pressure to their dedicated typed caps', () => {

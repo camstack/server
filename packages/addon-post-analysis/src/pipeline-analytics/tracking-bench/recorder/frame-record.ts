@@ -7,7 +7,7 @@
  * decides whether it is recorded.
  */
 import { createHmac } from 'node:crypto'
-import type { DiscardedDetection, FrameResult, ObjectDetection } from '@camstack/types'
+import type { DiscardedDetection, FrameResult, ObjectDetection } from '@dominevo/types'
 import type {
   FrameGateObservation,
   FrameLiveBinding,

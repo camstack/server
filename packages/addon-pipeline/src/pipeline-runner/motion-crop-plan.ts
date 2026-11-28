@@ -46,7 +46,7 @@
  * output is a detection, never a vector. Nothing here calls the detail
  * derivation and nothing here may be reused for one.
  *
- * Pure: no runner state, no IPC, no pixels. It lives in `@camstack/types`
+ * Pure: no runner state, no IPC, no pixels. It lives in `@dominevo/types`
  * (`pipeline/second-pass/`) so the offline accuracy eval plans the same crops;
  * this module re-exports it for the runner.
  */
@@ -64,4 +64,4 @@ export {
   readRecoveryRecipe,
   readRecoveryRecipeForSteps,
   type RecoveryRecipe,
-} from '@camstack/types'
+} from '@dominevo/types'

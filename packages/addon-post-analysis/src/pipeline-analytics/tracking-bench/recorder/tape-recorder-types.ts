@@ -3,7 +3,7 @@
  * of a status or a caller building an input does not import the recorder
  * itself (`tape-status.ts`, `index.ts`, Task 12's promotion).
  */
-import type { FrameResult, IScopedLogger } from '@camstack/types'
+import type { FrameResult, IScopedLogger } from '@dominevo/types'
 import type { FrameObservation } from '../../pipeline/frame-observation.js'
 import type { StationaryEntry } from '../../pipeline/stationary/stationary-types.js'
 import type { TrackDropReason, TrackFusion } from '../../pipeline/tracker-v2/index.js'

@@ -4,7 +4,7 @@
  * server side. The entry is the same addon page the standalone admin mounts at
  * `/addon/benchmark`.
  */
-import type { AppDeclaration, IAppSourceProvider } from '@camstack/types'
+import type { AppDeclaration, IAppSourceProvider } from '@dominevo/types'
 
 export const BENCHMARK_APP_ID = 'benchmark'
 

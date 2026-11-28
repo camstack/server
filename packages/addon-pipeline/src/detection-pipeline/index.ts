@@ -1,5 +1,5 @@
 /**
- * addon-detection-pipeline — unified detection pipeline for CamStack.
+ * addon-detection-pipeline — unified detection pipeline for Dominevo.
  *
  * Single addon replaces 13 separate vision addon classes.
  * Each pipeline step is a class implementing IPipelineStep.
@@ -12,7 +12,7 @@ import type {
   ModelCatalogEntry,
   ProviderRegistration,
   ScopedSettingsScope,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   BaseAddon,
   createEvent,
@@ -20,10 +20,10 @@ import {
   EventCategory,
   loadContributionCapability,
   pipelineExecutorCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { pickNodePlatformArch } from '../shared/node-topology-platform.js'
 import { pickBestRuntime } from './auto-pick.js'
-import { startEventLoopStallMonitor } from '@camstack/server/system/addon-utils'
+import { startEventLoopStallMonitor } from '@dominevo/server/system/addon-utils'
 import {
   overridesEqual,
   type PoolProvisioningOverride,
@@ -61,14 +61,14 @@ import {
  */
 function resolveAddonPythonDir(): string {
   // Phase D bundle merge: detection-pipeline now lives inside
-  // `@camstack/addon-pipeline/dist/detection-pipeline/`. Python files
-  // ship at the bundle root (`addons/@camstack/addon-pipeline/python/`)
+  // `@dominevo/addon-pipeline/dist/detection-pipeline/`. Python files
+  // ship at the bundle root (`addons/@dominevo/addon-pipeline/python/`)
   // so the manifest's `python.requirements: "./python/requirements.txt"`
   // resolves cleanly. From this addon's compiled file at
   // `dist/detection-pipeline/index.{js,mjs}`, that's `../../python`.
   const candidates: string[] = []
   try {
-    const pkgPath = require.resolve('@camstack/addon-pipeline/package.json')
+    const pkgPath = require.resolve('@dominevo/addon-pipeline/package.json')
     candidates.push(path.join(path.dirname(pkgPath), 'python'))
   } catch {
     // package not resolvable from here (in-tree build / before npm install)
@@ -90,7 +90,7 @@ export type {
   PoolModelConfig,
   PostprocessorType,
   StepDefinition,
-} from '@camstack/types'
+} from '@dominevo/types'
 export { DetectionPipelineProvider } from './provider.js'
 // Re-export for consumers
 export {

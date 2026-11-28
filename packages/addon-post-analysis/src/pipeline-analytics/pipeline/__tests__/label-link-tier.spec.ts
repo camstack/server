@@ -5,7 +5,7 @@
  * score) is a scored answer, a fallback one (score 0) is outranked by any
  * scored answer of the classifier and still lands when nothing else answers.
  */
-import type { ScoredLabel } from '@camstack/types'
+import type { ScoredLabel } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { resolveTieredLabelWrite } from '../label-tier.js'
 import { RAW_CLASS_STEP_ID, resolveDetectionLabelCandidate } from '../label-utils.js'

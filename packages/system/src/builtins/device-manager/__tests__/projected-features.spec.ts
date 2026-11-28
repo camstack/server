@@ -1,4 +1,4 @@
-import { DeviceFeature } from '@camstack/types'
+import { DeviceFeature } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { projectedFeatures } from '../device-projection.js'
 

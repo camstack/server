@@ -16,8 +16,8 @@
  * (device, cap) per process names the row and the recovery call. Nothing is
  * written: the row stays until the operator clears it (spec S1).
  */
-import { CapabilityRegistry, DeviceRegistry } from '@camstack/server/system'
-import type { AddonContext, IScopedLogger } from '@camstack/types'
+import { CapabilityRegistry, DeviceRegistry } from '@dominevo/server/system'
+import type { AddonContext, IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { makeRecordsAccessForOwner } from '../../sqlite-storage/__tests__/support/records-world.js'
 import type { DeviceBindingsStore } from '../device-meta-types.js'

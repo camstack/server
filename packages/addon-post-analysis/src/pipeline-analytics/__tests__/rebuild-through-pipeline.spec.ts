@@ -13,7 +13,7 @@
  * check the SHAPE of the call rather than an addon's private wiring.
  */
 
-import type { RunStatelessStepResult } from '@camstack/types'
+import type { RunStatelessStepResult } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   buildRebuildStepInput,

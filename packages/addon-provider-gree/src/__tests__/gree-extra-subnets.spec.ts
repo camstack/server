@@ -2,7 +2,7 @@
  * An operator-listed subnet is swept even when no local interface and no known device sits in it,
  * and a value that is not a /24 CIDR is refused (planner and record body alike).
  */
-import { makeInMemoryRecords } from '@camstack/types'
+import { makeInMemoryRecords } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { buildGreeInstances, greeConnectionsEntryKind, greeRecordKinds } from '../gree-instances.js'
 import { isGreeSweepCidr, planGreeSweep } from '../gree-subnet-scan.js'

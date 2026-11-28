@@ -1,6 +1,6 @@
 {
-  "name": "@camstack/addon-osd-manager",
-  "version": "0.1.324",
+  "name": "@dominevo/addon-osd-manager",
+  "version": "0.1.0",
   "description": "Binds camera on-screen-display slots to live state and recognitions",
   "keywords": [
     "camstack",
@@ -12,12 +12,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/camstack/server.git",
+    "url": "https://github.com/dominevo/server.git",
     "directory": "packages/addon-osd-manager"
   },
   "homepage": "https://camstack-docs.zentik.app",
   "bugs": {
-    "url": "https://github.com/camstack/server/issues"
+    "url": "https://github.com/dominevo/server/issues"
   },
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -68,9 +68,9 @@
       }
     ],
     "requires": {
-      "server": ">=1.2.972",
+      "server": ">=0.1.0",
       "addons": {
-        "@camstack/addon-admin-ui": ">=1.2.764"
+        "@dominevo/addon-admin-ui": ">=0.1.0"
       }
     }
   },
@@ -91,14 +91,14 @@
     "publish:npm": "npm publish --access public"
   },
   "peerDependencies": {
-    "@camstack/types": "*",
+    "@dominevo/types": "0.1.0",
     "react": ">=18",
     "react-dom": ">=18",
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@camstack/types": "*",
-    "@camstack/ui-library": "*",
+    "@dominevo/types": "0.1.0",
+    "@dominevo/ui-library": "0.1.0",
     "@module-federation/vite": "^1.16.9",
     "@tailwindcss/vite": "^4.2.0",
     "@testing-library/jest-dom": "^6.9.1",

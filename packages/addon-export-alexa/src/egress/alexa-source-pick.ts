@@ -13,8 +13,8 @@
  * belongs to whoever has the requirement. They come from the published RTC
  * interface: H.264 up to High 4.1, resolutions 480p to 1080p.
  */
-import type { IScopedLogger, StreamBrokerClient } from '@camstack/types'
-import { errMsg } from '@camstack/types'
+import type { IScopedLogger, StreamBrokerClient } from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
 
 /** Amazon's documented floor. Below it the Echo is out of spec. */
 export const ALEXA_MIN_LINES = 480

@@ -16,7 +16,7 @@
 import { promises as fs, statSync, utimesSync } from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import type { IScopedLogger, LogExtras } from '@camstack/types'
+import type { IScopedLogger, LogExtras } from '@dominevo/types'
 import Database from 'better-sqlite3'
 import { afterEach, describe, expect, it } from 'vitest'
 import { WalMaintenance } from '../wal-maintenance.js'

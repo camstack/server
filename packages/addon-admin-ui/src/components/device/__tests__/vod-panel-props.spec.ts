@@ -13,7 +13,7 @@
  * mounts, the hero appears, the video never plays), so the mapping is a pure
  * function and this pins it field by field.
  */
-import type { VodPlaybackRequest } from '@camstack/ui-library'
+import type { VodPlaybackRequest } from '@dominevo/ui-library'
 import { describe, expect, it } from 'vitest'
 import { vodPanelProps } from '../vod-panel-props'
 

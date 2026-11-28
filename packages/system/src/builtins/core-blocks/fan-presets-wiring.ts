@@ -14,7 +14,7 @@ import {
   type FanPreset,
   FanPresetSchema,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { FanPresetActionSource } from './fan-presets-action-source.js'
 import {

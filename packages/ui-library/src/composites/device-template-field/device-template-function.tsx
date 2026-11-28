@@ -3,9 +3,9 @@ import {
   deviceTemplateCatalogueSentence,
   deviceTemplateSignature,
   type DeviceTemplateCatalogueEntry,
-} from '@camstack/types/device-template-catalogue'
+} from '@dominevo/types/device-template-catalogue'
 import { type ReactNode, useMemo, useState } from 'react'
-import type { DeviceTemplateThisDevice } from '@camstack/types'
+import type { DeviceTemplateThisDevice } from '@dominevo/types'
 import { useUiText } from '../../contexts/ui-text'
 import { Button } from '../../primitives/button'
 import {

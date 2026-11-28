@@ -10,8 +10,8 @@ import type {
   ConfigField,
   ModelCatalogEntry,
   RootStepSupply,
-} from '@camstack/types'
-import { applyModelBoundSettings, collectModelBoundKeys, rootSuppliesOf } from '@camstack/types'
+} from '@dominevo/types'
+import { applyModelBoundSettings, collectModelBoundKeys, rootSuppliesOf } from '@dominevo/types'
 import { getStep, getStepDefinition } from '../registry/step-definitions.js'
 
 // ---------------------------------------------------------------------------

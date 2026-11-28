@@ -7,7 +7,7 @@
  * `auth.revokeCredentials` (a typed-count selection). Create is owned by the
  * Identity page header (`headerOwnsCreate`).
  */
-import type { UiTextFn } from '@camstack/ui-library'
+import type { UiTextFn } from '@dominevo/ui-library'
 import {
   Button,
   describeDeviceSelector,
@@ -17,8 +17,8 @@ import {
   useItemFormUrl,
   useUserManagementListUsers,
   useUiText,
-} from '@camstack/ui-library'
-import type { DeviceSelector } from '@camstack/types'
+} from '@dominevo/ui-library'
+import type { DeviceSelector } from '@dominevo/types'
 import { KeyRound, Trash2 } from 'lucide-react'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 

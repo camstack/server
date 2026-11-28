@@ -24,7 +24,7 @@ import {
   type SmtpInboundSettings,
   SmtpInboundSinceSchema,
   smtpSinceKey,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import {
   type EmailPushManagerSetupParams,

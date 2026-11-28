@@ -8,7 +8,7 @@
  * <WidgetSlot widgetId="pipeline-analytics/<stableId>" deviceId={…}/> mounts
  * each one.
  */
-import type { IAddonWidgetsSourceProvider } from '@camstack/types'
+import type { IAddonWidgetsSourceProvider } from '@dominevo/types'
 
 /** The remote-module coordinates shared by every analytics widget. */
 const REMOTE_NAME = 'addon_pipeline_analytics_widgets'

@@ -8,7 +8,7 @@
  * (`getRtcInfo` answers 404), while the same robot on `ali` streams through a
  * plain RTMP relay this stack implements end to end.
  */
-import type { ConfigSelectField } from '@camstack/types'
+import type { ConfigSelectField } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 
 import { CAMERA_SETTINGS_SCHEMA, cameraSettingsValues } from '../devices/dreame-camera-device.js'

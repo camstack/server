@@ -21,7 +21,7 @@
  * Temperatures are Celsius throughout (the cap's contract); Alexa converts for
  * the account.
  */
-import { ClimateControlStatusSchema, DeviceRole, type HvacMode } from '@camstack/types'
+import { ClimateControlStatusSchema, DeviceRole, type HvacMode } from '@dominevo/types'
 import type { z } from 'zod'
 import type { AlexaCapability, AlexaDisplayCategory, AlexaFriendlyName } from '../types.js'
 import type { AdapterDescription, AdapterDevice, GenericProperty } from './types.js'

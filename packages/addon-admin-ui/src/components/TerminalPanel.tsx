@@ -23,7 +23,7 @@ import {
   useTerminalSessionPullOutput,
   useTerminalSessionResize,
   useTerminalSessionWriteInput,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 
 /** Reported when the pty terminates, so the page can flip the session out. */
 export interface TerminalExitInfo {

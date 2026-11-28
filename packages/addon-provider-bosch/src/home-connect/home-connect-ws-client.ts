@@ -1,5 +1,5 @@
 import { lookup } from 'node:dns/promises'
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IScopedLogger } from '@dominevo/types'
 import type { HomeConnectGatewayConfig } from './config.js'
 import { homeConnectWsUrl } from './config.js'
 import { HomeConnectDescriptionStore } from './home-connect-description-store.js'

@@ -33,8 +33,8 @@ function view(over: Partial<PairingView> = {}): PairingView {
   }
 }
 
-vi.mock('@camstack/ui-library', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@camstack/ui-library')>()),
+vi.mock('@dominevo/ui-library', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@dominevo/ui-library')>()),
   useClusterTopology: () => ({ nodes: topologyNodes, isLoading: false }),
   trpc: {
     agentPairing: {

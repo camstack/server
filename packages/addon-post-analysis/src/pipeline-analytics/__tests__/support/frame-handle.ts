@@ -1,4 +1,4 @@
-import type { FrameHandle } from '@camstack/types'
+import type { FrameHandle } from '@dominevo/types'
 
 /** A valid {@link FrameHandle} for in-process recognizer / crop specs. */
 export function makeTestFrameHandle(patch: Partial<FrameHandle> = {}): FrameHandle {

@@ -1,4 +1,4 @@
-import { DeviceType, errMsg, type IScopedLogger } from '@camstack/types'
+import { DeviceType, errMsg, type IScopedLogger } from '@dominevo/types'
 import type { HomeConnectChildReconciler } from './home-connect-child-reconciler.js'
 
 /** The slice of a device the tracker reads. */

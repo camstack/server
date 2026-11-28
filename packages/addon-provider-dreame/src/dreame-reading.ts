@@ -6,7 +6,7 @@ import {
   tryConvertDelta,
   tryConvertUnit,
   type ReadingQuantity,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** Catalog unit → the quantity stored on the device. `times` is a count. */
 export function dreameQuantity(unit: string | undefined): ReadingQuantity | null {

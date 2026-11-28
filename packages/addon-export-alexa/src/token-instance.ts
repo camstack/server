@@ -11,7 +11,7 @@
  * ledger already lists the user: those links keep working, nothing is re-linked. A NEW user on a
  * non-default skill needs a token that names it.
  */
-import { oauthLinkServesInstance } from '@camstack/types'
+import { oauthLinkServesInstance } from '@dominevo/types'
 
 /** The addon id, which is also the id of the default instance. */
 export const ALEXA_ADDON_ID = 'export-alexa'

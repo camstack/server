@@ -9,7 +9,7 @@
  * lands in the wrong space: the index is chosen from the stamp (D649). A
  * detail with no model id is now refused by name, and nobody is asked to guess.
  */
-import { encodeVectorBase64 } from '@camstack/types'
+import { encodeVectorBase64 } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { makeFakeVectorStore, makeLogRecorder } from './test-helpers.js'
 import {

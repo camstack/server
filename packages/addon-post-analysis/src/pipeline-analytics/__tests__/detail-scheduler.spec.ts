@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { defined } from '../../__tests__/support/vitest-mock.js'
-import type { DetailStepAnnounce } from '@camstack/types'
+import type { DetailStepAnnounce } from '@dominevo/types'
 import { DetailScheduler } from '../detail-scheduler.js'
 
 function once(

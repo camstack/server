@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { BaseDevice, errMsg, type DeviceContext, type DeviceFeature } from '@camstack/types'
+import { BaseDevice, errMsg, type DeviceContext, type DeviceFeature } from '@dominevo/types'
 import type { DreoDeviceHandle } from '../dreo-device-handle.js'
 import { dreoConnections } from '../dreo-gateway.js'
 import { registerDreoStateRefresh } from '../dreo-state-refresh.js'

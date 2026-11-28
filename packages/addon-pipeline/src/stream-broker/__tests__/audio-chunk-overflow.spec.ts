@@ -10,7 +10,7 @@
  * DROPS work silently which CLAUDE.md forbids, and the reason the 3-hour media
  * blackout produced no line.
  */
-import type { DecodedAudioChunk, IScopedLogger } from '@camstack/types'
+import type { DecodedAudioChunk, IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 
 import { AUDIO_QUEUE_CAPACITY, AudioChunkPlane } from '../stream-broker/audio-chunk-plane.js'

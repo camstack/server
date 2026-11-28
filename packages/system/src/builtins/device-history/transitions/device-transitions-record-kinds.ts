@@ -7,7 +7,7 @@
  * Kept in a module with no side effects: the records guards import it.
  */
 import type { z } from 'zod'
-import { defineRecordKinds, DeviceTransitionSchema, type DefinedRecordKind } from '@camstack/types'
+import { defineRecordKinds, DeviceTransitionSchema, type DefinedRecordKind } from '@dominevo/types'
 
 /** A stored row is a command: `ok` or `failed`. `device` is a derived row and never written (D1084). */
 const StoredDeviceTransitionSchema = DeviceTransitionSchema.refine(

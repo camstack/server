@@ -1,6 +1,6 @@
 {
-  "name": "@camstack/addon-remote-storage",
-  "version": "1.2.147",
+  "name": "@dominevo/addon-remote-storage",
+  "version": "0.1.0",
   "description": "Remote storage providers (SFTP, S3, WebDAV, SMB) — unifies remote backends behind the storage-provider cap",
   "keywords": [
     "camstack",
@@ -15,12 +15,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/camstack/server.git",
+    "url": "https://github.com/dominevo/server.git",
     "directory": "packages/addon-remote-storage"
   },
   "homepage": "https://camstack-docs.zentik.app",
   "bugs": {
-    "url": "https://github.com/camstack/server/issues"
+    "url": "https://github.com/dominevo/server/issues"
   },
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -117,7 +117,7 @@
               "dnf": "samba-client",
               "brew": "samba"
             },
-            "reason": "The SMB provider drives Samba's own smbclient binary; it is not present in the CamStack container image."
+            "reason": "The SMB provider drives Samba's own smbclient binary; it is not present in the Dominevo container image."
           }
         ],
         "capabilities": [
@@ -134,7 +134,7 @@
       "samba-client"
     ],
     "requires": {
-      "server": ">=1.2.931"
+      "server": ">=0.1.0"
     }
   },
   "files": [
@@ -158,10 +158,10 @@
     "webdav": "^5.7.0"
   },
   "peerDependencies": {
-    "@camstack/types": "*"
+    "@dominevo/types": "0.1.0"
   },
   "devDependencies": {
-    "@camstack/types": "*",
+    "@dominevo/types": "0.1.0",
     "@types/ssh2": "^1.15.0",
     "tsup": "^8.0.0",
     "typescript": "~6.0.3",

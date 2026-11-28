@@ -15,7 +15,7 @@
  * answer". None is on wall clock; the deadline is driven by an injected `now`.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { MediaBlobStorage } from '../location-aware-media-storage.js'
 import {

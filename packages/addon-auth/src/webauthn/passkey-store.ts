@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import type { RecordKindHandle } from '@camstack/types'
+import type { RecordKindHandle } from '@dominevo/types'
 import { authWebauthnRecordKinds, type PasskeyBody, type PasskeyPrefBody } from './record-kinds.js'
 
 const StoredPreferenceSchema = z.object({

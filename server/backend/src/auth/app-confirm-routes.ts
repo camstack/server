@@ -3,12 +3,12 @@
  *
  * Both browser legs (the OIDC `finish-app`, the passkey `finish`) end here
  * instead of at the app: they park an {@link AppConfirmations} entry and send
- * the browser to this page. `GET` renders "Sign in the CamStack app as <user>?";
+ * the browser to this page. `GET` renders "Sign in the Dominevo app as <user>?";
  * `POST` (Continue) spends the one-shot, cookie-bound token and ONLY THEN mints
  * the handoff code and answers `{ location }` at the app's scheme. Nothing is
  * minted without the POST, and the token is useless in any other browser.
  */
-import { appFlowLocation } from '@camstack/types'
+import { appFlowLocation } from '@dominevo/types'
 import type { FastifyInstance, FastifyReply } from 'fastify'
 import { z } from 'zod'
 import type { HandoffCodeService } from '../core/auth/handoff-code.service.js'

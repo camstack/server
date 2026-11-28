@@ -35,7 +35,7 @@ import {
   type DataPlaneHandler,
   type InferProvider,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 import { SnapshotAddon } from '../snapshot.addon.js'
 import { parseVerifiedSnapshotLink } from '../snapshot-link-url.js'

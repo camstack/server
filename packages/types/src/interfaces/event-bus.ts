@@ -705,7 +705,7 @@ export type NodeUpdateTarget = 'server' | 'desktop-shell' | 'container-image'
  * Payload carried on `system.restarting` (when the restart is being
  * scheduled) and `system.restart-completed` (after the new process
  * boots). Mirrors the on-disk `.restart-pending` marker schema in
- * `@camstack/server/system` so consumers don't need a separate type.
+ * `@dominevo/server/system` so consumers don't need a separate type.
  *
  * Optional fields stay optional because not every restart is a
  * framework update — operator-triggered "restart hub" flows can fire
@@ -721,7 +721,7 @@ export interface PendingRestartMarkerPayload {
   readonly kind: 'framework-update' | 'manual' | 'system' | 'framework-bulk-update'
   /**
    * WHAT is being replaced when the restart is an update. Absent means the
-   * `@camstack/server` closure (every announcement predating the field):
+   * `@dominevo/server` closure (every announcement predating the field):
    * `desktop-shell` is the Electron app's own self-update, `container-image` a
    * container that booted on a different image than its previous boot.
    */
@@ -826,7 +826,7 @@ export interface TopologyNode {
   readonly processes: readonly TopologyProcess[]
   readonly categories: readonly TopologyCategory[]
   /**
-   * The node's runtime-updatable ROOT package (`@camstack/server` — the
+   * The node's runtime-updatable ROOT package (`@dominevo/server` — the
    * single root package for every node role) from its `registerNode`
    * manifest — version visibility for the Server management surface. Null for
    * offline rows and nodes that never reported one. Mirrors
@@ -1901,7 +1901,7 @@ export function createEvent<C extends KnownEventCategory>(
 // ---------------------------------------------------------------------------
 // System readiness protocol — low-level producer emission helper.
 // Consumers (kernel `ReadinessRegistry`) and their `awaitReady` /
-// `onReadyState` APIs live in `@camstack/server/system/src/readiness/`.
+// `onReadyState` APIs live in `@dominevo/server/system/src/readiness/`.
 // ---------------------------------------------------------------------------
 
 /**

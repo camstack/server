@@ -33,7 +33,7 @@ export function faultSince(
 }
 
 /**
- * The active faults CamStack derives from the CCU: the same pure mapping that
+ * The active faults Dominevo derives from the CCU: the same pure mapping that
  * fills a device's `error` cap, read from the facade's cached MAINTENANCE values.
  * A device whose flags the CCU has not reported is UNKNOWN: it is not a fault
  * row but is named in `unreported`, so no caller reads it as "no fault". Only the `since` lookup is best effort; the device read

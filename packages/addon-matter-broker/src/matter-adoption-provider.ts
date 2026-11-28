@@ -1,10 +1,10 @@
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IScopedLogger } from '@dominevo/types'
 import type {
   IDeviceAdoptionProvider,
   AdoptionStatus,
   AdoptionFilter,
   DiscoveredChildDevice,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { MatterNodeSnapshot } from './matter-controller.js'
 import { buildMatterNodeCandidate } from './matter-discovery.js'
 
@@ -36,7 +36,7 @@ export interface MatterAdoptionProviderDeps {
 /** Single granularity: a whole Matter node adopts as one Container. */
 const DEVICES_FILTER: AdoptionFilter = { id: 'devices', label: 'Devices', isDefault: true } as const
 
-/** Resolve the adopted CamStack device id for a (broker, node), or null. */
+/** Resolve the adopted Dominevo device id for a (broker, node), or null. */
 async function adoptedNodeId(
   brokerId: string,
   nodeId: string,

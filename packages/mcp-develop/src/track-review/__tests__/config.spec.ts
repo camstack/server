@@ -1,7 +1,7 @@
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import { saveSession, type HubTransport, type HubTransportRequest } from '@camstack/develop'
+import { saveSession, type HubTransport, type HubTransportRequest } from '@dominevo/develop'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
@@ -78,14 +78,14 @@ describe('review hub resolution', () => {
     expect(sentHeaders()).not.toContain('file-token')
   })
 
-  it('(d) with no session, env tokens do not help and the error names camstack login', async () => {
+  it('(d) with no session, env tokens do not help and the error names dominevo login', async () => {
     const err = await provider({
       CAMSTACK_HUB_URL: HUB,
       CAMSTACK_HUB_TOKEN: 'env-token',
     })('read').catch((e: unknown) => e)
     expect(err).toBeInstanceOf(HubConfigError)
     const message = err instanceof Error ? err.message : ''
-    expect(message).toContain('camstack login')
+    expect(message).toContain('dominevo login')
     expect(message).not.toContain('CAMSTACK_HUB_TOKEN_FILE')
     expect(requests).toEqual([])
   })

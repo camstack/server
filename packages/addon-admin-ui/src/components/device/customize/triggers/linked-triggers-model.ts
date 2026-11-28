@@ -20,7 +20,7 @@ import {
   type TemplateInstance,
   type TemplateDeviceStateValue,
   type TemplateTimeWindowValue,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** What the action column offers: the template's actions, plus "on" held for a time. */
 export const ON_FOR_CHOICE = 'on-for'

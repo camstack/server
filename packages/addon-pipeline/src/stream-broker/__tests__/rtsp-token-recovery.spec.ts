@@ -10,7 +10,7 @@
  *    released, registered with fresh tokens that are persisted at once, the alert
  *    says new URLs were issued, and the re-check stops for it.
  */
-import type { IScopedLogger, KeychainResolveResult } from '@camstack/types'
+import type { IScopedLogger, KeychainResolveResult } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mergeRtspTokens, RTSP_TOKENS_KEY, rtspTokensMirror } from '../broker-device-state.js'
 import { HELD_TOKEN_RECHECK_MS, TokenRecovery, type TokenAlerts } from '../rtsp-token-recovery.js'

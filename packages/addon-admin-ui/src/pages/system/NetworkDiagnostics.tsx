@@ -9,7 +9,7 @@
  *    player, once with every candidate type and once TURN-only, read from
  *    both ends (the browser's stats and the hub's `getSessionDebug`).
  *
- * The probes and the report live in `@camstack/ui-library`
+ * The probes and the report live in `@dominevo/ui-library`
  * (`composites/webrtc-diagnostics/`) so the viewer embed can host the same
  * test; this page only supplies the hub client and the camera picker.
  */
@@ -21,7 +21,7 @@ import {
   STACK_GAP,
   useDeviceManagerListAll,
   useSystem,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { type ReactNode, useCallback, useMemo, useState } from 'react'
 import { AdminPage } from '../../components/AdminPage'
 import { hubOrigin } from '../../lib/mount'

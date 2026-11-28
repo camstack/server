@@ -9,7 +9,7 @@ import type {
   TrainingJob,
   TrainingJobState,
   TrainingResult,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** The happy path, in order. Terminal side states are drawn as a failure marker. */
 export const TIMELINE: readonly TrainingJobState[] = [

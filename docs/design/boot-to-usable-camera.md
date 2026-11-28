@@ -185,7 +185,7 @@ imposes.
 
 ## Why the reference NVR takes seconds — an honest comparison
 
-| | the reference NVR | CamStack |
+| | the reference NVR | Dominevo |
 | --- | --- | --- |
 | Plugin isolation | plugins in-process (or one shared fork) | **one addon = one process** ([D2](../decisions/adr-0002.md)) |
 | Cross-plugin call | a function call | UDS/MsgPack or Moleculer round-trip |
@@ -259,7 +259,7 @@ builtins) is untouched — it is load-bearing and documented where it lives; the
 ordering *within* a plan never was. The one hazard overlapping exposed was Node's
 process-global `require.cache`: the custom-action catalog load used to purge under
 the addon's bundle root before importing it in hub-main, and
-`@camstack/addon-remote-storage`'s three addon ids resolve into one `dist/`, so
+`@dominevo/addon-remote-storage`'s three addon ids resolve into one `dist/`, so
 that purge-and-import had to be serialised per bundle. Since
 [D444](../decisions/adr-0444-hub-main-measures-its-own-episodes-bounds-its-readers-and-reads-no-bundle.md)
 hub-main imports no addon bundle at all — the runner describes its catalog in its
@@ -297,8 +297,8 @@ written backwards too. The boot is readable live, in order, from line one.
 ## Reproducing the measurement
 
 ```bash
-ssh unraid 'docker logs -t CamStack 2>&1' > hub.log
-# split on '[entrypoint] backend @camstack/server' markers, then:
+ssh unraid 'docker logs -t Dominevo 2>&1' > hub.log
+# split on '[entrypoint] backend @dominevo/server' markers, then:
 #   - strip ANSI
 #   - parse the EMBEDDED timestamp ("8/15/2026, 9:26:49 AM", local) — not docker's
 #   - convert to UTC, stable-sort ascending

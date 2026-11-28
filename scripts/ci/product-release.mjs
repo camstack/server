@@ -1,6 +1,6 @@
 /**
  * Product release version — the line of the container image, the desktop
- * app and the GitHub release. It is not an npm version. `@camstack/*` stay
+ * app and the GitHub release. It is not an npm version. `@dominevo/*` stay
  * on their own line; this file only names the product (D943).
  *
  * Plain node, zero deps: `release.yml`'s derive job does not `npm ci`.
@@ -27,7 +27,7 @@ export function productLabel(version) {
 
 /** @param {string} version */
 export function productReleaseName(version) {
-  return `CamStack ${productLabel(version)}`
+  return `Dominevo ${productLabel(version)}`
 }
 
 /**

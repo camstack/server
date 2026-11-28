@@ -13,7 +13,7 @@
  * debug tool: `freezeCount: 0` means the decoder measured no freeze,
  * `freezeCount: null` means nobody measured. Those are opposite conclusions.
  */
-import type { WebrtcSessionDebug } from '@camstack/types'
+import type { WebrtcSessionDebug } from '@dominevo/types'
 
 /** One resolution the stream actually presented, and when it started. */
 export interface ResolutionMark {
@@ -469,7 +469,7 @@ export interface StreamDebugSample {
    * The verdict, computed HERE.
    *
    * The host that renders this sample is not always a web page — the native
-   * app draws it in React Native — and `@camstack/ui-library` is a DOM
+   * app draws it in React Native — and `@dominevo/ui-library` is a DOM
    * component library whose bundle a React Native app must not import (it
    * reaches for browser globals and for `Array.prototype.toSorted`, which
    * Hermes does not have). Sending the verdict rather than the function that

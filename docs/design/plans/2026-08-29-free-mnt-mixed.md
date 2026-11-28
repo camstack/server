@@ -1,25 +1,25 @@
 ---
-title: Freeing /mnt/mixed for CamStack — inventory, destination, and the order of operations
+title: Freeing /mnt/mixed for Dominevo — inventory, destination, and the order of operations
 ---
 
 # Freeing `/mnt/mixed`
 
 > **The operator's goal, 2026-08-29.** *Free the Unraid disk `/mnt/mixed` so it
-> can be given entirely to CamStack, by moving the shares that live there onto
+> can be given entirely to Dominevo, by moving the shares that live there onto
 > the `common_backups` disk.*
 >
 > **Position, up front.** The goal is right and reachable. The route named in
 > the request is not, and the inspection changed three things about its premise:
 >
 > 1. **`/mnt/mixed` is not a spinning disk. It is a Samsung SSD 870 QVO 2 TB
->    SATA SSD** (`ROTA=0`), and that is *why* the CamStack settings database
+>    SATA SSD** (`ROTA=0`), and that is *why* the Dominevo settings database
 >    lives on it. `common_backups` is a Seagate ST2000LM007 — a 5400 rpm 2.5"
 >    USB drive, the same class as the recordings spindle. For two of the five
 >    items on the disk this is not a relocation, it is a demotion.
 > 2. **It does not fit.** 605.6 GiB to place, **456.2 GiB free** on the
 >    destination. The shortfall is 149 GiB before any headroom.
 > 3. **The disk is already 65 % empty — 1.19 TiB free right now.** Whatever
->    CamStack wants the space for, it can have most of it today, with a bind
+>    Dominevo wants the space for, it can have most of it today, with a bind
 >    mount and a container recreate, without one byte moving.
 >
 > And the free space the destination is missing is already there: **1,102 GiB
@@ -100,7 +100,7 @@ Depth-1, bounded to the mount (`du -x --max-depth=1 -B1 /mnt/mixed`):
 | --- | ---: | ---: | --- | --- | --- |
 | `ftp` | **437.3 GiB** | 69 992 | `ftp.cfg` → pool `mixed` | **`pure-ftpd`** via `/mnt/user/ftp` → `/home` (Reolink cameras push here). **`previous-nvr`** via the *direct* bind `/mnt/mixed/ftp/reolink` → `/Volumes/ftp` | **warm** — 10.4 GiB / 1 424 files in 7 d; newest file today 12:55 |
 | `previous-nvr` | **166.8 GiB** | 668 365 | `previous-nvr.cfg` → pool `mixed` | **`previous-nvr`** only, via the *direct* bind `/mnt/mixed/previous-nvr` → `/Volumes/previous-nvr`. All of it is `advanced-notifier/<deviceId>/` | **hot, and small-file hot** — 73.4 GiB / **342 353 files** in 7 d (≈ 49 k files/day) |
-| `camstack` | **1.05 GiB** | 6 | `camstack.cfg` → pool `common_backups` (**stale, see §1**) | **`CamStack`** via the *direct* bind `/mnt/mixed/camstack/addons-data/sqlite-settings` → `/data/addons-data/sqlite-settings` | **hot, and the only one that is a database** |
+| `camstack` | **1.05 GiB** | 6 | `camstack.cfg` → pool `common_backups` (**stale, see §1**) | **`Dominevo`** via the *direct* bind `/mnt/mixed/camstack/addons-data/sqlite-settings` → `/data/addons-data/sqlite-settings` | **hot, and the only one that is a database** |
 | `logs` | 348.5 MiB | ~30 | `logs.cfg` → pool `mixed` | host **`rsyslogd`** (`server_folder="/mnt/user/logs"`), plus `pihole-v6-unbound`, `Npm-Tailscale`, `GrafanaPromtail` — all via `/mnt/user/logs/...` | warm, but trivial in size |
 | `zentik` | 4 KiB | 0 | *no share cfg exists* | nothing. Three nested empty dirs, untouched since 2025-10-13 | cold / orphan |
 | `models` | 0 | 0 | `models.cfg` → pool `mixed` | nothing. Empty since 2025-07-21 | cold / orphan |
@@ -122,7 +122,7 @@ what btrfs must then allocate differently.
   across ~200 files/day. Cold in the tail, warm at the head.
 - **`camstack/addons-data/sqlite-settings`** is `camstack.db`, **1 121 865 728 B**,
   plus a live `-wal` (5.1 MB) and `-shm`. `lsof` shows exactly **one** holder:
-  PID 404351 inside the `CamStack` container, with the file open `rw` and
+  PID 404351 inside the `Dominevo` container, with the file open `rw` and
   memory-mapped. There is no second writer, and no reader that would tolerate
   the bytes changing underneath it.
 
@@ -248,7 +248,7 @@ procedure — an Unraid share can target the array by setting
 | `logs` | 348 MiB | **move** — to `common_backups` | Cold in size, warm in access. Cheap, and it is the right first rehearsal of the whole procedure. Carries one hidden dependency: see §7.2. |
 | `ftp` | 437.3 GiB | **move — but to the ARRAY, not to `common_backups`** | Alone it consumes 96 % of the destination's free space and leaves nothing for anything else. On the array it fits with 4.8 TiB to spare and gains parity. Requires a `previous-nvr` window (§7.3). |
 | `previous-nvr` | 166.8 GiB | **decide — do not default it to `common_backups`** | 668 k files, +49 k/day. This is the one workload on the disk that a USB SMR drive is worst at. Three real options in §8. |
-| `camstack` (the settings DB) | 1.05 GiB | **DO NOT MOVE** | Measured 68.9 ms/fsync on this destination vs 5.7 ms today — 12× worse, already rejected once on this host. It is also 0.16 % of the disk, and the disk is being freed *for CamStack*: moving CamStack's own database off it to make room for CamStack is self-defeating. It stays. |
+| `camstack` (the settings DB) | 1.05 GiB | **DO NOT MOVE** | Measured 68.9 ms/fsync on this destination vs 5.7 ms today — 12× worse, already rejected once on this host. It is also 0.16 % of the disk, and the disk is being freed *for Dominevo*: moving Dominevo's own database off it to make room for Dominevo is self-defeating. It stays. |
 
 **Net effect if the recommendation is taken:** `common_backups` receives 348 MiB
 (`logs`) and nothing else; the array receives 437 GiB (`ftp`); `previous-nvr`'s
@@ -273,7 +273,7 @@ possible "yes" — but it should be asked before the disk is emptied, not after.
 
 ## 6 · The Docker bind-mount trap — as a rule, not a footnote
 
-Today `/recordings` inside `CamStack` kept pointing at a device that had been
+Today `/recordings` inside `Dominevo` kept pointing at a device that had been
 unmounted and remounted underneath it. The container saw a dead directory,
 every recording write failed, and the only symptom was I/O errors. **A bind
 mount is resolved once, at container start.**
@@ -294,7 +294,7 @@ The three direct-bind consumers on this disk, all of which fall into the second
 row above if their data moves:
 
 ```
-CamStack   /mnt/mixed/camstack/addons-data/sqlite-settings -> /data/addons-data/sqlite-settings
+Dominevo   /mnt/mixed/camstack/addons-data/sqlite-settings -> /data/addons-data/sqlite-settings
 previous-nvr   /mnt/mixed/previous-nvr                             -> /Volumes/previous-nvr
 previous-nvr   /mnt/mixed/ftp/reolink                          -> /Volumes/ftp
 ```
@@ -315,7 +315,7 @@ Prerequisite for all of them, and it is not optional:
 
 ### 7.0 · Back up the settings database — because nothing does
 
-`CamStack` is `"skip": "yes"` in the Appdata Backup plugin, and
+`Dominevo` is `"skip": "yes"` in the Appdata Backup plugin, and
 `backupExtVolumes` is `"no"` for **every** container on this host (0 matches).
 `allowedSources` is `/mnt/user/appdata` + `/mnt/cache/appdata`. The settings DB
 is on neither. `/mnt/common_backups/backups/camstack/` contains one 36-byte
@@ -324,15 +324,15 @@ is on neither. `/mnt/common_backups/backups/camstack/` contains one 36-byte
 **`camstack.db` has no backup.** Before any step that touches this disk:
 
 ```bash
-docker stop CamStack
+docker stop Dominevo
 mkdir -p /mnt/cache/appdata/camstack-db-backup-20260829
 cp -av /mnt/mixed/camstack/addons-data/sqlite-settings/. \
        /mnt/cache/appdata/camstack-db-backup-20260829/
 ls -l /mnt/cache/appdata/camstack-db-backup-20260829/
-docker start CamStack
+docker start Dominevo
 ```
 
-Container-stop window: **~30 s**, `CamStack` only.
+Container-stop window: **~30 s**, `Dominevo` only.
 
 Why stopped and why `cp`: the file is open `rw` and mmap'd by PID 404351 with a
 live WAL. A copy taken while that process runs copies a torn database. **Do not
@@ -595,11 +595,11 @@ done
 ```
 
 At the end of the plan the expected answers are: `camstack.cfg` only; nothing;
-`CamStack` only.
+`Dominevo` only.
 
 ---
 
-### 7.7 · Then, and only then — hand the disk to CamStack
+### 7.7 · Then, and only then — hand the disk to Dominevo
 
 Out of scope for this document, but it is the reason for all of the above, and
 the sequencing trap is already written down. From
@@ -635,7 +635,7 @@ options, and the operator's direction of travel decides:
   concern. Recommended if the reference NVR stays in production.
 - *Move to `common_backups`* — fits after 8.1, but puts 49 k file-creations/day
   on a 5400 rpm USB drive that is also the backup target. Not recommended.
-- *Prune or drop it* — this is the reference NVR's event archive, and CamStack is
+- *Prune or drop it* — this is the reference NVR's event archive, and Dominevo is
   replacing the reference NVR. If this data has already been superseded, the cheapest
   migration is not to migrate it. **Only the operator knows this.**
 

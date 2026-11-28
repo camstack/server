@@ -20,7 +20,7 @@ import {
   type GatedToolSpec,
   type HubClient,
   type HubConnection,
-} from '@camstack/develop'
+} from '@dominevo/develop'
 import { z } from 'zod'
 import type { McpContext } from './context.js'
 import { noSessionResult, type NoSessionResult } from './ops-hub.js'

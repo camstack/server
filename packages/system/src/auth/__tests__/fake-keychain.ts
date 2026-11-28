@@ -9,7 +9,7 @@ import {
   type KeychainResolveResult,
   type SecretScope,
   type SecretsAccess,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export interface FakeKeychain {
   readonly access: SecretsAccess

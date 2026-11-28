@@ -37,7 +37,7 @@ token that was made for another one (planning#415).
   hub that routes on the access token without being able to call the hub.
   The hub does not trust that claim for anything.
 - **One comparison**, `oauthLinkServesInstance(link, request.instanceId,
-  addonId)` in `@camstack/types`: a per-instance route calls it and refuses
+  addonId)` in `@dominevo/types`: a per-instance route calls it and refuses
   a link made for another instance. Nothing compares an absent instance with
   an id by hand.
 

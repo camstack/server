@@ -22,7 +22,7 @@
  * path. A lost event now delays convergence by at most one reconcile
  * round — never forever.
  */
-import { createDurableState, type AddonContext, type DurableState, sleep } from '@camstack/types'
+import { createDurableState, type AddonContext, type DurableState, sleep } from '@dominevo/types'
 import type { ZodType } from 'zod'
 import { describe, expect, it, vi } from 'vitest'
 import { PipelineSettingsStore } from '../pipeline-settings-store.js'

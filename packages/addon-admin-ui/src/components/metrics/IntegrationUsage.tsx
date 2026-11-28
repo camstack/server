@@ -1,4 +1,4 @@
-import { StatusBadge, useIntegrationsList } from '@camstack/ui-library'
+import { StatusBadge, useIntegrationsList } from '@dominevo/ui-library'
 import { ProviderIcon } from '../shared/ProviderIcon'
 import { Trans, useTranslation } from 'react-i18next'
 

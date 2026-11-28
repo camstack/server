@@ -14,7 +14,7 @@
  * fans out, and a reconcile can never destroy work on the strength of a read
  * that failed (D49).
  */
-import { type IScopedLogger, type OsdSlotBinding, OsdSlotBindingSchema } from '@camstack/types'
+import { type IScopedLogger, type OsdSlotBinding, OsdSlotBindingSchema } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import type { BindingsHandle, OsdDeviceBindings } from '../bindings-store.js'
 import { EMPTY_TEMPLATES } from '../templates-store.js'

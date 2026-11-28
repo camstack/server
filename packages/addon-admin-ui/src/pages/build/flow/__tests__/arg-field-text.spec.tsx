@@ -2,7 +2,7 @@
  * A free-text action argument takes device values (`{{ alias.field }}`, rendered
  * by the hub when the step runs); the stored arg keeps its shape.
  */
-import type { LooseVocabOpenArg } from '@camstack/types'
+import type { LooseVocabOpenArg } from '@dominevo/types'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { renderWithTemplateHub } from '../../../../test-setup/device-template-hub'

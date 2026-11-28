@@ -1,4 +1,4 @@
-import { errMsg, type IBrokerProvider, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IBrokerProvider, type IScopedLogger } from '@dominevo/types'
 import { publicMatterConnection } from './config.js'
 import type { MatterBrokerEntry } from './config.js'
 import type { MatterBrokerRegistry } from './matter-broker-registry.js'

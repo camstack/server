@@ -1,4 +1,4 @@
-import type { RunnerLocalLoad } from '@camstack/types'
+import type { RunnerLocalLoad } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { balance, capacityImprovement, computeCapacityScore } from '../load-balancer.js'
 

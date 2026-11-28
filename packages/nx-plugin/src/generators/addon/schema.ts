@@ -1,5 +1,5 @@
 /**
- * Option schema for the CamStack `addon` generator.
+ * Option schema for the Dominevo `addon` generator.
  * Mirrors `schema.json` (the Nx-facing JSON schema).
  */
 export interface AddonGeneratorSchema {

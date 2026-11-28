@@ -1,4 +1,4 @@
-import type { ModelFormat, PostprocessorType } from '@camstack/types'
+import type { ModelFormat, PostprocessorType } from '@dominevo/types'
 
 export class UnsupportedPlusDecodeError extends Error {
   readonly type: string

@@ -18,7 +18,7 @@
  * PDF input and structured outputs; the cap has no flag for them, so they are
  * not carried.
  */
-import type { LlmModelInfo } from '@camstack/types'
+import type { LlmModelInfo } from '@dominevo/types'
 import { z } from 'zod'
 
 const Supported = z.object({ supported: z.boolean() })

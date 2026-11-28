@@ -7,7 +7,7 @@ import {
   deviceAdminLinkCapability,
   errMsg,
   type InferNativeProvider,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { rademacherGatewayDeviceSchema } from '../config.js'
 import { gatewayMetadataPatch } from '../rademacher-gateway-metadata.js'
 import { rademacherSessions } from '../rademacher-session-resolver.js'

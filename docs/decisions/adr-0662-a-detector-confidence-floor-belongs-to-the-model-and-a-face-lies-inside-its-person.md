@@ -63,8 +63,8 @@ face threshold is a follow-up (on the producer, see Consequences).
 removed from the face settings, the form and the candidate filter, and a stored
 value is announced and unset by the retention pass (the D222 procedure). The
 other choice — derive the recognizer's bar from the detector that ran — needs
-the detector's model id on `DetailResult`: a `@camstack/types` field, codegen,
-and a `@camstack/server` release before the hub route stops stripping it, to
+the detector's model id on `DetailResult`: a `@dominevo/types` field, codegen,
+and a `@dominevo/server` release before the hub route stops stripping it, to
 buy a number that can only equal the floor the runner already applied (a no-op)
 or disagree with it (the defect). A threshold belongs to whoever generates the
 event, and the detector's model is known only on the runner.
@@ -93,8 +93,8 @@ does not.
   Never roll back `addon-pipeline` alone while the new post-analysis runs: that
   leaves YuNet at 0.5 with no second bar. Roll post-analysis back first, then
   restore 0.85 from the rollback record, then the pipeline.
-- `defaultConfidence` is a new optional field on a `@camstack/types` schema.
-  Addons bundle `@camstack/types`; the per-model option field in
+- `defaultConfidence` is a new optional field on a `@dominevo/types` schema.
+  Addons bundle `@dominevo/types`; the per-model option field in
   `getSchema` is optional, so an admin UI talking to an older runner falls
   back to the step value.
 - There is no face-confidence lever at all now — global, per node or per

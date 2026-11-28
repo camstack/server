@@ -12,7 +12,7 @@
  * and the first three tests go red on the transport assertion, not on a spy.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { IntercomAudioCodecApi } from '../intercom-orchestrator.js'
 import {

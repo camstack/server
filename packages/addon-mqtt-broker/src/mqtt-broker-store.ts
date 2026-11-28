@@ -2,7 +2,7 @@ import {
   type RecordKindHandle,
   type RecordsAccess,
   RecordSecretUnavailableError,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   MqttExternalBrokerEntrySchema,
   type MqttExternalBrokerEntry,

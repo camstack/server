@@ -29,7 +29,7 @@ export function nodePickerItems(
  * The server's own package name: `server-update-available` / `server-updated`
  * carry it, and `addons.listPackages` does not list it.
  */
-export const NC_SERVER_PACKAGE_NAME = '@camstack/server'
+export const NC_SERVER_PACKAGE_NAME = '@dominevo/server'
 
 /**
  * Every package name an update EVENT carries as `packageName`, one per
@@ -37,10 +37,10 @@ export const NC_SERVER_PACKAGE_NAME = '@camstack/server'
  * `addons.listPackages` lists it, because a rule scoped to a name no event
  * carries can never fire (and one an event carries must be pickable).
  *
- * - `@camstack/server` — `server-update-available` / `server-updated`: the hub
- *   root package (`HUB_ROOT_SPEC.packageName`, `@camstack/node-root`).
+ * - `@dominevo/server` — `server-update-available` / `server-updated`: the hub
+ *   root package (`HUB_ROOT_SPEC.packageName`, `@dominevo/node-root`).
  *   The kernel and builtins ship inside it, so there is no separate framework
- *   package to announce. `@camstack/types` / `@camstack/sdk` are framework
+ *   package to announce. `@dominevo/types` / `@dominevo/sdk` are framework
  *   packages for upload routing but are never announced, so they are NOT here.
  * - `camstack-wrapper` — `wrapper-update-available` (`WRAPPER_PACKAGE_NAME`,
  *   `wrapper-update-checker.ts`).
@@ -54,7 +54,7 @@ export const NC_UPDATE_EVENT_PACKAGE_NAMES = [NC_SERVER_PACKAGE_NAME, 'camstack-
 type NcUpdateEventPackageName = (typeof NC_UPDATE_EVENT_PACKAGE_NAMES)[number]
 
 const UPDATE_EVENT_PACKAGE_TYPE: Readonly<Record<NcUpdateEventPackageName, string>> = {
-  '@camstack/server': 'server',
+  '@dominevo/server': 'server',
   'camstack-wrapper': 'wrapper',
 }
 

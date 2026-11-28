@@ -12,7 +12,7 @@
  *    so a stored track can say which model produced it and a later replay can
  *    name the original.
  */
-import type { PipelineDefaultStep, PipelineStepInput } from '@camstack/types'
+import type { PipelineDefaultStep, PipelineStepInput } from '@dominevo/types'
 
 export type ReplayPinRefusal = 'model-not-servable' | 'device-not-servable'
 

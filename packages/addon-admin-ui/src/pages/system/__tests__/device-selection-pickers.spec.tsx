@@ -17,15 +17,15 @@ import type {
   NcConditionDescriptor,
   NcConditions,
   NcSystemEventCondition,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { useState, type ReactElement, type ReactNode } from 'react'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 
-import { SystemProvider } from '@camstack/ui-library'
-import type { System } from '@camstack/sdk'
+import { SystemProvider } from '@dominevo/ui-library'
+import type { System } from '@dominevo/sdk'
 import { AlarmModeCard } from '../alarm-mode-card'
 import { alarmDeviceNames } from '../alarm-nonblocking.helpers'
 import { alarmSensorRows } from '../alarm-sensor-table-model'

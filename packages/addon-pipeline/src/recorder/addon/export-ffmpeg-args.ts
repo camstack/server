@@ -32,7 +32,7 @@
  * bounded per segment and never accumulates.
  */
 import path from 'node:path'
-import type { ExportDense, ExportOptions } from '@camstack/types'
+import type { ExportDense, ExportOptions } from '@dominevo/types'
 
 /** Widest [min,max] speed a single ffmpeg `atempo` filter accepts. Outside this
  *  band audio is dropped rather than chained (kept simple + predictable). */

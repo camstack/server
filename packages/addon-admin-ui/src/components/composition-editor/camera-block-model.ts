@@ -4,7 +4,7 @@
  * it, and the Terminal page finds a terminal's camera the same way. A read that
  * has not answered is never "no camera" (D315).
  */
-import { type CompositionListRead, coreBlockComposition } from '@camstack/types'
+import { type CompositionListRead, coreBlockComposition } from '@dominevo/types'
 
 export interface TerminalCameraBlock {
   readonly blockId: string

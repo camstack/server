@@ -10,7 +10,7 @@
  * agent's settings store forwards there (D332) — the old "agents only" branch
  * was exactly that leak. There is no role parameter on purpose.
  */
-import type { SettingsStoreClient } from '@camstack/types'
+import type { SettingsStoreClient } from '@dominevo/types'
 import { EventStore } from './store/event-store.js'
 import { MediaStore } from './store/media-store.js'
 import { TrackStore } from './store/track-store.js'

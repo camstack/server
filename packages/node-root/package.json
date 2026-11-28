@@ -1,8 +1,8 @@
 {
-  "name": "@camstack/node-root",
-  "version": "1.0.0",
+  "name": "@dominevo/node-root",
+  "version": "0.1.0",
   "private": true,
-  "description": "CamStack shared node-root boot core — zero-dep starter machinery (state schema/IO, boot plan, semver compare, workspace detect, root update service) bundled INTO each node starter at build time. Never published; never a runtime dependency.",
+  "description": "Dominevo shared node-root boot core — zero-dep starter machinery (state schema/IO, boot plan, semver compare, workspace detect, root update service) bundled INTO each node starter at build time. Never published; never a runtime dependency.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -18,7 +18,7 @@
   ],
   "camstack": {
     "requires": {
-      "server": ">=1.2.718"
+      "server": ">=0.1.0"
     }
   },
   "scripts": {
@@ -27,7 +27,7 @@
     "test": "vitest run"
   },
   "devDependencies": {
-    "@camstack/types": "*",
+    "@dominevo/types": "0.1.0",
     "@types/node": "^24",
     "tsup": "^8.0.0",
     "typescript": "~6.0.3",

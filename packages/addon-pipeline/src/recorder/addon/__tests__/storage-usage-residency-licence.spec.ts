@@ -23,7 +23,7 @@
  * implementation quietly reverts `devices[]` to `deps.index`, the numbers here
  * change and these tests go red.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { RecordingIndex } from '../../recording-index.js'
 import type { SegmentStore } from '../../segment-store.js'

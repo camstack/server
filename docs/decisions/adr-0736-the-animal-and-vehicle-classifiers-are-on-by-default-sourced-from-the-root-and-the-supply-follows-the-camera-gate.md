@@ -92,7 +92,7 @@ only to `face-embedding` / `clip-embedding`, not to these steps).
 
 - Every camera without an explicit toggle gains both classifiers on the next
   attach after `addon-pipeline` is deployed. On the hub today every root is a
-  CamStack COCO model, which declares animals 6/8 and vehicles 5/8, so no
+  Dominevo COCO model, which declares animals 6/8 and vehicles 5/8, so no
   classifier model is dispatched there; the visible change is the
   `detailSteps` announce carrying `filledBy`, and fine labels at the
   detection's score. `deer`, `squirrel`, `Ambulance`, `Taxi`, `Van` are not
@@ -109,7 +109,7 @@ only to `face-embedding` / `clip-embedding`, not to these steps).
   runner's plan) first, then `addon-pipeline-orchestrator` (only the
   catalog-free `DEFAULT_OFF_STEP_IDS`, used by the done-flagged migration),
   then `addon-admin-ui` and `addon-model-studio` (text and chips). No
-  framework package changes behaviour; `@camstack/types` changes a comment.
+  framework package changes behaviour; `@dominevo/types` changes a comment.
 
 ## Enforcement
 

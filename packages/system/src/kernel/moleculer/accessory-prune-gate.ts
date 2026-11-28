@@ -22,7 +22,7 @@
  *    later probe still lacks it. A successful read that lists it again
  *    forgets the record.
  */
-import type { AccessoryChildrenAnswer, AccessoryChildSpec } from '@camstack/types'
+import type { AccessoryChildrenAnswer, AccessoryChildSpec } from '@dominevo/types'
 
 export type AccessoryReadVerdict =
   | { readonly kind: 'successful'; readonly children: readonly AccessoryChildSpec[] }

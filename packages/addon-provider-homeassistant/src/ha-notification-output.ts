@@ -10,7 +10,7 @@
  *
  * Why a local, self-contained implementation? Addons may not cross-import, so
  * this cannot reuse `addon-notifiers`' provider/adapter/TargetStore code. Only
- * `@camstack/types` is shared (the cap schema + the pure `prepareNotification`
+ * `@dominevo/types` is shared (the cap schema + the pure `prepareNotification`
  * degrade engine). Everything else here (`HaTargetStore`, the settings-store
  * port, the payload builder, the discovery parser) is a small local copy.
  *
@@ -49,7 +49,7 @@ import {
   type SendResult,
   type Target,
   type TargetKind,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { HA_BROKER_KIND } from './ha-broker-source.js'
 
 /** The single kind this provider contributes to the shared catalog. */
@@ -450,8 +450,8 @@ export interface HaNotificationOutputDeps {
 /** The canned notification `testTarget` sends when the caller omits a sample. */
 function cannedNotification(): Notification {
   return {
-    body: 'This is a CamStack test notification.',
-    title: 'CamStack',
+    body: 'This is a Dominevo test notification.',
+    title: 'Dominevo',
     format: 'text',
     priority: 3,
   }

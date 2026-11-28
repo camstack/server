@@ -2,7 +2,7 @@
  * The Modal provider wired to the recorded gateway, shared by the contract
  * suite and the Modal-specific spec.
  */
-import type { ITrainingCloudProvider } from '@camstack/types'
+import type { ITrainingCloudProvider } from '@dominevo/types'
 import { MemoryPeerBytes } from '../providers/fake/memory-peer-bytes.js'
 import { DEFAULT_MODAL_ENTRY_NAME } from '../providers/modal/modal-entries.js'
 import {
@@ -69,7 +69,7 @@ export function modalSubject(): Subject & { gateway: FakeModalGateway } {
     entry: (entryId) => entries.find((e) => e.id === entryId) ?? null,
     gateway: (entryId) => (entryId === MODAL_ENTRY_ID ? gateway : null),
     secretViews: async () => {
-      const map = new Map<string, import('@camstack/types').SecretFieldView | null>()
+      const map = new Map<string, import('@dominevo/types').SecretFieldView | null>()
       for (const e of entries) {
         const secret = typeof e.tokenSecret === 'string' ? e.tokenSecret : ''
         map.set(

@@ -6,10 +6,10 @@ import type {
   FrameInput,
   DetectorOutput,
   SpatialDetection,
-} from '@camstack/types'
-import type { DeviceProxy } from '@camstack/types'
-import { BaseAddon, DeviceType, hydrateSchema, motionDetectionCapability } from '@camstack/types'
-import type { ConfigUISchemaWithValues, ConfigUISchema } from '@camstack/types'
+} from '@dominevo/types'
+import type { DeviceProxy } from '@dominevo/types'
+import { BaseAddon, DeviceType, hydrateSchema, motionDetectionCapability } from '@dominevo/types'
+import type { ConfigUISchemaWithValues, ConfigUISchema } from '@dominevo/types'
 import {
   WasmMotionDetector,
   DEFAULT_CONFIG,

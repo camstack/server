@@ -3,9 +3,9 @@
  * store keys every earlier build used (`snapshotSigningKey`, `linkedAccounts`, `tokens`), written
  * through `state()` instead of `updateGlobalSettings`. A value an old build stored is read as it was;
  * a write lands under the same key. (That a `state()` over a `secretStatePaths` key is stored through
- * the keychain is pinned in `@camstack/types` `base-addon-keychain.spec.ts`.)
+ * the keychain is pinned in `@dominevo/types` `base-addon-keychain.spec.ts`.)
  */
-import { fakeAddonContext } from '@camstack/types/testing'
+import { fakeAddonContext } from '@dominevo/types/testing'
 import { describe, expect, it } from 'vitest'
 import { ExportAlexaAddon } from '../export-alexa.addon.js'
 import type { LegacyLedgerPort } from '../skill-runtime.js'

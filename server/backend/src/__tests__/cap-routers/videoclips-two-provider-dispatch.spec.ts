@@ -31,9 +31,9 @@
  * the dispatch and the merge.
  */
 
-import { CAP_METHOD_NOT_IMPLEMENTED, CapabilityRegistry } from '@camstack/server/system'
-import type { Clip, ClipSource, IScopedLogger } from '@camstack/types'
-import { deviceManagerCapability, videoclipsCapability } from '@camstack/types'
+import { CAP_METHOD_NOT_IMPLEMENTED, CapabilityRegistry } from '@dominevo/server/system'
+import type { Clip, ClipSource, IScopedLogger } from '@dominevo/types'
+import { deviceManagerCapability, videoclipsCapability } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { buildRuntimeCapRouters, type CapProxyProvider } from '../../api/trpc/cap-router-runtime.js'
 import { requireDeviceCollection } from '../../api/trpc/device-collection-dispatch.js'
@@ -781,7 +781,7 @@ describe('videoclips — the device SOURCES are its bindings, not the registrati
  * row carries — and the name is REQUIRED (D554 amended).
  *
  * It was documented as optional, "absent means the device's bound provider,
- * which is CamStack on every camera". Measured on the live hub 2026-09-20,
+ * which is Dominevo on every camera". Measured on the live hub 2026-09-20,
  * device 107 bound to `recorder` AND `provider-reolink`: a bare `listClips`
  * with `limit: 3` answered **six** rows, three from each source, merged
  * newest-first. There was no default resolution anywhere in the dispatcher —

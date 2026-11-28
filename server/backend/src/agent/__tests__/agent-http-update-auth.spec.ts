@@ -1,7 +1,7 @@
 /**
  * Auth gate over the agent UI's update routes.
  *
- * `/api/agent/server-update/apply` installs a `@camstack/server` closure and
+ * `/api/agent/server-update/apply` installs a `@dominevo/server` closure and
  * restarts the node — it is a code-execution primitive. It must sit behind the
  * SAME rule as the rest of `/api/` (loopback, or a session redeemed from a hub
  * unlock ticket, D857) and must NOT be part of the pairing surface: an UNPAIRED
@@ -15,7 +15,7 @@ import type { ServiceBroker } from 'moleculer'
 import { afterAll, describe, expect, it } from 'vitest'
 import type { AgentHttpConfig } from '../agent-http.js'
 import { createAgentHttpServer } from '../agent-http.js'
-import type { ServerPackageStatus } from '@camstack/types'
+import type { ServerPackageStatus } from '@dominevo/types'
 import { createAgentServerUpdateControls } from '../agent-update-routes.js'
 import { unlockSession, writePairedConfig, type PairedFixture } from './helpers/paired-agent.js'
 
@@ -40,7 +40,7 @@ function makeStubBroker(): ServiceBroker {
 
 function stubStatus(): ServerPackageStatus {
   return {
-    packageName: '@camstack/server',
+    packageName: '@dominevo/server',
     runningVersion: '1.2.78',
     nodeRuntimeVersion: '24.0.0',
     activeVersion: '1.2.78',
@@ -83,7 +83,7 @@ async function buildApp(options: {
       server: createAgentServerUpdateControls({
         getServerPackageStatus: async () => stubStatus(),
         checkServerUpdate: async () => ({
-          packageName: '@camstack/server',
+          packageName: '@dominevo/server',
           runningVersion: '1.2.78',
           latestVersion: '1.2.81',
           updateAvailable: true,
@@ -96,7 +96,7 @@ async function buildApp(options: {
             accepted: false,
             targetVersion: null,
             restarting: false,
-            message: 'Refused: @camstack/server@1.2.78 is already running.',
+            message: 'Refused: @dominevo/server@1.2.78 is already running.',
           }
         },
       }),

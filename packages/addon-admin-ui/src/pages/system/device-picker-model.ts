@@ -1,4 +1,4 @@
-/** Re-export — shared device-picker model lives in `@camstack/ui-library`. */
+/** Re-export — shared device-picker model lives in `@dominevo/ui-library`. */
 export type {
   PickerId,
   PickerItem,
@@ -17,7 +17,7 @@ export type {
   PickerFacet,
   PickerFacetOption,
   PickerFilters,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 export {
   PICKER_SEARCH_DEBOUNCE_MS,
   PICKER_GROUP_COLLAPSE_AT,
@@ -54,4 +54,4 @@ export {
   resetPickerFilters,
   pickerHiddenSelectedCount,
   pickerFacetFilterShown,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'

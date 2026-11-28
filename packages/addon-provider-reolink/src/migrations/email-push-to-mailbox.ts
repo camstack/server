@@ -11,7 +11,7 @@
  * is `tolerate`, so the addon and its cameras keep running while the next boot retries. The
  * legacy keys stay one release, so a restore of an older snapshot still finds them.
  */
-import type { MigrationProcedureResult } from '@camstack/types'
+import type { MigrationProcedureResult } from '@dominevo/types'
 import { z } from 'zod'
 
 /** What the mailbox is created with: the settings of `SmtpInboundSettingsSchema` the cameras know. */

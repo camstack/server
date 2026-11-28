@@ -13,7 +13,7 @@ import {
   type RemoteLayoutPayload,
   remoteRoleIcon,
   remoteRoleLegend,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { GripVertical } from 'lucide-react'
 import { Fragment, type KeyboardEvent, type PointerEvent, type ReactNode, type Ref } from 'react'
 import { useUiText } from '../../contexts/ui-text'

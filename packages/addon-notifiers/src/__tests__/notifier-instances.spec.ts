@@ -11,7 +11,7 @@ import {
   notificationTargetKinds,
   type ProbeTargetConfigResult,
   type SendResult,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { NOTIFIER_ADAPTERS } from '../adapters/registry.js'
 import { iconMediaTypeFor, iconUrlFor } from '../icon-routes.js'

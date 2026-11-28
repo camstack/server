@@ -3,7 +3,7 @@ import {
   type IDeviceRegistry,
   type DeviceManagerApi,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /**
  * Remove every adopted Kia PARENT device (children cascade via the kernel)

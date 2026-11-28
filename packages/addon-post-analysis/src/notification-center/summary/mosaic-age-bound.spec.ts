@@ -5,7 +5,7 @@
  * nothing".
  */
 import { describe, expect, it } from 'vitest'
-import type { MediaFileRef } from '@camstack/types'
+import type { MediaFileRef } from '@dominevo/types'
 import { mosaicsToEvict } from './summary-mosaic.js'
 
 function row(mediaId: number, timestamp: number): MediaFileRef {

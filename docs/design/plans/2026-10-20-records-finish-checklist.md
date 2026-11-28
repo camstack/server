@@ -18,7 +18,7 @@ tables. Do not dispatch the Checks workflow.
 
 | Moment | Channel |
 | --- | --- |
-| Iterate / cut over on `.50`, then prod, from the local tree | Path B: `deploy --closure` + `camstack deploy` addon |
+| Iterate / cut over on `.50`, then prod, from the local tree | Path B: `deploy --closure` + `dominevo deploy` addon |
 | Durable state on the registry once stable | Path A: push → Publish Packages → `applyServerUpdate` |
 
 **Mandatory order:** `.50` before prod for every cutover. Enumerate agents
@@ -38,7 +38,7 @@ with `nodes.topology`, never from a remembered list.
   token dead after 595
 - [x] Hub snapshot < 24 h, or a fresh `database-snapshot`, before every `--apply`
   (settings snapshot ~9.3MB on `.50` before the adopts)
-- [x] `.50` admin session via `camstack login` (JWT `isAdmin`, D884); the dead
+- [x] `.50` admin session via `dominevo login` (JWT `isAdmin`, D884); the dead
   `csa_` token parked — **unblocked**
 
 **Exit:** local gate green + hubs reachable + snapshot/token ready.
@@ -52,14 +52,14 @@ prod keeps running on the previous closure/addons.
 
 - [x] `git push origin main` (after verify:push GREEN) — including the CJS fix
 - [x] Wait for the push CI to be green on that sha
-- [x] `gh workflow run "Publish Packages" … -f force_packages=@camstack/server`
-  → `@camstack/server@1.2.595` (CJS; 594 was ESM and crash-looped)
+- [x] `gh workflow run "Publish Packages" … -f force_packages=@dominevo/server`
+  → `@dominevo/server@1.2.595` (CJS; 594 was ESM and crash-looped)
 - [x] `git pull` after the CI bump commit
 - [x] Wait for the tarball URL on npm (lag is fine; do not re-publish)
 - [x] `applyServerUpdate` **1.2.595**: prod hub + Mac + agent-b; `.50` hub
   (disk/healthy). `agent-a` was offline at the time of the apply
 - [x] Poll `getServerPackageStatus` → `1.2.595` + `idle` (hub/Mac/amd)
-- [x] `camstack deploy` the records-related addons on prod (notifiers, pipeline,
+- [x] `dominevo deploy` the records-related addons on prod (notifiers, pipeline,
   orchestrator, post-analysis, auth, ai, mqtt/matter/google/import-alexa,
   admin-ui)
 - [x] Prod: no `adoption-pending` in recent logs; `.50`: mesh still pending
@@ -176,7 +176,7 @@ ticked. Details: the LTS master plan +
 - [x] Cutover fixes in tree/applied: history series get-or-create; records rehome
   settings→events; history opt-outs/departures not declared into history; offline
   phase5 adopt (INTEGER id cursor); `storageAdmin` list/read peers
-- [x] **Prod verify:** `@camstack/server@1.2.599` idle; post-analysis `1.2.603`;
+- [x] **Prod verify:** `@dominevo/server@1.2.599` idle; post-analysis `1.2.603`;
   `databaseSnapshot.listDatabases` = three DBs; deviceHistory ready; phase5
   `isAdoptedLegacyTable` for motion/audio/faces/ops-log/track-aliases/birth/
   track-purity; runners 25/25; PA active tracking
@@ -201,7 +201,7 @@ sessions entry 2026-10-20 "LTS P5 + phase5 cutover".
 ## Block 7 — Full "affected" publish once everything is stable
 
 **Closed 2026-10-20.** Prod (hub + agent-a + agent-b + Mac) on
-`@camstack/server@1.2.601` idle; runners all green; `listTables` = 154;
+`@dominevo/server@1.2.601` idle; runners all green; `listTables` = 154;
 phase5 motion/faces adopted; gallery kinds adopted + early-dropped
 (2026-10-20 offline; see sessions).
 
@@ -232,7 +232,7 @@ Trigger only if Blocks 1–6 are green (stable cutover; early-drop still out of 
 - Never `git add -A`.
 - Never `--allow-increase` on the baselines.
 - Path B and Path A: separate labels; after Path A, `git pull` before a local
-  `camstack deploy`.
+  `dominevo deploy`.
 - Degraded agents: do not block the hub cutover; bring them back afterwards.
 - Phase 6: stop and ask the operator only if login fails after the apply.
 

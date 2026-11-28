@@ -4,7 +4,7 @@ import {
   type DeviceFeature,
   type DeviceRole,
   errMsg,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { tuyaConnections, type TuyaDeviceHandle } from '../tuya-gateway.js'
 import { registerTuyaStateRefresh } from '../tuya-state-refresh.js'

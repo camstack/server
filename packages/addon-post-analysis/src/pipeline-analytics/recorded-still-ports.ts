@@ -13,7 +13,7 @@
  * background maintenance pass must never be able to perturb.
  */
 import { execFile } from 'node:child_process'
-import type { IScopedLogger, PinnedFfmpegResolver } from '@camstack/types'
+import type { IScopedLogger, PinnedFfmpegResolver } from '@dominevo/types'
 import { buildRecordedStillArgs, type RecordedStillPorts } from './recorded-still.js'
 
 /**

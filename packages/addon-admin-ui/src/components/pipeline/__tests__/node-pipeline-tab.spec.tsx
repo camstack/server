@@ -17,7 +17,7 @@ const panels: Array<{
   readonly sectionIds?: readonly string[]
 }> = []
 
-vi.mock('@camstack/ui-library', () => ({
+vi.mock('@dominevo/ui-library', () => ({
   Button: ({ children, onClick }: { children: React.ReactNode; onClick?: () => void }) => (
     <button type="button" onClick={onClick}>
       {children}

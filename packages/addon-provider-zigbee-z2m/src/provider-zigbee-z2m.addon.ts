@@ -25,7 +25,7 @@ import {
   integrationInstancesCapability,
   type RecordIntegrationInstances,
   type SystemEvent,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   buildProviderZigbeeZ2mAdoptionProvider,
   type RemoteZigbeeDevice,

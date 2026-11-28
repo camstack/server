@@ -9,7 +9,7 @@
  * with the recorder's own, so a channel past the first declares neither (and drops
  * one stored before), keeping only its host.
  */
-import type { DeviceIdentifierKey, RawDeviceIdentifiers } from '@camstack/types'
+import type { DeviceIdentifierKey, RawDeviceIdentifiers } from '@dominevo/types'
 
 export interface AmcrestIdentityRead {
   readonly serialNumber: string | null

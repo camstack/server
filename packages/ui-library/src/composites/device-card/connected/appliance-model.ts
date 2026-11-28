@@ -3,7 +3,7 @@
  * appliance scene's model — kept out of the components so each rule is
  * tested on its own.
  */
-import { DeviceType, type DishwasherStatus } from '@camstack/types'
+import { DeviceType, type DishwasherStatus } from '@dominevo/types'
 import type { UiTextFn } from '../../../contexts/ui-text'
 import type { ApplianceKind } from '../illustrations/ApplianceIllustration'
 import type { AppliancePhase, ApplianceProgramModel } from '../scenes/appliance/model'

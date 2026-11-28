@@ -14,8 +14,8 @@ import { type ReactNode, useCallback, useMemo, useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { X } from 'lucide-react'
-import type { PipelineAddonSchema, PipelineSchema } from '@camstack/types'
-import { settingValuesEqual, type StepSettingsBag } from '@camstack/types'
+import type { PipelineAddonSchema, PipelineSchema } from '@dominevo/types'
+import { settingValuesEqual, type StepSettingsBag } from '@dominevo/types'
 import {
   BackToStepsButton,
   buildStepTreeFromSchema,
@@ -33,7 +33,7 @@ import {
   usePipelineOrchestratorSetCameraStepSettings,
   usePipelineOrchestratorSetCameraStepToggle,
   useSystem,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useCameraDetectionSource } from '../../../hooks/useCameraDetectionSource'
 import { useEventInvalidation } from '../../../hooks/useEventInvalidation'
 import { useStepUrlSelection } from '../../../hooks/useStepUrlSelection'

@@ -32,7 +32,7 @@ stays in `display-palette.cap.ts` (D4). The palette document is the
 `displayPalette` key of the orchestrator's addon settings store — the store
 is shared with the orchestrator's other settings, so the document is not the
 whole row. Read and write semantics stay D939's: an unreadable store is
-`unknown`, an absent key is the bundled CamStack preset named
+`unknown`, an absent key is the bundled Dominevo preset named
 `unconfigured`, and `setPalette` refuses by naming the pairs. The builtin is
 deleted. There is no compatibility shim.
 

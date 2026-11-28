@@ -127,7 +127,7 @@ status line has been spent on the first fragment — the broker reads them at
   question with the same words and two different tolerances (1.5 s and 1.0 s).
   The Amcrest copy uses Reolink's names to the letter so the extraction is
   mechanical — but it was NOT extracted here, on purpose: the shared home is
-  `@camstack/types`, which travels inside the published `@camstack/server`
+  `@dominevo/types`, which travels inside the published `@dominevo/server`
   closure, so extracting would have turned a provider bugfix (an addon deploy)
   into a framework release on every node. The debt is real and is named here so
   the next person does not have to rediscover it.

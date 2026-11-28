@@ -26,7 +26,7 @@ import {
   touchSession,
   resolveFreshCredentials,
   type ResolvedCredentials,
-} from '@camstack/develop'
+} from '@dominevo/develop'
 import { runDiscover } from './commands/discover.js'
 import { HOST_CHECK_HELP, runHostCheck } from './commands/host-check.js'
 import { runUpdate } from './commands/update.js'
@@ -42,7 +42,7 @@ import { maybeNotifyUpdate } from './update-notifier.js'
 /**
  * Zero-dep CLI dispatcher.
  *
- * `commander` was dropped to keep `npx @camstack/cli` install-time at
+ * `commander` was dropped to keep `npx @dominevo/cli` install-time at
  * zero transitive packages. `node:util.parseArgs` (Node ≥18.3) handles
  * per-subcommand flag parsing; sub-command routing + help/version is
  * hand-rolled below — every command file exposes a `runX(rawArgs)`
@@ -61,7 +61,7 @@ try {
   /* fallback */
 }
 
-/** Inline replacement for the deleted `@camstack/types` import. */
+/** Inline replacement for the deleted `@dominevo/types` import. */
 function errMsg(err: unknown): string {
   if (err instanceof Error) return err.message
   if (typeof err === 'string') return err
@@ -99,7 +99,7 @@ function printGlobalHelp(commands: readonly CommandSpec[]): void {
 
 /** Shared by every hub-talking command's help: where the token comes from. */
 const TOKEN_RESOLUTION_HELP = [
-  'Auth: the session cached by `camstack login <host>` for the target server (renewed',
+  'Auth: the session cached by `dominevo login <host>` for the target server (renewed',
   '  automatically). There is no token flag or file: a headless service logs in once.',
 ].join('\n')
 
@@ -107,11 +107,11 @@ function buildCommands(): readonly CommandSpec[] {
   return [
     {
       name: 'serve',
-      summary: 'Start CamStack in hub mode',
+      summary: 'Start Dominevo in hub mode',
       run: runServe,
       help: () =>
         [
-          'Usage: camstack serve [options]',
+          'Usage: dominevo serve [options]',
           '',
           'Options:',
           '  -p, --port <port>      Port to listen on',
@@ -120,11 +120,11 @@ function buildCommands(): readonly CommandSpec[] {
     },
     {
       name: 'agent',
-      summary: 'Start CamStack in agent mode (worker node)',
+      summary: 'Start Dominevo in agent mode (worker node)',
       run: runAgent,
       help: () =>
         [
-          'Usage: camstack agent [options]',
+          'Usage: dominevo agent [options]',
           '',
           'Required:',
           '  --hub <ip>             Hub server IP address',
@@ -141,7 +141,7 @@ function buildCommands(): readonly CommandSpec[] {
       run: runSetup,
       help: () =>
         [
-          'Usage: camstack setup [options]',
+          'Usage: dominevo setup [options]',
           '',
           'Options:',
           '  -d, --data <path>      Data directory path',
@@ -153,11 +153,11 @@ function buildCommands(): readonly CommandSpec[] {
       run: runLogin,
       help: () =>
         [
-          'Usage: camstack login [<host>] [options]',
+          'Usage: dominevo login [<host>] [options]',
           '',
           '  <host>                 The hub, same as --server: 192.0.2.20, hub.local:4443,',
           '                         https://hub.local, [fe80::1]:4443. Port defaults to 4443, scheme is',
-          '                         https (http:// is refused). Example: camstack login 192.0.2.20',
+          '                         https (http:// is refused). Example: dominevo login 192.0.2.20',
           '',
           '      --browser            Sign in by approving in the admin UI: prints a URL and a short code,',
           '                           you approve where you are already signed in. The default when stdin',
@@ -181,7 +181,7 @@ function buildCommands(): readonly CommandSpec[] {
     {
       name: 'host-check',
       summary:
-        'Before installing: which accelerators this machine has and what to pass to CamStack',
+        'Before installing: which accelerators this machine has and what to pass to Dominevo',
       run: runHostCheck,
       help: () => HOST_CHECK_HELP,
     },
@@ -191,9 +191,9 @@ function buildCommands(): readonly CommandSpec[] {
       run: runDiscover,
       help: () =>
         [
-          'Usage: camstack discover [options]',
+          'Usage: dominevo discover [options]',
           '',
-          'Lists the hubs `camstack login` would offer: those announcing _camstack._tcp over',
+          'Lists the hubs `dominevo login` would offer: those announcing _camstack._tcp over',
           '  mDNS plus saved sessions, $CAMSTACK_HUB_URL and scratchpad/.hub-url,',
           '  reachable ones only, each with its source. Agents never announce this service.',
           '',
@@ -209,10 +209,10 @@ function buildCommands(): readonly CommandSpec[] {
       run: runLogout,
       help: () =>
         [
-          'Usage: camstack logout [options]',
+          'Usage: dominevo logout [options]',
           '',
           'Options:',
-          '  -s, --server <host>     CamStack server URL (default: $CAMSTACK_SERVER or https://localhost:4443; a bare host or host:port is fine)',
+          '  -s, --server <host>     Dominevo server URL (default: $CAMSTACK_SERVER or https://localhost:4443; a bare host or host:port is fine)',
         ].join('\n'),
     },
     {
@@ -221,7 +221,7 @@ function buildCommands(): readonly CommandSpec[] {
       run: runWhoami,
       help: () =>
         [
-          'Usage: camstack whoami [options]',
+          'Usage: dominevo whoami [options]',
           '',
           'With one saved session, prints it and checks the token against the hub. With several and',
           'no --server, lists them all (server, user, admin role) and marks the default:',
@@ -235,20 +235,20 @@ function buildCommands(): readonly CommandSpec[] {
       name: 'deploy',
       aliases: ['push'],
       summary:
-        'Deploy an addon, or (with --closure) the @camstack/server workspace closure on the dev channel',
+        'Deploy an addon, or (with --closure) the @dominevo/server workspace closure on the dev channel',
       run: runDeploy,
       help: () =>
         [
-          'Usage: camstack deploy [options] [path]',
-          '       camstack push   [options] [path]    (alias)',
-          '       camstack deploy --closure [options]  (server closure, no addon path)',
+          'Usage: dominevo deploy [options] [path]',
+          '       dominevo push   [options] [path]    (alias)',
+          '       dominevo deploy --closure [options]  (server closure, no addon path)',
           '',
           'Argument:',
           '  path                    Path to addon dir, .tgz, or workspace name (e.g. "tailscale")',
           '                          Default: "." (current dir). Ignored with --closure.',
           '',
           'Server closure (dev channel, no npm publish):',
-          '      --closure           Build+pack+upload @camstack/server closure, then apply',
+          '      --closure           Build+pack+upload @dominevo/server closure, then apply',
           '      --version <ver>     With --closure: reuse hub upload <base>-dev.<epoch>',
           '                          (skip build/pack/upload; propagate+apply only)',
           '',
@@ -271,13 +271,13 @@ function buildCommands(): readonly CommandSpec[] {
     },
     {
       name: 'deploy-server',
-      summary: 'Alias of `camstack deploy --closure` (dev server-deploy channel)',
+      summary: 'Alias of `dominevo deploy --closure` (dev server-deploy channel)',
       run: runDeployServer,
       help: () =>
         [
-          'Usage: camstack deploy-server [options]',
+          'Usage: dominevo deploy-server [options]',
           '',
-          'Deprecated alias of `camstack deploy --closure`. Prefer that form.',
+          'Deprecated alias of `dominevo deploy --closure`. Prefer that form.',
           '',
           'Options:',
           '  -s, --server <host>     Hub URL',
@@ -296,7 +296,7 @@ function buildCommands(): readonly CommandSpec[] {
       run: runWatch,
       help: () =>
         [
-          'Usage: camstack watch [options] [path]',
+          'Usage: dominevo watch [options] [path]',
           '',
           'Argument:',
           '  path                       Addon dir / workspace name / `.` for 5-level scan',
@@ -322,7 +322,7 @@ function buildCommands(): readonly CommandSpec[] {
       run: runDev,
       help: () =>
         [
-          'Usage: camstack dev [options] [path]',
+          'Usage: dominevo dev [options] [path]',
           '',
           'Argument:',
           '  path                      Addon directory (or workspace name). Default: "."',
@@ -368,7 +368,7 @@ function buildCommands(): readonly CommandSpec[] {
       run: runUpdate,
       help: () =>
         [
-          'Usage: camstack update [options]',
+          'Usage: dominevo update [options]',
           '       camstack upgrade [options]    (alias)',
           '',
           'With no flags: fetches the latest version from npm, confirms,',
@@ -445,7 +445,7 @@ async function runLogin(args: readonly string[]): Promise<void> {
       ...LEGACY_LOGIN_FLAG_OPTIONS,
       // Accepted-and-ignored: `--no-verify` is a `deploy`-only flag (skip the
       // post-deploy health gate). Login has no verify step, but operators
-      // muscle-memory it in — we swallow it here so `camstack login --no-verify`
+      // muscle-memory it in — we swallow it here so `dominevo login --no-verify`
       // never errors with "Unknown option --no-verify".
       'no-verify': { type: 'boolean' },
     },
@@ -472,7 +472,7 @@ async function runLogin(args: readonly string[]): Promise<void> {
   if (wantsBrowser) {
     // No TTY (an assistant's shell, a service) or --browser: the operator approves in the admin UI.
     if (!explicitServer) {
-      console.error('[camstack] Name the hub: camstack login <host> --browser')
+      console.error('[camstack] Name the hub: dominevo login <host> --browser')
       process.exitCode = 1
       return
     }
@@ -654,9 +654,9 @@ async function runDeployServer(args: readonly string[]): Promise<void> {
 const DEFAULT_SERVER_URL = 'https://localhost:4443'
 
 /**
- * The cached `camstack login` session → credentials
- * (see `@camstack/develop` `resolveFreshCredentials`). A missing token exits 1 with the
- * "run `camstack login`" guidance instead of a stack-ish failure line.
+ * The cached `dominevo login` session → credentials
+ * (see `@dominevo/develop` `resolveFreshCredentials`). A missing token exits 1 with the
+ * "run `dominevo login`" guidance instead of a stack-ish failure line.
  */
 async function resolveCommandCredentials(
   values: Record<string, string | boolean | undefined>,
@@ -732,7 +732,7 @@ async function main(): Promise<void> {
   }
   if (invocation.kind === 'unknown') {
     console.error(`[camstack] Unknown command: ${invocation.name}`)
-    console.error('Run `camstack --help` for the list of commands.')
+    console.error('Run `dominevo --help` for the list of commands.')
     process.exit(1)
   }
   if (invocation.kind === 'command-help') {

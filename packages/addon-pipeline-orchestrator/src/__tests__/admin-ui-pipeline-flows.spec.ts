@@ -43,7 +43,7 @@
 import { describe, it, expect, afterEach } from 'vitest'
 import PipelineOrchestratorAddon from '../index.js'
 import { makeFakeBroker, makeFakeContext, enabledNodesFromBroker } from './e2e-helpers.js'
-import type { PipelineSchema } from '@camstack/types'
+import type { PipelineSchema } from '@dominevo/types'
 
 // ── Fixtures ───────────────────────────────────────────────────────────
 

@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
  * pin-root-deps — publish-time dependency pinning for the ROOT package
- * (@camstack/server — the single root package for every node role).
+ * (@dominevo/server — the single root package for every node role).
  *
- * The workspace files declare every @camstack/* dependency as "*" so local
+ * The workspace files declare every @dominevo/* dependency as "*" so local
  * dev always links the workspace copy. But a PUBLISHED root package with "*"
  * deps makes the staged closure resolve to "latest-of-everything at install
  * time" — applyServerUpdate / Docker builds stop being reproducible
@@ -12,7 +12,7 @@
  *   node scripts/ci/pin-root-deps.mjs pin      # before `npm publish`
  *   node scripts/ci/pin-root-deps.mjs restore  # after publish (if: always())
  *
- * pin: rewrites each "*" @camstack/* dependency to the exact version of that
+ * pin: rewrites each "*" @dominevo/* dependency to the exact version of that
  *      package in THIS checkout (post-bump — the same run's publish set), and
  *      saves the original file as package.json.prepin.
  * restore: puts the original dependencies back (keeping the bumped version)
@@ -89,8 +89,8 @@ function buildWorkspaceIndex() {
 
 /**
  * A pin taken from the REGISTRY must not carry a stale copy of a package this
- * run publishes. On 2026-09-19 the closure pinned `@camstack/types@1.2.231`
- * next to `@camstack/server/system@1.2.273 (npm — not in this publish set)`, and the
+ * run publishes. On 2026-09-19 the closure pinned `@dominevo/types@1.2.231`
+ * next to `@dominevo/server/system@1.2.273 (npm — not in this publish set)`, and the
  * `system` on the registry had inlined the previous day's `types`: every
  * `setCameraSwitch` on the fleet was refused with an eight-id enum while the
  * types package beside it carried nine (D545). The scope cascade now includes
@@ -130,7 +130,7 @@ function pin() {
     const pinned = {}
     let count = 0
     for (const [dep, spec] of Object.entries(pj.dependencies ?? {})) {
-      if (dep.startsWith('@camstack/') && spec === '*') {
+      if (dep.startsWith('@dominevo/') && spec === '*') {
         const entry = index.get(dep)
         if (!entry) {
           console.error(`::error::pin-root-deps: ${dep} (dep of ${pj.name}) not found in workspace`)
@@ -148,7 +148,7 @@ function pin() {
     }
     fs.writeFileSync(prepinPath, raw)
     fs.writeFileSync(pjPath, `${JSON.stringify({ ...pj, dependencies: pinned }, null, 2)}\n`)
-    console.log(`pinned ${count} @camstack/* deps in ${pj.name} (${dir})`)
+    console.log(`pinned ${count} @dominevo/* deps in ${pj.name} (${dir})`)
   }
 }
 

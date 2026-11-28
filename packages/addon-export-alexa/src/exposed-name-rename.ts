@@ -11,8 +11,8 @@
  * The store read must THROW when it cannot answer: a read that answered `{}` would rebuild the
  * names blob without the other skills' names and erase them.
  */
-import type { ExposedNameStore, IScopedLogger } from '@camstack/types'
-import { saveExposedName } from '@camstack/types'
+import type { ExposedNameStore, IScopedLogger } from '@dominevo/types'
+import { saveExposedName } from '@dominevo/types'
 import { alexaNameValidator } from './endpoints/alexa-name.js'
 
 export interface SkillRenameDeps {

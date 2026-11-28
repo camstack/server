@@ -19,8 +19,8 @@
  * {@link OwnedSqliteFile.vector}, whose signature IS the typing. Everything
  * else on either side of the boundary is typed.
  */
-import type { IDataStoreProvider, IVectorStoreProvider } from '@camstack/types'
-import type { DataStoreDatabase, LogTags } from '@camstack/types'
+import type { IDataStoreProvider, IVectorStoreProvider } from '@dominevo/types'
+import type { DataStoreDatabase, LogTags } from '@dominevo/types'
 import { isMigrateOp, type MigrateOp } from './migrations/migration-types.js'
 import type { SerializedError } from './placement-errors.js'
 import { isRecordsOp, type RecordsOp } from './records/records-engine-types.js'

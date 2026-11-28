@@ -1,4 +1,4 @@
-import type { ConfigUISchema } from '@camstack/types'
+import type { ConfigUISchema } from '@dominevo/types'
 import { type RuntimeId, type RuntimePoolProfile, tuningFor } from './runtimes.js'
 
 /**

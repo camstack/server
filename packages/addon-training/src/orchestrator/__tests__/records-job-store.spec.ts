@@ -2,7 +2,7 @@
  * RecordsJobStore over a fake kind handle — put / get / list / idempotency.
  */
 import { describe, expect, it } from 'vitest'
-import type { RecordKindHandle, RecordRow, TrainingJob } from '@camstack/types'
+import type { RecordKindHandle, RecordRow, TrainingJob } from '@dominevo/types'
 import { silentLogger } from '../../__tests__/harness.js'
 import { RecordsJobStore } from '../stores.js'
 

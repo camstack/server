@@ -24,7 +24,7 @@
  *
  * Pure: the conditions in, new conditions out.
  */
-import type { NcConditions } from '@camstack/types'
+import type { NcConditions } from '@dominevo/types'
 import {
   projectRuleScope,
   type RuleScopeDraft,

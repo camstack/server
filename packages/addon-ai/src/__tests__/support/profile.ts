@@ -12,7 +12,7 @@
  * pre-D893 row (plus `apiKey`, which the store keeps in the row's keychain
  * slot), so the profile handed to the code under test is always the real shape.
  */
-import { type LlmProfile, LlmProfileSchema } from '@camstack/types'
+import { type LlmProfile, LlmProfileSchema } from '@dominevo/types'
 import { migrateProfileBody } from '../../profile-migration.js'
 
 function providerConfigOf(body: Record<string, unknown>): Record<string, unknown> {

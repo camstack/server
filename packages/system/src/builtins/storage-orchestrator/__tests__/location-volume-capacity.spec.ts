@@ -12,7 +12,7 @@
  * ancestor and `statfs`'d the HUB's root volume. The Storage page then told
  * the operator the SMB share was 62% full on a reading nobody took of it.
  */
-import type { StorageLocation } from '@camstack/types'
+import type { StorageLocation } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   freePercentOf,

@@ -40,7 +40,7 @@ import {
   useDeviceManagerMigrateDevice,
   Button,
   Select,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 
 import { buildMigrationReport, type MigrationReport } from './migrate-device-report'
 

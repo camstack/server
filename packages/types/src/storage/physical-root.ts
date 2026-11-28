@@ -20,7 +20,7 @@
  *    blocks the operator on a doubt (D49's spirit). It needs to know.
  *
  * Node-only (`node:fs`), so it lives off the root entry and is re-exported from
- * `@camstack/types/node`.
+ * `@dominevo/types/node`.
  */
 import { realpathSync } from 'node:fs'
 import path from 'node:path'

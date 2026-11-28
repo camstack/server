@@ -25,14 +25,14 @@
  *  3. `flattenPipelineSteps` — flattens the resolved per-camera step tree
  *     (`pipelineOrchestrator.resolvePipeline`) into displayable rows.
  */
-import { CAMERA_SENSORS_NOT_LOADED, collectHydratedFieldEntries } from '@camstack/types'
+import { CAMERA_SENSORS_NOT_LOADED, collectHydratedFieldEntries } from '@dominevo/types'
 import type {
   CameraSensorAttachment,
   CameraSensorsNotForwarded,
   CameraSensorsStatus,
   CameraStatus,
   PipelineStepInputOutput,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { isArmedCamera } from './camera-health'
 import i18n from '../../../i18n/index'
 

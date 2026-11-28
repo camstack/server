@@ -1,6 +1,6 @@
 import { EventEmitter } from 'node:events'
 import type { Socket } from 'node:net'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   DEFAULT_PRIME_BURST_BOUND,

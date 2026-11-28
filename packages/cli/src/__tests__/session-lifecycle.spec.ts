@@ -1,12 +1,12 @@
 /**
- * `camstack login` keeps what the other tools need to renew the session, and
+ * `dominevo login` keeps what the other tools need to renew the session, and
  * ending a session is decided from the file and the token's claims, never from
  * a token prefix.
  */
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import type { SessionFile } from '@camstack/develop'
+import type { SessionFile } from '@dominevo/develop'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const requests: { url: string; headers: Record<string, string>; body: string }[] = []
@@ -81,7 +81,7 @@ describe('revocationFor — by claims and record, not by prefix', () => {
   })
 })
 
-describe('camstack login persists the refresh token', () => {
+describe('dominevo login persists the refresh token', () => {
   let home: string
   const realHome = process.env['HOME']
   beforeEach(() => {

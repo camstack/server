@@ -1,4 +1,4 @@
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import type { HmDevice } from 'nodehomematic'
 import { mapHmDeviceChannels } from './homematic-mapping.js'
 import { mapFirmwareUpdate, mapMaintenanceChannel } from './homematic-diagnostics-mapping.js'

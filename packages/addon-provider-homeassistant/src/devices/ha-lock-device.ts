@@ -3,7 +3,7 @@ import {
   type DeviceContext,
   type InferNativeProvider,
   type LockControlStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { HaBaseChildDevice } from '../ha-base-child-device.js'
 import { haChangeStamp, type HaStatePushContext } from '../ha-change-stamp.js'
 import type { HaEntityState } from '../ha-types.js'

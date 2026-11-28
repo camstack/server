@@ -7,7 +7,7 @@
  *  - the gateway calls the pre-warm hook on a press for an exposed camera;
  *  - the pre-warm holds the egress, releases it on a deadline, and never leaks.
  */
-import { EventCategory, type AddonApi, type IScopedLogger } from '@camstack/types'
+import { EventCategory, type AddonApi, type IScopedLogger } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { acquireAlexaEgress } from '../egress/alexa-rtc-egress.js'

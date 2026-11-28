@@ -1,4 +1,4 @@
-import type { ConfigUISchema } from '@camstack/types'
+import type { ConfigUISchema } from '@dominevo/types'
 
 /**
  * S3 (and S3-compatible: Minio, Backblaze B2, Cloudflare R2) config schema.

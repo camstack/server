@@ -1,4 +1,4 @@
-import { DeviceRole, DeviceType } from '@camstack/types'
+import { DeviceRole, DeviceType } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import { HomeConnectApplianceDevice } from '../devices/home-connect-appliance-device.js'
 import { deriveChildBindings } from '../home-connect-child-bindings.js'

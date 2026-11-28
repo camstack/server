@@ -10,13 +10,13 @@
  * `ctx.user`) and every assertion on `res.scope` fails.
  */
 
-import type { DeviceMetaLike } from '@camstack/types'
-import { DeviceType } from '@camstack/types'
+import type { DeviceMetaLike } from '@dominevo/types'
+import { DeviceType } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { AuthService } from '../../../core/auth/auth.service.js'
 import type { AuthenticatedAgent, TrpcContext } from '../../trpc/trpc.context.js'
 import { createAuthRouter } from '../auth.router.js'
-import { staticJwtSigningKey } from '@camstack/server/system'
+import { staticJwtSigningKey } from '@dominevo/server/system'
 
 function makeConfig(): { get<T>(p: string): T; update(): void } {
   const store: Record<string, unknown> = {}

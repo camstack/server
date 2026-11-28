@@ -9,7 +9,7 @@
  *
  * Extracted from the addon so the collection is unit-testable without booting a `BaseAddon`.
  */
-import type { IStorageProviderImpl } from '@camstack/types'
+import type { IStorageProviderImpl } from '@dominevo/types'
 
 /** One provider's `getProviderInfo()` answer. */
 export type StorageProviderListEntry = Awaited<ReturnType<IStorageProviderImpl['getProviderInfo']>>

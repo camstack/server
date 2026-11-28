@@ -17,14 +17,14 @@ cd "$REPO_ROOT"
 
 # Map a package `name` (scoped or unscoped) to its workspace directory by
 # reading each candidate `package.json`. Strips the assumption that the
-# directory name matches the package name minus `@camstack/`. The
+# directory name matches the package name minus `@dominevo/`. The
 # unscoped `camstack` CLI lives at `packages/cli/` and breaks that
 # heuristic; future renames will too.
 #
 # `server/backend` is searched too, and that omission was not cosmetic: it
-# holds `@camstack/server`, the package the RELEASE depends on. Both the Docker
+# holds `@dominevo/server`, the package the RELEASE depends on. Both the Docker
 # image and the Electron app are assembled by `npm install
-# @camstack/server@${VERSION}` from public npm, so a tag whose version was
+# @dominevo/server@${VERSION}` from public npm, so a tag whose version was
 # never published fails ~20 minutes in with `notarget No matching version
 # found` — which is exactly how v1.2.32 failed on 2026-08-02. The workflow
 # states the contract ("publish → tag → build"); nothing enforced it because
@@ -104,8 +104,8 @@ fi
 # Parse JSON → list of publishable packages (skip private ones)
 #
 # `server/` is scanned alongside `packages/`. It was excluded, and that is why
-# a release could tag a version of `@camstack/server` that npm had never seen —
-# the image and the Electron app both `npm install @camstack/server@${VERSION}`
+# a release could tag a version of `@dominevo/server` that npm had never seen —
+# the image and the Electron app both `npm install @dominevo/server@${VERSION}`
 # from the public registry.
 PUBLISHABLE=($(echo "$AFFECTED_JSON" | node -e "
   const fs = require('fs'), path = require('path');
@@ -178,7 +178,7 @@ echo "[publish] Build log: $BUILD_LOG"
 BUILD_ATTEMPTS=3
 for attempt in $(seq 1 $BUILD_ATTEMPTS); do
   echo "[publish] Build attempt $attempt/$BUILD_ATTEMPTS..."
-  if npx nx run-many -t build --exclude=@camstack/server > "$BUILD_LOG" 2>&1; then
+  if npx nx run-many -t build --exclude=@dominevo/server > "$BUILD_LOG" 2>&1; then
     echo "[publish] Build succeeded"
     break
   fi

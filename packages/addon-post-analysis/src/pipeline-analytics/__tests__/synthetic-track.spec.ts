@@ -14,7 +14,7 @@
  *  - a hanging snapshot cap is bounded by a timeout (skip media, track lands)
  */
 
-import type { Track } from '@camstack/types'
+import type { Track } from '@dominevo/types'
 import sharp from 'sharp'
 import { describe, expect, it } from 'vitest'
 import {

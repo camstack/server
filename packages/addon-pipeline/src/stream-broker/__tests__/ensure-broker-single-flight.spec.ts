@@ -21,8 +21,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { StreamBrokerManager } from '../stream-broker/stream-broker-manager.js'
 import { StreamBroker } from '../stream-broker/stream-broker.js'
-import { makeSourceBrokerId } from '@camstack/types'
-import type { IScopedLogger } from '@camstack/types'
+import { makeSourceBrokerId } from '@dominevo/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 function makeLogger(): IScopedLogger {
   const l: IScopedLogger = {

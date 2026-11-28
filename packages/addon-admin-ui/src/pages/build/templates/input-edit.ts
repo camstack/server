@@ -4,7 +4,7 @@
  * input, the device an event or action reads. An empty value removes the field,
  * so the saved input never carries a blank bound the schema would refuse.
  */
-import type { TemplateInput } from '@camstack/types'
+import type { TemplateInput } from '@dominevo/types'
 
 type Scalar = Exclude<TemplateInput, { kind: 'group' }>
 

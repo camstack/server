@@ -1,6 +1,6 @@
 {
-  "name": "@camstack/addon-provider-zigbee-z2m",
-  "version": "0.1.1",
+  "name": "@dominevo/addon-provider-zigbee-z2m",
+  "version": "0.1.0",
   "description": "Connects to an existing Zigbee2MQTT server and exposes its devices.",
   "keywords": [
     "camstack",
@@ -49,7 +49,7 @@
       }
     ],
     "requires": {
-      "server": ">=1.2.974"
+      "server": ">=0.1.0"
     }
   },
   "files": [
@@ -63,13 +63,13 @@
     "test": "vitest run"
   },
   "peerDependencies": {
-    "@camstack/types": "*"
+    "@dominevo/types": "0.1.0"
   },
   "dependencies": {
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@camstack/types": "*",
+    "@dominevo/types": "0.1.0",
     "typescript": "~6.0.3",
     "vite": "^8.0.11",
     "vitest": "^4.0.0"

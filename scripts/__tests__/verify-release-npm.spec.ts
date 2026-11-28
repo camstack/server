@@ -4,7 +4,7 @@ import { assessReleaseNpm } from '../ci/verify-release-npm.mjs'
 /**
  * The product tag and the npm closure are different lines (D943).
  *
- * The image and the desktop app both install `@camstack/server@latest`.
+ * The image and the desktop app both install `@dominevo/server@latest`.
  * The gate's job is to name that closure before the build starts. It must
  * not demand that `latest` equal the product version — that equality was
  * the old, coupled contract, and it is exactly what this release gives up.

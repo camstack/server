@@ -5,7 +5,7 @@ import {
   type HumiditySensorStatus,
   type InferNativeProvider,
   type SwitchStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { DreoChildDevice } from './dreo-child-device.js'
 import { clampPercent } from '../dreo-domain-mapping.js'
 
@@ -25,7 +25,7 @@ const HUMIDITY_COLD_START: HumiditySensorStatus = { humidity: 0, lastFetchedAt: 
  *
  * TODO (deferred control surface): the humidifier exposes a TARGET humidity
  * (`rhautolevel` / `rhsleeplevel`) and a fog level (`foglevel`), but there is no
- * standalone "set target humidity" cap in CamStack outside `climate-control` /
+ * standalone "set target humidity" cap in Dominevo outside `climate-control` /
  * the `humidifier` actuator cap (not in this addon's declared cap set). For this
  * INITIAL version the humidifier is a switch + a humidity readout. A later phase
  * should add the target-humidity control via the appropriate actuator cap.

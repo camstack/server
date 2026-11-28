@@ -1,26 +1,26 @@
 /**
- * Stage the @camstack/server runtime closure for electron-builder — sourced
- * PRE-BUILT from public npm. NO source build, NO nx: the @camstack/* packages
+ * Stage the @dominevo/server runtime closure for electron-builder — sourced
+ * PRE-BUILT from public npm. NO source build, NO nx: the @dominevo/* packages
  * are public (registry.npmjs.org, --access public) and published WITH their
  * dist (and addon-pipeline ships python/wasm/swift/assets too), so a single
- * `npm install @camstack/server@latest` brings the ENTIRE runtime closure:
+ * `npm install @dominevo/server@latest` brings the ENTIRE runtime closure:
  * server + system/types/sdk/ui-library + all addon-* transitively +
  * every third-party dep (fastify/moleculer/zod/winston/…) + native prebuilds.
  * electron-builder then copies `.deps/node_modules` into
  * `Contents/Resources/node_modules`.
  *
- * ONE closure serves BOTH roles: `@camstack/server` is the single root package
+ * ONE closure serves BOTH roles: `@dominevo/server` is the single root package
  * and the desktop shell selects hub vs agent at runtime via `CAMSTACK_ROLE`.
  *
  * ROLE CHANGE (runtime-updatable node packages, phase 3): this baked closure is
  * the immutable first-boot/offline SEED, not "the thing we run". The app spawns
- * the shared STARTER (`@camstack/server/dist/starter.js`), which boots the
+ * the shared STARTER (`@dominevo/server/dist/starter.js`), which boots the
  * ACTIVE server root from the user data dir (`<userData>/data/server-root`) and
  * only falls back to this seed when no version is installed there. Nothing
  * writes into Contents/Resources at runtime — all mutable state lives under
  * userData — so node/framework updates never touch the signed .app bundle.
  *
- * The closure is `@camstack/server@latest` at build time — the same install
+ * The closure is `@dominevo/server@latest` at build time — the same install
  * the image uses. The desktop app's own version is the product release
  * (`product-version.json`, D943), not this closure's version.
  *
@@ -54,11 +54,11 @@ const desktopDir = join(here, '..') // packages/desktop
 const stageDir = join(desktopDir, '.deps')
 const stageModules = join(stageDir, 'node_modules')
 
-// @camstack/server already depends on the addons, but listing it alone pulls
+// @dominevo/server already depends on the addons, but listing it alone pulls
 // the entire closure (server + system/types/sdk/ui-library + all
 // addon-* + third-party deps) transitively. `@latest` is deliberate:
 // the product version is not an npm version (D943).
-const SPECS = ['@camstack/server@latest']
+const SPECS = ['@dominevo/server@latest']
 const SERVER_TAG = 'latest' // the SPECS entry, resolved once by closure-pins-install.mjs
 
 // The closure install is the one long (~90 s), network-heavy, externally
@@ -91,7 +91,7 @@ const installClosure = () => {
     stdio: ['ignore', 'pipe', 'inherit'],
   }).trim()
   const installSpecs = SPECS.map((spec) =>
-    spec === `@camstack/server@${SERVER_TAG}` ? `@camstack/server@${pinnedVersion}` : spec,
+    spec === `@dominevo/server@${SERVER_TAG}` ? `@dominevo/server@${pinnedVersion}` : spec,
   )
   console.log(`[stage-deps] installing PRE-BUILT closure from npm: ${installSpecs.join(' ')}`)
   closureInstall = `npm install --omit=dev --no-audit --no-fund ${installSpecs.join(' ')}`
@@ -118,14 +118,14 @@ try {
 }
 
 // The shell spawns the STARTER out of the FULL baked closure at
-// Resources/node_modules/@camstack/server (so the starter's __dirname anchors
+// Resources/node_modules/@dominevo/server (so the starter's __dirname anchors
 // the seed package dir + its npm-sibling framework resolution). Assert both the
 // starter and the seed launcher are present — mirrors the Dockerfile `test -e`.
-const serverSeedDist = join(stageModules, '@camstack', 'server', 'dist')
+const serverSeedDist = join(stageModules, '@dominevo', 'server', 'dist')
 for (const f of ['starter.js', 'launcher.js']) {
   if (!existsSync(join(serverSeedDist, f))) {
     console.error(
-      `[stage-deps] baked seed is missing @camstack/server/dist/${f} — the shell cannot spawn the starter`,
+      `[stage-deps] baked seed is missing @dominevo/server/dist/${f} — the shell cannot spawn the starter`,
     )
     process.exit(1)
   }
@@ -133,7 +133,7 @@ for (const f of ['starter.js', 'launcher.js']) {
 console.log('[stage-deps] verified baked seed exposes dist/starter.js + dist/launcher.js')
 
 // --- Ensure node-av's prebuild for the TARGET arch is staged ---
-// node-av (runtime dep of @camstack/addon-pipeline, kept external by vite) loads
+// node-av (runtime dep of @dominevo/addon-pipeline, kept external by vite) loads
 // its native binary from a per-platform sibling package installed via its
 // optionalDependencies (e.g. @seydx/node-av-darwin-arm64). The install above
 // fetched the BUILD HOST's sibling; a cross-arch build (e.g. --x64 on an arm64
@@ -149,7 +149,7 @@ const targetArch =
 const nodeAvDir = join(stageModules, 'node-av')
 if (!existsSync(nodeAvDir)) {
   console.error(
-    '[stage-deps] node-av missing from staged closure (expected via @camstack/addon-pipeline)',
+    '[stage-deps] node-av missing from staged closure (expected via @dominevo/addon-pipeline)',
   )
   process.exit(1)
 }
@@ -297,16 +297,16 @@ if (process.platform === 'win32') {
 // --- Self-contain each bundled addon copy's native prebuilds ---
 // npm HOISTS the natives to the closure's top-level `node_modules`, so an
 // addon's own subtree carries none. At runtime the addon-installer seeds
-// `data/addons/@camstack/<addon>` from that subtree and `npm install`s the
+// `data/addons/@dominevo/<addon>` from that subtree and `npm install`s the
 // addon's deps; on a toolchain-less Mac that leaves `better-sqlite3`
-// source-only, so the runner cannot load its `.node` (fresh CamStack.app
+// source-only, so the runner cannot load its `.node` (fresh Dominevo.app
 // first-boot FATAL, 2026-07-21). Plant each referenced native (WITH the
 // bundled-Node `.node` fetched above) into the addon copy's own `node_modules`
 // so the subtree is self-contained, then VERIFY — the build must fail loudly if
 // any addon copy is still missing a native binary.
 //
-// The targets are the closure's OWN `@camstack/*` dirs, which is what
-// `CAMSTACK_BUNDLED_ADDONS_DIR` points at (`Resources/node_modules/@camstack`).
+// The targets are the closure's OWN `@dominevo/*` dirs, which is what
+// `CAMSTACK_BUNDLED_ADDONS_DIR` points at (`Resources/node_modules/@dominevo`).
 // Until 2026-08-25 this list was derived from the per-addon `extraResources`
 // entries instead, and it was verifying a tree electron-builder shipped WITHOUT
 // its `node_modules` — see `native-staging.mjs` for the measurement.

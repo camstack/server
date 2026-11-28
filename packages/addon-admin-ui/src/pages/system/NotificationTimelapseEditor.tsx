@@ -43,7 +43,7 @@ import {
   TagInput,
   useSystem,
   DurationInput,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useMutation } from '@tanstack/react-query'
 import { Film, Loader2 } from 'lucide-react'
 import { useState } from 'react'
@@ -104,7 +104,7 @@ import {
   timelapseRuleToForm,
 } from './notification-timelapse.helpers'
 import { Trans, useTranslation } from 'react-i18next'
-import { formatNumeric } from '@camstack/ui-library'
+import { formatNumeric } from '@dominevo/ui-library'
 
 /** The passage length the dense-cadence hint is written against. */
 const EXAMPLE_PASS_SEC = 7

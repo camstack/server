@@ -31,8 +31,8 @@ const mockCustom = vi.fn((call: CustomCall) => {
   return mockCustomImpl(call)
 })
 
-vi.mock('@camstack/ui-library', async () => {
-  const real = await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+vi.mock('@dominevo/ui-library', async () => {
+  const real = await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return {
     ...real,
     useSystem: () => ({ trpcClient: { addons: { custom: { mutate: mockCustom } } } }),

@@ -12,7 +12,7 @@ last-verified: 2026-10-13
 
 # The ffmpeg binary
 
-CamStack spawns ffmpeg for the broker's egress and derived transcodes, the
+Dominevo spawns ffmpeg for the broker's egress and derived transcodes, the
 WebRTC transcode leg, the recorder, snapshots, HomeKit fragments and the camera
 grid. What that binary is compiled with decides whether any of them can use the
 machine's hardware, so it is not left to the machine.
@@ -41,11 +41,11 @@ image-provided copy either — see "What the image owes" below.
 
 Resolution is only half the rule; the other half is that every SPAWN uses the
 answer. A runtime site asks `ctx.deps.ensureFfmpeg()` through
-`memoizePinnedFfmpeg` (`@camstack/types`) or is handed a REQUIRED path by its
+`memoizePinnedFfmpeg` (`@dominevo/types`) or is handed a REQUIRED path by its
 addon — never an optional path with a `'ffmpeg'` default. When the binary
 cannot be had, the site refuses with a logged reason (`tags: { deviceId }` when
 a camera is involved); it never falls back to PATH. One-shot clip passes use
-`resolvePinnedFfmpegSpawner` (`@camstack/types/node`).
+`resolvePinnedFfmpegSpawner` (`@dominevo/types/node`).
 
 **A refusal is never kept for good.** A site holds the RESOLVER and asks it
 at the point of use; the memo remembers only a success, so a node whose
@@ -105,7 +105,7 @@ The version is DATA, not code. To move it:
    only integrity check there is.
 2. Update `FFMPEG_RELEASE`, the five `sha256` values, the sizes and — if the
    build's flags changed — `expectedHwaccels`.
-3. Publish `@camstack/types` and apply the framework update. Each node
+3. Publish `@dominevo/types` and apply the framework update. Each node
    downloads the new build on its next runner start.
 
 Nothing else moves: not the image, not the containers. The binary is stored
@@ -138,7 +138,7 @@ This is not theoretical. Measured 2026-09-19 with the portable build:
 ```
 bare Unraid host  →  implib-gen: libva-drm.so.2: failed to load library …
                      Assertion `0 && "Assertion in generated code"' failed  →  SIGABRT
-inside CamStack   →  testsrc → format=nv12,hwupload → h264_vaapi  →  encodes
+inside Dominevo   →  testsrc → format=nv12,hwupload → h264_vaapi  →  encodes
 ```
 
 The dlopen design those builds use buys **portability, not graceful absence**:
@@ -187,7 +187,7 @@ Two checks keep it that way:
 
 `probeFfmpegBinary` (`packages/types/src/ffmpeg/binary-capabilities.ts`) runs
 `-version`, `-hwaccels` and `-encoders` and parses them. It answers a different
-question from the kernel's hardware resolver, and CamStack needs both:
+question from the kernel's hardware resolver, and Dominevo needs both:
 
 - **what does this NODE have** — `/dev/dri` presence, the resolver's job;
 - **what can this BINARY use** — the probe's job.

@@ -5,8 +5,8 @@ import type {
   IStorageProvider as INewStorageProvider,
   ISettingsBackend,
   HistogramBucket,
-} from '@camstack/types'
-import { userError } from '@camstack/types'
+} from '@dominevo/types'
+import { userError } from '@dominevo/types'
 
 // Legacy interfaces — still used by consumers during migration
 export interface IStorageProvider {

@@ -15,7 +15,7 @@ import {
   NC_TEMPLATE_TITLE_MAX_CHARS,
   type NotificationField,
   targetAttachmentAllows,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { NcNotificationInput } from './dispatcher.js'
 import type { NcOutboxTargetSettings } from './target-settings.js'
 

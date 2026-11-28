@@ -16,7 +16,7 @@
  * The legacy map keys were copied by the migrations of `migrations/index.ts`, whose last step
  * deletes them once every copy is applied; nothing here reads them.
  */
-import type { DurableState, IScopedLogger } from '@camstack/types'
+import type { DurableState, IScopedLogger } from '@dominevo/types'
 import type { ZodType } from 'zod'
 
 export interface NodeRowsDeps {

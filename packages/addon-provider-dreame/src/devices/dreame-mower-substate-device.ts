@@ -4,7 +4,7 @@ import {
   type EnumSensorStatus,
   enumSensorCapability,
   type InferNativeProvider,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { DreameChildDevice } from './dreame-child-device.js'
 
 const CAP_NAME = 'enum-sensor'

@@ -8,7 +8,7 @@
  * Disarm: put `authorizeProcedure(principal.scopes, 'addons.installPackage')`
  * back in place of `principal.isAdmin` → the non-admin rows pass.
  */
-import type { TokenScope } from '@camstack/types'
+import type { TokenScope } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { authorizeUploadRequest, type UploadAuthTokenVerifier } from '../upload-auth.js'
 

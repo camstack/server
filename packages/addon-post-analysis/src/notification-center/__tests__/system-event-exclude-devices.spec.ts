@@ -8,8 +8,8 @@
  * EXCLUDE list, applied after the include list, in the same kind family as
  * `deviceIds` (D636).
  */
-import type { NcSystemEventCondition, NcSystemEventKind } from '@camstack/types'
-import { NcRuleInputSchema, NcRuleSchema } from '@camstack/types'
+import type { NcSystemEventCondition, NcSystemEventKind } from '@dominevo/types'
+import { NcRuleInputSchema, NcRuleSchema } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { evaluateRule, NC_SYSTEM_DEVICE_ID, type NcRuleSubject } from '../rule-engine.js'
 

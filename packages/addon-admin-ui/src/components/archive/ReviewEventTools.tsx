@@ -4,7 +4,7 @@
  * while the debug filter is on, the debug analysis of the marked tracks.
  * Collapsed by default so the review surface stays player + list + timeline.
  */
-import { CollapsibleCard } from '@camstack/ui-library'
+import { CollapsibleCard } from '@dominevo/ui-library'
 import { Search } from 'lucide-react'
 import { useState, type ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'

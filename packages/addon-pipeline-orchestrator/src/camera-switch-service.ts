@@ -68,8 +68,8 @@ import type {
   CameraSwitchGroup,
   CameraSwitchId,
   IScopedLogger,
-} from '@camstack/types'
-import { CAMERA_SWITCH_CATALOG, deriveCameraSwitches, nodePin } from '@camstack/types'
+} from '@dominevo/types'
+import { CAMERA_SWITCH_CATALOG, deriveCameraSwitches, nodePin } from '@dominevo/types'
 import type { RepeatWarnSampler } from './repeat-warn-sampler.js'
 import { readSwitchAuthorities, type SwitchAuthorityReads } from './switch-authorities.js'
 

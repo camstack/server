@@ -6,7 +6,7 @@ import {
   DEVICE_NONCE_TTL_MS,
   type DeviceSignaturePurpose,
   type SettingsStoreClient,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { SubjectAlternativeNameExtension, X509Certificate as Peculiar } from '@peculiar/x509'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { CERT_NOT_BEFORE_BACKDATE_MS } from '../../tls/cert-backdate.js'

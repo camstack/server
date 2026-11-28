@@ -14,10 +14,10 @@
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import type { AddonContext, IScopedLogger } from '@camstack/types'
+import type { AddonContext, IScopedLogger } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import EmbeddingEncoderAddon from '../index.js'
-import { EMBEDDING_REQUIREMENTS_UNAVAILABLE, embeddingRefusalOf } from '@camstack/types'
+import { EMBEDDING_REQUIREMENTS_UNAVAILABLE, embeddingRefusalOf } from '@dominevo/types'
 import { completeLoggerStub } from '../../../notification-center/__tests__/support/nc-test-deps.js'
 
 function spyLogger(): IScopedLogger {

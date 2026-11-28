@@ -3,7 +3,7 @@
  * `listCandidates` answers from it at once and only asks for a background revalidation;
  * `refresh` re-lists the account before it answers, so a device added in the app appears.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { VeSyncDeviceSnapshot, VeSyncPurifierSnapshot } from '../vesync-client-contract.js'
 import { buildVeSyncAdoptionProvider } from '../vesync-adoption-provider.js'

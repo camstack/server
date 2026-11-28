@@ -1,14 +1,14 @@
 /**
  * Shared card editor for a stored composition block (/build/compositions/:id).
  */
-import { coreBlockComposition, DeviceType, isEngineHostedHelper } from '@camstack/types'
+import { coreBlockComposition, DeviceType, isEngineHostedHelper } from '@dominevo/types'
 import {
   Badge,
   ErrorBox,
   useCoreBlocksGetComposition,
   useCoreBlocksUpdateComposition,
   useDeviceManagerSetLocation,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { type ReactNode, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'

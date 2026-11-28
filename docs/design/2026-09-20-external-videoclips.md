@@ -69,7 +69,7 @@ library's fixtures (`reolink-baichuan-js/test/fixtures/recordings/`).
 | Playback URL | rejected — RTMP with credentials in the query, enables the RTMP port | rejected | `getRecordingPlaybackUrls` |
 
 **UID**: standalone via cmd 114 (7 ms; the library now does it itself in
-native-only mode). Hub child: CamStack already persists it in
+native-only mode). Hub child: Dominevo already persists it in
 `deviceMeta.metadata.uid` (present for 3628, 3629 and 3825 — 3825's config
 field is absent); the hub's cmd 145 push is a second source and arrives ~12 s
 after `subscribeEvents()`, not on login. The hub reports `channelNum=1`, so the
@@ -618,7 +618,7 @@ admin section does the viewer slice open — and it reuses the same
 ## 8. HomeKit — deferred to after slice 6
 
 HAP has no read-back (HDS `dataSend` is push-only); a clip HomeKit stored is
-never CamStack's. What exists: HKSV fully built and on by default
+never Dominevo's. What exists: HKSV fully built and on by default
 (`packages/addon-export-hap/src/hksv/`), a permanent per-camera fMP4 child
 feeding `Fmp4FragmentPlane` with an 8 s / 16 MB RAM prebuffer, built dual-use
 and with no second subscriber. What it takes: a second
@@ -637,7 +637,7 @@ iOS pulled. It becomes the third source on the same seam once 1–6 exist.
 | 0 | This document, D549, the two stale claims fixed, nodelink-js published and pinned — **0.7.9** since the events/label parsers landed | docs + library | `recordings-*.test.ts` (52 tests) |
 | 1 | Per-device wrapper mount: 2026-08-17 § 2 M1–M6 + CI guard | framework train | the two-provider router spec (§ 2.3) |
 | 6 | Collection mode: fan-out, merge by `(startMs, endMs, id)`, dispatch by prefix, per-source degradation — **LANDED 2026-09-20** ([D554](../decisions/adr-0554-a-per-device-wrapper-that-becomes-a-collection-stays-per-device-and-its-sources-are-fanned-out-not-picked.md)); `listSources` is on the cap, the per-device COLLECTION FILTER is what the router reads (`setWrapperActive`'s store cannot hold two), and the picker that writes it is slice 4 | framework train | two providers on one camera both appear; each id plays through its own provider; a throwing source is `unreachable` with its reason and the others still list |
-| 2 | Reolink provider: catalog only, both topologies, sleep policy, tagged logs, additive `ClipSchema` fields — **LANDED 2026-09-20** ([D555](../decisions/adr-0555-a-source-whose-library-method-does-not-exist-is-a-listed-source-that-says-so.md)). BOTH sources answer: `onboard` on both topologies, and the hub EVENTS view on nodelink-js **0.7.9**'s `searchEventLog`, with an event joined to its file by window containment and a row that cannot play saying which of `no-rec-file` / `no-file-for-window` it is. The TZ assert has its comparator and tests (`clip-timezone.ts`) and no caller yet | `types` + `camstack deploy provider-reolink` | provider spec with fakes shaped from the fixtures; "zero logins while sleeping"; live check on 592 and 639 |
+| 2 | Reolink provider: catalog only, both topologies, sleep policy, tagged logs, additive `ClipSchema` fields — **LANDED 2026-09-20** ([D555](../decisions/adr-0555-a-source-whose-library-method-does-not-exist-is-a-listed-source-that-says-so.md)). BOTH sources answer: `onboard` on both topologies, and the hub EVENTS view on nodelink-js **0.7.9**'s `searchEventLog`, with an event joined to its file by window containment and a row that cannot play saying which of `no-rec-file` / `no-file-for-window` it is. The TZ assert has its comparator and tests (`clip-timezone.ts`) and no caller yet | `types` + `dominevo deploy provider-reolink` | provider spec with fakes shaped from the fixtures; "zero logins while sleeping"; live check on 592 and 639 |
 | 3 | Thumbnail route + LRU cache + vouching + 204-with-reason — **LANDED 2026-09-20** | addon deploy | mint once, serve from disk after; 204 `sleeping`; overflow → 204 not wait |
 | 5 | Playback: fetch + mux (`+faststart`; **video only** — 0.7.9's `downloadRecordingDemuxed` still returns Annex-B video; the audio is reachable through the exported `BcMediaAnnexBDecoder`, and `getRecordingVideo` is refused because its `frag_keyframe+empty_moov` MP4 loses the seek and the duration this player needs, D555) + Range route + `getClipPlayback { format:'mp4' }`; `HlsVideo` `mp4` branch + `VodPlaybackRequest.format` (§ 6) — **LANDED 2026-09-20** | addon deploy + ui-library | mux spec on a captured cmd 5 dump; Range route; bound/LRU; `HlsVideo` plays an `mp4` request without hls.js |
 | 4 | Admin section: derived widget, source filter, tiles, four states, wake action with the 15 % refusal — **the proving ground (§ 7b)** | `types` + admin-ui | aggregator emits the section for a wrapped `videoclips` binding; four-state render; `check-absent-claim-is-answered`; the three § 7b cases seen live |
@@ -747,7 +747,7 @@ the client already handles, not a request; cmd 76 (network block) and cmd 192
 § 8 deferred all of HomeKit behind slice 6. Half of it could not wait, and the
 reason is physical rather than a matter of priority: **HKSV is a sink, and a
 stream nobody teed is gone.** HDS `dataSend` is push-only, so a clip iOS stored
-is never readable again by the accessory; the only copy CamStack can ever have
+is never readable again by the accessory; the only copy Dominevo can ever have
 is the one it kept of what it SENT, at the moment it sent it. A Reolink SD card
 will still be there next week — a HomeKit recording that went untee'd today will
 not. Record: [D550](../decisions/adr-0550-a-homekit-clip-is-ours-only-if-we-teed-what-we-sent-and-the-tee-may-never-touch-the-recording.md).
@@ -799,7 +799,7 @@ and D549 decision 3's gate stands. When they land:
 enabled H.264 slot, preferably ≤ 1080p, with a GOP ≤ 8 s records at all — the
 three refusals `buildHksvRecording` already logs; a camera with no clips here is
 a camera HKSV never recorded. A clip's duration is the prebuffer replay plus
-however long the hub kept the HDS stream open — never a window CamStack chose.
+however long the hub kept the HDS stream open — never a window Dominevo chose.
 The advertisement log line carries `clipsKept` (the conjunction) and
 `clipsSwitchedOn` (the operator's half), so "he turned it off" and "there is no
 writable clips location" are different lines.

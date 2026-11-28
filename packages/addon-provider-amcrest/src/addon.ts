@@ -4,7 +4,7 @@ import {
   defaultIntegrationPortsOver,
   integrationInstancesCapability,
   defaultIntegrationDepsOver,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   buildAmcrestInstances,
   amcrestConnectionsEntryKind,
@@ -20,7 +20,7 @@ import type {
   DiscoveryMode,
   FieldProbeResult,
   IDevice,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   BaseDeviceProvider,
   clipEventLabelDepsFromApi,
@@ -30,7 +30,7 @@ import {
   videoclipsCapability,
   widenDeviceConstructor,
   withClipEventLabels,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { AmcrestCamera } from './amcrest-camera.js'
 import { AmcrestCgiClient } from './amcrest-cgi-client.js'
 import {

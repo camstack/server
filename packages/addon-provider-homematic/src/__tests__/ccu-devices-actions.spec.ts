@@ -110,7 +110,7 @@ describe('listCcuDevices', () => {
     )
   })
 
-  it('attaches the CamStack device id for an adopted address', async () => {
+  it('attaches the Dominevo device id for an adopted address', async () => {
     const { deps } = fakeDeps({
       devices: () => [
         device({ name: 'Lamp' }, {}),

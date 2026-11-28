@@ -9,7 +9,7 @@
  * Nothing leaves without the output scrub, so a value the scrubber hides stays
  * hidden.
  */
-import type { HubClient } from '@camstack/develop'
+import type { HubClient } from '@dominevo/develop'
 import { z } from 'zod'
 import type { McpContext } from './context.js'
 import { cap, readQuery, withHub, type NoSessionResult, type RefusedResult } from './ops-hub.js'

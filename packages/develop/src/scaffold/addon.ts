@@ -27,7 +27,7 @@ const KIND_EXAMPLE: Record<NonNullable<ScaffoldAddonOptions['kind']>, string | n
 }
 
 export const INTEGRATION_NOTES: readonly string[] = [
-  'Public examples: `camstack/addon-examples` (`example-device-integration`, `example-service-integration`, `example-exporter`).',
+  'Public examples: `dominevo/addon-examples` (`example-device-integration`, `example-service-integration`, `example-exporter`).',
   '',
   'Integration rules (D1007, D996, D1009):',
   '- The integration is a typed instance record served through `integration-instances`; a secret is a `password` field (`.meta({ secret: true })` on the kind).',
@@ -118,7 +118,7 @@ function integrationPlan(
 
 /**
  * Scaffold a new addon package under `packages/addon-<name>/`.
- * Aligned with `@camstack/nx-plugin:addon` templates, plus a vite.config.ts
+ * Aligned with `@dominevo/nx-plugin:addon` templates, plus a vite.config.ts
  * entries map (the silent miss the Nx generator historically omitted).
  */
 export function scaffoldAddon(options: ScaffoldAddonOptions): ScaffoldAddonResult {
@@ -127,7 +127,7 @@ export function scaffoldAddon(options: ScaffoldAddonOptions): ScaffoldAddonResul
   const directory = options.directory ?? 'packages'
   const projectRoot = path.join(options.workspaceRoot, directory, `addon-${fileName}`)
   const displayName = options.displayName ?? className
-  const description = options.description ?? `${displayName} — CamStack addon.`
+  const description = options.description ?? `${displayName} — Dominevo addon.`
   const kind = options.kind ?? 'empty'
 
   if (fs.existsSync(projectRoot) && !options.dryRun) {
@@ -191,7 +191,7 @@ export function scaffoldAddon(options: ScaffoldAddonOptions): ScaffoldAddonResul
         '- Never import another addon; use `ctx.api`.',
         '- Declare capabilities by name in `package.json` → `camstack.addons[].capabilities`.',
         '- After any `*.cap.ts` change: `npm run codegen`.',
-        '- Deploy before expecting logs: `camstack deploy packages/addon-' + fileName + '`.',
+        '- Deploy before expecting logs: `dominevo deploy packages/addon-' + fileName + '`.',
         '',
       ].join('\n'),
     })
@@ -222,18 +222,18 @@ export function scaffoldAddon(options: ScaffoldAddonOptions): ScaffoldAddonResul
     nextSteps: [
       `cd ${path.relative(options.workspaceRoot, projectRoot)}`,
       'Implement providers in onInitialize and declare caps in package.json',
-      'npm run build -w @camstack/addon-' + fileName,
+      'npm run build -w @dominevo/addon-' + fileName,
       'npx tsx scripts/check-addon-entries.ts',
-      'camstack deploy packages/addon-' + fileName,
+      'dominevo deploy packages/addon-' + fileName,
       ...(example
         ? [`Study example: ${example.packageDir}`]
-        : [`camstack develop find-example <topic>`]),
+        : [`dominevo develop find-example <topic>`]),
     ],
   }
 }
 
 const PACKAGE_JSON = `{
-  "name": "@camstack/addon-<%= fileName %>",
+  "name": "@dominevo/addon-<%= fileName %>",
   "version": "0.1.0",
   "description": "<%= description %>",
   "keywords": [
@@ -278,13 +278,13 @@ const PACKAGE_JSON = `{
     "test": "vitest run"
   },
   "peerDependencies": {
-    "@camstack/types": "*"
+    "@dominevo/types": "*"
   },
   "dependencies": {
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@camstack/types": "*",
+    "@dominevo/types": "*",
     "typescript": "~6.0.3",
     "vite": "^8.0.11",
     "vitest": "^3.0.0"
@@ -355,13 +355,13 @@ const ADDON_TS = `/**
  * but does nothing until you wire it up.
  *
  * Common next steps:
- *   1. Pick capabilities (\`camstack develop list-caps\` / \`find-example\`).
+ *   1. Pick capabilities (\`dominevo develop list-caps\` / \`find-example\`).
  *   2. Implement a provider conforming to the cap's \`InferProvider\`.
  *   3. Return them from \`onInitialize\` and declare names in
  *      \`package.json\` → \`camstack.addons[0].capabilities\`.
- *   4. \`camstack deploy packages/addon-<%= fileName %>\`.
+ *   4. \`dominevo deploy packages/addon-<%= fileName %>\`.
  */
-import { BaseAddon, type ProviderRegistration } from '@camstack/types'
+import { BaseAddon, type ProviderRegistration } from '@dominevo/types'
 
 // An addon has no settings page of its own (D1007). What an operator
 // configures is an integration INSTANCE (scaffold kind device-integration,

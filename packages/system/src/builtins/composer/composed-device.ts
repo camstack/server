@@ -53,7 +53,7 @@ import {
   type ReadingQuantity,
   switchCapability,
   valveCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import type { ComposedWriteTarget, WriteOutcome } from './composition-runtime.js'
 import type { SlicePatch } from './slice-assembler.js'

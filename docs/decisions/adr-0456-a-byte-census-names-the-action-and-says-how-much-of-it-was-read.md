@@ -87,7 +87,7 @@ mixes the two measures nothing.
 And on the main thread the top cost is not the UDS plane either: **20.8 % of
 busy is one `_write`** — `Buffer.concat([this.buf, chunk])` plus
 `Buffer.from(packet)` in Moleculer's TCP transporter `Parser`
-(`@camstack/system/dist/index.js:78909`, reached through `Readable.pipe`), which
+(`@dominevo/system/dist/index.js:78909`, reached through `Readable.pipe`), which
 re-copies a packet's whole remainder on every chunk that leaves a partial. It is
 quadratic in the chunk count of a large cross-node message, it is the
 **cross-node mesh and not the UDS plane**, and nothing in 1.2.270 touched it.

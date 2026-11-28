@@ -2,7 +2,7 @@ import type {
   AudioAnalysisSettings,
   ConfigUISchemaWithValues,
   IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { AudioDeviceAttachments } from '../../audio-analyzer/audio-device-attachments.js'
 import type { AudioBackend, IAudioPipeline } from '../../audio-analyzer/audio-pipeline.js'
 import { AudioAnalyzerProvider } from '../../audio-analyzer/addons/analyzer/index.js'

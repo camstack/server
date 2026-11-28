@@ -11,13 +11,13 @@ mistakes, has a model (and then the operator) look at them, and writes only the
 confirmed ones into the re-training set with the right boxes.
 
 It is the MCP tools `track_review_triage`, `track_review_frame`,
-`track_review_plan`, `track_review_apply` of `@camstack/mcp-develop`. Without the
+`track_review_plan`, `track_review_apply` of `@dominevo/mcp-develop`. Without the
 MCP, the same hub methods can be called by hand; the order below still holds.
 
 ## 0. Configure the MCP
 
-The credential is the `camstack login` session, and only that: log in once
-(`camstack login <host>`), see the `hub-access` skill. The server reads two
+The credential is the `dominevo login` session, and only that: log in once
+(`dominevo login <host>`), see the `hub-access` skill. The server reads two
 optional environment variables, both addresses or paths and never a secret.
 
 | Variable | Meaning |
@@ -32,7 +32,7 @@ up front, before any hub call, when the credential is not admin. Tokens are neve
 
 ```json
 { "mcpServers": { "camstack-develop": {
-  "command": "npx", "args": ["@camstack/mcp-develop"],
+  "command": "npx", "args": ["@dominevo/mcp-develop"],
   "env": { "CAMSTACK_HUB_URL": "https://hub.local:4443",
            "CAMSTACK_HUB_CA_FILE": "/home/me/.camstack/hub-ca.pem" } } } }
 ```

@@ -3,7 +3,7 @@ import {
   type RecordKindHandle,
   RecordSecretUnavailableError,
   type RecordsAccess,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { hasUnresolvedCredential } from './waste-secrets.js'
 import {
   type plainWasteSourceKind,

@@ -3,7 +3,7 @@
  * rule, and nowhere else. A track-end rule fires at close and already carries
  * the name; a parcel, a sound, a sensor, an occupancy rule and a system rule
  * have no subject to promote and no tile per subject. {@link ruleGroupingApplies}
- * (`@camstack/types`) is the one predicate the editors and this guard read.
+ * (`@dominevo/types`) is the one predicate the editors and this guard read.
  *
  * A NEW or UPDATED rule that carries `groupingSec` without it is refused,
  * loudly, on both save routes — the cap provider
@@ -42,7 +42,7 @@ import {
   type NcRulePatch,
   ruleGroupingApplies,
   ruleKindOf,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { satisfies } from './confirm-gate.js'
 import {
   mergedFamilySubject,

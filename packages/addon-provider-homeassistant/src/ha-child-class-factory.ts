@@ -1,4 +1,4 @@
-import type { IDevice, DeviceContext } from '@camstack/types'
+import type { IDevice, DeviceContext } from '@dominevo/types'
 import { HaButtonDevice } from './devices/ha-button-device.js'
 import { HaUpdateDevice } from './devices/ha-update-device.js'
 import { HaSwitchDevice } from './devices/ha-switch-device.js'

@@ -4,7 +4,7 @@
  *
  * A pure factory (no addon references), fully unit-testable with lightweight
  * IncomingMessage/ServerResponse stubs — mirrors `createEventMediaHandler` in
- * `@camstack/addon-post-analysis`. The only difference from event media: a
+ * `@dominevo/addon-post-analysis`. The only difference from event media: a
  * snapshot is a LIVING frame, not a write-once thumbnail, so the response uses a
  * short `private, max-age=<device maxAgeS>` + ETag revalidation instead of
  * `immutable`. The ETag `"<deviceId>-<capturedAt>"` matches the cache-only
@@ -14,7 +14,7 @@
  * (the `.jpg` suffix is optional; `?streamId=` and `?force=1` are honoured).
  */
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import type { DataPlaneHandler } from '@camstack/types'
+import type { DataPlaneHandler } from '@dominevo/types'
 
 /** A renderable snapshot frame resolved for one device. */
 export interface SnapshotMedia {

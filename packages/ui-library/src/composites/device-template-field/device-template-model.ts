@@ -1,10 +1,10 @@
-import { holdVarSlots, templateCapKey } from '@camstack/types'
+import { holdVarSlots, templateCapKey } from '@dominevo/types'
 import {
   type DeviceTemplateCatalogueEntry,
   DEVICE_TEMPLATE_CATALOGUE,
   type DeviceTemplateParam,
   deviceTemplateParamChoices,
-} from '@camstack/types/device-template-catalogue'
+} from '@dominevo/types/device-template-catalogue'
 
 /** What a field of the text may hold: the declared value kind of the place the template feeds. */
 export type DeviceTemplateAccepts = 'number' | 'string' | 'boolean' | 'any'

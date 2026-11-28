@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { type AppFlowPurpose, SSO_STATE_COOKIE } from '@camstack/types'
+import { type AppFlowPurpose, SSO_STATE_COOKIE } from '@dominevo/types'
 import Fastify, { type FastifyInstance } from 'fastify'
 import { afterEach, describe, expect, it } from 'vitest'
 import { createAuthRouter } from '../../api/core/auth.router.js'
@@ -226,7 +226,7 @@ describe('/api/auth/sso/finish-app (D858)', () => {
     })
     expect(page.statusCode).toBe(200)
     expect(page.body).toContain('<html lang="it">')
-    expect(page.body).toContain('Accedere all&#39;app CamStack?')
+    expect(page.body).toContain('Accedere all&#39;app Dominevo?')
     expect(page.body).toContain('<strong>alice</strong>')
   })
 
@@ -240,7 +240,7 @@ describe('/api/auth/sso/finish-app (D858)', () => {
       headers: { cookie: cookie ?? '' },
     })
     expect(page.statusCode).toBe(200)
-    expect(page.body).toContain('Sign in the CamStack app?')
+    expect(page.body).toContain('Sign in the Dominevo app?')
     expect(page.body).toContain('<strong>alice</strong>')
     expect(String(page.headers['content-security-policy'])).toContain("default-src 'none'")
     expect(s.handoffs.pendingCount).toBe(0)
@@ -404,7 +404,7 @@ describe('/api/auth/sso/finish-app (D858)', () => {
   it('a signed redirect outside the allow-list is never followed', async () => {
     const s = boot()
     const res = await finishApp(s, bridge(s, { app: { redirect: 'https://evil.example/cb' } }))
-    expect(String(res.headers.location)).toBe('camstack://auth-callback?error=not-app-flow')
+    expect(String(res.headers.location)).toBe('dominevo://auth-callback?error=not-app-flow')
     expect(s.handoffs.pendingCount).toBe(0)
   })
 
@@ -439,16 +439,16 @@ describe('/api/auth/sso/finish-app (D858)', () => {
   it('a forged or missing bridge answers at the default callback', async () => {
     const s = boot()
     expect(String((await finishApp(s, 'forged')).headers.location)).toBe(
-      'camstack://auth-callback?error=invalid-bridge',
+      'dominevo://auth-callback?error=invalid-bridge',
     )
     const none = await s.fastify.inject({ method: 'GET', url: '/api/auth/sso/finish-app' })
-    expect(String(none.headers.location)).toBe('camstack://auth-callback?error=invalid-bridge')
+    expect(String(none.headers.location)).toBe('dominevo://auth-callback?error=invalid-bridge')
   })
 
   it('a web bridge (no app claim) is not an app login; a link bridge never is one', async () => {
     const s = boot()
     expect(String((await finishApp(s, bridge(s, { app: null }))).headers.location)).toBe(
-      'camstack://auth-callback?error=not-app-flow',
+      'dominevo://auth-callback?error=not-app-flow',
     )
     const link = await finishApp(s, bridge(s, { linkIntent: 'abcdefghijklmnopqrstuvwx' }))
     expect(String(link.headers.location)).toContain('error=link-not-supported')
@@ -458,7 +458,7 @@ describe('/api/auth/sso/finish-app (D858)', () => {
   it('a non-login bridge of the same signer (oauth account link) is refused', async () => {
     const s = boot()
     const res = await finishApp(s, bridge(s, { provider: 'oauth-code' }))
-    expect(String(res.headers.location)).toBe('camstack://auth-callback?error=not-app-flow')
+    expect(String(res.headers.location)).toBe('dominevo://auth-callback?error=not-app-flow')
   })
 
   it('a user who owes a second factor gets an error redirect, not a code', async () => {

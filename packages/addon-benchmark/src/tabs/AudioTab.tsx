@@ -4,9 +4,9 @@ import type {
   PipelineAddonSchema,
   PipelineSchema,
   ScoredLabel,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import type { AddonPageProps } from '@camstack/ui-library'
+import type { AddonPageProps } from '@dominevo/ui-library'
 import {
   AudioWaveform,
   ImageSelector,
@@ -16,7 +16,7 @@ import {
   Button,
   Slider,
   Select,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { buildAudioRunInput, selectAudioDebug } from '../audio-payloads.js'
 import { Trans, useT } from '../i18n/index.js'
 
@@ -273,7 +273,7 @@ export function AudioTab({
    * classification of a different one.
    *
    * The button still exists because `ImageSelectorProps.onUpload` is
-   * required by the shipped `@camstack/ui-library`; making it optional is a
+   * required by the shipped `@dominevo/ui-library`; making it optional is a
    * framework change, and this page consumes the HOST's ui-library
    * (`import: false`). So the handler explains itself and changes nothing
    * else: the previously selected reference file stays selected and stays

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Info, ExternalLink, Check, Cpu } from 'lucide-react'
-import { buildModelVariantGroups } from '@camstack/types'
-import { GroupedModelSelector, Button, Input } from '@camstack/ui-library'
+import { buildModelVariantGroups } from '@dominevo/types'
+import { GroupedModelSelector, Button, Input } from '@dominevo/ui-library'
 import type { ConfigModelSelectorField, ModelCatalogEntry } from '../../types/config-ui'
 import { useTranslation } from 'react-i18next'
 

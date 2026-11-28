@@ -131,7 +131,7 @@ async function callRegisterNodeWithRetry(
   }
 }
 
-/** The hub's `@camstack/server` version off a `$hub.registerNode` ack; null when it did not say. */
+/** The hub's `@dominevo/server` version off a `$hub.registerNode` ack; null when it did not say. */
 function hubServerVersionOf(ack: unknown): string | null {
   if (typeof ack !== 'object' || ack === null) return null
   const version: unknown = Reflect.get(ack, 'hubServerVersion')

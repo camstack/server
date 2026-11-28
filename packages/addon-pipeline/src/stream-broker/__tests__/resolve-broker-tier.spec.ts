@@ -12,7 +12,7 @@
  */
 import { describe, it, expect } from 'vitest'
 import { resolveBrokerTier } from '../stream-broker/stream-broker-manager.js'
-import type { CamProfile } from '@camstack/types'
+import type { CamProfile } from '@dominevo/types'
 
 describe('resolveBrokerTier', () => {
   const alwaysNullLocal = (): CamProfile | null => null

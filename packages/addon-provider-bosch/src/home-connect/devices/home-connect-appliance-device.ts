@@ -6,7 +6,7 @@ import {
   DeviceType,
   errMsg,
   type IDevice,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { homeConnectDishwasherEntityName } from '../home-connect-discovery.js'
 import { legacyChildBindings } from '../home-connect-child-bindings.js'
 import { parsePersistedBindings } from '../home-connect-child-reconciler.js'

@@ -1,4 +1,4 @@
-import type { CamProfile } from '@camstack/types'
+import type { CamProfile } from '@dominevo/types'
 
 export function isDerivedBrokerId(brokerId: string): boolean {
   const slash = brokerId.indexOf('/')

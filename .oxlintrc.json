@@ -39,8 +39,8 @@
           {
             "patterns": [
               {
-                "group": ["@camstack/*"],
-                "message": "@camstack/types must not import from other @camstack packages"
+                "group": ["@dominevo/*"],
+                "message": "@dominevo/types must not import from other @dominevo packages"
               }
             ]
           }
@@ -55,16 +55,16 @@
           {
             "patterns": [
               {
-                "group": ["@camstack/addon-*"],
-                "message": "@camstack/sdk must not import from addon packages"
+                "group": ["@dominevo/addon-*"],
+                "message": "@dominevo/sdk must not import from addon packages"
               },
               {
-                "group": ["@camstack/core"],
-                "message": "@camstack/sdk must not import from @camstack/core"
+                "group": ["@dominevo/core"],
+                "message": "@dominevo/sdk must not import from @dominevo/core"
               },
               {
-                "group": ["@camstack/lib-*"],
-                "message": "@camstack/sdk must not import from lib packages"
+                "group": ["@dominevo/lib-*"],
+                "message": "@dominevo/sdk must not import from lib packages"
               }
             ]
           }
@@ -79,16 +79,16 @@
           {
             "patterns": [
               {
-                "group": ["@camstack/addon-*"],
+                "group": ["@dominevo/addon-*"],
                 "message": "lib packages must not import from addon packages"
               },
               {
-                "group": ["@camstack/core"],
-                "message": "lib packages must not import from @camstack/core"
+                "group": ["@dominevo/core"],
+                "message": "lib packages must not import from @dominevo/core"
               },
               {
-                "group": ["@camstack/sdk"],
-                "message": "lib packages must not import from @camstack/sdk"
+                "group": ["@dominevo/sdk"],
+                "message": "lib packages must not import from @dominevo/sdk"
               }
             ]
           }
@@ -103,15 +103,15 @@
           {
             "patterns": [
               {
-                "group": ["@camstack/addon-*"],
-                "message": "Server must not import from addon packages. Use @camstack/types for interfaces."
+                "group": ["@dominevo/addon-*"],
+                "message": "Server must not import from addon packages. Use @dominevo/types for interfaces."
               },
               {
-                "group": ["@camstack/lib-*"],
-                "message": "Server must not import from lib packages. Use @camstack/types for interfaces."
+                "group": ["@dominevo/lib-*"],
+                "message": "Server must not import from lib packages. Use @dominevo/types for interfaces."
               },
               {
-                "group": ["@camstack/sdk"],
+                "group": ["@dominevo/sdk"],
                 "message": "Server must not import from SDK"
               }
             ]
@@ -127,20 +127,20 @@
           {
             "patterns": [
               {
-                "group": ["@camstack/core", "@camstack/core/*"],
-                "message": "Addons must not import from @camstack/core. Use ctx.deps, ctx.models, ctx.api, or other AddonContext fields instead."
+                "group": ["@dominevo/core", "@dominevo/core/*"],
+                "message": "Addons must not import from @dominevo/core. Use ctx.deps, ctx.models, ctx.api, or other AddonContext fields instead."
               },
               {
-                "group": ["@camstack/kernel", "@camstack/kernel/*"],
-                "message": "Addons must not import from @camstack/kernel. Use AddonContext interfaces from @camstack/types."
+                "group": ["@dominevo/kernel", "@dominevo/kernel/*"],
+                "message": "Addons must not import from @dominevo/kernel. Use AddonContext interfaces from @dominevo/types."
               },
               {
-                "group": ["@camstack/sdk", "@camstack/sdk/*"],
-                "message": "Addons must not import from @camstack/sdk. Use ctx.api for server communication."
+                "group": ["@dominevo/sdk", "@dominevo/sdk/*"],
+                "message": "Addons must not import from @dominevo/sdk. Use ctx.api for server communication."
               },
               {
-                "group": ["@camstack/addon-*"],
-                "message": "Addons must not import from other addon packages. Use shared interfaces from @camstack/types."
+                "group": ["@dominevo/addon-*"],
+                "message": "Addons must not import from other addon packages. Use shared interfaces from @dominevo/types."
               }
             ]
           }
@@ -155,20 +155,20 @@
           {
             "patterns": [
               {
-                "group": ["@camstack/core", "@camstack/core/*"],
-                "message": "Admin UI must not import from @camstack/core."
+                "group": ["@dominevo/core", "@dominevo/core/*"],
+                "message": "Admin UI must not import from @dominevo/core."
               },
               {
-                "group": ["@camstack/kernel", "@camstack/kernel/*"],
-                "message": "Admin UI must not import from @camstack/kernel."
+                "group": ["@dominevo/kernel", "@dominevo/kernel/*"],
+                "message": "Admin UI must not import from @dominevo/kernel."
               },
               {
-                "group": ["@camstack/addon-*"],
+                "group": ["@dominevo/addon-*"],
                 "message": "Admin UI must not import from other addon packages."
               },
               {
                 "group": ["**/trpc", "**/trpc.ts", "**/trpc.js"],
-                "message": "Use canonical hooks from @camstack/ui-library (useXMethod) or `useSystem().trpcClient` for imperative reads. Direct `trpc` imports are reserved for App.tsx + trpc.ts."
+                "message": "Use canonical hooks from @dominevo/ui-library (useXMethod) or `useSystem().trpcClient` for imperative reads. Direct `trpc` imports are reserved for App.tsx + trpc.ts."
               }
             ]
           }
@@ -187,15 +187,15 @@
           {
             "patterns": [
               {
-                "group": ["@camstack/core", "@camstack/core/*"],
-                "message": "Admin UI must not import from @camstack/core."
+                "group": ["@dominevo/core", "@dominevo/core/*"],
+                "message": "Admin UI must not import from @dominevo/core."
               },
               {
-                "group": ["@camstack/kernel", "@camstack/kernel/*"],
-                "message": "Admin UI must not import from @camstack/kernel."
+                "group": ["@dominevo/kernel", "@dominevo/kernel/*"],
+                "message": "Admin UI must not import from @dominevo/kernel."
               },
               {
-                "group": ["@camstack/addon-*"],
+                "group": ["@dominevo/addon-*"],
                 "message": "Admin UI must not import from other addon packages."
               }
             ]

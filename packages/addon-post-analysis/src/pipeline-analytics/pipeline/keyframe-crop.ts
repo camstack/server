@@ -38,7 +38,7 @@
  * Pure factory: all IO is injected so the guard + crop contract is unit-tested
  * in isolation from the addon boot closure.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { padBbox } from './bbox-pad.js'
 import { type SubjectPathSample, subjectAgreement } from './subject-agreement.js'
 

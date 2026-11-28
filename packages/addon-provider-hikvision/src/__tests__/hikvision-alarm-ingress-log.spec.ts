@@ -2,7 +2,7 @@
  * The motion-bearing alarm ingress is logged by BURST STATE, not per tick:
  * a start line, at most one summary per interval with counts, and an end line.
  */
-import type { IScopedLogger, LogExtras } from '@camstack/types'
+import type { IScopedLogger, LogExtras } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   ALARM_INGRESS_MESSAGE,

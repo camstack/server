@@ -1,7 +1,7 @@
-import { useClusterTopology } from '@camstack/ui-library'
+import { useClusterTopology } from '@dominevo/ui-library'
 import { formatBytes } from '../../lib/format-size'
 import { Trans, useTranslation } from 'react-i18next'
-import { formatNumeric } from '@camstack/ui-library'
+import { formatNumeric } from '@dominevo/ui-library'
 
 interface ProcessEntry {
   id: string

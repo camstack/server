@@ -1,10 +1,10 @@
-# CamStack Develop
+# Dominevo Develop
 
-CamStack developer tooling — catalogue, scaffold, validate, and example lookup shared by the CLI and MCP server.
+Dominevo developer tooling — catalogue, scaffold, validate, and example lookup shared by the CLI and MCP server.
 
 <!-- readme:generated:start (derived from the manifest; edit outside this block) -->
 
-Package `@camstack/develop` on npm.
+Package `@dominevo/develop` on npm.
 
 ## Requirements
 

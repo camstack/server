@@ -13,7 +13,7 @@
  *  - OpenVINO device list excludes 'npu' when no Intel NPU is present.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { DetectionPipelineProvider } from '../provider.js'
 import type { RuntimeEnv } from '../runtimes.js'

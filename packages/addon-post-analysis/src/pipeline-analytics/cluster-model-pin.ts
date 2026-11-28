@@ -34,7 +34,7 @@ import {
   type ClusterStepModels,
   readClusterStepModels,
   DEFAULT_CLUSTER_STEP_MODELS,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** The addon whose cluster-scoped settings hold the cluster row (D986 §7). */
 export const CLUSTER_MODEL_OWNER_ADDON_ID = 'pipeline-orchestrator'

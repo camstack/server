@@ -3,8 +3,8 @@
  * that target's own panel of the rule editor (`NotificationRuleTargetSettings`,
  * #487) — never written onto every selected target at once.
  */
-import type { DeliveryParam, DeliveryParamValue } from '@camstack/types'
-import { Input, Select, Switch } from '@camstack/ui-library'
+import type { DeliveryParam, DeliveryParamValue } from '@dominevo/types'
+import { Input, Select, Switch } from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 
 export interface ParamControlProps {

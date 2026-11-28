@@ -18,7 +18,7 @@
  */
 import type { SegmentRow } from '../../types.js'
 import { describe, expect, it, vi } from 'vitest'
-import { type IScopedLogger, resolveLocationMode } from '@camstack/types'
+import { type IScopedLogger, resolveLocationMode } from '@dominevo/types'
 import { RecordingIndex } from '../../recording-index.js'
 import type { SegmentStore } from '../../segment-store.js'
 import type { RecordingConfigsState } from '../config-store.js'

@@ -39,7 +39,7 @@ interface EmitterSlice {
 const slice = vi.hoisted(() => ({ current: undefined as EmitterSlice | undefined }))
 const refresh = vi.hoisted(() => vi.fn(async () => undefined))
 
-vi.mock('@camstack/ui-library', () => ({
+vi.mock('@dominevo/ui-library', () => ({
   useSystem: () => ({ trpcClient: {} }),
   useDeviceProxy: () => ({ state: { eventEmitter: { refresh } } }),
   useDeviceStateSlice: () => slice.current,

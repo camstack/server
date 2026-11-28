@@ -21,7 +21,7 @@
  * is the honest consequence. It only makes the refusal legible, so the next
  * reader sees a contract being enforced instead of a null-pointer crash.
  */
-import type { CapCaller } from '@camstack/types'
+import type { CapCaller } from '@dominevo/types'
 
 export function requireCapCaller(method: string, caller: CapCaller | undefined): CapCaller {
   if (caller === undefined || typeof caller.userId !== 'string' || caller.userId.length === 0) {

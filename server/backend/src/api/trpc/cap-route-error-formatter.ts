@@ -13,7 +13,7 @@
  *
  * The formatter is EXPORTED for unit testing (no side-effects, pure function).
  */
-import { CapRouteError, getCatalogRegistry, SERVER_NAMESPACE } from '@camstack/server/system'
+import { CapRouteError, getCatalogRegistry, SERVER_NAMESPACE } from '@dominevo/server/system'
 import {
   DEFAULT_CATALOG_LANG,
   FORBIDDEN_MESSAGE_PREFIX,
@@ -21,8 +21,8 @@ import {
   readErrorI18n,
   type CatalogLang,
   type ErrorI18nPayload,
-} from '@camstack/types'
-import type { RejectedRoute } from '@camstack/server/system'
+} from '@dominevo/types'
+import type { RejectedRoute } from '@dominevo/server/system'
 import type { TRPCError } from '@trpc/server'
 import type { DefaultErrorShape } from '@trpc/server/unstable-core-do-not-import'
 

@@ -234,7 +234,7 @@ entry condition, not an opinion.**
 | 5b | `--max-old-space-size` of the **recorder** | stage 3 in production **and** `heapUsed` flat with respect to the archive size over at least 7 days with the array attached, **and** steady-state `loopMax` under 200 ms | the ceiling stays and the retained set is hunted with a snapshot |
 | 5c | `rssBudget` of the recorder | as 5b: a budget on a process that cannot grow has no job | same |
 | 5d | `MALLOC_ARENA_MAX` | after 5b/5c, and only if the steady-state RSS is within twice `heapUsed`. It is last because it is the one that matters least: it changes **whether** the allocator returns already-free pages, not how many we ask for | it is left, documenting that it is cosmetics on the RSS |
-| 5e | budget and ceiling of **hub-main** | the telemetry must be **shipped and read** (`@camstack/server` train), then what allocates must be identified. Today hub-main goes 2.5 → 3.1 GB in 42 minutes and the composition is not measured | nothing is touched: without a measurement, removing hub-main's ceiling is removing the fuse from the process that mediates every call |
+| 5e | budget and ceiling of **hub-main** | the telemetry must be **shipped and read** (`@dominevo/server` train), then what allocates must be identified. Today hub-main goes 2.5 → 3.1 GB in 42 minutes and the composition is not measured | nothing is touched: without a measurement, removing hub-main's ceiling is removing the fuse from the process that mediates every call |
 
 **Note on reading `cpuGcPercent`.** A 2026-08-29 sample reads
 hub-main at `cpu=139` and `gc=246.8` — GC higher than the total, so the

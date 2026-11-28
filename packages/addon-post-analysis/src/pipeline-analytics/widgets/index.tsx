@@ -10,7 +10,7 @@
  * mounting goes through `<WidgetSlot widgetId="pipeline-analytics/<id>"
  * deviceId={…}/>` instead.
  */
-import type { WidgetProps } from '@camstack/ui-library'
+import type { WidgetProps } from '@dominevo/ui-library'
 import { AudioHistoryChart } from './AudioHistoryChart'
 import { AudioMetricsPanel } from './AudioMetricsPanel'
 import { OccupancyHistoryChart } from './OccupancyHistoryChart'

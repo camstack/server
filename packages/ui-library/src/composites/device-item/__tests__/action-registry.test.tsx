@@ -10,7 +10,7 @@
  * live value via `SensorValueAtom` directly in `DeviceItemActions`.
  */
 import { describe, it, expect } from 'vitest'
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import { DEVICE_TYPE_CONTROL, resolveDeviceControl } from '../../device-controls/control-registry'
 import { CoverInlineControl } from '../../device-controls/cover-inline'
 import { DummyInline } from '../../device-controls/dummy-hero-card'

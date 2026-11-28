@@ -8,7 +8,7 @@
  */
 import { WashingMachine } from 'lucide-react'
 import type { ReactNode } from 'react'
-import type { RunningStateStatus } from '@camstack/types'
+import type { RunningStateStatus } from '@dominevo/types'
 import { useDeviceState } from '../../hooks/use-device-proxy'
 import { RunningBadge } from '../running-badge'
 import type { DeviceControlProps } from './control-registry'

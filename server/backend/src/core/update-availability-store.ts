@@ -14,8 +14,8 @@
  */
 import * as fs from 'node:fs'
 import * as path from 'node:path'
-import type { IScopedLogger } from '@camstack/types'
-import { errMsg } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
 import type { UpdateAvailablePayload } from './update-availability-emitter.js'
 
 /** The emitter's two maps, in a JSON-round-trippable shape. */

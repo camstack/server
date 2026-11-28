@@ -12,8 +12,8 @@ import {
   NC_ALARM_DELAY_MAX_SEC,
   NC_ALARM_TRIGGERED_MAX_SEC,
   type NcAlarmDelayField,
-} from '@camstack/types'
-import { DurationInput, FormField } from '@camstack/ui-library'
+} from '@dominevo/types'
+import { DurationInput, FormField } from '@dominevo/ui-library'
 import { type ReactNode, useState } from 'react'
 import { delayLabel } from './notification-alarm.helpers'
 import i18n from '../../i18n/index'

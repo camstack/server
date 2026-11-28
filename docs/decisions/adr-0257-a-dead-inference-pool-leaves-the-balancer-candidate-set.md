@@ -102,7 +102,7 @@ REFUSED by its executor` line.
   `engine-factory-single-flight.spec.ts` asserted is now refused by name; the
   rebuild happens after 500 ms. That test was updated, not deleted.
 - The exclusion is a cap change, so it only reaches a node through a published
-  `@camstack/server` (D16). Until then the operator lever is unchanged and
+  `@dominevo/server` (D16). Until then the operator lever is unchanged and
   immediate: set `enabled: false` on `openvino:gpu` in the hub's
   `inferenceDevices`, which drops it from the same eligible set by the
   `disabled` reason. That is a zero-code fix and it stops the rotation today.

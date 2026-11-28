@@ -24,7 +24,7 @@
  * really have been.
  */
 
-import type { NotificationAction } from '@camstack/types'
+import type { NotificationAction } from '@dominevo/types'
 import { toRetrainClassTiers } from '../pipeline-analytics/retrain/retrain-pipeline-boxes.js'
 import type { NcVerdictValue } from './action-token.js'
 

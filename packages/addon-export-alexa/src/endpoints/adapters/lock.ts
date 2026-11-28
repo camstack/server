@@ -1,4 +1,4 @@
-import { LockControlStatusSchema } from '@camstack/types'
+import { LockControlStatusSchema } from '@dominevo/types'
 import { alexaLockStateFor, handleLock } from '../../handlers/lock-controller.js'
 import { iface, unshaped } from './shared.js'
 import type { GenericAdapter } from './types.js'

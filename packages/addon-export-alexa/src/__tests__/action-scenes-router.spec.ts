@@ -10,7 +10,7 @@ import {
   type IScopedLogger,
   instanceApiOverTargets,
   type TokenScope,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { AlexaAccessGate, type AlexaUserGrant } from '../access/access-gate.js'
 import { ActionSceneExports, actionEndpointId } from '../action-scenes.js'

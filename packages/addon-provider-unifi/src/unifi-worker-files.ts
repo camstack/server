@@ -8,7 +8,7 @@ import * as fs from 'node:fs/promises'
 import * as os from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { restrictDirToOwnerSync, writeOwnerOnlyFileSync } from '@camstack/types/node'
+import { restrictDirToOwnerSync, writeOwnerOnlyFileSync } from '@dominevo/types/node'
 
 const WORKER = 'unifi_worker.py'
 

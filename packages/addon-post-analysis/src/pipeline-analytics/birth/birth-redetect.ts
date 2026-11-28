@@ -3,7 +3,7 @@
  * (D925). Moved out of `pipeline-analytics/index.ts` verbatim (Plan B,
  * extraction 5): the re-detect became a function of the addon context.
  */
-import { type AddonContext, nodePin } from '@camstack/types'
+import { type AddonContext, nodePin } from '@dominevo/types'
 import type { CaptureCropBbox } from '../pipeline/capture-crop.js'
 import type { RedetectAnswer } from '../confirmation-gate.js'
 import {

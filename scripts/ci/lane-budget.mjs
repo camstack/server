@@ -24,14 +24,14 @@ import { pathToFileURL } from 'node:url'
  * work.
  */
 export const HEAVY_WEIGHT_SECONDS = {
-  '@camstack/addon-admin-ui': 1008,
-  '@camstack/server-framework': 483,
-  '@camstack/addon-post-analysis': 446,
-  '@camstack/ui-library': 299,
-  '@camstack/addon-pipeline': 265,
-  '@camstack/server': 221,
-  '@camstack/types': 61,
-  '@camstack/addon-pipeline-orchestrator': 55,
+  '@dominevo/addon-admin-ui': 1008,
+  '@dominevo/server-framework': 483,
+  '@dominevo/addon-post-analysis': 446,
+  '@dominevo/ui-library': 299,
+  '@dominevo/addon-pipeline': 265,
+  '@dominevo/server': 221,
+  '@dominevo/types': 61,
+  '@dominevo/addon-pipeline-orchestrator': 55,
 }
 
 /**

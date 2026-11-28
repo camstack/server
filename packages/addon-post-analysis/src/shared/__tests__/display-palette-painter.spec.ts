@@ -1,9 +1,9 @@
 /**
  * An unknown palette read is logged once and does not become the stored
- * default (D939). Painting continues with the bundled CamStack preset.
+ * default (D939). Painting continues with the bundled Dominevo preset.
  */
-import type { IScopedLogger } from '@camstack/types'
-import { bundledCamstack } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
+import { bundledCamstack } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import { createDisplayPalettePainter } from '../display-palette-painter.js'
@@ -26,7 +26,7 @@ describe('createDisplayPalettePainter', () => {
       loggerOf(warnings),
     )
     await vi.waitFor(() => {
-      expect(warnings).toContain('painting the bundled CamStack preset')
+      expect(warnings).toContain('painting the bundled Dominevo preset')
     })
     expect(painter.paint('person')).toBe('#11a64c')
     expect(warnings).toHaveLength(1)

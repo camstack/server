@@ -1,4 +1,4 @@
-import type { ReadingQuantity } from '@camstack/types'
+import type { ReadingQuantity } from '@dominevo/types'
 import type { ReactElement } from 'react'
 import { useUiText } from '../../../contexts/ui-text'
 import { useUnitPreferences } from '../../../contexts/unit-preferences'

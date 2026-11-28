@@ -13,13 +13,13 @@
  * all, and a cold/failing cache still dispatches by doing exactly what the
  * un-cached code did.
  */
-import { CAMERA_TRIGGER } from '@camstack/types'
+import { CAMERA_TRIGGER } from '@dominevo/types'
 import type {
   CameraDetectionConfig,
   IScopedLogger,
   RunnerCameraConfig,
   RunnerLocalLoad,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { RoundRobinInferenceDeviceRotation } from '../device-balancer.js'
 import { BALANCER_INPUT_TTL_MS } from '../session-dispatch-controller.js'

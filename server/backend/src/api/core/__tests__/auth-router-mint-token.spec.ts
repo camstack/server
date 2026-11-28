@@ -19,7 +19,7 @@
  *   - drop the `addon-routes` refusal in `scopesWithin` → alice mints it;
  *   - drop `canTalkOn` in `scopesWithin` → alice mints talk-back.
  */
-import { makeInMemoryRecords, type TokenScope } from '@camstack/types'
+import { makeInMemoryRecords, type TokenScope } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { sessionHarness } from '../../../auth/__tests__/session-test-harness.js'
 import { CredentialTokenService } from '../../../core/auth/credential-token.service.js'

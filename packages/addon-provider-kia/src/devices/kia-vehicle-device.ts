@@ -18,7 +18,7 @@ import {
   resyncCapability,
   resyncThroughAdoption,
   vehicleCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { KiaVehicleHandle } from '../kia-device-handle.js'
 import { kiaConnections } from '../kia-gateway.js'
 import { consumablesStatusOf, locationStatusOf, vehicleStatusOf } from '../kia-domain-mapping.js'

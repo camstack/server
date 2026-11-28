@@ -14,7 +14,7 @@ import {
   moveIntegrationRowsToRecords,
   type RowsIntegration,
   type RowsMigrationLog,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { ReolinkSocketDebugFlagSchema } from '../schema.js'
 import { type ReolinkConnectionBody, reolinkConnectionsEntryKind } from '../reolink-instances.js'
 

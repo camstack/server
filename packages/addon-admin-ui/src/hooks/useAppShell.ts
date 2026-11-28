@@ -6,7 +6,7 @@
  * announces `ready` once, routes a `navigate` message, and reports the current
  * path so the drawer marks the active entry.
  */
-import { useThemeMode } from '@camstack/ui-library'
+import { useThemeMode } from '@dominevo/ui-library'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import {

@@ -10,7 +10,7 @@
  * follow-the-tail; rows that carry a `deviceId` tag render an inline
  * device chip so lines interleaved across cameras stay attributable.
  */
-import { LogStream } from '@camstack/ui-library'
+import { LogStream } from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 
 const RUNNER_ADDON_ID = 'pipeline-runner'

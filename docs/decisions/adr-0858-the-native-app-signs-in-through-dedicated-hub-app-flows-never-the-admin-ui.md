@@ -47,7 +47,7 @@ session or cookie.
 1. **OIDC app flow.** `GET /addon/auth-oidc/<id>/start?app=1&code_challenge=<S256>
    &code_challenge_method=S256&state=<app state>&purpose=new-session|step-up
    [&redirect=camstack.dev://auth-callback]`. All of it is validated before
-   anything is stored (`parseAppFlowRequest` in `@camstack/types`); a refusal is
+   anything is stored (`parseAppFlowRequest` in `@dominevo/types`); a refusal is
    a plain page that says why. The app parameters live in the addon's
    server-side pending state (single use, 5 minute TTL, bound to the D810 state
    cookie hash), are never sent to the IdP, and travel to the hub inside the
@@ -132,7 +132,7 @@ code. A session that just signed in (an SSO return) still mints directly.
    challenge and, with a live IdP session in the system browser, receive a
    `new-session` code silently. Both browser legs (OIDC `finish-app`, passkey
    `finish`) now end at **`/auth/app/confirm`**, a hub-rendered page "Sign in
-   the CamStack app as <username>?" (same CSP discipline as the passkey page:
+   the Dominevo app as <username>?" (same CSP discipline as the passkey page:
    script and style by hash, same-origin only). The finished ceremony parks an
    `AppConfirmations` entry under a one-shot token (120 s, in memory, bounded)
    bound to the browser by an HttpOnly cookie (`camstack_app_confirm`, only its
@@ -162,9 +162,9 @@ the page navigates to) instead of `{ location }` on success.
 
 ## Consequences
 
-- `@camstack/types`, `@camstack/system` (the bridge now carries `app`; a
+- `@dominevo/types`, `@dominevo/system` (the bridge now carries `app`; a
   present-but-malformed claim refuses the token, it is never dropped) and
-  `@camstack/server` ship together; `addon-auth` is redeployed for the OIDC
+  `@dominevo/server` ship together; `addon-auth` is redeployed for the OIDC
   start/callback change. An older addon-auth against a newer hub still works
   for the web flow and reports no app path for OIDC (`app: null`).
 - The D855 browser handoff through the admin-ui login stays for installed
@@ -189,7 +189,7 @@ verified-assertion check fails the ceremony specs.
 
 ### Amendment: the hub pages share one shell
 
-The standalone pages of this flow (passkey, confirmation, refusals) looked like unstyled ad-hoc HTML. They now all render through `server/backend/src/auth/app-page-shell.ts`: the colours, radii, spacing and font stack are generated from the admin theme (`@camstack/ui-library/theme/tokens`, `themeToRootCss`, light default and dark under `prefers-color-scheme`), the card, primary button, cancel link and error line repeat the admin login, and the brand logo is inlined. The one inline stylesheet is hashed into the CSP at module load from the served string, so the hash cannot drift. The OIDC start (an addon, no theme access) no longer renders its own refusal page: it redirects (303) to the hub page `/auth/app/refused?reason=<code>`; only a code travels. The OAuth2 consent screen uses the same shell.
+The standalone pages of this flow (passkey, confirmation, refusals) looked like unstyled ad-hoc HTML. They now all render through `server/backend/src/auth/app-page-shell.ts`: the colours, radii, spacing and font stack are generated from the admin theme (`@dominevo/ui-library/theme/tokens`, `themeToRootCss`, light default and dark under `prefers-color-scheme`), the card, primary button, cancel link and error line repeat the admin login, and the brand logo is inlined. The one inline stylesheet is hashed into the CSP at module load from the served string, so the hash cannot drift. The OIDC start (an addon, no theme access) no longer renders its own refusal page: it redirects (303) to the hub page `/auth/app/refused?reason=<code>`; only a code travels. The OAuth2 consent screen uses the same shell.
 
 ### Amendment: the pages speak English and Italian
 

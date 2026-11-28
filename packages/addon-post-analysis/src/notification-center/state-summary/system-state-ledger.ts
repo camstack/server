@@ -33,7 +33,7 @@
  * "unavailable", never "none" (D49).
  */
 import { isDeepStrictEqual } from 'node:util'
-import type { IScopedLogger, NcSystemEventKind } from '@camstack/types'
+import type { IScopedLogger, NcSystemEventKind } from '@dominevo/types'
 import { BootWindowRows } from '../boot-window-rows.js'
 import { DurableLedger, type DurableLedgerSpec } from '../../durable/durable-ledger.js'
 import { type DurableKindDeps } from '../../durable/durable-wiring.js'

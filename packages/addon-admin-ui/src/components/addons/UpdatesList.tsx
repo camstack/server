@@ -1,7 +1,7 @@
 import { ArrowRight, RotateCcw, Zap } from 'lucide-react'
-import type { AddonUpdateEntry } from '@camstack/types'
+import type { AddonUpdateEntry } from '@dominevo/types'
 import { useTranslation } from 'react-i18next'
-import { Button } from '@camstack/ui-library'
+import { Button } from '@dominevo/ui-library'
 
 export type UpdateEntry = AddonUpdateEntry
 

@@ -231,7 +231,7 @@ plays them with no client change at all. But the repo's only segmenter is the
 recorder's VOD-from-disk (`recorder/playlist.ts`, `#EXT-X-PLAYLIST-TYPE:VOD` +
 `#EXT-X-ENDLIST`), so this would be the first EVENT-type playlist in the
 system, served from a library-owned temp dir, with a TTL cache nothing else in
-CamStack uses — and § 6 already rejected per-clip HLS as *"more server work for
+Dominevo uses — and § 6 already rejected per-clip HLS as *"more server work for
 no user-visible gain"*. Segment duration 4 s also throws away most of the
 latency win.
 

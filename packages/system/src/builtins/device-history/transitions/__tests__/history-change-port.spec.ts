@@ -1,5 +1,5 @@
 /** The derived changes over the REAL device-history runtime (D1084). */
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import { type Harness, makeHarness } from '../../__tests__/support/harness.js'
 import { type CapturedLog, recordingLogger } from '../../__tests__/support/real-door.js'

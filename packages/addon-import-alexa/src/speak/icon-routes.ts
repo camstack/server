@@ -10,7 +10,7 @@
  * purpose: the hub's response compressor returns an empty body for a larger
  * compressible response that crosses the route bridge of a forked addon.
  */
-import type { IAddonHttpRoute } from '@camstack/types'
+import type { IAddonHttpRoute } from '@dominevo/types'
 import { ALEXA_SPEAK_KIND } from './constants.js'
 
 export const ALEXA_ICON_SVG =

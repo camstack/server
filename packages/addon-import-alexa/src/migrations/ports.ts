@@ -3,7 +3,7 @@ import {
   type IntegrationRowsApi,
   type KeychainResolveResult,
   type MigrationApiV1,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { alexaBrokersEntryKind } from '../broker-record-kinds.js'
 import { echoRecordPortsOver } from '../speak/echo-store.js'

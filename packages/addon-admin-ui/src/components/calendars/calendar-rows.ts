@@ -7,7 +7,7 @@
  * from the record it read the calendar from), so the join is the pair (providing addon, record
  * id) and never an id rebuilt from form values.
  */
-import type { CalendarEntry } from '@camstack/types'
+import type { CalendarEntry } from '@dominevo/types'
 import type { HolderData } from '../instances/instances-model'
 
 export interface CalendarInstanceRef {

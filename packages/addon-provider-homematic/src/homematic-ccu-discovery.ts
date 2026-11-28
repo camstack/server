@@ -4,7 +4,7 @@ import {
   type DiscoveryCandidate,
   type DiscoveryHit,
   type DiscoveryMode,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** One CCU found on the LAN. */
 export interface HomematicDiscoveredCcu {

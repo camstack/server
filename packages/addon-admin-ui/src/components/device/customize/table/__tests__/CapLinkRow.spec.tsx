@@ -3,8 +3,8 @@
  * and the confirmed Remove edit the draft through `handle.save`, the pick is the
  * `SourceSelector` device dialog; nothing is written here.
  */
-import type { Composition, CustomizeCapLink } from '@camstack/types'
-import { DeviceType } from '@camstack/types'
+import type { Composition, CustomizeCapLink } from '@dominevo/types'
+import { DeviceType } from '@dominevo/types'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -12,8 +12,8 @@ import '../../../../../i18n'
 
 const confirm = vi.hoisted(() => vi.fn(async (_options: unknown) => true))
 
-vi.mock('@camstack/ui-library', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@camstack/ui-library')>()
+vi.mock('@dominevo/ui-library', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dominevo/ui-library')>()
   return {
     ...actual,
     useConfirm: () => confirm,

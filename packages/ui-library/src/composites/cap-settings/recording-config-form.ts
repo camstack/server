@@ -1,4 +1,4 @@
-import { deriveRecordingMode } from '@camstack/types'
+import { deriveRecordingMode } from '@dominevo/types'
 import type {
   RecordingBand,
   RecordingBandMode,
@@ -7,7 +7,7 @@ import type {
   RecordingTriggers,
   RecordingRetention,
   CamProfile,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** Every weekday — the `days` of a band that covers the whole week. */
 export const ALL_WEEKDAYS: readonly number[] = [0, 1, 2, 3, 4, 5, 6] as const

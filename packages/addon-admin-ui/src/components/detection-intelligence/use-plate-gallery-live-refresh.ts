@@ -13,8 +13,8 @@
  */
 import { useEffect, useRef } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { useLiveEvent } from '@camstack/ui-library'
-import { EventCategory, type PipelineAnalyticsPlateGalleryChangedPayload } from '@camstack/types'
+import { useLiveEvent } from '@dominevo/ui-library'
+import { EventCategory, type PipelineAnalyticsPlateGalleryChangedPayload } from '@dominevo/types'
 import { createDebouncedInvalidate, type DebouncedInvalidate } from './debounced-invalidate.js'
 
 const PLATE_GALLERY_KEY = [['plateGallery']]

@@ -12,7 +12,7 @@ import {
   partitionSuggested,
   type SuggestedPartition,
   sameLocationSuggestions,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import type { Known } from '../known'
 import type { CandidateDevice } from './assignment-candidates'
 

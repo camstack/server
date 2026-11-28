@@ -12,7 +12,7 @@ import {
   encodeVectorBase64,
   type RunStatelessStepInput,
   type RunStatelessStepResult,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { FaceReembedEmbedder } from '../face-reembed-wiring.js'
 import type { FaceReembedOutcome } from '../face-reembed-pass.js'

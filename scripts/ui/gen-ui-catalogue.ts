@@ -1,7 +1,7 @@
 #!/usr/bin/env tsx
 /**
  * Writes the committed UI catalogue `docs/reference/ui-components.json` —
- * every `@camstack/ui-library` export with its props, the viewer's React Native
+ * every `@dominevo/ui-library` export with its props, the viewer's React Native
  * kit (`camstack/src/components/ui`), the need → component table from
  * `docs/ui/need-x-use-y.md`, and the theme's colour tokens.
  *

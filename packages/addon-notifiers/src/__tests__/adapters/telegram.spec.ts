@@ -3,7 +3,7 @@
  * every case asserts the exact url / method / body it emits against a manually
  * constructed `PreparedNotification` — no network, no degrade engine.
  */
-import type { PreparedNotification, RenderedAs, ResolvedLevel } from '@camstack/types'
+import type { PreparedNotification, RenderedAs, ResolvedLevel } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { HttpRequestPlan, MultipartRequestBody, TargetConfig } from '../../adapters/adapter.js'
 import { telegramAdapter } from '../../adapters/telegram.js'

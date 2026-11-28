@@ -2,7 +2,7 @@
  * An alarm rule can never be snoozed, and nobody has to remember to say so.
  */
 
-import type { ActionStep, NcRule } from '@camstack/types'
+import type { ActionStep, NcRule } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { type ActionStepsOf, isSnoozeExempt, type SnoozeExemptRule } from '../snooze-exempt.js'
 

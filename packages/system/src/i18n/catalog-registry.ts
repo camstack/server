@@ -19,16 +19,16 @@ import {
   type CatalogLang,
   type CatalogLookup,
   type TranslationParams,
-} from '@camstack/types'
+} from '@dominevo/types'
 import serverEn from './en.json'
 import serverIt from './it.json'
 
 /** The core namespace: user-facing error texts and core schema labels. */
 export const SERVER_NAMESPACE = 'server'
 
-/** `@camstack/addon-provider-reolink` -> `provider-reolink`; `@camstack/server/system` -> `system`. */
+/** `@dominevo/addon-provider-reolink` -> `provider-reolink`; `@dominevo/server/system` -> `system`. */
 export function catalogNamespaceOf(packageName: string): string {
-  return packageName.replace(/^@camstack\//, '').replace(/^addon-/, '')
+  return packageName.replace(/^@dominevo\//, '').replace(/^addon-/, '')
 }
 
 export type CatalogWarn = (message: string) => void

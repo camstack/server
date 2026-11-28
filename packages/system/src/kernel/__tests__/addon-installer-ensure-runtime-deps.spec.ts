@@ -77,7 +77,7 @@ function writeInstalledAddon(
       camstack: {
         addons: [
           {
-            id: name.replace('@camstack/', ''),
+            id: name.replace('@dominevo/', ''),
             name,
             version: '1.0.0',
             entry: './dist/index.js',
@@ -118,41 +118,41 @@ describe('AddonInstaller.ensureAddonRuntimeDeps', () => {
   })
 
   it('links a restored addon dep from the closure — no npm', async () => {
-    writeInstalledAddon(addonsDir, '@camstack/addon-cam', { werift: '^0.22.9' })
+    writeInstalledAddon(addonsDir, '@dominevo/addon-cam', { werift: '^0.22.9' })
 
     const result = await installer.ensureAddonRuntimeDeps()
 
-    expect(result.linked).toEqual(['@camstack/addon-cam:werift'])
+    expect(result.linked).toEqual(['@dominevo/addon-cam:werift'])
     expect(result.reinstalled).toEqual([])
     expect(result.failed).toEqual([])
     expect(npmMock.calls).toEqual([])
-    const entry = path.join(addonsDir, '@camstack/addon-cam', 'node_modules', 'werift')
+    const entry = path.join(addonsDir, '@dominevo/addon-cam', 'node_modules', 'werift')
     expect(fs.lstatSync(entry).isSymbolicLink()).toBe(true)
   })
 
   it('npm-installs a dep the closure does not provide', async () => {
-    writeInstalledAddon(addonsDir, '@camstack/addon-mqtt', { aedes: '^0.51.3' })
+    writeInstalledAddon(addonsDir, '@dominevo/addon-mqtt', { aedes: '^0.51.3' })
     npmMock.onInstall = (cwd) => {
       writeFakePackage(path.join(cwd, 'node_modules'), 'aedes', '0.51.3')
     }
 
     const result = await installer.ensureAddonRuntimeDeps()
 
-    expect(result.reinstalled).toEqual(['@camstack/addon-mqtt'])
+    expect(result.reinstalled).toEqual(['@dominevo/addon-mqtt'])
     expect(result.failed).toEqual([])
     expect(npmMock.calls).toHaveLength(1)
-    expect(npmMock.calls[0]!.cwd).toBe(path.join(addonsDir, '@camstack/addon-mqtt'))
+    expect(npmMock.calls[0]!.cwd).toBe(path.join(addonsDir, '@dominevo/addon-mqtt'))
     expect(npmMock.calls[0]!.args).toContain('install')
     expect(
       fs.existsSync(
-        path.join(addonsDir, '@camstack/addon-mqtt', 'node_modules', 'aedes', 'package.json'),
+        path.join(addonsDir, '@dominevo/addon-mqtt', 'node_modules', 'aedes', 'package.json'),
       ),
     ).toBe(true)
   })
 
   it('refuses to link when the closure version is incompatible — npm instead', async () => {
     writeFakePackage(closureNodeModules, 'zod', '4.5.4')
-    writeInstalledAddon(addonsDir, '@camstack/addon-legacy', { zod: '^3.22.0' })
+    writeInstalledAddon(addonsDir, '@dominevo/addon-legacy', { zod: '^3.22.0' })
     npmMock.onInstall = (cwd) => {
       writeFakePackage(path.join(cwd, 'node_modules'), 'zod', '3.25.76')
     }
@@ -160,13 +160,13 @@ describe('AddonInstaller.ensureAddonRuntimeDeps', () => {
     const result = await installer.ensureAddonRuntimeDeps()
 
     expect(result.linked).toEqual([])
-    expect(result.reinstalled).toEqual(['@camstack/addon-legacy'])
-    const entry = path.join(addonsDir, '@camstack/addon-legacy', 'node_modules', 'zod')
+    expect(result.reinstalled).toEqual(['@dominevo/addon-legacy'])
+    const entry = path.join(addonsDir, '@dominevo/addon-legacy', 'node_modules', 'zod')
     expect(fs.lstatSync(entry).isSymbolicLink()).toBe(false)
   })
 
   it('does NOT touch an addon whose deps are already satisfied', async () => {
-    const dir = writeInstalledAddon(addonsDir, '@camstack/addon-ok', { aedes: '^0.51.3' })
+    const dir = writeInstalledAddon(addonsDir, '@dominevo/addon-ok', { aedes: '^0.51.3' })
     writeFakePackage(path.join(dir, 'node_modules'), 'aedes', '0.51.3')
 
     const result = await installer.ensureAddonRuntimeDeps()
@@ -179,7 +179,7 @@ describe('AddonInstaller.ensureAddonRuntimeDeps', () => {
   })
 
   it('an addon with no runtime deps is a no-op', async () => {
-    writeInstalledAddon(addonsDir, '@camstack/addon-selfcontained', {})
+    writeInstalledAddon(addonsDir, '@dominevo/addon-selfcontained', {})
 
     const result = await installer.ensureAddonRuntimeDeps()
 
@@ -190,7 +190,7 @@ describe('AddonInstaller.ensureAddonRuntimeDeps', () => {
   })
 
   it('repairs a dangling closure link', async () => {
-    const dir = writeInstalledAddon(addonsDir, '@camstack/addon-stale', { werift: '^0.22.9' })
+    const dir = writeInstalledAddon(addonsDir, '@dominevo/addon-stale', { werift: '^0.22.9' })
     const nm = path.join(dir, 'node_modules')
     fs.mkdirSync(nm, { recursive: true })
     // Link into the closure at a name that no longer exists there.
@@ -201,12 +201,12 @@ describe('AddonInstaller.ensureAddonRuntimeDeps', () => {
     }
     const result = await installer.ensureAddonRuntimeDeps()
 
-    expect(result.reinstalled).toEqual(['@camstack/addon-stale'])
+    expect(result.reinstalled).toEqual(['@dominevo/addon-stale'])
     expect(fs.existsSync(path.join(nm, 'gone-lib'))).toBe(false)
   })
 
   it('drops a closure link the tree ranges no longer accept (closure moved a major)', async () => {
-    const dir = writeInstalledAddon(addonsDir, '@camstack/addon-pinned', { werift: '^0.22.9' })
+    const dir = writeInstalledAddon(addonsDir, '@dominevo/addon-pinned', { werift: '^0.22.9' })
     const nm = path.join(dir, 'node_modules')
     fs.mkdirSync(nm, { recursive: true })
     fs.symlinkSync(path.join(closureNodeModules, 'werift'), path.join(nm, 'werift'))
@@ -219,7 +219,7 @@ describe('AddonInstaller.ensureAddonRuntimeDeps', () => {
     }
     const result = await installer.ensureAddonRuntimeDeps()
 
-    expect(result.reinstalled).toEqual(['@camstack/addon-pinned'])
+    expect(result.reinstalled).toEqual(['@dominevo/addon-pinned'])
     // The repaired tree carries its own compatible copy, not the closure's 1.0.0.
     expect(fs.lstatSync(path.join(nm, 'werift')).isSymbolicLink()).toBe(false)
     expect(
@@ -228,7 +228,7 @@ describe('AddonInstaller.ensureAddonRuntimeDeps', () => {
   })
 
   it('a workspace-symlinked addon dir is skipped entirely', async () => {
-    const real = writeInstalledAddon(addonsDir, '@camstack/addon-real', { werift: '^0.22.9' })
+    const real = writeInstalledAddon(addonsDir, '@dominevo/addon-real', { werift: '^0.22.9' })
     const workspaceCopy = path.join(tmpRoot, 'workspace-addon')
     fs.cpSync(real, workspaceCopy, { recursive: true })
     fs.rmSync(real, { recursive: true, force: true })
@@ -243,15 +243,15 @@ describe('AddonInstaller.ensureAddonRuntimeDeps', () => {
   })
 
   it('a failed npm install is loud but does not abort the sweep', async () => {
-    writeInstalledAddon(addonsDir, '@camstack/addon-broken', { 'gone-from-npm': '^1.0.0' })
-    writeInstalledAddon(addonsDir, '@camstack/addon-fine', { werift: '^0.22.9' })
+    writeInstalledAddon(addonsDir, '@dominevo/addon-broken', { 'gone-from-npm': '^1.0.0' })
+    writeInstalledAddon(addonsDir, '@dominevo/addon-fine', { werift: '^0.22.9' })
     npmMock.onInstall = (cwd) => {
       if (cwd.includes('addon-broken')) throw new Error('npm exploded')
     }
 
     const result = await installer.ensureAddonRuntimeDeps()
 
-    expect(result.failed).toEqual(['@camstack/addon-broken'])
-    expect(result.linked).toEqual(['@camstack/addon-fine:werift'])
+    expect(result.failed).toEqual(['@dominevo/addon-broken'])
+    expect(result.linked).toEqual(['@dominevo/addon-fine:werift'])
   })
 })

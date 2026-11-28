@@ -17,8 +17,8 @@
  * produced exactly that error on the second call.
  */
 
-import type { AddonContext, DeviceSummary, IDeviceAdoptionProvider } from '@camstack/types'
-import { DeviceType } from '@camstack/types'
+import type { AddonContext, DeviceSummary, IDeviceAdoptionProvider } from '@dominevo/types'
+import { DeviceType } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { HaProviderAddon } from '../addon.js'
 import type { HaDiscoveredDevice, HaDiscoveredEntity } from '../ha-discovery-types.js'

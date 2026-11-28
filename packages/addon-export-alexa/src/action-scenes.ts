@@ -24,7 +24,7 @@ import {
   type IScopedLogger,
   pruneDeletedEntities,
   runExportedAction,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 import type { AlexaPrincipal } from './access/access-gate.js'
 import type { AlexaEndpoint } from './endpoints/types.js'
@@ -56,8 +56,8 @@ export function parseActionEndpointId(endpointId: string): string | null {
 export function buildActionSceneEndpoint(entry: ActionSceneEntry): AlexaEndpoint {
   return {
     endpointId: actionEndpointId(entry.actionId),
-    manufacturerName: 'CamStack',
-    description: 'CamStack action',
+    manufacturerName: 'Dominevo',
+    description: 'Dominevo action',
     friendlyName: entry.displayName,
     displayCategories: ['SCENE_TRIGGER'],
     capabilities: [

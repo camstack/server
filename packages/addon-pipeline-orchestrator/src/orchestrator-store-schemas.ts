@@ -16,8 +16,8 @@
  */
 
 import { z } from 'zod'
-import { NodeColorIdSchema } from '@camstack/types/node-color'
-import { StepClusterModeSchema } from '@camstack/types'
+import { NodeColorIdSchema } from '@dominevo/types/node-color'
+import { StepClusterModeSchema } from '@dominevo/types'
 
 // ── nodeBindings: Record<nodeId, Record<capName, addonId>> ──────────────
 //

@@ -3,15 +3,15 @@
  *  - an unfinished binding shows an empty "Choose" row, and the modal opens only on click;
  *  - a stored call the vocabulary cannot name is read-only, with Change; Change opens the modal.
  */
-import type { RemoteBinding } from '@camstack/types'
+import type { RemoteBinding } from '@dominevo/types'
 import { fireEvent, render, screen } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import '../../../i18n'
 import type { AutomationDevice } from '../../../pages/build/automation/automation-data'
 
-vi.mock('@camstack/ui-library', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@camstack/ui-library')>()),
+vi.mock('@dominevo/ui-library', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@dominevo/ui-library')>()),
   ItemFormDialog: (props: { readonly children: ReactNode }) => (
     <div data-testid="command-picker-dialog">{props.children}</div>
   ),

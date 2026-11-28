@@ -19,7 +19,7 @@
  *
  * ## Both ride `HwAccelCache`, deliberately
  *
- * `createHwAccelCache` from `@camstack/types` is the primitive the broker's own
+ * `createHwAccelCache` from `@dominevo/types` is the primitive the broker's own
  * `egressHwAccelCache` is built from, and the discipline it encodes is the
  * point: **caller-owned, never a module global** — a module global would
  * outlive an addon respawn and survive an operator changing the decoder
@@ -36,7 +36,7 @@
  * closed here is HomeKit's own repetition of the cost, across cameras and
  * across sessions.
  */
-import { createHwAccelCache, type HwAccelCache, type HwAccelCacheOptions } from '@camstack/types'
+import { createHwAccelCache, type HwAccelCache, type HwAccelCacheOptions } from '@dominevo/types'
 
 import type { DecoderHwaccelReading } from './stream-hwaccel.js'
 

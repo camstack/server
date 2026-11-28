@@ -1,6 +1,6 @@
 # Public-docs draft: a Coral Edge TPU with the desktop app (agent role)
 
-Status: DRAFT for the public docs (`camstack/docs`). States what is possible
+Status: DRAFT for the public docs (`dominevo/docs`). States what is possible
 per OS on 2026-10-21 and what is not wired yet, so the public page does not
 promise more than the code does.
 

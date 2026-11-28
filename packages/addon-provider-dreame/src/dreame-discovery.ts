@@ -1,4 +1,4 @@
-import type { DiscoveredChildDevice } from '@camstack/types'
+import type { DiscoveredChildDevice } from '@dominevo/types'
 import { classifyDreameModel, controlCapForKind, deviceTypeForKind } from './dreame-mapping.js'
 
 /**
@@ -15,7 +15,7 @@ export interface DreameDiscoverable {
 
 export interface BuildDreameCandidatesInput {
   readonly devices: readonly DreameDiscoverable[]
-  /** dreameDeviceId → adopted CamStack device id. */
+  /** dreameDeviceId → adopted Dominevo device id. */
   readonly adopted: ReadonlyMap<string, number>
 }
 

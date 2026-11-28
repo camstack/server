@@ -40,7 +40,7 @@
  * by a one-frame pending-mark hold (park the native surface until the mark or
  * the next supersede), not by the reserved slot.
  */
-import type { NativeLeaseAdmission } from '@camstack/types'
+import type { NativeLeaseAdmission } from '@dominevo/types'
 
 /**
  * How many recent frame ids the marked window remembers.

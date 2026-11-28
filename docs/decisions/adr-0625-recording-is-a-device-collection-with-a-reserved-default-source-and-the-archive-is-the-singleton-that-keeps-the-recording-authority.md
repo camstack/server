@@ -91,7 +91,7 @@ list — logged with `tags: { deviceId }`.
 - A half-converted fleet during the deploy is acceptable (the operator's
   ruling) and is legible by construction: a node on the old build registers the
   old singleton, the new hub finds no device-scoped binding, `listSources`
-  carries no `camstack` row, and a surface says "CamStack has no recordings for
+  carries no `camstack` row, and a surface says "Dominevo has no recordings for
   this camera" — wrong, but NAMED, and it resolves on deploy. The reverse
   direction is a 412 naming the capability.
 - The multi-camera grid stays ours-only. The batches cannot be narrowed by

@@ -1,4 +1,4 @@
-import type { FrameResult } from '@camstack/types'
+import type { FrameResult } from '@dominevo/types'
 
 /**
  * MotionSettleGovernor — decides WHEN the root-plane `package-detection` step

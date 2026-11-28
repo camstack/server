@@ -5,8 +5,8 @@
  * refused by name. JPEG bytes are what the `llm` cap already takes.
  */
 
-import type { FrameHandle, NativeCropCapResult } from '@camstack/types'
-import { nodePin } from '@camstack/types'
+import type { FrameHandle, NativeCropCapResult } from '@dominevo/types'
+import { nodePin } from '@dominevo/types'
 import { decodeJpegToRgb, encodeRgbCropToJpeg } from '../../../shared/frame/encode-crop.js'
 
 export interface PackageSceneCropBox {

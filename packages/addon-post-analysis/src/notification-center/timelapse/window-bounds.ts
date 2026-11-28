@@ -16,7 +16,7 @@
  *
  * Pure: `nowMs` is always supplied by the caller.
  */
-import type { NcSchedule } from '@camstack/types'
+import type { NcSchedule } from '@dominevo/types'
 import { isScheduleActive } from '../rule-engine.js'
 
 /** The scan grid. The schedule's own resolution — a finer step would find the

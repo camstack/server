@@ -6,7 +6,7 @@ import type {
   MiotProp,
   PropertyResult,
 } from '@apocaliss92/nodedreame'
-import { consumablesCapability, DeviceRuntimeState } from '@camstack/types'
+import { consumablesCapability, DeviceRuntimeState } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { CONSUMABLES_CAP_NAME, type ConsumablesSlice } from '../devices/dreame-consumables.js'
 import {

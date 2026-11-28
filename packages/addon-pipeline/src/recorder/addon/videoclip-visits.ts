@@ -15,7 +15,7 @@ import {
   eventOverlapsClipWindow,
   MAX_CLIP_EVENT_IDS,
   VISIT_MERGE_GAP_MS,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type {
   ClipPad,
   EventBuckets,

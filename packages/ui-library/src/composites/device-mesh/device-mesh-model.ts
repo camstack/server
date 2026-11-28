@@ -7,7 +7,7 @@
  * report is `null`, a median over no known value is `null`, and a network whose
  * read failed carries `topology: null` and the reason.
  */
-import type { MeshLink, MeshNetworkInfo, MeshNode, MeshRole, MeshTopology } from '@camstack/types'
+import type { MeshLink, MeshNetworkInfo, MeshNode, MeshRole, MeshTopology } from '@dominevo/types'
 
 export type LqiTone = 'good' | 'fair' | 'poor' | 'unknown'
 
@@ -110,7 +110,7 @@ export interface MeshNetwork {
   readonly error: string | null
 }
 
-/** Does the network list this CamStack device as one of its nodes? */
+/** Does the network list this Dominevo device as one of its nodes? */
 export function networkHasDevice(network: MeshNetwork, deviceId: number): boolean {
   return (
     network.rootDeviceId === deviceId ||
@@ -157,7 +157,7 @@ const newest = (a: number | null, b: number | null): number | null =>
 
 /**
  * Merge two reads of one network. A node is the same node when it is the same
- * CamStack device (or the same peer key of a device-less peer); the newer
+ * Dominevo device (or the same peer key of a device-less peer); the newer
  * per-node read wins. Node keys are provider-scoped, so an incoming key that
  * collides with a different node is renamed before its links are carried over.
  */

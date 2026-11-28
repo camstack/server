@@ -3,8 +3,8 @@
  * means, and what `served` answers.
  */
 
-import type { CamProfile, ClipSourceAvailability, IScopedLogger } from '@camstack/types'
-import { CLIP_PLAYBACK_OPTIONS, VIDEOCLIPS_MAX_OFFER_BYTES } from '@camstack/types'
+import type { CamProfile, ClipSourceAvailability, IScopedLogger } from '@dominevo/types'
+import { CLIP_PLAYBACK_OPTIONS, VIDEOCLIPS_MAX_OFFER_BYTES } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 
 import { AMCREST_ADDON_ID } from '../../schema.js'

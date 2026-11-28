@@ -41,7 +41,7 @@
  * one action call away instead of one release away.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 /** How many stack frames identify a call site. See the module doc. */
 export const CENSUS_STACK_FRAMES = 3

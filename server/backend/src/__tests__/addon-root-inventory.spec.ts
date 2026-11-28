@@ -12,7 +12,7 @@ import {
 /**
  * "One addon root per node" is only true if a second one is LOUD.
  *
- * Measured on the Mac agent 2026-08-07: four `addons/@camstack` trees on one
+ * Measured on the Mac agent 2026-08-07: four `addons/@dominevo` trees on one
  * disk, holding `addon-pipeline` at 1.2.43 (live), 1.1.70, 1.1.59 and 1.1.1.
  * Every one of those is a true answer to "what version is on the Mac", and an
  * hour was spent on one of the three that no process had loaded since June.
@@ -22,8 +22,8 @@ const HOME = '/Users/someone'
 
 function input(overrides: Partial<RivalRootInput> = {}): RivalRootInput {
   return {
-    dataDir: `${HOME}/Library/Application Support/@camstack/desktop/data`,
-    activeAddonsDir: `${HOME}/Library/Application Support/@camstack/desktop/data/addons`,
+    dataDir: `${HOME}/Library/Application Support/@dominevo/desktop/data`,
+    activeAddonsDir: `${HOME}/Library/Application Support/@dominevo/desktop/data/addons`,
     homeDir: HOME,
     platform: 'darwin',
     ...overrides,
@@ -44,15 +44,15 @@ function fakeFs(layout: Record<string, Record<string, string | null>>): AddonRoo
   }
 }
 
-const ACTIVE_SCOPE = `${HOME}/Library/Application Support/@camstack/desktop/data/addons/@camstack`
-const LEGACY_SCOPE = `${HOME}/camstack-agent-data/addons/@camstack`
-const RETIRED_APP_SCOPE = `${HOME}/Library/Application Support/@camstack/electron/data/addons/@camstack`
+const ACTIVE_SCOPE = `${HOME}/Library/Application Support/@dominevo/desktop/data/addons/@dominevo`
+const LEGACY_SCOPE = `${HOME}/camstack-agent-data/addons/@dominevo`
+const RETIRED_APP_SCOPE = `${HOME}/Library/Application Support/@dominevo/electron/data/addons/@dominevo`
 
 describe('candidateDataRoots', () => {
   it('covers every Electron app id the product has shipped', () => {
     const roots = candidateDataRoots(input())
     for (const appId of KNOWN_ELECTRON_APP_IDS) {
-      expect(roots.some((r) => r.includes(`@camstack/${appId}`))).toBe(true)
+      expect(roots.some((r) => r.includes(`@dominevo/${appId}`))).toBe(true)
     }
   })
 
@@ -121,7 +121,7 @@ describe('inventoryAddonRoots', () => {
         [ACTIVE_SCOPE]: { 'addon-pipeline': '1.2.43' },
         [LEGACY_SCOPE]: { 'addon-pipeline': '1.2.43' },
       }),
-      realPath: () => '/real/addons/@camstack',
+      realPath: () => '/real/addons/@dominevo',
     }
 
     expect(inventoryAddonRoots(input(), fs).rivals).toEqual([])

@@ -1,5 +1,5 @@
 /** What "Add device" inside a homematic integration offers is the provider's call, per instance. */
-import { makeInMemoryRecords } from '@camstack/types'
+import { makeInMemoryRecords } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { buildHomematicInstances, homematicRecordKinds } from '../homematic-instances.js'
 

@@ -7,7 +7,7 @@
  * Heuristics for "is this a camstack addon":
  *   • `package.json` declares `camstack.addons` (the canonical manifest
  *     for shipped + dev addons).
- *   • `package.json.name` starts with `@camstack/addon-` or `camstack-addon-`.
+ *   • `package.json.name` starts with `@dominevo/addon-` or `camstack-addon-`.
  *   • `package.json.keywords` contains both `camstack` and `addon`.
  * Any one of those is sufficient. We DO NOT crawl into `node_modules`,
  * `dist`, `build`, `.git`, or any dotted dir — the search is for source
@@ -70,7 +70,7 @@ function classifyAddon(pkg: Record<string, unknown>): AddonCandidate['matchedBy'
   const name = pkg['name']
   if (
     typeof name === 'string' &&
-    (name.startsWith('@camstack/addon-') || name.startsWith('camstack-addon-'))
+    (name.startsWith('@dominevo/addon-') || name.startsWith('camstack-addon-'))
   ) {
     return 'name-prefix'
   }

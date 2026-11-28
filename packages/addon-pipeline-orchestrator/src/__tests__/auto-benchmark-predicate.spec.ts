@@ -7,7 +7,7 @@ import {
   measuredCapacityFromResults,
   type NodeBenchCell,
   type NodeBenchmarkResult,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   benchKey,

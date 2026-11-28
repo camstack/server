@@ -20,7 +20,7 @@ describe('createRequiresRegistry.requiresOf', () => {
         throw new Error('npm must not be asked')
       },
     })
-    expect(await registry.requiresOf('@camstack/addon-x', '1.0.0')).toEqual({ server: '>=1.2.0' })
+    expect(await registry.requiresOf('@dominevo/addon-x', '1.0.0')).toEqual({ server: '>=1.2.0' })
   })
 
   it('falls back to npm (npmrc auth) when HTTP answers 401, and uses its answer', async () => {
@@ -33,8 +33,8 @@ describe('createRequiresRegistry.requiresOf', () => {
         return JSON.stringify({ server: '>=1.4.0' })
       },
     })
-    expect(await registry.requiresOf('@camstack/addon-x', '1.0.0')).toEqual({ server: '>=1.4.0' })
-    expect(asked[0]).toEqual(['view', '@camstack/addon-x@1.0.0', 'camstack.requires', '--json'])
+    expect(await registry.requiresOf('@dominevo/addon-x', '1.0.0')).toEqual({ server: '>=1.4.0' })
+    expect(asked[0]).toEqual(['view', '@dominevo/addon-x@1.0.0', 'camstack.requires', '--json'])
   })
 
   it('reports an auth failure as a failed read, not as an unmet minimum', async () => {
@@ -45,7 +45,7 @@ describe('createRequiresRegistry.requiresOf', () => {
         throw new Error('npm error code E401')
       },
     })
-    const err: unknown = await registry.requiresOf('@camstack/addon-x', '1.0.0').catch((e) => e)
+    const err: unknown = await registry.requiresOf('@dominevo/addon-x', '1.0.0').catch((e) => e)
     expect(err).toBeInstanceOf(RegistryReadError)
     expect(err instanceof RegistryReadError && err.kind).toBe('auth')
   })
@@ -56,7 +56,7 @@ describe('createRequiresRegistry.requiresOf', () => {
       fetchJson: async () => response(404, {}),
       npmView: async () => '',
     })
-    expect(await registry.requiresOf('@camstack/addon-x', '1.0.0')).toBeUndefined()
+    expect(await registry.requiresOf('@dominevo/addon-x', '1.0.0')).toBeUndefined()
   })
 })
 
@@ -68,7 +68,7 @@ describe('createRequiresRegistry.versions', () => {
         response(200, { versions: { '1.2.0': {}, '1.10.0': {}, '1.3.0-beta.1': {}, '1.9.0': {} } }),
       npmView: async () => '[]',
     })
-    expect(await registry.versions('@camstack/addon-x')).toEqual(['1.10.0', '1.9.0', '1.2.0'])
+    expect(await registry.versions('@dominevo/addon-x')).toEqual(['1.10.0', '1.9.0', '1.2.0'])
   })
 
   it('falls back to npm when HTTP is refused', async () => {
@@ -77,6 +77,6 @@ describe('createRequiresRegistry.versions', () => {
       fetchJson: async () => response(403, {}),
       npmView: async () => JSON.stringify(['1.0.0', '1.1.0']),
     })
-    expect(await registry.versions('@camstack/addon-x')).toEqual(['1.1.0', '1.0.0'])
+    expect(await registry.versions('@dominevo/addon-x')).toEqual(['1.1.0', '1.0.0'])
   })
 })

@@ -25,7 +25,7 @@
  */
 
 import { describe, expect, it } from 'vitest'
-import type { ISystemProvider, RequestCensusStatus } from '@camstack/types'
+import type { ISystemProvider, RequestCensusStatus } from '@dominevo/types'
 import { buildCapRouterForTest, checkAuthMatrix, invokeProcedure, makeCtx } from './harness.js'
 
 const STATUS: RequestCensusStatus = {

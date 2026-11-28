@@ -6,7 +6,7 @@
  * layout read by an older UI — draws as the plain look every layout had before
  * shapes existed, never as an error.
  */
-import type { RemoteLayoutPayload } from '@camstack/types'
+import type { RemoteLayoutPayload } from '@dominevo/types'
 
 /** Classes for a button's shape; unknown or absent → '' (the button's own rounding). */
 export function shapeClass(shape: string | undefined): string {

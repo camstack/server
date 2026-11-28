@@ -20,7 +20,7 @@
  *   1. concurrent callers build ONE factory (single-flight), and
  *   2. no caller ever sees the factory before `initialize()` resolved.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { EngineProvisioningState } from '../engine-provisioner.js'
 import { describe, expect, it, vi } from 'vitest'
 

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import type { SceneMonitor, SceneReference } from '@camstack/types'
+import type { SceneMonitor, SceneReference } from '@dominevo/types'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { ConfirmDialogProvider } from '../../confirm-dialog'

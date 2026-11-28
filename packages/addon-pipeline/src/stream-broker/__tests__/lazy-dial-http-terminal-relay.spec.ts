@@ -22,7 +22,7 @@
  * asserting that line is ABSENT is direct proof no reader was spawned, not a
  * proxy for it.
  */
-import type { IScopedLogger, StreamSource } from '@camstack/types'
+import type { IScopedLogger, StreamSource } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { StreamBroker } from '../stream-broker/stream-broker'
 import { StreamBrokerManager } from '../stream-broker/stream-broker-manager.js'

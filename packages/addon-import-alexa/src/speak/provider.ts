@@ -17,7 +17,7 @@ import {
   type SendResult,
   type Target,
   type TargetKind,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   ALEXA_ACCOUNT_LINK,
   ALEXA_SPEAK_ADDON_ID,
@@ -433,8 +433,8 @@ export function createAlexaNotificationProvider(ports: AlexaSpeakPorts): AlexaNo
         return { success: false, error: `target not found: ${input.targetId}` }
       if (!found.enabled) return { success: false, error: 'target disabled' }
       const sample: Notification = input.sample ?? {
-        body: 'This is a CamStack test notification.',
-        title: 'CamStack',
+        body: 'This is a Dominevo test notification.',
+        title: 'Dominevo',
         format: 'text',
         priority: 3,
       }

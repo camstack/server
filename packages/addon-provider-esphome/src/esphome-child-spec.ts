@@ -1,11 +1,11 @@
-import { DeviceRole, DeviceType, type DeviceContext, type IDevice } from '@camstack/types'
+import { DeviceRole, DeviceType, type DeviceContext, type IDevice } from '@dominevo/types'
 import { EspActuatorDevice } from './devices/esp-actuator-device.js'
 import type { EspChildConfig } from './devices/esp-child-device.js'
 import { EspEventDevice } from './devices/esp-event-device.js'
 import { EspSensorDevice } from './devices/esp-sensor-device.js'
 import type { ChildKind, ChildPlan } from './esphome-entity-spec.js'
 
-/** The CamStack device type of each child kind. */
+/** The Dominevo device type of each child kind. */
 const DEVICE_TYPE: Readonly<Record<ChildKind, DeviceType>> = {
   switch: DeviceType.Switch,
   light: DeviceType.Light,

@@ -20,7 +20,7 @@ nothing but a `logger.warn`.
 The obvious fix is an env var: `CAMSTACK_WRAPPER=docker` in the compose
 template. This repo has already paid for exactly that shape. On 2026-08-02
 `scripts/check-deployment-templates.ts` passed every single day proving the <!-- drift-ok -->
-templates DECLARED `ghcr.io/camstack/camstack:intel-latest`, while the hub
+templates DECLARED `ghcr.io/dominevo/dominevo:intel-latest`, while the hub
 actually ran `camstack-server:intel-1.1.74` — a 13-day-old image from a
 repository that had been renamed and received no builds. `runningVersion` was
 current (`applyServerUpdate` swaps the data-root and never touches the image),

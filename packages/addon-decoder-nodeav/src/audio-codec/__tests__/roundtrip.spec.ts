@@ -10,7 +10,7 @@
  * on the pure catalogue tests.
  */
 import { describe, it, expect, beforeAll } from 'vitest'
-import type { AudioEncodedChunk, AudioPcmChunk, IScopedLogger } from '@camstack/types'
+import type { AudioEncodedChunk, AudioPcmChunk, IScopedLogger } from '@dominevo/types'
 import { loadNodeAvRuntime, type NodeAvRuntime } from '../nodeav-runtime-loader.js'
 import { NodeAvAudioDecodeSession } from '../nodeav-audio-decode-session.js'
 import { NodeAvAudioEncodeSession } from '../nodeav-audio-encode-session.js'

@@ -27,7 +27,7 @@ background, Apache-2.0). Google publishes its full-integer quantised TFLite in
 the ONNX/OpenVINO/CoreML builds of the same id come from the float graph. This
 script compiles THAT quantised file with ``edgetpu_compiler`` rather than
 re-quantising the ONNX: Google's quantisation is the one the upstream
-published, and a second post-training calibration on CamStack crops would be a
+published, and a second post-training calibration on Dominevo crops would be a
 new set of weights for no measured gain. Pinned by commit and sha256 below.
 
 The contract needs no graph edit:

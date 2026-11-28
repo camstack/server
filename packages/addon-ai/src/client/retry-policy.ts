@@ -17,7 +17,7 @@
  * A consumer NOT listed here falls through to the profile, which is why the
  * table names the interactive consumers explicitly rather than defaulting on.
  */
-import type { LlmRetryPolicy } from '@camstack/types'
+import type { LlmRetryPolicy } from '@dominevo/types'
 
 /** Interactive/batch consumers: a retry costs latency nobody is waiting on. */
 const RETRYING: LlmRetryPolicy = { enabled: true, maxAttempts: 3 }

@@ -6,7 +6,7 @@
  * work carries on with no way to observe it. The start method returns
  * `{ started, alreadyRunning }` immediately; progress is `getMediaReclaimStatus`.
  */
-import type { AddonContext, IScopedLogger, LogExtras, LogTags } from '@camstack/types'
+import type { AddonContext, IScopedLogger, LogExtras, LogTags } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import PipelineAnalyticsAddon from '../index.js'
 import { MediaStore } from '../store/media-store.js'

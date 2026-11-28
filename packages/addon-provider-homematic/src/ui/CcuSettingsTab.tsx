@@ -6,7 +6,7 @@ import {
   KebabMenu,
   usePrompt,
   type DataColumn,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { DoorOpen, Pencil, Plus, Trash2 } from 'lucide-react'
 import {
   CcuRoomSchema,

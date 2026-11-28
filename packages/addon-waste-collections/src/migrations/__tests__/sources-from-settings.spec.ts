@@ -3,7 +3,7 @@
  * raw) becomes `waste-source` records before the boot seeding and the argsJson rewrite are gone.
  * Real SQLite for the settings table, the real record kind, the credential read back.
  */
-import { makeInMemoryRecords, REDACTED_SECRET, type StoredKeyRead } from '@camstack/types'
+import { makeInMemoryRecords, REDACTED_SECRET, type StoredKeyRead } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { settingsFixture } from '../../__tests__/settings-fixture.js'
 import { wasteSourceEntryKind } from '../../waste-source-record-kinds.js'

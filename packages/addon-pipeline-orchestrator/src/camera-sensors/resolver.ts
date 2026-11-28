@@ -24,7 +24,7 @@ import {
   type IScopedLogger,
   isSourceCap,
   SOURCE_CAPS,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { cameraOwnMotionRule } from './effective-motion.js'
 import type { CameraSensorsSetting } from './settings.js'
 

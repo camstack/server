@@ -9,7 +9,7 @@ import {
   defineEntryKind,
   type RecordKindHandle,
   type RecordsAccess,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { HA_MEDIA_ROLES, type HaMediaRole } from '../media-url.js'
 

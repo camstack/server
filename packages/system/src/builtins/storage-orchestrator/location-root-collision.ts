@@ -34,8 +34,8 @@
  *
  * Pure: the realpath derivation is injected.
  */
-import type { PhysicalRoot } from '@camstack/types/node'
-import { containsOrEquals } from '@camstack/types/node'
+import type { PhysicalRoot } from '@dominevo/types/node'
+import { containsOrEquals } from '@dominevo/types/node'
 
 /** The minimum a row must expose for this check. */
 export interface RootCollisionCandidate {

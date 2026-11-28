@@ -11,7 +11,7 @@ import {
   type Composition,
   type DeviceInfo,
   mediaPlayerExtensionCommands,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 const MEDIA_PLAYER_CAP = 'media-player'
 

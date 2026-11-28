@@ -41,7 +41,7 @@ const httpsConfig = fs.existsSync(certPath)
 // singleton by importing the package's "local provider" source. When no
 // `import:` is configured, `@module-federation/vite` resolves that source by
 // `require.resolve(pkg)` (the package's `main` field), which for our
-// self-built `@camstack/*` system packages is the CJS bundle
+// self-built `@dominevo/*` system packages is the CJS bundle
 // (`dist/index.cjs`). vite 8's rolldown backend then tries to parse that
 // `.cjs` as ESM and throws `[PARSE_ERROR] Cannot use import statement outside
 // a module ../ui-library/dist/index.cjs`. The `resolve.alias` → `src` entries
@@ -75,7 +75,7 @@ function workspaceEsmEntry(pkgDir: string): string {
 // src/index.ts produces a REAL async chunk (code-split at build time), and the
 // synchronous ui-library chunk is konva-free.
 //
-// The `resolve.alias` entry (`@camstack/ui-library` → `src/`) already routes all
+// The `resolve.alias` entry (`@dominevo/ui-library` → `src/`) already routes all
 // non-MF source imports through this path; `import:` keeps the MF provider
 // consistent with the same source tree.
 //
@@ -121,7 +121,7 @@ export default defineConfig(({ command }) => ({
     //
     // DEV MODE: the plugin emits TLA-bearing virtual modules that
     // collide with Vite's CJS dep prebundler when workspace deps
-    // (ui-library/sdk built CJS) `require("@camstack/types")` — the
+    // (ui-library/sdk built CJS) `require("@dominevo/types")` — the
     // CJS-must-not-import-TLA error blocks the dev server. Since no
     // remotes are registered statically (we register at runtime from
     // the registry provider), the host's only build-time benefit from
@@ -137,7 +137,7 @@ export default defineConfig(({ command }) => ({
             remotes: {},
             // Disable MF DTS generation. Even as a host with no exposes,
             // the dts-plugin starts a type-hint worker that can follow the
-            // `@camstack/*` → src aliases and leak framework `.d.ts` into
+            // `@dominevo/*` → src aliases and leak framework `.d.ts` into
             // src (Bug-1, guarded by scripts/check-no-dts-in-src.sh).
             dts: false,
             shared: {
@@ -182,17 +182,17 @@ export default defineConfig(({ command }) => ({
               // `import: false`) so the host still supplies the singleton that
               // every widget remote — built with `import: false` — consumes
               // from the shared scope at runtime.
-              '@camstack/ui-library': {
+              '@dominevo/ui-library': {
                 singleton: true,
                 requiredVersion: false,
                 import: uiLibraryEsm,
               },
-              '@camstack/sdk': {
+              '@dominevo/sdk': {
                 singleton: true,
                 requiredVersion: false,
                 import: sdkEsm,
               },
-              '@camstack/types': {
+              '@dominevo/types': {
                 singleton: true,
                 requiredVersion: false,
                 import: typesEsm,
@@ -229,20 +229,20 @@ export default defineConfig(({ command }) => ({
   ],
   resolve: {
     alias: {
-      '@camstack/sdk': path.resolve(__dirname, '../sdk/src/index.ts'),
-      '@camstack/ui-library': path.resolve(__dirname, '../ui-library/src'),
-      // Alias `@camstack/types` to source so MF's `mf-shared:` wrapper
+      '@dominevo/sdk': path.resolve(__dirname, '../sdk/src/index.ts'),
+      '@dominevo/ui-library': path.resolve(__dirname, '../ui-library/src'),
+      // Alias `@dominevo/types` to source so MF's `mf-shared:` wrapper
       // doesn't end up routing through `ui-library/dist/index.cjs`'s
-      // `require("@camstack/types")` — that path can't reach a TLA
+      // `require("@dominevo/types")` — that path can't reach a TLA
       // shared module from CJS. Pure-ESM source resolves cleanly.
       // `/client` first: the alias table matches by prefix, so the bare key
-      // below would turn `@camstack/types/client` into `index.ts/client`.
-      '@camstack/types/client': path.resolve(__dirname, '../types/src/client.ts'),
-      '@camstack/types/device-template-catalogue': path.resolve(
+      // below would turn `@dominevo/types/client` into `index.ts/client`.
+      '@dominevo/types/client': path.resolve(__dirname, '../types/src/client.ts'),
+      '@dominevo/types/device-template-catalogue': path.resolve(
         __dirname,
         '../types/src/device-template-catalogue.ts',
       ),
-      '@camstack/types': path.resolve(__dirname, '../types/src/index.ts'),
+      '@dominevo/types': path.resolve(__dirname, '../types/src/index.ts'),
     },
     // Hoist tRPC packages to a single instance across the monorepo.
     // Without this, ui-library (aliased to its source) imports

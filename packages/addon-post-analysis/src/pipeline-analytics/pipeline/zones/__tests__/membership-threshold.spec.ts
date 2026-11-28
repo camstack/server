@@ -17,7 +17,7 @@
  * detections get lost quietly.
  */
 import { describe, it, expect } from 'vitest'
-import type { Zone } from '@camstack/types'
+import type { Zone } from '@dominevo/types'
 import { ZoneEngine } from '../zone-engine.js'
 
 const FRAME_W = 640

@@ -137,7 +137,7 @@ declare global {
 
   /**
    * One entity from `getSmarthomeEntities` (`/api/behaviors/entities`). Used to
-   * recover the Alexa group / room a device sits in (→ CamStack location).
+   * recover the Alexa group / room a device sits in (→ Dominevo location).
    */
   interface AlexaRemoteBehaviorEntity {
     readonly id?: string

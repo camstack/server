@@ -21,7 +21,7 @@
  *  - `entryId` names only an UNAMBIGUOUS strong holder — disarm: drop the
  *    `c.strong` filter or the single-holder check; the ambiguity test fails.
  */
-import type { FrameResult, ObjectDetection } from '@camstack/types'
+import type { FrameResult, ObjectDetection } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   FrameProcessor,

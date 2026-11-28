@@ -2,7 +2,7 @@
  * The Admin app as the shell sees it (`app-source`, D1096). Its nav is
  * `buildAdminNavManifest()`, built from the table the sidebar is built from.
  */
-import type { AppDeclaration } from '@camstack/types'
+import type { AppDeclaration } from '@dominevo/types'
 import { buildAdminNavManifest } from '../lib/nav-data'
 
 export const ADMIN_APP_ID = 'admin'

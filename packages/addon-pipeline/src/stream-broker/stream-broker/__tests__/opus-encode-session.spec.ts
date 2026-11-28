@@ -5,7 +5,7 @@
  * client, without needing the cap mounted.
  */
 import { describe, it, expect } from 'vitest'
-import type { AudioEncodedChunk, DecodedAudioChunk } from '@camstack/types'
+import type { AudioEncodedChunk, DecodedAudioChunk } from '@dominevo/types'
 import type { AudioCodecCapApi } from '../audio-codec-proxy'
 import {
   OpusEncodeSession,

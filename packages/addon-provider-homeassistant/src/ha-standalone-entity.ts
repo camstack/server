@@ -9,7 +9,7 @@ import {
   type IDevice,
   type SavedDevice,
   type SourceInfo,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { pickHaChildClass } from './ha-child-class-factory.js'
 import { readHaSource } from './ha-device-source.js'
 import type { HaDeviceSource } from './ha-device-source.js'
@@ -20,7 +20,7 @@ import type { HaDiscoveredEntity } from './ha-discovery-types.js'
  *
  * Where the `'devices'` granularity materialises one Container parent + N
  * accessory children per HA physical device, the `'entities'` granularity
- * imports ONE HA entity as a TOP-LEVEL standalone CamStack device — no
+ * imports ONE HA entity as a TOP-LEVEL standalone Dominevo device — no
  * Container. The standalone device reuses the per-domain `HaBaseChildDevice`
  * subclasses (which work parent-less: they read `brokerId`/`entityId` from
  * config and subscribe by that tuple), so live state flows exactly as it does
@@ -82,7 +82,7 @@ function readCapabilities(config: Record<string, unknown> | undefined): readonly
  * per-entity fields the container persists on its `entities[]` entries (so the
  * `HaBaseChildDevice` subclasses self-hydrate identically), plus the
  * `system`/`brokerId`/`integrationId` adoption-proof fields that `readHaSource`
- * recognises. Entities with no CamStack mapping cannot be imported standalone
+ * recognises. Entities with no Dominevo mapping cannot be imported standalone
  * (the caller skips them) — `mappedTo` is required here.
  */
 export function buildStandaloneEntityConfig(args: {
@@ -94,7 +94,7 @@ export function buildStandaloneEntityConfig(args: {
   const { entity, brokerId, integrationId, name } = args
   if (entity.mappedTo === null) {
     throw new Error(
-      `buildStandaloneEntityConfig: entity '${entity.entityId}' has no CamStack mapping`,
+      `buildStandaloneEntityConfig: entity '${entity.entityId}' has no Dominevo mapping`,
     )
   }
   const mapping = entity.mappedTo
@@ -146,7 +146,7 @@ export function entityToStandaloneCandidate(
 
 /**
  * Flatten every HA device's entities into the flat `'entities'`-granularity
- * candidate list. Entities with no CamStack mapping are skipped (they cannot
+ * candidate list. Entities with no Dominevo mapping are skipped (they cannot
  * be imported as a standalone device). `adoptedEntityDeviceIds` maps the
  * entityIds that already have a STANDALONE device to its device id — those are marked
  * `alreadyAdopted` (a container-child for the same entity does NOT count).
@@ -351,7 +351,7 @@ function snapshotDeviceConfig(device: IDevice): Record<string, unknown> {
  */
 export function buildFreshStandaloneSpec(entity: HaDiscoveredEntity): StandaloneEntitySpec {
   if (entity.mappedTo === null) {
-    throw new Error(`buildFreshStandaloneSpec: entity '${entity.entityId}' has no CamStack mapping`)
+    throw new Error(`buildFreshStandaloneSpec: entity '${entity.entityId}' has no Dominevo mapping`)
   }
   const config = buildStandaloneEntityConfig({ entity, brokerId: 'reconcile' })
   const source = readHaSource(config)

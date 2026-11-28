@@ -1,14 +1,14 @@
 #!/usr/bin/env tsx
 /**
- * Viewer-link guard — **`buildViewerLink` (`@camstack/types`
+ * Viewer-link guard — **`buildViewerLink` (`@dominevo/types`
  * `viewer-link-url.ts`) is the only place a link to a VIEWER page, or to the
- * CamStack app link domain, is assembled.** (D709)
+ * Dominevo app link domain, is assembled.** (D709)
  *
  * ## The failure this catches
  *
  * The address a notification tap opens is an operator choice (the address
  * flagged for notifications on the admin Network page). By default it is the
- * CamStack app link, `https://camstack.zentik.app/<viewer path>?…&hub=`; the
+ * Dominevo app link, `https://camstack.zentik.app/<viewer path>?…&hub=`; the
  * operator can flag one of the hub's own addresses instead, and then the tap
  * is `<base>/viewer/camstack/<viewer path>`. Both forms, the AASA-claimed
  * route families and the `hub=` encoding live in one builder, and the Network
@@ -102,10 +102,10 @@ function main(): void {
     }
   }
   if (problems.length > 0) {
-    console.error('Viewer links are built only by buildViewerLink (@camstack/types, D709):')
+    console.error('Viewer links are built only by buildViewerLink (@dominevo/types, D709):')
     for (const p of problems) console.error(`  ${p}`)
     console.error(
-      'Use buildViewerLink / CAMSTACK_APP_LINK_ORIGIN / HUB_VIEWER_MOUNT from @camstack/types.',
+      'Use buildViewerLink / CAMSTACK_APP_LINK_ORIGIN / HUB_VIEWER_MOUNT from @dominevo/types.',
     )
     process.exit(1)
   }

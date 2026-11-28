@@ -1,4 +1,4 @@
-import { DeviceRole, DeviceType, ERROR_STATUS_COLD, type ErrorStatus } from '@camstack/types'
+import { DeviceRole, DeviceType, ERROR_STATUS_COLD, type ErrorStatus } from '@dominevo/types'
 
 /**
  * Status columns the vendored library's `updateState` does not ask for. They are

@@ -33,8 +33,8 @@
  *    a stale session assignment WITHOUT wedging future motion dispatch.
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { EventCategory } from '@camstack/types'
-import type { CameraDetectionConfig, IEventBus } from '@camstack/types'
+import { EventCategory } from '@dominevo/types'
+import type { CameraDetectionConfig, IEventBus } from '@dominevo/types'
 import PipelineOrchestratorAddon from '../index.js'
 import {
   makeFakeBroker,

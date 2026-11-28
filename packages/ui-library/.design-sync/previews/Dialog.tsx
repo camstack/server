@@ -8,7 +8,7 @@ import {
   DialogFooter,
   Button,
   Input,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 
 const Frame = ({ children }: { children: ReactNode }) => (
   <div className="dark bg-background text-foreground p-5 rounded-lg" style={{ minHeight: 480 }}>
@@ -46,7 +46,7 @@ export const AddIntegrationForm = () => (
       <DialogContent width="md">
         <DialogHeader>
           <DialogTitle>Add integration</DialogTitle>
-          <DialogDescription>Connect a new NVR or device provider to CamStack.</DialogDescription>
+          <DialogDescription>Connect a new NVR or device provider to Dominevo.</DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-3">
           <label className="flex flex-col gap-1">

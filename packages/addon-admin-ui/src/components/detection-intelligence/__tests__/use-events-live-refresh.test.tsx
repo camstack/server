@@ -2,7 +2,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { renderHook } from '@testing-library/react'
 import { act } from 'react'
-import type { SystemLiveEvent } from '@camstack/sdk'
+import type { SystemLiveEvent } from '@dominevo/sdk'
 
 /**
  * `useEventsLiveRefresh` coalesces pipeline-activity events into one invalidation
@@ -25,7 +25,7 @@ const { capturedCallbacks, mockInvalidateQueries } = vi.hoisted(() => ({
   mockInvalidateQueries: vi.fn(),
 }))
 
-vi.mock('@camstack/ui-library', () => ({
+vi.mock('@dominevo/ui-library', () => ({
   useLiveEvent: (_category: string, cb: (event: SystemLiveEvent<unknown>) => void) => {
     capturedCallbacks.current.push(cb)
   },

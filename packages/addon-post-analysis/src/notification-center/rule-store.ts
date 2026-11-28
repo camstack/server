@@ -41,7 +41,7 @@ import type {
   NcRulePatch,
   RecordKindHandle,
   RecordsAccess,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   isRetiredClearKey,
   NcRuleSchema,
@@ -49,7 +49,7 @@ import {
   normalizeNcMediaPolicy,
   withSystemEventClasses,
   withSystemEventModes,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { warnLegacyAudioClassRules } from './detection-audio-guard.js'
 import { type NcRereadResult, rereadRecordRow } from './durable-reread.js'
 import {

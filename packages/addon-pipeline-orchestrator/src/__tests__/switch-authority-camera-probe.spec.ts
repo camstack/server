@@ -29,8 +29,8 @@
  *    tagged with the numeric deviceId, because every question asked of it is
  *    per-camera.
  */
-import type { IScopedLogger, PrivacyMaskRegion } from '@camstack/types'
-import { deriveCameraSwitches, PRIVACY_MASK_CAP_NAME } from '@camstack/types'
+import type { IScopedLogger, PrivacyMaskRegion } from '@dominevo/types'
+import { deriveCameraSwitches, PRIVACY_MASK_CAP_NAME } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { RepeatWarnSampler } from '../repeat-warn-sampler.js'
 import { readSwitchAuthorities, type SwitchAuthorityReadDeps } from '../switch-authorities.js'

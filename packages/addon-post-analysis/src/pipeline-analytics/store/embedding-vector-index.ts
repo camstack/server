@@ -32,7 +32,7 @@
  * Sharing a dimension is not a reason to share an index.
  */
 
-import { encodeVectorBase64, type IScopedLogger, type VectorMetadata } from '@camstack/types'
+import { encodeVectorBase64, type IScopedLogger, type VectorMetadata } from '@dominevo/types'
 
 /** The buffered per-track ArcFace face vector (`pipeline-analytics:faces`). */
 export const FACE_ARCFACE_INDEX = 'face-arcface'

@@ -1,4 +1,4 @@
-import type { NativeRecoveryEvidence } from '@camstack/types'
+import type { NativeRecoveryEvidence } from '@dominevo/types'
 import type { ConfirmationGateSettings } from './confirmation-gate-settings.js'
 
 /**

@@ -39,7 +39,7 @@ import type {
   ConfigUISchema,
   ConfigUISchemaWithValues,
   PipelineAssignment,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   CAMERA_SENSORS_SETTINGS_KEY,
   createEvent,
@@ -47,7 +47,7 @@ import {
   EventCategory,
   errMsg,
   hydrateSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   armOnboardChannel,
   type CameraDetectionSourceView,

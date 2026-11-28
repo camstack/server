@@ -39,7 +39,7 @@
  *
  * Idempotent through the stamp: a v2 photo sample is skipped.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import {
   FACE_ALIGNMENT_SCRFD_V2,
   type FaceAlignmentVersion,

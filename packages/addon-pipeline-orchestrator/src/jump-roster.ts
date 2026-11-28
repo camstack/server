@@ -20,7 +20,7 @@
  * target; the executor only resolves that choice against the target pool's
  * format (`resolveModelForFormat`, absent ⇒ the format default).
  */
-import type { RunnerInferenceDevice } from '@camstack/types'
+import type { RunnerInferenceDevice } from '@dominevo/types'
 import { buildInferenceDeviceRoster } from './inference-device-model.js'
 
 export interface JumpRosterInput {

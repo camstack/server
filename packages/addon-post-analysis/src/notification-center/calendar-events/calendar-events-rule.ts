@@ -2,7 +2,7 @@
  * NcCalendarEventsRule — scheduled "upcoming calendar events" digest.
  *
  * Same ownership model as Summaries/Timelapses: lives in the addon (not
- * `@camstack/types`) so a field is live on the next post-analysis deploy.
+ * `@dominevo/types`) so a field is live on the next post-analysis deploy.
  * Rides no `NcDelivery` member; reaches the outside world through
  * `nc.*CalendarEvents*` bridge actions.
  *
@@ -16,7 +16,7 @@ import {
   NcTargetOverridesSchema,
   TagIdsFieldSchema,
   TagsFieldSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import {
   CALENDAR_EVENTS_DEFAULT_HORIZON_DAYS,

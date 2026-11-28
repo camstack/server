@@ -13,7 +13,7 @@
  */
 
 import { EventEmitter } from 'node:events'
-import type { ExportRecord, IScopedLogger } from '@camstack/types'
+import type { ExportRecord, IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { ExportEngine } from '../export-engine.js'
 import { getExportRecord, type RecordingExportsState, upsertExport } from '../export-store.js'

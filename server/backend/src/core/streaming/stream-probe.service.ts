@@ -2,9 +2,9 @@ import { execFile } from 'child_process'
 
 import { LoggingService } from '../logging/logging.service'
 import { TtlCache } from './ttl-cache'
-import type { StreamMetadata } from '@camstack/types'
-import type { IScopedLogger, PinnedFfmpegResolver } from '@camstack/types'
-import { errMsg } from '@camstack/types'
+import type { StreamMetadata } from '@dominevo/types'
+import type { IScopedLogger, PinnedFfmpegResolver } from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
 import {
   buildStreamProbeArgs,
   parseFfmpegStreamInfo,

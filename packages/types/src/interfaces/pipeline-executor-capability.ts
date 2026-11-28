@@ -130,9 +130,9 @@ export interface PipelineRunInput {
 // installed addons dynamically, so the adapter and its interface were
 // removed.
 
-// BenchmarkHistoryEntry moved to `@camstack/addon-benchmark` — the
+// BenchmarkHistoryEntry moved to `@dominevo/addon-benchmark` — the
 // canonical shape is now derived from `BenchmarkHistoryEntrySchema` in
-// @camstack/types/capabilities/pipeline-executor.cap.ts (kept exported
+// @dominevo/types/capabilities/pipeline-executor.cap.ts (kept exported
 // so the addon can import it without re-declaring). 2026-04-14.
 
 // ---------------------------------------------------------------------------
@@ -252,7 +252,7 @@ export interface IPipelineExecutorProvider {
   }): Promise<{ base64: string; filename: string } | null>
 
   // ── Benchmarks ──
-  // Moved to `@camstack/addon-benchmark` (2026-04-14) — the addon owns the
+  // Moved to `@dominevo/addon-benchmark` (2026-04-14) — the addon owns the
   // benchmark catalog as customActions and delegates execution back to this
   // cap's `runPipeline`. The 6 methods (runBenchmark/runPipelineTest/
   // list|save|delete|clearBenchmarkHistory) are no longer part of the

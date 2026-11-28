@@ -4,8 +4,8 @@
  * WebAuthn is a W3C standard (`navigator.credentials`); the browser step
  * (turn server-issued options JSON → a credential assertion/attestation
  * JSON) is protocol-standard. This module wraps `@simplewebauthn/browser`
- * so the dependency lives ENTIRELY inside `@camstack/addon-auth` — the
- * admin shell and `@camstack/ui-library` carry NO WebAuthn knowledge. The
+ * so the dependency lives ENTIRELY inside `@dominevo/addon-auth` — the
+ * admin shell and `@dominevo/ui-library` carry NO WebAuthn knowledge. The
  * ceremony ships as a Module-Federation widget bundle (`passkey-login` /
  * `passkey-enrollment`), lazy-loaded by the host — pre-auth via the
  * public `auth.listLoginMethods` login-method channel, post-auth via the

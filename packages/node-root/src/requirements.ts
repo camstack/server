@@ -2,7 +2,7 @@
  * Package requirements (D989) for the zero-dep starter layer.
  *
  * The declaration format and its authoritative checker live in
- * `@camstack/types` (`PackageRequiresSchema`, `unmetRequirements`). The starter
+ * `@dominevo/types` (`PackageRequiresSchema`, `unmetRequirements`). The starter
  * cannot import a runtime value from there (it would bundle the whole types
  * barrel into a zero-dep file), so the few lines it needs are ported here on
  * top of `compareSemver`; `requirements-parity.spec.ts` runs both over one
@@ -13,13 +13,13 @@ import type {
   RequiredAddonUpdate,
   RunningWrapper,
   UnmetRequirement,
-} from '@camstack/types'
+} from '@dominevo/types'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { rootPackageDir } from './root-state.js'
 import type { RootPackageSpec } from './root-package-spec.js'
 import { compareSemver } from './semver-compare.js'
-import type { WrapperIdentity } from '@camstack/types'
+import type { WrapperIdentity } from '@dominevo/types'
 
 const MINIMUM_RE = /^>=(\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)$/
 

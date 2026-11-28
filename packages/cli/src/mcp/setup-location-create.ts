@@ -22,8 +22,8 @@ import {
   StorageLocationSchema,
   type StorageLocation,
   type StorageLocationMode,
-} from '@camstack/types'
-import type { DryRunOutcome, GatedToolSpec, HubClient } from '@camstack/develop'
+} from '@dominevo/types'
+import type { DryRunOutcome, GatedToolSpec, HubClient } from '@dominevo/develop'
 import { z } from 'zod'
 import { adminGated, type AdminGatedResult } from './configure-common.js'
 import type { McpContext } from './context.js'

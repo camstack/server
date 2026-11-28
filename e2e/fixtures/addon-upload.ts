@@ -1,11 +1,11 @@
 /**
  * Tarball-upload helper for E2E.
  *
- * Mirrors what `camstack deploy` does on the wire: `npm pack` a
+ * Mirrors what `dominevo deploy` does on the wire: `npm pack` a
  * package dir → POST the resulting .tgz to `/api/addons/upload` as a
  * multipart/form-data body. The CLI subprocess itself adds nothing
  * beyond auth-token caching, so the test exercises the same hub
- * codepath without depending on `camstack login` having written a
+ * codepath without depending on `dominevo login` having written a
  * session file.
  *
  * Why hand-rolled multipart instead of `globalThis.FormData`: the hub

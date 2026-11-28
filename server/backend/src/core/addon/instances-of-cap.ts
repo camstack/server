@@ -1,10 +1,10 @@
 /**
  * The hub's resolver of the instances of a function cap (D1013 rule 5). It binds the registry to the
- * one rule in `@camstack/types` (`instancesOfCap`): every holder of `integration-instances` that also
+ * one rule in `@dominevo/types` (`instancesOfCap`): every holder of `integration-instances` that also
  * provides the cap describes its kinds, and the instances of a kind of that cap are the answer. A
  * holder that cannot answer is reported, never skipped (D315, D49).
  */
-import { type InstanceSource, instancesOfCap, type InstancesOfCapResult } from '@camstack/types'
+import { type InstanceSource, instancesOfCap, type InstancesOfCapResult } from '@dominevo/types'
 import {
   holdersOf,
   type InstanceHolder,

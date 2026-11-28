@@ -27,8 +27,8 @@
  * Read-only: one calendar read per hour of the window, served from the same
  * bounded cache the timeline uses. It writes nothing and repairs nothing.
  */
-import type { IScopedLogger } from '@camstack/types'
-import { errMsg } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
 
 const HOUR_MS = 3_600_000
 

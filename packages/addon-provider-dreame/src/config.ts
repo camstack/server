@@ -1,5 +1,5 @@
 import type { NodreameOptions } from '@apocaliss92/nodedreame'
-import type { ConfigUISchema } from '@camstack/types'
+import type { ConfigUISchema } from '@dominevo/types'
 import { z } from 'zod'
 
 /**

@@ -17,9 +17,9 @@ function writeJson(file: string, value: unknown): void {
 
 function addon(capabilities: readonly string[]): Record<string, unknown> {
   return {
-    name: '@camstack/addon-demo',
+    name: '@dominevo/addon-demo',
     version: '1.2.3',
-    description: 'Demo addon for CamStack',
+    description: 'Demo addon for Dominevo',
     files: ['dist'],
     camstack: {
       displayName: 'Demo',
@@ -49,7 +49,7 @@ beforeEach(() => {
     'globalSettings.s_basics.hostname.o_a.label': 'Option label, not a field',
   })
   writeJson(path.join(root, 'packages/core/package.json'), {
-    name: '@camstack/core',
+    name: '@dominevo/core',
     version: '3.0.0',
     description: 'Framework package',
     files: ['dist'],
@@ -75,7 +75,9 @@ describe('readme generation', () => {
     generateAll()
     const file = path.join(root, 'packages/addon-demo/README.md')
     fs.writeFileSync(file, `${fs.readFileSync(file, 'utf8')}\n## Notes\n\nHand-written note.\n`)
-    const prose = fs.readFileSync(file, 'utf8').replace('Demo addon for CamStack.', 'Written by hand.')
+    const prose = fs
+      .readFileSync(file, 'utf8')
+      .replace('Demo addon for Dominevo.', 'Written by hand.')
     fs.writeFileSync(file, prose)
     writeJson(path.join(root, 'packages/addon-demo/package.json'), addon(['alpha-cap', 'beta-cap']))
     expect(staleReadmes(root)).toContain('packages/addon-demo')
@@ -107,12 +109,16 @@ describe('readme generation', () => {
 describe('check-addon-readme-changelog covers framework packages', () => {
   it('flags a published framework package without README, CHANGELOG or files entries', () => {
     const messages = allProblems(root).map((problem) => `${problem.pkg}: ${problem.message}`)
-    expect(messages).toContain('@camstack/core: README.md is missing or empty')
-    expect(messages).toContain('@camstack/core: files does not include CHANGELOG.md')
+    expect(messages).toContain('@dominevo/core: README.md is missing or empty')
+    expect(messages).toContain('@dominevo/core: files does not include CHANGELOG.md')
   })
 
   it('does not ask a private package to publish anything', () => {
-    writeJson(path.join(root, 'packages/hidden/package.json'), { name: '@camstack/hidden', version: '1.0.0', private: true })
-    expect(allProblems(root).some((problem) => problem.pkg === '@camstack/hidden')).toBe(false)
+    writeJson(path.join(root, 'packages/hidden/package.json'), {
+      name: '@dominevo/hidden',
+      version: '1.0.0',
+      private: true,
+    })
+    expect(allProblems(root).some((problem) => problem.pkg === '@dominevo/hidden')).toBe(false)
   })
 })

@@ -23,7 +23,7 @@
 import type { DoorbellController } from '@homebridge/hap-nodejs'
 import { Characteristic, Service } from '@homebridge/hap-nodejs'
 
-import { EventCategory } from '@camstack/types'
+import { EventCategory } from '@dominevo/types'
 
 import { describeDoorbellDelivery, ringReachedNobody } from './doorbell-delivery.js'
 import type { BuilderContext, BuilderHandle } from '../types.js'

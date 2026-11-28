@@ -222,7 +222,7 @@ const PipelineModelOptionSchema = z.object({
   // entries stay resolvable but hidden from the grouped selector.
   group: ModelVariantGroupSchema.optional(),
   legacy: z.boolean().optional(),
-  // Catalog source for the provider-first stepper picker. Absent ⇒ CamStack
+  // Catalog source for the provider-first stepper picker. Absent ⇒ Dominevo
   // (built-in). Stamped on plus catalog / plugin catalog / BYO registry merges.
   provider: ModelProviderIdSchema.optional(),
   // The default confidence IN FORCE for this model — its own floor, else the
@@ -368,7 +368,7 @@ const ReferenceAudioBodySchema = z.object({
 // Benchmark schemas (BenchmarkInputSchema, BenchmarkResultSchema,
 // BenchmarkHistoryEntrySchema, BenchmarkHistoryEntryInputSchema,
 // BenchmarkLatencyStatsSchema, PipelineRunInputSchema) moved to
-// `@camstack/addon-benchmark/src/benchmark-schemas.ts` (2026-04-14).
+// `@dominevo/addon-benchmark/src/benchmark-schemas.ts` (2026-04-14).
 // They describe a surface that belongs to the benchmark addon, not the
 // core pipeline-executor cap. `PipelineEngineChoiceSchema` below remains
 // exported because it's still referenced by other cap methods (runPipeline
@@ -418,7 +418,7 @@ const AudioTestResultSchema = z.object({
   frame: z.custom<AudioResult>().optional(),
 })
 
-// ── Typed bridges to complex TS interfaces defined in `@camstack/types` ──
+// ── Typed bridges to complex TS interfaces defined in `@dominevo/types` ──
 // Use `z.custom<T>()` when the target interface is a deeply-nested discriminated
 // union (ConfigUISchema) or a recursive graph (PipelineConfig, PipelineRunResult,
 // InferenceCapabilities). `z.custom<T>()` provides full TS inference on the
@@ -917,7 +917,7 @@ export const pipelineExecutorCapability = {
     ),
 
     // ── Benchmarks & testing ─────────────────────────────────────────
-    // Moved to `@camstack/addon-benchmark` as customActions (2026-04-14).
+    // Moved to `@dominevo/addon-benchmark` as customActions (2026-04-14).
     // The addon exposes runBenchmark / runPipelineTest / listBenchmarkHistory /
     // saveBenchmarkResult / deleteBenchmarkResult / clearBenchmarkHistory via
     // `api.addons.custom.mutate({addonId: 'benchmark', action, input})` and

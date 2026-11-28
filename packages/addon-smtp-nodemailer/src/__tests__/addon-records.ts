@@ -1,4 +1,4 @@
-import type { RecordsAccess } from '@camstack/types'
+import type { RecordsAccess } from '@dominevo/types'
 import { mailboxesKind } from '../mailbox-record-kinds.js'
 import { smtpRelaysKind } from '../relay-record-kinds.js'
 

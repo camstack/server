@@ -24,7 +24,7 @@ import {
   type JsParseFn,
 } from './segment-demux-js.js'
 import type { AccessUnit } from './segment-demux.js'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 /** Minimal Worker surface the client talks to — tests inject a fake. */
 export interface DemuxWorkerLike {

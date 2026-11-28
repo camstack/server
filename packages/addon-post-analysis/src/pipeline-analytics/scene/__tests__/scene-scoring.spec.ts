@@ -1,5 +1,5 @@
-import type { SceneMonitorState } from '@camstack/types'
-import { SCENE_DIVERGED } from '@camstack/types'
+import type { SceneMonitorState } from '@dominevo/types'
+import { SCENE_DIVERGED } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { HysteresisStep } from '../scene-scoring.js'
 import { coveredConditions, scoreStates, stepHysteresis } from '../scene-scoring.js'

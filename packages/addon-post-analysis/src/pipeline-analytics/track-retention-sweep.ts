@@ -21,7 +21,7 @@
  * Kept as a pure, dependency-injected function so the loop is unit-testable
  * without booting the addon.
  */
-import type { TrackCascadeCounts } from '@camstack/types'
+import type { TrackCascadeCounts } from '@dominevo/types'
 
 export interface TrackRetentionSweepDeps {
   /** The device set to sweep — devices that have persisted tracks. */

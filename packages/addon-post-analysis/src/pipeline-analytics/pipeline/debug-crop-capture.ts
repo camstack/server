@@ -48,7 +48,7 @@
  * the scale are unit-tested without sharp, the transport or the media store.
  */
 
-import type { FrameHandle, IScopedLogger } from '@camstack/types'
+import type { FrameHandle, IScopedLogger } from '@dominevo/types'
 import type { FrameBox } from '../../shared/frame/box-drawer.js'
 import {
   DEBUG_CROPS_PER_TRACK_MAX,

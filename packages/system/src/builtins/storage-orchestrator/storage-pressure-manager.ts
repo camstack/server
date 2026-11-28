@@ -1,4 +1,4 @@
-import type { IScopedLogger, IStorageEvictableProvider } from '@camstack/types'
+import type { IScopedLogger, IStorageEvictableProvider } from '@dominevo/types'
 import type { DrainProgress, DrainState } from './drain-ratchet.js'
 import { drainProgressOf, stepDrain } from './drain-ratchet.js'
 

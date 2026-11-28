@@ -2,14 +2,14 @@
  * The When tree editor: nested blocks, the row-type menu, reorder and collapse,
  * no in-tree warnings, the label picker and a stored legacy class.
  */
-import { selectOption, selectOptionLabels } from '@camstack/ui-library/testing'
+import { selectOption, selectOptionLabels } from '@dominevo/ui-library/testing'
 import {
   type AutomationRecipe,
   AutomationRecipeSchema,
   type AutomationWhen,
   DeviceType,
   MAX_WHEN_LEAVES,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render as plainRender, screen, within } from '@testing-library/react'
 import { type ReactElement, useState } from 'react'
@@ -27,9 +27,9 @@ vi.mock('../FieldPicker', async () => {
   }
 })
 
-vi.mock('@camstack/ui-library', async () => {
+vi.mock('@dominevo/ui-library', async () => {
   const actual =
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+    await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return {
     ...actual,
     useSystem: () => ({
@@ -55,7 +55,7 @@ vi.mock('@camstack/ui-library', async () => {
 import { DeviceSearchTrpc, SEARCH_HUB_FLEET } from '../../../../test-setup/device-search-hub'
 import type { AutomationDevice } from '../automation-data'
 import { EMPTY_RECIPE } from '../recipe-parts'
-import type { AutomationRunTrace } from '@camstack/types'
+import type { AutomationRunTrace } from '@dominevo/types'
 import { whenRunView } from '../../flow/trace-view'
 import { WhenTree } from '../WhenTree'
 

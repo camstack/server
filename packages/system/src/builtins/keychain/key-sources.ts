@@ -5,12 +5,12 @@
  *  1. `/run/secrets/camstack-master-key` — primary when the file EXISTS at boot
  *     (the Docker / Compose secrets convention; Unraid and Proxmox bind-mount a
  *     file there). A file outside the data volume: a whole-volume backup then
- *     holds the ciphertext but not the key. CamStack only READS it — it is
+ *     holds the ciphertext but not the key. Dominevo only READS it — it is
  *     never written and never created.
  *  2. The desktop app's OS keychain (`safeStorage`), handed to the hub over an
  *     inherited pipe. Primary on a desktop hub with no mounted key file.
  *  3. `<dataDir>/.keychain/master.key` (0600, directory 0700), generated on
- *     first boot. The fallback: it protects CamStack's own backups and stray
+ *     first boot. The fallback: it protects Dominevo's own backups and stray
  *     database copies (it is NOT in `DEFAULT_BACKUP_LOCATIONS`), but a tar of
  *     the whole data directory carries key and database together, and the
  *     Secrets page says so.
@@ -21,12 +21,12 @@
  */
 import { promises as fsp } from 'node:fs'
 import * as path from 'node:path'
-import type { KeychainKeySource, KeychainKeySourceKind } from '@camstack/types'
+import type { KeychainKeySource, KeychainKeySourceKind } from '@dominevo/types'
 import {
   restrictDirToOwnerSync,
   restrictFileToOwnerSync,
   writeOwnerOnlyFileSync,
-} from '@camstack/types/node'
+} from '@dominevo/types/node'
 import { decodeKeyMaterial, encodeKeyMaterial } from './keychain-crypto.js'
 import { getPlatformKeychainKey } from './platform-key-source.js'
 

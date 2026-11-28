@@ -1,4 +1,4 @@
-import type { ActionEntry } from '@camstack/types'
+import type { ActionEntry } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   checkDraft,

@@ -1,4 +1,4 @@
-import { nodePin } from '@camstack/types'
+import { nodePin } from '@dominevo/types'
 import { createTRPCClient, type TRPCLink } from '@trpc/client'
 import type { ServiceBroker } from 'moleculer'
 import { describe, expect, it, vi } from 'vitest'
@@ -394,7 +394,7 @@ describe('an unresolved provider does not erase the caller', () => {
   it('records the observation with the placeholder instead of dropping it', () => {
     const seen: CapUsageObservation[] = []
     const opts: CapUsageObserverOptions = {
-      callerAddonId: '@camstack/addon-post-analysis',
+      callerAddonId: '@dominevo/addon-post-analysis',
       providerAddonIdForCap: () => null,
       observer: (obs) => {
         seen.push(obs)
@@ -404,7 +404,7 @@ describe('an unresolved provider does not erase the caller', () => {
     recordCapUsage(opts, 'addon-settings', 'getDeviceSettings')
 
     expect(seen).toHaveLength(1)
-    expect(seen[0]?.callerAddonId).toBe('@camstack/addon-post-analysis')
+    expect(seen[0]?.callerAddonId).toBe('@dominevo/addon-post-analysis')
     expect(seen[0]?.capName).toBe('addon-settings')
     expect(seen[0]?.providerAddonId).toBe(UNRESOLVED_PROVIDER_ADDON_ID)
   })
@@ -413,8 +413,8 @@ describe('an unresolved provider does not erase the caller', () => {
     const seen: CapUsageObservation[] = []
     recordCapUsage(
       {
-        callerAddonId: '@camstack/addon-pipeline',
-        providerAddonIdForCap: () => '@camstack/server',
+        callerAddonId: '@dominevo/addon-pipeline',
+        providerAddonIdForCap: () => '@dominevo/server',
         observer: (obs) => {
           seen.push(obs)
         },
@@ -423,6 +423,6 @@ describe('an unresolved provider does not erase the caller', () => {
       'query',
     )
 
-    expect(seen[0]?.providerAddonId).toBe('@camstack/server')
+    expect(seen[0]?.providerAddonId).toBe('@dominevo/server')
   })
 })

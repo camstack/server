@@ -1,5 +1,5 @@
 import { createServer, request, type ClientRequest, type Server } from 'node:http'
-import { CALLER_USERNAME_HEADER, type IScopedLogger, type LogExtras } from '@camstack/types'
+import { CALLER_USERNAME_HEADER, type IScopedLogger, type LogExtras } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { createTerminalDataPlaneHandler } from '../terminal-data-plane.js'
 import type { PtyProcess, PtySpawner, PtySpawnOptions } from '../pty.js'

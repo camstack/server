@@ -10,12 +10,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mutateAsync = vi.fn<(input: { ref: string }) => Promise<{ value: string }>>()
 
-vi.mock('@camstack/ui-library', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@camstack/ui-library')>()
+vi.mock('@dominevo/ui-library', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dominevo/ui-library')>()
   return { ...actual, useKeychainAdminReveal: () => ({ mutateAsync }) }
 })
 
-import { ConfigFormField as FormField } from '@camstack/ui-library'
+import { ConfigFormField as FormField } from '@dominevo/ui-library'
 import { KeychainRevealHost } from '../KeychainRevealHost'
 
 const VIEW = { $secret: 'secret://provider-hikvision/device/7/password', v: 1, set: true }

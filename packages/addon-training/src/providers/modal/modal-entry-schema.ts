@@ -3,7 +3,7 @@
  * (`ConfigFormBuilder` + `type: 'password'`). Storage is the account record, whose secret is
  * a keychain marker (D787); this schema drives the account form of the instances table.
  */
-import type { ConfigUISchema } from '@camstack/types'
+import type { ConfigUISchema } from '@dominevo/types'
 import { MODAL_DEFAULT_GPU, MODAL_GPUS, MODAL_REGIONS } from './modal-pricing.js'
 
 export const MODAL_ENTRY_CONFIG_SCHEMA: ConfigUISchema = {

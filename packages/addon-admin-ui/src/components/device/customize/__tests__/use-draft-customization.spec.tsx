@@ -3,7 +3,7 @@
  * writes it once with the stamp it read, a refusal keeps it, and two commits
  * chain the stamp the first returned.
  */
-import type { Composition } from '@camstack/types'
+import type { Composition } from '@dominevo/types'
 import { act, renderHook } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import '../../../../i18n'
@@ -56,8 +56,8 @@ const read = (b: BlockStore['server']) => ({
           state: { kind: 'answered', state: null },
         },
 })
-vi.mock('@camstack/ui-library', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@camstack/ui-library')>()
+vi.mock('@dominevo/ui-library', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dominevo/ui-library')>()
   const idle = () => ({ mutateAsync: vi.fn(async () => ({})), isPending: false })
   return {
     ...actual,

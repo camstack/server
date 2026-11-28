@@ -16,8 +16,8 @@
  * `''` and `'shared'` meant the same thing) and shows `per-class` for an
  * untouched field without writing it.
  */
-import type { NcRule } from '@camstack/types'
-import { NC_CONDITION_CATALOG } from '@camstack/types'
+import type { NcRule } from '@dominevo/types'
+import { NC_CONDITION_CATALOG } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   buildRuleInput,

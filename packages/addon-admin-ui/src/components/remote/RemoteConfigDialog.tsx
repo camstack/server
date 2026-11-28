@@ -10,7 +10,7 @@ import {
   type RemoteBindingAction,
   type RemoteConfig,
   type RemoteSendResult,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   Button,
   Dialog,
@@ -27,7 +27,7 @@ import {
   useRemoteListCommands,
   useRemoteSendCommand,
   useTemplateList,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Pencil } from 'lucide-react'
 import type { TFunction } from 'i18next'
 import { type ReactNode, useMemo, useState } from 'react'
@@ -36,7 +36,7 @@ import { useAutomationDevices } from '../../pages/build/automation/automation-da
 import { BindingPanel } from './BindingPanel'
 import { deviceLabel } from './binding-summary'
 import { FlipperIrdbPanel } from './FlipperIrdbPanel'
-import { layoutOf, RemoteGrid } from '@camstack/ui-library'
+import { layoutOf, RemoteGrid } from '@dominevo/ui-library'
 import {
   applyDraft,
   type BindableRole,
@@ -46,7 +46,7 @@ import {
   IR_CAP,
   setBinding,
 } from './remote-config-model'
-import { roleName as vocabRoleName } from '@camstack/ui-library'
+import { roleName as vocabRoleName } from '@dominevo/ui-library'
 import { SmartIrImportPanel } from './SmartIrImportPanel'
 import { SourcesPanel } from './SourcesPanel'
 import { type TemplateDraft, TemplateEditorBody } from './TemplateEditorDialog'

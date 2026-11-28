@@ -29,7 +29,7 @@
  * click-to-that-frame affordance.
  */
 
-import { buildSubjectPath } from '@camstack/ui-library'
+import { buildSubjectPath } from '@dominevo/ui-library'
 
 export interface TrajPoint {
   readonly x: number

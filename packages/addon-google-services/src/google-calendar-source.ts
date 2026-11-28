@@ -7,7 +7,7 @@ import type {
   CalendarListEventsInput,
   ICalendarSourceProvider,
   IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { parseStampedCalendarId, stampCalendarId } from './google-broker-registry.js'
 import { GOOGLE_CALENDAR_API } from './google-types.js'
 

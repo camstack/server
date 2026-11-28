@@ -46,8 +46,8 @@ import {
   type UnreleasedClaim,
   problemsBlockSave,
   validateComposition,
-} from '@camstack/types'
-import { customizationBlockName } from '@camstack/types/node'
+} from '@dominevo/types'
+import { customizationBlockName } from '@dominevo/types/node'
 import type { NamedCompositionInput } from './core-block-store.js'
 import { storedCustomizationTargets, storedPeers } from './composition-peers.js'
 import type { CompositionDescriptions } from './composition-sources.js'

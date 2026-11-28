@@ -4,7 +4,7 @@
  * Nothing here is a component or a colour; tones are theme-token names.
  */
 
-import { HERO_SCENES, type HeroSceneId } from '@camstack/types'
+import { HERO_SCENES, type HeroSceneId } from '@dominevo/types'
 
 /** Every scene a device hero (or row mini scene) can draw — the model's list, not a copy. */
 export const HERO_SCENE_IDS: typeof HERO_SCENES = HERO_SCENES

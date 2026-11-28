@@ -8,7 +8,7 @@ import {
   DeviceType,
   errMsg,
   type InferNativeProvider,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { rademacherCoverSchema } from '../config.js'
 import { registerRademacherStateRefresh } from './rademacher-state-refresh.js'
 import { type RademacherCoverSnapshot, toCoverStatus, toLibraryPosition } from '../cover-mapping.js'
@@ -22,7 +22,7 @@ const COLD_START: CoverStatus = {
 }
 
 /**
- * One Rademacher HomePilot roller shutter as a CamStack {@link DeviceType.Cover}
+ * One Rademacher HomePilot roller shutter as a Dominevo {@link DeviceType.Cover}
  * device. A top-level device of its integration (a sibling of the gateway box, not its child). Registers ONE cap
  * (`cover`) with the full lifecycle surface (open/close/stop/setPosition +
  * setTiltPosition for slat-tilt / ventilation). The slice is fed from the live

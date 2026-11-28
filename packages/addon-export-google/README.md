@@ -4,7 +4,7 @@ Google Home Export — hub-side smart-home fulfillment (SYNC / QUERY / EXECUTE /
 
 <!-- readme:generated:start (derived from the manifest; edit outside this block) -->
 
-Package `@camstack/addon-export-google` on npm.
+Package `@dominevo/addon-export-google` on npm.
 
 ## What it provides
 
@@ -14,12 +14,12 @@ Package `@camstack/addon-export-google` on npm.
 ## Requirements
 
 - Placement: hub-only (runner group `integrations`).
-- A CamStack hub. An agent is used only where the placement above allows it.
+- A Dominevo hub. An agent is used only where the placement above allows it.
 
 ## Documentation
 
-- [docs/addons/addon-export-google.md](https://github.com/camstack/server/blob/main/docs/addons/addon-export-google.md)
-- [packages/addon-export-google/AGENTS.md](https://github.com/camstack/server/blob/main/packages/addon-export-google/AGENTS.md)
+- [docs/addons/addon-export-google.md](https://github.com/dominevo/server/blob/main/docs/addons/addon-export-google.md)
+- [packages/addon-export-google/AGENTS.md](https://github.com/dominevo/server/blob/main/packages/addon-export-google/AGENTS.md)
 
 See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
 

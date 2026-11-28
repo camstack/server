@@ -8,10 +8,10 @@
  * (`beginLinkedStills`) as its media: the mosaic, or one still per camera.
  */
 import { ncTable } from './support/nc-test-deps.js'
-import type { InMemoryRecords } from '@camstack/types'
+import type { InMemoryRecords } from '@dominevo/types'
 import { makeNcRecords } from './support/nc-test-deps.js'
-import type { NcRuleInput, SensorEvent } from '@camstack/types'
-import { NcRuleInputSchema } from '@camstack/types'
+import type { NcRuleInput, SensorEvent } from '@dominevo/types'
+import { NcRuleInputSchema } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   type FakeSettingsStore,

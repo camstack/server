@@ -4,7 +4,7 @@ import {
   type RemoteLayoutGroup,
   type RemoteLayoutPayload,
   RemoteLayoutPayloadSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   addButton,
@@ -21,7 +21,7 @@ import {
   setGroupTitle,
   setSeparatorOptions,
   slimRowsOf,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 
 function must(result: LayoutResult): RemoteLayoutPayload {
   if (result.status !== 'ok') throw new Error(`refused: ${result.reason}`)

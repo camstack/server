@@ -6,7 +6,7 @@ import { existsSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } fro
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { serverManagementCapability } from '@camstack/types'
+import { serverManagementCapability } from '@dominevo/types'
 import { buildLaunchOverrideMethods } from '../api/core/server-management.provider.js'
 import {
   LAUNCH_OVERRIDES_FILE,

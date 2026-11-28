@@ -2,8 +2,8 @@
  * D1099 — a `device-status` slice marked `unknown` is a placeholder, not a
  * liveness claim: a restarting integration must not produce a device-offline.
  */
-import type { SystemEvent } from '@camstack/types'
-import { DeviceType } from '@camstack/types'
+import type { SystemEvent } from '@dominevo/types'
+import { DeviceType } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { NcDeviceIdentity } from '../device-directory.js'
 import { discardedSystemEvent, incomingFromSystemEvent } from '../event-intake.js'

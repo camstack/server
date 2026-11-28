@@ -26,7 +26,7 @@ import {
   type TemplateRowValue,
   type TemplateScalarInput,
   type TemplateScalarValue,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { prepareRecipeUnits } from '../automation/recipe-units'
 
 function scalarDefault(input: TemplateScalarInput): TemplateScalarValue | undefined {

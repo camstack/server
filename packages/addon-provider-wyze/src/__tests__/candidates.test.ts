@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { WyzeCamera } from '@apocaliss92/wyze-bridge-js'
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import { buildWyzeCandidates } from '../candidates.js'
 
 function cam(partial: Partial<WyzeCamera>): WyzeCamera {

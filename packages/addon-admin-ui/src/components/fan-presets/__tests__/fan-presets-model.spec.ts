@@ -1,4 +1,4 @@
-import type { FanPreset, FanPresetState } from '@camstack/types'
+import type { FanPreset, FanPresetState } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   checkPresetDraft,

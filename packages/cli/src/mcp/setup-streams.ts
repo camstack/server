@@ -17,8 +17,8 @@ import {
   type CamProfile,
   type CameraStream,
   type ProfileSlot,
-} from '@camstack/types'
-import { type DryRunOutcome, type GatedToolSpec, type HubClient } from '@camstack/develop'
+} from '@dominevo/types'
+import { type DryRunOutcome, type GatedToolSpec, type HubClient } from '@dominevo/develop'
 import { z } from 'zod'
 import { adminGated, type AdminGatedResult } from './configure-common.js'
 import type { McpContext } from './context.js'

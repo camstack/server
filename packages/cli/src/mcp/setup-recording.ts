@@ -6,8 +6,8 @@
  * `unavailable`; it is never reported as "not recording". A camera the
  * operator switched off (`disabled`) is never proposed a schedule (D62).
  */
-import { RecordingConfigSchema, deriveRecordingMode, type RecordingConfig } from '@camstack/types'
-import { type DryRunOutcome, type GatedToolSpec, type HubClient } from '@camstack/develop'
+import { RecordingConfigSchema, deriveRecordingMode, type RecordingConfig } from '@dominevo/types'
+import { type DryRunOutcome, type GatedToolSpec, type HubClient } from '@dominevo/develop'
 import { z } from 'zod'
 import { adminGated, type AdminGatedResult } from './configure-common.js'
 import type { McpContext } from './context.js'

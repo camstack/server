@@ -36,7 +36,7 @@ import {
   resolveMethodAuth,
   settingsStoreCapability,
   type TokenScope,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { checkScopeAccess, type DeviceScopeLookup } from '../../api/trpc/scope-access.js'
 import { buildCapRouterForTest, invokeProcedure, makeCtx } from './harness.js'

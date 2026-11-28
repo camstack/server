@@ -10,8 +10,8 @@
  * that omit siblings do not need to mock `addons.custom`.
  */
 
-import type { StorageLocation } from '@camstack/types'
-import { useAddonsCustom, useConfirm, Button } from '@camstack/ui-library'
+import type { StorageLocation } from '@dominevo/types'
+import { useAddonsCustom, useConfirm, Button } from '@dominevo/ui-library'
 import { Eraser, Loader2, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import {

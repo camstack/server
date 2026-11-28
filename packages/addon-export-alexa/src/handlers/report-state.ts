@@ -36,8 +36,8 @@
  * Caps the cam doesn't expose are silently omitted — Alexa accepts a
  * partial property list and renders only what's present.
  */
-import type { AddonApi, AddonContext, IScopedLogger } from '@camstack/types'
-import { AlarmPanelStatusSchema } from '@camstack/types'
+import type { AddonApi, AddonContext, IScopedLogger } from '@dominevo/types'
+import { AlarmPanelStatusSchema } from '@dominevo/types'
 import { readConnectivity } from '../connectivity.js'
 import type { VerifiedDirectiveIdentity } from '../directive-router.js'
 import { type DetectionSensorClass, parseCameraEndpointId } from './endpoint-id.js'

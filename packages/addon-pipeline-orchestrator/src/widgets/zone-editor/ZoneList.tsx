@@ -1,7 +1,7 @@
 import { Trash2, X, Hexagon, Minus } from 'lucide-react'
 import { useT } from '../../i18n/index.js'
 import type { Zone, ZoneKind } from './types'
-import { Button } from '@camstack/ui-library'
+import { Button } from '@dominevo/ui-library'
 
 // ---------------------------------------------------------------------------
 // Kind badge helper

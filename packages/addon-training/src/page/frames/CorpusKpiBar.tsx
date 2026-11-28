@@ -4,7 +4,7 @@
  *
  * Counts come from an answered query only — pending is not rendered as zero (D315).
  */
-import type { RetrainCorpusKpi, RetrainCorpusKpiCameraRow } from '@camstack/types'
+import type { RetrainCorpusKpi, RetrainCorpusKpiCameraRow } from '@dominevo/types'
 import {
   Button,
   GRID_QUICK_STATS,
@@ -13,7 +13,7 @@ import {
   PopoverTrigger,
   Skeleton,
   StatCard,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Camera, CheckCircle2, CircleDashed, ImageIcon, PencilLine } from 'lucide-react'
 import { useMemo, useState, type JSX } from 'react'
 import { useT, type TFn } from '../../i18n/index.js'

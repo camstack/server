@@ -10,7 +10,7 @@ import { ArrowLeft, Cloud } from 'lucide-react'
 import type { ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import { Button } from '@camstack/ui-library'
+import { Button } from '@dominevo/ui-library'
 import { AdminPage } from '../../components/AdminPage'
 import { InstancesTable } from '../../components/instances/InstancesTable'
 
@@ -37,12 +37,12 @@ export function TrainingProvidersPage(): ReactElement {
         title={t('system.trainingProviders.accounts', 'Cloud accounts')}
         subtitle={t(
           'system.trainingProviders.accountsSubtitle',
-          'GPU-cloud accounts that run training jobs. Each account keeps its own token, GPU, cost cap and region; credentials stay in the CamStack keychain.',
+          'GPU-cloud accounts that run training jobs. Each account keeps its own token, GPU, cost cap and region; credentials stay in the Dominevo keychain.',
         )}
         emptyTitle={t('system.trainingProviders.noProviders', 'No training providers installed')}
         emptyDescription={t(
           'system.trainingProviders.noProvidersDescription',
-          'Install a training provider addon (for example @camstack/addon-training) to train on your own GPU-cloud account.',
+          'Install a training provider addon (for example @dominevo/addon-training) to train on your own GPU-cloud account.',
         )}
         addLabel={t('system.trainingProviders.addAccount', 'Add account')}
       />

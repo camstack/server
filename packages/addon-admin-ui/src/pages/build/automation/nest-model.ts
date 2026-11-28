@@ -6,7 +6,7 @@
  * steps too; the lists of THOSE are depth 2 and hold plain steps only. The
  * bound is `STEP_NEST_MAX`, the one the recipe schema refuses a save over.
  */
-import { type AutomationAction, type AutomationBodyStep, STEP_NEST_MAX } from '@camstack/types'
+import { type AutomationAction, type AutomationBodyStep, STEP_NEST_MAX } from '@dominevo/types'
 import { BRANCH_KINDS, isBranchStep } from './choose-model'
 import type { ActionKind } from './recipe-parts'
 

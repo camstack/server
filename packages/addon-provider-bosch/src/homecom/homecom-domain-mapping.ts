@@ -1,4 +1,4 @@
-import type { ClimateControlStatus, HvacMode, WaterHeaterStatus } from '@camstack/types'
+import type { ClimateControlStatus, HvacMode, WaterHeaterStatus } from '@dominevo/types'
 
 export interface HomeComHeatingCircuit {
   readonly id: string

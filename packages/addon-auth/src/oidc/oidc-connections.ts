@@ -3,7 +3,7 @@
  * `integration-instances` (kind `oidc-provider`, function cap `login-method`); the flow reads the
  * same rows, resolved.
  */
-import type { SecretClearInstruction } from '@camstack/types'
+import type { SecretClearInstruction } from '@dominevo/types'
 
 export const INSTANCE_ID_PATTERN = /^[a-z0-9][a-z0-9-]{0,63}$/
 

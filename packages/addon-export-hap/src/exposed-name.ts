@@ -5,7 +5,7 @@
  * display name and its service names on the next (re)expose. It never reaches the accessory UUID
  * (`accessoryUuidFor(kind, deviceId, instanceId)`), so a rename keeps the same paired accessory.
  */
-import type { ExposedNameValidator } from '@camstack/types'
+import type { ExposedNameValidator } from '@dominevo/types'
 import { HAP_NAME_MAX_LENGTH, isHapServiceName } from './mappers/builders/service-names.js'
 
 /** Apple's rule: at most 64 characters, begins and ends with a letter or digit, HAP punctuation only. */

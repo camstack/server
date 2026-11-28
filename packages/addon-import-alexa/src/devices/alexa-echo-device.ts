@@ -9,7 +9,7 @@ import {
   type DoNotDisturbStatus,
   type InferNativeProvider,
   type MediaPlayerStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { alexaEchoSessions, type EchoSession } from '../alexa-echo-sessions.js'
 import {
   emptyEchoStatus,

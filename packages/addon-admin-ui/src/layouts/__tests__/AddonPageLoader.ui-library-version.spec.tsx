@@ -28,8 +28,8 @@ vi.mock('@module-federation/runtime', () => ({
   getInstance: () => ({ shareScopeMap: { default: shareScope.map } }),
 }))
 
-vi.mock('@camstack/ui-library', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@camstack/ui-library')>()
+vi.mock('@dominevo/ui-library', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dominevo/ui-library')>()
   return {
     ...actual,
     get uiLibraryVersion() {
@@ -72,7 +72,7 @@ function renderPage() {
 
 beforeEach(() => {
   shareScope.map = {
-    '@camstack/ui-library': {
+    '@dominevo/ui-library': {
       '1.2.368': {
         from: 'addon_model_studio_page',
         shareConfig: { requiredVersion: shareScope.required },
@@ -107,7 +107,7 @@ describe('the page remote declares the ui-library it needs', () => {
 describe('requirement parsing', () => {
   it('reads only the declaration of the named remote', () => {
     const map = {
-      '@camstack/ui-library': {
+      '@dominevo/ui-library': {
         a: { from: 'one', shareConfig: { requiredVersion: '>=2.0.0' } },
         b: { from: 'two', shareConfig: { requiredVersion: '>=9.0.0' } },
       },

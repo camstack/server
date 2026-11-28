@@ -15,7 +15,7 @@
  * confirms (D1061, amending D874), so this addon projects nothing of its own.
  * Only when that read fails does the Response fall back to the plan's view.
  */
-import type { AddonApi, AddonContext, HvacMode, IScopedLogger } from '@camstack/types'
+import type { AddonApi, AddonContext, HvacMode, IScopedLogger } from '@dominevo/types'
 import { z } from 'zod'
 import {
   boundsOf,

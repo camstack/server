@@ -23,7 +23,7 @@ import {
   REDACTED_SECRET,
   SECRET_CLEAR,
   asRecordsError,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { describe, expect, it } from 'vitest'
 import { makeFakeKeychain, makeRecordsWorld } from './support/records-world.js'

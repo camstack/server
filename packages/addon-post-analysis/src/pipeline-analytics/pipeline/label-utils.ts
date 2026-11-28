@@ -1,5 +1,5 @@
-import type { DetailMacro, FirstLevelMacro, LabelTier, ScoredLabel } from '@camstack/types'
-import { linkedStepOf } from '@camstack/types'
+import type { DetailMacro, FirstLevelMacro, LabelTier, ScoredLabel } from '@dominevo/types'
+import { linkedStepOf } from '@dominevo/types'
 // Type-only: `label-tier.ts` imports the two predicates below at runtime, so a
 // value import here would be a cycle. The candidate shape has ONE definition,
 // and it belongs with the rule that consumes it.

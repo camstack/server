@@ -26,7 +26,7 @@
  * mis-computed wake-up costs one turn, not a stuck device, and the periodic
  * reconcile remains the backstop for both.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 /** Node truncates a `setTimeout` delay past this to 1 ms — clamp instead. */
 export const MAX_TIMER_DELAY_MS = 2_147_483_647

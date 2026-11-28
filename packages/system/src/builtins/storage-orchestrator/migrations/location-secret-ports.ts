@@ -3,7 +3,7 @@
  * addon's own keychain handle. Kept apart from the addon so the real-SQLite spec drives the
  * very same code the boot runs.
  */
-import type { RecordKindHandle, SecretsAccess, SecretMarker } from '@camstack/types'
+import type { RecordKindHandle, SecretsAccess, SecretMarker } from '@dominevo/types'
 import { readAllRows } from '../../../records/read-all-rows.js'
 import { isLegacyLocationMarker } from './legacy-location-secret-refs.js'
 import type { StorageLocationBody } from '../record-kinds.js'

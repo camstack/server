@@ -8,7 +8,7 @@
  *   - `tripwire` -> a `line` shape (2 ordered points),
  *   - `polygon`  -> a `polygon` shape (3+ ordered points).
  */
-import type { MaskPoint, MaskShape, MaskShapeKind, Zone as CapZone } from '@camstack/types'
+import type { MaskPoint, MaskShape, MaskShapeKind, Zone as CapZone } from '@dominevo/types'
 import type { MaskShapeItem } from './../cap-settings/MaskShapeCanvas'
 
 export type ZoneKind = 'polygon' | 'tripwire'

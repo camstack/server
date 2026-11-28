@@ -16,7 +16,7 @@ import {
   createAgentEventScope,
   createMeshAccessMiddleware,
   type AgentEventScope,
-} from '@camstack/server/system'
+} from '@dominevo/server/system'
 import type { Middleware } from 'moleculer'
 
 const HUB_NODE_ID = 'hub'

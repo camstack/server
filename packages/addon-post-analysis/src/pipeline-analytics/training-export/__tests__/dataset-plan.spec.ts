@@ -6,7 +6,7 @@
  * failure this module exists to avoid.
  */
 import { describe, it, expect, vi } from 'vitest'
-import type { Track } from '@camstack/types'
+import type { Track } from '@dominevo/types'
 import { archivePathFor, buildTrainingExportPlan, type PlanReaders } from '../dataset-plan.js'
 
 function track(partial: Partial<Track> & { trackId: string; deviceId: number }): Track {

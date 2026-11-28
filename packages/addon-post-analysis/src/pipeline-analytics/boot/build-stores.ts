@@ -15,9 +15,9 @@ import type {
   StorageOccupancyReport,
   Zone,
   ZoneRule,
-} from '@camstack/types'
-import type { MotionTimelineSample } from '@camstack/types'
-import { EventCategory, errMsg } from '@camstack/types'
+} from '@dominevo/types'
+import type { MotionTimelineSample } from '@dominevo/types'
+import { EventCategory, errMsg } from '@dominevo/types'
 import { NotificationCenter } from '../../notification-center/index.js'
 import { subjectLabelFromTiers } from '../../notification-center/rule-engine.js'
 import {

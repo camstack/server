@@ -84,7 +84,7 @@ Two alternatives were weighed and rejected as the fix to make FIRST:
   it is not a superset of this decision: `locations` is one array under one key,
   and the cross-KEY collision above survives any amount of normalising. It also
   costs a migration on a live NVR plus a version-skew window in which an older
-  `@camstack/server` reads the blob and sees an empty fleet. Do it when the
+  `@dominevo/server` reads the blob and sees an empty fleet. Do it when the
   storage layout is next opened, on top of this lock — not instead of it.
 - **Compare-and-swap / a version column.** The door has no conditional write,
   so CAS degenerates into read-verify-write with a retry loop — and every retry

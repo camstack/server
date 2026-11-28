@@ -6,7 +6,7 @@ import type {
   DeviceStepConfig,
   PipelineSchema,
   PipelineEngineChoice,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 const ENGINE: PipelineEngineChoice = { runtime: 'python', backend: 'coreml', format: 'coreml' }
 

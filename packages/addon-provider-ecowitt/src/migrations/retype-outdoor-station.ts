@@ -7,7 +7,7 @@ import {
   DeviceType,
   type AddonProcedureMigration,
   type MigrationProcedureResult,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { ECOWITT_SYSTEM } from '../config.js'
 
 export const ECOWITT_RETYPE_OUTDOOR_STATION_ID =

@@ -6,7 +6,7 @@
  * Assistant device. A broker without a live link is skipped; a failed send is logged per device
  * and makes the pass report "not all delivered" so the next reconcile announces again.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { devBlockFor } from './exposed-name.js'
 import type { HaCmps, HaDeviceBlock, HaDevicePlan } from './types.js'
 

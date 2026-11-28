@@ -8,7 +8,7 @@
  * Disarm: hydrate from `deviceRaw` only (drop `globalRaw` from the merge in
  * `hydrateWithInheritedGlobals`) — the first two cases fail.
  */
-import type { ConfigFieldWithValue, ConfigUISchema } from '@camstack/types'
+import type { ConfigFieldWithValue, ConfigUISchema } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   hydrateWithInheritedGlobals,

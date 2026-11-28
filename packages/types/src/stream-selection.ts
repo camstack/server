@@ -11,7 +11,7 @@
  * resolution-targeted auto-pick) and the cross-addon import rule
  * blocks deduping in either direction.
  *
- * Lifting the picker into `@camstack/types` lets every exporter call
+ * Lifting the picker into `@dominevo/types` lets every exporter call
  * the same code path with the consumer's target resolution baked into
  * the call site — Alexa passes 1280×720, HomeKit passes 1920×1080,
  * the picker handles the rest.

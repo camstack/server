@@ -3,7 +3,7 @@ import type {
   ClientNetworkStats,
   DeviceNetworkStats,
   INetworkQualityTracker,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export type { StreamNetworkStats, ClientNetworkStats, DeviceNetworkStats, INetworkQualityTracker }
 

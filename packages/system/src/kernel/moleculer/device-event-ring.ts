@@ -40,7 +40,7 @@
  * marked {@link TruncatedEventData} so a consumer can tell a short payload from
  * a cut one.
  */
-import type { SystemEvent } from '@camstack/types'
+import type { SystemEvent } from '@dominevo/types'
 
 // ---------------------------------------------------------------------------
 // Declared mirror categories

@@ -1,4 +1,4 @@
-import { AnalyticsLtsSeriesSchema } from '@camstack/types'
+import { AnalyticsLtsSeriesSchema } from '@dominevo/types'
 import type { z } from 'zod'
 
 export type AnalyticsLtsSeries = z.infer<typeof AnalyticsLtsSeriesSchema>

@@ -3,9 +3,9 @@
  * transcode — the broker transcode pool, the WebRTC transcode leg, a derived
  * stream, HomeKit's SRTP egress, Alexa — assembles its argument list here.
  *
- * It lives in `@camstack/types` rather than in an addon for one reason: three
+ * It lives in `@dominevo/types` rather than in an addon for one reason: three
  * addons need it (`addon-pipeline`, `addon-export-hap`, `addon-export-alexa`)
- * and addons may never import each other. `@camstack/types` is the framework
+ * and addons may never import each other. `@dominevo/types` is the framework
  * package all three already depend on, and it already owns `EncodeProfile`.
  *
  * The builder is PURE — argument list only. The binary path comes from
@@ -358,7 +358,7 @@ export interface FfmpegRtpOutput {
 /**
  * A fragmented-MP4 bytestream on stdout: `ftyp`+`moov` once, then a
  * `moof`+`mdat` per fragment. The shape HomeKit Secure Video's recording
- * delegate consumes, and the shape a CamStack clip source can consume from the
+ * delegate consumes, and the shape a Dominevo clip source can consume from the
  * same child (D67's primitive, one fragmenter, two consumers).
  *
  * ## Why `frag_keyframe` + `min_frag_duration`, and NOT `frag_duration`

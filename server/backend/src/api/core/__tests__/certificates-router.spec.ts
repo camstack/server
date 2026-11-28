@@ -1,4 +1,4 @@
-import type { SettingsStoreClient } from '@camstack/types'
+import type { SettingsStoreClient } from '@dominevo/types'
 import {
   describeMeshLeaf,
   generateMeshCa,
@@ -6,7 +6,7 @@ import {
   MeshCertificateRegistry,
   MeshCrl,
   type MeshPeerLeaf,
-} from '@camstack/server/system'
+} from '@dominevo/server/system'
 import { X509Certificate } from 'node:crypto'
 import { describe, expect, it } from 'vitest'
 import type { NodeCertificatesClient } from '../../../core/agent/node-certificates-client.js'

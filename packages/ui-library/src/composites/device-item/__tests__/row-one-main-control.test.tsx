@@ -9,7 +9,7 @@ import { render, screen } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import { beforeAll, describe, expect, it, vi } from 'vitest'
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 
 vi.mock('../../../generated/system-hooks', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../../generated/system-hooks')>()),

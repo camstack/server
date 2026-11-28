@@ -8,7 +8,7 @@
  * unit is not obvious, this value must match the camera) sat among them. The
  * text that stays is for an AMBIGUOUS field (two that could be confused, a
  * unit that is not obvious, a value that must match something outside
- * CamStack) or an UNCOMMON / RISKY one (an advanced override, a setting that
+ * Dominevo) or an UNCOMMON / RISKY one (an advanced override, a setting that
  * breaks streaming if wrong). Everything else is the label said twice.
  *
  * Two rules, both on the English source of `packages/addon-provider-*`:

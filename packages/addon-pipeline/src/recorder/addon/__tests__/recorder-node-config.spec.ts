@@ -9,7 +9,7 @@
  * ≠ own node) so the boot stays lightweight — no storage/broker wiring runs.
  */
 import { describe, it, expect } from 'vitest'
-import type { AddonContext, IEventBus } from '@camstack/types'
+import type { AddonContext, IEventBus } from '@dominevo/types'
 import RecorderV2Addon from '../index.js'
 
 function makeCtx(store: Record<string, unknown>, localNodeId: string): AddonContext {

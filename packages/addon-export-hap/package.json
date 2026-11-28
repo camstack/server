@@ -1,7 +1,7 @@
 {
-  "name": "@camstack/addon-export-hap",
-  "version": "1.2.212",
-  "description": "HomeKit (HAP) exporter for CamStack devices. Publishes each exposed device as its own HomeKit accessory: cameras and doorbells with SRTP streaming, HomeKit Secure Video, motion, two-way audio, PTZ and battery; switches, lights, locks and sensors through a capability→service table.",
+  "name": "@dominevo/addon-export-hap",
+  "version": "0.1.0",
+  "description": "HomeKit (HAP) exporter for Dominevo devices. Publishes each exposed device as its own HomeKit accessory: cameras and doorbells with SRTP streaming, HomeKit Secure Video, motion, two-way audio, PTZ and battery; switches, lights, locks and sensors through a capability→service table.",
   "keywords": [
     "camstack",
     "addon",
@@ -13,12 +13,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/camstack/server.git",
+    "url": "https://github.com/dominevo/server.git",
     "directory": "packages/addon-export-hap"
   },
   "homepage": "https://camstack-docs.zentik.app",
   "bugs": {
-    "url": "https://github.com/camstack/server/issues"
+    "url": "https://github.com/dominevo/server/issues"
   },
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -36,7 +36,7 @@
         "id": "export-hap",
         "category": "exports",
         "name": "HomeKit Export",
-        "description": "Publishes exposed CamStack devices to iOS Home over HomeKit (HAP) — cameras, doorbells, switches, lights, locks and sensors, each as its own accessory sharing one setup code.",
+        "description": "Publishes exposed Dominevo devices to iOS Home over HomeKit (HAP) — cameras, doorbells, switches, lights, locks and sensors, each as its own accessory sharing one setup code.",
         "entry": "./dist/hap-export.addon.js",
         "execution": {
           "placement": "hub-only"
@@ -56,7 +56,7 @@
           {
             "id": "homekitClips",
             "displayName": "HomeKit Clips",
-            "description": "Copies of the clips CamStack SENT to HomeKit Secure Video. HomeKit is a sink — HAP has no read-back — so a clip is only ever ours if we teed it while sending it. Its own location because a teed clip has no track, detection or event behind it, so it is not event media and no media-class retention may attach to it: the age is per camera (14 days by default) with fixed per-camera and whole-store rails. Exactly ONE location; repoint it to choose the disk. Written under the `homekit-clips/` subtree so occupancy is the class subtree even when it shares a root.",
+            "description": "Copies of the clips Dominevo SENT to HomeKit Secure Video. HomeKit is a sink — HAP has no read-back — so a clip is only ever ours if we teed it while sending it. Its own location because a teed clip has no track, detection or event behind it, so it is not event media and no media-class retention may attach to it: the age is per camera (14 days by default) with fixed per-camera and whole-store rails. Exactly ONE location; repoint it to choose the disk. Written under the `homekit-clips/` subtree so occupancy is the class subtree even when it shares a root.",
             "cardinality": "single",
             "access": "local-path",
             "defaultsTo": "recordings"
@@ -67,7 +67,7 @@
       }
     ],
     "requires": {
-      "server": ">=1.2.973"
+      "server": ">=0.1.0"
     }
   },
   "files": [
@@ -84,7 +84,7 @@
     "test:watch": "vitest"
   },
   "peerDependencies": {
-    "@camstack/types": "*"
+    "@dominevo/types": "0.1.0"
   },
   "dependencies": {
     "@homebridge/hap-nodejs": "^2.1.6",
@@ -92,8 +92,8 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@camstack/sdk": "*",
-    "@camstack/types": "*",
+    "@dominevo/sdk": "0.1.0",
+    "@dominevo/types": "0.1.0",
     "typescript": "~6.0.3",
     "vite": "^8.0.11",
     "vitest": "^3.2.4"

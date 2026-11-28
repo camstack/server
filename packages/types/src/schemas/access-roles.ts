@@ -29,7 +29,7 @@
  * regardless of scope, and (b) every system-scope method that NAMES a device
  * is cut back to the role's own device set by the F1 #3 device-reference gate.
  *
- * Lives in `@camstack/types` next to `device-selector.ts` for the same reason
+ * Lives in `@dominevo/types` next to `device-selector.ts` for the same reason
  * that file does: the admin UI composes these and the backend resolves them,
  * and a hand-copied second derivation drifts (D103).
  */

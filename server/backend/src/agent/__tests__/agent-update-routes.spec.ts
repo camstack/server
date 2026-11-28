@@ -11,7 +11,7 @@
  */
 import Fastify from 'fastify'
 import type { FastifyInstance } from 'fastify'
-import type { ServerPackageStatus, ServerUpdateActionResult } from '@camstack/types'
+import type { ServerPackageStatus, ServerUpdateActionResult } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import type { AgentServerUpdateResponse, ServerUpdateEngine } from '../agent-update-routes.js'
 import {
@@ -25,7 +25,7 @@ const REFUSAL = 'Refused: another operation is in flight (staging).'
 
 function status(overrides: Partial<ServerPackageStatus> = {}): ServerPackageStatus {
   return {
-    packageName: '@camstack/server',
+    packageName: '@dominevo/server',
     runningVersion: '1.2.78',
     nodeRuntimeVersion: '24.0.0',
     activeVersion: '1.2.78',
@@ -90,7 +90,7 @@ describe('createAgentServerUpdateControls', () => {
     const controls = createAgentServerUpdateControls({
       getServerPackageStatus: async () => status(),
       checkServerUpdate: async () => ({
-        packageName: '@camstack/server',
+        packageName: '@dominevo/server',
         runningVersion: '1.2.78',
         latestVersion: null,
         updateAvailable: false,
@@ -127,7 +127,7 @@ describe('createAgentServerUpdateControls', () => {
       accepted: true,
       targetVersion: '1.2.81',
       restarting: true,
-      message: 'Staged @camstack/server@1.2.81 — restarting to apply.',
+      message: 'Staged @dominevo/server@1.2.81 — restarting to apply.',
     })
     await new Promise((r) => setImmediate(r))
     expect((await controls.getView()).applyInFlight).toBe(false)
@@ -206,7 +206,7 @@ describe('registerAgentUpdateRoutes', () => {
       getServerPackageStatus: async () =>
         status({ latestVersion: '1.2.81', updateAvailable: true, updateState: 'idle' }),
       checkServerUpdate: async () => ({
-        packageName: '@camstack/server',
+        packageName: '@dominevo/server',
         runningVersion: '1.2.78',
         latestVersion: '1.2.81',
         updateAvailable: true,

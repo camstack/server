@@ -1,5 +1,5 @@
 /**
- * `@camstack/types/client` — the runtime values a CLIENT bundle needs, and
+ * `@dominevo/types/client` — the runtime values a CLIENT bundle needs, and
  * nothing it does not.
  *
  * The bare entry is one pre-bundled `index.mjs` (~1.1 MB minified) and Metro
@@ -8,8 +8,8 @@
  * is built on its own (`vite.client.config.ts`) with module side effects
  * OFF, so only the modules these names reach are emitted.
  *
- * The list is the viewer's: every non-type import of `@camstack/types` in
- * `camstack/src` + `app`, plus what `@camstack/sdk` imports at runtime.
+ * The list is the viewer's: every non-type import of `@dominevo/types` in
+ * `camstack/src` + `app`, plus what `@dominevo/sdk` imports at runtime.
  * The viewer's guard (`types-client-entry.spec.ts`) fails when it imports a
  * value this entry does not export — a missing name here is `undefined` at
  * runtime, not a build error.

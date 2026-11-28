@@ -13,7 +13,7 @@ import {
   type InferNativeProvider,
   type StateRefreshPolicy,
   type StateRefreshReason,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** The cadence of the scheduled cached read: 48 calls a day out of about 200. */
 export const KIA_REFRESH_INTERVAL_MS = 30 * 60_000

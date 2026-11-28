@@ -15,7 +15,7 @@
 import { type ChildProcess, fork } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { ChildCostRegistry } from '@camstack/types/node'
+import { ChildCostRegistry } from '@dominevo/types/node'
 import type { ForkDecodeWorkerDeps } from '../fork-decode-worker.js'
 import {
   type ExitHookProcess,

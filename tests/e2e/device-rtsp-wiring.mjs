@@ -3,7 +3,7 @@
  * End-to-end wiring test for a forked-worker device (RTSP provider).
  *
  * What this exercises, over a real tRPC WebSocket against a running server:
- *   1. Take the `camstack login` session (shared resolver) and open an authenticated WSS tRPC client.
+ *   1. Take the `dominevo login` session (shared resolver) and open an authenticated WSS tRPC client.
  *   2. Clean up any prior RTSP integration / device rows.
  *   3. Create the RTSP integration (`integrationInstances.createInstance`) — unique mode.
  *   4. Create a device (`deviceManagement.createDevice`) with a fake stream URL.
@@ -20,7 +20,7 @@
  * Run against an already-running dev server:
  *   node tests/e2e/device-rtsp-wiring.mjs
  *
- * Setup: `camstack login <host>` once (an admin account). No password is read here.
+ * Setup: `dominevo login <host>` once (an admin account). No password is read here.
  * Env: CAMSTACK_HOST overrides the hub address (otherwise CAMSTACK_HUB_URL, scratchpad/.hub-url or the session).
  */
 import { resolveHubAuth } from '../../scripts/hub/credentials.mjs'
@@ -31,7 +31,7 @@ import { setGlobalDispatcher, Agent } from 'undici'
 // Accept self-signed certs for localhost dev.
 setGlobalDispatcher(new Agent({ connect: { rejectUnauthorized: false } }))
 
-// The hub and the credential come from the `camstack login` session through the shared
+// The hub and the credential come from the `dominevo login` session through the shared
 // resolver (scripts/hub/credentials.mjs); CAMSTACK_HOST is an explicit override only.
 const AUTH = await resolveHubAuth(
   process.env.CAMSTACK_HOST ? { server: process.env.CAMSTACK_HOST } : {},

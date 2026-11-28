@@ -14,7 +14,7 @@
  * name keeps its accents. The validator rejects what Amazon would reject, with
  * a message the operator can act on.
  */
-import { checkExposedName, type ExposedNameCheck, type ExposedNameValidator } from '@camstack/types'
+import { checkExposedName, type ExposedNameCheck, type ExposedNameValidator } from '@dominevo/types'
 
 /**
  * Per-device store key of the RETIRED Alexa-only name (one per device, shared by every skill).

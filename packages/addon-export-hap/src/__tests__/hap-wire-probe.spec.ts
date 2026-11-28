@@ -9,7 +9,7 @@ import {
   CharacteristicWarningType,
   Service,
 } from '@homebridge/hap-nodejs'
-import type { IScopedLogger, LogExtras, LogTags } from '@camstack/types'
+import type { IScopedLogger, LogExtras, LogTags } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { buildHapWireProbe } from '../mappers/builders/hap-wire-probe.js'
 import type { BuilderContext } from '../mappers/types.js'

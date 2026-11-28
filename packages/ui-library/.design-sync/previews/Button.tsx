@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
-import { Button } from '@camstack/ui-library'
+import { Button } from '@dominevo/ui-library'
 
-// CamStack is dark-first (admin-ui forces dark via ThemeProvider). The preview
+// Dominevo is dark-first (admin-ui forces dark via ThemeProvider). The preview
 // card chrome is light, so every story renders inside the DS dark canvas with
 // the `dark` class active — otherwise light-foreground content washes out.
 const Frame = ({ children }: { children: ReactNode }) => (

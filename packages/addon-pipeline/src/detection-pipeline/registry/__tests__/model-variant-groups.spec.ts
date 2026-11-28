@@ -10,7 +10,7 @@ import {
   resolveVariantModelId,
   describeModelVariant,
   type ModelVariantSource,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 describe('buildModelVariantGroups', () => {
   const groups = buildModelVariantGroups(OBJECT_DETECTION_MODELS)

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import type { ChildLayout } from '@camstack/types'
+import type { ChildLayout } from '@dominevo/types'
 import { groupChildrenByLayout } from '../child-layout'
 import type { DeviceItemDevice } from '../helpers'
 

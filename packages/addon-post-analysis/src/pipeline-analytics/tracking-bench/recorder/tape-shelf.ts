@@ -19,7 +19,7 @@
  */
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IScopedLogger } from '@dominevo/types'
 
 const TRACKING_TAPES_SUBTREE = 'tracking-tapes'
 const SEGMENTS_DIR = 'segments'

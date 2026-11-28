@@ -6,7 +6,7 @@
  * accepted, corrected, relabelled, turned into a model error or deleted — and
  * until one of those happens it never reaches the save payload.
  */
-import type { RetrainAnnotation, RetrainPipelineBox } from '@camstack/types'
+import type { RetrainAnnotation, RetrainPipelineBox } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   acceptAllDrafts,

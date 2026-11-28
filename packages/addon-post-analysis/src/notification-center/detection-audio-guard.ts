@@ -20,8 +20,8 @@
  * keep loading and keep firing exactly as it did. The loader reports those
  * instead ({@link NcRuleStore.load} → {@link warnLegacyAudioClassRules}).
  */
-import type { IScopedLogger, NcRule } from '@camstack/types'
-import { isAudioClassName, isSystemDelivery } from '@camstack/types'
+import type { IScopedLogger, NcRule } from '@dominevo/types'
+import { isAudioClassName, isSystemDelivery } from '@dominevo/types'
 import {
   mergedFamilySubject,
   type NcRuleFamilyGuardContext,

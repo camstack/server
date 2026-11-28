@@ -5,7 +5,7 @@
  * 2026-09-30 tapes of 101 show the parcel on six frames and nothing on the
  * other 22 516, and nothing says which of those the package step ran on.
  */
-import type { FrameResult } from '@camstack/types'
+import type { FrameResult } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { TapeFrameSchema } from '../../tape-schema.js'
 import { buildFrameRecord } from '../frame-record.js'

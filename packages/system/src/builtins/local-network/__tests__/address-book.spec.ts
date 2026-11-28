@@ -13,7 +13,7 @@ import type {
   HubAddressBook,
   ILocalNetworkProvider,
   IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { makeMigrationsApi } from './migrations-api.js'
 import { normalizeAddressBook, withLanHttpsCounterparts } from '../address-book.js'

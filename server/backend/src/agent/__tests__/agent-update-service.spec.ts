@@ -9,9 +9,9 @@ import {
   serverRootDir,
   writeDesktopAppState,
   type NpmExecFn,
-} from '@camstack/node-root'
+} from '@dominevo/node-root'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { EventFilter, IEventBus, IScopedLogger, SystemEvent } from '@camstack/types'
+import type { EventFilter, IEventBus, IScopedLogger, SystemEvent } from '@dominevo/types'
 import {
   AGENT_RUNTIME_ADDON_ID,
   AgentRestartAnnouncer,
@@ -48,7 +48,7 @@ beforeEach(() => {
   runningPkgPath = path.join(tmp, 'running-package.json')
   fs.writeFileSync(
     runningPkgPath,
-    JSON.stringify({ name: '@camstack/server', version: '1.1.40' }),
+    JSON.stringify({ name: '@dominevo/server', version: '1.1.40' }),
     'utf-8',
   )
 })
@@ -89,7 +89,7 @@ function makeService(args: MakeServiceArgs = {}): AgentUpdateService {
 }
 
 describe('AgentUpdateService — agent bindings', () => {
-  it('reports the @camstack/server package with the shared server env markers', async () => {
+  it('reports the @dominevo/server package with the shared server env markers', async () => {
     const svc = makeService({
       env: {
         CAMSTACK_SERVER_BOOT_MODE: 'data-root',
@@ -100,24 +100,24 @@ describe('AgentUpdateService — agent bindings', () => {
     // Seed dir version comes from <seedDir>/package.json — write one.
     fs.writeFileSync(
       path.join(tmp, 'package.json'),
-      JSON.stringify({ name: '@camstack/server', version: '1.1.30' }),
+      JSON.stringify({ name: '@dominevo/server', version: '1.1.30' }),
       'utf-8',
     )
     const status = await svc.getServerPackageStatus()
-    expect(status.packageName).toBe('@camstack/server')
+    expect(status.packageName).toBe('@dominevo/server')
     expect(status.runningVersion).toBe('1.1.40')
     expect(status.activeVersion).toBe('1.1.40')
     expect(status.seedVersion).toBe('1.1.30')
     expect(status.bootMode).toBe('data-root')
-    expect(svc.getRunningRootPackage()).toEqual({ name: '@camstack/server', version: '1.1.40' })
+    expect(svc.getRunningRootPackage()).toEqual({ name: '@dominevo/server', version: '1.1.40' })
   })
 
-  it('checks npm for @camstack/server@latest', async () => {
+  it('checks npm for @dominevo/server@latest', async () => {
     const execNpm = vi.fn<NpmExecFn>(async () => ({ stdout: '1.1.41\n' }))
     const svc = makeService({ execNpm })
     const result = await svc.checkServerUpdate()
     expect(execNpm).toHaveBeenCalledWith(
-      ['view', '@camstack/server@latest', 'version'],
+      ['view', '@dominevo/server@latest', 'version'],
       expect.objectContaining({ timeoutMs: expect.any(Number) }),
     )
     expect(result.latestVersion).toBe('1.1.41')
@@ -135,7 +135,7 @@ describe('AgentUpdateService — agent bindings', () => {
         fs.writeFileSync(path.join(pkgDir, 'dist', 'launcher.js'), '// entry', 'utf-8')
         fs.writeFileSync(
           path.join(pkgDir, 'package.json'),
-          JSON.stringify({ name: '@camstack/server', version: '1.1.41' }),
+          JSON.stringify({ name: '@dominevo/server', version: '1.1.41' }),
           'utf-8',
         )
         scaffoldNatives(opts.cwd)
@@ -216,9 +216,9 @@ describe('scheduleAgentRestart — restart-intent marker (phase 3 supervisor)', 
   afterEach(() => vi.useRealTimers())
 
   it('drops a restart-intent marker in the server-root dir before exiting', () => {
-    scheduleAgentRestart(makeLogger(), 'server-update: @camstack/server@1.2.3', dataDir)
+    scheduleAgentRestart(makeLogger(), 'server-update: @dominevo/server@1.2.3', dataDir)
     const marker = readRestartIntentMarker(serverRootDir(dataDir))
-    expect(marker?.reason).toBe('server-update: @camstack/server@1.2.3')
+    expect(marker?.reason).toBe('server-update: @dominevo/server@1.2.3')
     expect(typeof marker?.requestedAtMs).toBe('number')
   })
 
@@ -244,12 +244,12 @@ describe('scheduleAgentRestart — restart-intent marker (phase 3 supervisor)', 
 })
 
 describe('resolveAgentPackageJsonPath', () => {
-  it('finds the @camstack/server package.json one level up from dist/', () => {
-    const pkgRoot = path.join(tmp, 'closure', 'node_modules', '@camstack', 'server')
+  it('finds the @dominevo/server package.json one level up from dist/', () => {
+    const pkgRoot = path.join(tmp, 'closure', 'node_modules', '@dominevo', 'server')
     fs.mkdirSync(path.join(pkgRoot, 'dist'), { recursive: true })
     fs.writeFileSync(
       path.join(pkgRoot, 'package.json'),
-      JSON.stringify({ name: '@camstack/server', version: '1.1.40' }),
+      JSON.stringify({ name: '@dominevo/server', version: '1.1.40' }),
       'utf-8',
     )
     expect(resolveAgentPackageJsonPath(path.join(pkgRoot, 'dist'))).toBe(
@@ -313,7 +313,7 @@ describe('the agent announces its own restart before exiting (D723)', () => {
         fs.writeFileSync(path.join(pkgDir, 'dist', 'launcher.js'), '// entry', 'utf-8')
         fs.writeFileSync(
           path.join(pkgDir, 'package.json'),
-          JSON.stringify({ name: '@camstack/server', version: '1.1.41' }),
+          JSON.stringify({ name: '@dominevo/server', version: '1.1.41' }),
           'utf-8',
         )
         scaffoldNatives(opts.cwd)
@@ -338,7 +338,7 @@ describe('the agent announces its own restart before exiting (D723)', () => {
     expect(announced[0]?.data).toMatchObject({
       kind: 'framework-update',
       toVersion: '1.1.41',
-      packageName: '@camstack/server',
+      packageName: '@dominevo/server',
       nodeId: 'agent-a',
     })
   })
@@ -377,7 +377,7 @@ describe('the agent announces its own restart before exiting (D723)', () => {
       data: {
         kind: 'framework-update',
         what: 'desktop-shell',
-        packageName: 'CamStack desktop app',
+        packageName: 'Dominevo desktop app',
         fromVersion: '1.2.10',
         toVersion: '1.2.11',
         nodeId: 'agent-a',

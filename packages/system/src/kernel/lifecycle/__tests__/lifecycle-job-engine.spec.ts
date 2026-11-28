@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import type { LifecycleJob, LifecycleTask, TaskLogEntry } from '@camstack/types'
+import type { LifecycleJob, LifecycleTask, TaskLogEntry } from '@dominevo/types'
 import {
   LifecycleJobEngine,
   type ApplyAddonUpdateFn,
@@ -34,7 +34,7 @@ describe('LifecycleJobEngine', () => {
       fs.mkdirSync(d, { recursive: true })
       fs.writeFileSync(
         path.join(d, 'package.json'),
-        JSON.stringify({ name: '@camstack/addon-test', version: v }),
+        JSON.stringify({ name: '@dominevo/addon-test', version: v }),
       )
     }
 
@@ -70,7 +70,7 @@ describe('LifecycleJobEngine', () => {
           taskId: 'task-1',
           target: 'addon',
           nodeId: 'hub',
-          packageName: '@camstack/addon-test',
+          packageName: '@dominevo/addon-test',
           fromVersion: '1.0.0',
           toVersion: '1.0.1',
           phase: 'queued',
@@ -104,7 +104,7 @@ describe('LifecycleJobEngine', () => {
     expect(result.tasks[0]?.finishedAtMs).toBe(1000)
     expect(applyAddonUpdateCalls).toHaveLength(1)
     expect(applyAddonUpdateCalls[0]).toEqual({
-      name: '@camstack/addon-test',
+      name: '@dominevo/addon-test',
       version: '1.0.1',
       stagedPath: expect.any(String),
     })
@@ -134,7 +134,7 @@ describe('LifecycleJobEngine', () => {
           taskId: 'task-2',
           target: 'addon',
           nodeId: 'hub',
-          packageName: '@camstack/addon-test',
+          packageName: '@dominevo/addon-test',
           fromVersion: '1.0.0',
           toVersion: '1.0.1',
           phase: 'queued',
@@ -180,14 +180,14 @@ describe('LifecycleJobEngine', () => {
     // so `applyAddonUpdate` was called with the STRING 'latest'. Downstream
     // that string became the manifest's installed version, the registry's
     // displayed version, and the `toVersion` on the `addon.updated` event the
-    // operator read as "@camstack/addon-terminal 0.0.0 → latest".
+    // operator read as "@dominevo/addon-terminal 0.0.0 → latest".
     const resolving = new StagingArea(stagingDir, {
       fetchTarball: async () => Buffer.from('fake'),
       extract: async (_t: Buffer, d: string) => {
         fs.mkdirSync(d, { recursive: true })
         fs.writeFileSync(
           path.join(d, 'package.json'),
-          JSON.stringify({ name: '@camstack/addon-terminal', version: '0.1.51' }),
+          JSON.stringify({ name: '@dominevo/addon-terminal', version: '0.1.51' }),
         )
       },
     })
@@ -204,7 +204,7 @@ describe('LifecycleJobEngine', () => {
           taskId: 'task-tag',
           target: 'addon',
           nodeId: 'hub',
-          packageName: '@camstack/addon-terminal',
+          packageName: '@dominevo/addon-terminal',
           fromVersion: '0.1.47',
           toVersion: 'latest',
           phase: 'queued',

@@ -34,7 +34,7 @@ import {
   planComposition,
   topLevelFieldsOf,
   replacedFieldKeys,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** A stored composition block, with its composition parsed out. */
 interface StoredComposition {

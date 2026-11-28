@@ -107,7 +107,7 @@
  * assumption behind "bounded by the installation" has failed.
  */
 
-import type { IScopedLogger, NcSystemEventKind } from '@camstack/types'
+import type { IScopedLogger, NcSystemEventKind } from '@dominevo/types'
 import { DurableLedger, type DurableLedgerSpec } from '../durable/durable-ledger.js'
 import { type DurableKindDeps } from '../durable/durable-wiring.js'
 import { ncDurableRecordKinds } from './nc-durable-record-kinds.js'

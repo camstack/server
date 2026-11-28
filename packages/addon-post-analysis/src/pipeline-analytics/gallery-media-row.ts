@@ -14,7 +14,7 @@
  * makes "deleted in one place" true of both methods.
  */
 
-import type { MediaFileBytes } from '@camstack/types'
+import type { MediaFileBytes } from '@dominevo/types'
 import { mediaFileUrl } from './media-file-url.js'
 
 /**

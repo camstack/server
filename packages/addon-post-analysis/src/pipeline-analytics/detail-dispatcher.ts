@@ -37,8 +37,8 @@ import type {
   IScopedLogger,
   RunDetailSubtreeInput,
   RunDetailSubtreeResult,
-} from '@camstack/types'
-import { isRootSuppliableStepId, rootSupplyServes } from '@camstack/types'
+} from '@dominevo/types'
+import { isRootSuppliableStepId, rootSupplyServes } from '@dominevo/types'
 import { isDetailHandleExpiredRefusal, isDetailNotAttachedRefusal } from './detail-refusal.js'
 import { type DetailRequest, DetailScheduler } from './detail-scheduler.js'
 import { BestDetectionTracker } from './pipeline/best-detection-tracker.js'

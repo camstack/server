@@ -15,8 +15,8 @@
  * step off the Coral while the executor loaded it there, and the root's load
  * failed with it.
  *
- * Lives in the bare `@camstack/types` entry, which every addon bundles
- * (`self-contained` externals), so it travels with a `camstack deploy`.
+ * Lives in the bare `@dominevo/types` entry, which every addon bundles
+ * (`self-contained` externals), so it travels with a `dominevo deploy`.
  */
 
 /** The catalog facts one model contributes: its id, its builds, and whether it is a legacy stub. */

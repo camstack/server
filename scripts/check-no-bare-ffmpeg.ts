@@ -19,7 +19,7 @@
  *     a binary we did not pin.
  *
  * A runtime site asks `memoizePinnedFfmpeg(() => ctx.deps.ensureFfmpeg())`
- * (`@camstack/types`) or is handed a REQUIRED path by its addon, and when the
+ * (`@dominevo/types`) or is handed a REQUIRED path by its addon, and when the
  * binary cannot be had it refuses with a logged reason. There is no pinned
  * `ffprobe` at all — the provisioning extracts `ffmpeg` only — so an `ffprobe`
  * literal in runtime source can only ever mean PATH.
@@ -305,7 +305,7 @@ function main(): void {
   console.error('\n\x1b[31m✘ a runtime site reaches ffmpeg/ffprobe through PATH (D540):\x1b[0m')
   console.error(
     "  Use the node's pinned build — `memoizePinnedFfmpeg(() => ctx.deps.ensureFfmpeg())`\n" +
-      '  from @camstack/types, or a REQUIRED path the addon resolved — and refuse with a\n' +
+      '  from @dominevo/types, or a REQUIRED path the addon resolved — and refuse with a\n' +
       '  logged reason (tags: { deviceId }) when it cannot be had. See docs/architecture/ffmpeg.md.\n',
   )
   for (const v of violations) {

@@ -9,7 +9,7 @@
  * UI that said "7 days" over a 3-day window would be lying about 4 of them.
  */
 
-import type { NcHistoryStatus, NcRuleLastRuns } from '@camstack/types'
+import type { NcHistoryStatus, NcRuleLastRuns } from '@dominevo/types'
 import i18n from '../../i18n/index'
 
 /** The slice of a react-query result the decision reads. */

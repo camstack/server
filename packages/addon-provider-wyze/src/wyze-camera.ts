@@ -9,7 +9,7 @@ import {
   providerMotionEvent,
   snapshotCapability,
   streamCatalogCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type {
   CamStreamDescriptor,
   ConfigUISchemaWithValues,
@@ -18,11 +18,11 @@ import type {
   InferNativeProvider,
   PinnedFfmpegResolver,
   StreamSourceEntry,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /**
  * Local mirror of the `snapshot` cap's `SnapshotImage` shape (the schema
- * type is not re-exported from `@camstack/types`). Structural — the cap
+ * type is not re-exported from `@dominevo/types`). Structural — the cap
  * dispatch is structural, not zod-identity, across the addon boundary.
  */
 interface SnapshotImage {

@@ -87,18 +87,18 @@ const installedAddon = (id: string, name: string, packageName: string) => ({
 })
 
 const ADDONS = [
-  installedAddon('provider-reolink', 'Reolink', '@camstack/addon-provider-reolink'),
-  installedAddon('provider-onvif', 'ONVIF', '@camstack/addon-provider-onvif'),
+  installedAddon('provider-reolink', 'Reolink', '@dominevo/addon-provider-reolink'),
+  installedAddon('provider-onvif', 'ONVIF', '@dominevo/addon-provider-onvif'),
   installedAddon(
     'provider-homeassistant',
     'Home Assistant',
-    '@camstack/addon-provider-homeassistant',
+    '@dominevo/addon-provider-homeassistant',
   ),
-  installedAddon('provider-wyze', 'Wyze', '@camstack/addon-provider-wyze'),
-  installedAddon('bosch-home-connect', 'Bosch Home Connect', '@camstack/addon-bosch-home-connect'),
-  installedAddon('bosch-shc', 'Bosch Smart Home Controller', '@camstack/addon-bosch-shc'),
-  installedAddon('core-blocks', 'Core Blocks', '@camstack/server'),
-  installedAddon('camera-grid', 'Camera Grid', '@camstack/server'),
+  installedAddon('provider-wyze', 'Wyze', '@dominevo/addon-provider-wyze'),
+  installedAddon('bosch-home-connect', 'Bosch Home Connect', '@dominevo/addon-bosch-home-connect'),
+  installedAddon('bosch-shc', 'Bosch Smart Home Controller', '@dominevo/addon-bosch-shc'),
+  installedAddon('core-blocks', 'Core Blocks', '@dominevo/server'),
+  installedAddon('camera-grid', 'Camera Grid', '@dominevo/server'),
 ]
 
 export default defineFixtures({

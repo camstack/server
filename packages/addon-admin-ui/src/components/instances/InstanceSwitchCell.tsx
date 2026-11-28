@@ -6,7 +6,7 @@
  * When `addons.list` answered that the owning addon is not running, the hub would refuse the
  * write: the switch is drawn disabled and says why, before anyone tries.
  */
-import { Switch } from '@camstack/ui-library'
+import { Switch } from '@dominevo/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { type ReactElement, useState } from 'react'
 import { useTranslation } from 'react-i18next'

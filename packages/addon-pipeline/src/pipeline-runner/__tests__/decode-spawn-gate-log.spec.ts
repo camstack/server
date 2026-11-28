@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import PipelineRunnerAddon from '../index.js'
 import { Semaphore } from '../semaphore.js'
 

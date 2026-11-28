@@ -15,7 +15,7 @@ import {
   type NcStateSummarySectionId,
   type NcSystemEventCondition,
   type NcSystemEventKind,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export { NC_STATE_SUMMARY_SECTION_IDS }
 import type { NcSystemEventSubject } from '../rule-engine.js'

@@ -13,7 +13,7 @@
  * Muting only the packets would leave the recorder's `-map 0` declaring an
  * audio stream that never delivers, which is worse than not muting at all.
  */
-import type { EncodedPacket, IScopedLogger, StreamSource } from '@camstack/types'
+import type { EncodedPacket, IScopedLogger, StreamSource } from '@dominevo/types'
 import { EventEmitter } from 'node:events'
 import type { Socket } from 'node:net'
 import { afterEach, describe, expect, it, vi } from 'vitest'

@@ -5,7 +5,7 @@
  * ("Runs on …"). Held off above (cluster or node) keeps the switch, disabled.
  * Draws nothing for a step with no switch row, or while the matrix has no answer.
  */
-import { Switch, TEXT_SECTION_LABEL } from '@camstack/ui-library'
+import { Switch, TEXT_SECTION_LABEL } from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 import { StepEffectLabel } from './StepEffectLabel'
 import { deviceEffect, findDevice, heldOffBy } from './step-switches-model'

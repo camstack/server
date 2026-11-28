@@ -10,7 +10,7 @@
  * prompt release that gives back the ~800 MB the old TTL lease pinned per busy
  * 4K worker.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   createSessionDecodeCoordinator,

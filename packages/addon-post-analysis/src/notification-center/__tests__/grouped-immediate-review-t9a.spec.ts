@@ -4,7 +4,7 @@
  * unreadable-owner path of the close is pinned (L-2, deviation 6 of the T9a report).
  */
 
-import type { ObjectEvent } from '@camstack/types'
+import type { ObjectEvent } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import type { NcTargetRef } from '../dispatcher.js'
 import {

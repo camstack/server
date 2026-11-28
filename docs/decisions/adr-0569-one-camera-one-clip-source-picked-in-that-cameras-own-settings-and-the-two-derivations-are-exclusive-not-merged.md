@@ -74,7 +74,7 @@ the work:
    `listClips` took `sources?: string[]` and now takes one `provider`
    ([D557](adr-0557-a-clip-source-picker-filters-the-view-because-the-persisted-authority-is-keyed-by-addon-not-by-source.md) § 4).
 3. **An absent `provider` is not an expression of a choice.** The cap documents
-   it as *"the device's BOUND provider, which is CamStack on every camera
+   it as *"the device's BOUND provider, which is Dominevo on every camera
    today"*. Measured on the live hub, 2026-09-20, with 592's `getBindings`
    holding BOTH `recorder` and `provider-reolink` for `videoclips`:
    `listClips({deviceId:107})` with no provider answered with the **Reolink**
@@ -101,15 +101,15 @@ camera's own settings menu, and the two derivations are EXCLUSIVE.**
    rejected option 1).
 
 2. **`provider` is ALWAYS sent.** Absence is not a choice; on this fleet it is
-   not even CamStack. A pick the camera no longer offers is REPORTED
+   not even Dominevo. A pick the camera no longer offers is REPORTED
    (`chosenMissing`) and never sent — the cap refuses an unbound provider by
    name, so a stale preference would otherwise be a permanently red timeline.
 
-3. **The default is CamStack and the default is stored as ABSENCE.** Absence
+3. **The default is Dominevo and the default is stored as ABSENCE.** Absence
    must reproduce exactly what the app drew before this setting existed. A
-   camera with no CamStack row falls to its first source instead of to nothing.
+   camera with no Dominevo row falls to its first source instead of to nothing.
 
-4. **Exactly one derivation fills the body.** CamStack ⇒
+4. **Exactly one derivation fills the body.** Dominevo ⇒
    `deriveClipsFromClusters`, and `listClips` is not called at all. Any other
    source ⇒ `listClips` for that one provider, and the derived list is not
    built. Never a concatenation, never a merge, never a dedup. **This is what
@@ -117,13 +117,13 @@ camera's own settings menu, and the two derivations are EXCLUSIVE.**
    where they are both on screen, and one camera has one source.
 
 5. **The setting is stored CLIENT-side, in the per-camera prefs document**
-   (`camera-prefs-store`, AsyncStorage `@camstack/v2/camera-prefs`, keyed by
+   (`camera-prefs-store`, AsyncStorage `@dominevo/v2/camera-prefs`, keyed by
    numeric device id) — the same document as `quality`, `audioOn` and
    `timelineClasses`, because it is the same kind of fact: **what the person
    holding the phone is LOOKING at.** It writes no hub state. Sources are not
    enabled or disabled here — each exists because of a configuration that lives
    somewhere else (HKSV because the camera is exported to HomeKit, the Reolink
-   source because Reolink is that camera's provider, CamStack's because it is
+   source because Reolink is that camera's provider, Dominevo's because it is
    always there) — and a knob over somebody else's decision is D62's failure
    reached from the direction D62 does not describe, which is precisely what
    D557 § 3 rejected on the admin side. `setWrapperActive` is NOT this control.
@@ -158,7 +158,7 @@ camera's own settings menu, and the two derivations are EXCLUSIVE.**
    default. A `served` that disagrees with the ask is shown. D559 puts this
    rule in `packages/types` so the admin DOM component and the app share one
    implementation; **it lives in the viewer for now** because the viewer
-   resolves `@camstack/*` from the PUBLISHED packages and this session shipped
+   resolves `@dominevo/*` from the PUBLISHED packages and this session shipped
    no publish. That is a duplication with `ClipPanel`'s fixed
    `['low','mid','high']`, and it is named here so it is paid rather than
    forgotten.
@@ -182,7 +182,7 @@ camera's own settings menu, and the two derivations are EXCLUSIVE.**
   band serves every tile. That removes the `timeline` group's status as the one
   group invisible in a grid cell, and its spec was tightened rather than
   relaxed.
-- **Nothing shipped needs a published `@camstack/types`.** Every new field is
+- **Nothing shipped needs a published `@dominevo/types`.** Every new field is
   read structurally, for `clip-mapping.ts`'s stated reason (installed types lag
   the hub; the installed `videoclips.cap.d.ts` still describes a substitutable
   single-provider wrapper). A bump buys nothing here, and would not have been
@@ -206,11 +206,11 @@ camera's own settings menu, and the two derivations are EXCLUSIVE.**
 
 - `camstack/src/data/__tests__/camera-clips-wiring.spec.ts` — the read is one
   hook, `provider` is always named, the addon comes off the row, the cap is not
-  touched while CamStack is the source, the read fails loudly
+  touched while Dominevo is the source, the read fails loudly
   (`rethrow: true`) under the BULK deadline, no `getClipPlayback` while
   listing, and the theater branches on `clips.choice.derivation` rather than
   concatenating. Proven red by removing the branch and by dropping `rethrow`.
-- `camstack/src/clips/__tests__/clip-sources.spec.ts` — the default is CamStack
+- `camstack/src/clips/__tests__/clip-sources.spec.ts` — the default is Dominevo
   even when the hub lists it second (proven red by `sources[0]`), `unknown` is
   not `ok` (proven red by defaulting to `ok`), a missing pick is reported rather
   than sent (proven red by `missing = false`), and the picker offers every

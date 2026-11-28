@@ -40,7 +40,7 @@ import {
   type SchedulerStatus,
   type StepDeviceTrace,
   type TimeSite,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   localDateIn,
   profileTimeline,

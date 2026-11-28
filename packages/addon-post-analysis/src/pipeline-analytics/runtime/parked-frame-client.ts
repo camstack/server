@@ -43,8 +43,8 @@ import type {
   ParkedFrameKind,
   ParkedTrackFrame,
   ParkTrackFrameResult,
-} from '@camstack/types'
-import { errMsg, nodePin } from '@camstack/types'
+} from '@dominevo/types'
+import { errMsg, nodePin } from '@dominevo/types'
 import type { WideCentralSquareLayout } from '../../shared/frame/wide-central-square-crop.js'
 import type { ParkOrder, ParkSubject } from '../pipeline/track-park.js'
 

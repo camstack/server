@@ -8,7 +8,7 @@ import type { EditorExtraLib } from './CodeEditor'
 export const STEP_AMBIENT_LIB: EditorExtraLib = {
   filePath: 'file:///automation-step-ambient.d.ts',
   content: [
-    "declare const ctx: import('@camstack/types').AddonContext",
+    "declare const ctx: import('@dominevo/types').AddonContext",
     "/** The run's variable bag. */",
     'declare const vars: Record<string, unknown>',
     '',

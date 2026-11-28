@@ -1,4 +1,4 @@
-import type { EngineOutput } from '@camstack/types'
+import type { EngineOutput } from '@dominevo/types'
 
 /** Minimal {@link EngineOutput} for pipeline executor specs. */
 export function makeEngineOutput(

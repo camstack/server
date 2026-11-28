@@ -14,7 +14,7 @@ import type { AbsoluteBbox } from './crop-utils.js'
  * post-inference point) means all consumers benefit from a single guard.
  *
  * This is the DETECTION-STAGE sibling of the MEDIA-stage best-thumbnail guard
- * (`@camstack/addon-post-analysis` `isPlausibleThumbnailBox`, commit
+ * (`@dominevo/addon-post-analysis` `isPlausibleThumbnailBox`, commit
  * b5eab4a64): same full-column / full-row plausibility heuristic, same
  * score-awareness (a genuinely huge close-up object at high confidence
  * survives), applied earlier in the pipeline so the phantom never reaches the

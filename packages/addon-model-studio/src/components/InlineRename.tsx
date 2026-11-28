@@ -8,7 +8,7 @@ import { useState } from 'react'
 import { Check, Pencil, X } from 'lucide-react'
 import { MODEL_DISPLAY_NAME_MAX, parseDisplayName } from '../display-name.js'
 import { Trans, useT } from '../i18n/index.js'
-import { Button, Input } from '@camstack/ui-library'
+import { Button, Input } from '@dominevo/ui-library'
 
 export interface InlineRenameProps {
   readonly name: string

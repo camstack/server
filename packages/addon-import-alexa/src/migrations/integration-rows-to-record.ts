@@ -14,7 +14,7 @@ import {
   type MigrationProcedureResult,
   type RowsMigrationLog,
   type SecretsAccess,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { z } from 'zod'
 import { alexaBrokersEntryKind } from '../broker-record-kinds.js'
 import type { PositionalRecordsDoor } from './records-door.js'

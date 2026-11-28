@@ -10,7 +10,7 @@
  * to write is COUNTED and logged rather than passed over in silence.
  */
 
-import type { SettingsStoreClient } from '@camstack/types'
+import type { SettingsStoreClient } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { type LogLine, makeRecordingLogger } from '../../__tests__/boot-analytics.js'
 import { type FakeSettingsStore, makeFakeSettingsStore } from '../../__tests__/test-helpers.js'

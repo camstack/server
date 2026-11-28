@@ -11,8 +11,8 @@
  * Not proven here (the hub-style path, as in the room spec): the forked
  * runner's UDS dispatch of a native method. That is the live check.
  */
-import { COMPOSER_ADDON_ID, CompositionSchema, DeclaredDevices, DeviceType } from '@camstack/types'
-import type { AddonApi, ComposerApplyInput, IEventBus, SystemEvent } from '@camstack/types'
+import { COMPOSER_ADDON_ID, CompositionSchema, DeclaredDevices, DeviceType } from '@dominevo/types'
+import type { AddonApi, ComposerApplyInput, IEventBus, SystemEvent } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { CapabilityRegistry } from '../../../kernel/capability-registry.js'
 import { DeviceRegistry } from '../../../kernel/device-registry.js'

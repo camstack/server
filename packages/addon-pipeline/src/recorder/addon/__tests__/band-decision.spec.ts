@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { DEFAULT_EVENTS_BAND_BUFFER_SEC } from '@camstack/types'
-import type { RecordingConfig, RecordingBand } from '@camstack/types'
+import { DEFAULT_EVENTS_BAND_BUFFER_SEC } from '@dominevo/types'
+import type { RecordingConfig, RecordingBand } from '@dominevo/types'
 import {
   type AttachWindow,
   attachRetainDeadlineMs,

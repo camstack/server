@@ -50,7 +50,7 @@ two samplers means two clocks.
 The `i915` figure was investigated and deliberately not adopted as a
 first-class number. It lives in **debugfs**, and debugfs is not mounted inside
 any camstack container: verified on the live hub the same day, readable on the
-Unraid host and `ENOENT` inside `CamStack`, where `native-metrics` actually
+Unraid host and `ENOENT` inside `Dominevo`, where `native-metrics` actually
 runs. It is also **host-wide across every DRM client**, so it is not a component
 of `memory.current` and cannot be subtracted from it.
 
@@ -117,7 +117,7 @@ tuning is added, changed or acted on from these numbers.
   would erase the spike the series exists to find.
 - `gpuShmemBytes` is `null` on every node today. Making it populate is a
   container change, not a code change: mounting `/sys/kernel/debug` read-only
-  into `CamStack` fills it on the next sample.
+  into `Dominevo` fills it on the next sample.
 - What this does **not** buy: it attributes nothing. It says the container holds
   6 GiB of page cache, shmem and slab; it does not say which process caused a
   page to be cached. That question needs a different instrument.

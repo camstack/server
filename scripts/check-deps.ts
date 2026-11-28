@@ -1,7 +1,7 @@
 #!/usr/bin/env tsx
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access -- TECH-DEBT(test-2026-03-31): test/script file */
 /**
- * Verify that every @camstack/* import in each package is declared
+ * Verify that every @dominevo/* import in each package is declared
  * as a dependency (dependencies, peerDependencies, or devDependencies).
  *
  * Usage:
@@ -25,12 +25,12 @@ interface Issue {
 
 /**
  * Package aliases that are not real npm packages.
- * `@camstack/owner-only-file` is the desktop shell's tsconfig/tsup/vitest alias
- * for ONE source file of @camstack/types (`src/util/owner-only-file.ts`), which
+ * `@dominevo/owner-only-file` is the desktop shell's tsconfig/tsup/vitest alias
+ * for ONE source file of @dominevo/types (`src/util/owner-only-file.ts`), which
  * tsup bundles (`noExternal`) — declaring it as a dependency would name a
  * package that does not exist.
  */
-const ALIASES = new Set(['@camstack/ui', '@camstack/owner-only-file'])
+const ALIASES = new Set(['@dominevo/ui', '@dominevo/owner-only-file'])
 
 function findTsFiles(dir: string): string[] {
   const result: string[] = []
@@ -59,9 +59,9 @@ function findTsFiles(dir: string): string[] {
 }
 
 /**
- * The `@camstack/*` packages a file really imports: import/export declarations,
+ * The `@dominevo/*` packages a file really imports: import/export declarations,
  * dynamic `import()` and `require()`. Parsed with the TypeScript compiler, not
- * matched line by line — a scaffold that EMITS `import … from '@camstack/types'`
+ * matched line by line — a scaffold that EMITS `import … from '@dominevo/types'`
  * inside a template string (packages/develop) is text, not a dependency.
  */
 function extractCamstackImports(file: string): Set<string> {
@@ -69,7 +69,7 @@ function extractCamstackImports(file: string): Set<string> {
   const source = ts.createSourceFile(file, content, ts.ScriptTarget.Latest, false)
   const imports = new Set<string>()
   const record = (specifier: string): void => {
-    const match = /^(@camstack\/[a-z][a-z0-9-]*)(?:\/.*)?$/.exec(specifier)
+    const match = /^(@dominevo\/[a-z][a-z0-9-]*)(?:\/.*)?$/.exec(specifier)
     if (match) imports.add(match[1]!)
   }
   const visit = (node: ts.Node): void => {
@@ -167,7 +167,7 @@ for (const { name, dir, pkgJsonPath } of packageDirs) {
 }
 
 if (issues.length === 0) {
-  console.log('✓ All @camstack/* imports have matching dependencies')
+  console.log('✓ All @dominevo/* imports have matching dependencies')
   process.exit(0)
 }
 

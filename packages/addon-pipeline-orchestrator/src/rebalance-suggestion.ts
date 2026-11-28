@@ -12,7 +12,7 @@
  *
  * Only in-memory state is read and a failed plan changes nothing (D49).
  */
-import type { Alert, IScopedLogger } from '@camstack/types'
+import type { Alert, IScopedLogger } from '@dominevo/types'
 import { AUTO_REBALANCE_MIN_IMPROVEMENT } from './orchestrator-types.js'
 
 export const REBALANCE_SUGGESTED_ALERT_ID = 'pipeline-orchestrator:rebalance-suggested'

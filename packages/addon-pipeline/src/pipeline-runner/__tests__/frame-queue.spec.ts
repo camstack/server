@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { FrameQueue, ownFrame } from '../frame-queue.js'
-import type { DecodedFrame } from '@camstack/types'
+import type { DecodedFrame } from '@dominevo/types'
 
 function makeFrame(timestamp: number): DecodedFrame {
   return {

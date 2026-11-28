@@ -5,8 +5,8 @@
  * off, and on how many nodes it actually runs. It writes the orchestrator's
  * cluster mode (`setClusterStepMode`); `Default` writes `null`.
  */
-import { Select } from '@camstack/ui-library'
-import { type StepClusterMode, StepClusterModeSchema } from '@camstack/types'
+import { Select } from '@dominevo/ui-library'
+import { type StepClusterMode, StepClusterModeSchema } from '@dominevo/types'
 import { useTranslation } from 'react-i18next'
 import { nodeEffect, type StepSwitchRow } from './step-switches-model'
 import type { StepSwitchWriters } from './use-step-switches'

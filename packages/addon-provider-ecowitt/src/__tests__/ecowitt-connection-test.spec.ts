@@ -4,7 +4,7 @@
  * for its redacted view) and names the reason when the gateway refuses, is something else, or
  * does not answer. The reasons are the ones nodewitt's error messages tell apart.
  */
-import { makeInMemoryRecords, REDACTED_SECRET } from '@camstack/types'
+import { makeInMemoryRecords, REDACTED_SECRET } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { EcowittLocalConfig } from '../config.js'
 import type { EcowittProbeClient, EcowittProbeFactory } from '../ecowitt-connection-test.js'

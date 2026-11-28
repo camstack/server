@@ -20,8 +20,8 @@ const disableMutateAsync = vi.fn()
 const refetch = vi.fn()
 const confirm = vi.fn<(opts: { message: string }) => Promise<boolean>>()
 
-vi.mock('@camstack/ui-library', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@camstack/ui-library')>()
+vi.mock('@dominevo/ui-library', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dominevo/ui-library')>()
   return {
     ...actual,
     useConfirm: () => confirm,

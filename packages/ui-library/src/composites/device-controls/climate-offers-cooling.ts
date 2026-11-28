@@ -1,4 +1,4 @@
-import type { HvacMode } from '@camstack/types'
+import type { HvacMode } from '@dominevo/types'
 
 /** Modes that mean the device can cool, dry, or move air — an air conditioner. */
 const COOLING_MODES: ReadonlySet<HvacMode> = new Set(['cool', 'heat_cool', 'dry', 'fan_only'])

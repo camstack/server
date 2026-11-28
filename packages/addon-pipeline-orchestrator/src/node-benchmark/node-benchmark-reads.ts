@@ -17,7 +17,7 @@ import {
   type NodeInferenceDevices,
   type PipelineSchema,
   resultStandings,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 const DETECTOR_STEP_ID = 'object-detection'
 /** The family Auto tune picks from (D745) — the suggestions follow it. */

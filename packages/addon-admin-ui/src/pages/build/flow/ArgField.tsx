@@ -6,7 +6,7 @@
  * text takes device values instead (`DeviceTemplateField`).
  */
 
-import type { LooseVocabOpenArg, VocabLocale } from '@camstack/types'
+import type { LooseVocabOpenArg, VocabLocale } from '@dominevo/types'
 import {
   QuantityValueInput,
   formatNumeric,
@@ -19,7 +19,7 @@ import {
   DropdownTrigger,
   Input,
   SelectedChip,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DraftNumberInput } from './DraftNumberInput'

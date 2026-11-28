@@ -5,7 +5,7 @@ import {
   type IdentityLinksRead,
   SWITCH_DEFAULT_OPTIONS,
   type SwitchOptions,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   PowerSourceService,

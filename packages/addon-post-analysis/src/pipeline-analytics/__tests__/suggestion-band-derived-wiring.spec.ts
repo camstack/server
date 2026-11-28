@@ -16,7 +16,7 @@
  *   3. the announcement happens once.
  */
 
-import type { AddonContext, IScopedLogger, LogExtras, LogTags } from '@camstack/types'
+import type { AddonContext, IScopedLogger, LogExtras, LogTags } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import { deriveSuggestionMinCosine, type FaceSettings } from '../face-settings.js'
 import PipelineAnalyticsAddon from '../index.js'

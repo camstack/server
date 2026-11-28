@@ -10,7 +10,7 @@ import {
   createDurableState,
   type DurableState,
   type PipelineSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { ZodType } from 'zod'
 import { PipelineSettingsStore } from '../pipeline-settings-store.js'
 import { applyPatch, rowFakes } from './settings-store-row-fakes.js'

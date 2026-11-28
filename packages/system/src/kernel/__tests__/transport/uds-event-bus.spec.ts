@@ -20,7 +20,7 @@
  *   6. Unsubscribe: the returned disposer removes the handler from the map.
  */
 
-import type { SystemEvent } from '@camstack/types'
+import type { SystemEvent } from '@dominevo/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { matchesPattern } from '../../moleculer/event-bus-core.js'
 import type { UdsEventChannel } from '../../transport/uds-event-bus.js'

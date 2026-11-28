@@ -43,7 +43,7 @@ interface StubChild {
   readonly sourceInfo?: { readonly id: string }
 }
 
-vi.mock('@camstack/types', () => ({
+vi.mock('@dominevo/types', () => ({
   DeviceType: { Container: 'container' },
   // No container in these specs declares a preference.
   primaryChildPreferenceOf: () => undefined,
@@ -52,7 +52,7 @@ vi.mock('@camstack/types', () => ({
 // Stub the ui-library boundary: a lightweight picker that emits the chosen
 // child's entityId, a resolver that returns the FIRST child (default), and a
 // capturing mutation hook. Resolver/picker correctness lives in ui-library tests.
-vi.mock('@camstack/ui-library', () => ({
+vi.mock('@dominevo/ui-library', () => ({
   // Responsive tokens consumed by the shared InfoRow primitive.
   LIST_ROW: 'list-row',
   TEXT_HINT: 'text-hint',

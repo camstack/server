@@ -21,10 +21,10 @@ import {
   useRemoteListCommands,
   useRemoteSendCommand,
   useTemplateList,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { layoutOf, RemoteGrid, SourceSelectKey } from '@camstack/ui-library'
+import { layoutOf, RemoteGrid, SourceSelectKey } from '@dominevo/ui-library'
 
 export interface RemoteHeroButtonProps {
   readonly deviceId: number

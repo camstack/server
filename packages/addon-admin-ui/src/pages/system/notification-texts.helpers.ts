@@ -23,7 +23,7 @@
  * where an operator cannot tell what he has actually changed.
  */
 
-import type { NcTemplateVarDescriptor } from '@camstack/types'
+import type { NcTemplateVarDescriptor } from '@dominevo/types'
 import i18n from '../../i18n/index'
 
 /** The addonId for `addons.custom` is the MANIFEST id, never the npm package. */

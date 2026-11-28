@@ -1,7 +1,7 @@
 /**
  * `ops` toolset: read-only questions to a hub, through the CLI's own session
- * (`camstack login`). A tool that finds no session answers with a structured
- * "run camstack login" result; the MCP never accepts a password.
+ * (`dominevo login`). A tool that finds no session answers with a structured
+ * "run dominevo login" result; the MCP never accepts a password.
  */
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
@@ -10,7 +10,7 @@ import {
   LogsExportArgsSchema,
   type CredentialSource,
   type CredentialTier,
-} from '@camstack/develop'
+} from '@dominevo/develop'
 import { text } from './tool-result.js'
 import type { McpContext, ToolTextResult } from './context.js'
 import { noSessionResult, type NoSessionResult } from './ops-hub.js'
@@ -106,14 +106,14 @@ export function registerOpsTools(
   registerSetupReadTools(server, ctx)
   server.tool(
     'ops_whoami',
-    'Which hub this MCP talks to and as whom, from the `camstack login` session (no network call). If there is no session, says to run `camstack login <host>` in a terminal.',
+    'Which hub this MCP talks to and as whom, from the `dominevo login` session (no network call). If there is no session, says to run `dominevo login <host>` in a terminal.',
     {},
     async (): Promise<ToolTextResult> => text(await whoami(ctx)),
   )
 
   server.tool(
     'ops_status',
-    'Cluster summary: every node (online, platform, server version, capability count, "online-but-capless" flag), the active alerts and the addons with an update. A part the hub did not answer is null with its reason in `unavailable`, never zero. Node list and updates need an admin `camstack login`.',
+    'Cluster summary: every node (online, platform, server version, capability count, "online-but-capless" flag), the active alerts and the addons with an update. A part the hub did not answer is null with its reason in `unavailable`, never zero. Node list and updates need an admin `dominevo login`.',
     {},
     async (): Promise<ToolTextResult> => text(await opsStatus(ctx)),
   )
@@ -134,7 +134,7 @@ export function registerOpsTools(
 
   server.tool(
     'ops_logs_export',
-    'The Logs page export: logs of chosen components (addonIds) and/or devices over a time range, as one NDJSON file under ~/.camstack/exports/logs/ (tags kept, deviceId included). Omit components and deviceIds to export the whole system log. Default everything over the last 6 hours. `zip: true` saves it as one .zip instead (compressed by the hub; the summary still describes the lines). Returns the path and a bounded summary (lines, span, busiest devices/components, truncated). Needs an admin `camstack login`.',
+    'The Logs page export: logs of chosen components (addonIds) and/or devices over a time range, as one NDJSON file under ~/.camstack/exports/logs/ (tags kept, deviceId included). Omit components and deviceIds to export the whole system log. Default everything over the last 6 hours. `zip: true` saves it as one .zip instead (compressed by the hub; the summary still describes the lines). Returns the path and a bounded summary (lines, span, busiest devices/components, truncated). Needs an admin `dominevo login`.',
     LogsExportArgsSchema.shape,
     async (args): Promise<ToolTextResult> =>
       text(await opsLogsExport(ctx, LogsExportArgsSchema.parse(args))),
@@ -142,7 +142,7 @@ export function registerOpsTools(
 
   server.tool(
     'ops_logs',
-    'Hub logs scoped by deviceId, addon, node, level, window and free text, grouped and deduplicated with counts. Says which tier answered (ring = recent in-RAM; persisted = the default log destination). With `around` (a track or event id) returns `contextLines` lines on each side of its first mention. Needs an admin `camstack login`.',
+    'Hub logs scoped by deviceId, addon, node, level, window and free text, grouped and deduplicated with counts. Says which tier answered (ring = recent in-RAM; persisted = the default log destination). With `around` (a track or event id) returns `contextLines` lines on each side of its first mention. Needs an admin `dominevo login`.',
     {
       deviceId: z.number().int().optional(),
       addonId: z.string().optional(),
@@ -202,28 +202,28 @@ export function registerOpsTools(
 
   server.tool(
     'ops_accelerators',
-    'Per node: the inference devices it has, the Auto-tune hardware class the node maps to, and whether the measured detector-latency table has a row for that class and accelerator. A node that could not be read is null with a reason, never "no accelerator". Needs an admin `camstack login`.',
+    'Per node: the inference devices it has, the Auto-tune hardware class the node maps to, and whether the measured detector-latency table has a row for that class and accelerator. A node that could not be read is null with a reason, never "no accelerator". Needs an admin `dominevo login`.',
     {},
     async (): Promise<ToolTextResult> => text(await opsAccelerators(ctx)),
   )
 
   server.tool(
     'ops_update_check',
-    'Read-only update report for the whole cluster. Every node from the topology: running vs installed vs latest @camstack/server, restartRequired / updateState / rolledBack, the wrapper (Docker image / desktop app) verdict, and whether its addon versions match the hub; the hub\'s addon updates; the viewer (not exposed by any API, said so); and this CLI/MCP against npm. A node that cannot be read is null with a reason, never "up to date". Needs an admin `camstack login`.',
+    'Read-only update report for the whole cluster. Every node from the topology: running vs installed vs latest @dominevo/server, restartRequired / updateState / rolledBack, the wrapper (Docker image / desktop app) verdict, and whether its addon versions match the hub; the hub\'s addon updates; the viewer (not exposed by any API, said so); and this CLI/MCP against npm. A node that cannot be read is null with a reason, never "up to date". Needs an admin `dominevo login`.',
     {},
     async (): Promise<ToolTextResult> => text(await opsUpdateCheck(ctx)),
   )
 
   server.tool(
     VERSION_CHECK_TOOL,
-    "Read-only, light version check, always fresh: the hub's @camstack/server running vs latest, how many hub addons have an update (first names), and this CLI/MCP against npm. With no hub session only the CLI/MCP is checked. Every other tool already prepends a one-line warning when something is outdated (checked at most every 15 minutes); this one asks on demand. `ops_update_check` has the full per-node report.",
+    "Read-only, light version check, always fresh: the hub's @dominevo/server running vs latest, how many hub addons have an update (first names), and this CLI/MCP against npm. With no hub session only the CLI/MCP is checked. Every other tool already prepends a one-line warning when something is outdated (checked at most every 15 minutes); this one asks on demand. `ops_update_check` has the full per-node report.",
     {},
     async (): Promise<ToolTextResult> => text(versionCheckResult(await refreshVersions())),
   )
 
   server.tool(
     UPDATE_APPLY_TOOL,
-    'Bring the cluster up to date through the ONE hub-side job (clusterUpdate.startClusterUpdate, the same as the admin UI "Update all"): backup, hub server closure, each online agent verified (target + capabilities registered), then addons (agents follow by reconciliation, verified); this tool follows the job by its id, then updates this CLI last. Two steps: call without confirm_token for a preview (order, versions, wrapper instructions, timeouts) and a one-shot token, then again with the SAME arguments and that token. A failed step stops the chain and names the node. Wrapper (image/app) updates are only reported with instructions. Needs an admin `camstack login`.',
+    'Bring the cluster up to date through the ONE hub-side job (clusterUpdate.startClusterUpdate, the same as the admin UI "Update all"): backup, hub server closure, each online agent verified (target + capabilities registered), then addons (agents follow by reconciliation, verified); this tool follows the job by its id, then updates this CLI last. Two steps: call without confirm_token for a preview (order, versions, wrapper instructions, timeouts) and a one-shot token, then again with the SAME arguments and that token. A failed step stops the chain and names the node. Wrapper (image/app) updates are only reported with instructions. Needs an admin `dominevo login`.',
     {
       version: z.string().min(1).optional().describe("Server target; default = the hub's latest."),
       addons: z.boolean().optional().describe('Update addons too (default true).'),

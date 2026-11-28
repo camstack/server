@@ -10,7 +10,7 @@ import {
   TEXT_SECTION_LABEL,
   useLocalNetworkGetScanSubnets,
   useLocalNetworkSetScanSubnets,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Plus } from 'lucide-react'
 import { type ReactElement, useState } from 'react'
 import { useTranslation } from 'react-i18next'

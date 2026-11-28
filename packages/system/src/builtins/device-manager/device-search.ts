@@ -24,14 +24,14 @@ import type {
   DeviceSearchResult,
   DeviceValueOption,
   IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   DEVICE_SEARCH_DEFAULT_LIMIT,
   DEVICE_SEARCH_MAX_LIMIT,
   deviceOffersActions,
   errMsg,
   searchRank,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** The wireable fields of one capability, as `wireableEntryForDef` derives them. */
 export interface SearchCapFields {

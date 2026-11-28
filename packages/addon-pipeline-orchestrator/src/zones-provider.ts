@@ -50,7 +50,7 @@ import {
   type DeviceProxy,
   type DurableState,
   createDurableState,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /**
  * Settings + DeviceProxy surface required by the zones provider. Narrow

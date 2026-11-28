@@ -49,8 +49,8 @@ vi.mock('../../../components/settings/SiteLocationCard', () => ({
   SiteLocationCard: () => null,
 }))
 
-vi.mock('@camstack/ui-library', async () => {
-  const real = await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+vi.mock('@dominevo/ui-library', async () => {
+  const real = await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return {
     ...real,
     useClusterNodes: () => ({

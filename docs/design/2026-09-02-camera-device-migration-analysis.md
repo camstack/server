@@ -39,7 +39,7 @@ covers:
 > the operator.
 
 > **What this document is.** A census, made on the files and on the real hub
-> (<hub-ip>, 2026-09-02), of everything in CamStack that is addressed by a camera's
+> (<hub-ip>, 2026-09-02), of everything in Dominevo that is addressed by a camera's
 > numeric `deviceId`; the classification into four categories
 > requested; and the answer to the four design questions. **It does not change a
 > line of code.** Every claim is either verified by reading a file / calling
@@ -133,7 +133,7 @@ it is **not** only Home Assistant as one might think):
 | Primary child and child layout | `primaryChildEntityId` (= `sourceInfo.id`, fallback `stableId`) and `childLayout[].childKey` | `device-meta-types.ts:126-129` — **chosen on purpose** to survive a reallocation of the numeric |
 | Terminal | `terminalCameraTombstones: stableId[]`, `TerminalInstance.cameraStableId` | `addon-terminal/src/addon.ts:105,123` |
 | ~~**Home Assistant export**~~ **(superseded)** | it was `device_id = camstack-<stableId>`, `unique_id = <stableId>_<entity>`; **now** `camstack-<deviceId>` and `<deviceId>_<entity>` | `ha-export/topics.ts` (`deviceKeyFor`), `entity-catalog.ts:308` |
-| Alexa endpoint cookie | `cookie.stableId` — but **CamStack never rereads it**; the `endpointId` is the numeric | `export-alexa/src/endpoints/builder.ts:399` |
+| Alexa endpoint cookie | `cookie.stableId` — but **Dominevo never rereads it**; the `endpointId` is the numeric | `export-alexa/src/endpoints/builder.ts:399` |
 | Reolink SMTP push | `recipientLocalPart = cam-<stableId>`, written **into the camera's NVRAM** and read back from the RCPT local-part | `addon-provider-reolink/src/email-push-server.ts:313` |
 
 **Direct consequence on the question posed.** The two forms get opposite
@@ -366,7 +366,7 @@ And the code **assumes that path and index cannot disagree**:
 | **Alexa** | `endpointId` = `String(deviceId)`, children `<A>__<B>` | numeric **`deviceId`** (`export-alexa/src/handlers/endpoint-id.ts:4-12`) | friendly name, groups, routines. Amazon refreshes its copy **only** on an `AddOrUpdateReport` that we push |
 | **Google Home** | `SyncDevice.id = String(deviceId)` | numeric **`deviceId`** (`export-google/src/google-home/device-model.ts:87`) | room, nickname, routines. **There is no `requestSync`**: Google stays misaligned until the operator says «sincronizza i dispositivi» [sync the devices] |
 | **Home Assistant** *(superseded)* | **now** `device_id = camstack-<deviceId>`, `unique_id = <deviceId>_<…>` | numeric **`deviceId`**, like the other three | entity registry, area, dashboards, automations **and the HA recorder's history**. The code says so: changing the key *«orphans every entity in an operator's installation, taking its recorder history and dashboard placement with it. Treat a rename here as a migration, not an edit»* (`ha-export/types.ts:6-11`) |
-| **Matter / MQTT / Alexa-import** | — | — | they are not exporters: no CamStack identity leaves through them (verified: no `device-export` in their manifests) |
+| **Matter / MQTT / Alexa-import** | — | — | they are not exporters: no Dominevo identity leaves through them (verified: no `device-export` in their manifests) |
 
 #### 3.3.3 References already distributed outside the hub
 
@@ -934,7 +934,7 @@ accessory and keeps pairing, room, scenes and automations; Alexa and Google
 see the same endpoint; HA sees the same device.**
 
 It is the generalisation of the coordinator's proposal: *every identity that
-CamStack publishes to the outside — the on-disk prefix, the HAP UUID,
+Dominevo publishes to the outside — the on-disk prefix, the HAP UUID,
 the Alexa `endpointId`, the Google id, the HA key — is today **derived** from an
 internal id. Making it a transferable attribute of the row, with a default equal to
 today's derivation, turns «migrating» into «transferring the tokens».*
@@ -1192,10 +1192,10 @@ D must go through `bareAddonId()` / `isSameAddonId()`**, and
 The operator asks explicitly. The answer is **yes, and it is worse than a
 single loss**: besides Home Assistant and the Reolink NVRAM, the
 `stableId` is on the **public surface of the extensions** —
-`@camstack/sdk` exposes `getDeviceByStableId(stableId)`
+`@dominevo/sdk` exposes `getDeviceByStableId(stableId)`
 (`packages/sdk/src/system.ts:746`). Any operator block or
 third-party extension may have `mac-040312a373d4` written inside it, in
-code that CamStack does not see.
+code that Dominevo does not see.
 
 **Where it does NOT reach** (verified: zero occurrences of `stableId` in those
 packages): **HomeKit, Google Home, Matter and the MQTT broker** are all
@@ -1207,7 +1207,7 @@ keyed on the numeric `deviceId`. In form D nobody touches them.
 | **`allowedDevices` ACL** (`auth-schema.ts:94` users, `:111` API keys) | the user loses live access (`live-events.router.ts:83-93`, *«Access denied»*) and **silently drops out of the notification fan-out** (`notification-center/index.ts:5101-5102`) | **Users: yes** — `userManagement.updateUser`. **API keys: NO** — the cap exposes only list/create/revoke/validate, there is no `updateApiKey`. The row *is* patchable (`api-key-manager.ts:63-67`, and the `tokenHash` is preserved) but no path does it: a new write route is needed, or revoke + reissue + redistribute |
 | **Automations** (`sourceStableId`, serialised **twice** per binding: `codegen.ts:67` and `:218`) | the leaf does not resolve and **is evaluated `false` for ever**, with a log and no error (`codegen.ts:344-348`) | **Yes**, but the replacement must be written through the update path that **recompiles** (`core-block-store.ts:11-13`): a direct SQL `UPDATE` bypasses that guarantee. (On this hub: **0 blocks**) |
 | **Reolink SMTP push** (`cam-<stableId>` in the camera's NVRAM) | the resolver looks for `cam-<new-mac>` (`email-push-server.ts:194`); if the new camera was adopted normally its firmware is already configured that way and **matches**. If auto-configure never ran on it, every delivery is refused with `550 Unknown recipient` and **motion events stop silently** | **Yes** — re-run `setupEmailPushToManager` + `refreshCameraEmailConfig`, but the camera must be **awake** |
-| **Alexa endpoint cookie** (`builder.ts:399` and 3 others) | **nothing.** CamStack never rereads it: every handler routes on `endpointId`, which is numeric | no repair needed |
+| **Alexa endpoint cookie** (`builder.ts:399` and 3 others) | **nothing.** Dominevo never rereads it: every handler routes on `endpointId`, which is numeric | no repair needed |
 
 **Correction to what I had written**: I had listed **Terminal** among the
 references that break. **It is out of scope**: the `stableId`s of the terminal

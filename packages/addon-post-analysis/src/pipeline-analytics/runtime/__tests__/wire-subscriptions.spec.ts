@@ -13,8 +13,8 @@
  * So the contract this file pins is not "the addon subscribes to these
  * categories" but "the addon registers a DISTINCT KEY per category".
  */
-import type { EventFilter, SystemEvent } from '@camstack/types'
-import { EventCategory } from '@camstack/types'
+import type { EventFilter, SystemEvent } from '@dominevo/types'
+import { EventCategory } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { NC_SYSTEM_EVENT_CATEGORIES, wireSubscriptions } from '../wire-subscriptions.js'
 import type { WireSubscriptionsDeps } from '../wire-subscriptions.js'

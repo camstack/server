@@ -48,8 +48,8 @@ action. Board records are written only by the adopt and manual flows.
 
 The generic cross-integration network scan stays under Integrations. Existing
 saved boards need no migration: the record shape and its keychain secrets are
-unchanged, only the form stopped exposing them. `@camstack/types` and
-`@camstack/server-framework` change (an additive optional field and parameter),
+unchanged, only the form stopped exposing them. `@dominevo/types` and
+`@dominevo/server-framework` change (an additive optional field and parameter),
 so the system closure needs a force-publish. A `device-adoption` integration
 still lists its candidates through the adopt job surface (children, granularity
 filters); only the device-provider path uses the merged list.

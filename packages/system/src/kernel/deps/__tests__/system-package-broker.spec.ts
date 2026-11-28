@@ -6,7 +6,7 @@
  * talks to the helper for apt instead of spawning apt-get.
  */
 import { describe, expect, it, vi } from 'vitest'
-import type { AddonDeclaration, IScopedLogger } from '@camstack/types'
+import type { AddonDeclaration, IScopedLogger } from '@dominevo/types'
 import { packageIsAllowlisted } from '../system-package-allowlist.js'
 import { decidePackageInstall } from '../system-package-broker.js'
 import { installManifestSystemDeps } from '../manifest-system-deps.js'

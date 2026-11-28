@@ -15,15 +15,15 @@
  * nor removed here: the stale sweep undeploys the hub-only addon alone, and
  * removing the package would take the shared bundle directory with it.
  */
-import type { AddonPlacement } from '@camstack/types'
-import { ADDON_VERSION_REASON_HUB, decideAddonVersionMove } from '@camstack/server/system'
+import type { AddonPlacement } from '@dominevo/types'
+import { ADDON_VERSION_REASON_HUB, decideAddonVersionMove } from '@dominevo/server/system'
 
 /**
  * Agent-only packages the hub tracks and delivers without loading them itself.
  * The version the hub follows for each is the registry's `latest`, resolved by
  * the caller and passed in as `trackedForAgents`.
  */
-export const AGENT_TRACKED_PACKAGES: readonly string[] = ['@camstack/addon-agent-ui']
+export const AGENT_TRACKED_PACKAGES: readonly string[] = ['@dominevo/addon-agent-ui']
 
 export function isAgentTrackedPackage(name: string): boolean {
   return AGENT_TRACKED_PACKAGES.includes(name)
@@ -43,7 +43,7 @@ export interface DesiredSetInput {
   readonly trackedForAgents: ReadonlyMap<string, string>
   /** Packages removed on purpose from this node; they stay off. */
   readonly tombstones: ReadonlySet<string>
-  /** Packages the node bootstraps itself (`@camstack/server/system`); never managed. */
+  /** Packages the node bootstraps itself (`@dominevo/server/system`); never managed. */
   readonly bootstrap: ReadonlySet<string>
 }
 

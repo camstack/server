@@ -18,7 +18,7 @@ import {
   runtimeStatePolicyFor,
   type IScopedLogger,
   type StatusOverlayAnswer,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { CapabilityRegistry } from '../../../kernel/capability-registry.js'
 import { installClaimedStatusOverlay } from '../claimed-status-overlay.js'
 import { type AggregationDeps, getDeviceStatusAggregate } from '../device-aggregation.js'

@@ -30,7 +30,7 @@ vi.mock('../../session-decode/session-decode-pump.js', () => ({
 
 import PipelineRunnerAddon from '../index.js'
 import type { PipelineRunner } from '../runner.js'
-import type { DecodedFrame, FrameHandle, FrameResult, RunnerCameraConfig } from '@camstack/types'
+import type { DecodedFrame, FrameHandle, FrameResult, RunnerCameraConfig } from '@dominevo/types'
 
 // ── helpers ────────────────────────────────────────────────────────────────
 

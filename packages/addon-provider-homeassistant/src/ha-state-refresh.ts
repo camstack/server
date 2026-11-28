@@ -12,7 +12,7 @@ import {
   type IScopedLogger,
   type InferNativeProvider,
   type StateRefreshPolicy,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** Never scheduled (push full); only the floor the core accepts. */
 export const HA_MIN_REFRESH_INTERVAL_MS = 1_000

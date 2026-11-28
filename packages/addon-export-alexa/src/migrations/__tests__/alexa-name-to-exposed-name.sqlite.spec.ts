@@ -7,7 +7,7 @@
  *
  * Disarm: writing the name under the default instance id only fails the two-skill case.
  */
-import type { AddonMigration } from '@camstack/types'
+import type { AddonMigration } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { settingsFixture } from '../../../../system/src/builtins/sqlite-storage/__tests__/support/addon-settings-fixture.js'
 import { ALEXA_INSTANCE_ID } from '../../skill-records.js'

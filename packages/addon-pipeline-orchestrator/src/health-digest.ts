@@ -16,7 +16,7 @@ import type {
   HealthNodeSummary,
   HealthSourceStatus,
   PlacementNodeStats,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { BlindCameraSnapshot } from './detection-blind-monitor.js'
 import type { UnusableInferenceDevice } from './inference-device-usability-mirror.js'
 

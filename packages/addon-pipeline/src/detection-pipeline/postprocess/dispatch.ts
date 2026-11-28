@@ -11,7 +11,7 @@
  * removed with the Node ONNX path — an engine output without `structured`
  * is a defect and throws loudly instead of silently falling back.
  */
-import type { EngineOutput, PostprocessorType, StepDefinition, StepOutput } from '@camstack/types'
+import type { EngineOutput, PostprocessorType, StepDefinition, StepOutput } from '@dominevo/types'
 
 // Re-export postprocessor types for consumers
 export type { StepOutput }

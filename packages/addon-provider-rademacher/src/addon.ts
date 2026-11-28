@@ -18,7 +18,7 @@ import {
   collectOwnerIntegrationIds,
   type RecordIntegrationInstances,
   rowsDepsOver,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { RademacherConnectionBody } from './rademacher-instances.js'
 import { RademacherReconciler, type IntegrationLifecycleKind } from './rademacher-reconciler.js'
 import {

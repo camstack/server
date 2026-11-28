@@ -1,4 +1,4 @@
-import { type ConsumableItem, consumablesCapability, DeviceRuntimeState } from '@camstack/types'
+import { type ConsumableItem, consumablesCapability, DeviceRuntimeState } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   CONSUMABLES_CAP_NAME,

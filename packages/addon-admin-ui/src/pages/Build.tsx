@@ -3,8 +3,8 @@
  *
  * Shell is library `SectionedPage` via `AdminSectionedPage` (OSD template).
  */
-import { coreBlockSourceKind, type CoreBlock } from '@camstack/types'
-import { Button, FORM_OPEN_ROUTER_STATE, useSystem, useTemplateList } from '@camstack/ui-library'
+import { coreBlockSourceKind, type CoreBlock } from '@dominevo/types'
+import { Button, FORM_OPEN_ROUTER_STATE, useSystem, useTemplateList } from '@dominevo/ui-library'
 import { useQuery } from '@tanstack/react-query'
 import { Hammer, Plus } from 'lucide-react'
 import { useTranslation } from 'react-i18next'

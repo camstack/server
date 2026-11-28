@@ -6,7 +6,7 @@
  *  - without the override in `toEndpoint`, the friendlyName test fails;
  *  - an endpoint id derived from the name breaks the no-duplicate test.
  */
-import { DeviceRole } from '@camstack/types'
+import { DeviceRole } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { ALEXA_NAME_MAX_LENGTH, validateAlexaName } from '../endpoints/alexa-name.js'
 import { buildChildAccessoryEndpoint, classifyChildKind } from '../endpoints/builder.js'

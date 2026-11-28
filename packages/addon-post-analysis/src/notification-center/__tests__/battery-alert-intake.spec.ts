@@ -22,8 +22,8 @@
  *    the variant is a fact about the event, so it is chosen where the event is,
  *    and the catalog stays a flat list of finished sentences.
  */
-import type { SystemEvent } from '@camstack/types'
-import { DeviceType } from '@camstack/types'
+import type { SystemEvent } from '@dominevo/types'
+import { DeviceType } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { NcDeviceIdentity, NcDeviceLookup } from '../device-directory.js'
 import { incomingFromBatteryBand } from '../event-intake.js'

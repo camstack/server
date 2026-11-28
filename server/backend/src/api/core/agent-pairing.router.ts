@@ -18,7 +18,7 @@ import { X509Certificate } from 'node:crypto'
  * the hub checks it against the code it computed itself. A page that sends back
  * `code` from `getPairing` defeats the check and is a bug.
  */
-import { browseAgentsMdns } from '@camstack/develop/hub-discovery'
+import { browseAgentsMdns } from '@dominevo/develop/hub-discovery'
 import {
   getProcessMeshCaState,
   getProcessMeshCertificateRegistry,
@@ -36,7 +36,7 @@ import {
   processMeshCrl,
   revokeMeshCertificate,
   DEFAULT_HUB_TLS_TCP_PORT,
-} from '@camstack/server/system'
+} from '@dominevo/server/system'
 import { TRPCError } from '@trpc/server'
 import { z } from 'zod'
 import type { NodeCertificatesClient } from '../../core/agent/node-certificates-client.js'
@@ -189,7 +189,9 @@ export function createAgentPairingRouter(deps: AgentPairingRouterDeps) {
       if (deps.hubDataDir === undefined) return null
       const identity = loadOrCreateHubId(deps.hubDataDir)
       if (identity.hubId === null) {
-        deps.log.warn('the pairing offer carries no hub id', { meta: { problem: identity.problem } })
+        deps.log.warn('the pairing offer carries no hub id', {
+          meta: { problem: identity.problem },
+        })
       }
       return identity.hubId
     },

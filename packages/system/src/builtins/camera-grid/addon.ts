@@ -42,7 +42,7 @@ import type {
   HostedEngineDevice,
   ProfileSlot,
   ProviderRegistration,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   BaseAddon,
   bareAddonId,
@@ -62,7 +62,7 @@ import {
   type DetectionResultPayload,
   type MotionOnMotionChangedPayload,
   type PipelineAudioInferenceResultPayload,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { GridCameraDevice, installGridCameraRuntime } from './grid-camera-device.js'
 import { acquireWithRetry } from './acquire-retry.js'
 import {

@@ -1,5 +1,5 @@
-import type { StreamSourceEntry } from '@camstack/types'
-import { EventCategory } from '@camstack/types'
+import type { StreamSourceEntry } from '@dominevo/types'
+import { EventCategory } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   AudioSubscriptionController,

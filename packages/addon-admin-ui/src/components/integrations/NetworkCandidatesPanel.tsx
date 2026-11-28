@@ -9,8 +9,8 @@
  * on click: it opens the provider's creation form prefilled with what was found, and adds through the
  * same call afterwards.
  */
-import type { DiscoveredChildDevice } from '@camstack/types'
-import { DeviceType } from '@camstack/types'
+import type { DiscoveredChildDevice } from '@dominevo/types'
+import { DeviceType } from '@dominevo/types'
 import {
   Button,
   CollapsibleCard,
@@ -19,7 +19,7 @@ import {
   useDeviceManagerAdoptionListCandidates,
   useDeviceManagerGetCreationSchema,
   useDeviceManagerProviderCreationType,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { AlertTriangle, ArrowLeft, Download, Loader2, Radar } from 'lucide-react'
 import { type ReactElement, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'

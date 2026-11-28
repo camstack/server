@@ -1,8 +1,8 @@
 import { Lock } from 'lucide-react'
-import type { BulkUpdateItem } from '@camstack/types'
+import type { BulkUpdateItem } from '@dominevo/types'
 import { AddonRowBadge } from './AddonRowBadge'
 import { useTranslation } from 'react-i18next'
-import { Button } from '@camstack/ui-library'
+import { Button } from '@dominevo/ui-library'
 
 interface AddonRowAddon {
   readonly name: string

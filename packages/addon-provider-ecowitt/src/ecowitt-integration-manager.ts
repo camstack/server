@@ -1,5 +1,5 @@
 import { Ecowitt, type Sensor } from '@apocaliss92/nodewitt'
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IScopedLogger } from '@dominevo/types'
 import {
   type EcowittConfig,
   type EcowittListenerConfig,

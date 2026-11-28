@@ -50,8 +50,8 @@ const CLIENTS = {
   encodedSubscribers: 1,
 }
 
-vi.mock('@camstack/ui-library', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@camstack/ui-library')>()),
+vi.mock('@dominevo/ui-library', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@dominevo/ui-library')>()),
   useDeviceProxy: () => null,
   useEventInvalidation: () => undefined,
   useEventStreamLatest: (_topic: string, filter: (d: { brokerId: string }) => boolean) => {

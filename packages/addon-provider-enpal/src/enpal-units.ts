@@ -1,4 +1,4 @@
-import { ingestReading, type IngestRefusal, type ReadingQuantity } from '@camstack/types'
+import { ingestReading, type IngestRefusal, type ReadingQuantity } from '@dominevo/types'
 
 /**
  * The box's InfluxDB `unit` tag, as written (including the box's own spelling

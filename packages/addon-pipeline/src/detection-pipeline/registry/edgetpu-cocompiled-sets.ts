@@ -23,7 +23,7 @@
  * keeps 3.34 of its 6.39 MiB, YuNet's activations take the rest) is
  * deliberately absent.
  */
-import { hfModelUrl } from '@camstack/types'
+import { hfModelUrl } from '@dominevo/types'
 
 const HF_REPO = 'camstack/camstack-models'
 const setFile = (setId: string, file: string): string =>

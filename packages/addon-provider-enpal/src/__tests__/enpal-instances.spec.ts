@@ -8,7 +8,7 @@ import {
   integrationRowsMigration,
   integrationRowsPortsOver,
   makeInMemoryRecords,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { EnpalError } from '../enpal-client.js'
 import { createSnapshot } from '../enpal-snapshot.js'

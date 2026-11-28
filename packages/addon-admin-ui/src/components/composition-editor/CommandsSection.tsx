@@ -13,7 +13,7 @@ import {
   type CompositionSourceRef,
   featureFieldEntries,
   fieldReads,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { Terminal } from 'lucide-react'
 import { type ReactNode, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'

@@ -34,12 +34,12 @@ import {
   Volume2,
   WifiOff,
 } from 'lucide-react'
-import type { DeviceDisplayOverride } from '@camstack/types'
+import type { DeviceDisplayOverride } from '@dominevo/types'
 import {
   PET_FEEDER_MANUAL_FEED_MAX,
   PET_FEEDER_MANUAL_FEED_MIN,
   tryConvertUnit,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { useUnitPreferences } from '../../contexts/unit-preferences.js'
 import { useDeviceCapability } from '../../hooks/use-device-capability.js'
 import { useDeviceCommand } from '../../hooks/use-device-command.js'

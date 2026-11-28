@@ -46,7 +46,7 @@ export interface VersionProbe {
 }
 
 export const ADDON_NAME_LIMIT = 3
-const NO_HUB_SESSION = 'no hub session (run `camstack login <host>`)'
+const NO_HUB_SESSION = 'no hub session (run `dominevo login <host>`)'
 
 export interface ProbeDeps {
   readonly entryPath?: string
@@ -123,7 +123,7 @@ export function formatWarning(probe: VersionProbe): string | null {
   if (probe.cli.state === 'behind')
     parts.push(`CLI/MCP ${probe.cli.installed} → ${probe.cli.latest}`)
   if (parts.length === 0) return null
-  return `⚠ CamStack versions: ${parts.join(' · ')} — run ops_update_check / ops_update_apply.`
+  return `⚠ Dominevo versions: ${parts.join(' · ')} — run ops_update_check / ops_update_apply.`
 }
 
 const LABELS = {

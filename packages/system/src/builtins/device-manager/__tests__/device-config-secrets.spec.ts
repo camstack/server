@@ -4,7 +4,7 @@ import {
   type KeychainResolveResult,
   type KeychainTransport,
   makeSecretMarker,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   loadDeviceConfigWithSecrets,

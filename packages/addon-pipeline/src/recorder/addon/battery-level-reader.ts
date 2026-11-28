@@ -1,4 +1,4 @@
-import { batteryCapability, type AddonApi } from '@camstack/types'
+import { batteryCapability, type AddonApi } from '@dominevo/types'
 import { batteryLevelFromSlice, type BatteryReading } from '../battery-hysteresis.js'
 import { withDeadline } from './with-deadline.js'
 

@@ -39,7 +39,7 @@ import type {
   NcRuleTarget,
   TimelapseRule,
   TimelapseRulePatch,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { NcSummaryRule, NcSummaryRulePatch } from './summary/summary-rule.js'
 
 /** Which store a pruned rule lives in. */
@@ -57,10 +57,7 @@ export type NcPruneSubjectKind = 'device' | 'target'
  *    operator who later re-enables it is not overridden, and so no banner
  *    claims we switched off something the operator had switched off.
  */
-export type NcPruneOutcome =
-  | 'removed'
-  | 'kept-disabled'
-  | 'kept'
+export type NcPruneOutcome = 'removed' | 'kept-disabled' | 'kept'
 
 /** Who asked: the `DeviceUnregistered` event, or the reload-tick reconcile. */
 export type NcPruneSource = 'event' | 'reconcile'

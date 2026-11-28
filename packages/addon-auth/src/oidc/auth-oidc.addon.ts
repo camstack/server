@@ -71,7 +71,7 @@ import {
   type ProviderRegistration,
   SSO_STATE_COOKIE,
   SSO_STATE_COOKIE_MAX_AGE_SEC,
-} from '@camstack/types'
+} from '@dominevo/types'
 import * as jose from 'jose'
 import { OIDC_CONNECTION_FORM_SCHEMA } from './oidc-connection-schema.js'
 import {

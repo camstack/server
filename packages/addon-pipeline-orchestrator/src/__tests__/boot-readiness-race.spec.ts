@@ -35,7 +35,7 @@
  * replays via `queueMicrotask` during boot, before `this.audio` used to
  * be assigned.
  */
-import { emitReadiness, pipelineOrchestratorCapability } from '@camstack/types'
+import { emitReadiness, pipelineOrchestratorCapability } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AudioSubscriptionController } from '../audio-subscription-controller.js'
 import PipelineOrchestratorAddon from '../index.js'

@@ -30,11 +30,11 @@ import type {
   IZoneAnalyticsProvider,
   StationaryObject,
   Zone,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { OccupancyEvidence } from '../notification-center/occupancy-watcher.js'
 import { computeStationaryEntryZones } from './pipeline/stationary/stationary-zones.js'
 import { TRACKING_DEFAULTS } from './tracking-settings.js'
-import { occupancyScope } from '@camstack/types'
+import { occupancyScope } from '@dominevo/types'
 import { SliceThrottler, snapshotEqualsIgnoringTs } from './runtime/slice-throttler.js'
 
 interface RecordedSample {

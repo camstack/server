@@ -7,7 +7,7 @@ import type { InstanceRow } from '../../instances/instances-model'
 const confirm = vi.fn()
 const custom = vi.fn()
 
-vi.mock('@camstack/ui-library', () => ({
+vi.mock('@dominevo/ui-library', () => ({
   useConfirm: () => confirm,
   useAddonsCustom: () => ({ mutateAsync: custom, isPending: false }),
 }))

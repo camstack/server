@@ -17,7 +17,7 @@ import type {
   NcSensorTransition,
   NcThrottle,
   NcThrottleGranularity,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   isSystemDelivery,
   isSystemRuleKind,
@@ -25,7 +25,7 @@ import {
   ruleKindOf,
   ruleKindSpec,
   sensorTransitionOffered,
-} from '@camstack/types'
+} from '@dominevo/types'
 import i18n from '../../i18n/index'
 
 /** A trigger/urgency choice rendered in the delivery `<Select>`. */
@@ -226,7 +226,7 @@ export {
   parseRuleSection,
   ruleMatchesSection,
   ruleSeedForSection,
-} from '@camstack/types'
+} from '@dominevo/types'
 /**
  * The rule list is split into sections rather than one flat table.
  *
@@ -241,7 +241,7 @@ export {
  * operator concludes a rule was deleted.
  *
  * THE KEYS, THE MEMBERSHIP RULE AND THE SEEDS ARE SHARED
- * (`@camstack/types` → `notification/rule-kinds.ts`) — the viewer partitions the
+ * (`@dominevo/types` → `notification/rule-kinds.ts`) — the viewer partitions the
  * same rules with the same predicate and seeds a "New occupancy rule" with the
  * same condition, and two tables answering "which section is this rule in"
  * differently is the drift the hoist removed. What stays here is the WORDING
@@ -561,7 +561,7 @@ export function parseCooldownGranularity(value: string): NcThrottleGranularity |
 /**
  * The notification's PICTURE (D897): one mode, rendered at send time from the
  * clean frame of the moment. Filtered per rule kind by `imageModesForKind`
- * (`@camstack/types`) — a sound is never offered a crop.
+ * (`@dominevo/types`) — a sound is never offered a crop.
  */
 export const NC_IMAGE_OPTIONS: readonly {
   readonly value: NcMediaImage

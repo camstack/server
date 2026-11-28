@@ -9,7 +9,7 @@ import {
   Select,
   Skeleton,
   useUrlQueryParam,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Plug } from 'lucide-react'
 import { type ReactNode, useMemo } from 'react'
 import { z } from 'zod'

@@ -1,4 +1,4 @@
-import { type ColorStatus, DeviceFeature } from '@camstack/types'
+import { type ColorStatus, DeviceFeature } from '@dominevo/types'
 import type { ReactElement } from 'react'
 import { useTrpcClient } from '../../../contexts/system-context'
 import { useDeviceProxy, useDeviceStateSlice } from '../../../hooks/use-device-proxy'

@@ -16,7 +16,7 @@ import {
   type DataColumn,
   useConfirm,
   useDeviceManagerCleanupDeletedDevicesData,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Loader2, Search, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'

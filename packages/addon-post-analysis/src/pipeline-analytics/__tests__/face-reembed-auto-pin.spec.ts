@@ -17,7 +17,7 @@ import {
   type ClusterModelChoice,
   type IScopedLogger,
   clusterModelSettingKey,
-} from '@camstack/types'
+} from '@dominevo/types'
 import PipelineAnalyticsAddon from '../index.js'
 import {
   makeFakeAddonApi,

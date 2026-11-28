@@ -11,7 +11,7 @@ import {
   type IScopedLogger,
   mergeIdentifiers,
   type SetIdentifiersInput,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { UnifiInfraSnapshot } from '../unifi-client-contract.js'
 import { workerDeviceToSnapshot } from '../unifi-client-aiounifi.js'

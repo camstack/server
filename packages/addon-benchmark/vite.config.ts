@@ -68,7 +68,7 @@ export default defineConfig({
       filename: 'remoteEntry.js',
       // Disable Module Federation's DTS generation. The MF dts-plugin is
       // on by default and walks the exposed module's import graph through
-      // the `@camstack/ui-library` → `../ui-library/src` alias, emitting a
+      // the `@dominevo/ui-library` → `../ui-library/src` alias, emitting a
       // `.d.ts` next to every framework source file it touches — the
       // "Bug-1" leak that `scripts/check-no-dts-in-src.sh` guards against.
       // This remote's types are never consumed by another package, so no
@@ -87,13 +87,13 @@ export default defineConfig({
         '@tanstack/react-query': { singleton: true, requiredVersion: false, import: false },
         '@trpc/client': { singleton: true, requiredVersion: false, import: false },
         '@trpc/react-query': { singleton: true, requiredVersion: false, import: false },
-        '@camstack/ui-library': {
+        '@dominevo/ui-library': {
           singleton: true,
           requiredVersion: `>=${uiLibraryVersion}`,
           import: false,
         },
-        '@camstack/sdk': { singleton: true, requiredVersion: false, import: false },
-        '@camstack/types': { singleton: true, requiredVersion: false, import: false },
+        '@dominevo/sdk': { singleton: true, requiredVersion: false, import: false },
+        '@dominevo/types': { singleton: true, requiredVersion: false, import: false },
       },
     }),
   ],

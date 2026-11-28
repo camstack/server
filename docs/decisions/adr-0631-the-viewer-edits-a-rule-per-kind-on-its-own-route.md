@@ -77,7 +77,7 @@ only an admin may author.
   strip. The editor never offers another kind's discriminator
   (`isKindLockedOut`). Changing a rule's kind means creating a new rule.
 - **Sections come from the shared order.** `editorSectionsFor(kind, isAdmin)`
-  is `ruleEditorSectionsForKind` from `@camstack/types` (the same call the
+  is `ruleEditorSectionsForKind` from `@dominevo/types` (the same call the
   admin's tabs are checked against), minus Actions for a non-admin. The viewer
   owns only the i18n keys and the CLAIM map — which form field each section
   edits — and its spec requires every field to be claimed exactly once.

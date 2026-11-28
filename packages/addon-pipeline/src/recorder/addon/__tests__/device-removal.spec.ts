@@ -3,7 +3,7 @@
  * evicted through the segment store, audited as `orphaned-device`, and a camera
  * that still has footage is NOT reported clean.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import type { SegmentRow } from '../../types.js'
 import { createRecorderRemovalHook } from '../device-removal.js'

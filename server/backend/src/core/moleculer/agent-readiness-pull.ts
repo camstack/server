@@ -22,7 +22,7 @@
  * (`ReadinessRegistry.hydrate` has its own self-origin + forward-only
  * guards — this filter is the first line, at the trust boundary.)
  */
-import type { IReadinessRegistryRecord } from '@camstack/types'
+import type { IReadinessRegistryRecord } from '@dominevo/types'
 
 const VALID_STATES: ReadonlySet<string> = new Set(['starting', 'ready', 'down'])
 const VALID_SCOPE_TYPES: ReadonlySet<string> = new Set(['global', 'node', 'device'])

@@ -8,7 +8,7 @@
  * and a non-admin's save that leaves tags alone never trips the admin-only gate.
  */
 
-import { normalizeTags } from '@camstack/types'
+import { normalizeTags } from '@dominevo/types'
 
 /** The tags slice of a wire payload: `{}` when there is nothing to send. */
 export interface TagsWire {

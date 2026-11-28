@@ -9,8 +9,8 @@
  * per-intent: SYNC and QUERY read, EXECUTE writes, and a token that may only
  * `view` must be able to list and read without being able to actuate.
  */
-import type { IScopedLogger, MethodAccess, TokenScope } from '@camstack/types'
-import { scopesAllowDeviceCap } from '@camstack/types'
+import type { IScopedLogger, MethodAccess, TokenScope } from '@dominevo/types'
+import { scopesAllowDeviceCap } from '@dominevo/types'
 
 import type {
   FulfillmentResponse,

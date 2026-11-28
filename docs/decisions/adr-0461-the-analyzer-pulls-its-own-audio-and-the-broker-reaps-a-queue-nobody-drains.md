@@ -166,11 +166,11 @@ nothing else. The broker reaps a subscription nobody drains.**
   this worktree is not deployed and must not be. The confirmation is that the
   orchestrator peer's audio share goes to zero, not that the total drops by a
   particular amount.
-- **Deployable with `camstack deploy`, not a published server.** Routing is by
+- **Deployable with `dominevo deploy`, not a published server.** Routing is by
   `capName` + `deviceId` and the method name is opaque to the parent
   (`LocalChildRegistry.callCap`); `capRequestOpts` falls back to the default
   timeout for a method an older hub does not know. Both packages are
-  `self-contained` and bundle the bare `@camstack/types`, so the schema
+  `self-contained` and bundle the bare `@dominevo/types`, so the schema
   travels. The tRPC edge route arrives at the next release and nothing needs
   it — this is an addon-to-addon pair.
 - **Deploy order matters in ONE direction, and it is the safe one.** A new

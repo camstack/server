@@ -1,7 +1,7 @@
 /**
  * The hub methods the track-review tools use, behind one typed interface.
  *
- * Every shape is derived from the capability schemas in `@camstack/types`
+ * Every shape is derived from the capability schemas in `@dominevo/types`
  * (`z.infer` of the schema the hub itself validates with), and every answer is
  * parsed with the same schema, so a hub that drifts fails loudly here instead
  * of feeding a half-shaped value into a decision. The interface exists so the
@@ -23,8 +23,8 @@ import {
   RetrainOriginSchema,
   TrackFlagsSchema,
   TrackSchema,
-} from '@camstack/types'
-import type { HubClient } from '@camstack/develop'
+} from '@dominevo/types'
+import type { HubClient } from '@dominevo/develop'
 
 /** The Track fields triage reads — a pick of the hub's own schema. */
 export const TriageTrackSchema = TrackSchema.pick({

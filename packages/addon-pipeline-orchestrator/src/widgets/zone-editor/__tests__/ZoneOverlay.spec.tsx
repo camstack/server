@@ -7,7 +7,7 @@
  */
 import { act, cleanup, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { MaskShape } from '@camstack/types'
+import type { MaskShape } from '@dominevo/types'
 
 interface CanvasProps {
   readonly onDrawComplete: (shape: MaskShape) => void
@@ -21,7 +21,7 @@ const hoisted = vi.hoisted(() => ({
   enterDraft: vi.fn(),
 }))
 
-vi.mock('@camstack/ui-library', () => ({
+vi.mock('@dominevo/ui-library', () => ({
   MaskShapeCanvas: (props: unknown) => {
     hoisted.canvasProps.current = props
     return null

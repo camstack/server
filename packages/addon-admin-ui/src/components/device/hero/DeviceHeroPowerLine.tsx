@@ -1,4 +1,4 @@
-import { usePowerSourceGetStatus } from '@camstack/ui-library'
+import { usePowerSourceGetStatus } from '@dominevo/ui-library'
 import type { ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
 

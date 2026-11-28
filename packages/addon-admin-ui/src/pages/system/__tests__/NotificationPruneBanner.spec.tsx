@@ -10,8 +10,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 let answer: () => Promise<unknown> = () => Promise.resolve({ prunes: [] })
 const mockCustom = vi.fn(() => answer())
 
-vi.mock('@camstack/ui-library', async () => {
-  const real = await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+vi.mock('@dominevo/ui-library', async () => {
+  const real = await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return {
     ...real,
     useSystem: () => ({ trpcClient: { addons: { custom: { mutate: mockCustom } } } }),

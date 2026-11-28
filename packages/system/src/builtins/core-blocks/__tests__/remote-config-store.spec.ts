@@ -1,4 +1,4 @@
-import { EMPTY_REMOTE_CONFIG, type IScopedLogger } from '@camstack/types'
+import { EMPTY_REMOTE_CONFIG, type IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { remoteConfigStoreOver } from '../remote-wiring.js'
 

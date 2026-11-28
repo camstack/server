@@ -12,7 +12,7 @@
 import { writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import type { ConfigSection } from '@camstack/types'
+import type { ConfigSection } from '@dominevo/types'
 import { deriveFormContribution } from '../../../../packages/system/src/builtins/device-manager/device-config-contribution'
 import { buildBatteryRefreshDeviceSection } from '../../../../packages/addon-provider-reolink/src/battery-refresh-settings'
 import { DEFAULT_CONFIG as MOTION } from '../../../../packages/addon-pipeline/src/motion-wasm/wasm-motion-detector'

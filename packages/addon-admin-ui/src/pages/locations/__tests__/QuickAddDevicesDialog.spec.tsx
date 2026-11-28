@@ -3,8 +3,8 @@
  * members are drawn checked and disabled, unassigned devices are suggested but
  * never ticked, and Confirm hands back exactly the picked ids.
  */
-import type { System } from '@camstack/sdk'
-import { type PickerItem, SystemProvider } from '@camstack/ui-library'
+import type { System } from '@dominevo/sdk'
+import { type PickerItem, SystemProvider } from '@dominevo/ui-library'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'

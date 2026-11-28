@@ -2,7 +2,7 @@
  * Which names the hub has certified to which agent (D856): the memory behind "a name
  * already certified to another node is never signed again". Hub only.
  */
-import type { CollectionColumn, RecordKindHandle, SettingsStoreClient } from '@camstack/types'
+import type { CollectionColumn, RecordKindHandle, SettingsStoreClient } from '@dominevo/types'
 import type { AgentHttpsNameBody } from '../builtins/system-config/record-kinds.js'
 import { systemConfigRecordKinds } from '../builtins/system-config/record-kinds.js'
 

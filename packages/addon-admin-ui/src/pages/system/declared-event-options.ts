@@ -7,7 +7,7 @@
  * fire's `eventType`), not the part of the device that fired it, so a token
  * several parts declare is one choice.
  */
-import { EventEmitterStatusSchema, readEventVocabulary } from '@camstack/types'
+import { EventEmitterStatusSchema, readEventVocabulary } from '@dominevo/types'
 import type { RuleCameraOption } from './notification-condition-fields'
 import type { DeclaredEventDevice, PickOption } from './notification-rule-pickers'
 import type { RuleDeviceOption } from './rule-device-filter'

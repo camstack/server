@@ -1,4 +1,4 @@
-import { resetHubMountForTests } from '@camstack/ui-library'
+import { resetHubMountForTests } from '@dominevo/ui-library'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { hubOrigin, hubPath, hubUrl, hubWsUrl, mountPath, routerBasename } from '../mount'
 

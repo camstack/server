@@ -2,7 +2,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { createEventBusProxyRouter } from '../api/core/event-bus-proxy.router.js'
 import { makeCtx } from './cap-routers/harness.js'
-import type { IEventBus } from '@camstack/types'
+import type { IEventBus } from '@dominevo/types'
 
 function createMockEventBus() {
   return {

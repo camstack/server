@@ -49,7 +49,7 @@ import {
   CLIP_STREAM_TRANSPORT_HEADER,
   clipReasonHeaderValue,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { type MintRefusal, type MintResult, refuseStill } from './clip-still-refusal.js'
 import type { ClipStreamAudioAsk } from './clip-stream.js'
 import type { ClipTwin } from './clip-twins.js'
@@ -299,7 +299,7 @@ export function createClipPlaybackHandler(
  */
 export const CLIP_STREAM_PREFIX = 'clip-stream'
 
-/** The stream route's own statement of what it is — spelled in `@camstack/types`
+/** The stream route's own statement of what it is — spelled in `@dominevo/types`
  *  because the broker reads it back (D597). */
 export { CLIP_STREAM_TRANSPORT_HEADER }
 

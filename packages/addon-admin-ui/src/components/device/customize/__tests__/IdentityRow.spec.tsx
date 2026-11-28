@@ -1,6 +1,6 @@
-import { selectOption } from '@camstack/ui-library/testing'
-import { type DeviceInfo, DeviceType } from '@camstack/types'
-import { ConfirmDialogProvider } from '@camstack/ui-library'
+import { selectOption } from '@dominevo/ui-library/testing'
+import { type DeviceInfo, DeviceType } from '@dominevo/types'
+import { ConfirmDialogProvider } from '@dominevo/ui-library'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen } from '@testing-library/react'
 import type { ReactNode } from 'react'
@@ -15,8 +15,8 @@ const setDisplay = vi.fn(async () => undefined)
 const setName = vi.fn(async () => undefined)
 const setLocation = vi.fn(async () => undefined)
 
-vi.mock('@camstack/ui-library', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@camstack/ui-library')>()
+vi.mock('@dominevo/ui-library', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dominevo/ui-library')>()
   return {
     ...actual,
     useSystem: () => ({ trpcClient: {} }),

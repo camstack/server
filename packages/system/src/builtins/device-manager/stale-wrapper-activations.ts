@@ -25,7 +25,7 @@
  * says it could not check, and the next answered read checks instead (D49).
  * Generic on purpose: the next wrapper retirement gets the same backstop.
  */
-import { ALL_CAPABILITY_DEFINITIONS, type IScopedLogger } from '@camstack/types'
+import { ALL_CAPABILITY_DEFINITIONS, type IScopedLogger } from '@dominevo/types'
 import type { DeviceBindingsStore } from './device-meta-types.js'
 
 const STALE_MESSAGE =

@@ -30,7 +30,7 @@ import {
   type ProviderRegistration,
   resolveMutate,
   processTimeZoneOr,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { isRecord, parseConfirmedStateChanged } from '../shared/device-state-changed.js'
 import { normalizedNativeOwner } from '../core-blocks/composition-sources.js'
 import { invokeActuatorCall } from './actuator-invoke.js'

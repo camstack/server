@@ -48,8 +48,8 @@
  * then reads as a phantom re-seed and is lost.
  */
 
-import type { CameraOccupancySnapshot, NcOccupancyCondition } from '@camstack/types'
-import { isDetectionMacroClass } from '@camstack/types'
+import type { CameraOccupancySnapshot, NcOccupancyCondition } from '@dominevo/types'
+import { isDetectionMacroClass } from '@dominevo/types'
 
 /**
  * WHO produced a snapshot, and therefore what it is allowed to say.

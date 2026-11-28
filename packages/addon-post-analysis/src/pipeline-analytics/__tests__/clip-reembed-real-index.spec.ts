@@ -17,7 +17,7 @@
  * way to trust that counter is to feed the code rows it did not invent.
  */
 import { describe, expect, it } from 'vitest'
-import type { VectorMetadata } from '@camstack/types'
+import type { VectorMetadata } from '@dominevo/types'
 import realRows from './fixtures/clip-index-rows-2026-08-20.json' with { type: 'json' }
 import { TEST_STAND_IN_INDEX, testClipRegistry } from './fixtures/clip-test-registry.js'
 import { makeStubObjectVectorStoreClient } from '../../__tests__/support/vector-index.js'

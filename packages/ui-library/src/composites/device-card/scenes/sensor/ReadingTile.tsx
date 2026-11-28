@@ -1,4 +1,4 @@
-import type { HeroMeasurementQuantity } from '@camstack/types'
+import type { HeroMeasurementQuantity } from '@dominevo/types'
 import type { ReactElement } from 'react'
 import { cn } from '../../../../lib/cn'
 import { MeasurementFx } from '../../illustrations/MeasurementFx'

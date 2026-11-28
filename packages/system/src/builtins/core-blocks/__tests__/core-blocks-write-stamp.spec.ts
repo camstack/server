@@ -10,7 +10,7 @@ import {
   CoreBlockSchema,
   type ICoreBlocksProvider,
   StaleStampError,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { makeRecordsAccessForOwner } from '../../sqlite-storage/__tests__/support/records-world.js'
 import { makeSettingsStoreApi } from '../../device-manager/__tests__/settings-store-api.js'

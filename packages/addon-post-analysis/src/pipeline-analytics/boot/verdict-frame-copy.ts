@@ -17,12 +17,9 @@ import type {
   MediaFileKind,
   RetrainFrameList,
   RetrainFrameSelection,
-} from '@camstack/types'
-import { errMsg } from '@camstack/types'
-import {
-  autoPickRetrainFrame,
-  isRetrainFrameKind,
-} from '../retrain/retrain-frame-selection.js'
+} from '@dominevo/types'
+import { errMsg } from '@dominevo/types'
+import { autoPickRetrainFrame, isRetrainFrameKind } from '../retrain/retrain-frame-selection.js'
 
 /** The slice of `pipelineAnalytics` the copy calls. */
 export interface VerdictFrameCopyApi {
@@ -73,10 +70,13 @@ export async function copyVerdictFrame(
         meta: { trackId: input.trackId, mediaId: frozen.mediaId, kind: frozen.kind },
       })
     } else if (frozen !== undefined && !isRetrainFrameKind(frozen.kind)) {
-      logger.info('verdict frame — the frozen frame is not a clean whole frame, using the best one', {
-        tags,
-        meta: { trackId: input.trackId, mediaId: frozen.mediaId, kind: frozen.kind },
-      })
+      logger.info(
+        'verdict frame — the frozen frame is not a clean whole frame, using the best one',
+        {
+          tags,
+          meta: { trackId: input.trackId, mediaId: frozen.mediaId, kind: frozen.kind },
+        },
+      )
     }
     if (frozen !== undefined && ownsFrozen && isRetrainFrameKind(frozen.kind)) {
       const picked = await api.selectRetrainFrames({
@@ -120,7 +120,7 @@ export async function copyVerdictFrame(
         refused: picked.refused.map((r) => r.reason),
       })
     }
-    logger.info('verdict frame copied — the track\'s best frame', {
+    logger.info("verdict frame copied — the track's best frame", {
       tags,
       meta: { trackId: input.trackId, mediaId: best.mediaId, kind: best.kind },
     })

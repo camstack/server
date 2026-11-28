@@ -7,8 +7,8 @@
  * load) is re-run periodically and on demand, and the node's inference device
  * list is rebuilt from the new answer. Pure: the scorer owns the cache.
  */
-import { enumerateInferenceDevices, scoreRuntimes } from '@camstack/types'
-import type { CoralInfo, InferenceDeviceDescriptor, PlatformCapabilities } from '@camstack/types'
+import { enumerateInferenceDevices, scoreRuntimes } from '@dominevo/types'
+import type { CoralInfo, InferenceDeviceDescriptor, PlatformCapabilities } from '@dominevo/types'
 import type { CoralDetection } from './coral-accelerators.js'
 
 /** Device keys that appeared and disappeared between two probes, sorted. */

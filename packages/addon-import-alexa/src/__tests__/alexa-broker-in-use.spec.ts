@@ -3,7 +3,7 @@ import {
   linkUserFinder,
   guardInstanceDelete,
   makeInMemoryRecords,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { buildAlexaAccountInstances } from '../alexa-account-instances.js'
 import { buildAlexaInstances } from '../alexa-instances.js'

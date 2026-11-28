@@ -15,7 +15,7 @@
  * recording that it re-read a value that had not changed.
  */
 import { describe, expect, it } from 'vitest'
-import type { RuntimeStatePolicy } from '@camstack/types'
+import type { RuntimeStatePolicy } from '@dominevo/types'
 import { OWNED_FIELDS_KEY } from '../field-ownership.js'
 import {
   effectivelyEqual,

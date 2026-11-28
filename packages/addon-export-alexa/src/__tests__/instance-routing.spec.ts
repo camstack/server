@@ -3,7 +3,7 @@
  * Legacy URLs must keep answering `export-alexa` exactly as before; a path never falls through.
  */
 import { describe, expect, it } from 'vitest'
-import type { AddonHttpReply, AddonHttpRequest } from '@camstack/types'
+import type { AddonHttpReply, AddonHttpRequest } from '@dominevo/types'
 import { buildRoutes, type HttpRouteDeps } from '../http-server.js'
 import { LEGACY_SKILL_ID, pickSkill, type RoutableSkill } from '../instance-routing.js'
 

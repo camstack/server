@@ -18,7 +18,7 @@ import {
   type DeviceHistoryRefusalReason,
   type DeviceHistorySubject,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { DeviceDirectory } from '../capture/device-directory.js'
 import { isRealDeviceType } from '../capture/device-directory.js'
 import type { PointWriter } from '../capture/point-writer.js'

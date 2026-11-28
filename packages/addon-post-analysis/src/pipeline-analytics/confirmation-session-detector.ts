@@ -24,7 +24,7 @@
  * PURE apart from the injected `run`, so the matrix is testable without an
  * executor.
  */
-import { errMsg, type FrameResult } from '@camstack/types'
+import { errMsg, type FrameResult } from '@dominevo/types'
 import type { RedetectAnswer } from './confirmation-gate.js'
 import {
   type ConfirmationRedetectResult,

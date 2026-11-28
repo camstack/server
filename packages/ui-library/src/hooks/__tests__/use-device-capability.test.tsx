@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook } from '@testing-library/react'
-import type { DeviceStatus } from '@camstack/types'
+import type { DeviceStatus } from '@dominevo/types'
 
 /**
  * The hook collapses three (now four) preconditions into one `available`

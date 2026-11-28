@@ -10,7 +10,7 @@
  * equivalent (gap i). The function is PURE — deterministic, no clock, no I/O.
  */
 
-import type { PipelineAssignment } from '@camstack/types'
+import type { PipelineAssignment } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import PipelineOrchestratorAddon from '../index.js'
 import {

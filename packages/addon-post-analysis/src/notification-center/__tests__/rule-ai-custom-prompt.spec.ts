@@ -25,7 +25,7 @@
  * degrades to nothing" is the failure this feature could hide inside.
  */
 import { describe, expect, it } from 'vitest'
-import type { IScopedLogger, LogExtras } from '@camstack/types'
+import type { IScopedLogger, LogExtras } from '@dominevo/types'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import type { JudgeVisionRequest, JudgeVisionResult } from '../../shared/llm-vision/vision-judge.js'
 import type { NcOutboxAiPolicy } from '../outbox.js'

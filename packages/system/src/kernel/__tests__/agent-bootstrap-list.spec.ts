@@ -1,13 +1,13 @@
 /**
  * AGENT_PACKAGES derivation — single source of truth.
  *
- * The agent bootstrap list is derived from the `@camstack/server`
+ * The agent bootstrap list is derived from the `@dominevo/server`
  * meta-package's `camstack.agentBootstrapAddons` manifest field (the
  * separate agent meta-package has been removed). The agent runtime boots
- * from the SAME `@camstack/server` closure, so its bootstrap addon set is
+ * from the SAME `@dominevo/server` closure, so its bootstrap addon set is
  * declared alongside the hub's rather than in a second package.
  *
- * Contract: `AGENT_PACKAGES = ['@camstack/server/system', ...agentBootstrapAddons]`.
+ * Contract: `AGENT_PACKAGES = ['@dominevo/server/system', ...agentBootstrapAddons]`.
  */
 
 import * as fs from 'node:fs'
@@ -42,25 +42,25 @@ function serverAgentOnlyBootstrapAddons(): readonly string[] {
 }
 
 describe('AGENT_PACKAGES derivation', () => {
-  it('derives from @camstack/server camstack.agentBootstrapAddons + system', () => {
-    expect(AddonInstaller.AGENT_PACKAGES).toContain('@camstack/server')
-    expect(AddonInstaller.AGENT_PACKAGES).toContain('@camstack/addon-agent-ui')
-    expect(AddonInstaller.AGENT_PACKAGES).not.toContain('@camstack/addon-admin-ui')
+  it('derives from @dominevo/server camstack.agentBootstrapAddons + system', () => {
+    expect(AddonInstaller.AGENT_PACKAGES).toContain('@dominevo/server')
+    expect(AddonInstaller.AGENT_PACKAGES).toContain('@dominevo/addon-agent-ui')
+    expect(AddonInstaller.AGENT_PACKAGES).not.toContain('@dominevo/addon-admin-ui')
   })
 
-  it('AGENT_PACKAGES = @camstack/server/system + the server manifest agentBootstrapAddons', () => {
-    const expected = ['@camstack/server', ...serverAgentBootstrapAddons()].toSorted()
+  it('AGENT_PACKAGES = @dominevo/server/system + the server manifest agentBootstrapAddons', () => {
+    const expected = ['@dominevo/server', ...serverAgentBootstrapAddons()].toSorted()
     expect([...AddonInstaller.AGENT_PACKAGES].toSorted()).toEqual(expected)
   })
 
   it('REQUIRED_PACKAGES (hub bootstrap) EXCLUDES agent-only bootstrap addons', () => {
-    // Agent-only addons (e.g. @camstack/addon-agent-ui) are carried in the
-    // @camstack/server closure so agent-role nodes can seed them, but they
+    // Agent-only addons (e.g. @dominevo/addon-agent-ui) are carried in the
+    // @dominevo/server closure so agent-role nodes can seed them, but they
     // MUST NOT be part of the HUB bootstrap set — the hub never installs them.
     for (const agentOnly of serverAgentOnlyBootstrapAddons()) {
       expect(AddonInstaller.REQUIRED_PACKAGES).not.toContain(agentOnly)
     }
     // Concretely, agent-ui must be excluded from the hub REQUIRED_PACKAGES.
-    expect(AddonInstaller.REQUIRED_PACKAGES).not.toContain('@camstack/addon-agent-ui')
+    expect(AddonInstaller.REQUIRED_PACKAGES).not.toContain('@dominevo/addon-agent-ui')
   })
 })

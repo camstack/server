@@ -7,8 +7,8 @@
  * classifiers together — a keyword added to one and forgotten in the other
  * fails here rather than leaking in production.
  */
-import type { DeviceConfigEntry } from '@camstack/types'
-import { zodEntriesToConfigUI } from '@camstack/types'
+import type { DeviceConfigEntry } from '@dominevo/types'
+import { zodEntriesToConfigUI } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import {

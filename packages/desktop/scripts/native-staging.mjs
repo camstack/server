@@ -4,12 +4,12 @@
  * PURE + zero-dep (node:fs/node:path only) so the missing-prebuild detection and
  * the addon→native mapping are unit-testable without a real npm install.
  *
- * Problem this addresses (fresh CamStack.app first-boot FATAL, 2026-07-21): the
- * `npm install @camstack/server` closure HOISTS the native modules
+ * Problem this addresses (fresh Dominevo.app first-boot FATAL, 2026-07-21): the
+ * `npm install @dominevo/server` closure HOISTS the native modules
  * (`better-sqlite3`, `sharp`, `node-av` + their `@img`/`@seydx` platform
  * siblings) to the TOP-LEVEL `node_modules`, so an addon's own subtree carries
  * none of them. At runtime the addon-installer copies that subtree into
- * `data/addons/@camstack/<addon>` and `npm install`s the addon's deps; on a
+ * `data/addons/@dominevo/<addon>` and `npm install`s the addon's deps; on a
  * toolchain-less Mac that leaves `better-sqlite3` source-only, so the runner
  * cannot load its `.node`. Planting each referenced native (WITH its
  * bundled-Node `.node`) into the addon copy's own `node_modules` makes the
@@ -21,15 +21,15 @@
  * app used to ship beside the closure. That tree was the WRONG target twice
  * over. Measured on `release/mac-arm64/…/Resources`: electron-builder dropped
  * `node_modules` on every per-package `extraResources` entry, so not one `.node`
- * reached `Resources/addons/**` although `.deps/node_modules/@camstack/
+ * reached `Resources/addons/**` although `.deps/node_modules/@dominevo/
  * addon-pipeline/node_modules` had carried them since before the build ran. The
  * planting was verified in `.deps` and lost in transit; `copyBundledNativeModules`
  * and `ensureAddonNativePrebuilds({ bundledSourceDir })` were no-ops against the
  * copy the installer actually seeded from.
  *
  * The second tree is gone. The seed source is the closure's own scope dir,
- * `Resources/node_modules/@camstack`, which electron-builder copies WITH the
- * package `node_modules`. So the dirs to plant into are every `@camstack`
+ * `Resources/node_modules/@dominevo`, which electron-builder copies WITH the
+ * package `node_modules`. So the dirs to plant into are every `@dominevo`
  * package in the staged closure — see {@link bundledAddonSourceDirs}. That is
  * also strictly wider than the old six: an addon the closure carries but the
  * `extraResources` list forgot (`addon-decoder-nodeav`, `addon-auth`,
@@ -51,7 +51,7 @@ export const NATIVE_SIBLING_SCOPES = Object.freeze({
 /**
  * Where each native's `.node` may live, relative to an addon copy's
  * `node_modules` — the package dir AND its platform sibling scope(s). Mirrors
- * `findMissingNativePrebuilds` in `@camstack/node-root`.
+ * `findMissingNativePrebuilds` in `@dominevo/node-root`.
  */
 export const NATIVE_SEARCH_DIRS = Object.freeze({
   'better-sqlite3': ['better-sqlite3'],
@@ -78,7 +78,7 @@ export function hasDotNode(dir, maxDepth = 6) {
 }
 
 /**
- * Every `@camstack/*` package dir inside a staged closure's `node_modules` —
+ * Every `@dominevo/*` package dir inside a staged closure's `node_modules` —
  * i.e. every dir the packaged app's `CAMSTACK_BUNDLED_ADDONS_DIR` can seed from,
  * because `AddonInstaller.findLocalPackage` joins the SHORT name onto that dir
  * and an npm scope dir is laid out exactly that way.
@@ -87,7 +87,7 @@ export function hasDotNode(dir, maxDepth = 6) {
  * a `package.json` (`.bin`, a stray) is not a package and is skipped. PURE.
  */
 export function bundledAddonSourceDirs(stageModules) {
-  const scopeDir = path.join(stageModules, '@camstack')
+  const scopeDir = path.join(stageModules, '@dominevo')
   let entries
   try {
     entries = fs.readdirSync(scopeDir, { withFileTypes: true })

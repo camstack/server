@@ -12,7 +12,7 @@
  * `password` field (`secretStatePaths`, owner `waste-collections`); the row
  * keeps a marker, `this.config` reads the value.
  */
-import { isSecretMarker, REDACTED_SECRET } from '@camstack/types'
+import { isSecretMarker, REDACTED_SECRET } from '@dominevo/types'
 
 /** Argument keys holding a credential, wherever a service declares them. */
 export const SECRET_ARG_KEYS: readonly string[] = [

@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { CamProfileSchema, CLIP_BROKER_PACED_RATES } from '@camstack/types'
+import { CamProfileSchema, CLIP_BROKER_PACED_RATES } from '@dominevo/types'
 
 /**
  * The rates a clip may be OFFERED at — re-exported from the capability, which

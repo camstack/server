@@ -1,5 +1,5 @@
 /**
- * `camstack mcp doctor` — read-only checks of everything `camstack mcp` needs,
+ * `dominevo mcp doctor` — read-only checks of everything `dominevo mcp` needs,
  * each ok / fail / unknown with the one command that fixes it. Nothing is
  * written, and no token value is ever printed (only its scope).
  */
@@ -8,7 +8,7 @@ import {
   hubCaFileForServer,
   resolveHubTls,
   type ConnectOutcome,
-} from '@camstack/develop'
+} from '@dominevo/develop'
 import type { FetchFn } from './context.js'
 import { isOlder } from './ops-update-cli.js'
 import { latestOnNpm } from './setup-tools.js'
@@ -110,7 +110,7 @@ export async function runDoctorChecks(deps: DoctorDeps): Promise<readonly Doctor
       ok: false,
       reason: 'no-session',
       message: tls ?? message,
-      action: 'camstack login <host>',
+      action: 'dominevo login <host>',
     }
   }
 
@@ -123,7 +123,7 @@ export async function runDoctorChecks(deps: DoctorDeps): Promise<readonly Doctor
         label: 'Login session',
         status: 'fail',
         detail: outcome.message,
-        fix: `${outcome.action}; without a TTY: log in once with camstack login <host> --browser, the session then refreshes unattended`,
+        fix: `${outcome.action}; without a TTY: log in once with dominevo login <host> --browser, the session then refreshes unattended`,
       },
       { id: 'scope', label: 'Token scope', status: 'unknown', detail: 'no credential to inspect' },
       await versionCheck(deps),
@@ -145,7 +145,7 @@ export async function runDoctorChecks(deps: DoctorDeps): Promise<readonly Doctor
           detail: `${server}: ${probe.error ?? 'no answer'}`,
           fix:
             tlsExplained === null
-              ? 'Check the hub is running and the address is right (camstack login <host>).'
+              ? 'Check the hub is running and the address is right (dominevo login <host>).'
               : 'Pin the hub CA (see the next line).',
         },
   )
@@ -196,7 +196,7 @@ export async function runDoctorChecks(deps: DoctorDeps): Promise<readonly Doctor
           label: 'Token scope',
           status: 'unknown',
           detail: 'not admin: read tools work, configure and update tools are refused',
-          fix: connection.adminHint ?? 'camstack login <host> as an administrator',
+          fix: connection.adminHint ?? 'dominevo login <host> as an administrator',
         },
   )
   checks.push(await versionCheck(deps))
@@ -210,7 +210,7 @@ const MARK: Readonly<Record<DoctorStatus, string>> = {
 }
 
 export function formatDoctor(checks: readonly DoctorCheck[]): string {
-  const lines: string[] = ['camstack mcp doctor', '']
+  const lines: string[] = ['dominevo mcp doctor', '']
   for (const c of checks) {
     lines.push(`[${MARK[c.status]}] ${c.label}: ${c.detail}`)
     if (c.fix && c.status !== 'ok') lines.push(`          fix: ${c.fix}`)

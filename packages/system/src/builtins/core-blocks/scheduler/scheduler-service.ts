@@ -30,7 +30,7 @@ import {
   type WeekdayKey,
   weekdayOfLocalDate,
   resolveStepArgs,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { type RunsLedger, schedulerOwner } from '../runs-ledger.js'
 import type { SchedulerEngine } from './scheduler-engine.js'
 import type { SchedulersStore } from './scheduler-store.js'

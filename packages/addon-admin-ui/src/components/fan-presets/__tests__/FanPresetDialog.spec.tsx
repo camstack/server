@@ -1,4 +1,4 @@
-import type { FanPreset, FanPresetCaptureResult } from '@camstack/types'
+import type { FanPreset, FanPresetCaptureResult } from '@dominevo/types'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -9,8 +9,8 @@ const FAN = 3370
 
 const refetch = vi.fn()
 
-vi.mock('@camstack/ui-library', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@camstack/ui-library')>()
+vi.mock('@dominevo/ui-library', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dominevo/ui-library')>()
   return {
     ...actual,
     useFanPresetsCapturePreset: () => ({

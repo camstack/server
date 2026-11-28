@@ -25,7 +25,7 @@ import {
   type SourceInfo,
   canonicalIconKey,
   primaryChildPreferenceOf,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { LucideIcon } from 'lucide-react'
 import {
   Activity,
@@ -54,7 +54,7 @@ import { resolveDisplayIcon } from '../icon-glyphs'
  * `deviceManager.listAll` / `getDevice` / `getChildren` row is
  * already this exact shape — call sites pass the raw row through
  * without remapping. Lives here as a structural type (not an
- * import) so this composite stays decoupled from `@camstack/types`.
+ * import) so this composite stays decoupled from `@dominevo/types`.
  */
 export interface DeviceItemDevice {
   readonly id: number
@@ -473,7 +473,7 @@ export function childListName(
  * Icon for each `DeviceFeature` advertised on a device row. Used by
  * the features popover (`<DeviceItemFeatures>`) to render compact
  * feature chips. Keys mirror `DeviceFeature` enum string values from
- * `@camstack/types/device/device-type.ts`.
+ * `@dominevo/types/device/device-type.ts`.
  */
 export const FEATURE_ICON_MAP: Readonly<Record<string, LucideIcon>> = {
   'native-snapshot': ImageIcon,

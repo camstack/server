@@ -1,7 +1,7 @@
 /**
  * POST /api/server-upload — the dev server-deploy channel's upload gateway.
  *
- * `camstack deploy-server` packs the whole `@camstack/server` workspace
+ * `dominevo deploy-server` packs the whole `@dominevo/server` workspace
  * closure at one uniform dev version (`<base>-dev.<epochSeconds>`) and
  * uploads every tarball here in ONE multipart request (plus a `version`
  * field). The route validates fail-closed and stores the set under
@@ -17,7 +17,7 @@
  *     route serves ONLY the dev channel,
  *   - no path traversal in the version or any filename,
  *   - every tarball must carry `package/package.json` with an
- *     `@camstack/*` name and a version equal to the declared dev version.
+ *     `@dominevo/*` name and a version equal to the declared dev version.
  *
  * REGISTRATION ORDER: `@fastify/multipart` must already be registered on
  * the instance (done by `registerAddonUploadRoute`) — this route only adds
@@ -86,7 +86,7 @@ function hasPathTraversal(name: string): boolean {
   return name.includes('/') || name.includes('\\') || name.includes('..')
 }
 
-/** `@camstack/server` → `camstack-server.tgz` — server-derived, never client-named. */
+/** `@dominevo/server` → `camstack-server.tgz` — server-derived, never client-named. */
 function flattenedTgzName(packageName: string): string {
   return `${packageName.replace(/^@/, '').replace(/\//g, '-')}.tgz`
 }
@@ -120,9 +120,9 @@ export function validateTarballSet(
         error: `Refused: ${file.filename} is missing or has a malformed package/package.json`,
       }
     }
-    if (!manifest.name.startsWith('@camstack/')) {
+    if (!manifest.name.startsWith('@dominevo/')) {
       return {
-        error: `Refused: ${file.filename} declares non-@camstack package "${manifest.name}"`,
+        error: `Refused: ${file.filename} declares non-@dominevo package "${manifest.name}"`,
       }
     }
     if (manifest.version !== version) {
@@ -186,7 +186,7 @@ export function registerServerUploadRoute(
       return reply.status(400).send({
         error:
           `Refused: version "${version}" is not dev-channel shaped — this route only ` +
-          'accepts `<base>-dev.<epochSeconds>` versions produced by `camstack deploy-server`.',
+          'accepts `<base>-dev.<epochSeconds>` versions produced by `dominevo deploy-server`.',
       })
     }
     if (files.length === 0) {

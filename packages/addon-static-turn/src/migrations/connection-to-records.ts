@@ -8,7 +8,7 @@
  * in full (a credential that cannot be resolved aborts the pass); an existing record is never
  * overwritten; the old credential is cleared only once the record verifiably holds it.
  */
-import { type MigrationPlan, type MigrationProcedureResult, preconditionOf } from '@camstack/types'
+import { type MigrationPlan, type MigrationProcedureResult, preconditionOf } from '@dominevo/types'
 import { type TurnServerBody, TURN_DEFAULT_BODY } from '../turn-record-kinds.js'
 
 /** The addon id, the prefix of its rows in the canonical settings table. */

@@ -8,13 +8,13 @@
  * point is the empty state — never a flat zero.
  */
 import { useMemo, useState, type JSX, type ReactNode } from 'react'
-import { convertUnit } from '@camstack/types'
+import { convertUnit } from '@dominevo/types'
 import type {
   DeviceHistoryQueryResult,
   DeviceHistoryQueryManyEntry,
   DeviceHistorySeriesInfo,
   DeviceRun,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { useUiText, type UiTextFn } from '../../contexts/ui-text'
 import { useUnitPreferences } from '../../contexts/unit-preferences'
 import { Select } from '../../primitives/select'

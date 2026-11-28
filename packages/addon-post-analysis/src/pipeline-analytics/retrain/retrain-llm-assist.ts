@@ -30,7 +30,7 @@
  * An endpoint that cannot be judged is treated as leaving — the safe answer.
  */
 
-import type { RetrainMacroClass } from '@camstack/types'
+import type { RetrainMacroClass } from '@dominevo/types'
 import { z } from 'zod'
 import { isRetrainMacroClass } from './retrain-taxonomy.js'
 

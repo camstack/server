@@ -6,7 +6,7 @@
  */
 import { snapshotsOff } from './helpers/allow-all-access.js'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { AddonContext, AddonHttpReply, AddonHttpRequest } from '@camstack/types'
+import type { AddonContext, AddonHttpReply, AddonHttpRequest } from '@dominevo/types'
 
 import {
   BrokerError,

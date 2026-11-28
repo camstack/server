@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import type { ConvertResult, ModelCatalogEntry } from '@camstack/types'
+import type { ConvertResult, ModelCatalogEntry } from '@dominevo/types'
 import {
   ensureFormatsThenDistribute,
   missingEngineFormats,

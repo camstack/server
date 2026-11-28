@@ -17,8 +17,8 @@ applies-to:
 
 ## Context
 
-Setting up CamStack was described three times: the public docs, the tool
-texts of `camstack mcp`, and the wizard's own step list. They disagreed. The
+Setting up Dominevo was described three times: the public docs, the tool
+texts of `dominevo mcp`, and the wizard's own step list. They disagreed. The
 docs had three orderings of the first steps; the wizard began after install and
 skipped storage, core addons, streams, recording and the benchmark; tool text
 said NVIDIA was unsupported months after the `nvidia` images shipped; the docs

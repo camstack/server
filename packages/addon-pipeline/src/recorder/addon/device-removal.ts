@@ -27,7 +27,7 @@ import type {
   DeviceRemovedInput,
   DeviceRemovedResult,
   IDeviceRemovalHookProvider,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { PRUNE_MAX_SEGMENTS_PER_PASS } from '../evict-select.js'
 import type { SegmentRow } from '../types.js'
 import { evictVictims, type RecordingProviderDeps } from './recording-provider.js'

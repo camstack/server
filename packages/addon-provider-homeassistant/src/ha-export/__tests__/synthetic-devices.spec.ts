@@ -70,7 +70,7 @@ function at(
 describe('syntheticPlans', () => {
   it('builds a LIST of devices, each with its own identity', () => {
     const plans = syntheticPlans(INPUT)
-    expect(plans.map((p) => p.dev.name)).toEqual(['Notification Center', 'CamStack Server'])
+    expect(plans.map((p) => p.dev.name)).toEqual(['Notification Center', 'Dominevo Server'])
     expect(plans.every((p) => p.deviceId === null)).toBe(true)
     expect(plans[0]?.deviceKey).toBe(`camstack-${NOTIFICATION_CENTER_STABLE_ID}`)
     expect(plans[1]?.deviceKey).toBe(`camstack-${SERVER_STABLE_ID}`)

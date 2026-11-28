@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return -- AddonContext stub crosses typed boundaries. */
-import type { IScopedLogger, ScopedSettingsScope } from '@camstack/types'
-import { makeInMemoryRecords } from '@camstack/types'
+import type { IScopedLogger, ScopedSettingsScope } from '@dominevo/types'
+import { makeInMemoryRecords } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('../ensure-cloudflared.js', () => ({

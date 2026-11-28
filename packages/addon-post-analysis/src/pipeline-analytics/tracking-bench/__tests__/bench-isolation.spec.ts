@@ -17,7 +17,7 @@ const FORBIDDEN = [
   /track-store/,
   /media-store/,
   /event-store/,
-  /@camstack\/system/,
+  /@dominevo\/system/,
   /\.\.\/index\.js/,
 ]
 

@@ -4,7 +4,7 @@
  * the alarm panel), so a spec can build the REAL endpoint shapes for any
  * combination of bound caps.
  */
-import type { AddonApi, AddonContext, IScopedLogger } from '@camstack/types'
+import type { AddonApi, AddonContext, IScopedLogger } from '@dominevo/types'
 import type { DeviceBuildContext } from '../../handlers/discovery.js'
 import type { DetectionSensorClass } from '../../handlers/endpoint-id.js'
 

@@ -8,7 +8,7 @@
  * mapping, one row each.
  */
 import { describe, expect, it } from 'vitest'
-import type { NcRule } from '@camstack/types'
+import type { NcRule } from '@dominevo/types'
 import {
   buildClipRetentionPlan,
   clipRetentionSecFor,

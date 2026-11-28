@@ -8,11 +8,11 @@
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import type { AddonDeclaration, IScopedLogger } from '@camstack/types'
+import type { AddonDeclaration, IScopedLogger } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AddonRegistryService } from '../addon-registry.service.js'
 
-const PACKAGE = '@camstack/addon-iconchange'
+const PACKAGE = '@dominevo/addon-iconchange'
 const ADDON_ID = 'iconchange'
 
 function logger(): IScopedLogger {

@@ -11,7 +11,7 @@ import {
   type CoreBlock,
   type IDeviceRemovalHookProvider,
   type LinkedTriggerSource,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   createCoreBlocksRemovalHook,

@@ -173,7 +173,7 @@ export async function fetchPluginCatalogRemoteTree(opts: {
         assertPluginCatalogTreePageUrl(new URL(url), revision)
         const response = await opts.fetchImpl(url, {
           redirect: 'manual',
-          headers: { 'User-Agent': 'CamStack/1.0' },
+          headers: { 'User-Agent': 'Dominevo/1.0' },
         })
         if (
           response.status === 301 ||

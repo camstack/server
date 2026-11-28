@@ -4,13 +4,13 @@
  * `check-runner-dist-barrel-free.ts`.
  *
  * ── The bug class ──────────────────────────────────────────────────────────
- * An addon bundles `@camstack/types`. Reaching `ALL_CAPABILITY_DEFINITIONS`
+ * An addon bundles `@dominevo/types`. Reaching `ALL_CAPABILITY_DEFINITIONS`
  * from addon server code inlines the Zod schema graph of every capability
  * (~11,000 builder calls) and evaluates it when the addon loads: +~100 MB of
  * private heap in every runner that holds it. Two addons did, for two
  * lookups, and nothing noticed: the suite was green and the runners were
  * fat. The facts addons need are served as codegen'd plain data on
- * `@camstack/types/addon` (`CAP_ADVANCE_FIELDS`, `CAP_STATE_LEAVES`).
+ * `@dominevo/types/addon` (`CAP_ADVANCE_FIELDS`, `CAP_STATE_LEAVES`).
  *
  * ── What it checks (needs every addon built) ───────────────────────────────
  * For each addon declared in a `packages/<pkg>/package.json` manifest
@@ -54,7 +54,7 @@ const BUDGETS_FILE = path.join(ROOT, 'scripts/addon-dist-footprint-budgets.json'
 export const DEFAULT_MAX_GROWTH_MB = 45
 
 /**
- * Packages whose addons are not forked runners. `@camstack/server/system` ships the
+ * Packages whose addons are not forked runners. `@dominevo/server/system` ships the
  * kernel's builtin addons (device-manager, composer, local-auth, …); they run
  * INSIDE the hub process, which holds the cap schema graph for its own routers,
  * so a second copy is not what this guard measures.
@@ -246,13 +246,13 @@ function main(): void {
     }
     for (const f of filesCarryingCanary(closure)) {
       failures.push(
-        `${key}: ${path.relative(ROOT, f)} carries the types tree-shaking canary (an unused @camstack/types schema survived the bundle)`,
+        `${key}: ${path.relative(ROOT, f)} carries the types tree-shaking canary (an unused @dominevo/types schema survived the bundle)`,
       )
     }
     const reach = closureReachability(closure)
     if (reach.deadKb > MAX_UNREACHABLE_TYPES_KB) {
       failures.push(
-        `${key}: ${reach.deadKb.toFixed(0)} KB of @camstack/types is kept but no addon code reaches it (limit ${MAX_UNREACHABLE_TYPES_KB} KB)`,
+        `${key}: ${reach.deadKb.toFixed(0)} KB of @dominevo/types is kept but no addon code reaches it (limit ${MAX_UNREACHABLE_TYPES_KB} KB)`,
       )
     }
     notes.push(
@@ -285,7 +285,7 @@ function main(): void {
       `\n✗ addon-dist-footprint guard (D28): a BUILT addon is heavier than its budget.\n` +
         `  An addon must not import ALL_CAPABILITY_DEFINITIONS or a barrel value that builds the cap schema graph\n` +
         `  (+~100 MB per runner): add the fact to scripts/generate-addon-cap-facts.ts and read it from\n` +
-        `  '@camstack/types/addon'. A legitimately heavy addon is listed with a reason in\n` +
+        `  '@dominevo/types/addon'. A legitimately heavy addon is listed with a reason in\n` +
         `  scripts/addon-dist-footprint-budgets.json (reason + a dated "expires"). See docs/decisions/adr-0028.md.\n`,
     )
     for (const f of failures) {

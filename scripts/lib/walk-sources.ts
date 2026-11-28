@@ -66,7 +66,7 @@ export interface WalkOptions {
  * Tracked paths that are build output, not source. The viewer's web bundle is
  * built in the `camstack` submodule's repository (with its own CI) and
  * committed here so the orchestrator can serve it. It inlines every enum
- * member it imports from `@camstack/types`, so a source guard naming an
+ * member it imports from `@dominevo/types`, so a source guard naming an
  * owner-only identifier fired on it the day a pin first bundled one
  * (2026-10-01: `check-field-claims` and `check-owner-only-events`, red on
  * three minified files).

@@ -3,7 +3,7 @@
  * device template, so its input is the formula input: it autocompletes the bound
  * names and the saved leaf keeps its shape.
  */
-import type { ExpressionLeaf } from '@camstack/types'
+import type { ExpressionLeaf } from '@dominevo/types'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { renderWithTemplateHub } from '../../../../test-setup/device-template-hub'

@@ -1,4 +1,4 @@
-import type { HeroConfirm } from '@camstack/types'
+import type { HeroConfirm } from '@dominevo/types'
 
 /** The words of one confirmation dialog the card asks before a risky action. */
 export interface HeroConfirmLabels {

@@ -3,7 +3,7 @@
  * nothing outside `tracker-v2/` holds a reference; what leaves is an
  * immutable emission.
  */
-import type { BoundingBox, NativeRecoveryEvidence, SpatialDetection } from '@camstack/types'
+import type { BoundingBox, NativeRecoveryEvidence, SpatialDetection } from '@dominevo/types'
 import { type AppearanceAggregate, foldAppearance } from './appearance.js'
 import { MAX_PATH_LENGTH, MAX_PREDICTION_MS } from './constants.js'
 import { centreOf } from './geometry.js'

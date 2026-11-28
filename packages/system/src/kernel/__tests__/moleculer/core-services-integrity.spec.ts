@@ -18,7 +18,7 @@
  */
 import { describe, it, expect, afterEach } from 'vitest'
 import { ServiceBroker } from 'moleculer'
-import { ReadinessRegistry } from '@camstack/types'
+import { ReadinessRegistry } from '@dominevo/types'
 import {
   createHubService,
   createReadinessServiceForRegistry,

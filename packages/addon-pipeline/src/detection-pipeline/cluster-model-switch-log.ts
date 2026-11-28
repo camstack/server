@@ -14,7 +14,7 @@
  * just booted has nothing to compare against, and a line per camera per boot
  * says nothing.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { ExecutableStep, ExecutableTree } from './pipeline/tree-builder.js'
 
 function* clusterScopedSteps(steps: readonly ExecutableStep[]): Generator<ExecutableStep> {

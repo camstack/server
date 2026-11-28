@@ -18,7 +18,7 @@
  *     released with a warning — a lost event can never keep a camera pinned
  *     for ever.
  */
-import type { RecordingConfig } from '@camstack/types'
+import type { RecordingConfig } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { specRoot } from './spec-root.js'
 import { settleTurns, settleUntil } from './settle.js'

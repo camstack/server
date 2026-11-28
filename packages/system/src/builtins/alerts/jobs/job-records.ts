@@ -2,7 +2,7 @@
  * Record kinds of the `jobs` ledger (planning#719, D1105). Owned by the alert-center
  * addon, separate from `alerts`: own kinds, no shared rows.
  */
-import { defineRecordKinds, JobSchema, type DefinedRecordKind, type Job } from '@camstack/types'
+import { defineRecordKinds, JobSchema, type DefinedRecordKind, type Job } from '@dominevo/types'
 import { z } from 'zod'
 import type { IsolatedRecordKinds } from '../../records-isolated.js'
 

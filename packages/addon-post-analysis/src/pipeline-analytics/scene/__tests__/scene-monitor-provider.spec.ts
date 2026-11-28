@@ -3,8 +3,8 @@ import type {
   RecordsAccess,
   SceneMonitor,
   SceneMonitorStatus,
-} from '@camstack/types'
-import { SCENE_DIVERGED } from '@camstack/types'
+} from '@dominevo/types'
+import { SCENE_DIVERGED } from '@dominevo/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { makeAnalyticsRecords } from '../../__tests__/fake-records.js'
 import type { SceneEngineResult } from '../scene-engine.js'

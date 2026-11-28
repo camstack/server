@@ -2,8 +2,8 @@
  * Custom — upload or remote URL.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { AddonPageProps } from '@camstack/ui-library'
-import type { ModelFormat } from '@camstack/types'
+import type { AddonPageProps } from '@dominevo/ui-library'
+import type { ModelFormat } from '@dominevo/types'
 import { registerCustomModel, uploadModelFile, type UploadedModelFile } from '../ui/api.js'
 import { summarizeConversionOutcomes } from '../ensure-formats.js'
 import { parsePlusCatalogLabelmap } from '../plus-catalog/plus-catalog-import.js'
@@ -24,7 +24,7 @@ import {
 } from '../components/DisplayNameField.js'
 import type { UploadPrefill } from './PlusCatalogSourceSections.js'
 import { Trans, useT } from '../i18n/index.js'
-import { Button, FileInput, Textarea, Select } from '@camstack/ui-library'
+import { Button, FileInput, Textarea, Select } from '@dominevo/ui-library'
 
 interface CustomTabProps {
   readonly trpc: AddonPageProps['trpc']

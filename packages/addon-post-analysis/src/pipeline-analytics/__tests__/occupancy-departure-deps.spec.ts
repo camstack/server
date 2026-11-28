@@ -5,7 +5,7 @@
  * fakes, and twice this repo has had a test pass because the fake supplied
  * what production forgot.
  */
-import type { OccupancyLookRequest } from '@camstack/types'
+import type { OccupancyLookRequest } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { NC_RECORDED_FOOTAGE_WAIT_MS } from '../../notification-center/dispatcher.js'
 import type {

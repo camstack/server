@@ -14,7 +14,7 @@ import type {
   AddonInitResult,
   IScopedLogger,
   SettingsStoreClient,
-} from '@camstack/types'
+} from '@dominevo/types'
 import PipelineAnalyticsAddon from '../index.js'
 import {
   type FakeDeviceManager,

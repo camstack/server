@@ -1,7 +1,7 @@
 /**
  * The cap slices of one PoE port device, derived from its port in the infra snapshot. Pure.
  */
-import type { NetworkLinkStatus, PowerMeterStatus, SwitchStatus } from '@camstack/types'
+import type { NetworkLinkStatus, PowerMeterStatus, SwitchStatus } from '@dominevo/types'
 import type { UnifiInfraPort } from './unifi-client-contract.js'
 
 /** `switch`: PoE on (the port's PoE mode is not `off`). */

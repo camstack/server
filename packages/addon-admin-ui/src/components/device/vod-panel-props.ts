@@ -13,7 +13,7 @@
  * manifest and fails (D549 decision 22). It was dropped here for exactly as
  * long as it took to write this file.
  */
-import type { VodPlaybackRequest } from '@camstack/ui-library'
+import type { VodPlaybackRequest } from '@dominevo/ui-library'
 
 /** The playback half of `StreamPanel`'s props. */
 export interface VodPanelProps {

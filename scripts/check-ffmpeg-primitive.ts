@@ -327,7 +327,7 @@ for (const scanRoot of SCAN_ROOTS) {
           file: relative,
           line: lineNo,
           content: raw.trim(),
-          rule: `Rule 1: a SECOND argv builder (\`${builder[1]}\`). Compose \`buildFfmpegArgs\` from @camstack/types instead.`,
+          rule: `Rule 1: a SECOND argv builder (\`${builder[1]}\`). Compose \`buildFfmpegArgs\` from @dominevo/types instead.`,
         })
       }
 
@@ -337,7 +337,7 @@ for (const scanRoot of SCAN_ROOTS) {
           file: relative,
           line: lineNo,
           content: raw.trim(),
-          rule: 'Rule 2: ffmpeg spawned outside the primitive. Use `FfmpegProcess` from @camstack/types/node, or add an allowlist entry WITH its reason.',
+          rule: 'Rule 2: ffmpeg spawned outside the primitive. Use `FfmpegProcess` from @dominevo/types/node, or add an allowlist entry WITH its reason.',
         })
       }
     }

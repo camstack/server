@@ -1,5 +1,5 @@
-import type { ProviderRegistration } from '@camstack/types'
-import { BaseAddon, storageProviderCapability } from '@camstack/types'
+import type { ProviderRegistration } from '@dominevo/types'
+import { BaseAddon, storageProviderCapability } from '@dominevo/types'
 import { SftpStorageProvider } from './providers/sftp/sftp-provider.js'
 
 /**
@@ -9,7 +9,7 @@ import { SftpStorageProvider } from './providers/sftp/sftp-provider.js'
  * `CapabilityRegistry` keys collection providers by `Map<addonId, …>`,
  * so registering N providers from the same addon collapses to one.
  * Splitting SFTP / S3 / WebDAV into three addon entries (all shipped
- * by the same npm package `@camstack/addon-remote-storage`) is the
+ * by the same npm package `@dominevo/addon-remote-storage`) is the
  * standard fan-out pattern.
  */
 export class SftpStorageAddon extends BaseAddon {

@@ -21,7 +21,7 @@ import {
   useSystemDetectSiteLocation,
   useSystemGetSiteLocation,
   useSystemSetSiteLocation,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { MapPin, RefreshCw } from 'lucide-react'
 import { type FormEvent, useEffect, useState } from 'react'

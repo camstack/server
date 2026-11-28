@@ -50,7 +50,7 @@ import {
   RevConflictError,
   isInstanceOn,
   pruneExposedNames,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 import { createHubAccessGate } from './access/hub-access-source.js'
 import type { AlexaAccessGate } from './access/access-gate.js'

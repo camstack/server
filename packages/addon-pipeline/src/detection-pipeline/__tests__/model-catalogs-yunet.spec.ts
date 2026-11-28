@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import type { ModelFormat } from '@camstack/types'
+import type { ModelFormat } from '@dominevo/types'
 import { FACE_DETECTION_MODELS } from '../registry/model-catalogs.js'
 import {
   getDefaultModelForFormat,

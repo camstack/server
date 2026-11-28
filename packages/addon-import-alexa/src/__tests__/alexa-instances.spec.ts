@@ -1,4 +1,4 @@
-import { makeInMemoryRecords } from '@camstack/types'
+import { makeInMemoryRecords } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { buildAlexaInstances } from '../alexa-instances.js'
 import { alexaBrokersEntryKind, alexaConnectionsEntryKind } from '../broker-record-kinds.js'

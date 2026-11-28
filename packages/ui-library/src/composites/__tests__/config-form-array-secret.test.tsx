@@ -15,7 +15,7 @@
  *    never means "remove");
  *  - the eye shows the value only through the host's audited reveal.
  */
-import { type ConfigField, SECRET_CLEAR } from '@camstack/types'
+import { type ConfigField, SECRET_CLEAR } from '@dominevo/types'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { FormField } from '../config-form-field'

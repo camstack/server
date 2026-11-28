@@ -29,7 +29,7 @@
  * supplies the track's owned media and executes the store operation.
  */
 
-import type { MediaFileBytes } from '@camstack/types'
+import type { MediaFileBytes } from '@dominevo/types'
 
 /**
  * WHY no swap was made. Every value is a distinct branch:

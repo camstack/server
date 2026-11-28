@@ -5,7 +5,7 @@
  * read from the model's `storage` part — the card never draws a battery corner,
  * because the system is not a device that runs on a battery (#522).
  */
-import { DeviceType, type EnergySystemStatus } from '@camstack/types'
+import { DeviceType, type EnergySystemStatus } from '@dominevo/types'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { plugFixtures } from '../__fixtures__/plug'

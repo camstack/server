@@ -1,4 +1,4 @@
-import type { PetFeederStatus } from '@camstack/types'
+import type { PetFeederStatus } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { buildFeederConsumableItems } from '../petkit-feeder-consumables.js'
 

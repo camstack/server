@@ -8,7 +8,7 @@
  */
 import { describe, expect, it, vi } from 'vitest'
 import type { ServiceBroker } from 'moleculer'
-import type { DeviceCall, DeviceCallAnswer } from '@camstack/types'
+import type { DeviceCall, DeviceCallAnswer } from '@dominevo/types'
 import { createParentUnownedCallHandler } from '../../transport/parent-unowned-call.js'
 import type { DeviceCallRedirectHook } from '../../transport/device-call-redirect.js'
 import type { CapRoute } from '../../transport/cap-route.js'

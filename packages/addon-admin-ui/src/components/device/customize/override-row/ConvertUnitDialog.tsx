@@ -1,7 +1,7 @@
 /**
  * Publish one numeric field converted to another unit in its dimension.
  */
-import { convertUnitTargets } from '@camstack/types'
+import { convertUnitTargets } from '@dominevo/types'
 import {
   Button,
   Dialog,
@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
   Select,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 

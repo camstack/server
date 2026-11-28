@@ -12,7 +12,7 @@ import {
   useDeviceNameIndex,
   useDeviceNameNouns,
   type DataColumn,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 import { candidateSearchText, seriesSubjectLabel, type SeriesCandidate } from './history-page-model'
 

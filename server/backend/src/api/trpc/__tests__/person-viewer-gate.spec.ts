@@ -7,7 +7,7 @@
  * Disarm: stop reducing a person's scopes in `protectedProcedure` — the
  * category row reaches `snapshot.getSnapshot` again and the first test fails.
  */
-import type { CredentialScope } from '@camstack/types'
+import type { CredentialScope } from '@dominevo/types'
 import { describe, expect, it, beforeEach } from 'vitest'
 import { z } from 'zod'
 import type { AuthenticatedAgent, TrpcContext, TrpcContextLogger } from '../trpc.context.js'

@@ -12,14 +12,14 @@ import type {
   ModelCatalogEntry,
   ModelFormat,
   StepDefinition,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   AUDIO_MACRO_LABELS,
   audioKindId,
   COCO_80_LABELS,
   COCO_TO_MACRO,
   LABEL_SUPPLY_VOCABULARIES,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { resolveModelDefaultConfidence } from './effective-confidence.js'
 import { DEFAULT_LANDMARK_PRECISION_FLOOR_PX } from '../pipeline/landmark-precision-gate.js'
 import {
@@ -59,7 +59,7 @@ const ANIMAL_10_LABELS = [
 
 // PRIMARY `animal-classifier` logit order (Open Images V7, 8 classes) and the
 // vehicle classifier's emitted labels live in ONE place,
-// `LABEL_SUPPLY_VOCABULARIES` (@camstack/types): they are also the vocabulary a
+// `LABEL_SUPPLY_VOCABULARIES` (@dominevo/types): they are also the vocabulary a
 // root detector's linked label must use (D730). The runtime label lookup itself
 // comes per-model from each model's `-labels.json`.
 const ANIMAL_CLASSIFIER_LABELS = LABEL_SUPPLY_VOCABULARIES['animal-classifier']
@@ -691,7 +691,7 @@ const STEP_FACE_EMBEDDING = new FaceEmbeddingStep({
   // `arcface-r100`, which has since left the catalog (it is the only entry).
   // Every format this cluster runs (onnx, openvino, coreml) has a build, so no
   // per-format override is declared. The
-  // mirror in `@camstack/types` (`CLUSTER_MODEL_SCOPED_STEPS`) must equal this;
+  // mirror in `@dominevo/types` (`CLUSTER_MODEL_SCOPED_STEPS`) must equal this;
   // `scripts/check-cluster-model-scope.ts` refuses a drift.
   defaultModelId: 'auraface-r100',
   // CLUSTER-scoped: every vector this step produces lands in the ONE enrolled

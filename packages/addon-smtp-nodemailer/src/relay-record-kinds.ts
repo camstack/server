@@ -3,7 +3,7 @@
  * `smtp-nodemailer`, listed on the Integrations page like any other connection. The row id is the
  * `integrations` registry id (`int_NNNN`). The password is a keychain marker bound to the row.
  */
-import { type DefinedRecordKind, defineEntryKind } from '@camstack/types'
+import { type DefinedRecordKind, defineEntryKind } from '@dominevo/types'
 import { z } from 'zod'
 
 /** The inclusive bounds of the port: the schema and the settings migration read ONE copy. */

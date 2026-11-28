@@ -3,8 +3,8 @@
  * the scalar dialog's steps; the item name, key and fixed traits come first.
  */
 import { liveWireableCatalog } from '../source-picker-model'
-import type { CompositionSourceRef, DeviceInfo, KeyedArrayLiteral } from '@camstack/types'
-import { evaluateExpressionSource } from '@camstack/types'
+import type { CompositionSourceRef, DeviceInfo, KeyedArrayLiteral } from '@dominevo/types'
+import { evaluateExpressionSource } from '@dominevo/types'
 import {
   Button,
   Dialog,
@@ -18,7 +18,7 @@ import {
   useDeviceManagerGetWireableFields,
   useDeviceManagerListAll,
   useDeviceStateGetSnapshot,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { itemKeyFromLabel } from '../item-key'

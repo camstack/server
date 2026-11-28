@@ -7,7 +7,7 @@ import {
   buildLinkedInstances,
   type RecordIntegrationInstances,
   type RecordsAccess,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { type HaConnectionBody, haConnectionsEntryKind } from './broker-record-kinds.js'
 
 export const HA_BROKER_KIND = 'home-assistant'

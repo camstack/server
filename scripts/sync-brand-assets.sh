@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # sync-brand-assets.sh
 #
-# Single-source-of-truth sync for the CamStack brand mark. The
+# Single-source-of-truth sync for the Dominevo brand mark. The
 # canonical SVG lives at:
 #
 #   packages/addon-admin-ui/public/favicon.svg

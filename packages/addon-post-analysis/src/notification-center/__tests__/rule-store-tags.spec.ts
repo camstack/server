@@ -5,8 +5,8 @@
  * before tags existed must load byte-for-byte, and the `tags` cap's write
  * (`setTags`) must change nothing but the tags.
  */
-import type { InMemoryRecords, NcRuleInput } from '@camstack/types'
-import { NcRuleInputSchema, NcRulePatchSchema } from '@camstack/types'
+import type { InMemoryRecords, NcRuleInput } from '@dominevo/types'
+import { NcRuleInputSchema, NcRulePatchSchema } from '@dominevo/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import { ncRecordKinds } from '../record-kinds.js'

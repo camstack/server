@@ -6,12 +6,12 @@
  * is asked first (`useCapabilityPresence`): only an ANSWERED "no
  * pipeline-orchestrator" makes it absent without asking the status at all.
  */
-import type { CameraSensorsStatus } from '@camstack/types'
+import type { CameraSensorsStatus } from '@dominevo/types'
 import {
   type CapabilityPresence,
   useCapabilityPresence,
   usePipelineOrchestratorGetCameraStatus,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 
 const ORCHESTRATOR_CAP = 'pipeline-orchestrator'
 

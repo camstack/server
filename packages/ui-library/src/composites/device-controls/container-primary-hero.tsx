@@ -16,7 +16,7 @@
  * admin-ui `PrimaryChildRow`), wired to `deviceManager.setPrimaryChildEntityId`.
  */
 import { useUiText } from '../../contexts/ui-text'
-import type { ContainerPrimaryChildPreference } from '@camstack/types'
+import type { ContainerPrimaryChildPreference } from '@dominevo/types'
 import type { ReactNode } from 'react'
 import type { UseDeviceProxyTrpc } from '../../hooks/use-device-proxy'
 import { resolveDeviceControl } from './control-registry'

@@ -8,7 +8,7 @@
  *
  * The generated addon:
  *   - has a unique scoped name (caller-supplied; default
- *     `@camstack/e2e-fixture-noop`).
+ *     `@dominevo/e2e-fixture-noop`).
  *   - declares ONE camstack addon entry pointing at `dist/addon.js`.
  *   - exports a default class with `async initialize()` that returns an
  *     empty ProviderRegistration list. This satisfies the kernel's
@@ -35,7 +35,7 @@ import { join } from 'node:path'
 export type SyntheticAddonPlacement = 'hub-only' | 'agent-only' | 'any-node'
 
 export interface SyntheticAddonOptions {
-  /** Package name. Default: `@camstack/e2e-fixture-noop`. */
+  /** Package name. Default: `@dominevo/e2e-fixture-noop`. */
   readonly name?: string
   /** Semver. */
   readonly version: string
@@ -56,7 +56,7 @@ export interface SyntheticAddon {
   readonly addonId: string
 }
 
-const DEFAULT_NAME = '@camstack/e2e-fixture-noop'
+const DEFAULT_NAME = '@dominevo/e2e-fixture-noop'
 
 export function buildSyntheticAddon(options: SyntheticAddonOptions): SyntheticAddon {
   const name = options.name ?? DEFAULT_NAME

@@ -23,7 +23,7 @@
  *     imply it: the hub's own mesh principal holds `'*'` and is nobody's
  *     account.
  *
- * Pure: no I/O. It lives in `@camstack/types` so the hub, the kernel and any
+ * Pure: no I/O. It lives in `@dominevo/types` so the hub, the kernel and any
  * addon read the same vocabulary.
  */
 import { z } from 'zod'

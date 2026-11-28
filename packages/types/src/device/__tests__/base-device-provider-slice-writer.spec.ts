@@ -5,7 +5,7 @@
  * `getLocalLoad().motionSliceWriter`.
  *
  * It is said by `BaseDeviceProvider`, which every provider BUNDLES (providers
- * build `self-contained`: `@camstack/types` is inlined into each dist). So only
+ * build `self-contained`: `@dominevo/types` is inlined into each dist). So only
  * a provider built from this code carries it, and an old provider — one that
  * still writes the slice — answers without it whatever server it runs under.
  */

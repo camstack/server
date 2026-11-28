@@ -3,7 +3,7 @@
  * `rawDiscreteDays` (default 30), a continuous one (`gauge`, `counter`) `rawDays` (default 7).
  * A per-device override of either wins over the cluster value.
  */
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import { afterEach, describe, expect, it } from 'vitest'
 import { type Harness, makeHarness } from '../../__tests__/support/harness.js'
 import { DAY_MS } from '../../time/bucket-time.js'

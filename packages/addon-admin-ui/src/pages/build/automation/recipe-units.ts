@@ -2,7 +2,7 @@
  * The save boundary of the editor for numbers tied to a quantity (D972).
  *
  * The rule itself — stamp the unit on a bare number, then run the server's
- * `normalizeRecipeUnits` — is the pure `prepareRecipeUnits` in `@camstack/types`,
+ * `normalizeRecipeUnits` — is the pure `prepareRecipeUnits` in `@dominevo/types`,
  * shared with every other surface that saves a recipe. This file only supplies
  * the editor's resolver: the generated capability definitions.
  */
@@ -13,7 +13,7 @@ import {
   type UnitResolver,
   capUnitResolver,
   prepareRecipeUnits as prepareRecipeUnitsWith,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export type { PreparedRecipe }
 

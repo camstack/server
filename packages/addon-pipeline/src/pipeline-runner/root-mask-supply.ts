@@ -20,7 +20,7 @@ import type {
   FrameResult,
   ObjectDetection,
   PipelineStepInputOutput,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { RootSupplyPlan } from './root-supply.js'
 
 /** The frame-plane step a seg root supplies. */

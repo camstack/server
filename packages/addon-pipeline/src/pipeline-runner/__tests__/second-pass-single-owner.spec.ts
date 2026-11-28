@@ -1,16 +1,16 @@
 /**
- * The second pass's planning has ONE owner: `@camstack/types`
+ * The second pass's planning has ONE owner: `@dominevo/types`
  * (`pipeline/second-pass/`). The runner's modules re-export it, so the live
  * runner and the offline accuracy eval (`addon-benchmark`) run the same
  * functions — identity, not a copy that happens to agree today.
  */
-import * as types from '@camstack/types'
+import * as types from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { OBJECT_DETECTION_STEP_ID } from '../../detection-pipeline/default-detection-model.js'
 import * as cropPlan from '../motion-crop-plan.js'
 import * as recovery from '../small-subject-recovery.js'
 
-describe('second-pass planning — single owner in @camstack/types', () => {
+describe('second-pass planning — single owner in @dominevo/types', () => {
   it('the runner re-exports the shared planners, never its own copy', () => {
     expect(recovery.planRecoveryCrops).toBe(types.planRecoveryCrops)
     expect(recovery.remapCropDetections).toBe(types.remapCropDetections)

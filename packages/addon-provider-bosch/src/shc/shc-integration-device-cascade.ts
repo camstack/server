@@ -3,7 +3,7 @@ import {
   type DeviceManagerApi,
   type IDeviceRegistry,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export async function cascadeRemoveDevicesForIntegration(input: {
   readonly reg: Pick<IDeviceRegistry, 'getAllForAddon'>

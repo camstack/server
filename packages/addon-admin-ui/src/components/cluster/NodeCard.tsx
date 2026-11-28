@@ -6,7 +6,7 @@ import {
   useConfirm,
   usePipelineOrchestratorListAgentSettings,
   useSystem,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import {
   buildAgentDashboardBaseUrl,
   buildAgentDashboardTicketUrl,
@@ -86,7 +86,7 @@ export interface NodeData {
   readonly addons: readonly NodeAddon[]
   readonly processes: readonly NodeProcess[]
   readonly categories: readonly NodeCategory[]
-  // The node's runtime-updatable ROOT package — always `@camstack/server` now
+  // The node's runtime-updatable ROOT package — always `@dominevo/server` now
   // (hub and agent are the same root, differentiated by CAMSTACK_ROLE) from
   // `nodes.topology.rootPackage` — the SAME single source the Server-management
   // surface reads. Nullable for offline / pre-phase-2 rows.

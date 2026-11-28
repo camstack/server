@@ -6,7 +6,7 @@
  * Provider calls are keyed by `entryId`. This port resolves each entry to its
  * owning addon and pins the collection with `{ addonId }` (broker posture).
  */
-import type { AddonApi } from '@camstack/types'
+import type { AddonApi } from '@dominevo/types'
 import type {
   CorpusPort,
   DatasetPort,

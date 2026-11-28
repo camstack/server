@@ -41,7 +41,7 @@
  * with it.
  */
 import { PerformanceObserver, type PerformanceEntry } from 'node:perf_hooks'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 /** Tick period. Small enough to bound attribution error, large enough to cost
  *  nothing on a process already doing frame work. */

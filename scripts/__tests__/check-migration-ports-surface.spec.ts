@@ -18,7 +18,7 @@ describe('check-migration-ports-surface', () => {
     const files = [
       file(
         CATALOGUE,
-        "import { z } from 'zod'\nimport type { MigrationApiV1 } from '@camstack/types'\nimport { helper } from './helper.js'\nexport const x = 1\n",
+        "import { z } from 'zod'\nimport type { MigrationApiV1 } from '@dominevo/types'\nimport { helper } from './helper.js'\nexport const x = 1\n",
       ),
     ]
     expect(portsSurfaceProblems(files, [])).toEqual([])
@@ -44,7 +44,7 @@ describe('check-migration-ports-surface', () => {
 
   it('refuses a server import in a catalogue source', () => {
     const problems = portsSurfaceProblems(
-      [file(CATALOGUE, "import { fs } from 'node:fs'\nimport { a } from '@camstack/system'\n")],
+      [file(CATALOGUE, "import { fs } from 'node:fs'\nimport { a } from '@dominevo/system'\n")],
       [],
     )
     expect(problems).toHaveLength(2)

@@ -15,7 +15,7 @@
  * fifth of its night. Without the second, the fix for that becomes the 2026-08-22
  * `segment read timeout` all over again.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { RecordingIndex } from '../../recording-index.js'
 import type { RecordingConfigsState } from '../config-store.js'

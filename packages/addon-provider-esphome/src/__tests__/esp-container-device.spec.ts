@@ -4,7 +4,7 @@ import {
   DeviceType,
   mergeIdentifiers,
   type SetIdentifiersInput,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { EspContainerDevice } from '../devices/esp-container-device.js'
 import { espLinkHub } from '../esphome-link-hub.js'
 import { type LogLine, makeCtx } from './fake-ctx.js'

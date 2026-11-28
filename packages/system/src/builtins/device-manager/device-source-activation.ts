@@ -41,8 +41,8 @@
  * marker, the write lock and the out-of-lock emit.
  */
 
-import type { AddonContext, ICapabilityRegistry, WrapperActivationRead } from '@camstack/types'
-import { EventCategory } from '@camstack/types'
+import type { AddonContext, ICapabilityRegistry, WrapperActivationRead } from '@dominevo/types'
+import { EventCategory } from '@dominevo/types'
 import { randomUUID } from 'node:crypto'
 import {
   readBindingsStore,

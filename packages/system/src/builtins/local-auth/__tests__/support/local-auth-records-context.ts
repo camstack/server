@@ -1,4 +1,4 @@
-import { createRecordsAccess, type AddonContext, type RecordsAccess } from '@camstack/types'
+import { createRecordsAccess, type AddonContext, type RecordsAccess } from '@dominevo/types'
 import {
   makeRecordsWorld,
   type RecordsWorld,

@@ -29,7 +29,7 @@ import type {
   PipelineStepInputOutput,
   RunnerCameraConfig,
   RunnerInferenceDevice,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { applyDeviceProvisioning, provisionDeviceSteps } from './apply-device-provisioning.js'
 import type { PendingReason } from './placement-ledger.js'
 import { buildJumpRoster, jumpTargetKeys } from './jump-roster.js'

@@ -1,4 +1,4 @@
-import { makeInMemoryRecords, moveCalendarIdsToRecords } from '@camstack/types'
+import { makeInMemoryRecords, moveCalendarIdsToRecords } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { haBrokersEntryKind, haCalendarsEntryKind } from '../broker-record-kinds.js'
 import { buildHaCalendarInstances, selectedEntityIds } from '../ha-calendar-instances.js'

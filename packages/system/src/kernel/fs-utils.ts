@@ -3,7 +3,7 @@ import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 import { promisify } from 'node:util'
-import { asJsonObject, parseJsonUnknown } from '@camstack/types'
+import { asJsonObject, parseJsonUnknown } from '@dominevo/types'
 
 const execFileAsync = promisify(execFile)
 
@@ -21,7 +21,7 @@ export function ensureDir(dirPath: string): void {
  * The hub installs addons into `/data/addons`, which on Unraid is a slow
  * shfs/FUSE mount. The former synchronous `fs.copyFileSync`-per-file loop
  * blocked the Node event loop for the whole copy of a large bundle (e.g.
- * `addon-pipeline`), which froze the hub's HTTP listener mid-`camstack deploy`
+ * `addon-pipeline`), which froze the hub's HTTP listener mid-`dominevo deploy`
  * (accept backlog piling up, existing connections stuck in CLOSE_WAIT). Using
  * `fs.promises.cp` keeps the I/O off the event loop. (Node ≥18 stable.)
  */
@@ -64,7 +64,7 @@ function readRuntimeDependencies(pkg: Record<string, unknown>): readonly string[
  * Strip every dependency an addon's self-contained dist has already bundled,
  * keeping ONLY what must resolve from node_modules at runtime:
  *
- *   keep = RUNTIME_NATIVE_KEEP ∪ camstack.runtimeDependencies (minus @camstack/*)
+ *   keep = RUNTIME_NATIVE_KEEP ∪ camstack.runtimeDependencies (minus @dominevo/*)
  *
  * Addon dists are fully bundled (vite `externals: 'self-contained'`), yet the
  * blanket `npm install` of the manifest's dependencies re-installed the whole
@@ -93,7 +93,7 @@ export function stripBundledDeps(pkg: Record<string, unknown>): Record<string, u
     const rawDeps = pkg[depType]
     if (rawDeps === null || typeof rawDeps !== 'object' || Array.isArray(rawDeps)) continue
     for (const [name, version] of Object.entries(rawDeps)) {
-      if (name.startsWith('@camstack/')) continue
+      if (name.startsWith('@dominevo/')) continue
       if (!keep.has(name) || typeof version !== 'string') continue
       // First declaration wins (dependencies iterate before peerDependencies).
       if (!(name in kept)) kept[name] = version
@@ -108,8 +108,8 @@ export function stripBundledDeps(pkg: Record<string, unknown>): Record<string, u
 }
 
 /**
- * Strip @camstack/* dependencies and devDependencies from a package.json object.
- * Used when installing addons into the addons directory — @camstack packages
+ * Strip @dominevo/* dependencies and devDependencies from a package.json object.
+ * Used when installing addons into the addons directory — @dominevo packages
  * are provided by the host runtime, not installed per-addon.
  *
  * Returns a new object (immutable).
@@ -122,7 +122,7 @@ export function stripCamstackDeps(pkg: Record<string, unknown>): Record<string, 
     if (rawDeps === null || typeof rawDeps !== 'object' || Array.isArray(rawDeps)) continue
     const filtered: Record<string, string> = {}
     for (const [name, version] of Object.entries(rawDeps)) {
-      if (!name.startsWith('@camstack/') && typeof version === 'string') {
+      if (!name.startsWith('@dominevo/') && typeof version === 'string') {
         filtered[name] = version
       }
     }
@@ -190,7 +190,7 @@ export function isSourceNewer(packageDir: string): boolean {
 
 /**
  * Install a single npm package into a target directory (package.json + dist/).
- * No validation on camstack.addons -- works for any @camstack/* package.
+ * No validation on camstack.addons -- works for any @dominevo/* package.
  *
  * ASYNC: uses `execFile`/`fs.promises` throughout so a package install on a
  * live node never blocks the event loop (the `npm pack` + tar extract + copy to

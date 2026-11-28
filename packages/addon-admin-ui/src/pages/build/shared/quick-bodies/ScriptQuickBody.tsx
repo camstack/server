@@ -2,8 +2,8 @@
  * Script quick body: where it runs, its state and last error, and its recent
  * block logs (the same `LogStream` the Scripts table opens).
  */
-import { type CoreBlock, coreBlockAddonId } from '@camstack/types'
-import { Badge, LogStream } from '@camstack/ui-library'
+import { type CoreBlock, coreBlockAddonId } from '@dominevo/types'
+import { Badge, LogStream } from '@dominevo/ui-library'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { badgeVariantForTone, describeBlockStatus } from '../../core-block-status'

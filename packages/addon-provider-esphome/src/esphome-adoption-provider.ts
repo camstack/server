@@ -6,7 +6,7 @@ import {
   type DiscoveredChildDevice,
   type IDeviceAdoptionProvider,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { deviceTypeOf } from './esphome-child-spec.js'
 import { planBoard, type ChildKind, type ChildPlan } from './esphome-entity-spec.js'
 import type { EspLink } from './esphome-link.js'

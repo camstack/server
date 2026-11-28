@@ -23,8 +23,8 @@
  */
 import { type ReactNode, useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import type { DeviceStepConfig, NodeInferenceDevice, PipelineAddonSchema } from '@camstack/types'
-import { pickClusterStepModels, settingValuesEqual } from '@camstack/types'
+import type { DeviceStepConfig, NodeInferenceDevice, PipelineAddonSchema } from '@dominevo/types'
+import { pickClusterStepModels, settingValuesEqual } from '@dominevo/types'
 import {
   acceleratorShortLabel,
   buildStepTreeFromSchema,
@@ -46,7 +46,7 @@ import {
   usePipelineOrchestratorGetNodeInferenceDevices,
   usePipelineOrchestratorSetAgentInferenceDevices,
   usePipelineOrchestratorSetNodeStepSettings,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Link } from 'react-router-dom'
 import {
   buildInferenceDevicesWrite,

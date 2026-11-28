@@ -22,7 +22,7 @@ applies-to:
 
 A UniFi PoE port seen only through the Integration API (an API key, no local account)
 reports whether PoE is on but cannot switch it. The one thing it can do is
-`POWER_CYCLE`. A camera on such a port could not be restarted from CamStack: a
+`POWER_CYCLE`. A camera on such a port could not be restarted from Dominevo: a
 `power-source` link needs a `switch` source, and the port had none.
 
 A `power-cycle` button per port was retired (one control per port, no reboot

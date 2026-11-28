@@ -25,13 +25,13 @@
  *
  * ## The fallback, and why it is coarser on purpose
  *
- * A hub whose `@camstack/server` predates the method answers 404. That must not
+ * A hub whose `@dominevo/server` predates the method answers 404. That must not
  * cost the notification, so the old `renderPreBufferClip` path stays — but it
  * renders ONE format, so in fallback the notification carries the mp4 only and
  * SAYS so. Shipping a gif from a second render would reintroduce exactly the
  * defect above; a missing attachment is honest, a disagreeing pair is not.
  */
-import type { EventMediaArtifact, EventMediaKind, IScopedLogger } from '@camstack/types'
+import type { EventMediaArtifact, EventMediaKind, IScopedLogger } from '@dominevo/types'
 
 /** What one production covered and produced. */
 export interface EventMedia {
@@ -326,7 +326,7 @@ export class EventMediaService {
    * the rendition, so the profile is pinned to whatever the FIRST call actually
    * used and handed to the second.
    *
-   * It exists for one reason: a hub whose `@camstack/server` predates the
+   * It exists for one reason: a hub whose `@dominevo/server` predates the
    * production method must not stop attaching footage, and three of the four
    * live rules on this install ask for a gif and nothing else.
    */

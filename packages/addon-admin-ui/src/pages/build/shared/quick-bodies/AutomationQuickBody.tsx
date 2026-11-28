@@ -2,8 +2,8 @@
  * Automation quick body: what starts it, how it behaves when it is already
  * running, and where it runs. Its last runs are their own tab (`QuickLastRuns`).
  */
-import { type AutomationRunMode, type CoreBlock, countWhenLeaves } from '@camstack/types'
-import { Badge } from '@camstack/ui-library'
+import { type AutomationRunMode, type CoreBlock, countWhenLeaves } from '@dominevo/types'
+import { Badge } from '@dominevo/ui-library'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { triggerSummaryOf } from '../../automation/AutomationList'

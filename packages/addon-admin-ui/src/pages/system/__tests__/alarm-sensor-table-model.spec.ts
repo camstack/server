@@ -1,4 +1,4 @@
-import type { NcAlarmModeCoverage, NcAlarmSettings } from '@camstack/types'
+import type { NcAlarmModeCoverage, NcAlarmSettings } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   type AlarmSensorRow,

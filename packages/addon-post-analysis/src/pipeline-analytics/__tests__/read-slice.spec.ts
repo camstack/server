@@ -8,7 +8,7 @@
  * one — the old code fails it.
  */
 
-import type { SliceHandle } from '@camstack/types'
+import type { SliceHandle } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { readSliceOnce } from '../read-slice.js'
 

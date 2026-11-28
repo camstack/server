@@ -5,7 +5,7 @@
  * `skill-links`, under the SAME id: the instance they belong to. The tokens' credentials are
  * keychain markers bound to that row, matched by user id so a reorder keeps every ref.
  */
-import { CamProfileSchema, type DefinedRecordKind, defineEntryKind } from '@camstack/types'
+import { CamProfileSchema, type DefinedRecordKind, defineEntryKind } from '@dominevo/types'
 import { z } from 'zod'
 import type { ActionSceneEntry } from './action-scenes.js'
 import type { StoredVisibilityMap } from './access/account-visibility.js'

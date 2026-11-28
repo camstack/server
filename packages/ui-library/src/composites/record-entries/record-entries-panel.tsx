@@ -1,4 +1,4 @@
-import type { EntryKindInfo, EntryView } from '@camstack/types'
+import type { EntryKindInfo, EntryView } from '@dominevo/types'
 import { Loader2, Pencil, Plus, Trash2 } from 'lucide-react'
 import { useCallback, useMemo, useState, type JSX, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'

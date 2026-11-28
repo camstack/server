@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import type { IScopedLogger, IEventBus } from '@camstack/types'
+import type { IScopedLogger, IEventBus } from '@dominevo/types'
 
 export type ElementState = 'stopped' | 'starting' | 'running' | 'stopping' | 'error' | 'disabled'
 

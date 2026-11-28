@@ -17,7 +17,7 @@
  * pressure.
  */
 import path from 'node:path'
-import type { CamProfile } from '@camstack/types'
+import type { CamProfile } from '@dominevo/types'
 import type { ActiveWriterDir } from './recording-controller.js'
 import type { RecordingsLocation } from './roots.js'
 

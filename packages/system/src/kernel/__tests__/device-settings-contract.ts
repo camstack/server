@@ -11,7 +11,7 @@
 import { promises as fs } from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import type { ISettingsStoreProvider, ResolvedSettings } from '@camstack/types'
+import type { ISettingsStoreProvider, ResolvedSettings } from '@dominevo/types'
 import { expect } from 'vitest'
 import { SqliteSettingsBackend } from '../../builtins/sqlite-storage/sqlite-settings-backend.js'
 import { createDataStoreDispatch } from '../../builtins/storage-orchestrator/data-store-dispatch.js'

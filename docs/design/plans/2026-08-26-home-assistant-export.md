@@ -43,9 +43,9 @@ The rules of `CLAUDE.md` apply. In addition, verbatim:
 - **`unique_id` and entity id are WIRE FORMAT.** Renaming one orphans the entity
   in the operator's installation, taking away the recorder history and the
   dashboard position. See `ha-export/types.ts:1-12`.
-- **No task touches `@camstack/types`.** Framework packages travel in the
-  `@camstack/server` train; everything here is addon-local and goes live with
-  `camstack deploy packages/addon-provider-homeassistant`.
+- **No task touches `@dominevo/types`.** Framework packages travel in the
+  `@dominevo/server` train; everything here is addon-local and goes live with
+  `dominevo deploy packages/addon-provider-homeassistant`.
 - **No task touches the HA component** (`camstack/homeassistant-component`,
   another repo). All the new entities of this plan use only `sensor`,
   `binary_sensor` and `select`, which are in `LEGACY_PLATFORMS`
@@ -99,7 +99,7 @@ but the catalogue classified all the same.
 | Camera, derived caps | `intercom` (2), `day-night` (3), `ptz-autotrack` (1) | slice, via `CAP_ENTITY_MAP` |
 | Non-camera | derived from `CAP_ENTITY_MAP`, ~2 on average and 3 at most per device | slice |
 | Synthetic *Notification Center* | `snoozed`, `rules_enabled`, one `switch` per rule | poll on `notificationRules` |
-| Synthetic *CamStack Server* | `cluster_healthy`, `nodes_online/total`, `addons_healthy/running/failed`, `server_version`, `update_available`, + per node `online/cpu/memory/uptime` | poll on `nodes.topology`, `addons.list`, `serverManagement` |
+| Synthetic *Dominevo Server* | `cluster_healthy`, `nodes_online/total`, `addons_healthy/running/failed`, `server_version`, `update_available`, + per node `online/cpu/memory/uptime` | poll on `nodes.topology`, `addons.list`, `serverManagement` |
 
 Last measurement on the wire: `devices=4 entities=175` (2026-08-14, two cameras
 plus the two synthetics — (planning repo: sessions/2026-10.md:2496)). <!-- drift-ok: moved to the private planning repo -->
@@ -265,7 +265,7 @@ Zero new dialers towards the camera.
 **Interfaces:**
 - Produces: `deriveCameraFunctions(reads: CameraFunctionReads): readonly CameraFunction[]`
 - Produces: `resolveCameraFunctionWrite(id, on, reads): CameraFunctionWrite | null`
-- Consumes: `CameraSwitchId` from `@camstack/types` — **survives phase 4**,
+- Consumes: `CameraSwitchId` from `@dominevo/types` — **survives phase 4**,
   because it is the vocabulary of `CameraStatus.switchedOff`, which stays.
 
 - [ ] **Step 1 — write the failing test.**
@@ -422,7 +422,7 @@ describe('resolveCameraFunctionWrite', () => {
  * The rule for which the `null`s exist: **a source that did not answer is
  * unknown, never a value set to "on"**.
  */
-import type { CameraSwitchId } from '@camstack/types'
+import type { CameraSwitchId } from '@dominevo/types'
 
 export interface CameraFunctionReads {
   /** `deviceManager.listAll()` → `disabled`. `null` = failed read. */
@@ -667,7 +667,7 @@ describe('applyCameraFunctionWrite', () => {
       `command-routes.ts` exists.
 
 ```ts
-import { nodePin } from '@camstack/types'
+import { nodePin } from '@dominevo/types'
 import type { CameraFunctionWrite } from './camera-functions.js'
 
 /** The slice of `ctx.api` this write uses. Injected, so it is testable. */
@@ -1119,7 +1119,7 @@ topology already owns.
 
 - [ ] `buildSynthetic` reads `alerts.list.query({ unreadOnly: false, limit: 50 })`,
       best-effort like the others.
-- [ ] Three entities on *CamStack Server*: `alerts_active`
+- [ ] Three entities on *Dominevo Server*: `alerts_active`
       (`binary_sensor`, `device_class: 'problem'`, on when an alert exists with
       `status === 'active'` and `severity` in `warning|error`), `alerts_active_count`
       (`sensor`), `alerts_last_title` (`sensor`, `entityCategory: 'diagnostic'`
@@ -1297,7 +1297,7 @@ deferrals: if one changes, it changes with a written reason.
 - **Do not delete `getCameraSwitches` / `setCameraSwitch`.** The shipped viewers
   call them. Track A removes the last caller in the repo; the deletion is another
   session, with its own verification.
-- **Do not touch `@camstack/types`.** None of the new entities needs it, and
+- **Do not touch `@dominevo/types`.** None of the new entities needs it, and
   doing so would tie the whole plan to a train.
 - **Do not touch the Home Assistant component.** Every entity here uses only the
   platforms that every released component builds.

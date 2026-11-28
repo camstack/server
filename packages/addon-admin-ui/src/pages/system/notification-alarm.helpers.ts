@@ -22,14 +22,14 @@ import {
   type NcAlarmSettings,
   type NcAlarmSkippedDevice,
   type NcSchedule,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { AlarmDeviceNamer } from './alarm-nonblocking.helpers'
 import i18n from '../../i18n/index'
 
 /**
  * The panel as it is now. Derived from the published config type rather than
  * imported by name: the per-part schemas are not re-exported by
- * `@camstack/types`, and a derived alias cannot drift from the shape the hub
+ * `@dominevo/types`, and a derived alias cannot drift from the shape the hub
  * answers with.
  */
 export type NcAlarmLiveView = NonNullable<NcAlarmConfig['live']>
@@ -270,7 +270,7 @@ export function modeDelayEdit(
 export function modePostTriggeredEdit(
   settings: NcAlarmDelaySettings,
   mode: AlarmArmMode,
-  next: import('@camstack/types').NcAlarmPostTriggeredAction | 'default',
+  next: import('@dominevo/types').NcAlarmPostTriggeredAction | 'default',
 ): NcAlarmModeDelaysEdit | null {
   const stored = (settings.modeDelays ?? []).find((e) => e.mode === mode)?.postTriggeredAction
   if (next === 'default') {

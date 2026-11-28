@@ -3,7 +3,7 @@
  * `defaultModelIdForDevice` (the admin-ui column header) must equal
  * (`default-model-for-device.spec.ts` there asserts the same literals).
  */
-import { deviceBackendToFormat } from '@camstack/types'
+import { deviceBackendToFormat } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { resolveDefaultDetectionModel } from '../default-detection-model.js'
 

@@ -25,7 +25,7 @@
  * not because a sweeper ran. A sweeper that fails leaves the operator silenced.
  */
 
-import type { NcSnooze, NcSnoozeScope } from '@camstack/types'
+import type { NcSnooze, NcSnoozeScope } from '@dominevo/types'
 
 /** What a snooze covers. Broader scopes win when several match. */
 export type SnoozeScope = NcSnoozeScope

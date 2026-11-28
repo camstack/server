@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # The D28 barrel guards of CI's `guards` lane: the ONE list, called by
 # .github/workflows/ci.yml and by scripts/ci/verify-push.sh so the two cannot
-# diverge (planning#379: a value import from the @camstack/types barrel in
+# diverge (planning#379: a value import from the @dominevo/types barrel in
 # packages/system passed verify:push and went red in CI).
 #
-#   source  no bare '@camstack/types' VALUE import reachable from the
+#   source  no bare '@dominevo/types' VALUE import reachable from the
 #           addon-runner / addon-utils, and the generated device-local-state
 #           cap-name table imports no schema (D1074) (pure source scans, ~1 s)
 #   dist    the BUILT addon-runner and addon-utils carry no schema barrel

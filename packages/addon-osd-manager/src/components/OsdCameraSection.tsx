@@ -7,13 +7,13 @@ import {
   Select,
   useOsdManagerPreviewSlot,
   useOsdManagerSetSlotCameraEnabled,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import type {
   OsdNamedTemplate,
   OsdRenderResult,
   OsdSlotBinding,
   OsdSlotView,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { Loader2, RefreshCw } from 'lucide-react'
 import { useT } from '../i18n/index.js'
 import {

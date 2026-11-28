@@ -240,7 +240,7 @@ export function parseCameraStreamConfig(raw: Record<string, unknown>): CameraStr
 /**
  * Per-device mapping of quality profile → streamId.
  * Cameras expose N physical streams; the user assigns which stream
- * serves each of the 3 standard CamStack profiles.
+ * serves each of the 3 standard Dominevo profiles.
  */
 export interface StreamProfileMap {
   high?: string

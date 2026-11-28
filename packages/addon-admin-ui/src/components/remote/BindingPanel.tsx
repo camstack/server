@@ -6,7 +6,7 @@
  * the selected button's binding is rendered; the grid is the list. Test sends
  * the SAVED command once.
  */
-import { type RemoteBinding, type RemoteBindingAction, remoteRoleIcon } from '@camstack/types'
+import { type RemoteBinding, type RemoteBindingAction, remoteRoleIcon } from '@dominevo/types'
 import {
   Badge,
   Button,
@@ -14,7 +14,7 @@ import {
   FormField,
   Select,
   useDisplayIconResolver,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { AutomationDevice } from '../../pages/build/automation/automation-data'

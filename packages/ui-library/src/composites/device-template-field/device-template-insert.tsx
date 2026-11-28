@@ -1,5 +1,5 @@
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
-import { runtimeFieldUnit } from '@camstack/types'
+import { runtimeFieldUnit } from '@dominevo/types'
 import { useUiText } from '../../contexts/ui-text'
 import {
   useDeviceManagerGetWireableFields,

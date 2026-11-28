@@ -5,7 +5,7 @@
  * deps object.
  */
 
-import type { AddonContext, RecordsAccess, SettingsStoreClient } from '@camstack/types'
+import type { AddonContext, RecordsAccess, SettingsStoreClient } from '@dominevo/types'
 import { ncDurableRecordKinds } from '../../notification-center/nc-durable-record-kinds.js'
 import { ncRecordKinds } from '../../notification-center/record-kinds.js'
 import { declarePipelineAnalyticsBootCollections } from '../pa-boot-declare.js'

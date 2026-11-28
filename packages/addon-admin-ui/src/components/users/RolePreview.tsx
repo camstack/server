@@ -5,8 +5,8 @@
  * `summarizeEffectiveScope` call `auth.me` runs against the identical fleet,
  * so the number here is the number enforcement will produce.
  */
-import type { EffectiveScope, UserScope } from '@camstack/types'
-import { useDeviceManagerListAll, useSystem } from '@camstack/ui-library'
+import type { EffectiveScope, UserScope } from '@dominevo/types'
+import { useDeviceManagerListAll, useSystem } from '@dominevo/ui-library'
 import { useQuery } from '@tanstack/react-query'
 import { Eye, Loader2, ShieldAlert } from 'lucide-react'
 import { useTranslation } from 'react-i18next'

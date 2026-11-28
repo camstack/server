@@ -1,14 +1,14 @@
 /**
  * Contract, provider half: the slices `HaBinarySensorDevice` REALLY commits
  * are (1) valid `MotionStatusSchema` values and (2) read by the SHARED edge
- * rule, `evaluateSensorEdge` in `@camstack/types`, as exactly one rise per HA
+ * rule, `evaluateSensorEdge` in `@dominevo/types`, as exactly one rise per HA
  * `on` and never a rise on an `off`.
  *
  * Why this half stops at the shared rule: addons never import each other,
  * not even from a spec. Every consumer of a sensor edge — the orchestrator's
  * `CameraSensorsSource`, the recorder's sensor trigger, post-analysis —
  * reaches it through `evaluateSensorEdge`, so the rule in
- * `@camstack/types` IS the contract. The consumer half,
+ * `@dominevo/types` IS the contract. The consumer half,
  * `addon-pipeline-orchestrator/src/__tests__/camera-sensors-kept-rise.spec.ts`,
  * drives schema-valid slices of this exact shape through the real source.
  *
@@ -22,7 +22,7 @@ import {
   MotionStatusSchema,
   type SensorEdgeVerdict,
   sliceChangedAt,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { makeMotionSensor } from './ha-binary-sensor-harness.js'
 

@@ -4,8 +4,8 @@
  * Each faulted id is one card under a stable id, so a retry that fixes it
  * dismisses exactly that card and a repeated reconcile never duplicates it.
  */
-import type { Alert, MigrationLedgerEntry } from '@camstack/types'
-import { EventCategory } from '@camstack/types'
+import type { Alert, MigrationLedgerEntry } from '@dominevo/types'
+import { EventCategory } from '@dominevo/types'
 
 export const MIGRATION_ALERT_PREFIX = 'migration:'
 

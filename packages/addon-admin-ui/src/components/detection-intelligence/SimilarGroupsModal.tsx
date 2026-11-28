@@ -25,7 +25,7 @@ import {
   useFaceGallerySuggestFaceClusters,
   Input,
   Slider,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { ImageOff, Loader2, RefreshCw, Sparkles, Trash2, Undo2, UserCheck, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
@@ -41,7 +41,7 @@ import {
 import type { FaceInfo, Identity } from './types.js'
 import { ZoomableImage } from './ZoomableImage.js'
 import { useTranslation } from 'react-i18next'
-import { formatNumeric } from '@camstack/ui-library'
+import { formatNumeric } from '@dominevo/ui-library'
 
 const FACE_GALLERY_KEY = [['faceGallery']]
 const CLUSTER_LIMIT = 20

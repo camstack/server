@@ -6,7 +6,7 @@
  * Two contracts: the gallery's own vector reaches the scorer BY IDENTITY, and
  * the scores are bit-identical to what the number[] gallery produced.
  */
-import { cosineSimilarity } from '@camstack/types'
+import { cosineSimilarity } from '@dominevo/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   assignUniquePerFrame,
@@ -16,8 +16,8 @@ import {
   rankIdentities,
 } from '../pipeline/face-matcher.js'
 
-vi.mock('@camstack/types', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@camstack/types')>()
+vi.mock('@dominevo/types', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dominevo/types')>()
   return { ...actual, cosineSimilarity: vi.fn(actual.cosineSimilarity) }
 })
 

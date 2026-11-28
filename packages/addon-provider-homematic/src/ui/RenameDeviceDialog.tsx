@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Button, Checkbox, FormField, Input, ItemFormDialog } from '@camstack/ui-library'
+import { Button, Checkbox, FormField, Input, ItemFormDialog } from '@dominevo/ui-library'
 import { Pencil } from 'lucide-react'
 import type { CcuChannelRow, CcuDeviceRow } from '../ccu/ccu-schemas.js'
 import { useT } from '../i18n/index.js'

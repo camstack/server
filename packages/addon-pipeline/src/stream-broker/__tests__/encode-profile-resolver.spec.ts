@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import type { EncodeProfile } from '@camstack/types'
+import type { EncodeProfile } from '@dominevo/types'
 import { resolveEncodeProfile, withSourceResolution } from '../encode-profile-resolver.js'
 
 const consumerDefault: EncodeProfile = {

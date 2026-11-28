@@ -229,7 +229,7 @@ Blocks:
   `CompositionPeer.blockId` drops only the candidate's own old version; a
   different block on the same target is `duplicate-target`.
 - **The implicit name `customize:<addonId>/<stableId>`** (or a sha256 form past
-  120 chars) is derived by the SERVER (`@camstack/types/node`), refused when a
+  120 chars) is derived by the SERVER (`@dominevo/types/node`), refused when a
   client sends a name, and never displayed — the UI shows the device's current
   name.
 - **Cycles are decided per strongly connected component** (Tarjan): a save is

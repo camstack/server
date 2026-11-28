@@ -7,7 +7,7 @@
  * is the path an ABRUPT disconnect takes.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { BrokerConsumerKind, IScopedLogger, IStreamBroker, Unsubscribe } from '@camstack/types'
+import type { BrokerConsumerKind, IScopedLogger, IStreamBroker, Unsubscribe } from '@dominevo/types'
 import { BrokerWebrtcServer } from '../webrtc/broker-webrtc-server.js'
 import { AdaptiveSession } from '../webrtc/session.js'
 

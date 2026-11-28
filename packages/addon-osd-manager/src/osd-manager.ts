@@ -25,7 +25,7 @@ import {
   type OsdStatus,
   type PipelineAnalyticsTrackLifecyclePayload,
   readDeviceStateFrom,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { BindingsHandle, OsdDeviceBindings } from './bindings-store.js'
 import { EMPTY_BINDINGS, withBinding, withoutBinding } from './bindings-store.js'
 import type { BoundIndexHandle } from './bound-index.js'

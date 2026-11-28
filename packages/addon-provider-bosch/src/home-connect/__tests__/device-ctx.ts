@@ -1,4 +1,4 @@
-import { type DeviceContext, type DeviceType, type IDeviceRuntimeState } from '@camstack/types'
+import { type DeviceContext, type DeviceType, type IDeviceRuntimeState } from '@dominevo/types'
 
 export interface LogLine {
   readonly level: 'debug' | 'info' | 'warn' | 'error'

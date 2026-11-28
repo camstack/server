@@ -1,11 +1,11 @@
-import { DeviceFeature, DeviceType } from '@camstack/types'
+import { DeviceFeature, DeviceType } from '@dominevo/types'
 import {
   useDeviceLabelById,
   DoorbellRecentPanel,
   useDoorbellEvents,
   useNetworkQualityGetDeviceStats,
   WidgetSlot,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Wifi } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { DeviceNotificationMute } from '../DeviceNotificationMute'
@@ -13,7 +13,7 @@ import { HelperGroupStatus } from '../HelperGroupStatus'
 import { MigrateDeviceCard } from '../MigrateDeviceCard'
 import { DeviceInfoAdapter } from '../overview-adapters/DeviceInfoAdapter'
 import { ResyncButton } from '../ResyncButton'
-import { formatNumeric } from '@camstack/ui-library'
+import { formatNumeric } from '@dominevo/ui-library'
 
 interface OverviewTabProps {
   device: Record<string, unknown>

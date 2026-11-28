@@ -3,7 +3,7 @@ import {
   type DeviceContext,
   type InferNativeProvider,
   type ScriptRunnerStatus,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { HaBaseChildDevice } from '../ha-base-child-device.js'
 import type { HaEntityState } from '../ha-types.js'
 

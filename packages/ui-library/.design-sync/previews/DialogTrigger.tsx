@@ -8,7 +8,7 @@ import {
   DialogDescription,
   DialogFooter,
   Button,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 
 const Frame = ({ children }: { children: ReactNode }) => (
   <div className="dark bg-background text-foreground p-5 rounded-lg" style={{ minHeight: 480 }}>

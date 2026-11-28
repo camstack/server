@@ -13,8 +13,8 @@ import {
   DialogTitle,
 } from '../../primitives/dialog'
 import { Button } from '../../primitives/button'
-import type { LockControlStatus } from '@camstack/types'
-import { DeviceFeature } from '@camstack/types'
+import type { LockControlStatus } from '@dominevo/types'
+import { DeviceFeature } from '@dominevo/types'
 import type { ControlPanelProps } from './types'
 
 type LockControlCap = {

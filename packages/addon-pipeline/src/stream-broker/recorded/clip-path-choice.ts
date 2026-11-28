@@ -27,7 +27,7 @@
  * accessor wired has no clip playback. Each answer carries its reason so the
  * broker's log line says which path served, and why.
  */
-import type { CamProfile } from '@camstack/types'
+import type { CamProfile } from '@dominevo/types'
 import type { FeederStateTransition } from './recorded-feeder.js'
 import type { ClipPlaybackHandle, TimelineSessionClipFeeder } from './timeline-session.js'
 

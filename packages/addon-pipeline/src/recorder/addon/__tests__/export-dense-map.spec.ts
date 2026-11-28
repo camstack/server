@@ -11,7 +11,7 @@
  * video was uniform while the log said `denseRanges=5`.
  */
 
-import type { ExportOptions } from '@camstack/types'
+import type { ExportOptions } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   type ExportSegmentTiming,

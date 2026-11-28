@@ -3,7 +3,7 @@
  * with TIER_PREFERENCE (high→mid→low) fallback when the preferred tier is
  * unassigned. See `resolve-tier-slot.ts` for the slice 3b context.
  */
-import type { ProfileSlot } from '@camstack/types'
+import type { ProfileSlot } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 
 import { resolveTierSlot } from '../resolve-tier-slot.js'

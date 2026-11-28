@@ -16,7 +16,7 @@
  * Driven through the real `start()` subscription rather than by reaching at a
  * private method, so the wiring is part of what is under test.
  */
-import { EventCategory } from '@camstack/types'
+import { EventCategory } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { LwaEventGateway, type LwaEventGatewayDeps } from '../lwa-event-gateway.js'

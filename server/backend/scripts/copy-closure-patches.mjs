@@ -2,7 +2,7 @@
 /**
  * Build step: copy the `closure-postinstall` patches into
  * `server/backend/dist/closure-patches/` so they ship inside
- * `@camstack/server`'s tarball (`files: ["dist", ...]`). (D478)
+ * `@dominevo/server`'s tarball (`files: ["dist", ...]`). (D478)
  *
  * npm's `files` cannot reach outside the package directory and `patches/` lives
  * at the repo ROOT, which is the whole reason this step exists. The repo root

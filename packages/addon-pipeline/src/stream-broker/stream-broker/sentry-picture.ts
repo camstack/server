@@ -24,8 +24,8 @@ import {
   renderCourtesyJpeg,
   renderCourtesyOverlayJpeg,
   type CourtesyReason,
-} from '@camstack/server/system/addon-utils'
-import { errMsg, type IScopedLogger } from '@camstack/types'
+} from '@dominevo/server/system/addon-utils'
+import { errMsg, type IScopedLogger } from '@dominevo/types'
 
 /** Which of the two the picture came from. Logged per camera, per wake. */
 export type SentryPictureSource = 'cached-snapshot' | 'generated-card'

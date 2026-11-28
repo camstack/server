@@ -5,7 +5,7 @@
  * falling edge: composer `rose` on a HA doorbell switch re-fires when HA
  * then pushes the real `on` after every provider restart.
  */
-import { DeviceType, type IDeviceRuntimeState } from '@camstack/types'
+import { DeviceType, type IDeviceRuntimeState } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { HaSwitchDevice } from '../ha-switch-device.js'
 import type { HaEntityState } from '../../ha-types.js'
@@ -97,7 +97,7 @@ function makeSwitch(initialRuntimeState: Record<string, unknown> = {}): {
       child: vi.fn(),
       withTags: vi.fn(),
     },
-  } as unknown as import('@camstack/types').DeviceContext
+  } as unknown as import('@dominevo/types').DeviceContext
 
   const device = new HaSwitchDevice(ctx)
   return {

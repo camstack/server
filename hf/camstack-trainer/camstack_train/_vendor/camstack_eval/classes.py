@@ -1,4 +1,4 @@
-"""COCO → CamStack macro classes, as the pipeline maps them
+"""COCO → Dominevo macro classes, as the pipeline maps them
 (`packages/types/src/catalogs/coco-classmap.ts` `COCO_TO_MACRO`). The floors
 and the comparison are per macro class, because that is what the pipeline
 gates on. `package` (COCO luggage proxies) is mapped but not evaluated by

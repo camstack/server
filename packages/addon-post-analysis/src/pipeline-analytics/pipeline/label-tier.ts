@@ -46,7 +46,7 @@ import {
   type LabelAttribution,
   type LabelTier,
   linkedStepOf,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { isInternalMarker, isMacroClass } from './label-utils.js'
 
 /**

@@ -1,5 +1,5 @@
 /**
- * `camstack login --admin` / `--admin-days` are gone (D895: one login, one
+ * `dominevo login --admin` / `--admin-days` are gone (D895: one login, one
  * token). An old invocation still parses, so a script does not break, but it is
  * told in one line that the flag does nothing instead of being silently ignored.
  */
@@ -10,7 +10,7 @@ import {
   legacyLoginFlagWarnings,
 } from '../commands/login-legacy-flags.js'
 
-describe('camstack login legacy --admin / --admin-days', () => {
+describe('dominevo login legacy --admin / --admin-days', () => {
   it('still parses in strict mode, so an old script does not abort', () => {
     expect(() =>
       parseArgs({

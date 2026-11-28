@@ -16,7 +16,7 @@ applies-to:
 
 The operator asked for one new section in the camera settings covering the
 camera's OWN storage and the camera's OWN recording, on both Reolink and
-Hikvision. `recording.cap.ts` does not answer this: that is CamStack's
+Hikvision. `recording.cap.ts` does not answer this: that is Dominevo's
 recorder — our ledger, our locations, our retention — and the authority here is
 the firmware.
 
@@ -63,11 +63,11 @@ every camera. What varies per device is which VALUES that device accepts, which
 schedule's own limits (`granularityMinutes`, `triggers`,
 `supportsOverlappingTriggers`). A field a camera cannot write is still
 rendered, DISABLED, with its reason visible — never hidden, because a missing
-control is indistinguishable from a feature CamStack never built.
+control is indistinguishable from a feature Dominevo never built.
 
 A write a camera cannot honour is REFUSED BY NAME, never accepted and dropped.
 The refusal vocabulary is one pure function, `describeOnboardRefusal`, in
-`@camstack/types`, shared by both providers so the operator gets the same
+`@dominevo/types`, shared by both providers so the operator gets the same
 sentence whoever refuses. A window that is not aligned to the camera's own step
 is refused, not rounded: rounding is how an operator's 06:30 becomes 06:00 with
 nothing saying so.

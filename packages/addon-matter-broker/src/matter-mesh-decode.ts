@@ -15,7 +15,7 @@ import type {
   MeshThreadNeighbor,
   MeshThreadRoute,
   MeshTransport,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { decodePowerSourceKind, MatterAttributeId } from './matter-attr-decode.js'
 import { MatterClusterId } from './matter-cluster-mapping.js'
 

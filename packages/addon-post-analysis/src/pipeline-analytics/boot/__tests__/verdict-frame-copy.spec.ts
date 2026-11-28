@@ -4,7 +4,7 @@
  * and a log line carrying the camera — never a throw.
  */
 
-import type { IScopedLogger, RetrainFrameList, RetrainFrameSelection } from '@camstack/types'
+import type { IScopedLogger, RetrainFrameList, RetrainFrameSelection } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { copyVerdictFrame, type VerdictFrameCopyApi } from '../verdict-frame-copy.js'
 

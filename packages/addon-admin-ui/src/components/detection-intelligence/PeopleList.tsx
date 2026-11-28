@@ -29,7 +29,7 @@ import {
   useFaceGalleryRenameIdentity,
   useItemFormUrl,
   type DataColumn,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { ImagePlus, Loader2, Pencil, Plus, Trash2, UserRound, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'

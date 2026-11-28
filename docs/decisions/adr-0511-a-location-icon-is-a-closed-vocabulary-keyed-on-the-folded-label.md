@@ -42,7 +42,7 @@ argues with the operator who wants the car glyph on a room called
 ## Decision
 
 A location icon is a member of **`LOCATION_ICON_IDS`**, a closed vocabulary in
-`@camstack/types` whose members are the exact kebab-case **lucide icon ids** —
+`@dominevo/types` whose members are the exact kebab-case **lucide icon ids** —
 the vocabulary names the DRAWING, not the room. "Can this surface draw it?" is
 then mechanical (`lucide-react`'s PascalCase export; the viewer's
 `lucide-react-native/icons/<id>` line) instead of a judgement call, and there

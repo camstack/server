@@ -4,7 +4,7 @@
  * capability (D860). A lookup that failed is `null` — unknown, never `[]` —
  * and an unknown package is never a match for a capability filter.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AddonPackageService } from '../addon-package.service.js'
 
@@ -23,9 +23,9 @@ interface LogCall {
   readonly meta: unknown
 }
 
-const TAILSCALE = '@camstack/addon-tailscale'
-const CLOUDFLARE = '@camstack/addon-cloudflare'
-const BROKEN = '@camstack/addon-broken'
+const TAILSCALE = '@dominevo/addon-tailscale'
+const CLOUDFLARE = '@dominevo/addon-cloudflare'
+const BROKEN = '@dominevo/addon-broken'
 
 const SEARCH_BODY = {
   objects: [TAILSCALE, CLOUDFLARE, BROKEN].map((name) => ({

@@ -1,4 +1,4 @@
-import type { FanPreset } from '@camstack/types'
+import type { FanPreset } from '@dominevo/types'
 import type { ReactElement } from 'react'
 import { useTrpcClient } from '../../../contexts/system-context'
 import { useUiText } from '../../../contexts/ui-text'

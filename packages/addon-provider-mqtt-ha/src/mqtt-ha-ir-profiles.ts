@@ -1,4 +1,4 @@
-import type { IrNativeFormat } from '@camstack/types'
+import type { IrNativeFormat } from '@dominevo/types'
 import type { MqttHaEntity } from './mqtt-ha-discovery-types.js'
 
 /** Where the payload of one learn press is taken from. First hit wins. */

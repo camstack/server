@@ -1,12 +1,12 @@
 # Velux Provider
 
-Velux KLF-200 device-provider addon for CamStack. The gateway's windows, roller shutters, blinds and
+Velux KLF-200 device-provider addon for Dominevo. The gateway's windows, roller shutters, blinds and
 awnings become `cover` devices (positional, no tilt), and a roof window's built-in rain sensor becomes a
 `flood` sensor. State is pushed by the gateway, not polled.
 
 <!-- readme:generated:start (derived from the manifest; edit outside this block) -->
 
-Package `@camstack/addon-provider-velux` on npm.
+Package `@dominevo/addon-provider-velux` on npm.
 
 ## What it provides
 
@@ -24,11 +24,11 @@ Edit these from System, Addons, this addon, Settings (a device's own settings ar
 ## Requirements
 
 - Placement: hub-only.
-- A CamStack hub. An agent is used only where the placement above allows it.
+- A Dominevo hub. An agent is used only where the placement above allows it.
 
 ## Documentation
 
-- [docs/architecture/device-model.md](https://github.com/camstack/server/blob/main/docs/architecture/device-model.md)
+- [docs/architecture/device-model.md](https://github.com/dominevo/server/blob/main/docs/architecture/device-model.md)
 
 See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
 
@@ -40,11 +40,11 @@ See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
    Home Assistant's VELUX integration is connected to the same gateway, that is fine for one session each, but
    if anything else (a phone app session, ioBroker, a second hub) is also connected, close it before adding the
    gateway here.
-2. In CamStack: Integrations, add **Velux**. Pick the gateway found on your network (a KLF-200 announces itself
+2. In Dominevo: Integrations, add **Velux**. Pick the gateway found on your network (a KLF-200 announces itself
    as `VELUX_KLF_…`) or type its **host / IP**, then enter the gateway **password**. **Test** checks the login
    and closes its session at once.
 3. The password is the **WiFi / web password printed on the back of the unit**, not the WiFi network password of
-   your router. It is stored in the CamStack keychain; it is never put in an environment variable, a command
+   your router. It is stored in the Dominevo keychain; it is never put in an environment variable, a command
    line or a log line.
 4. Open the integration's discovery. The KLF-200 appears as one **Gateway** device (reboot, firmware, link to its
    web page); every window, shutter, blind and awning appears as a cover. A window with a rain sensor appears as
@@ -72,8 +72,8 @@ What this addon does about it:
   exponential backoff: 2 s, 4 s, 8 s ... capped at 5 minutes. A refused password waits the full 5 minutes
   before the next try, so a wrong password does not hammer the unit.
 
-So with Home Assistant connected (1 session) and CamStack (1 session) the gateway is full. A third client
-(for example a phone app on the same network, or a second CamStack hub) will be refused.
+So with Home Assistant connected (1 session) and Dominevo (1 session) the gateway is full. A third client
+(for example a phone app on the same network, or a second Dominevo hub) will be refused.
 
 ## Certificate
 
@@ -84,7 +84,7 @@ certificate, expired or not, is rejected. There is no `rejectUnauthorized: false
 
 ## Cover mapping
 
-| KLF-200 actuator | CamStack | Notes |
+| KLF-200 actuator | Dominevo | Notes |
 | --- | --- | --- |
 | window opener | `cover` (class `window`) | position 0 = closed, 100 = open |
 | roller shutter, swinging shutter, dual shutter | `cover` (`shutter`) | a dual shutter is one cover here |
@@ -95,7 +95,7 @@ certificate, expired or not, is rejected. There is no `rejectUnauthorized: false
 | window opener with rain sensor | extra `flood` sensor ("<name> rain") | role: leak sensor |
 | lights, locks, switches, heating | not exposed | |
 
-The wire position runs 0x0000 .. 0xC800 where **0 is fully open**, for every actuator type; CamStack's cover is
+The wire position runs 0x0000 .. 0xC800 where **0 is fully open**, for every actuator type; Dominevo's cover is
 0 = closed .. 100 = open, so `open% = round(100 * (1 - raw / 0xC800))`. A raw value above 0xC800 is a protocol
 marker (target, current, ignore), reported as an unknown position and shown as `stopped`, never `closed`.
 `stop` is sent as the stop marker 0xD200.

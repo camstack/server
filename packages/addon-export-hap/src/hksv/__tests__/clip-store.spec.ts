@@ -12,7 +12,7 @@ import { mkdtemp, readdir, readFile, rm, stat, writeFile } from 'node:fs/promise
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { ClipRemuxer } from '../clip-remux.js'
 import type { ClipThumbnailMinter, HksvClipBounds } from '../clip-store.js'

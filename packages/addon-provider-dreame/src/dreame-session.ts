@@ -5,7 +5,7 @@
  */
 
 import { DreameAuthError } from '@apocaliss92/nodedreame'
-import { IntegrationSessionReporter, type SessionLossReason } from '@camstack/types'
+import { IntegrationSessionReporter, type SessionLossReason } from '@dominevo/types'
 
 export function classifyDreameSessionError(err: unknown): SessionLossReason | null {
   return err instanceof DreameAuthError ? 'auth-rejected' : null

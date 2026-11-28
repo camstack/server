@@ -7,8 +7,8 @@
  * refuses to delete or disable the last enabled location of a type, so an operator cannot
  * produce "marker, zero rows" through the UI.
  */
-import type { StorageLocationDeclaration } from '@camstack/types'
-import { createRecordsAccess, createSecretsAccess, defineAddonMigrations } from '@camstack/types'
+import type { StorageLocationDeclaration } from '@dominevo/types'
+import { createRecordsAccess, createSecretsAccess, defineAddonMigrations } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   makeFakeKeychain,

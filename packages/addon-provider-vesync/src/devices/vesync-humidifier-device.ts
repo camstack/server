@@ -11,7 +11,7 @@ import {
   type IDevice,
   type InferNativeProvider,
   registerPowerSwitch,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { vesyncHumidifierSchema, type VeSyncSensorKind, type VeSyncToggleKind } from '../config.js'
 import type { VeSyncClient, VeSyncHumidifierSnapshot } from '../vesync-client-contract.js'
 import { vesyncAccounts } from '../vesync-account-resolver.js'
@@ -45,7 +45,7 @@ interface AccessoryPlan {
 }
 
 /**
- * One VeSync humidifier as a CamStack {@link DeviceType.Humidifier} device. Registers the `humidifier` cap (power, target humidity, mode, the
+ * One VeSync humidifier as a Dominevo {@link DeviceType.Humidifier} device. Registers the `humidifier` cap (power, target humidity, mode, the
  * measured humidity) and fans three accessory children out:
  *   - display   → {@link DeviceType.Switch} ({@link VeSyncToggleDevice})
  *   - humidity  → {@link DeviceType.Sensor} ({@link VeSyncSensorDevice}, humidity-sensor)

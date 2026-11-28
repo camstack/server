@@ -10,8 +10,8 @@
  * when it is not available right now, so reopening a profile never silently
  * rewrites where it runs.
  */
-import type { LlmRuntimeNode } from '@camstack/types'
-import { Badge, useSystem, Button } from '@camstack/ui-library'
+import type { LlmRuntimeNode } from '@dominevo/types'
+import { Badge, useSystem, Button } from '@dominevo/ui-library'
 import { useQuery } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'

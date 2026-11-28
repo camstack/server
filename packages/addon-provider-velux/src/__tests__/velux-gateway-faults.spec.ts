@@ -9,7 +9,7 @@ import {
   DeviceType,
   type ErrorStatus,
   type IDeviceRuntimeState,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { VeluxGatewayDevice } from '../devices/velux-gateway-device.js'
 import { VELUX_GATEWAY_FAULT_TYPES, VELUX_UNREACHABLE_FAULT_MS } from '../velux-gateway-faults.js'

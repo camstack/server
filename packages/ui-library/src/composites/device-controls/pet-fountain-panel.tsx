@@ -18,7 +18,7 @@
  */
 import { AlertTriangle, Droplet, Droplets, Pause, Play, Timer } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { DeviceType, timedRunLimitOf } from '@camstack/types'
+import { DeviceType, timedRunLimitOf } from '@dominevo/types'
 import { useUiText } from '../../contexts/ui-text'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
 import { useDeviceCommand } from '../../hooks/use-device-command'

@@ -11,7 +11,7 @@ import {
   normalizeTags,
   type RecordKindHandle,
   type RecordsAccess,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { ActionsStore } from './actions-store.js'
 import type { CoreBlockStore } from './core-block-store.js'
 import { coreBlocksRecordKinds, type TemplateRowBody } from './record-kinds.js'

@@ -1,4 +1,4 @@
-import type { ConnectionEndpoint } from '@camstack/types'
+import type { ConnectionEndpoint } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   buildConnectLink,

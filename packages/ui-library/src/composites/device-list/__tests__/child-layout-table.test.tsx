@@ -6,7 +6,7 @@
  * existing flat accessory sub-rows (no section rows).
  */
 
-import type { ChildLayout } from '@camstack/types'
+import type { ChildLayout } from '@dominevo/types'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen } from '@testing-library/react'
 import type { ReactNode } from 'react'

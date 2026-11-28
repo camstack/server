@@ -1,4 +1,4 @@
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { mergeRanges } from './merge-ranges.js'
 import { parseSegmentPath } from './segment-path.js'
 import type { Accounting, FootagePile, Range, SegmentRow } from './types.js'

@@ -6,7 +6,7 @@ import {
   ROOM_EXAMPLE_TEMPERATURE_SOURCES,
   roomCompositionExample,
   type SourceReading,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { CompositionRuntime } from '../composition-runtime.js'
 import { MAX_TIMER_DELAY_MS, NodeDeadlineTimer } from '../deadline-timer.js'

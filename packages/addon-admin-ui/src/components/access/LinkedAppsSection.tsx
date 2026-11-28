@@ -6,12 +6,12 @@
  * `auth.revokeCredentials` (`oauth-session`): active → mark revoked;
  * already-revoked → delete (Remove revoked).
  */
-import type { TokenScope } from '@camstack/types'
+import type { TokenScope } from '@dominevo/types'
 import {
   useConfirm,
   useUserManagementListOauthSessions,
   useUserManagementRevokeOauthSession,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { Link2, Trash2 } from 'lucide-react'
 import { useMemo, useState, type ReactNode } from 'react'

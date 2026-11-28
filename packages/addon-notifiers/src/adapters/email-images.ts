@@ -11,8 +11,8 @@ import type {
   EmailImagePart,
   IScopedLogger,
   PreparedNotification,
-} from '@camstack/types'
-import { EMAIL_IMAGE_MAX_COUNT, EMAIL_IMAGE_MAX_TOTAL_BYTES } from '@camstack/types'
+} from '@dominevo/types'
+import { EMAIL_IMAGE_MAX_COUNT, EMAIL_IMAGE_MAX_TOTAL_BYTES } from '@dominevo/types'
 import { type FetchedAttachment, fetchAttachmentBytes } from '../http.js'
 
 export interface EmailAdapterDeps {

@@ -8,7 +8,7 @@ import {
   InstanceInUseError,
   makeInMemoryRecords,
   SMTP_INBOUND_KIND,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { mailboxLinkStoreOver } from '../mailbox-link-store.js'
 import { buildReolinkInstances, reolinkRecordKinds } from '../reolink-instances.js'

@@ -8,7 +8,7 @@ import type { AmcrestEvent, AmcrestEventHandlers } from './amcrest-cgi-client.js
  * arrives (D669). The camera sends one part per edge and then says nothing
  * until the next edge, so a reader that waits for the following boundary is
  * exactly one event behind: it reported every `Start` at the firmware's `Stop`
- * and every `Stop` at the next `Start`, and CamStack recorded the quiet
+ * and every `Stop` at the next `Start`, and Dominevo recorded the quiet
  * between episodes instead of the episodes.
  *
  * A part with no `Content-Length` header has no other end than the next

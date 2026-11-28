@@ -1,4 +1,4 @@
-import { BaseDevice, DeviceType, type DeviceContext, type DeviceFeature } from '@camstack/types'
+import { BaseDevice, DeviceType, type DeviceContext, type DeviceFeature } from '@dominevo/types'
 import { mqttHaDeviceSchema } from './mqtt-ha-device-config.js'
 
 /**

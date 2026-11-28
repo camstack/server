@@ -12,7 +12,7 @@
  * still wins in tree-builder; the face floor has no operator input (D662).
  */
 import { describe, it, expect } from 'vitest'
-import type { IInferenceEngine, ModelCatalogEntry, PipelineDefaultStep } from '@camstack/types'
+import type { IInferenceEngine, ModelCatalogEntry, PipelineDefaultStep } from '@dominevo/types'
 import { FACE_DETECTION_MODELS } from '../registry/model-catalogs.js'
 import { getStepDefinition } from '../registry/step-definitions.js'
 import { resolveModelDefaultConfidence } from '../registry/effective-confidence.js'

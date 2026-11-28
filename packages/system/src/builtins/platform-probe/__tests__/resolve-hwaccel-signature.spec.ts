@@ -11,8 +11,8 @@
  *     without a cast, and `'none'` passes through as the disable sentinel;
  *   - an unavailable kernel resolver degrades to an EXPLAINED empty list.
  */
-import type { SystemEvent } from '@camstack/types'
-import { platformProbeCapability } from '@camstack/types'
+import type { SystemEvent } from '@dominevo/types'
+import { platformProbeCapability } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 
 vi.mock('../platform-scorer.js', () => ({

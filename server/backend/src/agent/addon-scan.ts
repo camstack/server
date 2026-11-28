@@ -3,14 +3,14 @@
  *
  * ── The single-copy collapse, finally on the agent ─────────────────────────
  * The hub stopped loading framework builtins from a physical
- * `<addonsDir>/@camstack/server/system` on 2026-07-18: it loads them from the ACTIVE
+ * `<addonsDir>/@dominevo/server/system` on 2026-07-18: it loads them from the ACTIVE
  * CLOSURE it is itself running (`addon-registry.service.ts`, `loadFromAddonDir`
- * on the closure dir, then `loadFromDirectory(addonsDir, ['@camstack/server'])`
+ * on the closure dir, then `loadFromDirectory(addonsDir, ['@dominevo/server'])`
  * so the copy is skipped). The reason is in that file's comment — *"that copy
  * drifted because no update channel refreshed it"*.
  *
  * The agent never got the change, and drifted exactly as predicted. Measured
- * 2026-08-11: agent-a carried `@camstack/server/system@1.2.61` and macmini
+ * 2026-08-11: agent-a carried `@dominevo/server/system@1.2.61` and macmini
  * `1.2.62` in their addon roots while both ran a `1.2.78` closure. Nothing
  * refreshed them, because `seedBuiltinsFromClosure` (now deleted) only wrote
  * the copy when it was ABSENT — a self-heal that guaranteed a copy existed and
@@ -27,7 +27,7 @@
  * ── The fallback ──────────────────────────────────────────────────────────
  * If the closure cannot be resolved, the copy is NOT skipped and the node boots
  * from it. In a running agent this is near-impossible — `agent/main.ts`
- * statically imports `@camstack/server`, so if the process exists the walk-up
+ * statically imports `@dominevo/server`, so if the process exists the walk-up
  * resolves — but a node with neither source must fail through the D87 guard
  * (`assertRequiredInfraResolved`, which names every missing required cap),
  * never through a silent "no addon packages found" early return.
@@ -37,7 +37,7 @@ import * as path from 'node:path'
 import { LEGACY_SYSTEM_PACKAGE_NAME } from '../legacy-package-names.js'
 
 /** The framework builtins package. Loaded from the closure, never from a copy. */
-export const BUILTINS_PACKAGE = '@camstack/server'
+export const BUILTINS_PACKAGE = '@dominevo/server'
 
 function isDir(p: string): boolean {
   try {
@@ -65,7 +65,7 @@ export function resolveAddonPackageDirs(
   for (const name of fs.readdirSync(addonsDir)) {
     const full = path.join(addonsDir, name)
     if (name.startsWith('@') && isDir(full)) {
-      // Scoped packages: @camstack/addon-xyz
+      // Scoped packages: @dominevo/addon-xyz
       for (const sub of fs.readdirSync(full)) {
         const subFull = path.join(full, sub)
         if (skip.has(`${name}/${sub}`)) continue

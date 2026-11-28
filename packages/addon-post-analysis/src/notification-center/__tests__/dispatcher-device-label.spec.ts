@@ -2,7 +2,7 @@
  * `{{device}}`, `{{deviceName}}` and everything built from the device's name
  * stay the BARE name; only `{{deviceLabel}}` carries the translated type.
  */
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import { NcDispatcher, type NcSendInput } from '../dispatcher.js'

@@ -5,8 +5,8 @@
  * chips, formats ONNX / OpenVINO / CoreML / TFLite on one registry id per chip.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { AddonPageProps } from '@camstack/ui-library'
-import type { ModelFormat } from '@camstack/types'
+import type { AddonPageProps } from '@dominevo/ui-library'
+import type { ModelFormat } from '@dominevo/types'
 import {
   ensureModelFormats,
   importPluginCatalogCatalogModel,
@@ -36,7 +36,7 @@ import {
   isDisplayNameInvalid,
 } from '../components/DisplayNameField.js'
 import { Trans, useT } from '../i18n/index.js'
-import { Button, Select } from '@camstack/ui-library'
+import { Button, Select } from '@dominevo/ui-library'
 
 interface PluginCatalogTabProps {
   readonly trpc: AddonPageProps['trpc']

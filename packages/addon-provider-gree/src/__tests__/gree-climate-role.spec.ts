@@ -7,7 +7,7 @@ import {
   DeviceRole,
   DeviceType,
   type IDeviceRuntimeState,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { GreeAcDevice } from '../devices/gree-ac-device.js'
 

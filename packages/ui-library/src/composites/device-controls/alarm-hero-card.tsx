@@ -4,7 +4,7 @@ import { Shield, ShieldCheck, ShieldAlert, ShieldOff } from 'lucide-react'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
 import { useUiText, type UiTextFn } from '../../contexts/ui-text'
 import { cn } from '../../lib/cn'
-import type { AlarmPanelStatus, AlarmState, AlarmArmMode } from '@camstack/types'
+import type { AlarmPanelStatus, AlarmState, AlarmArmMode } from '@dominevo/types'
 import type { DeviceControlProps } from './control-registry'
 
 // ── Cap surface ───────────────────────────────────────────────────────────────

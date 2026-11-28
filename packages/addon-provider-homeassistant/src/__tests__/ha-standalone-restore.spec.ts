@@ -6,7 +6,7 @@ import {
   type IDevice,
   type IDeviceRuntimeState,
   type SavedDevice,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   isContainerEntityChildSaved,
   isStandaloneEntitySaved,

@@ -23,7 +23,7 @@ import {
   cameraSensorRefKey,
   errMsg,
   type IScopedLogger,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   type CameraSensorsResolution,
   type CameraSensorsResolverPorts,

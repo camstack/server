@@ -22,7 +22,7 @@
  *    is evicted oldest-first and released, so `holdOverflow` in the worker
  *    keeps meaning "the runner stopped answering", not "the runner forgot".
  */
-import type { FrameHandle } from '@camstack/types'
+import type { FrameHandle } from '@dominevo/types'
 import type { NativeCropRequester } from '../session-decode/session-decode-pump.js'
 
 /** The per-frame binding key — the same identity the retention handle carries. */

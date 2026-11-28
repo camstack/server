@@ -24,7 +24,7 @@
 
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button } from '@camstack/ui-library'
+import { Button } from '@dominevo/ui-library'
 import {
   RULE_SCOPE_MODES,
   type RuleScopeDraft,

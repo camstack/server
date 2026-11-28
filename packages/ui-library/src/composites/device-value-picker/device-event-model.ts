@@ -11,7 +11,7 @@ import {
   type DeviceFiredLeaf,
   type EventVocabularyEntry,
   readEventVocabulary,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** The cap whose slice carries a device's event vocabulary. */
 export const DEVICE_EVENT_CAP = 'event-emitter'

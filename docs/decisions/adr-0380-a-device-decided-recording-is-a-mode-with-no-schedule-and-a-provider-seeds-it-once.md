@@ -99,8 +99,8 @@ may SEED it once, gated on a durable mark that is not the value.** Concretely:
 
 ## Consequences
 
-- **`@camstack/types` changes, so nothing here is live until a
-  `@camstack/server` carrying it is installed.** The hub validates every tRPC
+- **`@dominevo/types` changes, so nothing here is live until a
+  `@dominevo/server` carrying it is installed.** The hub validates every tRPC
   input with ITS copy of `RecordingConfigSchema`, which is `.strict()`:
   `deviceDecision` is REJECTED — not stripped — by the current hub, so the
   provider's seed fails loudly on an un-upgraded server rather than writing a

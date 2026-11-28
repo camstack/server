@@ -17,7 +17,7 @@ import {
   FormField,
   Input,
   TagInput,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { Loader2 } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'

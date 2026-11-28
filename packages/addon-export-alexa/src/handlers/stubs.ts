@@ -13,6 +13,6 @@ export function notImplemented(header: DirectiveHeader): AlexaErrorEnvelope {
   return errorEnvelope(
     header,
     'INVALID_DIRECTIVE',
-    `${header.namespace}/${header.name} is not implemented yet — coming in the next CamStack release`,
+    `${header.namespace}/${header.name} is not implemented yet — coming in the next Dominevo release`,
   )
 }

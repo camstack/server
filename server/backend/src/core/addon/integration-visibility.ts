@@ -16,8 +16,8 @@ import type {
   IIntegrationRegistry,
   Integration,
   IScopedLogger,
-} from '@camstack/types'
-import { bareAddonId } from '@camstack/types'
+} from '@dominevo/types'
+import { bareAddonId } from '@dominevo/types'
 
 export interface IntegrationVisibilityDeps {
   /** The unfiltered store. */

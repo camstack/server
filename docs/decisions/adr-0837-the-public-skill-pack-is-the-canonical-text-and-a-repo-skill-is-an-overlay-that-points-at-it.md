@@ -15,12 +15,12 @@ applies-to:
 
 ## Context
 
-The pack (`packages/develop/skills/`, shipped with `@camstack/develop` and served
-by `@camstack/mcp-develop`) began as a sanitized copy of the repo skills. Two
+The pack (`packages/develop/skills/`, shipped with `@dominevo/develop` and served
+by `@dominevo/mcp-develop`) began as a sanitized copy of the repo skills. Two
 copies of one procedure drift, and they did: on 2026-10-09 the repo
 `camstack-addon` was 358 lines against the pack's 126, and the repo
 `add-capability` told authors to deploy `packages/types` after a capability
-change when the hub reads the definitions from `@camstack/system`. Whichever copy
+change when the hub reads the definitions from `@dominevo/system`. Whichever copy
 an agent loaded was partly wrong.
 
 The 2026-10-09 skills plan chose the opposite direction: the repo is canonical
@@ -46,7 +46,7 @@ overlay. The pack never links outside itself.
 ## Consequences
 
 - An edit to a public procedure is made once, in `packages/develop/skills/`,
-  and ships with the next `@camstack/develop` publish.
+  and ships with the next `@dominevo/develop` publish.
 - Skills that are inherently repo-internal (`camstack-workflow`,
   `camstack-server-change`, `camstack-diagnose`, `camstack-publish-ci`,
   `camstack-hub-image-deploy`, the UI skills) stay in `.claude/skills/` and are

@@ -41,7 +41,7 @@ import {
   type LogTags,
   planComposition,
   withDefaultRunning,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { declarationFor, placeholderDeclaration, shapeOf } from './composition-declarations.js'
 import type { TargetDescriptions } from './existing-target.js'
 import type { SourceResolution } from './source-tracker.js'

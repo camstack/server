@@ -10,7 +10,7 @@
  * No custom admin page — the operator-facing UI is the generic
  * `/system/mesh-networks` page driven entirely by the cap + addon
  * settings schema. Serve / Funnel ingresses are owned by a SEPARATE
- * addon (`@camstack/addon-tailscale-ingress`) which depends on this
+ * addon (`@dominevo/addon-tailscale-ingress`) which depends on this
  * one being installed + the host being joined.
  *
  * `tailscaled` itself is NOT bundled — operators install it from
@@ -36,7 +36,7 @@ import type {
   NetworkEndpoint,
   ProviderRegistration,
   ScopedSettingsScope,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   BaseAddon,
   BOOT_RECOVERY_BACKOFF_MS,
@@ -51,7 +51,7 @@ import {
   REDACTED_SECRET,
   RevConflictError,
   SECRET_CLEAR,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 import { readRawKeys } from '../settings-per-node.js'
 import {
@@ -1217,7 +1217,7 @@ export class TailscaleClientAddon extends BaseAddon<TailscaleConfig> {
                 '<a href="https://tailscale.com/download">tailscale.com/download</a>.' +
                 ' On macOS the GUI app ships the CLI inside the .app bundle.' +
                 ' For Serve / Funnel ingress, install ' +
-                '<code>@camstack/addon-tailscale-ingress</code> separately.',
+                '<code>@dominevo/addon-tailscale-ingress</code> separately.',
               variant: 'info' as const,
             },
             this.field({

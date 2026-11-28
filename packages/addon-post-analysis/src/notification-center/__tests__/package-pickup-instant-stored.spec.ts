@@ -15,9 +15,9 @@
  *    as UNKNOWN — the dispatcher's fallback line, never a guessed instant.
  */
 
-import type { InMemoryRecords } from '@camstack/types'
-import type { ObjectEvent } from '@camstack/types'
-import { NcRuleInputSchema } from '@camstack/types'
+import type { InMemoryRecords } from '@dominevo/types'
+import type { ObjectEvent } from '@dominevo/types'
+import { NcRuleInputSchema } from '@dominevo/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import { NotificationCenter } from '../index.js'

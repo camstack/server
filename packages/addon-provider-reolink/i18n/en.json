@@ -29,7 +29,7 @@
   "creation.s_connection.uid.description": "Needed for battery / UDP cameras that are not on the same LAN.",
   "creation.s_events.title": "Events",
   "creation.s_events.autoConfigureEventPush.label": "Auto-configure event push on add",
-  "creation.s_events.autoConfigureEventPush.description": "Once, right after the camera is added, set up its local push (webhook or camera mailbox) so motion and AI events reach CamStack.",
+  "creation.s_events.autoConfigureEventPush.description": "Once, right after the camera is added, set up its local push (webhook or camera mailbox) so motion and AI events reach Dominevo.",
   "osdStateBanner.osdSnapshotState.label": "OSD state",
   "fields.osdChannelName.label": "Channel name",
   "osdSection.s_osd.title": "OSD overlay",

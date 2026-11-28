@@ -13,7 +13,7 @@ import {
   type CompositionTarget,
   type DeviceRole,
   type DeviceType,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export interface EditorDraft {
   readonly target: CompositionTarget

@@ -13,7 +13,7 @@ import {
 } from '../command-routes.js'
 import { capCommandEntities, capEntities, CAP_ENTITY_MAP } from '../entity-catalog.js'
 import { derivedEntityId, derivedExtraEntityId } from '../topics.js'
-import { SWITCH_DEFAULT_OPTIONS, type ClimateControlStatus } from '@camstack/types'
+import { SWITCH_DEFAULT_OPTIONS, type ClimateControlStatus } from '@dominevo/types'
 
 const CAMERA: CommandTarget = {
   deviceId: 101,
@@ -1545,7 +1545,7 @@ describe('applyCapCommand', () => {
   })
 
   it('surfaces a REFUSED arm as a failure, never as a silent success', async () => {
-    // CamStack's own panel throws `NcAlarmArmRefusedError` when a contact the
+    // Dominevo's own panel throws `NcAlarmArmRefusedError` when a contact the
     // mode covers is open. Reporting success over it would leave Home
     // Assistant showing `armed_away` on a house with an open door.
     const device: CapCommandDevice = {

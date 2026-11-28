@@ -21,7 +21,7 @@
  *    killed by a later shrink (spawn-only gate), and the gate is a no-op
  *    with no frame context.
  */
-import type { BoundingBox, SpatialDetection } from '@camstack/types'
+import type { BoundingBox, SpatialDetection } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { sequentialTrackIdMinter } from '../../track-id.js'
 import type { SpawnRefusalFacts } from '../../tracker/spawn-refusal.js'

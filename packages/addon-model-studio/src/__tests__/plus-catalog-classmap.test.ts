@@ -4,7 +4,7 @@
  * dropped by the executor as an unmapped class.
  */
 import { describe, expect, it } from 'vitest'
-import { PLUS_CATALOG_TO_MACRO, PLUS_CATALOG_UNMAPPED_LABELS } from '@camstack/types'
+import { PLUS_CATALOG_TO_MACRO, PLUS_CATALOG_UNMAPPED_LABELS } from '@dominevo/types'
 import { buildPlusCatalogCatalogDescriptor } from '../plus-catalog/plus-catalog-catalog.js'
 import {
   buildPlusCatalogDescriptor,
@@ -12,7 +12,7 @@ import {
 } from '../plus-catalog/plus-catalog-import.js'
 import { plusInfoToDescriptor } from '../plus-catalog/plus-catalog-api.js'
 import { buildRegistrationDescriptor } from '../plus-catalog/registration.js'
-import { describeRootSupplies, type ModelCatalogEntry } from '@camstack/types'
+import { describeRootSupplies, type ModelCatalogEntry } from '@dominevo/types'
 import { rowSupplies, toModelRows } from '../ui/model-studio-ui.js'
 
 const PLUS_LABELS = ['person', 'car', 'deer', 'package', 'face'] as const

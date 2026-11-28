@@ -10,8 +10,8 @@ last-verified: 2026-10-28
 
 ## Context
 
-A `v*.*.*` tag builds five Electron legs — the full CamStack desktop app (mac
-arm64, mac x64, linux x64, each staging the `@camstack/server` closure) and the
+A `v*.*.*` tag builds five Electron legs — the full Dominevo desktop app (mac
+arm64, mac x64, linux x64, each staging the `@dominevo/server` closure) and the
 viewer shell (mac arm64, linux x64, no closure) — and attaches all of it,
 ~2.2 GB, to one GitHub Release.
 

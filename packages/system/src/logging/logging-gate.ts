@@ -43,7 +43,7 @@
  * neither can be read as overriding the other.
  */
 
-import { LOG_LEVEL_RANK, type LogLevel } from '@camstack/types'
+import { LOG_LEVEL_RANK, type LogLevel } from '@dominevo/types'
 
 /** What a hub emits when nothing is configured anywhere. */
 export const DEFAULT_LOG_LEVEL: LogLevel = 'debug'

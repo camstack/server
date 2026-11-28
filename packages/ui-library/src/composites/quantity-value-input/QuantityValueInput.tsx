@@ -11,7 +11,7 @@
  *
  * With one selectable unit there is no picker: the unit is a suffix.
  */
-import { type QuantityValue, type ReadingQuantity, unitDimension } from '@camstack/types'
+import { type QuantityValue, type ReadingQuantity, unitDimension } from '@dominevo/types'
 import { type ReactNode, useState } from 'react'
 import { Input } from '../../primitives/input.js'
 import { UnitPicker } from '../unit-picker/UnitPicker.js'

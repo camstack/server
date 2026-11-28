@@ -9,7 +9,7 @@
  * never echoed.
  */
 import type { IncomingHttpHeaders } from 'node:http'
-import { CatalogLangSchema, DEFAULT_CATALOG_LANG, type CatalogLang } from '@camstack/types'
+import { CatalogLangSchema, DEFAULT_CATALOG_LANG, type CatalogLang } from '@dominevo/types'
 import { langFromAcceptLanguage } from '../auth/app-page-strings.js'
 
 export interface RequestLangInput {

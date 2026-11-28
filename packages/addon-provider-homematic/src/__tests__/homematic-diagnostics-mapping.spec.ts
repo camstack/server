@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { DeviceType, DeviceRole } from '@camstack/types'
+import { DeviceType, DeviceRole } from '@dominevo/types'
 import type { HmDataPoint, HmDevice, HmValue } from 'nodehomematic'
 import {
   mapMaintenanceChannel,

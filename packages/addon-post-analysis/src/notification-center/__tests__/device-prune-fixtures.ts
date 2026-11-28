@@ -5,7 +5,7 @@
  * a shape the store would refuse — a planner that passed against a hand-built
  * object the schema rejects would be the green-suite-is-not-proof failure.
  */
-import { type NcRule, NcRuleSchema, type TimelapseRule, TimelapseRuleSchema } from '@camstack/types'
+import { type NcRule, NcRuleSchema, type TimelapseRule, TimelapseRuleSchema } from '@dominevo/types'
 import { type NcSummaryRule, NcSummaryRuleSchema } from '../summary/summary-rule.js'
 import type { NcPruneSnapshot } from '../device-prune.js'
 

@@ -1,4 +1,4 @@
-import { DeviceType } from '@camstack/types'
+import { DeviceType } from '@dominevo/types'
 import type {
   HeatPumpCircuit,
   HeatPumpCircuitKind,
@@ -9,7 +9,7 @@ import type {
   HeatPumpStatus,
   HeatPumpSystem,
   IconKey,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type {
   HomeComBridgeDhwCircuit,
   HomeComBridgeFault,

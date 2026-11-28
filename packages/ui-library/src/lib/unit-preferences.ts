@@ -12,7 +12,7 @@ import {
   DISPLAY_PREFERENCES,
   type DisplayPreference,
   type ReadingQuantity,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 export const UNIT_PREFERENCES_NAMESPACE = 'admin.units'
 

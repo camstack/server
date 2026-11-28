@@ -9,8 +9,8 @@ import {
   getDebugInterest,
   type LogChannelDescriptor,
   type LogChannelWindow,
-} from '@camstack/types'
-import { LoggingGate } from '@camstack/server/system'
+} from '@dominevo/types'
+import { LoggingGate } from '@dominevo/server/system'
 import { LoggingSettingsService, type LogChannelPlane } from '../api/core/logging-settings.js'
 import type { RequestCensusService } from '../api/core/request-census-settings.js'
 import type { SettingsStoreGateway } from '../api/core/site-location.js'

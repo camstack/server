@@ -13,11 +13,11 @@
  * An address — a DETECTED endpoint or an operator-entered CUSTOM address —
  * carries role flags, the same way for both:
  *
- * - `appConnections` (many) — what the CamStack apps try when connecting.
+ * - `appConnections` (many) — what the Dominevo apps try when connecting.
  *   Automatic: every LAN IPv4 address plus the public tunnel — unless the
  *   tunnel's address is not stable (a Quick tunnel, D860).
  * - `notificationTaps` (one) — ONLY where tapping a notification opens.
- *   Automatic: the CamStack app link (D709); a hub address may be flagged.
+ *   Automatic: the Dominevo app link (D709); a hub address may be flagged.
  * - `publicEndpoint` (one) — every URL that must work from OUTSIDE the home
  *   network: sign-in links, OIDC / OAuth2 callbacks, the passkey relying
  *   party, account linking, and the notification centre's action buttons,
@@ -213,7 +213,7 @@ export function checkRoleAddress(
       ? { ok: true, baseUrl: CAMSTACK_APP_LINK_ORIGIN }
       : {
           ok: false,
-          reason: 'The CamStack app link is not a hub address — only notification taps can use it.',
+          reason: 'The Dominevo app link is not a hub address — only notification taps can use it.',
         }
   }
   const check = validateCustomAddress(baseUrl)
@@ -325,7 +325,7 @@ export function resolvePublicEndpoint(
   return resolveHubRole(endpoints, 'publicEndpoint', flags.publicEndpoint, remembered)
 }
 
-/** `notificationTaps`: the flagged address, else the CamStack app link (D709). */
+/** `notificationTaps`: the flagged address, else the Dominevo app link (D709). */
 export function resolveNotificationTapAddress(flags: HubAddressFlags): HubAddressRoleResolution {
   const flagged = validFlag('notificationTaps', flags.notificationTaps)
   if (flagged !== null && !isAppLinkBase(flagged)) {

@@ -1,4 +1,4 @@
-import type { AddonMigration } from '@camstack/types'
+import type { AddonMigration } from '@dominevo/types'
 import { type DropPublicHubUrlPorts, planDropPublicHubUrl } from './drop-public-hub-url.js'
 import {
   type DropMovedExposurePorts,

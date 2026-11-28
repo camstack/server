@@ -20,7 +20,7 @@
 import { spawn, type ChildProcess } from 'node:child_process'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
-import type { IAddonDepsManager, IScopedLogger } from '@camstack/types'
+import type { IAddonDepsManager, IScopedLogger } from '@dominevo/types'
 
 /**
  * Tailscale static-build version to download for onboard mode.

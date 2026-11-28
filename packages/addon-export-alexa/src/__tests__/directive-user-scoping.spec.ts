@@ -5,7 +5,7 @@
  * handler runs. Discovery returns only what that user may see, shaped to what
  * that user may drive.
  */
-import type { AddonContext, DeviceMetaLike, IScopedLogger, TokenScope } from '@camstack/types'
+import type { AddonContext, DeviceMetaLike, IScopedLogger, TokenScope } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { AlexaAccessGate, type AlexaUserGrant } from '../access/access-gate.js'
 import {
@@ -454,7 +454,7 @@ describe('R4 (D779): the object-detection directives go through the gate', () =>
     })
   })
 
-  it('SetObjectDetectionClasses needs only view (it changes what Alexa is told, nothing in CamStack)', async () => {
+  it('SetObjectDetectionClasses needs only view (it changes what Alexa is told, nothing in Dominevo)', async () => {
     const r = await dispatchDirective(setClasses('10'), makeDeps(), identity('viewer'))
     expect(eventOf(r.body).name).toBe('Response')
   })

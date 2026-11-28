@@ -10,13 +10,13 @@ library_name: ultralytics
 
 <!-- Tracked in camstack/server as hf/camstack-trainer/; edit it there, not on the Hub. The vendored code under camstack_train/_vendor/ is a byte-identical copy of camstack/server sources, guarded by scripts/check-trainer-vendor.ts. -->
 
-# CamStack trainer
+# Dominevo trainer
 
-The container a [CamStack](https://camstack-docs.zentik.app) hub runs on a
+The container a [Dominevo](https://camstack-docs.zentik.app) hub runs on a
 cloud GPU (Modal first) to fine-tune its YOLOv9 root detector on the operator's
 own annotated frames. It evaluates the result against the model the cameras
 run today, proposes per-class confidence floors, and exports every format a
-CamStack node runs (ONNX, OpenVINO FP16 and INT8, Core ML FP16).
+Dominevo node runs (ONNX, OpenVINO FP16 and INT8, Core ML FP16).
 
 **Licence: AGPL-3.0.** It imports Ultralytics (AGPL-3.0), and a model it
 fine-tunes is an Ultralytics derivative. The hub never imports this package: it
@@ -68,7 +68,7 @@ Exit codes: 0 ok · 64 bad job · 65 dataset unusable · 70 internal.
    calibrated on the user's own train frames letterboxed exactly like the
    runtime, Core ML FP16. A failing optional format is dropped with its
    reason; ONNX failing fails the job.
-5. **Evaluate** — the CamStack evaluation harness (vendored from
+5. **Evaluate** — the Dominevo evaluation harness (vendored from
    `scripts/eval/`) runs the baseline and the candidate with the inference
    pool's own preprocess and decode on the complete holdout frames, and the
    D739 rule proposes floors. INT8 is dropped when its mAP50 falls more than

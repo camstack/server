@@ -4,8 +4,8 @@
  * `mode` through the policy module (D385) — a location is frozen when it is
  * not a write target.
  */
-import { mayWriteToLocation } from '@camstack/types'
-import type { StorageLocation } from '@camstack/types'
+import { mayWriteToLocation } from '@dominevo/types'
+import type { StorageLocation } from '@dominevo/types'
 
 export function footageLocationFrozen(location: StorageLocation): boolean {
   return !mayWriteToLocation(location)

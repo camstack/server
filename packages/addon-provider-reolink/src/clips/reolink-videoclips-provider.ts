@@ -109,14 +109,14 @@ import type {
   IScopedLogger,
   IVideoclipsProvider,
   PeerBytesTicket,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   CLIP_PLAYBACK_OPTIONS,
   type ClipPlaybackOptions,
   clipExportFailure,
   VIDEOCLIPS_MAX_OFFER_BYTES,
   VIDEOCLIPS_MAX_READ_BYTES,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { REOLINK_ADDON_ID } from '../schema.js'
 import type { CameraUid } from './clip-addressing.js'
 import { UID_MISSING_REASON, uidIsMissing } from './clip-addressing.js'

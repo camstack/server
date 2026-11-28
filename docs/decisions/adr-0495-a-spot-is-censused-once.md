@@ -73,7 +73,7 @@ like jitter. The scene-sized guard is checked first, or an entry covering the
 view would swallow the frame.
 
 **The occasion is named by whoever produced the frame.** `InferenceOccasion`
-(`'session' | 'burst'`) is declared once in `@camstack/types`, set by the runner
+(`'session' | 'burst'`) is declared once in `@dominevo/types`, set by the runner
 on the queue entry, carried on `PipelineInferenceResultPayload.occasion`, and
 consumed by the ledger — `StationaryEvidenceSource` is an alias of it, not a
 second spelling. The occupancy recheck is armed from registration, and the

@@ -1,4 +1,4 @@
-import type { BacklightMode, DayNightMode, ExposureMode, ImageRotate } from '@camstack/types'
+import type { BacklightMode, DayNightMode, ExposureMode, ImageRotate } from '@dominevo/types'
 
 /**
  * Pure value maps between the Dahua CGI table vocabulary and the

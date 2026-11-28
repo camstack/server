@@ -10,7 +10,7 @@
  * `finish`, and the recognizer's recorded verdicts (`identity`) reach the
  * processor exactly as live delivered them — see {@link FrameJoin}.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { createFrameProcessor } from '../../pipeline/frame-processor-config.js'
 import type { FrameProcessor } from '../../pipeline/frame-processor.js'
 import { sequentialTrackIdMinter, type TrackIdMinter } from '../../pipeline/track-id.js'

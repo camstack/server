@@ -8,7 +8,7 @@
  * empty key `''`, which no store ever writes, so a model picked for the Mac's
  * only accelerator was silently never run.
  */
-import type { PipelineSchema } from '@camstack/types'
+import type { PipelineSchema } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { type AttachPipelineOutcome, resolveAttachPipeline } from '../attach-pipeline.js'
 import { CORAL_GPU_CATALOG, GPU, NODE, makeRealStore } from './attach-pipeline-fixtures.js'

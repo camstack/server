@@ -8,8 +8,8 @@ import {
   ErrorBox,
   useMeshNetworkListPeers,
   type DataColumn,
-} from '@camstack/ui-library'
-import type { MeshPeer, MeshStatus } from '@camstack/types'
+} from '@dominevo/ui-library'
+import type { MeshPeer, MeshStatus } from '@dominevo/types'
 import { useTranslation } from 'react-i18next'
 import i18n from '../../i18n/index'
 import { useMeshStatus } from './use-mesh-status'

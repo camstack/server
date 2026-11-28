@@ -8,7 +8,7 @@
  * - a child was bound to the knobs it was BORN with, so a worker could never be
  *   forked before the camera it would serve was known;
  * - resolving the knobs needed the Zod schemas, which dragged the whole
- *   `@camstack/types` index into the child bundle — measured on the hub,
+ *   `@dominevo/types` index into the child bundle — measured on the hub,
  *   ~170 ms and ~100 MB of heap on every single fork.
  *
  * The knobs now travel on `start` (`WorkerRequest.lease`, covered by

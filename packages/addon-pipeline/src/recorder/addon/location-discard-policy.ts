@@ -4,8 +4,8 @@
  * writable sibling of the same type. The last writable of a type is
  * refused here even if the UI is bypassed.
  */
-import type { StorageLocationMode } from '@camstack/types'
-import { evictionPolicyOfLocation, mayWriteToLocation } from '@camstack/types'
+import type { StorageLocationMode } from '@dominevo/types'
+import { evictionPolicyOfLocation, mayWriteToLocation } from '@dominevo/types'
 
 export const DISCARD_SUBTREES: Readonly<Record<string, readonly string[]>> = {
   eventMedia: ['events'],

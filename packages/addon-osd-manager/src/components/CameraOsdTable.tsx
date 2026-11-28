@@ -11,8 +11,8 @@ import {
   useDataTableFilter,
   useItemFormUrl,
   type DataColumn,
-} from '@camstack/ui-library'
-import type { OsdNamedTemplate } from '@camstack/types'
+} from '@dominevo/ui-library'
+import type { OsdNamedTemplate } from '@dominevo/types'
 import { type OsdCameraRow } from '../ui/osd-page-model.js'
 import { useT } from '../i18n/index.js'
 import { DuplicateIntoAction } from './DuplicateIntoAction.js'

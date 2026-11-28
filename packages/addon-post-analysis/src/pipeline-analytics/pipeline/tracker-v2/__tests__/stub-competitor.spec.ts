@@ -11,7 +11,7 @@
  * Disarm: exempt an unconfirmed competitor of a confirmed active owner in
  * `auditCompetitors` (the reverted F3): both tests below go RED.
  */
-import type { BoundingBox } from '@camstack/types'
+import type { BoundingBox } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   type AssocConfig,

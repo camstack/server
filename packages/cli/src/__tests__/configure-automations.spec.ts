@@ -2,7 +2,7 @@
  * The two interviews and their gated saves. The fake hub answers the reads the
  * interview makes; the writes are asserted on the recorded calls.
  */
-import { ruleKindOf } from '@camstack/types'
+import { ruleKindOf } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { automationQuestionnaire, saveAutomation } from '../mcp/configure-automations.js'
 import { ncRuleQuestionnaire, saveRule } from '../mcp/configure-nc-rules.js'

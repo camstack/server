@@ -18,7 +18,7 @@
  *  - never anything on a KEPT (node, device) — a custom-registry detector pin,
  *    or an accelerator of its group (D786).
  */
-import { modelBindingKey } from '@camstack/types'
+import { modelBindingKey } from '@dominevo/types'
 import type { AgentSettingsMapBlob } from '../orchestrator-store-schemas.js'
 
 /** The root detector step. */

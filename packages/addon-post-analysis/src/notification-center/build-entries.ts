@@ -26,7 +26,7 @@ import type {
 import { effectiveMediaPolicyForRule, isLinkedSetSubject } from './rule-engine.js'
 import { targetDelivery, targetsInSchedule } from './target-settings.js'
 import { NcRuleStore } from './rule-store.js'
-import type { IScopedLogger, NcConditions, NcRule, NcRuleTarget } from '@camstack/types'
+import type { IScopedLogger, NcConditions, NcRule, NcRuleTarget } from '@dominevo/types'
 import type { NotificationCenterDeps } from './index.js'
 
 /** The user slice the rule→user fan-out needs. */

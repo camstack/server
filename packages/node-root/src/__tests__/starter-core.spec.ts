@@ -20,7 +20,7 @@ import { isHostExternal, runNodeStarter, type NodeStarterOptions } from '../star
  * keeps the DI coverage without a second production constant.
  */
 const ALT_ROOT_SPEC: RootPackageSpec = {
-  packageName: '@camstack/alt-root',
+  packageName: '@dominevo/alt-root',
   entryRelPath: ['dist', 'cli.js'],
 }
 
@@ -218,11 +218,11 @@ describe('runNodeStarter (single-copy model)', () => {
 
 describe('isHostExternal', () => {
   it('matches exact and subpath specifiers only', () => {
-    expect(isHostExternal('@camstack/server/system')).toBe(true)
-    expect(isHostExternal('@camstack/server/system/dist/addon-runner.js')).toBe(true)
+    expect(isHostExternal('@dominevo/server/system')).toBe(true)
+    expect(isHostExternal('@dominevo/server/system/dist/addon-runner.js')).toBe(true)
     expect(isHostExternal('zod')).toBe(true)
     expect(isHostExternal('zod-to-json-schema')).toBe(false)
-    expect(isHostExternal('@camstack/server/systemx')).toBe(false)
+    expect(isHostExternal('@dominevo/server/systemx')).toBe(false)
     expect(isHostExternal('fastify')).toBe(false)
   })
 })

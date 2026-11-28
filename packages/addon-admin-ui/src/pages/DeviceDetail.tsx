@@ -6,7 +6,7 @@ import {
   primaryChildPreferenceOf,
   WELL_KNOWN_TAB_MAP,
   type WellKnownTab,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   BatteryBadge,
   Breadcrumb,
@@ -59,7 +59,7 @@ import {
   useUiText,
   VodPlaybackProvider,
   ZoneEditingProvider,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   Activity,
@@ -119,7 +119,7 @@ import {
   removedDeviceDestination,
 } from '../lib/integration-instance-selection'
 import { STEP_INSPECTOR_PARAMS } from '../lib/step-url-selection'
-import { formatNumeric } from '@camstack/ui-library'
+import { formatNumeric } from '@dominevo/ui-library'
 
 // ---------------------------------------------------------------------------
 // Tab definitions

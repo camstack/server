@@ -1,4 +1,4 @@
-import { type DeviceManagerApi, DeviceRole, DeviceType } from '@camstack/types'
+import { type DeviceManagerApi, DeviceRole, DeviceType } from '@dominevo/types'
 import { UNRAID_SYSTEM } from './config.js'
 import { UnraidInstanceDevice } from './devices/unraid-instance-device.js'
 import { UnraidUpsDevice } from './devices/unraid-ups-device.js'

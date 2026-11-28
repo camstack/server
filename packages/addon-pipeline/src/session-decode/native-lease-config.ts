@@ -6,7 +6,7 @@
  * ## Where the values come from
  *
  * The knobs are cluster-wide `pipeline-orchestrator` settings
- * (`@camstack/types` → `pipeline/native-lease.ts`). The pipeline-runner reads
+ * (`@dominevo/types` → `pipeline/native-lease.ts`). The pipeline-runner reads
  * them over the hub-routed `addon-settings` cap
  * (`pipeline-runner/native-lease-settings-source.ts`) and resolves them HERE,
  * once per session, at the moment the session starts — so a changed setting
@@ -15,7 +15,7 @@
  * Until D453 the resolution ran inside the CHILD, from `*_SETTING` env vars the
  * parent wrote at fork time. That bound a worker to the knobs it was forked
  * with (a pre-forked worker cannot be), and it dragged the Zod schemas — the
- * whole `@camstack/types` index — into the child bundle: ~130 ms and ~140 MB
+ * whole `@dominevo/types` index — into the child bundle: ~130 ms and ~140 MB
  * per fork, measured. Moving the resolution up one process removed both.
  *
  * ## Precedence — setting > env > default
@@ -50,10 +50,10 @@ import {
   type NativeLeaseNumberKnob,
   type NativeLeaseSettingsOverride,
   NativeLeaseSettingsSchema,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { NativeLeaseKnobSource, WorkerLeaseKnobs } from './native-lease-knobs.js'
 
-export type { NativeLeaseKnob } from '@camstack/types'
+export type { NativeLeaseKnob } from '@dominevo/types'
 export type { NativeLeaseKnobSource, WorkerLeaseKnobs } from './native-lease-knobs.js'
 export { formatNativeLeaseKnobs } from './native-lease-knobs.js'
 

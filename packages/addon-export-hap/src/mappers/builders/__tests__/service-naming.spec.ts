@@ -24,8 +24,8 @@
  * be present with the right value — so dropping either half turns one red.
  */
 
-import type { AddonContext, DeviceProxy } from '@camstack/types'
-import { DeviceType } from '@camstack/types'
+import type { AddonContext, DeviceProxy } from '@dominevo/types'
+import { DeviceType } from '@dominevo/types'
 import type { CharacteristicWarning } from '@homebridge/hap-nodejs'
 import { Accessory, Characteristic, Perms, Service, uuid } from '@homebridge/hap-nodejs'
 import { describe, expect, it } from 'vitest'

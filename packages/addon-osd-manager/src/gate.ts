@@ -16,7 +16,7 @@
  *
  * Pure: no I/O, no clock. State comes in as a lookup function.
  */
-import { isScheduleActive, type NcConditions, type NcSchedule } from '@camstack/types'
+import { isScheduleActive, type NcConditions, type NcSchedule } from '@dominevo/types'
 
 /**
  * Condition ids from `NC_CONDITION_CATALOG` this gate can evaluate.

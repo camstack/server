@@ -4,8 +4,8 @@
  * (the known `{ ...existing, ...patch }` trap). A rule stored before the field
  * reads exactly as it did: no key, no migration.
  */
-import type { InMemoryRecords, NcRuleInput } from '@camstack/types'
-import { NcRulePatchSchema, NcRuleInputSchema } from '@camstack/types'
+import type { InMemoryRecords, NcRuleInput } from '@dominevo/types'
+import { NcRulePatchSchema, NcRuleInputSchema } from '@dominevo/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import { ncRecordKinds } from '../record-kinds.js'

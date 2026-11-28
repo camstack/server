@@ -1,4 +1,4 @@
-import { ContactStatusSchema } from '@camstack/types'
+import { ContactStatusSchema } from '@dominevo/types'
 import { detectionValue, iface, unshaped } from './shared.js'
 import type { GenericAdapter } from './types.js'
 

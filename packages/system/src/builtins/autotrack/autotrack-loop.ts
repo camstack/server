@@ -18,7 +18,7 @@
  * ("am I tracking") is in-memory state refreshed off the event path, and a
  * failed mirror read never spells the subject's disappearance.
  */
-import type { IScopedLogger, ObjectDetection } from '@camstack/types'
+import type { IScopedLogger, ObjectDetection } from '@dominevo/types'
 import type { AutotrackLoopConfig, PtzAxisStep } from './autotrack-config.js'
 import {
   type AutotrackDecision,

@@ -47,7 +47,7 @@
  *
  * They look adjacent and they are not the same control ([D83](../../../../docs/decisions/adr-0083.md)):
  * `device-audio` writes the CAMERA, so it is hardware privacy — the microphone
- * genuinely stops, it survives CamStack entirely, and it costs a multi-second
+ * genuinely stops, it survives Dominevo entirely, and it costs a multi-second
  * encoder restart on every flip. `broker-audio` writes THIS server, so it is
  * instant, vendor-independent and reversible without touching the camera, and
  * a camera that ignores or lacks the ISAPI/Reolink control is still silenced.
@@ -257,7 +257,7 @@ export type CameraSwitchWarning = z.infer<typeof CameraSwitchWarningSchema>
  *
  * `label` and `costWhenOff` travel ON THE WIRE rather than being looked up
  * client-side: the viewer is a separate repository that does not import
- * `@camstack/types`, and a cost line duplicated in two clients is a cost line
+ * `@dominevo/types`, and a cost line duplicated in two clients is a cost line
  * that will disagree with itself. Five rows per camera is nothing.
  */
 export const CameraSwitchSchema = z.object({
@@ -315,7 +315,7 @@ export const PRIVACY_MASK_CAP_NAME = 'privacy-mask'
 export const PIPELINE_ANALYTICS_CAP_NAME = 'pipeline-analytics'
 
 /**
- * Every analyser a camera CamStack BUILDS is created with switched off.
+ * Every analyser a camera Dominevo BUILDS is created with switched off.
  *
  * A grid and a Terminal camera are `DeviceType.Camera`, so every wrapper that
  * declares `defaultActive: true` for a camera binds to them the instant they

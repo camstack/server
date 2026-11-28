@@ -11,7 +11,7 @@ import type {
   TrainingProviderDescriptor,
   TrainingRefusalReason,
   TrainingSplitPlan,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { type BaseModelSpec, findBaseModel } from './base-models.js'
 import {
   datasetBytesEstimate,

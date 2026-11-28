@@ -3,7 +3,7 @@
  * with the API key as the form holds it (a saved key stands in for its redacted view) and names
  * the reason when the server refuses or cannot be reached.
  */
-import { makeInMemoryRecords, REDACTED_SECRET } from '@camstack/types'
+import { makeInMemoryRecords, REDACTED_SECRET } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type {
   UnraidClientFactory,

@@ -217,7 +217,7 @@ const provider = (id: string, extra: object = {}): object => ({
   id,
   name: id,
   description: `${id} provider`,
-  packageName: `@camstack/addon-${id}`,
+  packageName: `@dominevo/addon-${id}`,
   packageVersion: '1.0.0',
   capabilities: ['device-provider'],
   ...extra,
@@ -255,7 +255,7 @@ describe('support_diagnose_camera', () => {
     const { ctx } = fakeHub(
       catalog(
         [provider('provider-onvif')],
-        [published('@camstack/addon-provider-hikvision', ['hikvision'])],
+        [published('@dominevo/addon-provider-hikvision', ['hikvision'])],
       ),
     )
     const out = await supportDiagnoseCamera(ctx, { brand: 'Hikvision' })

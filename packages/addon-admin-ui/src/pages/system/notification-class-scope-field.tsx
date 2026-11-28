@@ -13,7 +13,7 @@
  * dropped (D49). A hub with no taxonomy keeps the free-text input.
  */
 
-import type { NcTaxonomy } from '@camstack/types'
+import type { NcTaxonomy } from '@dominevo/types'
 import { useMemo } from 'react'
 import { classGroupTitle, classPickerItems } from './class-picker-items'
 import { DevicePicker } from './DevicePicker'

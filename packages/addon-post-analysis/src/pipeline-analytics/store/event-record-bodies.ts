@@ -4,7 +4,7 @@
  * index or aggregate needs it in JSON).
  */
 import { z } from 'zod'
-import { MotionTriggeredBySchema } from '@camstack/types'
+import { MotionTriggeredBySchema } from '@dominevo/types'
 
 export const MotionEventBodySchema = z.object({
   deviceId: z.number(),

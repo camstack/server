@@ -18,7 +18,7 @@ import {
   type MeshReadNowResult,
   type MeshRefreshResult,
   type MeshTopology,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { MatterAttributeReport, MatterReadRequest } from './matter-controller.js'
 import { matterNodes, type MatterNodeResolver } from './matter-gateway.js'
 import { MatterClusterId } from './matter-cluster-mapping.js'

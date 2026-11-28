@@ -6,7 +6,7 @@
  * `deviceId: null`.
  */
 
-import type { MeshLink, MeshNetworkInfo, MeshNode, MeshRole, MeshTopology } from '@camstack/types'
+import type { MeshLink, MeshNetworkInfo, MeshNode, MeshRole, MeshTopology } from '@dominevo/types'
 import type { NodeMeshFacts, ThreadFacts } from './matter-mesh-decode.js'
 
 /** One commissioned node as the builder sees it. */

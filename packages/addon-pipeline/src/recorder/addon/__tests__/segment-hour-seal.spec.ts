@@ -47,7 +47,7 @@
  * dead round half-deleted both answer SHORT; an hour that merely shrank is the
  * ordinary result of eviction, and it is adopted.
  */
-import type { IScopedLogger, LogExtras } from '@camstack/types'
+import type { IScopedLogger, LogExtras } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { segmentRelPath } from '../../segment-path.js'
 import type { SegmentRow } from '../../types.js'

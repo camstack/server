@@ -1,4 +1,4 @@
-import type { ConfigInfoField, ConfigSection } from '@camstack/types'
+import type { ConfigInfoField, ConfigSection } from '@dominevo/types'
 import type { ReolinkCameraConfig } from './schema.js'
 
 /**
@@ -231,7 +231,7 @@ export interface SnapshotFreshnessSectionOptions {
 
 /**
  * Read-only "Snapshot freshness" section (advanced tab, next to Debug).
- * Lists every snapshot group with its own age so "is CamStack's belief
+ * Lists every snapshot group with its own age so "is Dominevo's belief
  * current?" is answerable per fact, not per cache. Purely informational:
  * it triggers no reads — refresh stays on the existing operator-triggered
  * "Refresh from camera" action and the event-driven paths.

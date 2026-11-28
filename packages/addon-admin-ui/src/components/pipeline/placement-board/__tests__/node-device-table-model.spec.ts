@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { NodeInferenceDevice } from '@camstack/types'
+import type { NodeInferenceDevice } from '@dominevo/types'
 import { buildDeviceTableRows, deviceRowState } from '../node-device-table-model'
 
 function device(over: Partial<NodeInferenceDevice> & { key: string }): NodeInferenceDevice {

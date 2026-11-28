@@ -48,7 +48,7 @@ origin are gone. See
 
 ## Decision
 
-The ffmpeg CamStack spawns is always a binary we provided. Which one is a
+The ffmpeg Dominevo spawns is always a binary we provided. Which one is a
 property of where the node runs, not of configuration: our container image
 installs one and links it at `/opt/camstack/bin/ffmpeg` — a path only the image
 ever writes, which is what makes "is this ours?" answerable at all, since

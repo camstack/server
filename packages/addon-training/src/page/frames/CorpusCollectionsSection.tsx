@@ -2,8 +2,8 @@
  * Named collections between the KPI strip and the filter bar — create / rename /
  * delete. Selecting a collection also sets the single-select collection filter.
  */
-import type { RetrainCollection } from '@camstack/types'
-import { SectionCard, SECTION_BODY } from '@camstack/ui-library'
+import type { RetrainCollection } from '@dominevo/types'
+import { SectionCard, SECTION_BODY } from '@dominevo/ui-library'
 import type { JSX } from 'react'
 import { useT, type TFn } from '../../i18n/index.js'
 import { RetrainCollectionsList } from './RetrainCollectionsList.js'

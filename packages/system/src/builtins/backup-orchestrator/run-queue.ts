@@ -25,7 +25,7 @@
  * answer "what is running, how far along, how big" without `du`.
  */
 import { randomUUID } from 'node:crypto'
-import type { DataStoreDatabase } from '@camstack/types'
+import type { DataStoreDatabase } from '@dominevo/types'
 import { BackupCancelledError } from '../system-backup/system-backup.service.js'
 
 export type BackupRunState = 'queued' | 'running' | 'succeeded' | 'failed' | 'cancelled'

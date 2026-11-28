@@ -121,8 +121,8 @@ No code under `packages/*/src` or `server/*/src` may start a child in a new grou
   spawns, but a third-party binary that daemonises itself is out of reach.
 - **Windows is not a target.** There are no process groups in this sense; the
   runner is spawned exactly as before and nothing is reaped.
-- This is a framework change: it runs only once a `@camstack/server` whose closure
-  carries this `@camstack/system` is installed on a node, hub and agents alike.
+- This is a framework change: it runs only once a `@dominevo/server` whose closure
+  carries this `@dominevo/system` is installed on a node, hub and agents alike.
 
 ## Enforcement
 

@@ -1,4 +1,4 @@
-import { DeviceRole, DeviceType } from '@camstack/types'
+import { DeviceRole, DeviceType } from '@dominevo/types'
 
 /**
  * The cards a device gets from ONE cap that its type names: a lock needs

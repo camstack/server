@@ -9,7 +9,7 @@
  * raw bytes per request; the data-plane branch replays them.
  */
 import type { IncomingMessage } from 'node:http'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import type { FastifyInstance } from 'fastify'
 
 const FORM_CONTENT_TYPE = 'application/x-www-form-urlencoded'

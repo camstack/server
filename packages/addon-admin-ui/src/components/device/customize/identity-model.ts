@@ -3,7 +3,7 @@
  * other key is kept — the identity draft writes the same object on Save — and
  * an override with nothing left is cleared (`null`).
  */
-import { type DeviceDisplayOverride, DeviceRole, DeviceType, WORKLOAD_ROLES } from '@camstack/types'
+import { type DeviceDisplayOverride, DeviceRole, DeviceType, WORKLOAD_ROLES } from '@dominevo/types'
 
 export function displayWithHidden(
   display: DeviceDisplayOverride | undefined,
@@ -22,7 +22,7 @@ export function isKnownRole(role: string): boolean {
 
 /**
  * Roles that belong on a `DeviceType`, mirrored from the groupings on
- * `DeviceRole` in `@camstack/types`. A Camera / Hub / Container has none —
+ * `DeviceRole` in `@dominevo/types`. A Camera / Hub / Container has none —
  * role is an accessory / sub-type fact, not a top-level one. Showing every
  * role on every device made the Customize select unusable.
  */

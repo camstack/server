@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import type { IScopedLogger } from '@camstack/types'
-import { makeProfileBrokerId, makeSourceBrokerId } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
+import { makeProfileBrokerId, makeSourceBrokerId } from '@dominevo/types'
 import { RtspListenServer } from '../rtsp/rtsp-listen-server.js'
 import { RtspRestreamer } from '../rtsp/rtsp-restreamer.js'
 import { RtspRestreamProviderImpl } from '../rtsp/rtsp-restream-provider.js'

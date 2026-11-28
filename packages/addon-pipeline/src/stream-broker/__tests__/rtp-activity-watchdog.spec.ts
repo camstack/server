@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { StreamBroker } from '../stream-broker/stream-broker'
-import type { StreamSource, IScopedLogger } from '@camstack/types'
+import type { StreamSource, IScopedLogger } from '@dominevo/types'
 
 /**
  * Source-RTP activity watchdog regression suite.

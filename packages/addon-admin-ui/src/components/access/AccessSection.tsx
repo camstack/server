@@ -14,7 +14,7 @@ import {
   SECTION_BODY,
   SectionCard,
   useUserManagementListUsers,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { AlertOctagon, CheckCircle2, X, type LucideIcon } from 'lucide-react'
 import { useMemo, type ReactNode } from 'react'
 

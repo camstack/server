@@ -17,8 +17,8 @@ import type {
   ModelVariantGroup,
   ModelVariantSource,
   RootStepSupply,
-} from '@camstack/types'
-import { COCO_TO_MACRO, rootSuppliesOf } from '@camstack/types'
+} from '@dominevo/types'
+import { COCO_TO_MACRO, rootSuppliesOf } from '@dominevo/types'
 import { resolveModelDisplayName } from '../display-name.js'
 import type {
   ModelAvailabilityMapSchema,
@@ -206,7 +206,7 @@ export function stepOptionsFromSchema(schema: StepOptionSchemaLike): readonly St
 }
 
 // ---------------------------------------------------------------------------
-// Catalog seeds — CamStack pipeline offer from `getSchema`
+// Catalog seeds — Dominevo pipeline offer from `getSchema`
 // ---------------------------------------------------------------------------
 
 export interface CatalogSeedFormat {
@@ -333,10 +333,10 @@ function catalogFormatEntries(
 /**
  * Flatten `pipelineExecutor.getSchema` into Catalog seeds.
  *
- * Catalog shows CamStack seeds AND imported plus catalog / plugin catalog / custom
+ * Catalog shows Dominevo seeds AND imported plus catalog / plugin catalog / custom
  * entries (so a downloaded plugin catalog model is visible next to plus catalog). Same
  * `family` across providers must NOT merge chips — plugin catalog YOLOv9 used to
- * fold into the CamStack YOLOv9 card while plus catalog's `ssdlite-mobiledet`
+ * fold into the Dominevo YOLOv9 card while plus catalog's `ssdlite-mobiledet`
  * stayed visible as its own card. Non-camstack groups are namespaced
  * (`<provider>:<family>`) so each provider keeps a separate card; the tab then
  * sections by `provider`.
@@ -372,7 +372,7 @@ export function suppliesField(supplies: readonly RootStepSupply[] | undefined): 
 }
 
 /**
- * Namespace non-CamStack families so `buildModelVariantGroups` cannot merge
+ * Namespace non-Dominevo families so `buildModelVariantGroups` cannot merge
  * them with first-party chips that share the same architecture name.
  */
 export function catalogGroupForProvider(
@@ -385,7 +385,7 @@ export function catalogGroupForProvider(
 }
 
 const PROVIDER_SECTION_LABEL: Readonly<Record<ModelProviderId, string>> = {
-  camstack: 'CamStack',
+  camstack: 'Dominevo',
   scrypted: 'plugin catalog',
   frigate: 'plus catalog',
   custom: 'Custom',

@@ -1,4 +1,4 @@
-import { useSystem } from '@camstack/ui-library'
+import { useSystem } from '@dominevo/ui-library'
 import { useQuery } from '@tanstack/react-query'
 import type { KindLabelSource } from './group-members-model'
 

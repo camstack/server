@@ -1,13 +1,13 @@
 /**
  * The two argv the compositor spawns, pinned.
  *
- * Both come from the shared builder in `@camstack/types` — this addon builds no
+ * Both come from the shared builder in `@dominevo/types` — this addon builds no
  * argv of its own (`scripts/check-ffmpeg-primitive.ts`, Rule 1). What this
  * suite protects is the two decisions that are NOT the builder's: a tile pays
  * no codec on the way out, and the encoder never decodes.
  */
 import { describe, expect, it } from 'vitest'
-import { buildFfmpegArgs } from '@camstack/types'
+import { buildFfmpegArgs } from '@dominevo/types'
 import {
   gridCanvasEncoderInvocation,
   gridTileDecoderInvocation,

@@ -1,4 +1,4 @@
-import { userError } from '@camstack/types'
+import { userError } from '@dominevo/types'
 /**
  * Step-up proofs for `auth.enrollSelf` (D855).
  *
@@ -11,7 +11,7 @@ import { userError } from '@camstack/types'
  * hash. It replaces no session.
  */
 import * as crypto from 'node:crypto'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 
 export const DEVICE_ENROLL_PROOF_TTL_MS = 5 * 60_000
 const MAX_PENDING = 1_000

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ToastService } from '../toast-service.js'
-import type { Toast } from '@camstack/types'
+import type { Toast } from '@dominevo/types'
 
 function createToast(overrides: Partial<Toast> = {}): Toast {
   return {

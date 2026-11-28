@@ -6,8 +6,8 @@ import {
   DeviceType,
   type IDevice,
   type IDeviceRuntimeState,
-} from '@camstack/types'
-import { fakeAddonContext } from '@camstack/types/testing'
+} from '@dominevo/types'
+import { fakeAddonContext } from '@dominevo/types/testing'
 import { describe, expect, it, vi } from 'vitest'
 import { HaProviderAddon } from '../addon.js'
 import { HaContainerDevice } from '../devices/ha-container-device.js'

@@ -6,7 +6,7 @@
 
 **Architecture:** The arcface embedding already rides on first-level person detections (Phase 0, inherited from the face detail). We surface it on the tracker output by mirroring the existing `labelsByBbox` mechanism in `frame-processor.ts`. The `FaceRecognizer` consumes `(trackId, embedding, embeddingModelId, bbox, confidence)` per frame, uses the Phase-1a pure matcher (`assignUniquePerFrame` + `updateTrackAggregate`) against the in-memory gallery loaded from `IdentityStore` (Phase 1b), and on a new assignment propagates the name forward-only via `TrackStore.setLabel` + `EventStore.setLabelForTrack` (Phase 1a). It holds the best face per track (crop extracted from the live `frameHandle`) and persists one `FaceStore` entry per track at track-end. Retention reuses the existing 5-min sweep. Crop extraction is injected (`captureCrop`) so the worker is unit-testable without `sharp`.
 
-**Tech Stack:** TypeScript 5.9 (strict, ESM NodeNext, `.js` imports), vitest. No `@camstack/types` change (Phase 0 already shipped the `ObjectDetection.embedding` field; everything here is internal to `addon-post-analysis`).
+**Tech Stack:** TypeScript 5.9 (strict, ESM NodeNext, `.js` imports), vitest. No `@dominevo/types` change (Phase 0 already shipped the `ObjectDetection.embedding` field; everything here is internal to `addon-post-analysis`).
 
 ## Global Constraints
 
@@ -20,7 +20,7 @@
 - **Crop extraction injected:** `FaceRecognizer` takes a `captureCrop(frameHandle, bbox, frameWidth, frameHeight) => Promise<Buffer | null>` dep. Production builds it from `resolveFrame` + `extractCrop` (the same `readers`/`getRemoteFrame` the `EventMediaDispatcher` uses); tests stub it.
 - **Best-effort** everywhere (try/catch + `logger.warn`); immutable inputs; ESM `.js`; strict TS. Type gate: `cd packages/addon-post-analysis && npx tsc --noEmit` clean.
 - **Commit:** `git commit --no-verify`; conventional commits, no attribution trailers. **Test command:** `npx vitest run --exclude '**/.claude/**' <files>`.
-- **Deploy (after all tasks):** `camstack deploy packages/addon-post-analysis --server https://localhost:4443`. No `@camstack/types` rebuild needed.
+- **Deploy (after all tasks):** `dominevo deploy packages/addon-post-analysis --server https://localhost:4443`. No `@dominevo/types` rebuild needed.
 
 ## File Structure
 
@@ -299,7 +299,7 @@ Expected: FAIL — module not found.
 - [ ] **Step 3: Implement `face-recognizer.ts` (Task-3 scope)**
 
 ```typescript
-import type { FrameHandle, IScopedLogger } from '@camstack/types'
+import type { FrameHandle, IScopedLogger } from '@dominevo/types'
 import {
   assignUniquePerFrame,
   updateTrackAggregate,
@@ -823,8 +823,8 @@ Run: `cd packages/addon-post-analysis && npx tsc --noEmit` (clean), then
 
 - [ ] **Step 2: Deploy**
 
-Run (repo root): `camstack deploy packages/addon-post-analysis --server https://localhost:4443`
-Expected: `✓ Deployed` + `✓ Hub healthy`. (No `@camstack/types` rebuild — no shared type changed in 1c.)
+Run (repo root): `dominevo deploy packages/addon-post-analysis --server https://localhost:4443`
+Expected: `✓ Deployed` + `✓ Hub healthy`. (No `@dominevo/types` rebuild — no shared type changed in 1c.)
 
 - [ ] **Step 3: Empirical check on cam99**
 

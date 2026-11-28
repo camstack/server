@@ -27,8 +27,8 @@ import type {
   ExportRecord,
   IScopedLogger,
   TimelapsePreviewMode,
-} from '@camstack/types'
-import { CamProfileSchema } from '@camstack/types'
+} from '@dominevo/types'
+import { CamProfileSchema } from '@dominevo/types'
 import type { TimelapseArtifactSet } from './artifact-publish.js'
 import { resolveDenseCadence } from './dense-cadence.js'
 import {

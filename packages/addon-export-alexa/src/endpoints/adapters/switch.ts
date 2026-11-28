@@ -7,8 +7,8 @@ import {
   isSwitchLight,
   SwitchStatusSchema,
   switchRefusesSetState,
-} from '@camstack/types'
-import { isCapMethodAbsent } from '@camstack/types/addon'
+} from '@dominevo/types'
+import { isCapMethodAbsent } from '@dominevo/types/addon'
 import { handleSetBrightness } from '../../handlers/brightness-controller.js'
 import { handlePower } from '../../handlers/power-controller.js'
 import { iface, plainNumber } from './shared.js'
@@ -36,7 +36,7 @@ const BRIGHTNESS_DIRECTIVE: AdapterDirective = {
 
 /**
  * A switch's category comes from its sub-role, read only through the
- * `@camstack/types` accessors (operator decision 2026-11-12: every switch
+ * `@dominevo/types` accessors (operator decision 2026-11-12: every switch
  * sub-role is exported as its own category):
  *  - an outlet (D875, e.g. HA `device_class: outlet`) is a SMARTPLUG;
  *  - a relay driving a lamp (`switch-light`) is a LIGHT with power only;

@@ -4,7 +4,7 @@
  * that node's error, never as "runs nowhere".
  */
 import { useEffect, useState } from 'react'
-import type { AddonPageProps } from '@camstack/ui-library'
+import type { AddonPageProps } from '@dominevo/ui-library'
 import {
   listLoadedEngines,
   listNodeInferenceDevices,

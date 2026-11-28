@@ -41,7 +41,7 @@ own settings:
 | Home Assistant | a `button`: pressing it runs the action | a `notify` entity: a message is sent to the target |
 
 Running goes through `ctx.api` (`actions.run`, `notification-output.send`) via
-shared helpers in `@camstack/types`. A refusal (already running, cooldown, no
+shared helpers in `@dominevo/types`. A refusal (already running, cooldown, no
 such action) is logged with a named reason and never queued. A deleted action
 or target is dropped from the export and the drop is logged; a list that could
 not be read changes nothing (D49).

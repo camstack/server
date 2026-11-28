@@ -23,9 +23,9 @@
  */
 import { describe, it, expect, beforeEach } from 'vitest'
 import { z } from 'zod'
-import { CapabilityRegistry } from '@camstack/server/system'
-import type { RegisterNodeParams } from '@camstack/server/system'
-import type { CapabilityDefinition, IScopedLogger, SystemEvent } from '@camstack/types'
+import { CapabilityRegistry } from '@dominevo/server/system'
+import type { RegisterNodeParams } from '@dominevo/server/system'
+import type { CapabilityDefinition, IScopedLogger, SystemEvent } from '@dominevo/types'
 import { MoleculerService } from '../core/moleculer/moleculer.service.js'
 import type { EventBusService } from '../core/events/event-bus.service.js'
 import type { ConfigService } from '../core/config/config.service.js'

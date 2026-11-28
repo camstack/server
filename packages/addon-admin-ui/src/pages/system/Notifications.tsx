@@ -6,8 +6,8 @@
  * header (AdminPage embedded drops actions). Rules → Simulate handoff stays
  * here (owns tab coordination).
  */
-import type { NcRule } from '@camstack/types'
-import { Button, useUrlQueryParam } from '@camstack/ui-library'
+import type { NcRule } from '@dominevo/types'
+import { Button, useUrlQueryParam } from '@dominevo/ui-library'
 import { Bell, Plus } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'

@@ -1,9 +1,9 @@
-import type { ConfigMultiSelectField, ConfigOption } from '@camstack/types'
-import { OptionSelect, type OptionSelectOption } from '@camstack/ui-library'
+import type { ConfigMultiSelectField, ConfigOption } from '@dominevo/types'
+import { OptionSelect, type OptionSelectOption } from '@dominevo/ui-library'
 import { resolveLabel, type TranslationFn } from './FormBuilder'
 import { useTranslation } from 'react-i18next'
 
-export { INPUT_SHELL, SelectedChip } from '@camstack/ui-library'
+export { INPUT_SHELL, SelectedChip } from '@dominevo/ui-library'
 
 /**
  * Thin wrapper: large `multiselect` fields render via shared `OptionSelect`

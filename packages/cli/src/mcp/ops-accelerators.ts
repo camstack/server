@@ -4,7 +4,7 @@
  * whether the measured latency table (DETECTOR_PERF) holds a row for that
  * class and accelerator.
  *
- * The table is the typed one in `@camstack/types`, never read from `docs/` at
+ * The table is the typed one in `@dominevo/types`, never read from `docs/` at
  * runtime. A node whose hardware or devices could not be read is reported as
  * unknown, with the hub's reason — never as "no accelerator" (D315, D393).
  */
@@ -15,8 +15,8 @@ import {
   type AcceleratorKind,
   type HardwareClassId,
   type HardwareInfo,
-} from '@camstack/types'
-import type { HubClient } from '@camstack/develop'
+} from '@dominevo/types'
+import type { HubClient } from '@dominevo/develop'
 import { z } from 'zod'
 import type { McpContext } from './context.js'
 import {

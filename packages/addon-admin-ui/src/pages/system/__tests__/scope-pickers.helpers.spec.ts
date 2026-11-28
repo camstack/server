@@ -44,22 +44,22 @@ describe('package picker state', () => {
     const s = packageScopeState({ data: undefined, isError: false })
     expect(s.listState).toBe('pending')
     expect(s.fleet.devices).toBeUndefined()
-    expect(offListSelections(['@camstack/x'], s.items, s.fleet.devices, s.fleet.state)).toEqual([
-      { id: '@camstack/x', removed: false },
+    expect(offListSelections(['@dominevo/x'], s.items, s.fleet.devices, s.fleet.state)).toEqual([
+      { id: '@dominevo/x', removed: false },
     ])
   })
 
   it('every update-event package is always offered', () => {
     expect(packageScopeState({ data: [], isError: false }).items.map((i) => i.id)).toEqual([
-      '@camstack/server',
+      '@dominevo/server',
       'camstack-wrapper',
     ])
   })
 
   it('a stored package the answered list lacks is judged missing', () => {
     const s = packageScopeState({ data: [], isError: false })
-    expect(offListSelections(['@camstack/gone'], s.items, s.fleet.devices, s.fleet.state)).toEqual([
-      { id: '@camstack/gone', removed: true },
+    expect(offListSelections(['@dominevo/gone'], s.items, s.fleet.devices, s.fleet.state)).toEqual([
+      { id: '@dominevo/gone', removed: true },
     ])
   })
 })

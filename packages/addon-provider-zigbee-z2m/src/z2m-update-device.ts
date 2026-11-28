@@ -10,7 +10,7 @@ import {
   type DeviceFeature,
   type InferNativeProvider,
   updateCapability,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { Z2mConnection } from './z2m-client.js'
 import { ieeeOfUpdateEquipment, zigbeeUpdateSchema } from './z2m-device-config.js'
 import { COLD_UPDATE_STATUS, startFirmwareUpdate, updateStatusOf } from './z2m-firmware.js'

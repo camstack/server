@@ -3,7 +3,7 @@ import type {
   Integration,
   IntegrationInstance,
   IntegrationTestConnectionResult,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { buildIntegrationsProvider } from '../../api/core/cap-providers'
 import { registerLikeTheHub, type SeedCreateInput, seedCreate } from './support/seed-create'

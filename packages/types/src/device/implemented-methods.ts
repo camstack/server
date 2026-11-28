@@ -1,4 +1,4 @@
-// Import-free on purpose: the runner reaches it through `@camstack/types/node`, never the schema barrel (D28).
+// Import-free on purpose: the runner reaches it through `@dominevo/types/node`, never the schema barrel (D28).
 
 /**
  * Which of a cap's methods a registered provider object serves. Sent with the

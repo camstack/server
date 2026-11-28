@@ -1,2 +1,2 @@
-/** Re-export — UnitPicker lives in `@camstack/ui-library`. */
-export { UnitPicker, type UnitPickerProps } from '@camstack/ui-library'
+/** Re-export — UnitPicker lives in `@dominevo/ui-library`. */
+export { UnitPicker, type UnitPickerProps } from '@dominevo/ui-library'

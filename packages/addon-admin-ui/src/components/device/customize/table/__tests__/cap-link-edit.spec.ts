@@ -1,5 +1,5 @@
-import type { CapLinkView, Composition, CustomizeCapLink } from '@camstack/types'
-import { DeviceType } from '@camstack/types'
+import type { CapLinkView, Composition, CustomizeCapLink } from '@dominevo/types'
+import { DeviceType } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   capLinkCellState,

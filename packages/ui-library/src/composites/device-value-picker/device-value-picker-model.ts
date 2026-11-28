@@ -19,7 +19,7 @@ import type {
   DeviceSearchItem,
   DeviceSearchResult,
   DeviceValueOption,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** One picked value. `cap`/`path` are absent when the field wants only a device. */
 export interface PickedValue {

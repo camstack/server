@@ -16,7 +16,7 @@ import type {
   ProfileRtspEntry,
   ProfileSlot,
   WebrtcStreamChoice,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 import {
   ASSUMED_FPS,

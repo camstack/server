@@ -25,7 +25,7 @@ import {
   NC_GROUPING_MIN_SEC,
   type NcRuleConditionsSubject,
   ruleGroupingApplies,
-} from '@camstack/types'
+} from '@dominevo/types'
 
 /** A stored rule row as the ledger hands it over, before projection. */
 export interface NcRetiredFieldsRow {

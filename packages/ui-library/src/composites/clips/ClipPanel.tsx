@@ -23,7 +23,7 @@
  */
 import { useEffect, type JSX } from 'react'
 import { Download } from 'lucide-react'
-import type { CamProfile, Clip } from '@camstack/types'
+import type { CamProfile, Clip } from '@dominevo/types'
 import { useVideoclipsGetClipPlayback } from '../../generated/system-hooks.js'
 import { UiTrans, useUiText } from '../../contexts/ui-text.js'
 import { useVodPlayback } from '../../contexts/vod-playback.js'

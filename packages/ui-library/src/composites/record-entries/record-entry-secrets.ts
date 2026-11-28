@@ -1,4 +1,4 @@
-import { REDACTED_SECRET } from '@camstack/types'
+import { REDACTED_SECRET } from '@dominevo/types'
 
 /** Whether a record entry field still holds the redaction token from a read. */
 export function isRedactedSecret(value: unknown): value is typeof REDACTED_SECRET {

@@ -49,7 +49,7 @@
  * with the new columns empty (`revision` is kept NOT NULL and is `1` on a window row).
  */
 
-import type { IScopedLogger, RecordKindHandle } from '@camstack/types'
+import type { IScopedLogger, RecordKindHandle } from '@dominevo/types'
 import { z } from 'zod'
 import type { DurableLedgerBody } from '../../durable/durable-record-body.js'
 import type { DurableKindDeps } from '../../durable/durable-wiring.js'

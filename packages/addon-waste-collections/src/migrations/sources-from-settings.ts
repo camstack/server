@@ -13,7 +13,7 @@
  * disabled source stays disabled, and a row that cannot be converted (malformed JSON, a nested
  * value) is counted and left in the settings, never guessed at. The legacy key stays where it is.
  */
-import { isSecretMarker, type MigrationProcedureResult, type StoredKeyRead } from '@camstack/types'
+import { isSecretMarker, type MigrationProcedureResult, type StoredKeyRead } from '@dominevo/types'
 import { isSecretArg } from '../waste-secrets.js'
 import type { WasteArgValue, WasteSourceConfig } from '../waste-types.js'
 

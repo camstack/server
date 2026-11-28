@@ -6,17 +6,17 @@
  * enabled toggle + delete-confirm wiring, and that the create modal builds a
  * valid `NcRuleInput` (empty conditions, selected targets).
  */
-import { selectOption, selectOptionValues, selectShowing } from '@camstack/ui-library/testing'
+import { selectOption, selectOptionValues, selectShowing } from '@dominevo/ui-library/testing'
 import type {
   NcConditionDescriptor,
   NcRule,
   NcRuleLastRuns,
   NcSnooze,
   Target,
-} from '@camstack/types'
-import { NC_AUDIO_DB_OFFERED, NC_CONDITION_CATALOG } from '@camstack/types'
-import type { System } from '@camstack/sdk'
-import { ConfirmDialogProvider, SystemProvider } from '@camstack/ui-library'
+} from '@dominevo/types'
+import { NC_AUDIO_DB_OFFERED, NC_CONDITION_CATALOG } from '@dominevo/types'
+import type { System } from '@dominevo/sdk'
+import { ConfirmDialogProvider, SystemProvider } from '@dominevo/ui-library'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { TemplateHubTrpc } from '../../../test-setup/device-template-hub'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
@@ -116,7 +116,7 @@ const mockDirectory = vi.fn(() =>
 )
 const mockTopology = vi.fn(() => Promise.resolve([{ id: 'hub', name: 'Hub', isOnline: true }]))
 const mockListPackages = vi.fn(() =>
-  Promise.resolve([{ name: '@camstack/addon-ai', version: '0.2.17' }]),
+  Promise.resolve([{ name: '@dominevo/addon-ai', version: '0.2.17' }]),
 )
 
 interface ErrorBoxProps {
@@ -148,8 +148,8 @@ vi.mock('../use-notification-targets', () => ({
   useNotificationTargets: () => ({ data: mockTargets, isError: false }),
 }))
 
-vi.mock('@camstack/ui-library', async () => {
-  const real = await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+vi.mock('@dominevo/ui-library', async () => {
+  const real = await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return {
     ...real,
     useDeviceManagerListAll: (input?: FleetListInput, options?: FleetListOptions) =>

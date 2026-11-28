@@ -1,4 +1,4 @@
-import { BaseDevice, type DeviceContext, type DeviceFeature } from '@camstack/types'
+import { BaseDevice, type DeviceContext, type DeviceFeature } from '@dominevo/types'
 import type { HmChannel, HmDevice, Homematic, ValueChangedEvent } from 'nodehomematic'
 import { z } from 'zod'
 import { homematicFacades } from '../homematic-facade-resolver.js'

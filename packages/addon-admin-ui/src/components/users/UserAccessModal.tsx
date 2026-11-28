@@ -11,7 +11,7 @@
  */
 import { useMemo, useState } from 'react'
 import { Loader2 } from 'lucide-react'
-import { VIEWER_FEATURES, type SafeUser } from '@camstack/types'
+import { VIEWER_FEATURES, type SafeUser } from '@dominevo/types'
 import {
   Button,
   Checkbox,
@@ -27,7 +27,7 @@ import {
   type PickerItem,
   useDeviceManagerListAll,
   Radio,
-} from '@camstack/ui-library'
+} from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 
 import { DevicePicker } from '../../pages/system/DevicePicker'

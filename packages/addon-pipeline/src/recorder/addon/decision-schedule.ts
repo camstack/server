@@ -36,7 +36,7 @@
  * and the gate can never disagree about what an edge IS, because only one of
  * them defines it.
  */
-import type { RecordingBand, RecordingConfig } from '@camstack/types'
+import type { RecordingBand, RecordingConfig } from '@dominevo/types'
 import { activeBandAt, type BatteryContext } from '../band-engine.js'
 import {
   bandTriggerSources,

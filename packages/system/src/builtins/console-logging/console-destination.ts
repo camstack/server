@@ -5,7 +5,7 @@
  * the rotating-file transport — ideal fallback when the Winston addon
  * is disabled or unavailable (e.g. bare-bones agents, tests).
  */
-import type { ILogDestination, LogEntry } from '@camstack/types'
+import type { ILogDestination, LogEntry } from '@dominevo/types'
 import { formatLogLine } from '../../logging/formatter.js'
 
 interface ConsoleConfig {

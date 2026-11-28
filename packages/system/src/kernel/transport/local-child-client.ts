@@ -2,8 +2,8 @@ import type {
   ChildCustomActionCatalogs,
   IReadinessRegistryRecord,
   SystemEvent,
-} from '@camstack/types'
-import { CAP_METHOD_TIMEOUTS_MS } from '@camstack/types/addon'
+} from '@dominevo/types'
+import { CAP_METHOD_TIMEOUTS_MS } from '@dominevo/types/addon'
 import { stampCallerAddonId } from './cap-route-resolver.js'
 import { liftRoutingHints } from './cap-routing-hints.js'
 import type {

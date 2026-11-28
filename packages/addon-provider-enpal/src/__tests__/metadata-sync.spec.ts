@@ -2,7 +2,7 @@
  * The identity facts a piece reports (model, serial, firmware) become device attributes: the
  * Gateway writes the box's, a Container its own. A poll that changed nothing writes nothing.
  */
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it, vi } from 'vitest'
 import { EnpalMetadataSync } from '../devices/enpal-metadata-sync.js'
 import { ENPAL_BOX_ID } from '../enpal-equipment.js'

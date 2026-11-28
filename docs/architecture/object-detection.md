@@ -52,7 +52,7 @@ merged key by key over the node base on every accelerator
 ([D754](../decisions/adr-0754-a-camera-step-setting-is-camera-wide-and-field-level-and-a-model-stays-per-accelerator.md)).
 `setCameraStepSettings` refuses a model id, a `<key>ModelId` binding or a
 `minConfidence*` floor by name, and dispatch drops one a legacy row may still
-hold. The rule lives in `@camstack/types` `pipeline/step-settings-layers.ts`
+hold. The rule lives in `@dominevo/types` `pipeline/step-settings-layers.ts`
 and `isModelScopedStepSettingKey`; `scripts/check-no-camera-model-layer.ts`
 keeps the retired per-camera layers out. Per-camera thresholds are a possible
 future extension (D927, private planning ideas), not a gap.
@@ -267,7 +267,7 @@ provisioned with.
 
 Three consequences that read as bugs if you do not know them:
 
-- **A camera on a CamStack COCO root does not dispatch the animal or vehicle
+- **A camera on a Dominevo COCO root does not dispatch the animal or vehicle
   classifier.** Both are on, and its `dog` / `bus` come from the detector at
   the detection's score; `deer`, `Van` and friends are not produced there. The
   runner logs `root model supplies a pipeline step` once per (camera, step).

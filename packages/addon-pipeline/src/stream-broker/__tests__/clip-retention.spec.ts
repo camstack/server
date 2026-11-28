@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import type { EncodedPacket, IScopedLogger, StreamSource } from '@camstack/types'
+import type { EncodedPacket, IScopedLogger, StreamSource } from '@dominevo/types'
 import { StreamBroker } from '../stream-broker/stream-broker'
 
 /**

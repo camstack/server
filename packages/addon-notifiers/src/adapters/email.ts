@@ -14,7 +14,7 @@ import {
   type PreparedNotification,
   type SendResult,
   type TargetKind,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { DirectNotifierAdapter, TargetConfig } from './adapter.js'
 import { type EmailAdapterDeps, emailImagesFor } from './email-images.js'
 
@@ -259,7 +259,7 @@ export function createEmailAdapter(
         const subject =
           prepared.title?.trim() && prepared.title.trim().length > 0
             ? prepared.title.trim()
-            : 'CamStack notification'
+            : 'Dominevo notification'
         const from = trimmed(config, 'from')
         await smtp.sendEmail({
           to,

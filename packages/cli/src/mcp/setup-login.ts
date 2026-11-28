@@ -43,7 +43,7 @@ export async function loginTool(server: string, deps: LoginDeps = {}): Promise<L
     url: request.approvalUrl,
     code: request.userCode,
     expiresAt: request.expiresAt,
-    next: 'Tell the operator to open the url in a browser where they are signed in to CamStack and type the code, then call setup_login_wait.',
+    next: 'Tell the operator to open the url in a browser where they are signed in to Dominevo and type the code, then call setup_login_wait.',
   }
 }
 
@@ -51,7 +51,7 @@ export async function loginWaitTool(
   server: string,
   deps: LoginDeps = {},
 ): Promise<LoginWaitResult> {
-  const { normalizeHubAddress } = await import('@camstack/develop')
+  const { normalizeHubAddress } = await import('@dominevo/develop')
   const key = normalizeHubAddress(server)
   const request = pendingByServer.get(key)
   if (!request) {
@@ -75,7 +75,7 @@ export async function loginWaitTool(
       pendingByServer.delete(key)
       return {
         status: 'expired',
-        next: 'Call setup_login again, or run camstack login <host> --browser in a terminal.',
+        next: 'Call setup_login again, or run dominevo login <host> --browser in a terminal.',
       }
     }
     intervalSec = outcome.intervalSec

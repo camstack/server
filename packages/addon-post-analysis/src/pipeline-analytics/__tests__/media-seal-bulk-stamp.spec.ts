@@ -37,7 +37,7 @@
  * three places said.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import type { MediaBlobStorage } from '../location-aware-media-storage.js'
 import { MediaRelocateEngine } from '../media-relocate-engine.js'

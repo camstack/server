@@ -7,8 +7,8 @@
  * A failed read is said on screen: every record is then named after its raw value, and the
  * operator sees why before confirming.
  */
-import type { ConfigSelectField } from '@camstack/types'
-import { useDiscoveredOptions } from '@camstack/ui-library'
+import type { ConfigSelectField } from '@dominevo/types'
+import { useDiscoveredOptions } from '@dominevo/ui-library'
 import { type ReactElement, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 

@@ -203,7 +203,7 @@ Rejected:
   of the gallery. It shares the gallery-job exclusion (re-embed pass, photo
   pass, reset) and names every sample it could not do.
 - `pipelineExecutor.inferCached` gained a required `modelId`: a
-  `@camstack/server` release. Until it ships, the new runner's benchmark fast
+  `@dominevo/server` release. Until it ships, the new runner's benchmark fast
   path is refused by name (the old closure strips the field); the `runPipeline`
   bench path is unaffected.
 - The runner now needs an orchestrator that answers `getClusterModelChoice`

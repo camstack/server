@@ -20,7 +20,7 @@ describe('buildServeEnv', () => {
 
 // These asserted `CAMSTACK_MODE` — a variable NOTHING in server/backend has
 // ever read. The role switch is `resolveNodeRole` (CAMSTACK_ROLE), which
-// returns 'hub' for an empty value, so `camstack agent` booted a hub while a
+// returns 'hub' for an empty value, so `dominevo agent` booted a hub while a
 // green test vouched for it. The serve case "passed" only because hub is the
 // default. Asserting the variable production actually reads is the point.
 describe('buildAgentEnv', () => {

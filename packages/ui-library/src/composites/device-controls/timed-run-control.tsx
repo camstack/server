@@ -14,7 +14,7 @@
  */
 import { RotateCw, Square, Timer } from 'lucide-react'
 import { type ReactNode, useEffect, useState } from 'react'
-import type { TimedRunLimit, TimedRunRefusal } from '@camstack/types'
+import type { TimedRunLimit, TimedRunRefusal } from '@dominevo/types'
 import { useUiText } from '../../contexts/ui-text'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
 import { Button } from '../../primitives/button'

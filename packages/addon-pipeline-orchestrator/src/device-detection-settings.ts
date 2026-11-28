@@ -42,7 +42,7 @@ import type {
   PipelineStepInputOutput,
   RunnerCameraConfig,
   Zone,
-} from '@camstack/types'
+} from '@dominevo/types'
 import {
   type ClusterDetectionDefaults,
   CamProfileSchema,
@@ -52,7 +52,7 @@ import {
   RunnerCameraDeviceUIFields,
   resolveDetectionDefault,
   resolveDeviceProfile,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { DEVICE_ACTIVITY_SOURCE } from './device-activity-source.js'
 import { isPipelinePhaseMode } from './orchestrator-types.js'
 

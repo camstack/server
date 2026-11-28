@@ -3,7 +3,7 @@
  * customization" (D676 ruling 16): the message names what goes, and says so
  * when the removal empties the customization — then it IS `coreBlocks.delete`.
  */
-import { useConfirm } from '@camstack/ui-library'
+import { useConfirm } from '@dominevo/ui-library'
 import { useTranslation } from 'react-i18next'
 
 /** `what` names what is removed; `emptiesCustomization` when nothing is left afterwards. */

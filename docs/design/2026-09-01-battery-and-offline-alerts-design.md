@@ -67,7 +67,7 @@ that iterates "battery-operated devices" would skip 25 devices that report a
 level; one that iterates slices would skip 1 that declares the feature. The
 slice is the authority for "does this device have a readable level".
 
-Providers, by device: **HA containers** (`@camstack/addon-provider-homeassistant`)
+Providers, by device: **HA containers** (`@dominevo/addon-provider-homeassistant`)
 supply 46 of the 70, **ecowitt** 22, **reolink** 4 (Baby monitor 640, Campanello
 4263, Camera laundry 3628, Camera porta retro 3629 — the four
 battery cameras).
@@ -104,7 +104,7 @@ by its own design (it never paints "we know nothing" as a fault) but it means
 | devices with a `device-status` slice | **1013** |
 | `online: false` right now | **100** |
 | of those, `disabled: true` | **0** |
-| of those, from `@camstack/addon-provider-homeassistant` | **100 (all)** |
+| of those, from `@dominevo/addon-provider-homeassistant` | **100 (all)** |
 | of those, having a `parentDeviceId` | **96** |
 | distinct parents of those | 35 — **32 of them ONLINE** |
 
@@ -145,7 +145,7 @@ over the last 5 h contain 4 `stream-offline`, 4 `stream-online`, 2 `node-offline
 | Authorable list, viewer (hand mirror) | `camstack/src/components/notifications/rule-editor.ts` → `NC_SYSTEM_EVENT_VALUES` |
 
 **Adding a kind is a six-surface change with a train cost.** The enum lives in
-`@camstack/types`, which travels inside the published `@camstack/server`
+`@dominevo/types`, which travels inside the published `@dominevo/server`
 closure — so a new kind is not live on a hub until a server carrying it is
 installed, and the viewer needs an OTA for its mirror before the hub offers the
 kind (that ordering is the `check-viewer-condition-mirror.ts` rule; the audio
@@ -452,7 +452,7 @@ draft, and both are marked.**
 
 | | Decision | Where it lives now |
 | --- | --- | --- |
-| **D-1** | New `NcSystemEventKind` members in `@camstack/types` — the train, not an addon-local rule surface | `notification-rules.cap.ts` → `device-battery-low`, `device-battery-normal` |
+| **D-1** | New `NcSystemEventKind` members in `@dominevo/types` — the train, not an addon-local rule surface | `notification-rules.cap.ts` → `device-battery-low`, `device-battery-normal` |
 | **D-2** | ⚠ **AGAINST the draft.** ONE cluster setting each, not per-rule | `pipeline-analytics/device-alert-settings.ts`, form section *Battery & offline alerts* |
 | **D-3** | Re-notify applies to battery AND offline | `alerts/alert-episode.ts`, one reducer for both |
 | **D-4** | ⚠ **AGAINST the draft.** The all-clear EXISTS and is configurable, default `true` | `alertNotifyRecovery`; gates `device-battery-normal` and `device-online` |
@@ -597,8 +597,8 @@ Three properties worth keeping in mind when reading it:
   Verified by grep, not assumed. Run it anyway before merging if the branch
   touches a cap's method surface for another reason.
 
-- **The `@camstack/types` half of this change is untested in this worktree.**
-  `@camstack/types` resolves to the MAIN checkout's built `dist`, so the two new
+- **The `@dominevo/types` half of this change is untested in this worktree.**
+  `@dominevo/types` resolves to the MAIN checkout's built `dist`, so the two new
   enum members are inert under vitest here. Every test written for this feature
   is therefore built on modules that do not need the new schema at runtime —
   which is honest, but it means **nothing here proves a rule carrying

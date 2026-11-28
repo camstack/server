@@ -25,7 +25,7 @@ it was earned:
 | --- | --- |
 | Serving | `ctx.dataPlane.serve({ prefix:'embed', access:'public' })` + an SPA-aware static handler, reverse-proxied on the hub's own origin/cert |
 | Build | `vite build -c embed/vite.config.ts` → `embed-dist/`, packed by the addon's `files` |
-| Ship | `camstack deploy packages/addon-pipeline` |
+| Ship | `dominevo deploy packages/addon-pipeline` |
 | Caching | content-hashed assets served `immutable` for a year; `index.html` `no-cache` |
 | Config | native `window.__CAMSTACK_*` global, or the `embed-ready`→`embed-config` iframe handshake, or a standalone share URL with the token in `#t=` |
 | Auth | token in the injected body config, never on the navigation |
@@ -192,7 +192,7 @@ open a detail view with no extra round-trip. `countChanged` separates `loaded`
 ## Verification
 
 Live against the hub at `https://<hub-ip>:4443` after
-`camstack deploy packages/addon-pipeline`:
+`dominevo deploy packages/addon-pipeline`:
 
 - `GET /addon/stream-broker/embed/?mode=events&v=1&view=gallery` → 200 (the
   prefix is `access: 'public'`; the DATA is token-gated);

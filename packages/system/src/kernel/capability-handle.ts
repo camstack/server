@@ -1,4 +1,4 @@
-import type { ReadinessRegistry, ReadinessScope, ICapabilityHandle } from '@camstack/types'
+import type { ReadinessRegistry, ReadinessScope, ICapabilityHandle } from '@dominevo/types'
 
 type CapState = 'pending' | 'ready' | 'down'
 

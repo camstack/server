@@ -1,4 +1,4 @@
-// Guard: ban re-declaring interfaces that already live in @camstack/types.
+// Guard: ban re-declaring interfaces that already live in @dominevo/types.
 // Ported from the old eslint no-restricted-syntax selector
 //   TSInterfaceDeclaration[id.name=/^(Logger|LoggerLike|ElementConfigStore
 //     |IWebRtcProvider|DetectionEvent|StreamOption|StreamInfo)$/]
@@ -15,5 +15,5 @@ TsInterfaceDeclaration(id=$name) where {
     $name <: r"StreamOption",
     $name <: r"StreamInfo"
   },
-  register_diagnostic(span=$name, message="This interface exists in @camstack/types. Import it instead of redefining it.")
+  register_diagnostic(span=$name, message="This interface exists in @dominevo/types. Import it instead of redefining it.")
 }

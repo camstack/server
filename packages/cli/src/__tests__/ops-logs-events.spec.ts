@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { text } from '@camstack/develop'
+import { text } from '@dominevo/develop'
 import { groupEntries, messageKey, opsLogs, CONTEXT_RADIUS_MS } from '../mcp/ops-logs.js'
 import { opsEvents, opsTrack, resolveLinkBase } from '../mcp/ops-events.js'
 import { fakeHub, noSessionContext } from './ops-fake-hub.js'

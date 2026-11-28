@@ -6,7 +6,7 @@
  * and already knows how to drive ffmpeg. This module only decides WHAT to ask
  * for (profile, cadence, dense ranges) and reports what it got.
  */
-import { type ExportRecord, ExportTimelapseSchema, type IScopedLogger } from '@camstack/types'
+import { type ExportRecord, ExportTimelapseSchema, type IScopedLogger } from '@dominevo/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mockFirstCall } from '../../../__tests__/support/vitest-mock.js'
 import { makeSilentLogger } from '../../../pipeline-analytics/__tests__/test-helpers.js'

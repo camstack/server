@@ -10,7 +10,7 @@
  * A node is NAMED, never shown by its id: the Mac mini's id is its hostname
  * (`MacMiniAgent.localdomain`) and its name is what the sidebar calls it.
  */
-import type { CameraAssignmentStatus } from '@camstack/types'
+import type { CameraAssignmentStatus } from '@dominevo/types'
 import i18n from '../../../i18n/index'
 
 /** One placeable role of a camera. */

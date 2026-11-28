@@ -16,7 +16,7 @@
  *   - `ownerKind` is a TABLE — `track` | `face` | `identity` | `plate` |
  *     `vehicle` | `scene` | `motion` | `object` | `audio` (D476;
  *     `event` covered the last three at once and is no longer a valid owner
- *     kind — see `@camstack/types` `media-owner-key.ts`)
+ *     kind — see `@dominevo/types` `media-owner-key.ts`)
  *   - `ownerId` is the row id in that table (a trackId, faceId, or — since
  *     D474 — a per-table numeric event id)
  *   - `kind` is the `MediaKind` (derived from the canonical `MediaFileKind`
@@ -38,8 +38,8 @@ import type {
   MediaFileRef,
   MediaLocationCensus,
   SettingsStoreClient,
-} from '@camstack/types'
-import { EVENT_OWNER_TYPES, MediaFileKindEnum } from '@camstack/types'
+} from '@dominevo/types'
+import { EVENT_OWNER_TYPES, MediaFileKindEnum } from '@dominevo/types'
 import type { MediaBlobStorage } from '../location-aware-media-storage.js'
 import type { MediaWriteGate } from '../media-write-gate.js'
 import type { TrackCascadeLeafCount } from '../pipeline/delete-track-cascade.js'
@@ -79,7 +79,7 @@ export interface MediaReclaimCandidate {
 }
 
 /** Media kinds a stored blob can be — derived from the canonical `MediaFileKind`
- *  cap enum (`@camstack/types`) so the write side never drifts from the read
+ *  cap enum (`@dominevo/types`) so the write side never drifts from the read
  *  side. Includes the full-resolution detail images `fullFrame` (clear) +
  *  `fullFrameBoxed` (boxed). */
 export type MediaKind = MediaFileKind
@@ -101,7 +101,7 @@ export type MediaKind = MediaFileKind
  * id a per-table SQLite rowid alias, so `event:5` stopped naming one row —
  * three different rows, one per table, can all be `5`. This is the AUTHORITY
  * on what may own media; `MEDIA_OWNER_TYPES` in
- * `@camstack/types/media/media-owner-key.ts` must cover every member here —
+ * `@dominevo/types/media/media-owner-key.ts` must cover every member here —
  * `scripts` / `__tests__/owner-kinds-authority.spec.ts` guards the two lists
  * staying married.
  */

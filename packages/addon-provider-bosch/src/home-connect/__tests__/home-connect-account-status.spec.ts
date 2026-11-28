@@ -1,4 +1,4 @@
-import { SECRET_CLEAR } from '@camstack/types'
+import { SECRET_CLEAR } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   HOMECOM_CLIENT_ID,

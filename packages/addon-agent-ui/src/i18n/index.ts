@@ -1,4 +1,4 @@
-import { type AddonTFunction, createAddonI18n, type TranslationKey } from '@camstack/ui-library'
+import { type AddonTFunction, createAddonI18n, type TranslationKey } from '@dominevo/ui-library'
 import en from './en.json'
 import it from './it.json'
 

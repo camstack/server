@@ -14,7 +14,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { BindingCache } from '../runtime/binding-cache.js'
 import { makeFakeAddonApi, makeFakeDeviceManager, makeSilentLogger } from './test-helpers.js'
-import type { AddonApi } from '@camstack/types'
+import type { AddonApi } from '@dominevo/types'
 
 function makeApiWithSpy(
   override?: (input: { deviceId: number }) => Promise<{ deviceId: number; entries: unknown[] }>,

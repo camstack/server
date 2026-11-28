@@ -7,7 +7,7 @@ import {
   type RemoteSource,
   customRole,
   readStoredRemoteConfig,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { RemoteService, type RemoteServiceDeps } from '../remote-service.js'
 import { recordingLogger } from './fixtures.js'

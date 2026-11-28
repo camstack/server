@@ -1,4 +1,4 @@
-import { DeviceType, type DiscoveredChildDevice, type DiscoveryCandidate } from '@camstack/types'
+import { DeviceType, type DiscoveredChildDevice, type DiscoveryCandidate } from '@dominevo/types'
 
 /**
  * Minimal structural subset of a Gree discovery row the discovery code needs.
@@ -14,7 +14,7 @@ export interface GreeDiscoverable {
 
 export interface BuildGreeCandidatesInput {
   readonly devices: readonly GreeDiscoverable[]
-  /** mac (lowercased) → adopted CamStack device id. */
+  /** mac (lowercased) → adopted Dominevo device id. */
   readonly adopted: ReadonlyMap<string, number>
 }
 

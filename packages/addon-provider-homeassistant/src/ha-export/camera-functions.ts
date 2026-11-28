@@ -16,7 +16,7 @@
  * The rule for which `null`s exist: **a source that has not answered is
  * unknown, never a value set to "on"**.
  */
-import type { CameraSwitchId } from '@camstack/types'
+import type { CameraSwitchId } from '@dominevo/types'
 
 export interface CameraFunctionReads {
   /** `deviceManager.listAll()` → `disabled`. `null` = lettura fallita. */

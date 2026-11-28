@@ -15,7 +15,7 @@
  * Enrichment is best-effort by construction: a probe that fails, times out or
  * answers something else leaves the model as listed. It never fails a list.
  */
-import type { LlmModelFeatures, LlmModelInfo } from '@camstack/types'
+import type { LlmModelFeatures, LlmModelInfo } from '@dominevo/types'
 import { z } from 'zod'
 import { requestJson, type ListModelsOptions } from './list-models-http.js'
 

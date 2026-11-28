@@ -98,7 +98,7 @@ nothing and is logged (D49).
 ## Consequences
 
 - The editors show one more system group. The phone draws it from the
-  published `@camstack/types`; until its pin moves it shows the old three, and
+  published `@dominevo/types`; until its pin moves it shows the old three, and
   after it moves it needs the label key
   `v2.nc.rules.editor.systemGroups.addon-updates` (it falls back to the shared
   English label meanwhile).

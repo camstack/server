@@ -13,7 +13,7 @@
  * Extracted from the addon so the forwarding is unit-testable without
  * booting a `BaseAddon` — the same reason `provider-discovery.ts` exists.
  */
-import type { IDataStoreProvider, ISettingsStoreProvider } from '@camstack/types'
+import type { IDataStoreProvider, ISettingsStoreProvider } from '@dominevo/types'
 
 /** How the dispatcher reaches the registered engines, read per call. */
 export type GetDataStoreEngines = () => readonly IDataStoreProvider[]

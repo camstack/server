@@ -19,7 +19,7 @@ import type {
   NcOccupancyCondition,
   NcRuleInput,
   NcTestResult,
-} from '@camstack/types'
+} from '@dominevo/types'
 import type { NotificationCenterDeps } from './index.js'
 import type { ActionStepsOf } from './snooze-exempt.js'
 

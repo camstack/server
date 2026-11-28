@@ -294,7 +294,7 @@ Neither is this topic, both are real and should be logged rather than lost.
 - **`automation-control` and `script-runner` have zero providers live** even
   though `addon-provider-homeassistant` implements both. No HA automation or
   script entity has been adopted. If the operator expects HA automations to
-  appear in CamStack, they currently do not.
+  appear in Dominevo, they currently do not.
 
 ---
 
@@ -483,7 +483,7 @@ Two things this deliberately refuses:
 
 - **Caps carry the contracts.** `core-blocks` gains the `source` union; a
   composed device's caps are ordinary `*.cap.ts` contracts registered natively.
-  Any change here runs `npm run codegen` and force-publishes `@camstack/system`.
+  Any change here runs `npm run codegen` and force-publishes `@dominevo/system`.
 - **Events are telemetry (D8/D11).** A block reacts to `ctx.eventBus`, but a
   trigger that must not be missed is not an event-only path. The recipe's
   `device-state` trigger evaluates against the **state mirror**, which is

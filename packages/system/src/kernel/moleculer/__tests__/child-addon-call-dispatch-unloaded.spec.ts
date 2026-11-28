@@ -1,4 +1,4 @@
-import type { ICamstackAddon } from '@camstack/types'
+import type { ICamstackAddon } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import { createChildAddonCallDispatch } from '../child-addon-call-dispatch.js'
 

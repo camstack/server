@@ -17,8 +17,8 @@ import {
   MeshCrl,
   TlsTcpTransporter,
   type MeshCaSigner,
-} from '@camstack/server/system'
-import type { IScopedLogger, SettingsStoreClient } from '@camstack/types'
+} from '@dominevo/server/system'
+import type { IScopedLogger, SettingsStoreClient } from '@dominevo/types'
 import { ServiceBroker, Errors } from 'moleculer'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { EventBusService } from '../../events/event-bus.service'

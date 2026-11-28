@@ -37,7 +37,7 @@ import {
   type IComposerProvider,
   type IScopedLogger,
   type SystemEvent,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { vi } from 'vitest'
 import { SystemEventBus } from '../../../events/system-event-bus.js'
 import { CapabilityRegistry } from '../../../kernel/capability-registry.js'

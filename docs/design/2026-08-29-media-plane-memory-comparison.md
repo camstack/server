@@ -426,7 +426,7 @@ hub, same 30 cameras, before/after.
 | 5 | Bulk media off hub-main | hub root CPU, viewer `netMs` | Already scoped in the 2026-08-25 plan (item 1); unchanged by this pass |
 
 Stages 1–3 are broker-local, no protocol change, no cap change, deployable as
-one addon (`camstack deploy packages/addon-pipeline`) and individually
+one addon (`dominevo deploy packages/addon-pipeline`) and individually
 revertible. Stage 4 touches runner lifecycle only. If stages 1–4 land as
 expected, the per-camera CPU gap closes to roughly hub-root mediation plus
 in-session decode — i.e. the honest residual is stage 5 plus physics.

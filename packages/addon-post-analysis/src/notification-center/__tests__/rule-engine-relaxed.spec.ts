@@ -3,7 +3,7 @@
  * except the recognition-dependent ones. `evaluateRule(..., { relax })` answers PENDING
  * for exactly those conditions and nothing else; the gauntlet and its order are unchanged.
  */
-import { NC_CONDITION_CATALOG, NcRuleInputSchema } from '@camstack/types'
+import { NC_CONDITION_CATALOG, NcRuleInputSchema } from '@dominevo/types'
 import { describe, expect, it } from 'vitest'
 import {
   NC_RECOGNITION_CONDITIONS,

@@ -1,11 +1,11 @@
-import type { OauthIntegrationDescriptor } from '@camstack/types'
+import type { OauthIntegrationDescriptor } from '@dominevo/types'
 
 /**
  * The `homeassistant` OAuth client — the descriptor behind
  * `/api/oauth2/authorize?integration=homeassistant`.
  *
  * **Why this manifest and not the provider's.** The client on the other side of
- * this grant is the CamStack custom component inside Home Assistant, and that
+ * this grant is the Dominevo custom component inside Home Assistant, and that
  * component is `homeassistant-export`'s counterpart: export pushes to it, and it
  * pins `addonId: 'homeassistant-export'` on the cap calls it makes back. The
  * provider half runs the opposite direction (camstack → HA over the WebSocket,
@@ -82,7 +82,7 @@ export const HOME_ASSISTANT_OAUTH_INTEGRATION: OauthIntegrationDescriptor = {
     /**
      * `POST /addon/homeassistant-export/command` — the ONLY path by which an
      * actuated Home Assistant entity (a camera switch, a PTZ button, reboot,
-     * snooze) reaches CamStack. Added when D103 made the addon-route gate check
+     * snooze) reaches Dominevo. Added when D103 made the addon-route gate check
      * the grant instead of accepting any valid hub JWT; without it every HA
      * control entity answers `403 Token scope mismatch`. `view` is here for the
      * same addon's future GET routes, so a read does not force a re-link.

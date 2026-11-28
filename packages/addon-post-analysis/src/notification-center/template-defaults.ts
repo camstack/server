@@ -6,7 +6,7 @@
  * falls back to (`appliance.finished.*`), so what an editor shows is what a
  * template-less rule sends — language and operator overrides included.
  */
-import type { NcTemplateDefault } from '@camstack/types'
+import type { NcTemplateDefault } from '@dominevo/types'
 import type { NcTextCatalog } from './text-catalog.js'
 
 export function servedTemplateDefaults(texts: NcTextCatalog): NcTemplateDefault[] {

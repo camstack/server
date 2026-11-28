@@ -7,7 +7,7 @@
  * that treats it as the defaults writes a whole index on a guess.
  */
 import { describe, expect, it } from 'vitest'
-import { clusterModelSettingKey, DEFAULT_CLUSTER_STEP_MODELS } from '@camstack/types'
+import { clusterModelSettingKey, DEFAULT_CLUSTER_STEP_MODELS } from '@dominevo/types'
 import {
   CLUSTER_MODEL_OWNER_ADDON_ID,
   readClusterModelPinStrict,

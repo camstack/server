@@ -16,7 +16,7 @@ import {
   type IrTransmitterStateUpdate,
   type TransmitSettingKey,
   type TransmitSettings,
-} from '@camstack/types'
+} from '@dominevo/types'
 import { espLinkHub } from '../esphome-link-hub.js'
 import { EspServiceError, type EspServiceArgValue } from '../esphome-link.js'
 import { EspServiceRunner } from '../esphome-services.js'
