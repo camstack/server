@@ -43,10 +43,10 @@ describe('verifyWinsw', () => {
 
 describe('agent service resources', () => {
   it('points at the shipped wrapper, the supervisor and the bundled Node, Windows-style', () => {
-    expect(serviceResourcePaths('C:\\Program Files\\CamStack\\resources')).toEqual({
-      winsw: 'C:\\Program Files\\CamStack\\resources\\service\\winsw.exe',
-      supervisor: 'C:\\Program Files\\CamStack\\resources\\service\\service-supervisor.js',
-      nodeExe: 'C:\\Program Files\\CamStack\\resources\\node\\node.exe',
+    expect(serviceResourcePaths('C:\\Program Files\\Dominevo\\resources')).toEqual({
+      winsw: 'C:\\Program Files\\Dominevo\\resources\\service\\winsw.exe',
+      supervisor: 'C:\\Program Files\\Dominevo\\resources\\service\\service-supervisor.js',
+      nodeExe: 'C:\\Program Files\\Dominevo\\resources\\node\\node.exe',
     })
   })
 

@@ -24,7 +24,7 @@ const spec: AgentServiceSpec = {
   workingDir: 'C:\\Program Files\\Cam&Stack\\resources\\node_modules\\@dominevo\\server\\dist',
   env: buildNodeEnv({
     role: 'agent',
-    dataDir: "C:\\Users\\O'Brien\\AppData\\Roaming\\CamStack\\data",
+    dataDir: "C:\\Users\\O'Brien\\AppData\\Roaming\\Dominevo\\data",
     appVersion: '1.2.3',
     agent: { hubAddress: '192.0.2.10:4443', agentName: 'win-box', statusPort: 4444 },
     bundledAddonsDir: 'C:\\Program Files\\Cam&Stack\\resources\\node_modules\\@dominevo',
@@ -48,7 +48,7 @@ describe('buildWinswXml', () => {
     expect(xml).toContain('<env name="CAMSTACK_ROLE" value="agent"/>')
     expect(xml).toContain('<env name="CAMSTACK_HUB_ADDRESS" value="192.0.2.10:4443"/>')
     expect(xml).toContain(
-      '<env name="CAMSTACK_DATA" value="C:\\Users\\O&apos;Brien\\AppData\\Roaming\\CamStack\\data"/>',
+      '<env name="CAMSTACK_DATA" value="C:\\Users\\O&apos;Brien\\AppData\\Roaming\\Dominevo\\data"/>',
     )
     expect(xml).not.toMatch(/SECRET|TOKEN/i)
   })
@@ -67,12 +67,12 @@ describe('buildWinswXml', () => {
 })
 
 describe('buildInstallScript', () => {
-  const winsw = 'C:\\Program Files\\CamStack\\resources\\service\\winsw.exe'
+  const winsw = 'C:\\Program Files\\Dominevo\\resources\\service\\winsw.exe'
   const script = buildInstallScript({
     layout,
     winswSource: winsw,
     spec,
-    agentConfigSource: 'C:\\Users\\alice\\AppData\\Roaming\\CamStack\\data\\agent.json',
+    agentConfigSource: 'C:\\Users\\alice\\AppData\\Roaming\\Dominevo\\data\\agent.json',
   })
 
   it('locks the service directory to Administrators + SYSTEM BEFORE putting anything in it', () => {
@@ -87,9 +87,9 @@ describe('buildInstallScript', () => {
   })
 
   it('also locks the service DATA dir (it holds the addons SYSTEM will run) and seeds only agent.json', () => {
-    expect(layout.dataDir).toBe('C:\\ProgramData\\CamStack\\agent-data')
+    expect(layout.dataDir).toBe('C:\\ProgramData\\Dominevo\\agent-data')
     expect(script.match(/\/inheritance:r/g)).toHaveLength(2)
-    expect(script).toContain("-Destination 'C:\\ProgramData\\CamStack\\agent-data\\agent.json'")
+    expect(script).toContain("-Destination 'C:\\ProgramData\\Dominevo\\agent-data\\agent.json'")
     expect(script.indexOf("agent-data' /inheritance")).toBeLessThan(script.indexOf('Copy-Item'))
   })
 
@@ -106,13 +106,13 @@ describe('buildInstallScript', () => {
 
   it('reinstalls over an existing service, then installs and starts, checking each step', () => {
     expect(script.indexOf('uninstall')).toBeLessThan(script.indexOf("camstack-agent.exe' install"))
-    expect(script).toContain("& 'C:\\ProgramData\\CamStack\\service\\camstack-agent.exe' install")
+    expect(script).toContain("& 'C:\\ProgramData\\Dominevo\\service\\camstack-agent.exe' install")
     expect(script).toContain('start')
     expect(script).toContain('$LASTEXITCODE -ne 0')
   })
 
   it('logs the outcome where the unprivileged app can read it back', () => {
-    expect(script).toContain("'C:\\ProgramData\\CamStack\\service-last-action.log'")
+    expect(script).toContain("'C:\\ProgramData\\Dominevo\\service-last-action.log'")
   })
 
   it('quotes an apostrophe in a path instead of breaking out of the literal', () => {

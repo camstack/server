@@ -9,7 +9,7 @@ import {
 import type { AgentServiceSpec } from '../../windows-service/winsw-config'
 
 const spec: AgentServiceSpec = {
-  nodeExe: 'C:\\Program Files\\CamStack\\resources\\node\\node.exe',
+  nodeExe: 'C:\\Program Files\\Dominevo\\resources\\node\\node.exe',
   supervisorJs: 'C:\\App\\resources\\service\\service-supervisor.js',
   starterJs: 'C:\\App\\resources\\node_modules\\@dominevo\\server\\dist\\starter.js',
   workingDir: 'C:\\App\\resources',
@@ -64,7 +64,7 @@ describe('WindowsServiceManager', () => {
   it('refuses to install a build that shipped without the wrapper', async () => {
     const { mgr, exec } = manager({ fileExists: (p) => !p.endsWith('winsw.exe') })
     const res = await mgr.install({
-      winswSource: 'C:\\Program Files\\CamStack\\resources\\service\\winsw.exe',
+      winswSource: 'C:\\Program Files\\Dominevo\\resources\\service\\winsw.exe',
       spec,
       agentConfigSource: null,
     })
@@ -108,7 +108,7 @@ describe('WindowsServiceManager', () => {
     const { mgr, exec } = manager()
     const perUser = {
       ...spec,
-      nodeExe: 'C:\\Users\\alice\\AppData\\Local\\Programs\\CamStack\\resources\\node\\node.exe',
+      nodeExe: 'C:\\Users\\alice\\AppData\\Local\\Programs\\Dominevo\\resources\\node\\node.exe',
     }
     const res = await mgr.install({ winswSource: 'w.exe', spec: perUser, agentConfigSource: null })
     expect(res.ok === false && res.reason).toMatch(/for all users/)
@@ -116,7 +116,7 @@ describe('WindowsServiceManager', () => {
   })
 
   it('gives the service its own data dir under ProgramData, not the user profile', () => {
-    expect(manager().mgr.dataDir).toBe('C:\\ProgramData\\CamStack\\agent-data')
+    expect(manager().mgr.dataDir).toBe('C:\\ProgramData\\Dominevo\\agent-data')
   })
 })
 
@@ -127,7 +127,7 @@ describe('isUnderProtectedRoot', () => {
     expect(isUnderProtectedRoot('c:/program files/camstack/resources/node/node.exe', roots)).toBe(
       true,
     )
-    expect(isUnderProtectedRoot('C:\\PROGRAM FILES (X86)\\CamStack\\node.exe', roots)).toBe(true)
+    expect(isUnderProtectedRoot('C:\\PROGRAM FILES (X86)\\Dominevo\\node.exe', roots)).toBe(true)
   })
 
   it('is not a sibling that merely shares the prefix, nor a user folder', () => {
