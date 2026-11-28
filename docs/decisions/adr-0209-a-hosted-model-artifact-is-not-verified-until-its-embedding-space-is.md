@@ -75,8 +75,8 @@ BEFORE upload.
   live row was flipped OFF. Excising the dispatcher + `encode` is follow-up
   work; the cap method stays until a cap change can ride an image release.
 - The int8 vision onnx files (and the s0 tree) still exist on HF until the
-  operator deletes them — no catalog references them, so they are inert, but
-  `hf repos delete-files camstack/camstack-models "clip/mobileclip-s0/*"
+  operator deletes them (the repo moved from `camstack/camstack-models` to `Dominevo/dominevo-models` on 2026-11-28) — no catalog references them, so they are inert, but
+  `hf repos delete-files Dominevo/dominevo-models "clip/mobileclip-s0/*"
   "clip/mobileclip-s1/onnx/camstack-mobileclip-s1-vision.onnx"
   "clip/mobileclip-s2/onnx/camstack-mobileclip-s2-vision.onnx"` finishes the
   job.

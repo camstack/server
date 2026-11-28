@@ -40,7 +40,7 @@ A Coral build is a later, separate step under D710.
    `imagenet` normalisation, `resize` preprocess (matches the step), label
    smoothing, light augmentation (no colour shifts that turn a taxi into a car).
    Seed and versions pinned; the run writes its metrics next to the weights.
-3. **Export.** Through `scripts/build-camstack-models.py`: ONNX, OpenVINO,
+3. **Export.** Through `scripts/build-dominevo-models.py`: ONNX, OpenVINO,
    CoreML, plus `-labels.json` in the existing format. Uploaded to the HF
    `camstack-models` repo under `vehicleClassification/vehicle-type-oi-v1/`.
 4. **Evaluation — the gate.**

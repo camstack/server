@@ -40,7 +40,7 @@ async function submit(s: Subject) {
   return s.provider.submitJob({
     entryId: s.entryId,
     jobKey: JOB,
-    trainer: { repo: 'camstack/camstack-trainer', revision: 'ebeed67a' },
+    trainer: { repo: 'Dominevo/dominevo-trainer', revision: 'ebeed67a' },
     jobSpecJson: '{"schema":"camstack.training/v1"}',
     gpuType: 'L4',
     region: '',

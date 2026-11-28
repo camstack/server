@@ -66,7 +66,7 @@ export function builtInCatalogEntries(): readonly CatalogEntryRef[] {
   ]
 }
 
-export const HF_MIRROR_PREFIX = 'https://huggingface.co/camstack/camstack-models/resolve/main/'
+export const HF_MIRROR_PREFIX = 'https://huggingface.co/Dominevo/dominevo-models/resolve/main/'
 
 /** The `<category>/<model>` folders of the Dominevo HF mirror an entry downloads from. */
 export function hostedFolders(entry: ModelCatalogEntry): readonly string[] {

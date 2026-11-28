@@ -13,7 +13,7 @@ describe('@dominevo/types/addon model-hosting surface', () => {
     expect(addon.MODEL_FORMATS).toBe(barrel.MODEL_FORMATS)
     expect(addon.hfModelUrl).toBe(barrel.hfModelUrl)
     expect(addon.hfModelUrl(addon.HF_REPO, 'a/b.onnx')).toBe(
-      'https://huggingface.co/camstack/camstack-models/resolve/main/a/b.onnx',
+      'https://huggingface.co/Dominevo/dominevo-models/resolve/main/a/b.onnx',
     )
   })
 })

@@ -27,7 +27,7 @@ not rewritten. Counts are what remains after the codemod; run
 | Keychain owners and `secret://` markers | `camstack-secrets` | the keychain on every node | unchanged names; owners are addon ids (follow the scope) | n/a |
 | Bundle ids `com.apocaliss92.camstack(.dev)`, `com.camstack.app` (desktop `appId`) | AASA, assetlinks, electron-builder | app stores, OS install identity | `app.dominevo.*` (AASA already lists `app.dominevo.viewer`) | 20 |
 | External domains `camstack.zentik.app`, `camstack-docs.zentik.app` | notification app link, docs links | DNS owned outside the repo | `dominevo.*` once registered | 165 |
-| Hugging Face org `camstack/camstack-models`, `camstack-trainer`, `hf/camstack-models` | model catalog, trainer | model downloads | `dominevo/…` after the HF org exists | 180 |
+| Hugging Face org `camstack/camstack-models`, `camstack-trainer`, `camstack-bench-clips`, `hf/camstack-models` | model catalog, trainer | model downloads | DONE 2026-11-28: `Dominevo/dominevo-models`, `Dominevo/dominevo-trainer`, `Dominevo/dominevo-bench-clips`, `hf/dominevo-*` | 180 |
 | Tooling names: `.claude/skills/camstack-*`, MCP `camstack-dev` / `camstack-ops`, `camstack-skills-pointer` markers, git submodule path `camstack/` | `.claude`, `.cursor`, `.gitmodules` | operator tooling and the viewer submodule path | follow the viewer repo rename | many |
 | Code identifiers `ICamstackAddon`, `CamstackError`, `__camstackTypes`, `mapHaEntityToCamStack` … | `types`, `sdk`, `system`, MF globals | the SDK API of third-party addons; module-federation globals between host and remote pages | `IDominevoAddon`, … in a separate API-breaking pass | ~400 |
 | Docker local tags `camstack-server:<tag>` | build scripts | local images | `dominevo-server` | 12 |

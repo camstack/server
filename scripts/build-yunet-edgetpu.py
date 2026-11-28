@@ -14,7 +14,7 @@ produces, under ``<work>/stage/faceDetection/yunet/tflite/``:
 plus the evidence D710 asks for in ``<work>/report.json`` (op mapping, on-chip
 memory alone and co-compiled with the root SSD, parity) and the fixture
 ``packages/addon-pipeline/python/postprocessors/testdata/yunet_int8_outputs.json``.
-Upload with ``hf upload camstack/camstack-models <work>/stage/faceDetection/yunet
+Upload with ``hf upload Dominevo/dominevo-models <work>/stage/faceDetection/yunet
 faceDetection/yunet``.
 
 SOURCE
@@ -84,7 +84,7 @@ _PY = _REPO / "packages" / "addon-pipeline" / "python"
 _FIXTURE = _PY / "postprocessors" / "testdata" / "yunet_int8_outputs.json"
 _FIXTURE_IMAGE = _REPO / "packages" / "addon-pipeline" / "assets" / "reference-images" / "3-persons.jpg"
 
-_HF = "https://huggingface.co/camstack/camstack-models/resolve/main/faceDetection/yunet"
+_HF = "https://huggingface.co/Dominevo/dominevo-models/resolve/main/faceDetection/yunet"
 SRC_ONNX = (f"{_HF}/onnx/camstack-yunet-2023mar.onnx", "camstack-yunet-2023mar.onnx",
             "55df63fd5a5128903ee2b6dd4315aa82979be9a1d6cf83cc154b74cd4bd2c42f", 233_080)
 
@@ -415,7 +415,7 @@ def main() -> None:
                                                   "parity": parity}, indent=1))
     for name, meta in files.items():
         print(f"  {dest / name}  {meta['bytes']} bytes  sha256 {meta['sha256']}")
-    print(f"  hf upload camstack/camstack-models {work / 'stage' / FOLDER} {FOLDER}")
+    print(f"  hf upload Dominevo/dominevo-models {work / 'stage' / FOLDER} {FOLDER}")
 
 
 if __name__ == "__main__":

@@ -8,7 +8,7 @@
   packages/addon-ai/src/runtime/llm-model-licenses.ts), then run npm run models:notices.
   The package copies (packages/addon-pipeline, packages/addon-post-analysis, packages/addon-ai, packages/addon-model-studio, server/backend) are byte-identical
   (npm cannot ship a file from outside the package); the Hugging Face mirror receives
-  the same file from hf/camstack-models/upload.sh. Drift fails CI.
+  the same file from hf/dominevo-models/upload.sh. Drift fails CI.
   Facts: planning repo superpowers/specs/2026-09-26-model-license-compliance.md. Not legal advice.
 -->
 
@@ -22,18 +22,18 @@ licence: every Dominevo-made build is a modified version (a "model derivative")
 of the upstream weights, and the change is stated per model.
 
 Full licence texts: `licenses/models/` in the Dominevo source repository, and
-[`LICENSES/`](https://huggingface.co/camstack/camstack-models/tree/main/LICENSES)
-in the model mirror https://huggingface.co/camstack/camstack-models.
+[`LICENSES/`](https://huggingface.co/Dominevo/dominevo-models/tree/main/LICENSES)
+in the model mirror https://huggingface.co/Dominevo/dominevo-models.
 
 Some of these models are **not licensed for commercial use**. They are listed
 under [Non-commercial models](#non-commercial-models).
 
 ## Required attributions
 
-- © Ultralytics, AGPL-3.0. Corresponding source: the upstream Ultralytics checkpoint and build-camstack-models.py (with convert_lib.py) published at https://huggingface.co/camstack/camstack-models/tree/main/source. https://github.com/ultralytics/ultralytics
+- © Ultralytics, AGPL-3.0. Corresponding source: the upstream Ultralytics checkpoint and build-dominevo-models.py (with convert_lib.py) published at https://huggingface.co/Dominevo/dominevo-models/tree/main/source. https://github.com/ultralytics/ultralytics
 - Coral Edge TPU models and AIY Vision Birds V1 © Google LLC, Apache-2.0. https://github.com/google-coral/test_data
-- YOLOv9-s EdgeTPU weights © 2025 Dan Brown (fine-tuned to 17 COCO classes, INT8, compiled for the Edge TPU; https://github.com/dbro/frigate-detector-edgetpu-yolo9, repository MIT). Derived from the YOLOv9 code and yolov9-s checkpoint of Chien-Yao Wang, I-Hau Yeh, Hong-Yuan Mark Liao, GPL-3.0 (https://github.com/WongKinYiu/yolov9). Corresponding source: the fine-tuning checkpoint (yolov9-s-relu6-best.pt), the fine-tuning and conversion notebooks and the publisher LICENSE, mirrored at https://huggingface.co/camstack/camstack-models/tree/main/source/yolov9-edgetpu-dbro. https://github.com/dbro/frigate-detector-edgetpu-yolo9
-- © Ultralytics, AGPL-3.0 (Ultralytics YOLOv9 weights). YOLOv9 architecture: Chien-Yao Wang, I-Hau Yeh, Hong-Yuan Mark Liao, GPL-3.0 (https://github.com/WongKinYiu/yolov9). Corresponding source: the upstream Ultralytics checkpoint and build-camstack-models.py (with convert_lib.py) published at https://huggingface.co/camstack/camstack-models/tree/main/source. https://github.com/ultralytics/ultralytics
+- YOLOv9-s EdgeTPU weights © 2025 Dan Brown (fine-tuned to 17 COCO classes, INT8, compiled for the Edge TPU; https://github.com/dbro/frigate-detector-edgetpu-yolo9, repository MIT). Derived from the YOLOv9 code and yolov9-s checkpoint of Chien-Yao Wang, I-Hau Yeh, Hong-Yuan Mark Liao, GPL-3.0 (https://github.com/WongKinYiu/yolov9). Corresponding source: the fine-tuning checkpoint (yolov9-s-relu6-best.pt), the fine-tuning and conversion notebooks and the publisher LICENSE, mirrored at https://huggingface.co/Dominevo/dominevo-models/tree/main/source/yolov9-edgetpu-dbro. https://github.com/dbro/frigate-detector-edgetpu-yolo9
+- © Ultralytics, AGPL-3.0 (Ultralytics YOLOv9 weights). YOLOv9 architecture: Chien-Yao Wang, I-Hau Yeh, Hong-Yuan Mark Liao, GPL-3.0 (https://github.com/WongKinYiu/yolov9). Corresponding source: the upstream Ultralytics checkpoint and build-dominevo-models.py (with convert_lib.py) published at https://huggingface.co/Dominevo/dominevo-models/tree/main/source. https://github.com/ultralytics/ultralytics
 - RF-DETR © Roboflow, Apache-2.0. https://github.com/roboflow/rf-detr
 - YuNet weights Copyright (c) 2020 Shiqi Yu, MIT. Training code: ShiqiYu/libfacedetection.train, BSD-3-Clause. https://github.com/opencv/opencv_zoo/tree/main/models/face_detection_yunet
 - AuraFace v1 by fal.ai, Apache-2.0. https://huggingface.co/fal/AuraFace-v1
@@ -66,20 +66,20 @@ Training data under attribution terms:
 The folders `segmentation/yolo26-seg`, `objectDetection/yolo26` and `objectDetection/yolov9` of the model mirror hold Ultralytics weights,
 modified by Dominevo and distributed under AGPL-3.0. Their Corresponding Source
 is published in the mirror itself, in its **`source/`** folder,
-**https://huggingface.co/camstack/camstack-models/tree/main/source**, together
+**https://huggingface.co/Dominevo/dominevo-models/tree/main/source**, together
 with the upstream checkpoints it starts from:
 
 1. **The upstream checkpoints.** Ultralytics publishes
    `yolo26{n,s,m,l,x}.pt`, `yolov9{t,s,m,c}.pt` and `yolo26{n,s,m}-seg.pt` at
    https://github.com/ultralytics/assets/releases.
-2. **The build script** in `source/`: `build-camstack-models.py`, with
+2. **The build script** in `source/`: `build-dominevo-models.py`, with
    `convert_lib.py` (the ONNX to OpenVINO / INT8 converter it calls, the same
    file Dominevo's Model Studio runs) and `requirements.txt`. It holds one
    recipe per hosted file: the upstream checkpoint, the input size, the
    Ultralytics `export()` arguments, the OpenVINO precision and the INT8
    calibration count that file records about itself. Every hosted
    Ultralytics-derived file is rebuilt by one invocation:
-   `build-camstack-models.py --variant <file stem>` (for example
+   `build-dominevo-models.py --variant <file stem>` (for example
    `camstack-yolo26n-320` or `camstack-yolov9m-640`), `--family <folder>`
    or `--all`; `--list` prints the recipes and `--check-hosted` confirms
    against the mirror that every hosted file is a recipe output. The INT8
@@ -111,7 +111,7 @@ commercial use**:
 
 ## Models
 
-"Mirror" means https://huggingface.co/camstack/camstack-models, folder given.
+"Mirror" means https://huggingface.co/Dominevo/dominevo-models, folder given.
 "Code / weights" gives the two licences separately because they often differ.
 **Unknown** means no licence could be traced; it does not mean free to use.
 *default* marks the model a step runs when nobody chose one; *hidden* marks an
@@ -122,10 +122,10 @@ entry kept resolvable for a saved selection but no longer offered.
 | Catalog ids | Upstream | Code / weights | Training data | Dominevo changes | Downloaded from |
 | --- | --- | --- | --- | --- | --- |
 | `yolo26n-seg`, `yolo26s-seg`, `yolo26m-seg` | [Ultralytics](https://github.com/ultralytics/ultralytics) | AGPL-3.0 / AGPL-3.0 (`AGPL-3.0.txt`) | COCO 2017: annotations CC-BY-4.0; images under their Flickr owners' terms | exported to ONNX, OpenVINO IR and CoreML | mirror `segmentation/yolo26-seg` |
-| `yolo26n` (default), `yolo26s`, `yolo26m`, `yolo26l`, `yolo26x` (hidden), `yolo26n-fp16` (hidden), `yolo26n-int8`, `yolo26s-fp16` (hidden), `yolo26s-int8`, `yolo26m-fp16` (hidden), `yolo26m-int8`, `yolo26l-fp16` (hidden), `yolo26l-int8`, `yolo26n-320`, `yolo26n-320-int8`, `yolo26n-256`, `yolo26n-256-int8`, `yolo26s-320`, `yolo26s-320-int8`, `yolo26s-256`, `yolo26s-256-int8`, `yolo26m-320`, `yolo26m-320-int8`, `yolo26m-256`, `yolo26m-256-int8`, `yolo26l-320`, `yolo26l-320-int8`, `yolo26l-256`, `yolo26l-256-int8`, `yolo26x-fp16` (hidden), `yolo26x-int8` (hidden) | [Ultralytics](https://github.com/ultralytics/ultralytics) | AGPL-3.0 / AGPL-3.0 (`AGPL-3.0.txt`) | COCO 2017: annotations CC-BY-4.0; images under their Flickr owners' terms | exported to ONNX, OpenVINO IR and CoreML (scripts/build-camstack-models.py); OpenVINO FP16 export; exported to OpenVINO IR, then OpenVINO NNCF INT8 post-training quantisation; re-exported at 320×320 to ONNX, OpenVINO IR and CoreML; re-exported at 320×320 to OpenVINO IR; OpenVINO NNCF INT8 post-training quantisation; re-exported at 256×256 to ONNX, OpenVINO IR and CoreML; re-exported at 256×256 to OpenVINO IR; OpenVINO NNCF INT8 post-training quantisation | mirror `objectDetection/yolo26` |
+| `yolo26n`, `yolo26s`, `yolo26m`, `yolo26l`, `yolo26x` (hidden), `yolo26n-fp16` (hidden), `yolo26n-int8`, `yolo26s-fp16` (hidden), `yolo26s-int8`, `yolo26m-fp16` (hidden), `yolo26m-int8`, `yolo26l-fp16` (hidden), `yolo26l-int8`, `yolo26n-320`, `yolo26n-320-int8`, `yolo26n-256`, `yolo26n-256-int8`, `yolo26s-320`, `yolo26s-320-int8`, `yolo26s-256`, `yolo26s-256-int8`, `yolo26m-320`, `yolo26m-320-int8`, `yolo26m-256`, `yolo26m-256-int8`, `yolo26l-320`, `yolo26l-320-int8`, `yolo26l-256`, `yolo26l-256-int8`, `yolo26x-fp16` (hidden), `yolo26x-int8` (hidden) | [Ultralytics](https://github.com/ultralytics/ultralytics) | AGPL-3.0 / AGPL-3.0 (`AGPL-3.0.txt`) | COCO 2017: annotations CC-BY-4.0; images under their Flickr owners' terms | exported to ONNX, OpenVINO IR and CoreML (scripts/build-dominevo-models.py); OpenVINO FP16 export; exported to OpenVINO IR, then OpenVINO NNCF INT8 post-training quantisation; re-exported at 320×320 to ONNX, OpenVINO IR and CoreML; re-exported at 320×320 to OpenVINO IR; OpenVINO NNCF INT8 post-training quantisation; re-exported at 256×256 to ONNX, OpenVINO IR and CoreML; re-exported at 256×256 to OpenVINO IR; OpenVINO NNCF INT8 post-training quantisation | mirror `objectDetection/yolo26` |
 | `ssd-mobilenet-v2-coco-edgetpu` | [Google Coral test_data](https://github.com/google-coral/test_data) | Apache-2.0 / Apache-2.0 (`Apache-2.0.txt`) | COCO 2017: annotations CC-BY-4.0; images under their Flickr owners' terms | none | https://github.com/google-coral/test_data |
 | `yolov9s-320-edgetpu` (default), `yolov9s-512-edgetpu` | [YOLOv9-s EdgeTPU (Dan Brown)](https://github.com/dbro/frigate-detector-edgetpu-yolo9) | GPL-3.0 / GPL-3.0 (`GPL-3.0.txt`) | COCO 2017: annotations CC-BY-4.0; images under their Flickr owners' terms | none: the publisher release files are mirrored byte-identical | mirror `objectDetection/yolov9` |
-| `yolov9t-320`, `yolov9t-320-int8`, `yolov9t-640`, `yolov9t-640-int8`, `yolov9s-320`, `yolov9s-320-int8`, `yolov9s-640`, `yolov9s-640-int8`, `yolov9m-320`, `yolov9m-320-int8`, `yolov9m-640`, `yolov9m-640-int8`, `yolov9c-320`, `yolov9c-320-int8`, `yolov9c-640`, `yolov9c-640-int8` | [Ultralytics](https://github.com/ultralytics/ultralytics) | AGPL-3.0 / AGPL-3.0 (`AGPL-3.0.txt`) | COCO 2017: annotations CC-BY-4.0; images under their Flickr owners' terms | exported at 320×320 to ONNX, OpenVINO IR FP16 and CoreML; exported at 320×320 to OpenVINO IR; OpenVINO NNCF INT8 post-training quantisation; exported at 640×640 to ONNX, OpenVINO IR FP16 and CoreML; exported at 640×640 to OpenVINO IR; OpenVINO NNCF INT8 post-training quantisation | mirror `objectDetection/yolov9` |
+| `yolov9t-320`, `yolov9t-320-int8`, `yolov9t-640`, `yolov9t-640-int8`, `yolov9s-320` (default), `yolov9s-320-int8`, `yolov9s-640`, `yolov9s-640-int8`, `yolov9m-320`, `yolov9m-320-int8`, `yolov9m-640`, `yolov9m-640-int8`, `yolov9c-320`, `yolov9c-320-int8`, `yolov9c-640`, `yolov9c-640-int8` | [Ultralytics](https://github.com/ultralytics/ultralytics) | AGPL-3.0 / AGPL-3.0 (`AGPL-3.0.txt`) | COCO 2017: annotations CC-BY-4.0; images under their Flickr owners' terms | exported at 320×320 to ONNX, OpenVINO IR FP16 and CoreML; exported at 320×320 to OpenVINO IR; OpenVINO NNCF INT8 post-training quantisation; exported at 640×640 to ONNX, OpenVINO IR FP16 and CoreML; exported at 640×640 to OpenVINO IR; OpenVINO NNCF INT8 post-training quantisation | mirror `objectDetection/yolov9` |
 
 ### Package detection
 

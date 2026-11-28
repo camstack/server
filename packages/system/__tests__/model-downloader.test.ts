@@ -379,7 +379,7 @@ const sha256 = (body: string): string => createHash('sha256').update(body).diges
  */
 describe('hosted revisions (the mirror table) and adoption by hash', () => {
   let tmpDir: string
-  const MIRROR = 'https://huggingface.co/camstack/camstack-models/resolve/main'
+  const MIRROR = 'https://huggingface.co/Dominevo/dominevo-models/resolve/main'
   const FIXTURE = 'https://huggingface.co/camstack-test/fixture-models/resolve/main'
 
   const bundle = (revision: string): ModelCatalogEntry => ({

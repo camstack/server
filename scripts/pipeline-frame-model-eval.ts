@@ -255,14 +255,14 @@ const ARTIFACTS: readonly ArtifactSpec[] = [
   },
   {
     modelId: 'yolov9m-320',
-    repo: 'camstack/camstack-models',
+    repo: 'Dominevo/dominevo-models',
     treePath: 'objectDetection/yolov9/coreml/camstack-yolov9m-320.mlpackage',
     packageName: 'camstack-yolov9m-320.mlpackage',
     inputSize: 320,
   },
   {
     modelId: 'yolov9m-640',
-    repo: 'camstack/camstack-models',
+    repo: 'Dominevo/dominevo-models',
     treePath: 'objectDetection/yolov9/coreml/camstack-yolov9m-640.mlpackage',
     packageName: 'camstack-yolov9m-640.mlpackage',
     inputSize: 640,

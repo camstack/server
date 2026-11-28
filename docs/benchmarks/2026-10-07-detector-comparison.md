@@ -203,7 +203,7 @@ Budget rule of thumb: a camera detecting at 10 fps needs about 10 inferences per
 
 ## (e) YOLO26 Core ML on the M3 Pro (after D742)
 
-Measured 2026-10-07 afternoon, after the 8 reduced packages on HF `camstack/camstack-models` were re-exported static at their original paths. Packages downloaded fresh from HF; coremltools 8.3 (the pool's `requirements-coreml.txt` pins `<9`), macOS 26.2.
+Measured 2026-10-07 afternoon, after the 8 reduced packages on HF `Dominevo/dominevo-models` were re-exported static at their original paths. Packages downloaded fresh from HF; coremltools 8.3 (the pool's `requirements-coreml.txt` pins `<9`), macOS 26.2.
 
 **Method** — identical to the original Apple column (`mac_lat.py`): `ct.models.MLModel(.mlpackage, compute_units=…)`, which is the pool's cache-miss load path (`_acquire_coreml_model`); `imageType` input fed a grey-114 PIL image of the model size; 5 warm-up + 40 timed `predict`; p50 / p95; fps = 1000 / p50 (the pool's Core ML executor is single-threaded). One model per process. Two full passes; each cell is the pass with the lower p50. **Machine load 7–29 on 12 cores** (other agents running) — the Neural Engine cells are stable across passes (±15 %); the CPU-only and ONNX cells vary by up to 1.6× and are pessimistic.
 
@@ -252,7 +252,7 @@ Every cell within 0.03 of its ONNX row (largest: `yolo26s-320` night R 0.53 vs 0
 
 ## (f) YOLOv9 Core ML FP16 on the M3 Pro (after D743)
 
-Measured 2026-10-07 evening, after the eight YOLOv9 packages on HF `camstack/camstack-models` were re-exported FP16 (`half=True`, Ultralytics 8.4.98, PyTorch 2.13.0, coremltools 9.0) and replaced at their original paths. Same method as (e) (`ct.models.MLModel(.mlpackage, compute_units=…)`, grey-114 image, 5 warm-up + 40 timed `predict`, one package per process, two passes, the lower p50 kept). Load 7–9 on 12 cores.
+Measured 2026-10-07 evening, after the eight YOLOv9 packages on HF `Dominevo/dominevo-models` were re-exported FP16 (`half=True`, Ultralytics 8.4.98, PyTorch 2.13.0, coremltools 9.0) and replaced at their original paths. Same method as (e) (`ct.models.MLModel(.mlpackage, compute_units=…)`, grey-114 image, 5 warm-up + 40 timed `predict`, one package per process, two passes, the lower p50 kept). Load 7–9 on 12 cores.
 
 | model | FP16 `ALL` p50 / p95 ms | fps | FP16 `CPU_AND_NE` | FP16 `CPU_AND_GPU` | FP16 `CPU_ONLY` | FP32 `ALL` (old) | FP32 `CPU_AND_NE` (old) |
 |---|---|---|---|---|---|---|---|

@@ -4,7 +4,7 @@
  * truth (D661):
  *
  *   THIRD_PARTY_MODELS.md + the package copies                  the product notice
- *   hf/camstack-models/README.md, between the table markers     the HF model table
+ *   hf/dominevo-models/README.md, between the table markers     the HF model table
  *
  * Operator-facing "Models and licenses" lives in the public docs
  * (`dominevo/docs` → `/docs/detection/models`), not in the Admin UI.
@@ -31,7 +31,7 @@ import {
 } from './lib/model-catalogs.js'
 
 const ROOT = path.resolve(import.meta.dirname, '..')
-const HF_README = 'hf/camstack-models/README.md'
+const HF_README = 'hf/dominevo-models/README.md'
 const BEGIN = '<!-- BEGIN GENERATED MODEL TABLE -->'
 const END = '<!-- END GENERATED MODEL TABLE -->'
 
@@ -369,7 +369,7 @@ export function renderNotice(rows: readonly ModelLicenseRowData[]): string {
   packages/addon-ai/src/runtime/llm-model-licenses.ts), then run npm run models:notices.
   The package copies (${NOTICE_PACKAGES.join(', ')}) are byte-identical
   (npm cannot ship a file from outside the package); the Hugging Face mirror receives
-  the same file from hf/camstack-models/upload.sh. Drift fails CI.
+  the same file from hf/dominevo-models/upload.sh. Drift fails CI.
   Facts: planning repo superpowers/specs/2026-09-26-model-license-compliance.md. Not legal advice.
 -->
 
@@ -383,8 +383,8 @@ licence: every Dominevo-made build is a modified version (a "model derivative")
 of the upstream weights, and the change is stated per model.
 
 Full licence texts: \`licenses/models/\` in the Dominevo source repository, and
-[\`LICENSES/\`](https://huggingface.co/camstack/camstack-models/tree/main/LICENSES)
-in the model mirror https://huggingface.co/camstack/camstack-models.
+[\`LICENSES/\`](https://huggingface.co/Dominevo/dominevo-models/tree/main/LICENSES)
+in the model mirror https://huggingface.co/Dominevo/dominevo-models.
 
 Some of these models are **not licensed for commercial use**. They are listed
 under [Non-commercial models](#non-commercial-models).
@@ -408,20 +408,20 @@ ${renderDataAttributions(rows)}
 The folders ${folderList} of the model mirror hold Ultralytics weights,
 modified by Dominevo and distributed under AGPL-3.0. Their Corresponding Source
 is published in the mirror itself, in its **\`source/\`** folder,
-**https://huggingface.co/camstack/camstack-models/tree/main/source**, together
+**https://huggingface.co/Dominevo/dominevo-models/tree/main/source**, together
 with the upstream checkpoints it starts from:
 
 1. **The upstream checkpoints.** Ultralytics publishes
    \`yolo26{n,s,m,l,x}.pt\`, \`yolov9{t,s,m,c}.pt\` and \`yolo26{n,s,m}-seg.pt\` at
    https://github.com/ultralytics/assets/releases.
-2. **The build script** in \`source/\`: \`build-camstack-models.py\`, with
+2. **The build script** in \`source/\`: \`build-dominevo-models.py\`, with
    \`convert_lib.py\` (the ONNX to OpenVINO / INT8 converter it calls, the same
    file Dominevo's Model Studio runs) and \`requirements.txt\`. It holds one
    recipe per hosted file: the upstream checkpoint, the input size, the
    Ultralytics \`export()\` arguments, the OpenVINO precision and the INT8
    calibration count that file records about itself. Every hosted
    Ultralytics-derived file is rebuilt by one invocation:
-   \`build-camstack-models.py --variant <file stem>\` (for example
+   \`build-dominevo-models.py --variant <file stem>\` (for example
    \`camstack-yolo26n-320\` or \`camstack-yolov9m-640\`), \`--family <folder>\`
    or \`--all\`; \`--list\` prints the recipes and \`--check-hosted\` confirms
    against the mirror that every hosted file is a recipe output. The INT8
@@ -451,7 +451,7 @@ ${renderNonCommercial(rows)}
 
 ## Models
 
-"Mirror" means https://huggingface.co/camstack/camstack-models, folder given.
+"Mirror" means https://huggingface.co/Dominevo/dominevo-models, folder given.
 "Code / weights" gives the two licences separately because they often differ.
 **Unknown** means no licence could be traced; it does not mean free to use.
 *default* marks the model a step runs when nobody chose one; *hidden* marks an

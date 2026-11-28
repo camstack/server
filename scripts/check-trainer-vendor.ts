@@ -1,7 +1,7 @@
 /**
  * The trainer's vendored code must be byte-identical to its source.
  *
- * `hf/camstack-trainer/camstack_train/_vendor/` carries two copies, because the
+ * `hf/dominevo-trainer/camstack_train/_vendor/` carries two copies, because the
  * trainer image is built from the Hugging Face repo alone and cannot reach this
  * repository:
  *
@@ -22,7 +22,7 @@ import path, { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
-const VENDOR = join(ROOT, 'hf/camstack-trainer/camstack_train/_vendor')
+const VENDOR = join(ROOT, 'hf/dominevo-trainer/camstack_train/_vendor')
 
 export interface VendorPair {
   /** Source folder, relative to the repository root. */
@@ -123,7 +123,7 @@ function main(): void {
     console.error('✘ the trainer vendors code that drifted from its source:')
     for (const p of problems) console.error(`    ${p}`)
     console.error(
-      '  Re-copy the source into hf/camstack-trainer/camstack_train/_vendor/ (never edit the copy).',
+      '  Re-copy the source into hf/dominevo-trainer/camstack_train/_vendor/ (never edit the copy).',
     )
     process.exit(1)
   }

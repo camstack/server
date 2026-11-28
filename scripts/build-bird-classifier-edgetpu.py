@@ -13,11 +13,11 @@ on-chip memory), the same compiler co-compiling the root SSD with the bird
 (does the pair fit the ~8 MB parameter cache together?), and the top-1 parity
 report against the ONNX survivor. Upload with:
 
-    hf upload camstack/camstack-models <work>/stage/animalClassification/bird-classifier \
+    hf upload Dominevo/dominevo-models <work>/stage/animalClassification/bird-classifier \
         animalClassification/bird-classifier
 
-The model card (``hf/camstack-models/animalClassification/bird-classifier/README.md``)
-travels with ``hf/camstack-models/upload.sh``, not with this script.
+The model card (``hf/dominevo-models/animalClassification/bird-classifier/README.md``)
+travels with ``hf/dominevo-models/upload.sh``, not with this script.
 
 SOURCE
 ------
@@ -103,7 +103,7 @@ _REFERENCE_IMAGES = _REPO / "packages" / "addon-pipeline" / "assets" / "referenc
 
 CORAL_COMMIT = "104342d2d3480b3e66203073dac24f4e2dbb4c41"  # google-coral/test_data HEAD, 2021-07-26
 _CORAL = f"https://raw.githubusercontent.com/google-coral/test_data/{CORAL_COMMIT}"
-_HF = "https://huggingface.co/camstack/camstack-models/resolve/main/animalClassification/bird-classifier"
+_HF = "https://huggingface.co/Dominevo/dominevo-models/resolve/main/animalClassification/bird-classifier"
 
 # (url, file name, sha256, bytes)
 SRC_BIRD_QUANT = (f"{_CORAL}/mobilenet_v2_1.0_224_inat_bird_quant.tflite", "bird_quant.tflite",
@@ -429,7 +429,7 @@ def main() -> None:
         {"file": str(dest), "sha256": digest, "bytes": dest.stat().st_size,
          "source": SRC_BIRD_QUANT[0], **compile_report, "parity": parity}, indent=1))
     print(f"  {dest}  {dest.stat().st_size} bytes  sha256 {digest}")
-    print(f"  hf upload camstack/camstack-models {work / 'stage' / FOLDER} {FOLDER}")
+    print(f"  hf upload Dominevo/dominevo-models {work / 'stage' / FOLDER} {FOLDER}")
 
 
 if __name__ == "__main__":

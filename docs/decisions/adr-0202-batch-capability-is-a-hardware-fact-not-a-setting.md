@@ -63,7 +63,7 @@ operator-tunable per node.
 - A conversion script must no longer decide batch for a target. The static pin
   left in `build-plate-ocr-model.py` is now redundant belt-and-braces, kept only
   because it costs nothing and makes that model's three formats agree; the
-  dynamic exports in `build-camstack-models.py` and `build-auraface-model.py`
+  dynamic exports in `build-dominevo-models.py` and `build-auraface-model.py`
   stay dynamic on purpose.
 - The catalog declares nothing about batch, and must not start. The fact is
   readable from the graph at load; a catalog field would be a second authority

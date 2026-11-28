@@ -164,7 +164,7 @@ class StaticBatchPlanTest(unittest.TestCase):
 def _dynamic_batch_ov_model(core, tmpdir: str):
     """Build the smallest ONNX with a DYNAMIC first dim and read it as an OV
     model. Mirrors what `ov.convert_model` produces from every dynamic-batch
-    export in this repo (`scripts/build-camstack-models.py`, and the
+    export in this repo (`scripts/build-dominevo-models.py`, and the
     model-studio convert path)."""
     import os
 

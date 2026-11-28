@@ -45,7 +45,7 @@ describe('classifier model catalogs — PRIMARY entries + legacy flags', () => {
 })
 
 describe('classifier model catalogs — HF URLs + label extraFiles', () => {
-  const BASE = 'https://huggingface.co/camstack/camstack-models/resolve/main/'
+  const BASE = 'https://huggingface.co/Dominevo/dominevo-models/resolve/main/'
 
   it('animal-classifier resolves the expected HF onnx URL + labels extraFile', () => {
     const m = ANIMAL_CLASSIFIER_MODELS[0]
@@ -174,7 +174,7 @@ describe('the deleted Coral stubs leave no tflite sibling behind', () => {
 })
 
 describe('bird-classifier — the Coral build is a format of the survivor (D710)', () => {
-  const BASE = 'https://huggingface.co/camstack/camstack-models/resolve/main/'
+  const BASE = 'https://huggingface.co/Dominevo/dominevo-models/resolve/main/'
   const bird = BIRD_CLASSIFIER_MODELS[0]
   const device = (deviceKey: string) => ({
     deviceKey,

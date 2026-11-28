@@ -31,10 +31,10 @@ describe('FACE_DETECTION_MODELS catalog — yunet-2023mar', () => {
     expect(yunet?.inputNormalization).toBeUndefined()
   })
 
-  it('ships onnx / openvino / coreml from faceDetection/yunet on camstack/camstack-models', () => {
+  it('ships onnx / openvino / coreml from faceDetection/yunet on Dominevo/dominevo-models', () => {
     const formats = yunet?.formats
     expect(formats?.onnx?.url).toMatch(
-      /camstack\/camstack-models\/resolve\/main\/faceDetection\/yunet\/onnx\/camstack-yunet-2023mar\.onnx$/,
+      /Dominevo\/dominevo-models\/resolve\/main\/faceDetection\/yunet\/onnx\/camstack-yunet-2023mar\.onnx$/,
     )
     expect(formats?.openvino?.url).toMatch(
       /faceDetection\/yunet\/openvino\/camstack-yunet-2023mar\.xml$/,
@@ -86,7 +86,7 @@ describe('face-detection default is yunet-2023mar (since 2026-09-26)', () => {
 
   it('tflite is YuNet’s own Coral build — a format of the survivor, not a sibling id (D710)', () => {
     expect(yunet?.formats.tflite?.url).toBe(
-      'https://huggingface.co/camstack/camstack-models/resolve/main/faceDetection/yunet/tflite/camstack-yunet-2023mar_edgetpu.tflite',
+      'https://huggingface.co/Dominevo/dominevo-models/resolve/main/faceDetection/yunet/tflite/camstack-yunet-2023mar_edgetpu.tflite',
     )
     expect(yunet?.formats.tflite?.runtimes).toEqual(['python'])
     expect(yunet?.license?.modifications).toContain('edgetpu_compiler')

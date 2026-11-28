@@ -1,7 +1,7 @@
 """Shared model converter: ONNX -> OpenVINO IR (fp16/int8/CoreML) + validation.
 
 Used by both the runtime model-convert cap (convert.py) and the offline
-scripts/build-camstack-models.py. Conversion ALWAYS starts from ONNX via
+scripts/build-dominevo-models.py. Conversion ALWAYS starts from ONNX via
 ov.convert_model (never the Ultralytics OV exporter, which emits unnamed
 tensors that break the runtime's named-output postprocess)."""
 from __future__ import annotations

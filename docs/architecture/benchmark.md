@@ -208,7 +208,7 @@ All admin.
 CC BY / CC0 / public-domain sources (MEVA, Wikimedia Commons) plus a
 fictional plate drawn on a MEVA car; `NOTICE.md` is the attribution and
 `bench-manifest.json` the segment list. The H.264 build is uploaded to the HF
-dataset repo `camstack/camstack-bench-clips` and its sha256 pinned in
+dataset repo `Dominevo/dominevo-bench-clips` and its sha256 pinned in
 `node-bench/bench-frames.ts` (`BENCH_CLIP`).
 
 ## Operator deploy

@@ -31,7 +31,7 @@ function job(
     },
     maxCostUsd: overrides.maxCostUsd ?? 1,
     maxRuntimeSec: overrides.maxRuntimeSec ?? 3600,
-    trainer: overrides.trainer ?? { repo: 'camstack/camstack-trainer', revision: 'abcdef1' },
+    trainer: overrides.trainer ?? { repo: 'Dominevo/dominevo-trainer', revision: 'abcdef1' },
     datasetLayout: overrides.datasetLayout ?? 'frames',
     frameCount: overrides.frameCount ?? 0,
     frameIds: overrides.frameIds ?? [],

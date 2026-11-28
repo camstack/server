@@ -3,9 +3,9 @@ import { hfModelUrl } from '../src/utils/hf-url.js'
 
 describe('hfModelUrl', () => {
   it('builds a correct huggingface URL', () => {
-    const url = hfModelUrl('camstack/camstack-models', 'objectDetection/yolov8/onnx/model.onnx')
+    const url = hfModelUrl('Dominevo/dominevo-models', 'objectDetection/yolov8/onnx/model.onnx')
     expect(url).toBe(
-      'https://huggingface.co/camstack/camstack-models/resolve/main/objectDetection/yolov8/onnx/model.onnx',
+      'https://huggingface.co/Dominevo/dominevo-models/resolve/main/objectDetection/yolov8/onnx/model.onnx',
     )
   })
 

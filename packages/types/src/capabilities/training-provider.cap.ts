@@ -167,7 +167,7 @@ export type ProviderJobStatus = z.infer<typeof ProviderJobStatusSchema>
  * in `result.json`.
  */
 export const TrainerSourceRefSchema = z.object({
-  /** Hugging Face repo id, e.g. `camstack/camstack-trainer`. */
+  /** Hugging Face repo id, e.g. `Dominevo/dominevo-trainer`. */
   repo: z.string().min(1),
   /** A commit sha (never a branch) — the job must be reproducible. */
   revision: z.string().regex(/^[0-9a-f]{7,64}$/),

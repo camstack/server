@@ -39,7 +39,7 @@ describe('model downloader — no Hugging Face token from the environment', () =
       return new Response(new Uint8Array([1, 2, 3]), { status: 200 })
     }) as typeof fetch
     await downloadFile(
-      'https://huggingface.co/camstack/models/resolve/main/model.onnx',
+      'https://huggingface.co/Dominevo/dominevo-models/resolve/main/model.onnx',
       path.join(dir, 'model.onnx'),
       { fetchImpl },
     )

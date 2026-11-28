@@ -882,7 +882,7 @@ queues on the live pool instead (load history still `bench:<deviceKey>`).
 device `all` to `ComputeUnit.ALL` and `ane` to `CPU_AND_NE`, and Core ML
 decides the placement. An FP32 package goes to the GPU under `ALL` and to the
 CPU under `CPU_AND_NE`. The YOLOv9 packages were FP32 until 2026-10-07 and ran
-2.5–5× slower than now. Every CoreML recipe in `scripts/build-camstack-models.py`
+2.5–5× slower than now. Every CoreML recipe in `scripts/build-dominevo-models.py`
 is FP16, and `check_recipes` refuses one that is not. The FP16 packages
 replaced the FP32 ones under the same names. Every mirror artefact has a
 revision (D744), so a node holding the old copy downloads the new one

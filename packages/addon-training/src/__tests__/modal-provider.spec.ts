@@ -46,7 +46,7 @@ describe('trainer Dockerfile as Modal builds it', () => {
     const { fileURLToPath } = await import('node:url')
     // Repo-root trainer recipe (not under the package); resolve from this file.
     const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '../../../..')
-    const text = await readFile(join(repoRoot, 'hf/camstack-trainer/Dockerfile'), 'utf8')
+    const text = await readFile(join(repoRoot, 'hf/dominevo-trainer/Dockerfile'), 'utf8')
     const parsed = parseTrainerDockerfile(text, 'ebeed67a296241fcb5b0d97cf7c85dd12a743db8')
     expect(parsed.kind).toBe('ok')
     if (parsed.kind === 'ok') {
@@ -64,7 +64,7 @@ describe('Modal provider', () => {
     await s.provider.submitJob({
       entryId: s.entryId,
       jobKey: JOB,
-      trainer: { repo: 'camstack/camstack-trainer', revision: 'ebeed67a' },
+      trainer: { repo: 'Dominevo/dominevo-trainer', revision: 'ebeed67a' },
       jobSpecJson: '{"jobKey":"x"}',
       gpuType: 'L4',
       region: 'eu',
@@ -98,7 +98,7 @@ describe('Modal provider', () => {
     const status = await s.provider.submitJob({
       entryId: s.entryId,
       jobKey: JOB,
-      trainer: { repo: 'camstack/camstack-trainer', revision: 'ebeed67a' },
+      trainer: { repo: 'Dominevo/dominevo-trainer', revision: 'ebeed67a' },
       jobSpecJson: '{}',
       gpuType: 'L4',
       region: '',

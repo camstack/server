@@ -2,7 +2,7 @@
 """Build the `yolox-tiny-plate` catalog artefacts from open-lpr's YOLOX-tiny plate detector.
 
     python3 scripts/build-yolox-plate-model.py <work-dir> [--skip-verify]
-    hf upload camstack/camstack-models <work-dir>/stage/plateDetection/yolox-tiny-plate \
+    hf upload Dominevo/dominevo-models <work-dir>/stage/plateDetection/yolox-tiny-plate \
         plateDetection/yolox-tiny-plate
 
 Produces, under ``<work-dir>/stage/plateDetection/yolox-tiny-plate``, the three
@@ -496,7 +496,7 @@ def main() -> None:
         _verify(base, upstream, image, work / "verify-tmp", want_coreml)
 
     print(f"\nReady to publish: {base}")
-    print(f"  hf upload camstack/camstack-models {base} {FOLDER}")
+    print(f"  hf upload Dominevo/dominevo-models {base} {FOLDER}")
 
 
 if __name__ == "__main__":

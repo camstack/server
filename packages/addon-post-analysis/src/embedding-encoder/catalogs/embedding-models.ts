@@ -2,7 +2,7 @@ import type { ClipModelMeta, ModelCatalogEntry, ModelFormatEntry } from '@domine
 import { hfModelUrl } from '@dominevo/types'
 import { SIGLIP2_APACHE, SIGLIP2_TEXT_APACHE } from './model-licenses.js'
 
-const HF_REPO = 'camstack/camstack-models'
+const HF_REPO = 'Dominevo/dominevo-models'
 const hf = (path: string) => hfModelUrl(HF_REPO, path)
 
 /**

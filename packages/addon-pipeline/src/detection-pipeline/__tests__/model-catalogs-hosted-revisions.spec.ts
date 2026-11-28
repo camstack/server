@@ -11,7 +11,7 @@ import * as catalogs from '../registry/model-catalogs.js'
 // batch-flexible export aborted every process that loaded it) before
 // revisions existed; these values are the mirror's `lfs.oid` of each
 // package's weight.bin after that replacement.
-const MIRROR = 'https://huggingface.co/camstack/camstack-models/resolve/main/'
+const MIRROR = 'https://huggingface.co/Dominevo/dominevo-models/resolve/main/'
 
 const YOLO26_STATIC_COREML: Readonly<Record<string, string>> = {
   'yolo26n-320': 'b30bb5ced9c127f0a813c7740c451a1766226dde43e277e01eb9d298d44f17cd',

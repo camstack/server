@@ -19,7 +19,7 @@ import { modelFormatFor } from '../runtimes.js'
  */
 const CORAL_SSD_ID = 'ssd-mobilenet-v2-coco-edgetpu'
 const MIRROR =
-  'https://huggingface.co/camstack/camstack-models/resolve/main/objectDetection/yolov9/tflite'
+  'https://huggingface.co/Dominevo/dominevo-models/resolve/main/objectDetection/yolov9/tflite'
 
 /** The publisher's `labels-coco17.txt`, in logit order. */
 const COCO17 = [

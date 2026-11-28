@@ -35,15 +35,15 @@ export const ULTRALYTICS_AGPL: ModelLicense = {
   },
   url: 'https://github.com/ultralytics/ultralytics/blob/main/LICENSE',
   attribution:
-    '© Ultralytics, AGPL-3.0. Corresponding source: the upstream Ultralytics checkpoint and build-camstack-models.py (with convert_lib.py) published at https://huggingface.co/camstack/camstack-models/tree/main/source.',
-  modifications: 'exported to ONNX, OpenVINO IR and CoreML (scripts/build-camstack-models.py)',
+    '© Ultralytics, AGPL-3.0. Corresponding source: the upstream Ultralytics checkpoint and build-dominevo-models.py (with convert_lib.py) published at https://huggingface.co/Dominevo/dominevo-models/tree/main/source.',
+  modifications: 'exported to ONNX, OpenVINO IR and CoreML (scripts/build-dominevo-models.py)',
   hosting: 'camstack-hf',
 }
 
 export const ULTRALYTICS_YOLOV9_AGPL: ModelLicense = {
   ...ULTRALYTICS_AGPL,
   attribution:
-    '© Ultralytics, AGPL-3.0 (Ultralytics YOLOv9 weights). YOLOv9 architecture: Chien-Yao Wang, I-Hau Yeh, Hong-Yuan Mark Liao, GPL-3.0 (https://github.com/WongKinYiu/yolov9). Corresponding source: the upstream Ultralytics checkpoint and build-camstack-models.py (with convert_lib.py) published at https://huggingface.co/camstack/camstack-models/tree/main/source.',
+    '© Ultralytics, AGPL-3.0 (Ultralytics YOLOv9 weights). YOLOv9 architecture: Chien-Yao Wang, I-Hau Yeh, Hong-Yuan Mark Liao, GPL-3.0 (https://github.com/WongKinYiu/yolov9). Corresponding source: the upstream Ultralytics checkpoint and build-dominevo-models.py (with convert_lib.py) published at https://huggingface.co/Dominevo/dominevo-models/tree/main/source.',
 }
 
 /**
@@ -67,7 +67,7 @@ export const DBRO_YOLOV9_EDGETPU_GPL: ModelLicense = {
   },
   url: 'https://github.com/WongKinYiu/yolov9/blob/main/LICENSE.md',
   attribution:
-    'YOLOv9-s EdgeTPU weights © 2025 Dan Brown (fine-tuned to 17 COCO classes, INT8, compiled for the Edge TPU; https://github.com/dbro/frigate-detector-edgetpu-yolo9, repository MIT). Derived from the YOLOv9 code and yolov9-s checkpoint of Chien-Yao Wang, I-Hau Yeh, Hong-Yuan Mark Liao, GPL-3.0 (https://github.com/WongKinYiu/yolov9). Corresponding source: the fine-tuning checkpoint (yolov9-s-relu6-best.pt), the fine-tuning and conversion notebooks and the publisher LICENSE, mirrored at https://huggingface.co/camstack/camstack-models/tree/main/source/yolov9-edgetpu-dbro.',
+    'YOLOv9-s EdgeTPU weights © 2025 Dan Brown (fine-tuned to 17 COCO classes, INT8, compiled for the Edge TPU; https://github.com/dbro/frigate-detector-edgetpu-yolo9, repository MIT). Derived from the YOLOv9 code and yolov9-s checkpoint of Chien-Yao Wang, I-Hau Yeh, Hong-Yuan Mark Liao, GPL-3.0 (https://github.com/WongKinYiu/yolov9). Corresponding source: the fine-tuning checkpoint (yolov9-s-relu6-best.pt), the fine-tuning and conversion notebooks and the publisher LICENSE, mirrored at https://huggingface.co/Dominevo/dominevo-models/tree/main/source/yolov9-edgetpu-dbro.',
   modifications: 'none: the publisher release files are mirrored byte-identical',
   hosting: 'camstack-hf',
 }

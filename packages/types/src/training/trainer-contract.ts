@@ -2,12 +2,12 @@
  * The trainer contract — what the hub hands the cloud trainer and what it
  * gets back (cloud training, D805+).
  *
- * The trainer (`hf/camstack-trainer`, published as the Hugging Face repo
- * `camstack/camstack-trainer`) is a separate AGPL program the hub never
+ * The trainer (`hf/dominevo-trainer`, published as the Hugging Face repo
+ * `Dominevo/dominevo-trainer`) is a separate AGPL program the hub never
  * imports: `job.json` goes in, files come out, and progress is `CAMSTACK_EVENT`
  * lines on stdout. These schemas are the hub's half of that boundary; the
  * trainer's pydantic models (and the JSON Schemas generated from them under
- * `hf/camstack-trainer/schemas/`) are the other half. A change here is a
+ * `hf/dominevo-trainer/schemas/`) are the other half. A change here is a
  * change there, in the same piece of work.
  *
  * No `.default()` anywhere: defaults do not run on the addon cap path, so the

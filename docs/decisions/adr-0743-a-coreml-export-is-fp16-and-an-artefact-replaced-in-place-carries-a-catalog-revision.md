@@ -5,7 +5,7 @@ status: accepted
 date: 2026-10-07
 supersedes:
 applies-to:
-  - scripts/build-camstack-models.py
+  - scripts/build-dominevo-models.py
   - packages/types/src/types/models.ts
   - packages/system/src/download/model-downloader.ts
   - packages/addon-pipeline/src/detection-pipeline/registry/model-catalogs.ts
@@ -48,7 +48,7 @@ nodes by hand does not scale.
 ## Decision
 
 Every CoreML export is FP16. Every CoreML recipe in
-`scripts/build-camstack-models.py` sets `half=True`, and ad-hoc builds always
+`scripts/build-dominevo-models.py` sets `half=True`, and ad-hoc builds always
 do.
 
 A catalog format whose bytes were replaced in place names a `revision`

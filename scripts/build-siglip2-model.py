@@ -90,7 +90,7 @@ REPO = "google/siglip2-base-patch16-224"
 # Pinned: the snapshot the 2026-09-26 spike measured.
 REVISION = "75de2d55ec2d0b4efc50b3e9ad70dba96a7b2fa2"
 NAME = "camstack-siglip2-b16-224"
-HF_REPO_ID = "camstack/camstack-models"
+HF_REPO_ID = "Dominevo/dominevo-models"
 HF_FOLDER = "clip/siglip2"
 IMGSZ = 224
 TEXT_POSITIONS = 64

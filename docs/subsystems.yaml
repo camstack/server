@@ -474,7 +474,7 @@
     - packages/types/src/capabilities/training-provider.cap.ts
     - packages/types/src/training/**
     - packages/addon-model-studio/src/bundle/**
-    - hf/camstack-trainer/**
+    - hf/dominevo-trainer/**
 
 - id: tooling
   title: Benchmarks, model studio and developer tooling

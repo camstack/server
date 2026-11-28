@@ -1,6 +1,6 @@
 /**
  * The trainer contract has two halves — these zod schemas and the trainer's
- * pydantic models, exported as JSON Schema under `hf/camstack-trainer/schemas/`
+ * pydantic models, exported as JSON Schema under `hf/dominevo-trainer/schemas/`
  * (D805, D807). This pins them to each other: same fields, same required set,
  * for job.json, result.json and the nested blocks the hub reads. A field added
  * on one side only fails here, not on the first real cloud run.
@@ -23,7 +23,7 @@ interface JsonSchemaObject {
 
 function load(name: string): JsonSchemaObject {
   const url = new URL(
-    `../../../../hf/camstack-trainer/schemas/${name}.schema.json`,
+    `../../../../hf/dominevo-trainer/schemas/${name}.schema.json`,
     import.meta.url,
   )
   return JSON.parse(readFileSync(url, 'utf8')) as JsonSchemaObject

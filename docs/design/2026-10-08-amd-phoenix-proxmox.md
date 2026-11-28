@@ -182,7 +182,7 @@ ls -l /dev/accel/accel0
   - `HardwareClassId` includes `amd-phoenix`. `AcceleratorKind` includes
     `amd-igpu` / `amd-npu`. `acceleratorKindOf('onnx:webgpu')` → `amd-igpu`.
   - `DETECTOR_PERF` is mirrored from `docs/benchmarks/detector-latency.json`, with a spec holding the two equal.
-- Models: yolov9 t/s/m at 320/640 ship static ONNX fp32, CoreML fp16, OpenVINO fp16 and int8 (`model-catalogs.ts`, `scripts/build-camstack-models.py`, HF `camstack/camstack-models`).
+- Models: yolov9 t/s/m at 320/640 ship static ONNX fp32, CoreML fp16, OpenVINO fp16 and int8 (`model-catalogs.ts`, `scripts/build-dominevo-models.py`, HF `Dominevo/dominevo-models`).
 - Image: `ubuntu:24.04`, variant label `intel`, Intel apt repo, `intel-media-va-driver-non-free`, `ENV LIBVA_DRIVER_NAME=iHD`. ffmpeg is downloaded at runtime (jellyfin portable). Tag `ghcr.io/dominevo/dominevo:intel-latest`.
 
 ### P0: CPU + VAAPI decode on Proxmox (Alexa demo hub). ~4-5 dev days
@@ -224,7 +224,7 @@ ls -l /dev/accel/accel0
    - Default `enabled` = opt-OUT like other iGPUs (D39; the Coral joined them in D912).
    - Make sure the share/least-loaded placement and the root-capability guard accept it. The format is `onnx`, which the guard already supports.
 3. **Models**: no new format.
-   - Optionally add **fp16 ONNX** builds (`OnnxExport` plus a fp16 conversion step in `build-camstack-models.py`, uploaded to HF) if fp32 is slow under WebGPU. Measure first.
+   - Optionally add **fp16 ONNX** builds (`OnnxExport` plus a fp16 conversion step in `build-dominevo-models.py`, uploaded to HF) if fp32 is slow under WebGPU. Measure first.
    - Detail-plane models (face, plate, CLIP) are ONNX too, so they get the device for free if their ops are covered.
 4. **Measure** the `amd-phoenix / amd-igpu` column (t/s/m × 320/640, single and concurrent) with Benchmark/capacity-ramp. Shares (D748/D750) then weigh it against CPU.
 5. **Fallback (only if WebGPU underperforms or op coverage fails)**: a ROCm + `onnxruntime-migraphx` spike, as runtime-installed deps under `/data/deps/rocm` with `/dev/kfd` and `HSA_OVERRIDE_GFX_VERSION=11.0.0`.

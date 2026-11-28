@@ -323,9 +323,9 @@ Small addons and builtins that act ON a device rather than describing it.
 Fine-tunes the root detector on the operator's annotated frames in a GPU cloud of their choice and returns a verified result to Model Studio.
 
 - **Owner doc**: `docs/architecture/cloud-training.md`
-- **Code**: `packages/addon-training/**`, `packages/types/src/capabilities/training.cap.ts`, `packages/types/src/capabilities/training-provider.cap.ts`, `packages/types/src/training/**`, `packages/addon-model-studio/src/bundle/**`, `hf/camstack-trainer/**`
+- **Code**: `packages/addon-training/**`, `packages/types/src/capabilities/training.cap.ts`, `packages/types/src/capabilities/training-provider.cap.ts`, `packages/types/src/training/**`, `packages/addon-model-studio/src/bundle/**`, `hf/dominevo-trainer/**`
 - **Files**: 161 (100 claimed by some document)
-- **Uncovered**: `hf/camstack-trainer/camstack_train` (16), `hf/camstack-trainer/camstack_train/_vendor/pipeline_python/postprocessors` (16), `hf/camstack-trainer/tests` (15), `hf/camstack-trainer/camstack_train/_vendor/camstack_eval` (9), `hf/camstack-trainer/camstack_train/_vendor/pipeline_python` (3), `hf/camstack-trainer/camstack_train/_vendor` (1), +1 more directories
+- **Uncovered**: `hf/dominevo-trainer/camstack_train` (16), `hf/dominevo-trainer/camstack_train/_vendor/pipeline_python/postprocessors` (16), `hf/dominevo-trainer/tests` (15), `hf/dominevo-trainer/camstack_train/_vendor/camstack_eval` (9), `hf/dominevo-trainer/camstack_train/_vendor/pipeline_python` (3), `hf/dominevo-trainer/camstack_train/_vendor` (1), +1 more directories
 
 ### ⚠️ Benchmarks, model studio and developer tooling
 

@@ -8,7 +8,7 @@ applies-to:
   - packages/addon-pipeline/python/coreml_load_probe.py
   - packages/addon-pipeline/python/inference_pool.py
   - packages/addon-pipeline/src/detection-pipeline/registry/model-catalogs.ts
-  - scripts/build-camstack-models.py
+  - scripts/build-dominevo-models.py
 ---
 
 ## Context
@@ -100,7 +100,7 @@ mirror: same paths, same catalog ids, same file names.
   These fail without the gate.
 - `test_inference_pool_coreml_cache.py`: a HIT does not invalidate the next
   HIT when the loader rewrites `Manifest.json`.
-- `build-camstack-models.py`: `check_recipes` refuses (exit 2, on every
+- `build-dominevo-models.py`: `check_recipes` refuses (exit 2, on every
   run, ad-hoc `--model yolo26* --dynamic` included) a YOLO26 recipe whose
   CoreML export is batch-flexible.
 - `model-catalogs-yolo26-reduced-coreml.spec.ts`: the reduced entries keep

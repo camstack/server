@@ -24,7 +24,7 @@ scripts, not from `convert_lib`, and are not affected.
 | YOLO26 @640 | `yolo26{n,s,m,l,x}-int8` | 128 |
 | YOLO26 reduced | `yolo26{n,s,m,l}-{320,256}-int8` | 128 |
 
-**How they were rebuilt.** We ran `scripts/build-camstack-models.py
+**How they were rebuilt.** We ran `scripts/build-dominevo-models.py
 --formats openvino --reuse-onnx --calib-dir val2017` with the `convert_lib.py`
 on main. `--reuse-onnx` is new in this change. It quantises the **hosted
 ONNX** file of each model rather than re-exporting it from Ultralytics, so
@@ -156,7 +156,7 @@ so **no floor changed**. `model-floors.json` and
 
 ## Mirror and catalog
 
-- Hugging Face `camstack/camstack-models`:
+- Hugging Face `Dominevo/dominevo-models`:
   - Commit `ba4cfc0f9b26` copies the 13 old IRs (xml + bin) to
     `archive/2026-10-08-int8-topleft-calibration/<same path>`.
   - Commit `6389d708a5e9` replaces them in place.
@@ -175,7 +175,7 @@ so **no floor changed**. `model-floors.json` and
 ```bash
 pip install -r scripts/eval/requirements.txt nncf==3.2.0 opencv-python-headless
 # mirror ONNX placed under rebuilt/<folder>/onnx/
-python scripts/build-camstack-models.py --variant camstack-yolov9s-320 \
+python scripts/build-dominevo-models.py --variant camstack-yolov9s-320 \
   --formats openvino --reuse-onnx --out rebuilt --calib-dir val2017
 python scripts/eval/evaluate_variants.py \
   --coco annotations/instances_val2017.json --images val2017 --skip 300 --limit 500 \

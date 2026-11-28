@@ -47,7 +47,7 @@ import { builtInCatalogEntries } from './lib/model-catalogs.js'
 
 const ROOT = path.resolve(import.meta.dirname, '..')
 const TABLE_FILE = path.join(ROOT, 'packages/system/src/download/hosted-model-revisions.ts')
-const MIRROR_REPO = 'camstack/camstack-models'
+const MIRROR_REPO = 'Dominevo/dominevo-models'
 const TREE_URL = `https://huggingface.co/api/models/${MIRROR_REPO}/tree/main?recursive=true`
 const FETCH_TIMEOUT_MS = 30_000
 

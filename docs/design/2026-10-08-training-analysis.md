@@ -55,7 +55,7 @@ Later decisions that change the plans:
 | Export | partial | A tar with annotations.json (canonical + derived geometries) and JPEGs. No YOLO/COCO/RF-DETR format. Wrong classifier padding. No per-step or per-collection filter |
 | Versioning / split | missing | No dataset version, split or holdout |
 | Train | missing | No training code in the repo. The animal classifier recipe is absent (model-licenses.ts:163-175 says "fine-tuned by Dominevo") |
-| Convert to ONNX | works | scripts/build-camstack-models.py (Ultralytics recipes). `--model` takes an Ultralytics id and appends .pt (:306-307), so a local checkpoint needs a hack |
+| Convert to ONNX | works | scripts/build-dominevo-models.py (Ultralytics recipes). `--model` takes an Ultralytics id and appends .pt (:306-307), so a local checkpoint needs a hack |
 | Convert to OpenVINO fp16/int8 | works | Script + Model Studio convert.py:28-46. INT8 is calibrated on COCO val2017. Model Studio `calibrationRef` is never populated |
 | Convert to CoreML | works | FP16 (D743), Mac only |
 | Convert to TFLite / Edge TPU | partial | One-off scripts only (build-bird-classifier-edgetpu.py, build-yolox-plate-edgetpu.py, build-edgetpu-sets.py, edgetpu_toolchain.py). Model Studio formats are openvino\|coreml (model-studio-actions.ts:133) |
@@ -165,7 +165,7 @@ Promotion gate (proposal):
 | Phase | Deliverables | Effort | Depends on |
 |---|---|---|---|
 | 0 | Answers to Q1–Q5; durable retrain storage; live census + 101 phantom check; export padding fixed to 0.15 | 1–2 d | Operator |
-| **1 MVP** | (a) Evaluation harness checked in (scripts/eval/). (b) False-alarm capture: Step 1 (pipeline boxes) + one-tap false alarm that seeds a model_error. (c) External training kit (tools/training/ or a separate repo): export→YOLO, COCO replay mix, Ultralytics MPS/CUDA recipe, manifest. (d) `build-camstack-models.py --checkpoint <path>` → ONNX, OV fp16/int8 (own-frame calibration), CoreML FP16 + a registry-ready entry with measured floors. (e) Register, 7-day batch replay, canary on 101. (f) Auto-tune skips or warns on nodes with a custom root pin | 7–10 d + 2–3 d training and evaluation | Phase 0 |
+| **1 MVP** | (a) Evaluation harness checked in (scripts/eval/). (b) False-alarm capture: Step 1 (pipeline boxes) + one-tap false alarm that seeds a model_error. (c) External training kit (tools/training/ or a separate repo): export→YOLO, COCO replay mix, Ultralytics MPS/CUDA recipe, manifest. (d) `build-dominevo-models.py --checkpoint <path>` → ONNX, OV fp16/int8 (own-frame calibration), CoreML FP16 + a registry-ready entry with measured floors. (e) Register, 7-day batch replay, canary on 101. (f) Auto-tune skips or warns on nodes with a custom root pin | 7–10 d + 2–3 d training and evaluation | Phase 0 |
 | 1b | D711 vehicle classifier (reuses a and d) | 3–4 d | Q6 |
 | 2 | P3 Tasks 2–3 + 5 (frame from recording, named collections, viewer add-frame); teacher pre-annotation; admin move/resize/zoom; per-step and per-collection export + YOLO/COCO adapters; uncertainty mining | 6–9 d | Phase 1 shows value |
 | 3 | Plate box + OCR fine-tunes; package after ≥100 annotated frames and gate diagnosis; "why not" panel | 5–8 d + data time | Phase 2 |

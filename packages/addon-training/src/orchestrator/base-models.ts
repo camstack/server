@@ -10,7 +10,7 @@
  */
 import type { TrainingBaseModel } from '@dominevo/types'
 
-const HF_MODELS = 'https://huggingface.co/camstack/camstack-models/resolve/main'
+const HF_MODELS = 'https://huggingface.co/Dominevo/dominevo-models/resolve/main'
 
 export interface BaseModelSpec extends TrainingBaseModel {
   /** `t`/`s`/`m`/`c`, used by the GPU-time model. */

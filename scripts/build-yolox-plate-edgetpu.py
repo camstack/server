@@ -14,7 +14,7 @@ produces, under ``<work>/stage/plateDetection/yolox-tiny-plate/tflite/``:
 plus ``<work>/report.json`` (op mapping, on-chip memory alone and co-compiled
 after the root SSD, parity) and the fixture
 ``packages/addon-pipeline/python/postprocessors/testdata/yolox_plate_int8_outputs.json``.
-Upload with ``hf upload camstack/camstack-models <work>/stage/plateDetection/yolox-tiny-plate/tflite
+Upload with ``hf upload Dominevo/dominevo-models <work>/stage/plateDetection/yolox-tiny-plate/tflite
 plateDetection/yolox-tiny-plate/tflite`` (the folder's LICENSE and NOTICE are already there).
 
 SOURCE
@@ -88,7 +88,7 @@ _PY = _REPO / "packages" / "addon-pipeline" / "python"
 _FIXTURE = _PY / "postprocessors" / "testdata" / "yolox_plate_int8_outputs.json"
 _FIXTURE_IMAGE = _REPO / "packages" / "addon-pipeline" / "assets" / "reference-images" / "1-car-plate.jpg"
 
-_HF = "https://huggingface.co/camstack/camstack-models/resolve/main"
+_HF = "https://huggingface.co/Dominevo/dominevo-models/resolve/main"
 SRC_ONNX = (f"{_HF}/plateDetection/yolox-tiny-plate/onnx/camstack-yolox-tiny-plate.onnx",
             "camstack-yolox-tiny-plate.onnx",
             "f57b5618eafe91bab19bbdcd9af9b0671dbdba30d76a6e0a3a86b0db24bb1ae6", 20_214_465)
@@ -484,7 +484,7 @@ def main() -> None:
                                                   "parity": parity}, indent=1))
     for name, meta in files.items():
         print(f"  {dest / name}  {meta['bytes']} bytes  sha256 {meta['sha256']}")
-    print(f"  hf upload camstack/camstack-models {dest} {FOLDER}/tflite")
+    print(f"  hf upload Dominevo/dominevo-models {dest} {FOLDER}/tflite")
 
 
 if __name__ == "__main__":

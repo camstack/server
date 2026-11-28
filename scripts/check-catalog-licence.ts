@@ -22,7 +22,7 @@
  * 4. One upstream name ⇒ one weights licence and one licence URL across every
  *    catalog (the records are duplicated per addon; they may not drift).
  * 5. Every Dominevo-mirror folder a catalog downloads from has a model card:
- *    `hf/camstack-models/<category>/<model>/README.md`, or — for the folders
+ *    `hf/dominevo-models/<category>/<model>/README.md`, or — for the folders
  *    whose card is written by their build script and uploaded with the
  *    weights — a `MODEL_CARD` in that script (CARDS_IN_BUILD_SCRIPTS).
  *
@@ -62,7 +62,7 @@ interface UpstreamClaim {
 }
 
 function hasCard(folder: string): boolean {
-  if (existsSync(path.join(ROOT, 'hf/camstack-models', folder, 'README.md'))) return true
+  if (existsSync(path.join(ROOT, 'hf/dominevo-models', folder, 'README.md'))) return true
   const script = CARDS_IN_BUILD_SCRIPTS[folder]
   if (script === undefined) return false
   const abs = path.join(ROOT, script)
@@ -138,7 +138,7 @@ function main(): void {
     if (!hasCard(folder)) {
       problems.push({
         id: folder,
-        what: `mirror folder has no model card at hf/camstack-models/${folder}/README.md`,
+        what: `mirror folder has no model card at hf/dominevo-models/${folder}/README.md`,
       })
     }
   }

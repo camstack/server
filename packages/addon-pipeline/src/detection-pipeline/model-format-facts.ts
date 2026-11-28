@@ -9,7 +9,7 @@
  *   bytes on the disk, still reclaimable, and is replaced on its next ensure.
  * - {@link formatPrecision} — the numeric precision of the BUILD, only when
  *   the build says so. An unsuffixed OpenVINO IR is FP16 for one family and
- *   FP32 for another (`scripts/build-camstack-models.py`), so this answers
+ *   FP32 for another (`scripts/build-dominevo-models.py`), so this answers
  *   `undefined` rather than guess.
  *
  * Kept in the addon, not in `@dominevo/server/system` / `@dominevo/types`: both are

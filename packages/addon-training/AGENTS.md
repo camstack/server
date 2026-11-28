@@ -9,7 +9,7 @@ Read `docs/architecture/cloud-training.md` first. Traps specific to this package
   pinned exactly. A version bump is: read its `index.d.ts`, fix that file, run the
   contract suite (`provider-contract.spec.ts`). Never import `modal` elsewhere.
 - **The trainer revision is a commit sha** (`orchestrator/trainer-source.ts`).
-  Change `hf/camstack-trainer/`, upload it to the HF repo, then bump the sha — the
+  Change `hf/dominevo-trainer/`, upload it to the HF repo, then bump the sha — the
   Modal provider builds the image from the Dockerfile AT that sha.
 - **Base-model floors are copies of the pipeline catalog**; `base-models.spec.ts`
   holds them equal. Re-measure there, then here.

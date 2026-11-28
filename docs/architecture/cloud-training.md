@@ -11,7 +11,7 @@ applies-to:
   - packages/addon-model-studio/src/bundle/**
   - packages/addon-post-analysis/src/pipeline-analytics/retrain/**
   - packages/types/src/retrain-review.ts
-  - hf/camstack-trainer/camstack_train/dataset.py
+  - hf/dominevo-trainer/camstack_train/dataset.py
 ---
 
 # Cloud training
@@ -38,7 +38,7 @@ Admin UI redesign (Frames corpus grid, Jobs, Providers hub):
 | `training` cap (singleton, hub-only) | `addon-training` → `training` entry | base models, planning, the job state machine, reconcile, cost guard, retention, the return flow |
 | `training-provider` cap (internal collection of **types**) | e.g. `training-modal` addon | creatable cloud kinds; each type owns zero or more **entries** (credentials + defaults) |
 | Provider **entry** | keyed by `entryId` | one account / workspace under a type; jobs address this id (legacy single-account configs migrate to an entry named "Default") |
-| The trainer | `hf/camstack-trainer/` → HF `camstack/camstack-trainer` (AGPL-3.0) | job.json → YOLO layout → train → evaluate → floors → export → result.json + bundle.tar |
+| The trainer | `hf/dominevo-trainer/` → HF `Dominevo/dominevo-trainer` (AGPL-3.0) | job.json → YOLO layout → train → evaluate → floors → export → result.json + bundle.tar |
 | `pipelineAnalytics.offerRetrainArchive` | post-analysis | the dataset tar for a live selection, offered over `ctx.peerBytes` |
 | `customModelRegistry.importModelBundle` | Model Studio | verifying and placing the result, registering it, distributing it |
 
@@ -243,7 +243,7 @@ views) and `defaults` for the form.
 ## The trainer contract
 
 `packages/types/src/training/trainer-contract.ts` (zod) and the trainer's
-pydantic models (`hf/camstack-trainer/schemas/*.schema.json`) are the two
+pydantic models (`hf/dominevo-trainer/schemas/*.schema.json`) are the two
 halves; `trainer-contract.spec.ts` pins them field for field.
 
 - `job.json` (`camstack.training/v1`): every field filled by the hub.

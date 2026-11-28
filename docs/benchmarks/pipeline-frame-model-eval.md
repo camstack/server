@@ -37,8 +37,8 @@ npx tsx scripts/pipeline-frame-model-eval.ts report --python python3.13
 ## Artifact inspection
 
 - `scrypted-yolov9c-relu-test`: [Hugging Face tree](https://huggingface.co/scrypted/plugin-models/tree/main/coreml/scrypted_yolov9c_relu_test/scrypted_yolov9c_relu_test.mlpackage); scrypted_yolov9c_relu_test.mlpackage, 48.40 MiB; weight sha256 fe5936b9430ab4c87f30b148220131d6ec998b2377223d033e2fa2a00e60aada; inputs image:imageType[320×320]; outputs var_1867:multiArrayType[1×7×2100]; declared classes {0: 'person', 1: 'vehicle', 2: 'animal'}.
-- yolov9m-320: [Hugging Face tree](https://huggingface.co/camstack/camstack-models/tree/main/objectDetection/yolov9/coreml/camstack-yolov9m-320.mlpackage); camstack-yolov9m-320.mlpackage, 76.83 MiB; weight sha256 1c396ded5f2a7b43fc8f08c6b1f8854495fe72a15394f521c0ec79d1cdeb8149; inputs image:imageType[320×320]; outputs var_1763:multiArrayType[1×84×2100]; declared classes 80 classes (COCO metadata).
-- yolov9m-640: [Hugging Face tree](https://huggingface.co/camstack/camstack-models/tree/main/objectDetection/yolov9/coreml/camstack-yolov9m-640.mlpackage); camstack-yolov9m-640.mlpackage, 76.90 MiB; weight sha256 1b260e2c17edeedc2d1c55a1d9ffbf66529a6609f1a8e4d69a7576042dfd6591; inputs image:imageType[640×640]; outputs var_1763:multiArrayType[1×84×8400]; declared classes 80 classes (COCO metadata).
+- yolov9m-320: [Hugging Face tree](https://huggingface.co/Dominevo/dominevo-models/tree/main/objectDetection/yolov9/coreml/camstack-yolov9m-320.mlpackage); camstack-yolov9m-320.mlpackage, 76.83 MiB; weight sha256 1c396ded5f2a7b43fc8f08c6b1f8854495fe72a15394f521c0ec79d1cdeb8149; inputs image:imageType[320×320]; outputs var_1763:multiArrayType[1×84×2100]; declared classes 80 classes (COCO metadata).
+- yolov9m-640: [Hugging Face tree](https://huggingface.co/Dominevo/dominevo-models/tree/main/objectDetection/yolov9/coreml/camstack-yolov9m-640.mlpackage); camstack-yolov9m-640.mlpackage, 76.90 MiB; weight sha256 1b260e2c17edeedc2d1c55a1d9ffbf66529a6609f1a8e4d69a7576042dfd6591; inputs image:imageType[640×640]; outputs var_1763:multiArrayType[1×84×8400]; declared classes 80 classes (COCO metadata).
 
 ## Quality and geometry
 

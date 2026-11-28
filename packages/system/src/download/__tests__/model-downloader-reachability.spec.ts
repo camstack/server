@@ -13,7 +13,7 @@ import {
   type HuggingFaceReachabilityOutcome,
 } from '../model-downloader.js'
 
-const HF_URL = 'https://huggingface.co/camstack/camstack-models/resolve/main/m.onnx'
+const HF_URL = 'https://huggingface.co/Dominevo/dominevo-models/resolve/main/m.onnx'
 
 describe('model downloader — Hugging Face reachability', () => {
   let dir: string

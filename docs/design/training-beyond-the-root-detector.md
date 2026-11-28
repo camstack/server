@@ -63,7 +63,7 @@ The short answer, before the evidence:
 | …and on 102 / 636 / 637? | same | 102: 10 from **`animal-classifier`** (6 bird, 2 dog, 1 cat, 1 horse) + 3 dog from `detector:raw-class`; 636: 1 dog from `animal-classifier`; 637: 28 from `animal-classifier` (27 dog, 1 cat) |
 | Does 101 have a package zone? | `zoneRules.listRules {deviceId:101, stage:'package'}` | yes — rule "Pacchetti" [Packages], `include`, `classFilter:['package']`, `enabled:true` |
 | Where are the volumes? | `storage.listLocations {}` | `eventMedia:ssd`, `recordings:recordings-high-4tb`, `recordingsLow:ssd`, `artifacts:default`, 2 `backups`. **No `galleryMedia` row** in the response |
-| Does `rfdetr-package` have a training checkpoint? | HF `camstack/camstack-models/packageDetection/rfdetr-package` | **yes**: `camstack-rfdetr-package.pth` (134,960,582 B) + `config.json`, next to onnx/coreml/openvino |
+| Does `rfdetr-package` have a training checkpoint? | HF `Dominevo/dominevo-models/packageDetection/rfdetr-package` | **yes**: `camstack-rfdetr-package.pth` (134,960,582 B) + `config.json`, next to onnx/coreml/openvino |
 | `yolov8n-package`, `yolov8n-plate`? | HF, same folders | **only** `coreml/ onnx/ openvino/` (+ `tflite/` for the plate). No `.pt` |
 
 ### Read in the code and the history
@@ -166,7 +166,7 @@ decided which of the two is the true one (§ 7, Q1), otherwise a dataset of
 **Is it fine-tunable?**
 
 - Root `yolo26*`/`yolov9*`: **yes, class A** — Ultralytics trains from
-  upstream `yolo26n.pt`, and `scripts/build-camstack-models.py` already uses
+  upstream `yolo26n.pt`, and `scripts/build-dominevo-models.py` already uses
   `from ultralytics import YOLO` for the exports. The real cost is that a
   fine-tune on 80 COCO classes with a few dozen dogs moves little: it is a
   dataset that is needed at the moment one chooses **a model reduced to the

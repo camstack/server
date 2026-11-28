@@ -1,4 +1,4 @@
-"""check_recipes in build-camstack-models.py (D742, D743).
+"""check_recipes in build-dominevo-models.py (D742, D743).
 
 Run: python3 -m unittest scripts/test_build_camstack_models.py
 Needs only the standard library: the build script imports no backend at module
@@ -13,7 +13,7 @@ import sys
 import unittest
 from pathlib import Path
 
-_SCRIPT = Path(__file__).resolve().parent / 'build-camstack-models.py'
+_SCRIPT = Path(__file__).resolve().parent / 'build-dominevo-models.py'
 _spec = importlib.util.spec_from_file_location('build_camstack_models', _SCRIPT)
 assert _spec is not None and _spec.loader is not None
 bcm = importlib.util.module_from_spec(_spec)

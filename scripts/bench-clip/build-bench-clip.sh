@@ -15,7 +15,7 @@
 #   SHA256SUMS                         pin the h264 hash in
 #     packages/addon-pipeline/src/pipeline-runner/node-bench/bench-frames.ts
 #     (BENCH_CLIP.sha256) after uploading to the HF dataset repo
-#     camstack/camstack-bench-clips under camstack-bench-v1/.
+#     Dominevo/dominevo-bench-clips under camstack-bench-v1/.
 # NOTICE.md and bench-manifest.json next to this script ship with the files.
 #
 # Needs: ffmpeg (libx264, libx265, drawtext), curl. Network: the public MEVA

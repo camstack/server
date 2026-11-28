@@ -2,7 +2,7 @@
 """Build the `cct-s-v2-global` catalog artefacts from ankandrew/fast-plate-ocr.
 
     python3 scripts/build-plate-ocr-model.py <work-dir> [--skip-verify]
-    hf upload camstack/camstack-models <work-dir>/stage/plateRecognition/cct-s-v2-global \
+    hf upload Dominevo/dominevo-models <work-dir>/stage/plateRecognition/cct-s-v2-global \
         plateRecognition/cct-s-v2-global
 
 Produces, under ``<work-dir>/stage/plateRecognition/cct-s-v2-global``:
@@ -464,7 +464,7 @@ def main() -> None:
 
     print(f"\nReady to publish: {base}")
     print(
-        "  hf upload camstack/camstack-models "
+        "  hf upload Dominevo/dominevo-models "
         f"{base} plateRecognition/cct-s-v2-global"
     )
 

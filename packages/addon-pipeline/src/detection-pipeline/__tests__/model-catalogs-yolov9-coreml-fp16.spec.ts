@@ -11,7 +11,7 @@ import { OBJECT_DETECTION_MODELS } from '../registry/model-catalogs.js'
 // from the generated mirror table (D744), and these are the values D743
 // shipped by hand: regenerating the table must not have moved them. That the export is
 // FP16 is enforced where it is made: `check_recipes` in
-// scripts/build-camstack-models.py refuses an FP32 CoreML recipe.
+// scripts/build-dominevo-models.py refuses an FP32 CoreML recipe.
 const YOLOV9 = ['t', 's', 'm', 'c'].flatMap((tier) =>
   [320, 640].map((res) => `yolov9${tier}-${res}`),
 )

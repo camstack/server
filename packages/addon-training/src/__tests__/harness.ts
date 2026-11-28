@@ -164,7 +164,7 @@ export interface Harness {
   readonly ports: EnginePorts
 }
 
-export const TRAINER = { repo: 'camstack/camstack-trainer', revision: 'abcdef1' }
+export const TRAINER = { repo: 'Dominevo/dominevo-trainer', revision: 'abcdef1' }
 
 export async function harness(): Promise<Harness> {
   const clock = { now: Date.UTC(2026, 9, 8, 12) }

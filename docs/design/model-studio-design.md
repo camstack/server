@@ -26,7 +26,7 @@ them for the cluster's heterogeneous hardware:
 
 ## What already exists (reuse, don't reinvent)
 
-- **Conversion pipeline (offline):** `scripts/build-camstack-models.py` +
+- **Conversion pipeline (offline):** `scripts/build-dominevo-models.py` +
   `gen-variants` already do `ov.convert_model` (onnx→IR), `compress_to_fp16`,
   NNCF `int8` (COCO-letterbox calibration) and validate (compile + named
   tensors). The Model Studio engine is this logic, promoted to a runtime cap.

@@ -2,7 +2,7 @@
 """Build the `auraface-r100` catalog artefacts from fal.ai's AuraFace v1.
 
     python3 scripts/build-auraface-model.py <work-dir> [--skip-verify]
-    hf upload camstack/camstack-models <work-dir>/stage/faceRecognition/auraface \
+    hf upload Dominevo/dominevo-models <work-dir>/stage/faceRecognition/auraface \
         faceRecognition/auraface
 
 Produces, under ``<work-dir>/stage/faceRecognition/auraface``, the three formats
@@ -305,7 +305,7 @@ def main() -> None:
         _verify(base, upstream, work / "verify-tmp", want_coreml)
 
     print(f"\nReady to publish: {base}")
-    print("  hf upload camstack/camstack-models "
+    print("  hf upload Dominevo/dominevo-models "
           f"{base} faceRecognition/auraface")
 
 

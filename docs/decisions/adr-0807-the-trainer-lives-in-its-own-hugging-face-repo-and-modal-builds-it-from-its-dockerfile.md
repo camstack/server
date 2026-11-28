@@ -5,7 +5,7 @@ status: accepted
 date: 2026-10-08
 supersedes:
 applies-to:
-  - hf/camstack-trainer/Dockerfile
+  - hf/dominevo-trainer/Dockerfile
   - packages/addon-training/src/orchestrator/trainer-source.ts
   - packages/addon-training/src/providers/modal/dockerfile.ts
   - packages/addon-training/src/providers/modal/modal-sdk-gateway.ts
@@ -23,7 +23,7 @@ JS SDK (0.11.0) and found `images.fromRegistry(base).dockerfileCommands([...])`
 
 Rejected:
 
-- **`source/trainer/` inside `camstack/camstack-models`.** That repo is a
+- **`source/trainer/` inside `Dominevo/dominevo-models`.** That repo is a
   multi-GB LFS mirror under a collection licence; `pip install git+…` would
   clone it, and every model upload would move the trainer's revision pins.
 - **A GHCR image built by a GitHub Actions workflow now.** It adds a registry,
@@ -33,8 +33,8 @@ Rejected:
 
 ## Decision
 
-**The trainer's source is the Hugging Face repo `camstack/camstack-trainer`
-(AGPL-3.0), tracked in this repository as `hf/camstack-trainer/` and edited
+**The trainer's source is the Hugging Face repo `Dominevo/dominevo-trainer`
+(AGPL-3.0), tracked in this repository as `hf/dominevo-trainer/` and edited
 only here. A job runs it at ONE commit sha (`TRAINER_SOURCE`, recorded on the
 job and in `result.json`). The Modal provider fetches the trainer's
 `Dockerfile` at that commit and builds the image as `fromRegistry(FROM)` plus
@@ -43,8 +43,8 @@ Dockerfile instruction that needs a build context (COPY, ADD, multi-stage) is
 refused, not approximated.**
 
 - Every pip version in the image is pinned; the trainer is installed with
-  `pip install "camstack-train[...] @ git+https://huggingface.co/camstack/camstack-trainer@<sha>"`
-  (verified to resolve on 2026-10-08).
+  `pip install "camstack-train[...] @ git+https://huggingface.co/Dominevo/dominevo-trainer@<sha>"`
+  (verified to resolve on 2026-10-08). The repos moved from `camstack/camstack-trainer` and `camstack/camstack-models` to `Dominevo/dominevo-trainer` and `Dominevo/dominevo-models` on 2026-11-28.
 - The evaluation harness and the pipeline's postprocessors are vendored into
   the trainer byte-identical; `scripts/check-trainer-vendor.ts` fails on drift.
 - The `modal` SDK is imported in exactly one file
@@ -53,7 +53,7 @@ refused, not approximated.**
 
 ## Consequences
 
-- Publishing a trainer change is: edit `hf/camstack-trainer/`, upload it to the
+- Publishing a trainer change is: edit `hf/dominevo-trainer/`, upload it to the
   HF repo, put the new commit sha in `trainer-source.ts`, redeploy
   addon-training.
 - Modal caches built layers, so the first job on an account pays the image
@@ -67,4 +67,4 @@ refused, not approximated.**
 
 `modal-provider.spec.ts` (the real Dockerfile parses; the revision is
 substituted; context instructions are refused), `scripts/check-trainer-vendor.ts`,
-and the trainer's own pytest suite (`hf/camstack-trainer/tests`).
+and the trainer's own pytest suite (`hf/dominevo-trainer/tests`).

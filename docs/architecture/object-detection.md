@@ -501,7 +501,7 @@ The community YOLOv9-s compiled for the Coral (`yolov9s-320-edgetpu`,
 D661 record `DBRO_YOLOV9_EDGETPU_GPL`: weights GPL-3.0 (fine-tuned from
 WongKinYiu/yolov9's GPL-3.0 checkpoint on 17 COCO classes), and
 `hosting: 'camstack-hf'` — the publisher's release files are mirrored
-byte-identical on `camstack/camstack-models` (`objectDetection/yolov9/tflite/`),
+byte-identical on `Dominevo/dominevo-models` (`objectDetection/yolov9/tflite/`),
 with the corresponding source (the fine-tuning checkpoint and notebooks) in
 `source/yolov9-edgetpu-dbro/`, pinned by sha256. It is
 the Coral default (D908) and Auto tune sizes an enabled Coral at it (D912). Layout and decode:

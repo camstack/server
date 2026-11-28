@@ -232,7 +232,7 @@ any → failed{reason, stage}   any → cancelling → cancelled   lost (provide
 
 **Repository.** A public repo `camstack/trainer`, AGPL-3.0, separate from camstack-server so the AGPL scope is visibly bounded.
 
-- It **vendors** `convert_lib.py` and the recipe logic from `scripts/build-camstack-models.py` via a git subtree or a copy pinned by sha, plus `edgetpu_toolchain.py`.
+- It **vendors** `convert_lib.py` and the recipe logic from `scripts/build-dominevo-models.py` via a git subtree or a copy pinned by sha, plus `edgetpu_toolchain.py`.
 - It is built and pushed by GitHub Actions to `ghcr.io/dominevo/trainer:<semver>`.
 - The hub always submits it **by digest**, which is recorded in the job record and in `result.json`.
 
@@ -408,7 +408,7 @@ This is a Module Federation page of `addon-training`, mounted at `/addon/trainin
 | P3 | Manifest fields `capturedAt`, a day/night flag and per-frame `complete` (operator ticks "all subjects boxed"); a `layout:'crops'` variant; a filter by version / frameIds; a `writeRetrainArchive` sink | Time-blocked split, day/night metrics, and honest detector evaluation (an unboxed person counts as a false positive) | 1.5–2 d |
 | P4 | "YOLO export" lives as `dataset.py` in the trainer, also runnable locally with `python -m camstack_train.dataset`. A hub-side YOLO/COCO adapter stays optional for users who train by hand | One converter, not two that drift | 1 d (inside A1) |
 | P5 | Evaluation harness checked in (`camstack_train/evaluate.py` + `floors.py`, mirrored as `scripts/eval/` for local use); the 409-frame harness moved out of the scratchpad | Floors and the comparison come from it | 2–3 d |
-| P6 | `build-camstack-models.py --checkpoint <path>`: the ad-hoc recipe takes a local `.pt` instead of appending `.pt` to an id (`:306-307`), plus `--calib-dir` pointing at the user's frames | The container's export path, and the local path for hand training | 0.5–1 d |
+| P6 | `build-dominevo-models.py --checkpoint <path>`: the ad-hoc recipe takes a local `.pt` instead of appending `.pt` to an id (`:306-307`), plus `--calib-dir` pointing at the user's frames | The container's export path, and the local path for hand training | 0.5–1 d |
 | P7 | Auto-tune skips custom pins (§4.6) | A canary would be overwritten | 1 d |
 | P8 | A shared `secret-codec` (promote `addon-mqtt-broker/src/secret-codec.ts` AES-GCM `enc:v1` into `@dominevo/core` or a kernel helper) so provider keys are encrypted at rest | Today password fields are stored in plaintext in the settings store | 1 d |
 | P9 | Q0 census (read-only) | Decides whether Phase A uses user crops or a smoke dataset | 0.25 d |
@@ -504,7 +504,7 @@ This is a Module Federation page of `addon-training`, mounted at `/addon/trainin
 
 1. **Q1: Modal first despite the beta SDK, or RunPod first despite no free tier?** Recommendation: Modal, with RunPod in Phase C. The free tier is the point of experimenting.
 2. **Q2: Data residency.** Require an EU region (1.15x+, if Starter allows it) or accept the provider default? Recommendation: default to "any", with an EU toggle shown in the confirm step. Frames stay in the user's account and are deleted after the job either way.
-3. **Q3: Where does the trainer live?** A separate public AGPL repo `camstack/trainer`, or `tools/trainer/` inside camstack-server? <!-- drift-ok: an option the plan weighed; the trainer lives in hf/camstack-trainer --> Recommendation: a separate repo, which keeps the AGPL boundary visible and gives it its own CI.
+3. **Q3: Where does the trainer live?** A separate public AGPL repo `camstack/trainer`, or `tools/trainer/` inside camstack-server? <!-- drift-ok: an option the plan weighed; the trainer lives in hf/dominevo-trainer --> Recommendation: a separate repo, which keeps the AGPL boundary visible and gives it its own CI.
 4. **Q4: Phase A target.** Which classifier? Recommendation: a vehicle-type fine-tune from the D711 Lite0 recipe if that model exists by then, otherwise the animal classifier on the user's crops. Use an OI smoke set if the Q0 census finds no annotations.
 5. **Q5: Edge TPU in scope for Phase A/B?** Recommendation: no. Classifiers only, in Phase C, as a separate `:edgetpu` image.
 6. **Q6: Retention of staged artefacts and of the provider-side dataset.** Recommendation: cloud dataset deleted immediately after a successful fetch (24 h after a failure); hub artefacts kept 14 days after registration.

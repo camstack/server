@@ -2,7 +2,7 @@
 """Build the `yunet-2023mar` catalog artefacts from OpenCV Zoo's YuNet.
 
     python3 scripts/build-yunet-model.py <work-dir> [--skip-verify]
-    hf upload camstack/camstack-models <work-dir>/stage/faceDetection/yunet \
+    hf upload Dominevo/dominevo-models <work-dir>/stage/faceDetection/yunet \
         faceDetection/yunet
 
 Produces, under ``<work-dir>/stage/faceDetection/yunet``, the three formats the
@@ -427,7 +427,7 @@ def main() -> None:
         _verify(base, upstream, work / "verify-tmp", want_coreml)
 
     print(f"\nReady to publish: {base}")
-    print(f"  hf upload camstack/camstack-models {base} faceDetection/yunet")
+    print(f"  hf upload Dominevo/dominevo-models {base} faceDetection/yunet")
 
 
 if __name__ == "__main__":

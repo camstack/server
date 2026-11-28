@@ -6,7 +6,7 @@ date: 2026-10-09
 supersedes:
 applies-to:
   - packages/addon-model-studio/python/convert_lib.py
-  - scripts/build-camstack-models.py
+  - scripts/build-dominevo-models.py
 ---
 
 ## Context

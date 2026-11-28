@@ -28,7 +28,7 @@ export const BENCH_CLIP = {
   id: 'camstack-bench-v1',
   revision: 'v1',
   fileName: 'camstack-bench-v1-h264-1080p.mp4',
-  url: 'https://huggingface.co/datasets/camstack/camstack-bench-clips/resolve/main/camstack-bench-v1/camstack-bench-v1-h264-1080p.mp4',
+  url: 'https://huggingface.co/datasets/Dominevo/dominevo-bench-clips/resolve/main/camstack-bench-v1/camstack-bench-v1-h264-1080p.mp4',
   sha256: '677eea6ccb5711dafe70ac7259aa152b8fad3e5704da1a8a8c66e6b1717f1434' as string | null,
 } as const
 

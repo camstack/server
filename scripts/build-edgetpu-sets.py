@@ -13,7 +13,7 @@ produces, per set, under ``<work>/stage/edgetpuSets/<set>/``:
 and ``<work>/report.json`` with the compiler's per-member on-chip / streamed
 figures — the numbers ``EDGETPU_COCOMPILED_SETS``
 (packages/addon-pipeline/src/detection-pipeline/registry/edgetpu-cocompiled-sets.ts)
-carries. Upload with ``hf upload camstack/camstack-models <work>/stage/edgetpuSets edgetpuSets``.
+carries. Upload with ``hf upload Dominevo/dominevo-models <work>/stage/edgetpuSets edgetpuSets``.
 
 WHY A SET
 ---------
@@ -59,7 +59,7 @@ _REPO = Path(__file__).resolve().parents[1]
 _REGISTRY = (_REPO / "packages" / "addon-pipeline" / "src" / "detection-pipeline" / "registry"
              / "edgetpu-cocompiled-sets.ts")
 _NOTICE = _REPO / "licenses" / "models" / "NOTICE-open-lpr.txt"
-_HF = "https://huggingface.co/camstack/camstack-models/resolve/main"
+_HF = "https://huggingface.co/Dominevo/dominevo-models/resolve/main"
 
 # (url, file name, sha256, bytes) of each member's CPU int8 graph.
 SRC_YUNET_INT8 = (f"{_HF}/faceDetection/yunet/tflite/camstack-yunet-2023mar_int8.tflite",
@@ -193,7 +193,7 @@ def main() -> None:
         for p in sorted(dest.iterdir()):
             print(f"    {p.name}  {p.stat().st_size} bytes  sha256 {sha256(p.read_bytes()).hexdigest()}")
     (work / "report.json").write_text(json.dumps(report, indent=1))
-    print(f"  hf upload camstack/camstack-models {work / 'stage' / 'edgetpuSets'} edgetpuSets")
+    print(f"  hf upload Dominevo/dominevo-models {work / 'stage' / 'edgetpuSets'} edgetpuSets")
 
 
 if __name__ == "__main__":

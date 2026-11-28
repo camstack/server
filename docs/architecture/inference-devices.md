@@ -316,7 +316,7 @@ one line and the compile is allowed to fail.
 
 Nothing declares batch per model — not the catalog, not a conversion script, not
 an operator knob. The static pin still in `build-plate-ocr-model.py` is redundant
-belt-and-braces; the dynamic exports in `build-camstack-models.py` and
+belt-and-braces; the dynamic exports in `build-dominevo-models.py` and
 `build-auraface-model.py` are dynamic on purpose.
 
 **The OpenVINO request pool is sized by the DEVICE, and four is what UNKNOWN

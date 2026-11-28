@@ -24,7 +24,7 @@ import {
   YUNET_MIT,
 } from './model-licenses.js'
 
-const HF_REPO = 'camstack/camstack-models'
+const HF_REPO = 'Dominevo/dominevo-models'
 const hf = (path: string) => hfModelUrl(HF_REPO, path)
 
 /**

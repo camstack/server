@@ -18,7 +18,7 @@ export const MODAL_ENTRY_ID = 'modal-entry-default'
 const DOCKERFILE = [
   'FROM pytorch/pytorch:2.13.0-cuda12.6-cudnn9-runtime',
   'ARG TRAINER_REVISION=main',
-  'RUN pip install "camstack-train @ git+https://huggingface.co/camstack/camstack-trainer@${TRAINER_REVISION}"',
+  'RUN pip install "camstack-train @ git+https://huggingface.co/Dominevo/dominevo-trainer@${TRAINER_REVISION}"',
 ].join('\n')
 
 export class MemoryLedger implements ModalJobLedger {

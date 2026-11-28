@@ -1,4 +1,4 @@
-export const HF_REPO = 'camstack/camstack-models'
+export const HF_REPO = 'Dominevo/dominevo-models'
 export const HF_BASE_URL = `https://huggingface.co/${HF_REPO}/resolve/main`
 
 /**

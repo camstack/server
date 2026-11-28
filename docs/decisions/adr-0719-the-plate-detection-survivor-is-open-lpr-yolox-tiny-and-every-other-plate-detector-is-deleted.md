@@ -10,7 +10,7 @@ applies-to:
   - packages/addon-pipeline/src/detection-pipeline/registry/step-definitions.ts
   - packages/addon-pipeline/src/detection-pipeline/pipeline/plate-ocr-crop-policy.ts
   - scripts/build-yolox-plate-model.py
-  - scripts/build-camstack-models.py
+  - scripts/build-dominevo-models.py
 ---
 
 > **Amended by [D725](adr-0725-a-stored-pin-to-a-deleted-model-is-reset-to-the-step-default-by-the-orchestrator.md)
@@ -51,7 +51,7 @@ real hub vehicle tracks:
 ## Decision
 
 `yolox-tiny-plate` is the plate-detection step's only model and its default.
-`yolov8n-plate` is deleted from the catalog, from `build-camstack-models.py`
+`yolov8n-plate` is deleted from the catalog, from `build-dominevo-models.py`
 (its recipe, the third-party download and the TFLite path that only it used)
 and from the Hugging Face mirror (`plateDetection/yolov8-plate`). The
 `plate-slots` reader margin moves from 0.15 to 0.05 with it: the margin is a

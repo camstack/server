@@ -27,7 +27,7 @@ import type { JobMutator } from './job-mutator.js'
 import type { DetectorDevice, EnginePorts } from './ports.js'
 
 export const DETECTOR_STEP_ID = 'object-detection'
-const TRAINER_SOURCE_URL = 'https://huggingface.co/camstack/camstack-trainer'
+const TRAINER_SOURCE_URL = 'https://huggingface.co/Dominevo/dominevo-trainer'
 
 function localFormat(
   id: string,

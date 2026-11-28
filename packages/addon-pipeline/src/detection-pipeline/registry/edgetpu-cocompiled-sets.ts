@@ -25,7 +25,7 @@
  */
 import { hfModelUrl } from '@dominevo/types'
 
-const HF_REPO = 'camstack/camstack-models'
+const HF_REPO = 'Dominevo/dominevo-models'
 const setFile = (setId: string, file: string): string =>
   hfModelUrl(HF_REPO, `edgetpuSets/${setId}/${setId}__${file}`)
 

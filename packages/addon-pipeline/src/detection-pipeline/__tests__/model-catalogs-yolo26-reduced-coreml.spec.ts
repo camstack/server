@@ -6,7 +6,7 @@ import { OBJECT_DETECTION_MODELS } from '../registry/model-catalogs.js'
 // unit). They were re-exported static (batch 1) and REPLACED IN PLACE on the
 // mirror, so the catalog keeps the original file names. That the export is
 // static is enforced where it is made: `check_recipes` in
-// scripts/build-camstack-models.py refuses a batch-flexible YOLO26 CoreML recipe.
+// scripts/build-dominevo-models.py refuses a batch-flexible YOLO26 CoreML recipe.
 const REDUCED = ['n', 's', 'm', 'l'].flatMap((tier) =>
   [320, 256].map((res) => `yolo26${tier}-${res}`),
 )
