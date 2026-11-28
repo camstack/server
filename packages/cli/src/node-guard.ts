@@ -7,7 +7,7 @@
 export const MIN_NODE_MAJOR = 24
 /** `EX_CONFIG`: the environment is not set up to run this. */
 export const NODE_TOO_OLD_EXIT_CODE = 78
-export const INSTALLER_COMMAND = 'curl -fsSL https://camstack-docs.zentik.app/install.sh | sh'
+export const INSTALLER_COMMAND = 'curl -fsSL https://dominevo.app/install.sh | sh'
 
 export type NodeGuardVerdict =
   | { readonly ok: true }

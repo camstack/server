@@ -17,7 +17,7 @@ library_name: onnx
 # Dominevo model mirror
 
 This repository is a **mirror of third-party models** converted by
-[Dominevo](https://camstack-docs.zentik.app) into the formats its inference
+[Dominevo](https://dominevo.app) into the formats its inference
 engines run (ONNX, OpenVINO IR, CoreML). **Nothing here is relicensed.**
 Each folder stays under the licence of the model it was made from, stated in the
 folder's `README.md` and in the table below, with the full text in

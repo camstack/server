@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The device-template help link points at dominevo.app
+
 ## [0.1.0] - 2026-11-28
 
 ### Changed

@@ -1271,5 +1271,5 @@ and argument limits are derived from it, and the public function table is
 generated from the same list.
 
 Operators can read the full template syntax at
-https://camstack-docs.zentik.app/docs/day-to-day/device-templates.
+https://dominevo.app/docs/day-to-day/device-templates.
 

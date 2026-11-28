@@ -39,7 +39,7 @@ import {
 import { DOCS_MANIFEST_RELATIVE, SNAPSHOT_PATH, docsCheckout } from './onboarding-manifest-paths.ts'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const LIVE_URL = 'https://camstack-docs.zentik.app/onboarding/v1/manifest.json'
+const LIVE_URL = 'https://dominevo.app/onboarding/v1/manifest.json'
 
 const PackageSchema = z.object({
   name: z.string(),

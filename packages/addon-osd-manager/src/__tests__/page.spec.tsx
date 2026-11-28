@@ -101,7 +101,7 @@ vi.mock('@dominevo/ui-library', async () => {
     await vi.importActual<typeof import('@dominevo/ui-library')>('@dominevo/ui-library')
   return {
     ...actual,
-    DEVICE_TEMPLATE_DOCS_URL: 'https://camstack-docs.zentik.app/docs/day-to-day/device-templates',
+    DEVICE_TEMPLATE_DOCS_URL: 'https://dominevo.app/docs/day-to-day/device-templates',
     // The field's own behaviour is covered in ui-library; here only the handle the editor drives.
     DeviceTemplateField: ({
       handle,

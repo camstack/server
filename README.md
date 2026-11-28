@@ -7,7 +7,7 @@ animals and parcels, and lets you know — without sending your video anywhere.
 It runs on a home server, a NAS or a spare computer, and it is free and open
 source.
 
-> **0.1 is a beta.** Guides and install steps: **[camstack-docs.zentik.app](https://camstack-docs.zentik.app)**
+> **0.1 is a beta.** Guides and install steps: **[dominevo.app](https://dominevo.app)**
 
 <p align="center">
   <img src="docs/assets/readme/viewer-grid-desktop.png" alt="Dominevo camera grid" width="860">
@@ -82,9 +82,9 @@ integration you turned on yourself.
 
 | How | |
 | --- | --- |
-| **Docker** | `ghcr.io/dominevo/dominevo:intel-latest` (or `amd-latest`) — [guide](https://camstack-docs.zentik.app/docs/installation) |
-| **Unraid** | Community template — [guide](https://camstack-docs.zentik.app/docs/installation/unraid) |
-| **Proxmox** | One-line install script — [guide](https://camstack-docs.zentik.app/docs/installation/proxmox) |
+| **Docker** | `ghcr.io/dominevo/dominevo:intel-latest` (or `amd-latest`) — [guide](https://dominevo.app/docs/installation) |
+| **Unraid** | Community template — [guide](https://dominevo.app/docs/installation/unraid) |
+| **Proxmox** | One-line install script — [guide](https://dominevo.app/docs/installation/proxmox) |
 | **Desktop** | macOS and Linux apps on the [releases page](https://github.com/dominevo/server/releases) |
 
 Then open `https://<your-server>:4443`, sign in as `admin` / `changeme`, and

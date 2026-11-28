@@ -12,7 +12,7 @@ library_name: ultralytics
 
 # Dominevo trainer
 
-The container a [Dominevo](https://camstack-docs.zentik.app) hub runs on a
+The container a [Dominevo](https://dominevo.app) hub runs on a
 cloud GPU (Modal first) to fine-tune its YOLOv9 root detector on the operator's
 own annotated frames. It evaluates the result against the model the cameras
 run today, proposes per-class confidence floors, and exports every format a

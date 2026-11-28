@@ -14,8 +14,7 @@ import type { FetchFn } from '../mcp/context.js'
 import { OnboardingManifestSchema, type OnboardingManifest } from './manifest-schema.js'
 import snapshot from './manifest.snapshot.json' with { type: 'json' }
 
-export const ONBOARDING_MANIFEST_URL =
-  'https://camstack-docs.zentik.app/onboarding/v1/manifest.json'
+export const ONBOARDING_MANIFEST_URL = 'https://dominevo.app/onboarding/v1/manifest.json'
 export const LIVE_TIMEOUT_MS = 3_000
 export const LIVE_TTL_MS = 60 * 60_000
 /** How long a failed live read is remembered, so a dead network costs one timeout, not one per call. */

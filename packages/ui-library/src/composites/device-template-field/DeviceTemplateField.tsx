@@ -46,7 +46,7 @@ import {
 } from './device-template-model'
 
 export const DEVICE_TEMPLATE_DOCS_URL: string =
-  'https://camstack-docs.zentik.app/docs/day-to-day/device-templates'
+  'https://dominevo.app/docs/day-to-day/device-templates'
 
 /** What a host drives from outside: a button of its own that writes at the caret. */
 export interface DeviceTemplateFieldHandle {

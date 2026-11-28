@@ -7,7 +7,7 @@ A vulnerability is not an issue. Report it as [SECURITY.md](SECURITY.md)
 describes. Questions belong in
 [Discussions](https://github.com/dominevo/server/discussions).
 
-User guides: <https://camstack-docs.zentik.app>
+User guides: <https://dominevo.app>
 
 ## Build and run
 
@@ -156,7 +156,7 @@ The published server's capability stub is `scaffold_cap_stub`.
 A runnable addon on its own, a bundle, tests, and a full `package.json` are
 in [camstack/addon-examples](https://github.com/dominevo/addon-examples) and
 on the docs page
-[/docs/developers/addon-examples](https://camstack-docs.zentik.app/docs/developers/addon-examples).
+[/docs/developers/addon-examples](https://dominevo.app/docs/developers/addon-examples).
 
 One addon is one process. An addon does not import another addon; it calls
 `ctx.api`. A credential is a `password` field on the settings schema, not an

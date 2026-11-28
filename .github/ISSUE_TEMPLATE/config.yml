@@ -10,7 +10,7 @@ contact_links:
     url: https://github.com/dominevo/server/discussions/2
     about: Ask for your domain to be added to the mobile app's linked domains.
   - name: Documentation
-    url: https://camstack-docs.zentik.app
+    url: https://dominevo.app
     about: Installation and user guides.
   - name: Report a security vulnerability
     url: https://github.com/dominevo/server/security/policy

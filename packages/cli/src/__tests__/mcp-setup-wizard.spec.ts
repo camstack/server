@@ -311,7 +311,7 @@ describe('setup_wizard: before a hub exists', () => {
       startWith: 'host-check',
     })
     expect(answer.nextStep?.actions.map((a) => a.tool)).toContain('setup_feasibility')
-    expect(answer.nextStep?.page).toBe('https://docs.dominevo.app/docs/get-started#feasibility')
+    expect(answer.nextStep?.page).toBe('https://dominevo.app/docs/get-started#feasibility')
   })
 
   it('what needs a hub is unknown with the reason, not missing', async () => {

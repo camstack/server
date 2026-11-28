@@ -1,7 +1,7 @@
 #!/bin/sh
 # Dominevo CLI installer (D988) — Linux and macOS.
 #
-#   curl -fsSL https://camstack-docs.zentik.app/install.sh | sh
+#   curl -fsSL https://dominevo.app/install.sh | sh
 #
 # Lays out the managed tree the CLI's `mcp update` / `mcp rollback` expect:
 #

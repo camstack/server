@@ -40,7 +40,7 @@
   <Category>HomeAutomation: Tools: Other:</Category>
   <WebUI>http://[IP]:[PORT:4444]/</WebUI>
   <TemplateURL>https://raw.githubusercontent.com/dominevo/unraid-templates/main/templates/camstack-agent.xml</TemplateURL>
-  <Icon>https://camstack-docs.zentik.app/icon.png</Icon>
+  <Icon>https://dominevo.app/icon.png</Icon>
   <ExtraParams>--device-cgroup-rule=&apos;c 189:* rmw&apos; --pids-limit=8192</ExtraParams>
   <PostArgs/>
   <CPUset/>

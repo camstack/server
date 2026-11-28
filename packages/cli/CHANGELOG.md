@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Environment variables are now named DOMINEVO_* (was CAMSTACK_*); the old names are no longer read, so rename them in your container template, compose file or shell.
+- The installer and onboarding manifest are fetched from dominevo.app
 
 ## [0.1.0] - 2026-11-28
 
