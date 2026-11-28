@@ -5,10 +5,10 @@
  */
 import {
   type CalendarRecordPorts,
-  calendarRecordId,
   makeInMemoryRecords,
   type RecordKindHandle,
 } from '@dominevo/types'
+import { calendarRecordId } from '@dominevo/types/node'
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import { googleBrokersEntryKind, googleCalendarsEntryKind } from '../../broker-record-kinds.js'

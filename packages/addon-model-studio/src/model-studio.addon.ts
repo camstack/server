@@ -17,6 +17,7 @@ import type {
   ImportModelBundleResult,
   ProviderRegistration,
 } from '@dominevo/types'
+import { resolveModelsDir } from '@dominevo/types/node'
 import {
   addonPagesSourceCapability,
   appSourceCapability,
@@ -287,7 +288,7 @@ export class ModelStudioAddon extends BaseAddon<ModelStudioConfig> {
 
   private makeConvertDeps(): ModelConvertProviderDeps {
     return {
-      modelsDir: () => this.resolveModelsDir(),
+      modelsDir: () => resolveModelsDir(this.ctx.nodeDataDir),
       pythonPath: async () => {
         const py = await this.ctx.deps.ensurePython()
         if (py === null) {
@@ -565,7 +566,7 @@ export class ModelStudioAddon extends BaseAddon<ModelStudioConfig> {
    */
   private async getUploadStore(): Promise<ModelUploadStore> {
     if (this.uploadStore) return this.uploadStore
-    const modelsDir = await this.resolveModelsDir()
+    const modelsDir = await resolveModelsDir(this.ctx.nodeDataDir)
     const stagingDir = path.join(this.ctx.dataDir ?? os.tmpdir(), 'model-uploads')
     this.uploadStore = new ModelUploadStore({ stagingDir, modelsDir })
     return this.uploadStore
@@ -914,7 +915,7 @@ export class ModelStudioAddon extends BaseAddon<ModelStudioConfig> {
       throw err
     }
     const filename = `${modelId}${decode.extension}`
-    const modelsDir = await this.resolveModelsDir()
+    const modelsDir = await resolveModelsDir(this.ctx.nodeDataDir)
     const destPath = path.join(modelsDir, filename)
     await downloadFile(downloadUrl, destPath)
     const bytes = (await fs.promises.stat(destPath)).size
@@ -1084,7 +1085,7 @@ export class ModelStudioAddon extends BaseAddon<ModelStudioConfig> {
         detail: 'no peer-bytes facility in this process',
       }
     }
-    const modelsDir = await this.resolveModelsDir()
+    const modelsDir = await resolveModelsDir(this.ctx.nodeDataDir)
     const nodeId = this.ctx.kernel?.localNodeId ?? 'hub'
     const result = await importModelBundle(input, {
       modelsDir,
@@ -1258,7 +1259,7 @@ export class ModelStudioAddon extends BaseAddon<ModelStudioConfig> {
 
     if (input.nodeId === 'hub') {
       try {
-        const modelsDir = await this.resolveModelsDir()
+        const modelsDir = await resolveModelsDir(this.ctx.nodeDataDir)
         deleteModelFromDisk(modelsDir, descriptor.entry, input.format)
         deleted = true
       } catch (err) {
@@ -1349,7 +1350,7 @@ export class ModelStudioAddon extends BaseAddon<ModelStudioConfig> {
 
     // Hub-local wipe even if the executor path missed (camstack-local basename).
     try {
-      const modelsDir = await this.resolveModelsDir()
+      const modelsDir = await resolveModelsDir(this.ctx.nodeDataDir)
       for (const format of formats) {
         deleteModelFromDisk(modelsDir, descriptor.entry, format)
       }

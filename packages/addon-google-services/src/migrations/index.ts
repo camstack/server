@@ -1,8 +1,5 @@
-import {
-  type AddonMigration,
-  type CalendarRecordPorts,
-  moveCalendarIdsToRecords,
-} from '@dominevo/types'
+import { type AddonMigration, type CalendarRecordPorts } from '@dominevo/types'
+import { moveCalendarIdsToRecords } from '@dominevo/types/node'
 import { parseStampedCalendarId } from '../google-broker-registry.js'
 import {
   type CalendarIdsPorts,

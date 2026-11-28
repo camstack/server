@@ -13,6 +13,7 @@ import type {
   ProviderRegistration,
   ScopedSettingsScope,
 } from '@dominevo/types'
+import { resolveModelsDir } from '@dominevo/types/node'
 import {
   BaseAddon,
   createEvent,
@@ -742,7 +743,7 @@ export default class DetectionPipelineAddon extends BaseAddon<DetectionPipelineC
   }
 
   protected async onInitialize(): Promise<ProviderRegistration[]> {
-    const modelsDir = await this.resolveModelsDir()
+    const modelsDir = await resolveModelsDir(this.ctx.nodeDataDir)
 
     if (!this.ctx.settings) {
       throw new Error('DetectionPipelineAddon: ctx.settings not available')
@@ -1002,7 +1003,7 @@ export default class DetectionPipelineAddon extends BaseAddon<DetectionPipelineC
     // Rebuild provider with the fresh override. Mirrors the construction path
     // in `onInitialize` so the new pool comes up with the same dependency
     // wiring.
-    const modelsDir = await this.resolveModelsDir()
+    const modelsDir = await resolveModelsDir(this.ctx.nodeDataDir)
     this.provider = this.buildProvider(modelsDir, next)
     await this.provider.init()
     await this.provider.setApi(this.ctx)

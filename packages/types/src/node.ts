@@ -173,3 +173,9 @@ export type {
   WakeOnLanTargetFailure,
 } from './network/wake-on-lan-node.js'
 export { WOL_REFUSAL_REASONS, sendWakeOnLan } from './network/wake-on-lan-node.js'
+// The egress sharing key, hashed with `node:crypto` (the plan itself is on the root entry).
+export { egressTranscodeSharingKey } from './ffmpeg/egress-sharing-key.js'
+// The calendar-ids migration hashes a record id with `node:crypto`; its row/port types stay on the root entry.
+export { calendarRecordId, moveCalendarIdsToRecords } from './migrations/calendar-ids-to-records.js'
+// The node-local models directory (`<nodeDataDir>/models`), created on demand.
+export { resolveModelsDir } from './util/models-dir.js'

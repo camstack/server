@@ -17,7 +17,6 @@
  * Here every knob is a named field, and defaults are APPLIED before hashing so
  * an omitted field and its explicit default land on the same key.
  */
-import { canonicalHash } from '../utils/canonical-hash.js'
 import type { EgressTranscodeRequest } from '../capabilities/stream-broker.cap.js'
 
 /**
@@ -166,22 +165,4 @@ export function canonicalEgressPlan(
     // and is distinct from any explicit pin.
     decodeHwAccel: request.decodeHwAccel ?? UNSET,
   }
-}
-
-/**
- * The refcount / dedup key. `canonicalHash` sorts object keys at every depth,
- * so a request built with a different field order produces the same digest.
- *
- * The handle this keys is IMMUTABLE: there is no `reconfigure`. A consumer
- * whose requirements change RELEASES and re-acquires; the refcount does the
- * rest. That is what stops co-tenants disturbing each other — the co-tenant
- * hazard that made Alexa's shared `derived:alexa-<id>` stream a hazard was
- * exactly a mutable shared object, where one consumer's downgrade dragged
- * every other consumer to 360p.
- */
-export function egressTranscodeSharingKey(
-  request: EgressTranscodeRequest,
-  delivery: EgressTransportPlan = egressTransportFromRequest(request),
-): string {
-  return `egress:${canonicalHash(canonicalEgressPlan(request, delivery))}`
 }

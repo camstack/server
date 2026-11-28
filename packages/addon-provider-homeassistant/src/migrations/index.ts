@@ -4,8 +4,8 @@ import {
   type CalendarRecordPorts,
   type FlattenRowPorts,
   moveBrokerLinksToConnections,
-  moveCalendarIdsToRecords,
 } from '@dominevo/types'
+import { moveCalendarIdsToRecords } from '@dominevo/types/node'
 import { BROKER_LINKS_TO_CONNECTIONS_ID, haBrokerLinkPorts } from './broker-links-to-connections.js'
 import { FLATTEN_BROKER_RECORDS_ID, flattenBrokerRecords } from './flatten-broker-records.js'
 import {

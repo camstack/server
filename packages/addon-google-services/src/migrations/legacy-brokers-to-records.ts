@@ -25,9 +25,9 @@ import {
 import {
   type CalendarRecordPorts,
   type MigrationProcedureResult,
-  moveCalendarIdsToRecords,
   type StoredKeyRead,
 } from '@dominevo/types'
+import { moveCalendarIdsToRecords } from '@dominevo/types/node'
 import { parseStampedCalendarId } from '../google-broker-registry.js'
 import type { CalendarIdsPorts } from './calendar-ids-to-brokers.js'
 

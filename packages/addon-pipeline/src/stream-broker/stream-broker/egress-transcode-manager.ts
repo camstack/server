@@ -105,7 +105,6 @@ import type {
 } from '@dominevo/types'
 import {
   AUDIO_PRESETS,
-  egressTranscodeSharingKey,
   egressTransportFromRequest,
   errMsg,
   invocationFromEncodeProfile,
@@ -114,6 +113,7 @@ import {
   RATE_CONTROL_RELAXED,
   RATE_CONTROL_TIGHT,
 } from '@dominevo/types'
+import { egressTranscodeSharingKey } from '@dominevo/types/node'
 import type { AudioEncode } from '@dominevo/types'
 import { NO_COST_CLAIM, type ChildCostRegistry } from '@dominevo/types/node'
 import type { AudioSidecarCodec, FfmpegSystemConfig } from './ffmpeg-invocation.js'

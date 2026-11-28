@@ -10,6 +10,7 @@ import type {
   ScopedSettingsScope,
   ProviderRegistration,
 } from '@dominevo/types'
+import { resolveModelsDir } from '@dominevo/types/node'
 import {
   AUDIO_BACKEND_CHOICES,
   BaseAddon,
@@ -1228,7 +1229,7 @@ export class AudioAnalyzerAddon extends BaseAddon<AudioAnalyzerGlobalConfig> {
    */
   private async buildPipeline(backend: AudioBackend): Promise<IAudioPipeline> {
     const logger = this.ctx.logger as IScopedLogger
-    const modelsDir = await this.resolveModelsDir()
+    const modelsDir = await resolveModelsDir(this.ctx.nodeDataDir)
     logger.info('audio-analyzer: resolving pipeline', {
       meta: {
         operatorChoice: this.config.audioBackend,

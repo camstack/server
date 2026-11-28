@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Models, the trainer and the benchmark clips are now fetched from the Dominevo Hugging Face repos (Dominevo/dominevo-models, dominevo-trainer, dominevo-bench-clips)
 - Environment variables are now named DOMINEVO_* (was CAMSTACK_*); the old names are no longer read, so rename them in your container template, compose file or shell.
+- Imports the Node-only helpers it uses from @dominevo/types/node; no behaviour change
 
 ## [0.1.0] - 2026-11-28
 

@@ -19,6 +19,7 @@ import {
   type ModelCatalogEntry,
   type ProviderRegistration,
 } from '@dominevo/types'
+import { resolveModelsDir } from '@dominevo/types/node'
 import { assembleAi } from './assembly.js'
 import { createLlmClient } from './client/llm-client.js'
 import { managedRuntimeOf } from './kinds/provider-config.js'
@@ -130,7 +131,7 @@ export class AiAddon extends BaseAddon<AiConfig> {
     const isHub = ownNodeId === 'hub'
     const api = ctx.api
 
-    const modelsDir = await this.resolveModelsDir()
+    const modelsDir = await resolveModelsDir(this.ctx.nodeDataDir)
     const supervisor = new LlamaSupervisor({ logger: logger.child('llama') })
     this.supervisor = supervisor
 

@@ -154,6 +154,7 @@ jobs:
             scripts/check-method-tiers.ts \
             scripts/check-method-roles.ts \
             scripts/check-viewer-calls-allowed.ts \
+            scripts/check-types-browser-entry-node-free.ts \
             scripts/check-capability-metadata-drift.ts \
             scripts/check-capability-union-complete.ts \
             scripts/check-collection-declarations.ts \

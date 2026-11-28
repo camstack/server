@@ -23,7 +23,7 @@
  */
 import { describe, expect, it, vi } from 'vitest'
 import type { CameraStream, EncodedPacket, EncodeProfile, IScopedLogger } from '@dominevo/types'
-import { egressTranscodeSharingKey } from '@dominevo/types'
+import { egressTranscodeSharingKey } from '@dominevo/types/node'
 
 import { buildTranscodeEgressRequest, H264EgressFramer } from '../transcode-egress-leg.js'
 import { WEBRTC_FALLBACK_PROFILE } from '../webrtc-fallback-profile.js'

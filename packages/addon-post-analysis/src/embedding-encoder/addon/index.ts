@@ -8,6 +8,7 @@ import type {
   PoolMemoryTelemetry,
   ProviderRegistration,
 } from '@dominevo/types'
+import { resolveModelsDir } from '@dominevo/types/node'
 import {
   BaseAddon,
   PoolMemoryWatchdog,
@@ -208,7 +209,7 @@ export default class EmbeddingEncoderAddon
   }
 
   protected async onInitialize(): Promise<ProviderRegistration[]> {
-    const modelsDir = await this.resolveModelsDir()
+    const modelsDir = await resolveModelsDir(this.ctx.nodeDataDir)
     // Seed the download service with the CLIP image + text catalogs so
     // `models.ensure(id, 'onnx')` can resolve every encoder model. An empty
     // catalog makes EVERY `ensure()` throw `unknown model "<id>"` — this broke

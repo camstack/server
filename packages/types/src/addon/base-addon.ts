@@ -1667,27 +1667,6 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
   // ── Common helpers ─────────────────────────────────────────────────────
 
   /**
-   * Resolve the shared, node-local models directory: `<nodeDataDir>/models`.
-   *
-   * This is the SINGLE centralized models-dir resolver for every inference addon
-   * (detection-pipeline, audio-analyzer, embedding-encoder, model-studio). It is
-   * anchored at the node's own writable data root (`ctx.nodeDataDir`, i.e.
-   * `DOMINEVO_DATA` ?? the kernel boot dir) — never the hub-singleton `storage`
-   * cap, which returns the hub's `/data/models` to every node and breaks any node
-   * whose real data dir differs (e.g. the macOS electron agent).
-   *
-   * `node:path`/`node:fs` are imported dynamically so the `@dominevo/types` root
-   * barrel (re-exported into browser bundles) stays free of node builtins.
-   */
-  protected async resolveModelsDir(): Promise<string> {
-    const { join } = await import('node:path')
-    const { promises: fsp } = await import('node:fs')
-    const dir = join(this.ctx.nodeDataDir, 'models')
-    await fsp.mkdir(dir, { recursive: true })
-    return dir
-  }
-
-  /**
    * Access the runtime capability registry for in-process provider lookups.
    * Returns null if the registry is not available (e.g. on agents).
    * Used by addons that consume other capabilities directly (snapshot, stream-broker, enrichment).

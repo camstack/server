@@ -1,4 +1,5 @@
-import { makeInMemoryRecords, moveCalendarIdsToRecords } from '@dominevo/types'
+import { makeInMemoryRecords } from '@dominevo/types'
+import { moveCalendarIdsToRecords } from '@dominevo/types/node'
 import { describe, expect, it } from 'vitest'
 import { haBrokersEntryKind, haCalendarsEntryKind } from '../broker-record-kinds.js'
 import { buildHaCalendarInstances, selectedEntityIds } from '../ha-calendar-instances.js'

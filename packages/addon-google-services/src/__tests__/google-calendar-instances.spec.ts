@@ -1,9 +1,5 @@
-import {
-  type CalendarRecordPorts,
-  type IScopedLogger,
-  makeInMemoryRecords,
-  moveCalendarIdsToRecords,
-} from '@dominevo/types'
+import { type CalendarRecordPorts, type IScopedLogger, makeInMemoryRecords } from '@dominevo/types'
+import { moveCalendarIdsToRecords } from '@dominevo/types/node'
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import { googleBrokersEntryKind, googleCalendarsEntryKind } from '../broker-record-kinds.js'

@@ -4,12 +4,12 @@
 
 # Guards
 
-266 repository guards: 261 in `scripts/`,
+267 repository guards: 262 in `scripts/`,
 5 as tests inside the package they judge. A guard is the only
 durable form of a convention: a rule nothing checks is a rule that has already
 been broken somewhere. Prefer adding one over adding a paragraph.
 
-## Enforced by CI checks (254)
+## Enforced by CI checks (255)
 
 Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.yml`.
 
@@ -257,6 +257,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-table-mobile-roles.ts` | A table fits a phone because every column says what it becomes there. |
 | `scripts/check-topology-is-a-diagram-not-a-lookup.ts` | Disproportionate-endpoint guard — `nodes.topology` draws the cluster DIAGRAM; it is not a lookup table. |
 | `scripts/check-tree-private-data.ts` | Tree scrub guard — house names, hosts, addresses, rooms and camera ids. |
+| `scripts/check-types-browser-entry-node-free.ts` | The browser entry of `@dominevo/types` reaches no Node built-in. |
 | `scripts/check-ui-catalogue-current.ts` | The committed UI catalogue (`docs/reference/ui-components.json`) is what the sources produce: ui-library exports and props, the need table, the colour tokens and — when the `camstack/` submodule is checked out — the viewer kit. |
 | `scripts/check-ui-save-discard.ts` | An editable settings surface writes only on an explicit Save (planning#675). |
 | `scripts/check-user-facing-decision-ids.ts` | User-facing decision-id guard — no `D550` / `ADR-0550` in text an operator reads. |

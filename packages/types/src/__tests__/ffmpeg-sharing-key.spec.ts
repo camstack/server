@@ -15,11 +15,8 @@
  * built differently.
  */
 import { describe, it, expect } from 'vitest'
-import {
-  canonicalEgressPlan,
-  egressTranscodeSharingKey,
-  egressTransportFromRequest,
-} from '../ffmpeg/sharing-key.js'
+import { canonicalEgressPlan, egressTransportFromRequest } from '../ffmpeg/sharing-key.js'
+import { egressTranscodeSharingKey } from '../ffmpeg/egress-sharing-key.js'
 import type { EgressTranscodeRequest } from '../capabilities/stream-broker.cap.js'
 
 function request(over: Partial<EgressTranscodeRequest> = {}): EgressTranscodeRequest {

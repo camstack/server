@@ -3053,10 +3053,7 @@ export type {
   CalendarRecordBody,
   CalendarRecordPorts,
 } from './migrations/calendar-ids-to-records.js'
-export {
-  calendarRecordId,
-  moveCalendarIdsToRecords,
-} from './migrations/calendar-ids-to-records.js'
+// `calendarRecordId` / `moveCalendarIdsToRecords` hash with `node:crypto`: `@dominevo/types/node`.
 export {
   brokerLinkPortsOver,
   moveBrokerLinksToConnections,
